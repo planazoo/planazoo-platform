@@ -1,0 +1,1109 @@
+{
+  "metadata": {
+    "version": "2.0",
+    "fecha_generacion": "2024-12-19T12:00:00.000Z",
+    "total_widgets": 31,
+    "grid_dimensions": {
+      "columnas": 17,
+      "filas": 13
+    },
+    "especificaciones_tecnicas": {
+      "framework": "Flutter",
+      "lenguaje": "Dart",
+      "responsive": true,
+      "grid_system": "17x13 columnas/filas uniformes",
+      "posicionamiento": "Stack + Positioned widgets",
+      "custom_painting": "GridPainter para líneas del grid",
+      "layout_builder": "Dimensiones responsivas automáticas",
+      "estado": "StatefulWidget con setState",
+      "navegacion": "Navigator.push para transiciones",
+      "estilos": "Material Design con colores personalizados",
+      "opacidad": "withOpacity(0.7) para transparencia",
+      "bordes": "Border.all con borderRadius.circular(4)",
+      "tipografia": "TextStyle con diferentes tamaños y pesos"
+    },
+    "instrucciones_reconstruccion": [
+      "1. Crear proyecto Flutter con estructura de carpetas features/",
+      "2. Implementar UXDemoPage como StatefulWidget",
+      "3. Crear GridPainter extendiendo CustomPainter",
+      "4. Usar LayoutBuilder para obtener constraints del padre",
+      "5. Calcular columnWidth = maxWidth / 17 y rowHeight = maxHeight / 13",
+      "6. Implementar Stack con CustomPaint de fondo",
+      "7. Añadir Positioned widgets usando coordenadas del JSON",
+      "8. Aplicar colores, estilos y contenido según especificaciones",
+      "9. Implementar AppBar con botones de actualización e información",
+      "10. Crear UXJsonGenerator para mantener JSON sincronizado"
+    ],
+    "estructura_archivos": {
+      "ux_demo_page.dart": "Página principal con implementación de todos los widgets",
+      "ux_json_generator.dart": "Generador automático del JSON de especificaciones",
+      "ux_specification.json": "Especificación completa de la UX (assets/)",
+      "docs/ux_specification.json": "Copia de respaldo de la especificación"
+    },
+    "dependencias_flutter": [
+      "flutter/material.dart",
+      "dart:convert",
+      "dart:io"
+    ],
+    "notas": "JSON generado automáticamente desde UXDemoPage - Documentación completa para reconstrucción",
+    "ultima_actualizacion": "2024-12-19T12:00:00.000Z",
+    "autor": "Sistema Automático de Generación UX",
+    "proyecto": "UNP Calendario - Flutter App"
+  },
+  "widgets": [
+    {
+      "Widget ID": "W1",
+      "Ubicación (texto)": "C1 (R1-R13)",
+      "Función (texto)": "Barra lateral que muestra la lista de Planazoos y accesos rápidos.",
+      "GridBBox": {
+        "cmin": 1,
+        "cmax": 1,
+        "rmin": 1,
+        "rmax": 13
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 0.0,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 1080.0
+        },
+        "tablet": {
+          "x": 0.0,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 1026.0
+        },
+        "mobile": {
+          "x": 0.0,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 972.0
+        }
+      },
+      "Color": "blue",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W2",
+      "Ubicación (texto)": "C2-C3 (R1)",
+      "Función (texto)": "Logo de la app",
+      "GridBBox": {
+        "cmin": 2,
+        "cmax": 3,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 112.9,
+          "y": 0.0,
+          "width": 225.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 101.6,
+          "y": 0.0,
+          "width": 203.3,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 79.1,
+          "y": 0.0,
+          "width": 158.2,
+          "height": 74.8
+        }
+      },
+      "Color": "green",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W3",
+      "Ubicación (texto)": "C4 (R1)",
+      "Función (texto)": "Botón nuevo planazoo",
+      "GridBBox": {
+        "cmin": 4,
+        "cmax": 4,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 338.8,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 304.9,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 237.3,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "orange",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W4",
+      "Ubicación (texto)": "C5 (R1)",
+      "Función (texto)": "Menú de opciones",
+      "GridBBox": {
+        "cmin": 5,
+        "cmax": 5,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 451.8,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 406.5,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 316.4,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "purple",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W5",
+      "Ubicación (texto)": "C6 (R1)",
+      "Función (texto)": "Icono planazoo seleccionado",
+      "GridBBox": {
+        "cmin": 6,
+        "cmax": 6,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 564.7,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 508.1,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 395.5,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "pink",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W6",
+      "Ubicación (texto)": "C7-C11 (R1)",
+      "Función (texto)": "Información del planazoo seleccionado",
+      "GridBBox": {
+        "cmin": 7,
+        "cmax": 11,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 677.6,
+          "y": 0.0,
+          "width": 564.7,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 609.7,
+          "y": 0.0,
+          "width": 508.1,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 474.6,
+          "y": 0.0,
+          "width": 395.5,
+          "height": 74.8
+        }
+      },
+      "Color": "cyan",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W7",
+      "Ubicación (texto)": "C12 (R1)",
+      "Función (texto)": "Info",
+      "GridBBox": {
+        "cmin": 12,
+        "cmax": 12,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1242.4,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1117.8,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 870.1,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "lime",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W8",
+      "Ubicación (texto)": "C13 (R1)",
+      "Función (texto)": "Presupuesto",
+      "GridBBox": {
+        "cmin": 13,
+        "cmax": 13,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1355.3,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1219.4,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 949.2,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "deepOrange",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W9",
+      "Ubicación (texto)": "C14 (R1)",
+      "Función (texto)": "Contador participantes",
+      "GridBBox": {
+        "cmin": 14,
+        "cmax": 14,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1468.2,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1321.0,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 1028.3,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "deepPurple",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W10",
+      "Ubicación (texto)": "C15 (R1)",
+      "Función (texto)": "Mi estado en el planazoo",
+      "GridBBox": {
+        "cmin": 15,
+        "cmax": 15,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1581.2,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1422.6,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 1107.4,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "blueGrey",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W11",
+      "Ubicación (texto)": "C16 (R1)",
+      "Función (texto)": "Libre",
+      "GridBBox": {
+        "cmin": 16,
+        "cmax": 16,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1694.1,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1524.2,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 1186.5,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "lightGreen",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W12",
+      "Ubicación (texto)": "C17 (R1)",
+      "Función (texto)": "Menu opciones",
+      "GridBBox": {
+        "cmin": 17,
+        "cmax": 17,
+        "rmin": 1,
+        "rmax": 1
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1807.1,
+          "y": 0.0,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1626.8,
+          "y": 0.0,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 1265.6,
+          "y": 0.0,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "grey",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W13",
+      "Ubicación (texto)": "C2-C5 (R2)",
+      "Función (texto)": "Campo de búsqueda",
+      "GridBBox": {
+        "cmin": 2,
+        "cmax": 5,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 112.9,
+          "y": 83.1,
+          "width": 451.8,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 101.6,
+          "y": 78.9,
+          "width": 406.5,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 79.1,
+          "y": 74.8,
+          "width": 316.4,
+          "height": 74.8
+        }
+      },
+      "Color": "teal",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W14",
+      "Ubicación (texto)": "C6 (R2)",
+      "Función (texto)": "Acceso info planazoo",
+      "GridBBox": {
+        "cmin": 6,
+        "cmax": 6,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 564.7,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 508.1,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 395.5,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "lightBlue",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W15",
+      "Ubicación (texto)": "C7 (R2)",
+      "Función (texto)": "Acceso calendario",
+      "GridBBox": {
+        "cmin": 7,
+        "cmax": 7,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 677.6,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 609.7,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 474.6,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "lightGreen",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W16",
+      "Ubicación (texto)": "C8 (R2)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 8,
+        "cmax": 8,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 790.6,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 711.3,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 553.7,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "yellow",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W17",
+      "Ubicación (texto)": "C9 (R2)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 9,
+        "cmax": 9,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 903.5,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 812.9,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 632.8,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "orange",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W18",
+      "Ubicación (texto)": "C10 (R2)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 10,
+        "cmax": 10,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1016.5,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 914.5,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 711.9,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "red",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W19",
+      "Ubicación (texto)": "C11 (R2)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 11,
+        "cmax": 11,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1129.4,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1016.1,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 791.0,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "purple",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W20",
+      "Ubicación (texto)": "C12 (R2)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 12,
+        "cmax": 12,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1242.4,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1117.8,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 870.1,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "indigo",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W21",
+      "Ubicación (texto)": "C13 (R2)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 13,
+        "cmax": 13,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1355.3,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1219.4,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 949.2,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "teal",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W22",
+      "Ubicación (texto)": "C14 (R2)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 14,
+        "cmax": 14,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1468.2,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1321.0,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 1028.3,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "cyan",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W23",
+      "Ubicación (texto)": "C15 (R2)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 15,
+        "cmax": 15,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1581.2,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1422.6,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 1107.4,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "amber",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W24",
+      "Ubicación (texto)": "C16 (R2)",
+      "Función (texto)": "Icono notificaciones",
+      "GridBBox": {
+        "cmin": 16,
+        "cmax": 16,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1694.1,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1524.2,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 1186.5,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "deepOrange",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W25",
+      "Ubicación (texto)": "C17 (R2)",
+      "Función (texto)": "Icono mensajes",
+      "GridBBox": {
+        "cmin": 17,
+        "cmax": 17,
+        "rmin": 2,
+        "rmax": 2
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 1807.1,
+          "y": 83.1,
+          "width": 112.9,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 1626.8,
+          "y": 78.9,
+          "width": 101.6,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 1265.6,
+          "y": 74.8,
+          "width": 79.1,
+          "height": 74.8
+        }
+      },
+      "Color": "deepPurple",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W26",
+      "Ubicación (texto)": "C2-C5 (R3)",
+      "Función (texto)": "Filtros fijos de la lista de planazoos",
+      "GridBBox": {
+        "cmin": 2,
+        "cmax": 5,
+        "rmin": 3,
+        "rmax": 3
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 112.9,
+          "y": 166.2,
+          "width": 451.8,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 101.6,
+          "y": 157.8,
+          "width": 406.5,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 79.1,
+          "y": 149.6,
+          "width": 316.4,
+          "height": 74.8
+        }
+      },
+      "Color": "indigo",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W27",
+      "Ubicación (texto)": "C2-C5 (R4)",
+      "Función (texto)": "Espacio extra no definido",
+      "GridBBox": {
+        "cmin": 2,
+        "cmax": 5,
+        "rmin": 4,
+        "rmax": 4
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 112.9,
+          "y": 249.3,
+          "width": 451.8,
+          "height": 83.1
+        },
+        "tablet": {
+          "x": 101.6,
+          "y": 236.7,
+          "width": 406.5,
+          "height": 78.9
+        },
+        "mobile": {
+          "x": 79.1,
+          "y": 224.4,
+          "width": 316.4,
+          "height": 74.8
+        }
+      },
+      "Color": "amber",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W28",
+      "Ubicación (texto)": "C2-C5 (R5-R12)",
+      "Función (texto)": "Lista de planazoos con imagen, información e iconos de acción (editar, eliminar, estado)",
+      "GridBBox": {
+        "cmin": 2,
+        "cmax": 5,
+        "rmin": 5,
+        "rmax": 12
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 112.9,
+          "y": 332.4,
+          "width": 451.8,
+          "height": 664.8
+        },
+        "tablet": {
+          "x": 101.6,
+          "y": 315.6,
+          "width": 406.5,
+          "height": 631.2
+        },
+        "mobile": {
+          "x": 79.1,
+          "y": 299.2,
+          "width": 316.4,
+          "height": 598.4
+        }
+      },
+      "Color": "red",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W29",
+      "Ubicación (texto)": "C2-C5 (R13)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 2,
+        "cmax": 5,
+        "rmin": 13,
+        "rmax": 13
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 112.9,
+          "y": 997.2,
+          "width": 451.8,
+          "height": 82.8
+        },
+        "tablet": {
+          "x": 101.6,
+          "y": 946.8,
+          "width": 406.5,
+          "height": 79.2
+        },
+        "mobile": {
+          "x": 79.1,
+          "y": 897.6,
+          "width": 316.4,
+          "height": 74.4
+        }
+      },
+      "Color": "brown",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W30",
+      "Ubicación (texto)": "C6-C17 (R13)",
+      "Función (texto)": "Por definir",
+      "GridBBox": {
+        "cmin": 6,
+        "cmax": 17,
+        "rmin": 13,
+        "rmax": 13
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 564.7,
+          "y": 997.2,
+          "width": 1355.3,
+          "height": 82.8
+        },
+        "tablet": {
+          "x": 508.1,
+          "y": 946.8,
+          "width": 1218.4,
+          "height": 79.2
+        },
+        "mobile": {
+          "x": 395.5,
+          "y": 897.6,
+          "width": 949.3,
+          "height": 74.4
+        }
+      },
+      "Color": "lightGreen",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    },
+    {
+      "Widget ID": "W31",
+      "Ubicación (texto)": "C6-C17 (R3-R12)",
+      "Función (texto)": "Pantalla principal donde se muestran los formularios e informaciones seleccionados del planazoo",
+      "GridBBox": {
+        "cmin": 6,
+        "cmax": 17,
+        "rmin": 3,
+        "rmax": 12
+      },
+      "LayoutPx": {
+        "desktop": {
+          "x": 564.7,
+          "y": 166.2,
+          "width": 1355.3,
+          "height": 664.8
+        },
+        "tablet": {
+          "x": 508.1,
+          "y": 157.8,
+          "width": 1218.4,
+          "height": 631.2
+        },
+        "mobile": {
+          "x": 395.5,
+          "y": 149.6,
+          "width": 949.3,
+          "height": 598.4
+        }
+      },
+      "Color": "blue",
+      "Estado": "Implementado",
+      "Última actualización": "2024-12-19T12:00:00.000Z"
+    }
+  ]
+}

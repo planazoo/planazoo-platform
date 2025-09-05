@@ -1,0 +1,1350 @@
+[
+  {
+    "Widget ID": "W1",
+    "Ubicación (texto)": "C1 (R1-R13)",
+    "Función (texto)": "Barra lateral que muestra la lista de Planazoos y accesos rápidos.",
+    "GridBBox": {
+      "cmin": 1,
+      "cmax": 1,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 0,
+        "y": 0,
+        "width": 320,
+        "height": 64
+      },
+      "tablet": {
+        "x": 0,
+        "y": 0,
+        "width": 280,
+        "height": 60
+      },
+      "mobile": {
+        "x": 0,
+        "y": 0,
+        "width": 320,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "loading": {
+        "description": "Mientras se cargan los Planazoos",
+        "visual": "Skeleton loader con 3-4 rectángulos grises",
+        "duration": "Hasta que se complete la carga"
+      },
+      "error": {
+        "description": "Error al cargar la lista",
+        "visual": "Icono de error + mensaje 'Error al cargar'",
+        "action": "Botón 'Reintentar' visible"
+      },
+      "empty": {
+        "description": "No hay Planazoos disponibles",
+        "visual": "Icono de calendario vacío + mensaje 'No hay planes'",
+        "action": "Botón 'Crear primer plan' destacado"
+      }
+    }
+  },
+  {
+    "Widget ID": "W2",
+    "Ubicación (texto)": "C2 (R1)",
+    "Función (texto)": "Botón 'Nuevo Planazoo' para crear un nuevo plan.",
+    "GridBBox": {
+      "cmin": 2,
+      "cmax": 2,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 336,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 292,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 328,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "default": {
+        "description": "Estado normal del botón",
+        "visual": "Fondo azul (#3F51B5), texto blanco, sombra sutil"
+      },
+      "hover": {
+        "description": "Al pasar el mouse",
+        "visual": "Fondo azul más oscuro (#303F9F), sombra más pronunciada"
+      },
+      "active": {
+        "description": "Al hacer click",
+        "visual": "Fondo azul muy oscuro (#1A237E), transformación scale(0.98)"
+      },
+      "loading": {
+        "description": "Mientras se procesa la creación",
+        "visual": "Spinner blanco + texto 'Creando...', botón deshabilitado",
+        "duration": "Hasta completar la creación"
+      },
+      "success": {
+        "description": "Planazoo creado exitosamente",
+        "visual": "Toast verde con checkmark + 'Planazoo creado'",
+        "duration": "3 segundos, luego navegación automática"
+      },
+      "error": {
+        "description": "Error al crear el Planazoo",
+        "visual": "Toast rojo con icono de error + mensaje específico",
+        "duration": "5 segundos, botón reactivado"
+      }
+    }
+  },
+  {
+    "Widget ID": "W3",
+    "Ubicación (texto)": "C2 (R1)",
+    "Función (texto)": "Menú de opciones rápidas dentro del Planazoo.",
+    "GridBBox": {
+      "cmin": 2,
+      "cmax": 2,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 336,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 292,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 328,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "default": {
+        "description": "Menú cerrado",
+        "visual": "Icono de tres puntos, color gris (#757575)"
+      },
+      "hover": {
+        "description": "Al pasar el mouse",
+        "visual": "Color azul (#3F51B5), cursor pointer"
+      },
+      "open": {
+        "description": "Menú desplegado",
+        "visual": "Dropdown con opciones, sombra pronunciada, animación slideDown"
+      },
+      "loading": {
+        "description": "Cargando opciones del menú",
+        "visual": "Spinner pequeño en lugar del icono",
+        "duration": "Hasta completar la carga"
+      }
+    }
+  },
+  {
+    "Widget ID": "W4",
+    "Ubicación (texto)": "C2 (R1)",
+    "Función (texto)": "Barra de búsqueda para encontrar eventos dentro del Planazoo.",
+    "GridBBox": {
+      "cmin": 2,
+      "cmax": 2,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 336,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 292,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 328,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "default": {
+        "description": "Campo vacío",
+        "visual": "Borde gris (#E0E0E0), placeholder 'Buscar eventos...'"
+      },
+      "focus": {
+        "description": "Campo seleccionado",
+        "visual": "Borde azul (#3F51B5), sombra azul sutil"
+      },
+      "typing": {
+        "description": "Usuario escribiendo",
+        "visual": "Icono de lupa cambia a spinner, borde azul"
+      },
+      "searching": {
+        "description": "Buscando resultados",
+        "visual": "Spinner azul, texto 'Buscando...'",
+        "duration": "Hasta completar la búsqueda"
+      },
+      "results": {
+        "description": "Resultados encontrados",
+        "visual": "Borde verde (#4CAF50), contador de resultados visible"
+      },
+      "no_results": {
+        "description": "Sin resultados",
+        "visual": "Borde naranja (#FF9800), mensaje 'No se encontraron eventos'"
+      },
+      "error": {
+        "description": "Error en la búsqueda",
+        "visual": "Borde rojo (#F44336), mensaje de error específico"
+      }
+    }
+  },
+  {
+    "Widget ID": "W5",
+    "Ubicación (texto)": "C3 (R1)",
+    "Función (texto)": "Información general del Planazoo (Nombre, Fechas, Estado).",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "loading": {
+        "description": "Cargando información del Planazoo",
+        "visual": "Skeleton loader para nombre, fechas y estado",
+        "duration": "Hasta completar la carga"
+      },
+      "editing": {
+        "description": "Modo de edición activo",
+        "visual": "Borde azul punteado, botones 'Guardar' y 'Cancelar' visibles"
+      },
+      "saving": {
+        "description": "Guardando cambios",
+        "visual": "Spinner azul, texto 'Guardando...', botones deshabilitados",
+        "duration": "Hasta completar el guardado"
+      },
+      "saved": {
+        "description": "Cambios guardados exitosamente",
+        "visual": "Toast verde con 'Cambios guardados', borde verde temporal",
+        "duration": "3 segundos"
+      },
+      "error": {
+        "description": "Error al guardar cambios",
+        "visual": "Toast rojo con mensaje de error, borde rojo temporal",
+        "duration": "5 segundos"
+      },
+      "validation_error": {
+        "description": "Error de validación en campos",
+        "visual": "Campo específico con borde rojo, mensaje de error debajo"
+      }
+    }
+  },
+  {
+    "Widget ID": "W6",
+    "Ubicación (texto)": "C3 (R1)",
+    "Función (texto)": "Navegación principal entre secciones: Calendario, Chat, Documentos.",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "default": {
+        "description": "Sección actual seleccionada",
+        "visual": "Fondo azul (#3F51B5), texto blanco, subrayado azul"
+      },
+      "hover": {
+        "description": "Al pasar el mouse sobre otra sección",
+        "visual": "Fondo gris claro (#F5F5F5), texto azul (#3F51B5)"
+      },
+      "active": {
+        "description": "Al hacer click en otra sección",
+        "visual": "Transformación scale(0.95), borde azul temporal"
+      },
+      "loading": {
+        "description": "Cargando nueva sección",
+        "visual": "Spinner azul en la sección seleccionada",
+        "duration": "Hasta completar la carga"
+      },
+      "error": {
+        "description": "Error al cargar la sección",
+        "visual": "Toast rojo con 'Error al cargar [sección]'",
+        "duration": "5 segundos"
+      }
+    }
+  },
+  {
+    "Widget ID": "W7",
+    "Ubicación (texto)": "C3 (R1)",
+    "Función (texto)": "Vista del calendario con los eventos organizados por día.",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "loading": {
+        "description": "Cargando eventos del calendario",
+        "visual": "Skeleton loader para días y eventos",
+        "duration": "Hasta completar la carga"
+      },
+      "empty": {
+        "description": "No hay eventos en el período",
+        "visual": "Mensaje 'No hay eventos programados', icono de calendario vacío"
+      },
+      "event_hover": {
+        "description": "Al pasar el mouse sobre un evento",
+        "visual": "Sombra más pronunciada, borde azul, tooltip con detalles"
+      },
+      "event_selected": {
+        "description": "Evento seleccionado",
+        "visual": "Borde azul grueso (#3F51B5), fondo azul claro (#E3F2FD)"
+      },
+      "drag_start": {
+        "description": "Inicio de arrastre de evento",
+        "visual": "Evento con opacidad 0.7, cursor grab, sombra pronunciada"
+      },
+      "drag_over": {
+        "description": "Arrastrando sobre zona válida",
+        "visual": "Zona con borde azul punteado, fondo azul muy claro"
+      },
+      "drop_success": {
+        "description": "Evento soltado exitosamente",
+        "visual": "Toast verde con 'Evento movido', animación de confirmación",
+        "duration": "2 segundos"
+      },
+      "drop_error": {
+        "description": "Error al mover evento",
+        "visual": "Toast rojo con 'No se pudo mover el evento', evento vuelve a posición original"
+      },
+      "sync_loading": {
+        "description": "Sincronizando con Google Calendar",
+        "visual": "Spinner azul, texto 'Sincronizando...'",
+        "duration": "Hasta completar la sincronización"
+      },
+      "sync_success": {
+        "description": "Sincronización exitosa",
+        "visual": "Toast verde con 'Sincronizado con Google Calendar'",
+        "duration": "3 segundos"
+      },
+      "sync_error": {
+        "description": "Error en la sincronización",
+        "visual": "Toast rojo con 'Error de sincronización', botón 'Reintentar' visible"
+      }
+    }
+  },
+  {
+    "Widget ID": "W8",
+    "Ubicación (texto)": "C3 (R1)",
+    "Función (texto)": "Opciones de vista del calendario: Semana, Mes, Año.",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "default": {
+        "description": "Vista actual seleccionada",
+        "visual": "Fondo azul (#3F51B5), texto blanco, borde azul"
+      },
+      "hover": {
+        "description": "Al pasar el mouse sobre otra vista",
+        "visual": "Fondo gris claro (#F5F5F5), texto azul (#3F51B5)"
+      },
+      "active": {
+        "description": "Al hacer click en otra vista",
+        "visual": "Transformación scale(0.95), borde azul temporal"
+      },
+      "changing": {
+        "description": "Cambiando de vista",
+        "visual": "Spinner azul, texto 'Cambiando vista...'",
+        "duration": "Hasta completar el cambio"
+      },
+      "error": {
+        "description": "Error al cambiar vista",
+        "visual": "Toast rojo con 'Error al cambiar vista', vista anterior restaurada"
+      }
+    }
+  },
+  {
+    "Widget ID": "W9",
+    "Ubicación (texto)": "C3 (R1)",
+    "Función (texto)": "Botón para sincronizar con Google Calendar.",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "default": {
+        "description": "Estado normal del botón",
+        "visual": "Fondo verde (#4CAF50), icono de sincronización, texto 'Sincronizar'"
+      },
+      "hover": {
+        "description": "Al pasar el mouse",
+        "visual": "Fondo verde más oscuro (#388E3C), sombra más pronunciada"
+      },
+      "active": {
+        "description": "Al hacer click",
+        "visual": "Fondo verde muy oscuro (#2E7D32), transformación scale(0.98)"
+      },
+      "syncing": {
+        "description": "Sincronizando",
+        "visual": "Spinner blanco, texto 'Sincronizando...', botón deshabilitado",
+        "duration": "Hasta completar la sincronización"
+      },
+      "synced": {
+        "description": "Sincronización exitosa",
+        "visual": "Toast verde con 'Sincronizado exitosamente', icono de check",
+        "duration": "3 segundos"
+      },
+      "sync_error": {
+        "description": "Error en la sincronización",
+        "visual": "Toast rojo con 'Error de sincronización', botón reactivado"
+      },
+      "not_connected": {
+        "description": "Google Calendar no conectado",
+        "visual": "Fondo gris (#9E9E9E), texto 'Conectar Google Calendar'"
+      }
+    }
+  },
+  {
+    "Widget ID": "W10",
+    "Ubicación (texto)": "C3 (R1)",
+    "Función (texto)": "Filtro para mostrar eventos por tipo (Alojamiento, Transporte, etc.).",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "default": {
+        "description": "Filtro no aplicado",
+        "visual": "Fondo blanco, borde gris (#E0E0E0), texto 'Filtrar por tipo'"
+      },
+      "hover": {
+        "description": "Al pasar el mouse",
+        "visual": "Borde azul (#3F51B5), sombra azul sutil"
+      },
+      "open": {
+        "description": "Dropdown abierto",
+        "visual": "Lista de opciones visible, sombra pronunciada, borde azul"
+      },
+      "filtered": {
+        "description": "Filtro aplicado",
+        "visual": "Fondo azul claro (#E3F2FD), borde azul, contador de resultados",
+        "text": "'X eventos mostrados'"
+      },
+      "no_results": {
+        "description": "Filtro sin resultados",
+        "visual": "Fondo naranja claro (#FFF3E0), borde naranja, mensaje 'Sin resultados'"
+      },
+      "clearing": {
+        "description": "Limpiando filtros",
+        "visual": "Spinner azul pequeño, texto 'Limpiando...'",
+        "duration": "Hasta completar la limpieza"
+      }
+    }
+  },
+  {
+    "Widget ID": "W11",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W12",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 1,
+      "rmax": 1
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 0,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 0,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 0,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W13",
+    "Ubicación (texto)": "C2 (R2)",
+    "Función (texto)": "Panel de ajustes del Planazoo.",
+    "GridBBox": {
+      "cmin": 2,
+      "cmax": 2,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 336,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 292,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 328,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W14",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W15",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W16",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W17",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W18",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W19",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W20",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W21",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W22",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W23",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W24",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W25",
+    "Ubicación (texto)": "",
+    "Función (texto)": "",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 2,
+      "rmax": 2
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 72,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 68,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 64,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W26",
+    "Ubicación (texto)": "C2 (R3)",
+    "Función (texto)": "Lista de eventos programados en el Planazoo.",
+    "GridBBox": {
+      "cmin": 2,
+      "cmax": 2,
+      "rmin": 3,
+      "rmax": 3
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 336,
+        "y": 144,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 292,
+        "y": 136,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 328,
+        "y": 128,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "loading": {
+        "description": "Cargando lista de eventos",
+        "visual": "Skeleton loader para 5-6 eventos",
+        "duration": "Hasta completar la carga"
+      },
+      "empty": {
+        "description": "No hay eventos programados",
+        "visual": "Icono de calendario vacío, mensaje 'No hay eventos', botón 'Crear evento'"
+      },
+      "event_hover": {
+        "description": "Al pasar el mouse sobre evento",
+        "visual": "Fondo gris claro (#F5F5F5), borde azul sutil, sombra"
+      },
+      "event_selected": {
+        "description": "Evento seleccionado",
+        "visual": "Fondo azul claro (#E3F2FD), borde azul (#3F51B5), sombra azul"
+      },
+      "event_editing": {
+        "description": "Evento en modo edición",
+        "visual": "Borde azul punteado, botones 'Guardar' y 'Cancelar' visibles"
+      },
+      "event_saving": {
+        "description": "Guardando cambios del evento",
+        "visual": "Spinner azul, texto 'Guardando...', botones deshabilitados",
+        "duration": "Hasta completar el guardado"
+      },
+      "event_saved": {
+        "description": "Evento guardado exitosamente",
+        "visual": "Toast verde con 'Evento guardado', borde verde temporal",
+        "duration": "2 segundos"
+      },
+      "event_error": {
+        "description": "Error al guardar evento",
+        "visual": "Toast rojo con mensaje de error, borde rojo temporal"
+      },
+      "event_deleting": {
+        "description": "Eliminando evento",
+        "visual": "Spinner rojo, texto 'Eliminando...', opacidad reducida",
+        "duration": "Hasta completar la eliminación"
+      },
+      "event_deleted": {
+        "description": "Evento eliminado exitosamente",
+        "visual": "Toast verde con 'Evento eliminado', animación de desvanecimiento"
+      },
+      "refresh_loading": {
+        "description": "Actualizando lista de eventos",
+        "visual": "Spinner azul en la parte superior, texto 'Actualizando...'",
+        "duration": "Hasta completar la actualización"
+      }
+    }
+  },
+  {
+    "Widget ID": "W27",
+    "Ubicación (texto)": "C2 (R4)",
+    "Función (texto)": "Resumen del día seleccionado en el calendario.",
+    "GridBBox": {
+      "cmin": 2,
+      "cmax": 2,
+      "rmin": 4,
+      "rmax": 4
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 336,
+        "y": 216,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 292,
+        "y": 204,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 328,
+        "y": 192,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W28",
+    "Ubicación (texto)": "C1 (R5-R12)",
+    "Función (texto)": "Lista de todos los Planazoos en los que participa el usuario.",
+    "GridBBox": {
+      "cmin": 2,
+      "cmax": 3,
+      "rmin": 1,
+      "rmax": 5
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 336,
+        "y": 0,
+        "width": 1216,
+        "height": 352
+      },
+      "tablet": {
+        "x": 292,
+        "y": 0,
+        "width": 1132,
+        "height": 332
+      },
+      "mobile": {
+        "x": 328,
+        "y": 0,
+        "width": 728,
+        "height": 312
+      }
+    }
+  },
+  {
+    "Widget ID": "W29",
+    "Ubicación (texto)": "C2 (R13)",
+    "Función (texto)": "Historial de actividad dentro del Planazoo.",
+    "GridBBox": {
+      "cmin": 2,
+      "cmax": 2,
+      "rmin": 13,
+      "rmax": 13
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 336,
+        "y": 864,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 292,
+        "y": 816,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 328,
+        "y": 768,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W30",
+    "Ubicación (texto)": "C3 (R13)",
+    "Función (texto)": "Chat del Planazoo para conversaciones entre participantes.",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 13,
+      "rmax": 13
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 864,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 816,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 768,
+        "width": 360,
+        "height": 56
+      }
+    }
+  },
+  {
+    "Widget ID": "W31",
+    "Ubicación (texto)": "C3 (R5-R12)",
+    "Función (texto)": "Vista principal con los detalles de eventos y opciones de edición.",
+    "GridBBox": {
+      "cmin": 3,
+      "cmax": 3,
+      "rmin": 3,
+      "rmax": 3
+    },
+    "LayoutPx": {
+      "desktop": {
+        "x": 952,
+        "y": 144,
+        "width": 600,
+        "height": 64
+      },
+      "tablet": {
+        "x": 864,
+        "y": 136,
+        "width": 560,
+        "height": 60
+      },
+      "mobile": {
+        "x": 696,
+        "y": 128,
+        "width": 360,
+        "height": 56
+      }
+    },
+    "feedback_states": {
+      "loading": {
+        "description": "Cargando detalles del evento",
+        "visual": "Skeleton loader para título, fecha, descripción y opciones",
+        "duration": "Hasta completar la carga"
+      },
+      "no_event_selected": {
+        "description": "Ningún evento seleccionado",
+        "visual": "Mensaje 'Selecciona un evento para ver detalles', icono de información"
+      },
+      "editing": {
+        "description": "Modo de edición activo",
+        "visual": "Campos editables con bordes azules, botones 'Guardar' y 'Cancelar'",
+        "changes_indicator": "Asterisco rojo en campos modificados"
+      },
+      "saving": {
+        "description": "Guardando cambios",
+        "visual": "Spinner azul, texto 'Guardando cambios...', botones deshabilitados",
+        "duration": "Hasta completar el guardado"
+      },
+      "saved": {
+        "description": "Cambios guardados exitosamente",
+        "visual": "Toast verde con 'Cambios guardados', borde verde temporal",
+        "duration": "3 segundos"
+      },
+      "error": {
+        "description": "Error al guardar cambios",
+        "visual": "Toast rojo con mensaje de error específico, borde rojo temporal",
+        "duration": "5 segundos"
+      },
+      "validation_error": {
+        "description": "Error de validación en campos",
+        "visual": "Campo específico con borde rojo, mensaje de error debajo, botón 'Guardar' deshabilitado"
+      },
+      "deleting": {
+        "description": "Eliminando evento",
+        "visual": "Overlay rojo con spinner, texto 'Eliminando evento...', confirmación requerida",
+        "duration": "Hasta completar la eliminación"
+      },
+      "deleted": {
+        "description": "Evento eliminado exitosamente",
+        "visual": "Toast verde con 'Evento eliminado', vista vuelve a estado 'no_event_selected'"
+      },
+      "sharing": {
+        "description": "Compartiendo evento",
+        "visual": "Spinner azul, texto 'Compartiendo...', botón deshabilitado",
+        "duration": "Hasta completar el compartir"
+      },
+      "shared": {
+        "description": "Evento compartido exitosamente",
+        "visual": "Toast verde con 'Evento compartido', icono de check"
+      }
+    }
+  }
+]
