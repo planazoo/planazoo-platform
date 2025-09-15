@@ -1,11 +1,11 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../widgets/ios_simulator.dart';
-import '../features/plans/presentation/pages/plans_page.dart';
-import '../features/calendar/domain/models/plan.dart';
-import '../features/calendar/presentation/providers/calendar_providers.dart';
-import '../features/calendar/domain/models/event.dart';
-import '../features/calendar/domain/services/plan_service.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/models/event.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/widgets/ios_simulator.dart';
 
 // Provider para obtener la lista de planes
 final plansListProvider = StreamProvider<List<Plan>>((ref) {
@@ -241,7 +241,7 @@ class _IOSPreviewPageState extends ConsumerState<IOSPreviewPage> {
     
     // Generar días basados en el plan seleccionado
     final startDate = planToUse.startDate;
-    final days = List.generate(planToUse.columnCount ?? 7, (index) => 
+    final days = List.generate(planToUse.columnCount, (index) => 
       startDate.add(Duration(days: index))
     );
     final calendarParams = CalendarNotifierParams(
@@ -261,7 +261,7 @@ class _IOSPreviewPageState extends ConsumerState<IOSPreviewPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               border: Border(
                 bottom: BorderSide(color: Colors.grey.shade300),
               ),
@@ -457,10 +457,10 @@ class _IOSPreviewPageState extends ConsumerState<IOSPreviewPage> {
       child: eventsForThisHour.isNotEmpty
           ? Container(
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.2),
+                color: Colors.blue.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                  color: Colors.blue.withOpacity(0.5),
+                  color: Colors.blue.withValues(alpha: 0.5),
                   width: 1,
                 ),
               ),
@@ -569,7 +569,7 @@ class _IOSPreviewPageState extends ConsumerState<IOSPreviewPage> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(

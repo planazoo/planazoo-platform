@@ -33,18 +33,21 @@ class ColorUtils {
   /// Obtiene el color de fondo para un evento
   static Color getEventBackgroundColor(String? typeFamily, bool isDraft) {
     final baseColor = getEventColor(typeFamily, isDraft);
-    return baseColor.withOpacity(0.2);
+    return baseColor.withValues(alpha: 0.2);
   }
 
   /// Obtiene el color del borde para un evento
   static Color getEventBorderColor(String? typeFamily, bool isDraft) {
     final baseColor = getEventColor(typeFamily, isDraft);
-    return baseColor.withOpacity(0.5);
+    return baseColor.withValues(alpha: 0.5);
   }
 
   /// Obtiene el color del texto para un evento
   static Color getEventTextColor(String? typeFamily, bool isDraft) {
-    final baseColor = getEventColor(typeFamily, isDraft);
-    return isDraft ? Colors.grey.shade700 : baseColor;
+    if (isDraft) {
+      return Colors.grey.shade700; // Texto gris para borradores
+    } else {
+      return Colors.white; // Texto blanco para eventos confirmados
+    }
   }
 }

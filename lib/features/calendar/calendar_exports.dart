@@ -22,19 +22,19 @@ export 'presentation/notifiers/calendar_notifier.dart';
 export 'presentation/providers/calendar_providers.dart';
 export 'presentation/providers/accommodation_providers.dart';
 
-// Presentation Widgets
-export 'presentation/widgets/calendar_loading_states.dart';
-export 'presentation/widgets/calendar_error_handler.dart';
-export 'presentation/widgets/event_cell.dart';
-export 'presentation/widgets/event_dialog.dart';
-export 'presentation/widgets/overlapping_events_cell.dart';
+// Presentation Widgets (moved to lib/widgets/)
+export '../../widgets/wd_calendar_loading_states.dart';
+export '../../widgets/wd_calendar_error_handler.dart';
+export '../../widgets/wd_event_cell.dart';
+export '../../widgets/wd_event_dialog.dart';
+export '../../widgets/wd_overlapping_events_cell.dart';
 
-export 'presentation/widgets/accommodation_dialog.dart';
-export 'presentation/widgets/date_selector.dart';
-export 'presentation/widgets/overlap_indicator.dart';
-// export 'presentation/widgets/event_continuation_indicator.dart'; // Archivo no existe
+export '../../widgets/wd_accommodation_dialog.dart';
+export '../../widgets/wd_date_selector.dart';
+export '../../widgets/wd_overlap_indicator.dart';
+// export '../../widgets/wd_event_continuation_indicator.dart'; // Archivo no existe
 
-// Presentation Pages
-export 'presentation/pages/calendar_page.dart';
-export 'presentation/pages/home_page.dart';
-export 'presentation/pages/create_plan_page.dart';
+// Presentation Pages (moved to lib/pages/)
+export '../../pages/pg_calendar_page.dart';
+export '../../pages/pg_home_page.dart';
+export '../../pages/pg_create_plan_page.dart';

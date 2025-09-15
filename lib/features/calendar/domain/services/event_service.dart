@@ -84,7 +84,7 @@ class EventService {
   }
 
   // Guardar evento (crear o actualizar)
-  Future<bool> saveEvent(Event event) async {
+  Future<Event?> saveEvent(Event event) async {
     if (event.id == null) {
       final now = DateTime.now();
       final newEvent = event.copyWith(
@@ -92,12 +92,16 @@ class EventService {
         updatedAt: now,
       );
       final id = await createEvent(newEvent);
-      return id != null;
+      if (id != null) {
+        return newEvent.copyWith(id: id);
+      }
+      return null;
     } else {
       final updatedEvent = event.copyWith(
         updatedAt: DateTime.now(),
       );
-      return await updateEvent(updatedEvent);
+      final success = await updateEvent(updatedEvent);
+      return success ? updatedEvent : null;
     }
   }
 

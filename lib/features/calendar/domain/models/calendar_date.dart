@@ -19,6 +19,10 @@ class CalendarDate {
            date.day == now.day;
   }
 
+  int get day => date.day;
+  int get month => date.month;
+  int get year => date.year;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

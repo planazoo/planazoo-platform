@@ -138,7 +138,7 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
 
   /// Remover columna
   void removeColumn() {
-    if (state.columnCount > 7) {
+    if (state.columnCount > 1) {
       state = state.copyWith(
         columnCount: state.columnCount - 1,
         hasUnsavedChanges: true,
@@ -166,9 +166,15 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
     );
 
     try {
-      final success = await _eventService.saveEvent(event);
+      final savedEvent = await _eventService.saveEvent(event);
       
-      if (success) {
+      if (savedEvent != null) {
+        // Actualizar el evento en el estado con el ID correcto
+        final finalEvents = state.events.map((e) => 
+          e.id == event.id ? savedEvent : e
+        ).toList();
+        
+        state = state.copyWith(events: finalEvents);
         _clearOperation(operationId);
         return true;
       } else {
@@ -207,9 +213,15 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
     );
 
     try {
-      final success = await _eventService.saveEvent(event);
+      final savedEvent = await _eventService.saveEvent(event);
       
-      if (success) {
+      if (savedEvent != null) {
+        // Actualizar el evento en el estado con los datos actualizados
+        final finalEvents = state.events.map((e) => 
+          e.id == event.id ? savedEvent : e
+        ).toList();
+        
+        state = state.copyWith(events: finalEvents);
         _clearOperation(operationId);
         return true;
       } else {
@@ -299,9 +311,15 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
     );
 
     try {
-      final success = await _eventService.saveEvent(updatedEvent);
+      final savedEvent = await _eventService.saveEvent(updatedEvent);
       
-      if (success) {
+      if (savedEvent != null) {
+        // Actualizar el evento en el estado con los datos actualizados
+        final finalEvents = state.events.map((e) => 
+          e.id == event.id ? savedEvent : e
+        ).toList();
+        
+        state = state.copyWith(events: finalEvents);
         _clearOperation(operationId);
         return true;
       } else {
@@ -346,9 +364,15 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
     );
 
     try {
-      final success = await _eventService.saveEvent(updatedEvent);
+      final savedEvent = await _eventService.saveEvent(updatedEvent);
       
-      if (success) {
+      if (savedEvent != null) {
+        // Actualizar el evento en el estado con los datos actualizados
+        final finalEvents = state.events.map((e) => 
+          e.id == event.id ? savedEvent : e
+        ).toList();
+        
+        state = state.copyWith(events: finalEvents);
         _clearOperation(operationId);
         return true;
       } else {

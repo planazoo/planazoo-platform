@@ -23,4 +23,9 @@ class DateService {
   static DateTime getToday() {
     return DateTime.now();
   }
+
+  static String getDayName(DateTime date) {
+    const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    return days[date.weekday - 1];
+  }
 } 
