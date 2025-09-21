@@ -19,7 +19,7 @@ El sistema UX de UNP Calendario es una implementación completa y documentada de
 - **Actualización automática** con cada cambio
 
 ### 🎯 31 Widgets Especializados
-- **W1**: Barra lateral (C1, R1-R13)
+- **W1**: Barra lateral con perfil (C1, R1-R13) - **ACTUALIZADO**
 - **W2-W12**: Header superior con funcionalidades
 - **W13**: Campo de búsqueda (C2-C5, R2)
 - **W14-W25**: Barra de herramientas (R2)
@@ -54,7 +54,7 @@ Cada widget tiene un color único para facilitar la identificación:
 - 🟢 **Verde**: W2 (Logo), W15 (Calendario)
 - 🟠 **Naranja**: W3 (Nuevo plan), W17 (Por definir)
 - 🟣 **Púrpura**: W4 (Menú), W19 (Por definir)
-- 🩷 **Rosa**: W5 (Icono plan)
+- 🟦 **Azul**: W5 (Imagen del plan)
 - 🔵 **Cian**: W6 (Info planazoo), W22 (Por definir)
 - 🟡 **Lima**: W7 (Info)
 - 🟠 **Naranja Oscuro**: W8 (Presupuesto), W24 (Notificaciones)
@@ -94,6 +94,46 @@ Cada widget tiene un color único para facilitar la identificación:
 # Implementar cada widget según las especificaciones
 ```
 
+## 🎨 **W1 - Barra Lateral (ACTUALIZADO)**
+
+### **📍 Posición**: C1 (R1-R13)
+### **🎯 Función**: Navegación principal y acceso al perfil
+
+### **✨ Características Actuales**:
+- **Diseño minimalista** con solo icono de perfil
+- **Posicionamiento inferior** centrado
+- **Icono redondo** con borde blanco semitransparente
+- **Tooltip multidioma** (ES: "Ver perfil", EN: "View profile")
+- **Esquinas cuadradas** en el contenedor principal
+- **Color de fondo** `AppColorScheme.color2`
+
+### **🔧 Implementación Técnica**:
+```dart
+// Posicionamiento inferior con padding
+Align(
+  alignment: Alignment.bottomCenter,
+  child: Padding(
+    padding: const EdgeInsets.only(bottom: 16.0),
+    child: Tooltip(
+      message: AppLocalizations.of(context)!.profileTooltip,
+      child: GestureDetector(
+        onTap: () => setState(() => currentScreen = 'profile'),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(24), // Redondo
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+          ),
+          child: const Icon(Icons.person, color: Colors.white, size: 24),
+        ),
+      ),
+    ),
+  ),
+)
+```
+
 ## 📊 Estado del Sistema
 
 ### ✅ **Completado**
@@ -105,6 +145,12 @@ Cada widget tiene un color único para facilitar la identificación:
 - [x] Sistema de colores único
 - [x] Responsive design
 - [x] CustomPainter para grid
+- [x] **W1 actualizado con diseño minimalista y tooltip multidioma**
+- [x] **W2 actualizado con logo "planazoo" minimalista**
+- [x] **W3 actualizado con botón "+" para crear plan**
+- [x] **W4 configurado como espacio reservado para funcionalidad futura**
+- [x] **Sistema completo de gestión de imágenes para planes**
+- [x] **Página de perfil rediseñada con diseño consistente**
 
 ### 🔄 **En Desarrollo**
 - [ ] Funcionalidad real de los widgets

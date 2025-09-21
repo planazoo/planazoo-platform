@@ -23,6 +23,7 @@ final calendarNotifierProvider = StateNotifierProvider.family<CalendarNotifier, 
     
     return CalendarNotifier(
       planId: params.planId,
+      userId: params.userId,
       eventService: eventService,
       initialDate: params.initialDate,
       initialColumnCount: params.initialColumnCount,
@@ -33,11 +34,13 @@ final calendarNotifierProvider = StateNotifierProvider.family<CalendarNotifier, 
 /// Parámetros para crear CalendarNotifier
 class CalendarNotifierParams {
   final String planId;
+  final String userId;
   final DateTime initialDate;
   final int initialColumnCount;
 
   const CalendarNotifierParams({
     required this.planId,
+    required this.userId,
     required this.initialDate,
     this.initialColumnCount = 7,
   });
@@ -47,12 +50,13 @@ class CalendarNotifierParams {
     if (identical(this, other)) return true;
     return other is CalendarNotifierParams &&
         other.planId == planId &&
+        other.userId == userId &&
         other.initialDate == initialDate &&
         other.initialColumnCount == initialColumnCount;
   }
 
   @override
-  int get hashCode => Object.hash(planId, initialDate, initialColumnCount);
+  int get hashCode => Object.hash(planId, userId, initialDate, initialColumnCount);
 }
 
 /// Provider para el estado actual del calendario

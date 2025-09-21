@@ -48,11 +48,11 @@ R13 └─────┴─────┴─────┴─────┴�
 ## 🎯 Leyenda de Widgets
 
 ### **Header (R1)**
-- **W1**: Barra lateral izquierda (C1, R1-R13) - 🔵 Azul
+- **W1**: Barra lateral con perfil (C1, R1-R13) - **ACTUALIZADO v2.0** 🔵 Azul
 - **W2**: Logo de la app (C2-C3, R1) - 🟢 Verde
 - **W3**: Botón nuevo planazoo (C4, R1) - 🟠 Naranja
-- **W4**: Menú de opciones (C5, R1) - 🟣 Púrpura
-- **W5**: Icono planazoo seleccionado (C6, R1) - 🩷 Rosa
+- **W4**: Espacio reservado (C5, R1) - 🟣 Púrpura - **ACTUALIZADO v1.2**
+- **W5**: Imagen del plan seleccionado (C6, R1) - 🔵 Azul
 - **W6**: Información del planazoo (C7-C11, R1) - 🔵 Cian
 - **W7**: Info (C12, R1) - 🟡 Lima
 - **W8**: Presupuesto (C13, R1) - 🟠 Naranja Oscuro
@@ -214,6 +214,126 @@ R13 └─────┴─────┴─────┴─────┴�
 └─────────────────┘
 ```
 
+## 🎨 **W1 - Barra Lateral (ACTUALIZADO v2.0)**
+
+### **📍 Especificaciones Técnicas**
+- **Posición**: C1 (R1-R13) - Columna completa, 13 filas
+- **Color**: `AppColorScheme.color2` (azul de la app)
+- **Forma**: Rectángulo con esquinas cuadradas
+- **Contenido**: Solo icono de perfil redondo
+
+### **🎯 Funcionalidad**
+- **Navegación**: Tap → Cambia a pantalla de perfil
+- **Tooltip**: Multidioma (ES: "Ver perfil", EN: "View profile")
+- **Posicionamiento**: Icono centrado en la parte inferior
+- **Accesibilidad**: Tamaño de touch target 48x48px
+
+### **🔧 Implementación**
+```dart
+// Contenedor principal sin borderRadius
+Container(
+  decoration: BoxDecoration(color: AppColorScheme.color2),
+  child: Align(
+    alignment: Alignment.bottomCenter,
+    child: Tooltip(
+      message: AppLocalizations.of(context)!.profileTooltip,
+      child: GestureDetector(
+        onTap: () => setState(() => currentScreen = 'profile'),
+        child: Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(24), // Redondo
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+          ),
+          child: const Icon(Icons.person, color: Colors.white, size: 24),
+        ),
+      ),
+    ),
+  ),
+)
+```
+
+## 🎨 **W4 - Espacio Reservado (ACTUALIZADO v1.2)**
+
+### **📍 Especificaciones Técnicas**
+- **Posición**: C5 (R1) - Columna 5, Fila 1
+- **Color**: `Colors.white` (blanco)
+- **Forma**: Rectángulo con esquinas cuadradas
+- **Contenido**: Vacío (espacio reservado)
+
+### **🎯 Funcionalidad**
+- **Estado**: Sin funcionalidad actual
+- **Propósito**: Mantener estructura visual del grid
+- **Interactividad**: Ninguna
+- **Futuro**: Espacio reservado para funcionalidades futuras
+
+### **🔧 Implementación**
+```dart
+// Container simple para mantener estructura
+Container(
+  width: w4Width,
+  height: w4Height,
+  decoration: BoxDecoration(
+    color: Colors.white,
+    border: Border.all(color: Colors.white, width: 2),
+  ),
+  // Sin contenido por el momento
+)
+```
+
+### **📋 Historial de Cambios**
+- **v1.0**: Creación inicial como espacio reservado
+- **v1.1**: Simplificación a container blanco vacío
+- **v1.2**: Eliminación de botón iPhone simulator
+
+## 🖼️ **W5 - Imagen del Plan (ACTUALIZADO v1.3)**
+
+### **📍 Especificaciones Técnicas**
+- **Posición**: C6 (R1) - Columna 6, Fila 1
+- **Color**: `AppColorScheme.color1` (azul)
+- **Forma**: Rectángulo con imagen circular centrada
+- **Contenido**: Imagen del plan seleccionado
+
+### **🎯 Funcionalidad**
+- **Estado**: Funcional - muestra imagen del plan seleccionado
+- **Propósito**: Representación visual del plan actual
+- **Responsive**: Se adapta al tamaño del contenedor
+
+### **🔧 Implementación**
+```dart
+Container(
+  decoration: BoxDecoration(
+    color: AppColorScheme.color1,
+    border: Border.all(color: AppColorScheme.color1, width: 2),
+  ),
+  child: Center(
+    child: Container(
+      width: circleSize,
+      height: circleSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColorScheme.color2, width: 2),
+      ),
+      child: ClipOval(child: _buildPlanImage()),
+    ),
+  ),
+)
+```
+
+### **📋 Historial de Cambios**
+- **v1.0**: Creación inicial con fondo blanco
+- **v1.1**: Implementación de imagen circular
+- **v1.2**: Integración con Firebase Storage
+- **v1.3**: Cambio de fondo a color1
+
+### **🚀 Funcionalidades Futuras Consideradas**
+- Menú de opciones adicionales
+- Selector de vista del calendario
+- Filtros de eventos
+- Configuraciones rápidas
+- Accesos directos
+
 ## 🎨 Sistema de Colores Detallado
 
 ### **Colores Primarios**
@@ -223,7 +343,7 @@ R13 └─────┴─────┴─────┴─────┴�
 - 🟣 **Púrpura**: W4, W19 (Configuración)
 
 ### **Colores Secundarios**
-- 🩷 **Rosa**: W5 (Selección)
+- 🔵 **Azul**: W5 (Imagen del plan)
 - 🔵 **Cian**: W6, W22 (Información)
 - 🟡 **Lima**: W7 (Información general)
 - 🟠 **Naranja Oscuro**: W8, W24 (Alertas)

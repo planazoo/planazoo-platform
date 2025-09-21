@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
-
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/pages/pg_calendar_page.dart';
 import 'package:unp_calendario/app/app_layout_wrapper.dart';
-import 'package:unp_calendario/pages/pg_home_page.dart';
+import 'package:unp_calendario/pages/pg_dashboard_page.dart';
 
-class CreatePlanPage extends StatefulWidget {
+class CreatePlanPage extends ConsumerStatefulWidget {
   const CreatePlanPage({super.key});
 
   @override
-  State<CreatePlanPage> createState() => _CreatePlanPageState();
+  ConsumerState<CreatePlanPage> createState() => _CreatePlanPageState();
 }
 
-class _CreatePlanPageState extends State<CreatePlanPage> {
+class _CreatePlanPageState extends ConsumerState<CreatePlanPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _unpIdController = TextEditingController();
@@ -58,9 +59,13 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
 
     try {
       final now = DateTime.now();
+      final currentUser = ref.read(currentUserProvider);
+      final userId = currentUser?.id ?? '';
+      
       final plan = Plan(
         name: _nameController.text.trim(),
         unpId: _unpIdController.text.trim(),
+        userId: userId,
         baseDate: _startDate,
         startDate: _startDate,
         endDate: _endDate,
@@ -168,7 +173,7 @@ class _CreatePlanPageState extends State<CreatePlanPage> {
               context,
               MaterialPageRoute(
                 builder: (context) => const AppLayoutWrapper(
-                  child: HomePage(),
+                  child: DashboardPage(),
                 ),
               ),
             );

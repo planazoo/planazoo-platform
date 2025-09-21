@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Event {
   final String? id;
   final String planId;
+  final String userId; // nuevo: ID del usuario propietario
   final DateTime date;
   final int hour;
   final int duration; // Duración en horas
@@ -19,6 +20,7 @@ class Event {
   const Event({
     this.id,
     required this.planId,
+    required this.userId,
     required this.date,
     required this.hour,
     required this.duration,
@@ -38,6 +40,7 @@ class Event {
     return Event(
       id: doc.id,
       planId: data['planId'] ?? '',
+      userId: data['userId'] ?? '',
       date: (data['date'] as Timestamp).toDate(),
       hour: data['hour'] ?? 0,
       duration: data['duration'] ?? 1,
@@ -58,6 +61,7 @@ class Event {
   Map<String, dynamic> toFirestore() {
     return {
       'planId': planId,
+      'userId': userId,
       'date': Timestamp.fromDate(date),
       'hour': hour,
       'duration': duration,
@@ -76,6 +80,7 @@ class Event {
   Event copyWith({
     String? id,
     String? planId,
+    String? userId,
     DateTime? date,
     int? hour,
     int? duration,
@@ -92,6 +97,7 @@ class Event {
     return Event(
       id: id ?? this.id,
       planId: planId ?? this.planId,
+      userId: userId ?? this.userId,
       date: date ?? this.date,
       hour: hour ?? this.hour,
       duration: duration ?? this.duration,

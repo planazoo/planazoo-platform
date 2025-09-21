@@ -10,6 +10,7 @@ import '../../domain/services/event_service.dart';
 class CalendarNotifier extends StateNotifier<CalendarState> {
   final EventService _eventService;
   final String planId;
+  final String userId;
   
   StreamSubscription<List<Event>>? _eventsSubscription;
   Timer? _retryTimer;
@@ -19,6 +20,7 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
 
   CalendarNotifier({
     required this.planId,
+    required this.userId,
     required EventService eventService,
     required DateTime initialDate,
     int initialColumnCount = 7,
@@ -49,7 +51,7 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
       _eventsSubscription?.cancel();
       
       // Crear nueva suscripción
-      _eventsSubscription = _eventService.getEventsByPlanId(planId).listen(
+      _eventsSubscription = _eventService.getEventsByPlanId(planId, userId).listen(
         (events) {
           if (state.loadingState != LoadingState.loading) return;
           
@@ -152,8 +154,11 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
 
     final operationId = _generateOperationId();
     
+    // Asegurar que el evento tenga el userId correcto
+    final eventWithUserId = event.userId.isEmpty ? event.copyWith(userId: userId) : event;
+    
     // Actualización optimista: agregar al estado inmediatamente
-    final updatedEvents = [...state.events, event];
+    final updatedEvents = [...state.events, eventWithUserId];
     
     state = state.copyWith(
       events: updatedEvents,
@@ -161,17 +166,17 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
       currentOperationId: operationId,
       pendingOperations: {
         ...state.pendingOperations,
-        operationId: {'type': 'create', 'event': event},
+        operationId: {'type': 'create', 'event': eventWithUserId},
       },
     );
 
     try {
-      final savedEvent = await _eventService.saveEvent(event);
+      final savedEvent = await _eventService.saveEvent(eventWithUserId);
       
       if (savedEvent != null) {
         // Actualizar el evento en el estado con el ID correcto
         final finalEvents = state.events.map((e) => 
-          e.id == event.id ? savedEvent : e
+          e.id == eventWithUserId.id ? savedEvent : e
         ).toList();
         
         state = state.copyWith(events: finalEvents);
@@ -179,14 +184,14 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
         return true;
       } else {
         // Rollback en caso de fallo
-        final rollbackEvents = state.events.where((e) => e.id != event.id).toList();
+        final rollbackEvents = state.events.where((e) => e.id != eventWithUserId.id).toList();
         state = state.copyWith(events: rollbackEvents);
         _handleOperationError(operationId, 'Error al crear el evento');
         return false;
       }
     } catch (e) {
       // Rollback en caso de excepción
-      final rollbackEvents = state.events.where((e) => e.id != event.id).toList();
+      final rollbackEvents = state.events.where((e) => e.id != eventWithUserId.id).toList();
       state = state.copyWith(events: rollbackEvents);
       _handleOperationError(operationId, 'Error inesperado: $e');
       return false;

@@ -4,6 +4,7 @@ class Plan {
   final String? id;
   final String name;
   final String unpId;
+  final String userId;
   final DateTime baseDate;
   final DateTime startDate;
   final DateTime endDate;
@@ -12,6 +13,7 @@ class Plan {
   final String? description;
   final double? budget;
   final int? participants;
+  final String? imageUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime savedAt;
@@ -20,6 +22,7 @@ class Plan {
     this.id,
     required this.name,
     required this.unpId,
+    required this.userId,
     required this.baseDate,
     required this.startDate,
     required this.endDate,
@@ -28,6 +31,7 @@ class Plan {
     this.description,
     this.budget,
     this.participants,
+    this.imageUrl,
     required this.createdAt,
     required this.updatedAt,
     required this.savedAt,
@@ -47,6 +51,7 @@ class Plan {
       id: doc.id,
       name: data['name'] ?? '',
       unpId: data['unpId'] ?? '',
+      userId: data['userId'] ?? '',
       baseDate: baseDate,
       startDate: startDate,
       endDate: endDate,
@@ -55,6 +60,7 @@ class Plan {
       description: data['description'],
       budget: data['budget']?.toDouble(),
       participants: data['participants'],
+      imageUrl: data['imageUrl'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       savedAt: (data['savedAt'] as Timestamp).toDate(),
@@ -66,6 +72,7 @@ class Plan {
     return {
       'name': name,
       'unpId': unpId,
+      'userId': userId,
       'baseDate': Timestamp.fromDate(baseDate),
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
@@ -74,6 +81,7 @@ class Plan {
       'description': description,
       'budget': budget,
       'participants': participants,
+      'imageUrl': imageUrl,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'savedAt': Timestamp.fromDate(savedAt),
@@ -85,6 +93,7 @@ class Plan {
     String? id,
     String? name,
     String? unpId,
+    String? userId,
     DateTime? baseDate,
     DateTime? startDate,
     DateTime? endDate,
@@ -93,6 +102,7 @@ class Plan {
     String? description,
     double? budget,
     int? participants,
+    String? imageUrl,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? savedAt,
@@ -101,6 +111,7 @@ class Plan {
       id: id ?? this.id,
       name: name ?? this.name,
       unpId: unpId ?? this.unpId,
+      userId: userId ?? this.userId,
       baseDate: baseDate ?? this.baseDate,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
@@ -109,6 +120,7 @@ class Plan {
       description: description ?? this.description,
       budget: budget ?? this.budget,
       participants: participants ?? this.participants,
+      imageUrl: imageUrl ?? this.imageUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       savedAt: savedAt ?? this.savedAt,
@@ -139,6 +151,7 @@ class Plan {
         other.description == description &&
         other.budget == budget &&
         other.participants == participants &&
+        other.imageUrl == imageUrl &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.savedAt == savedAt;
@@ -157,6 +170,7 @@ class Plan {
         description.hashCode ^
         budget.hashCode ^
         participants.hashCode ^
+        imageUrl.hashCode ^
         createdAt.hashCode ^
         updatedAt.hashCode ^
         savedAt.hashCode;

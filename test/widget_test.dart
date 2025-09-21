@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:unp_calendario/app/app.dart';
-import 'package:unp_calendario/pages/pg_home_page.dart';
+import 'package:unp_calendario/pages/pg_dashboard_page.dart';
 
 void main() {
   testWidgets('App should build without errors', (WidgetTester tester) async {
@@ -18,6 +18,6 @@ void main() {
 
     // Verify that the app builds successfully
     expect(find.byType(MaterialApp), findsOneWidget);
-    expect(find.byType(HomePage), findsOneWidget);
+    expect(find.byType(DashboardPage), findsOneWidget);
   });
 }

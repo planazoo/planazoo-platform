@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/calendar_exports.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_cell.dart';
 import 'package:unp_calendario/widgets/wd_event_cell.dart';
@@ -31,9 +32,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   void initState() {
     super.initState();
     
+    // Obtener el userId del usuario actual
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser?.id ?? '';
+    
     // Inicializar parámetros del calendario usando la fecha de inicio del plan
     _calendarParams = CalendarNotifierParams(
       planId: widget.plan.id ?? '',
+      userId: userId,
       initialDate: widget.plan.startDate,
       initialColumnCount: widget.plan.columnCount ?? AppConstants.defaultColumnCount,
     );
@@ -56,7 +62,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   List<Event> get _events => _calendarState.events;
   List<Accommodation> get _accommodations => _accommodationState.accommodations;
   DateTime get selectedDate => _calendarState.selectedDate;
-  int get columnCount => _calendarState.columnCount;
+  int get columnCount => _calendarState.columnCount + 1; // +1 para incluir la columna de horas
 
   @override
   Widget build(BuildContext context) {
@@ -116,33 +122,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // Calcular el ancho disponible para las celdas
-              final availableWidth = constraints.maxWidth - AppConstants.firstColumnWidth;
-              final cellWidth = availableWidth / (columnCount - 1); // Dividir entre las columnas de días (excluyendo la columna de horas)
-              final needsScroll = columnCount > 5; // Scroll cuando hay más de 5 columnas
+              // Anchos fijos simplificados
+              const hoursColumnWidth = 80.0;
+              const daysColumnWidth = 320.0; // 4 veces las horas (80 × 4)
               
-              return needsScroll 
-                  ? SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: _buildFixedCalendarTable(
-                        columnWidths: {
-                          for (int i = 0; i < columnCount; i++)
-                            i: i == 0 
-                                ? const FixedColumnWidth(80.0)
-                                : const FixedColumnWidth(120.0),
-                        },
-                        cellWidth: 120.0,
-                      ),
-                    )
-                  : _buildFixedCalendarTable(
-                      columnWidths: {
-                        for (int i = 0; i < columnCount; i++)
-                          i: i == 0 
-                              ? const FixedColumnWidth(80.0)
-                              : FixedColumnWidth(cellWidth),
-                      },
-                      cellWidth: cellWidth,
-                    );
+              
+              final columnWidths = {
+                for (int i = 0; i < columnCount; i++)
+                  i: i == 0 
+                      ? const FixedColumnWidth(hoursColumnWidth) // Columna de horas
+                      : const FixedColumnWidth(daysColumnWidth), // Columnas de días
+              };
+              
+              // Siempre con scroll horizontal para consistencia
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: _buildFixedCalendarTable(
+                  columnWidths: columnWidths,
+                  cellWidth: daysColumnWidth,
+                ),
+              );
             },
           ),
         ),

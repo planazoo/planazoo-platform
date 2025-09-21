@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/features/calendar/calendar_exports.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_cell.dart';
 import 'package:unp_calendario/widgets/wd_event_cell_controller.dart';
 import 'package:unp_calendario/widgets/wd_event_cell.dart';
@@ -35,9 +36,14 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
   void initState() {
     super.initState();
     
+    // Obtener el userId del usuario actual
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser?.id ?? '';
+    
     // Inicializar parámetros del calendario usando la fecha de inicio del plan
     _calendarParams = CalendarNotifierParams(
       planId: widget.plan.id ?? '',
+      userId: userId,
       initialDate: widget.plan.startDate,
       initialColumnCount: widget.plan.columnCount ?? AppConstants.defaultColumnCount,
     );

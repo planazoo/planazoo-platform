@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../models/plan.dart';
+import '../models/plan_participation.dart';
+import 'plan_participation_service.dart';
 
 class PlanService {
   static const String _collectionName = 'plans';
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PlanParticipationService _participationService = PlanParticipationService();
 
   // Obtener todos los planes
   Stream<List<Plan>> getPlans() {
@@ -14,6 +17,32 @@ class PlanService {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) => Plan.fromFirestore(doc)).toList();
+    });
+  }
+
+  // Obtener planes por userId (solo planes creados por el usuario)
+  Stream<List<Plan>> getPlansByUserId(String userId) {
+    return _firestore
+        .collection(_collectionName)
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => Plan.fromFirestore(doc)).toList();
+    });
+  }
+
+  // Obtener planes donde participa un usuario (incluyendo invitaciones)
+  Stream<List<Plan>> getPlansWhereUserParticipates(String userId) {
+    return _participationService.getUserPlanIds(userId).asyncMap((planIds) async {
+      if (planIds.isEmpty) return <Plan>[];
+      
+      final plans = <Plan>[];
+      for (final planId in planIds) {
+        final plan = await getPlanById(planId);
+        if (plan != null) plans.add(plan);
+      }
+      return plans..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     });
   }
 
@@ -54,8 +83,17 @@ class PlanService {
   Future<String?> createPlan(Plan plan) async {
     try {
       final docRef = await _firestore.collection(_collectionName).add(plan.toFirestore());
-      LoggerService.database('Plan created successfully with ID: ${docRef.id}', operation: 'CREATE');
-      return docRef.id;
+      final planId = docRef.id;
+      
+      // Crear participación del creador como organizador
+      await _participationService.createParticipation(
+        planId: planId,
+        userId: plan.userId,
+        role: 'organizer',
+      );
+      
+      LoggerService.database('Plan created successfully with ID: $planId', operation: 'CREATE');
+      return planId;
     } catch (e) {
       LoggerService.error('Error creating plan: ${plan.name}', context: 'PLAN_SERVICE', error: e);
       return null;
@@ -83,6 +121,10 @@ class PlanService {
   // Eliminar un plan
   Future<bool> deletePlan(String id) async {
     try {
+      // Eliminar todas las participaciones del plan
+      await _participationService.removeAllPlanParticipations(id);
+      
+      // Eliminar el plan
       await _firestore.collection(_collectionName).doc(id).delete();
       LoggerService.database('Plan deleted successfully: $id', operation: 'DELETE');
       return true;
@@ -184,5 +226,79 @@ class PlanService {
       LoggerService.error('Error getting accommodation for plan: $planId', context: 'PLAN_SERVICE', error: e);
       return null;
     }
+  }
+
+  // ===== MÉTODOS DE PARTICIPACIÓN =====
+
+  // Invitar usuario a un plan
+  Future<bool> inviteUserToPlan(String planId, String userId, {String? invitedBy}) async {
+    try {
+      final participationId = await _participationService.createParticipation(
+        planId: planId,
+        userId: userId,
+        role: 'participant',
+        invitedBy: invitedBy,
+      );
+      
+      if (participationId != null) {
+        LoggerService.database('User $userId invited to plan $planId', operation: 'CREATE');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      LoggerService.error('Error inviting user to plan: $planId, $userId', 
+          context: 'PLAN_SERVICE', error: e);
+      return false;
+    }
+  }
+
+  // Remover usuario de un plan
+  Future<bool> removeUserFromPlan(String planId, String userId) async {
+    try {
+      final success = await _participationService.removeParticipation(planId, userId);
+      if (success) {
+        LoggerService.database('User $userId removed from plan $planId', operation: 'UPDATE');
+      }
+      return success;
+    } catch (e) {
+      LoggerService.error('Error removing user from plan: $planId, $userId', 
+          context: 'PLAN_SERVICE', error: e);
+      return false;
+    }
+  }
+
+  // Obtener participantes de un plan
+  Stream<List<PlanParticipation>> getPlanParticipants(String planId) {
+    return _participationService.getPlanParticipations(planId);
+  }
+
+  // Verificar si usuario participa en un plan
+  Future<bool> isUserParticipant(String planId, String userId) async {
+    return await _participationService.isUserParticipant(planId, userId);
+  }
+
+  // Obtener participación específica
+  Future<PlanParticipation?> getParticipation(String planId, String userId) async {
+    return await _participationService.getParticipation(planId, userId);
+  }
+
+  // Cambiar rol de participante
+  Future<bool> changeParticipantRole(String planId, String userId, String newRole) async {
+    try {
+      final success = await _participationService.changeRole(planId, userId, newRole);
+      if (success) {
+        LoggerService.database('Role changed for user $userId in plan $planId to $newRole', operation: 'UPDATE');
+      }
+      return success;
+    } catch (e) {
+      LoggerService.error('Error changing participant role: $planId, $userId', 
+          context: 'PLAN_SERVICE', error: e);
+      return false;
+    }
+  }
+
+  // Actualizar última actividad del usuario en el plan
+  Future<bool> updateUserLastActive(String planId, String userId) async {
+    return await _participationService.updateLastActive(planId, userId);
   }
 } 

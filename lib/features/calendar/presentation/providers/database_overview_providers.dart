@@ -37,8 +37,8 @@ final allEventsProvider = FutureProvider<List<Event>>((ref) async {
   for (final plan in plans) {
     if (plan.id != null) {
       try {
-        // Obtener eventos de este plan
-        final events = await eventService.getEventsByPlanId(plan.id!).first;
+        // Obtener eventos de este plan (usar userId vacío para obtener todos los eventos)
+        final events = await eventService.getEventsByPlanId(plan.id!, '').first;
         allEvents.addAll(events);
       } catch (e) {
         // Continuar con el siguiente plan si hay error

@@ -36,5 +36,5 @@ export '../../widgets/wd_overlap_indicator.dart';
 
 // Presentation Pages (moved to lib/pages/)
 export '../../pages/pg_calendar_page.dart';
-export '../../pages/pg_home_page.dart';
+export '../../pages/pg_dashboard_page.dart';
 export '../../pages/pg_create_plan_page.dart';

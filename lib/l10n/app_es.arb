@@ -1,0 +1,234 @@
+{
+  "@@locale": "es",
+  "appTitle": "Planazoo",
+  "@appTitle": {
+    "description": "Título de la aplicación"
+  },
+  
+  "loginTitle": "Iniciar Sesión",
+  "@loginTitle": {
+    "description": "Título de la página de login"
+  },
+  "loginSubtitle": "Accede a tu cuenta",
+  "@loginSubtitle": {
+    "description": "Subtítulo de la página de login"
+  },
+  "emailLabel": "Email",
+  "@emailLabel": {
+    "description": "Etiqueta del campo de email"
+  },
+  "emailHint": "tu@email.com",
+  "@emailHint": {
+    "description": "Hint del campo de email"
+  },
+  "passwordLabel": "Contraseña",
+  "@passwordLabel": {
+    "description": "Etiqueta del campo de contraseña"
+  },
+  "passwordHint": "Tu contraseña",
+  "@passwordHint": {
+    "description": "Hint del campo de contraseña"
+  },
+  "loginButton": "Iniciar Sesión",
+  "@loginButton": {
+    "description": "Texto del botón de login"
+  },
+  "forgotPassword": "¿Olvidaste tu contraseña?",
+  "@forgotPassword": {
+    "description": "Enlace de recuperar contraseña"
+  },
+  "resendVerification": "Reenviar verificación",
+  "@resendVerification": {
+    "description": "Enlace de reenviar verificación"
+  },
+  "noAccount": "¿No tienes cuenta?",
+  "@noAccount": {
+    "description": "Texto de no tener cuenta"
+  },
+  "registerLink": "Regístrate",
+  "@registerLink": {
+    "description": "Enlace para ir al registro"
+  },
+  
+  "registerTitle": "Crear Cuenta",
+  "@registerTitle": {
+    "description": "Título de la página de registro"
+  },
+  "registerSubtitle": "Únete a Planazoo y comienza a planificar",
+  "@registerSubtitle": {
+    "description": "Subtítulo de la página de registro"
+  },
+  "nameLabel": "Nombre",
+  "@nameLabel": {
+    "description": "Etiqueta del campo de nombre"
+  },
+  "nameHint": "Tu nombre completo",
+  "@nameHint": {
+    "description": "Hint del campo de nombre"
+  },
+  "confirmPasswordLabel": "Confirmar contraseña",
+  "@confirmPasswordLabel": {
+    "description": "Etiqueta del campo de confirmar contraseña"
+  },
+  "confirmPasswordHint": "Repite tu contraseña",
+  "@confirmPasswordHint": {
+    "description": "Hint del campo de confirmar contraseña"
+  },
+  "registerButton": "Crear Cuenta",
+  "@registerButton": {
+    "description": "Texto del botón de registro"
+  },
+  "acceptTerms": "Acepto los términos y condiciones",
+  "@acceptTerms": {
+    "description": "Checkbox de aceptar términos"
+  },
+  "loginLink": "¿Ya tienes cuenta? Iniciar sesión",
+  "@loginLink": {
+    "description": "Enlace para ir al login"
+  },
+  
+  "emailRequired": "El email es requerido",
+  "@emailRequired": {
+    "description": "Error de email requerido"
+  },
+  "emailInvalid": "El formato del email no es válido",
+  "@emailInvalid": {
+    "description": "Error de formato de email"
+  },
+  "passwordRequired": "La contraseña es requerida",
+  "@passwordRequired": {
+    "description": "Error de contraseña requerida"
+  },
+  "passwordMinLength": "La contraseña debe tener al menos 6 caracteres",
+  "@passwordMinLength": {
+    "description": "Error de longitud mínima de contraseña"
+  },
+  "nameRequired": "El nombre es requerido",
+  "@nameRequired": {
+    "description": "Error de nombre requerido"
+  },
+  "nameMinLength": "El nombre debe tener al menos 2 caracteres",
+  "@nameMinLength": {
+    "description": "Error de longitud mínima de nombre"
+  },
+  "confirmPasswordRequired": "Confirma tu contraseña",
+  "@confirmPasswordRequired": {
+    "description": "Error de confirmación de contraseña requerida"
+  },
+  "passwordsNotMatch": "Las contraseñas no coinciden",
+  "@passwordsNotMatch": {
+    "description": "Error de contraseñas no coinciden"
+  },
+  "termsRequired": "Debes aceptar los términos y condiciones",
+  "@termsRequired": {
+    "description": "Error de términos requeridos"
+  },
+  
+  "loginSuccess": "¡Bienvenido!",
+  "@loginSuccess": {
+    "description": "Mensaje de login exitoso"
+  },
+  "registerSuccess": "¡Cuenta creada! Revisa tu email para verificar tu cuenta.",
+  "@registerSuccess": {
+    "description": "Mensaje de registro exitoso"
+  },
+  "emailVerificationSent": "Email de verificación reenviado",
+  "@emailVerificationSent": {
+    "description": "Mensaje de email de verificación reenviado"
+  },
+  "passwordResetSent": "Email de restablecimiento enviado",
+  "@passwordResetSent": {
+    "description": "Mensaje de email de restablecimiento enviado"
+  },
+  
+  "userNotFound": "No se encontró una cuenta con este email",
+  "@userNotFound": {
+    "description": "Error de usuario no encontrado"
+  },
+  "wrongPassword": "Contraseña incorrecta",
+  "@wrongPassword": {
+    "description": "Error de contraseña incorrecta"
+  },
+  "emailAlreadyInUse": "Ya existe una cuenta con este email",
+  "@emailAlreadyInUse": {
+    "description": "Error de email ya en uso"
+  },
+  "weakPassword": "La contraseña es muy débil. Usa al menos 6 caracteres",
+  "@weakPassword": {
+    "description": "Error de contraseña débil"
+  },
+  "invalidEmail": "El formato del email no es válido",
+  "@invalidEmail": {
+    "description": "Error de email inválido"
+  },
+  "userDisabled": "Esta cuenta ha sido deshabilitada",
+  "@userDisabled": {
+    "description": "Error de cuenta deshabilitada"
+  },
+  "tooManyRequests": "Demasiados intentos. Intenta más tarde",
+  "@tooManyRequests": {
+    "description": "Error de demasiados intentos"
+  },
+  "networkError": "Error de conexión. Verifica tu internet",
+  "@networkError": {
+    "description": "Error de red"
+  },
+  "invalidCredentials": "Email o contraseña incorrectos",
+  "@invalidCredentials": {
+    "description": "Error de credenciales inválidas"
+  },
+  "operationNotAllowed": "Esta operación no está permitida",
+  "@operationNotAllowed": {
+    "description": "Error de operación no permitida"
+  },
+  "emailNotVerified": "Por favor, verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.",
+  "@emailNotVerified": {
+    "description": "Error de email no verificado"
+  },
+  "genericError": "Error al iniciar sesión. Intenta de nuevo",
+  "@genericError": {
+    "description": "Error genérico de login"
+  },
+  "registerError": "Error al crear la cuenta. Intenta de nuevo",
+  "@registerError": {
+    "description": "Error genérico de registro"
+  },
+  
+  "forgotPasswordTitle": "Recuperar contraseña",
+  "@forgotPasswordTitle": {
+    "description": "Título del diálogo de recuperar contraseña"
+  },
+  "forgotPasswordMessage": "Ingresa tu email para recibir un enlace de restablecimiento.",
+  "@forgotPasswordMessage": {
+    "description": "Mensaje del diálogo de recuperar contraseña"
+  },
+  "sendResetEmail": "Enviar",
+  "@sendResetEmail": {
+    "description": "Botón de enviar email de restablecimiento"
+  },
+  "cancel": "Cancelar",
+  "@cancel": {
+    "description": "Botón de cancelar"
+  },
+  "close": "Cerrar",
+  "@close": {
+    "description": "Botón de cerrar"
+  },
+  
+  "resendVerificationTitle": "Reenviar verificación",
+  "@resendVerificationTitle": {
+    "description": "Título del diálogo de reenviar verificación"
+  },
+  "resendVerificationMessage": "Ingresa tu email y contraseña para reenviar el email de verificación.",
+  "@resendVerificationMessage": {
+    "description": "Mensaje del diálogo de reenviar verificación"
+  },
+  "resend": "Reenviar",
+  "@resend": {
+    "description": "Botón de reenviar"
+  },
+  "profileTooltip": "Ver perfil",
+  "@profileTooltip": {
+    "description": "Tooltip del icono de perfil en W1"
+  }
+}

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/presentation/notifiers/calendar_notifier.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -342,9 +343,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Future<void> _toggleDraftStatus() async {
     if (widget.event == null || widget.event!.id == null) return;
     
+    // Obtener el userId del usuario actual
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser?.id ?? '';
+    
     // Necesitamos los parámetros para el provider family
     final params = CalendarNotifierParams(
       planId: widget.event!.planId,
+      userId: userId,
       initialDate: widget.event!.date,
       initialColumnCount: 7,
     );
@@ -385,8 +391,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return;
     }
 
+    // Obtener el userId del usuario actual
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser?.id ?? '';
+
     final event = Event(
       id: widget.event?.id, // Mantener el ID original si existe
+      planId: widget.planId ?? '',
+      userId: userId,
       description: _descriptionController.text.trim(),
       date: _selectedDate,
       hour: _selectedHour,
@@ -395,11 +407,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       typeFamily: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       typeSubtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
       isDraft: _isDraft,
-      planId: widget.planId ?? '',
       createdAt: widget.event?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
-
 
     if (widget.onSaved != null) {
       widget.onSaved!(event);

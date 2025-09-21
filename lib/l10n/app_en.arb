@@ -1,0 +1,234 @@
+{
+  "@@locale": "en",
+  "appTitle": "Planazoo",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  
+  "loginTitle": "Sign In",
+  "@loginTitle": {
+    "description": "Login page title"
+  },
+  "loginSubtitle": "Access your account",
+  "@loginSubtitle": {
+    "description": "Login page subtitle"
+  },
+  "emailLabel": "Email",
+  "@emailLabel": {
+    "description": "Email field label"
+  },
+  "emailHint": "your@email.com",
+  "@emailHint": {
+    "description": "Email field hint"
+  },
+  "passwordLabel": "Password",
+  "@passwordLabel": {
+    "description": "Password field label"
+  },
+  "passwordHint": "Your password",
+  "@passwordHint": {
+    "description": "Password field hint"
+  },
+  "loginButton": "Sign In",
+  "@loginButton": {
+    "description": "Login button text"
+  },
+  "forgotPassword": "Forgot your password?",
+  "@forgotPassword": {
+    "description": "Forgot password link"
+  },
+  "resendVerification": "Resend verification",
+  "@resendVerification": {
+    "description": "Resend verification link"
+  },
+  "noAccount": "Don't have an account?",
+  "@noAccount": {
+    "description": "Text for not having an account"
+  },
+  "registerLink": "Sign up",
+  "@registerLink": {
+    "description": "Link to go to registration"
+  },
+  
+  "registerTitle": "Create Account",
+  "@registerTitle": {
+    "description": "Registration page title"
+  },
+  "registerSubtitle": "Join Planazoo and start planning",
+  "@registerSubtitle": {
+    "description": "Registration page subtitle"
+  },
+  "nameLabel": "Name",
+  "@nameLabel": {
+    "description": "Name field label"
+  },
+  "nameHint": "Your full name",
+  "@nameHint": {
+    "description": "Name field hint"
+  },
+  "confirmPasswordLabel": "Confirm password",
+  "@confirmPasswordLabel": {
+    "description": "Confirm password field label"
+  },
+  "confirmPasswordHint": "Repeat your password",
+  "@confirmPasswordHint": {
+    "description": "Confirm password field hint"
+  },
+  "registerButton": "Create Account",
+  "@registerButton": {
+    "description": "Registration button text"
+  },
+  "acceptTerms": "I accept the terms and conditions",
+  "@acceptTerms": {
+    "description": "Accept terms checkbox"
+  },
+  "loginLink": "Already have an account? Sign in",
+  "@loginLink": {
+    "description": "Link to go to login"
+  },
+  
+  "emailRequired": "Email is required",
+  "@emailRequired": {
+    "description": "Email required error"
+  },
+  "emailInvalid": "Invalid email format",
+  "@emailInvalid": {
+    "description": "Invalid email format error"
+  },
+  "passwordRequired": "Password is required",
+  "@passwordRequired": {
+    "description": "Password required error"
+  },
+  "passwordMinLength": "Password must be at least 6 characters",
+  "@passwordMinLength": {
+    "description": "Password minimum length error"
+  },
+  "nameRequired": "Name is required",
+  "@nameRequired": {
+    "description": "Name required error"
+  },
+  "nameMinLength": "Name must be at least 2 characters",
+  "@nameMinLength": {
+    "description": "Name minimum length error"
+  },
+  "confirmPasswordRequired": "Please confirm your password",
+  "@confirmPasswordRequired": {
+    "description": "Confirm password required error"
+  },
+  "passwordsNotMatch": "Passwords do not match",
+  "@passwordsNotMatch": {
+    "description": "Passwords don't match error"
+  },
+  "termsRequired": "You must accept the terms and conditions",
+  "@termsRequired": {
+    "description": "Terms required error"
+  },
+  
+  "loginSuccess": "Welcome!",
+  "@loginSuccess": {
+    "description": "Login success message"
+  },
+  "registerSuccess": "Account created! Check your email to verify your account.",
+  "@registerSuccess": {
+    "description": "Registration success message"
+  },
+  "emailVerificationSent": "Verification email resent",
+  "@emailVerificationSent": {
+    "description": "Email verification resent message"
+  },
+  "passwordResetSent": "Password reset email sent",
+  "@passwordResetSent": {
+    "description": "Password reset email sent message"
+  },
+  
+  "userNotFound": "No account found with this email",
+  "@userNotFound": {
+    "description": "User not found error"
+  },
+  "wrongPassword": "Incorrect password",
+  "@wrongPassword": {
+    "description": "Wrong password error"
+  },
+  "emailAlreadyInUse": "An account with this email already exists",
+  "@emailAlreadyInUse": {
+    "description": "Email already in use error"
+  },
+  "weakPassword": "Password is too weak. Use at least 6 characters",
+  "@weakPassword": {
+    "description": "Weak password error"
+  },
+  "invalidEmail": "Invalid email format",
+  "@invalidEmail": {
+    "description": "Invalid email error"
+  },
+  "userDisabled": "This account has been disabled",
+  "@userDisabled": {
+    "description": "User disabled error"
+  },
+  "tooManyRequests": "Too many attempts. Try again later",
+  "@tooManyRequests": {
+    "description": "Too many requests error"
+  },
+  "networkError": "Connection error. Check your internet",
+  "@networkError": {
+    "description": "Network error"
+  },
+  "invalidCredentials": "Incorrect email or password",
+  "@invalidCredentials": {
+    "description": "Invalid credentials error"
+  },
+  "operationNotAllowed": "This operation is not allowed",
+  "@operationNotAllowed": {
+    "description": "Operation not allowed error"
+  },
+  "emailNotVerified": "Please verify your email before signing in. Check your inbox.",
+  "@emailNotVerified": {
+    "description": "Email not verified error"
+  },
+  "genericError": "Sign in error. Try again",
+  "@genericError": {
+    "description": "Generic login error"
+  },
+  "registerError": "Account creation error. Try again",
+  "@registerError": {
+    "description": "Generic registration error"
+  },
+  
+  "forgotPasswordTitle": "Reset password",
+  "@forgotPasswordTitle": {
+    "description": "Forgot password dialog title"
+  },
+  "forgotPasswordMessage": "Enter your email to receive a reset link.",
+  "@forgotPasswordMessage": {
+    "description": "Forgot password dialog message"
+  },
+  "sendResetEmail": "Send",
+  "@sendResetEmail": {
+    "description": "Send reset email button"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button"
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Close button"
+  },
+  
+  "resendVerificationTitle": "Resend verification",
+  "@resendVerificationTitle": {
+    "description": "Resend verification dialog title"
+  },
+  "resendVerificationMessage": "Enter your email and password to resend the verification email.",
+  "@resendVerificationMessage": {
+    "description": "Resend verification dialog message"
+  },
+  "resend": "Resend",
+  "@resend": {
+    "description": "Resend button"
+  },
+  "profileTooltip": "View profile",
+  "@profileTooltip": {
+    "description": "Tooltip for profile icon in W1"
+  }
+}

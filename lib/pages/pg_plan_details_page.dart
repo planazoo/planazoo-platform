@@ -5,7 +5,8 @@ import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/app/app_layout_wrapper.dart';
-import 'package:unp_calendario/pages/pg_home_page.dart';
+import 'package:unp_calendario/pages/pg_dashboard_page.dart';
+import 'package:unp_calendario/pages/pg_plan_participants_page.dart';
 
 class PlanDetailsPage extends ConsumerStatefulWidget {
   final Plan plan;
@@ -35,7 +36,7 @@ class _PlanDetailsPageState extends ConsumerState<PlanDetailsPage> {
               context,
               MaterialPageRoute(
                 builder: (context) => const AppLayoutWrapper(
-                  child: HomePage(),
+                  child: DashboardPage(),
                 ),
               ),
             );
@@ -51,6 +52,11 @@ class _PlanDetailsPageState extends ConsumerState<PlanDetailsPage> {
             onPressed: _showNewAccommodationDialog,
             icon: const Icon(Icons.hotel),
             tooltip: 'Crear alojamiento',
+          ),
+          IconButton(
+            onPressed: _showParticipants,
+            icon: const Icon(Icons.people),
+            tooltip: 'Gestionar participantes',
           ),
         ],
       ),
@@ -585,6 +591,18 @@ class _PlanDetailsPageState extends ConsumerState<PlanDetailsPage> {
   void _showNewAccommodationDialog() {
     // TODO: Implementar creación de alojamiento
     
+  }
+
+  /// Mostrar página de participantes
+  void _showParticipants() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AppLayoutWrapper(
+          child: PlanParticipantsPage(plan: widget.plan),
+        ),
+      ),
+    );
   }
 
   /// Mostrar diálogo para editar evento

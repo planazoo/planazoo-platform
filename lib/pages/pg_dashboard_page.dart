@@ -1,9 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
+import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
+import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/shared/utils/date_formatter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 import 'package:unp_calendario/widgets/grid/wd_grid_painter.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
@@ -11,17 +22,16 @@ import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_create_plan_page.dart';
-import 'package:unp_calendario/pages/ios_preview_page.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
 
-class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+class DashboardPage extends ConsumerStatefulWidget {
+  const DashboardPage({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _DashboardPageState extends ConsumerState<DashboardPage> {
   // Estado para el planazoo seleccionado
   String? selectedPlanId;
   Plan? selectedPlan;
@@ -84,11 +94,20 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _showCreatePlanDialog() {
-    // Navegar a la página dedicada de creación de planes
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CreatePlanPage(),
-      ),
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return _CreatePlanModal(
+          onPlanCreated: (plan) {
+            // Actualizar la lista de planes (el modal ya se cierra automáticamente)
+            setState(() {
+              planazoos.add(plan);
+              filteredPlanazoos = List.from(planazoos);
+            });
+          },
+        );
+      },
     );
   }
 
@@ -310,93 +329,40 @@ class _MainPageState extends State<MainPage> {
         height: w1Height,
         decoration: BoxDecoration(
           color: AppColorScheme.color2, // Color de elementos interactivos de la app
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          // Sin borderRadius - esquinas cuadradas
         ),
-        child: Column(
-          children: [
-            // Parte superior con logo/info
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Logo/Icono principal
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.calendar_today,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Tooltip(
+              message: AppLocalizations.of(context)!.profileTooltip,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    currentScreen = 'profile';
+                  });
+                },
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(24), // Icono redondo
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 2,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'W1',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Barra lateral',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 8,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            // Icono de perfil en la parte inferior
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12.0),
-              child: Center(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      currentScreen = 'profile';
-                    });
-                  },
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -416,38 +382,16 @@ class _MainPageState extends State<MainPage> {
         width: w2Width,
         height: w2Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color1.withValues(alpha: 0.7),
-          border: Border.all(color: AppColorScheme.color2, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: Colors.white, // Fondo blanco
+          border: Border.all(color: Colors.white, width: 2), // Borde blanco
         ),
         child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W2',
-                style: AppTypography.mediumTitle.copyWith(
-                  color: AppColorScheme.color4,
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                'C2-C3 (R1)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: AppColorScheme.color4,
-                ),
-              ),
-              Text(
-                'Logo app',
-                style: AppTypography.caption.copyWith(
-                  color: AppColorScheme.color4,
-                  fontSize: 8,
-                ),
-              ),
-            ],
+          child: Text(
+            'planazoo',
+            style: AppTypography.mediumTitle.copyWith(
+              color: AppColorScheme.color1, // Color 1
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
@@ -469,30 +413,35 @@ class _MainPageState extends State<MainPage> {
         width: w3Width,
         height: w3Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color3.withValues(alpha: 0.2),
-          border: Border.all(color: AppColorScheme.color3, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: Colors.white, // Fondo blanco
+          border: Border.all(color: Colors.white, width: 2), // Borde blanco
         ),
         child: Center(
-          child: ElevatedButton.icon(
-            onPressed: () => _showCreatePlanDialog(),
-            icon: Icon(
-              Icons.add,
-              color: AppColorScheme.color0,
-              size: 20,
-            ),
-            label: Text(
-              'Nuevo',
-              style: AppTypography.interactiveStyle.copyWith(
-                color: AppColorScheme.color0,
+          child: GestureDetector(
+            onTap: () => _showCreatePlanDialog(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColorScheme.color3, // Fondo del botón color3
+                borderRadius: BorderRadius.circular(20), // Redondo
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColorScheme.color3,
-              foregroundColor: AppColorScheme.color0,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+              child: Center(
+                child: Text(
+                  '+',
+                  style: TextStyle(
+                    color: AppColorScheme.color1, // "+" color1
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ),
@@ -502,7 +451,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   Widget _buildW4(double columnWidth, double rowHeight) {
-    // W4: C5 (R1) - Menú de opciones
+    // W4: C5 (R1) - Por definir
     final w4X = columnWidth * 4; // Empieza en la columna C5 (índice 4)
     final w4Y = 0.0; // Empieza en la fila R1 (índice 0)
     final w4Width = columnWidth; // Ancho de 1 columna (C5)
@@ -515,52 +464,23 @@ class _MainPageState extends State<MainPage> {
         width: w4Width,
         height: w4Height,
         decoration: BoxDecoration(
-          color: Colors.purple.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.purple.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: Colors.white, // Fondo blanco
+          border: Border.all(color: Colors.white, width: 2), // Borde blanco
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              IconButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const IOSPreviewPage(),
-                    ),
-                  );
-                },
-                icon: Icon(
-                  Icons.phone_iphone,
-                  color: Colors.purple.shade800,
-                  size: 20,
-                ),
-                tooltip: 'iOS Preview',
-              ),
-              Text(
-                'iOS',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.purple.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido por el momento
       ),
     );
   }
 
   Widget _buildW5(double columnWidth, double rowHeight) {
-    // W5: C6 (R1) - Icono planazoo seleccionado
+    // W5: C6 (R1) - Foto del plan seleccionado
     final w5X = columnWidth * 5; // Empieza en la columna C6 (índice 5)
     final w5Y = 0.0; // Empieza en la fila R1 (índice 0)
     final w5Width = columnWidth; // Ancho de 1 columna (C6)
     final w5Height = rowHeight; // Alto de 1 fila (R1)
+    
+    // Calcular el tamaño del círculo (responsive)
+    final circleSize = (w5Width < w5Height ? w5Width : w5Height) * 0.8;
     
     return Positioned(
       left: w5X,
@@ -569,41 +489,56 @@ class _MainPageState extends State<MainPage> {
         width: w5Width,
         height: w5Height,
         decoration: BoxDecoration(
-          color: Colors.pink.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.pink.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color1,
+          border: Border.all(color: AppColorScheme.color1, width: 2),
         ),
         child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W5',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.pink.shade800,
-                ),
-              ),
-              Text(
-                'C6 (R1)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.pink.shade700,
-                ),
-              ),
-              Text(
-                'Icono plan',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.pink.shade600,
-                ),
-              ),
-            ],
+          child: Container(
+            width: circleSize,
+            height: circleSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColorScheme.color2, width: 2),
+            ),
+            child: ClipOval(
+              child: _buildPlanImage(),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlanImage() {
+    if (selectedPlan?.imageUrl != null && ImageService.isValidImageUrl(selectedPlan!.imageUrl)) {
+      return CachedNetworkImage(
+        imageUrl: selectedPlan!.imageUrl!,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          color: AppColorScheme.color2.withOpacity(0.1),
+          child: const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildDefaultIcon(),
+      );
+    } else {
+      return _buildDefaultIcon();
+    }
+  }
+
+  Widget _buildDefaultIcon() {
+    return Container(
+      color: AppColorScheme.color2.withOpacity(0.1),
+      child: Center(
+        child: Icon(
+          Icons.image,
+          color: AppColorScheme.color2.withOpacity(0.5),
+          size: 24,
         ),
       ),
     );
@@ -1886,7 +1821,7 @@ class _MainPageState extends State<MainPage> {
           border: Border.all(color: AppColorScheme.color2, width: 3),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: (selectedPlanId == null && currentScreen != 'profile')
+        child: (selectedPlanId == null && currentScreen != 'profile' && currentScreen != 'email')
           ? _buildNoPlanSelected()
           : _buildScreenContent(),
       ),
@@ -1900,6 +1835,8 @@ class _MainPageState extends State<MainPage> {
         return _buildPlanDataScreen();
       case 'profile':
         return _buildProfileScreen();
+      case 'email':
+        return _buildEmailScreen();
       case 'calendar':
       default:
         return _buildCalendarWidget();
@@ -1909,12 +1846,85 @@ class _MainPageState extends State<MainPage> {
   // NUEVO: Pantalla de datos principales del plan
   Widget _buildPlanDataScreen() {
     if (selectedPlan == null) return const SizedBox.shrink();
-    return PlanDataScreen(plan: selectedPlan!);
+    return PlanDataScreen(
+      plan: selectedPlan!,
+      onPlanDeleted: () {
+        // Actualizar la lista de planes después de eliminar
+        setState(() {
+          planazoos.removeWhere((p) => p.id == selectedPlan!.id);
+          filteredPlanazoos = List.from(planazoos);
+          selectedPlan = null;
+          selectedPlanId = null;
+          currentScreen = 'calendar'; // Volver al calendario
+        });
+      },
+    );
   }
 
   // NUEVO: Pantalla de perfil
   Widget _buildProfileScreen() {
     return const ProfilePage();
+  }
+
+  // NUEVO: Pantalla de email (temporal)
+  Widget _buildEmailScreen() {
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Label
+            Container(
+              width: 81,
+              height: 38,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'email',
+                style: AppTypography.bodyStyle.copyWith(
+                  fontSize: 16,
+                  color: AppColorScheme.color4,
+                ),
+              ),
+            ),
+            
+            const SizedBox(width: 24), // Espaciado entre label y campo
+            
+            // Campo de texto
+            Container(
+              width: 320,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFFE0E0E0),
+                  width: 1,
+                ),
+              ),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Introduce el mail',
+                  hintStyle: AppTypography.interactiveStyle.copyWith(
+                    fontSize: 14,
+                    color: Colors.grey.shade500,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+                style: AppTypography.interactiveStyle.copyWith(
+                  fontSize: 14,
+                  color: AppColorScheme.color4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // NUEVO: Método para mostrar mensaje cuando no hay plan seleccionado
@@ -2012,6 +2022,650 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Modal para crear plan con tamaño específico (R1-R17, C2-C3)
+class _CreatePlanModal extends ConsumerStatefulWidget {
+  final Function(Plan) onPlanCreated;
+
+  const _CreatePlanModal({
+    required this.onPlanCreated,
+  });
+
+  @override
+  ConsumerState<_CreatePlanModal> createState() => _CreatePlanModalState();
+}
+
+class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _unpIdController = TextEditingController();
+  final _planService = PlanService();
+  final _userService = UserService();
+  bool _isCreating = false;
+  
+  // Variables para fechas y duración
+  DateTime _startDate = DateTime.now();
+  DateTime _endDate = DateTime.now().add(const Duration(days: 6));
+  int _columnCount = 7;
+  
+  // Variables para participantes
+  List<UserModel> _allUsers = [];
+  List<UserModel> _selectedParticipants = [];
+  bool _isLoadingUsers = true;
+  
+  // Variables para imagen
+  XFile? _selectedImage;
+  String? _imageUrl;
+  bool _isUploadingImage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateColumnCount();
+    _loadUsers();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _unpIdController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUsers() async {
+    try {
+      final users = await _userService.getAllUsers();
+      setState(() {
+        _allUsers = users;
+        _isLoadingUsers = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingUsers = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar usuarios: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _updateColumnCount() {
+    final difference = _endDate.difference(_startDate).inDays;
+    setState(() {
+      _columnCount = difference + 1;
+    });
+  }
+
+  Future<void> _createPlan() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isCreating = true;
+    });
+
+    try {
+      final now = DateTime.now();
+      final currentUser = ref.read(currentUserProvider);
+      final userId = currentUser?.id ?? '';
+      
+      // Subir imagen si hay una seleccionada
+      String? uploadedImageUrl;
+      if (_selectedImage != null) {
+        setState(() {
+          _isUploadingImage = true;
+        });
+        
+        // Crear un plan temporal para obtener el ID
+        final tempPlan = Plan(
+          name: _nameController.text.trim(),
+          unpId: _unpIdController.text.trim(),
+          userId: userId,
+          baseDate: _startDate,
+          startDate: _startDate,
+          endDate: _endDate,
+          columnCount: _columnCount,
+          createdAt: now,
+          updatedAt: now,
+          savedAt: now,
+        );
+        
+        // Guardar plan temporal para obtener ID
+        final tempSuccess = await _planService.savePlanByUnpId(tempPlan);
+        if (!tempSuccess) {
+          throw Exception('Error al crear plan temporal');
+        }
+        
+        // Subir imagen con el ID del plan
+        uploadedImageUrl = await ImageService.uploadPlanImage(_selectedImage!, tempPlan.id!);
+        
+        setState(() {
+          _isUploadingImage = false;
+        });
+      }
+      
+      final plan = Plan(
+        name: _nameController.text.trim(),
+        unpId: _unpIdController.text.trim(),
+        userId: userId,
+        baseDate: _startDate,
+        startDate: _startDate,
+        endDate: _endDate,
+        columnCount: _columnCount,
+        imageUrl: uploadedImageUrl,
+        createdAt: now,
+        updatedAt: now,
+        savedAt: now,
+      );
+
+      // Guardar el plan (con o sin imagen)
+      final success = await _planService.savePlanByUnpId(plan);
+      if (!success) {
+        throw Exception('Error al guardar el plan');
+      }
+
+      // Si había imagen, actualizar el plan con la URL de la imagen
+      if (_selectedImage != null && uploadedImageUrl != null) {
+        final updatedPlan = plan.copyWith(id: plan.id, imageUrl: uploadedImageUrl);
+        await _planService.updatePlan(updatedPlan);
+      }
+
+      if (success) {
+        // Crear participaciones para el creador y los participantes seleccionados
+        final planParticipationService = PlanParticipationService();
+        
+        // El creador siempre participa como organizador
+        await planParticipationService.createParticipation(
+          planId: plan.id!,
+          userId: userId,
+          role: 'organizer',
+        );
+        
+        // Añadir participantes seleccionados
+        for (final participant in _selectedParticipants) {
+          await planParticipationService.createParticipation(
+            planId: plan.id!,
+            userId: participant.id,
+            role: 'participant',
+            invitedBy: userId,
+          );
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Plan "${plan.name}" creado exitosamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Cerrar el modal antes de actualizar la lista
+          Navigator.of(context).pop();
+          widget.onPlanCreated(plan);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Error al crear el plan'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreating = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _selectStartDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null && picked != _startDate) {
+      setState(() {
+        _startDate = picked;
+        if (_endDate.isBefore(_startDate)) {
+          _endDate = _startDate.add(const Duration(days: 6));
+        }
+        _updateColumnCount();
+      });
+    }
+  }
+
+  Future<void> _selectEndDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate,
+      firstDate: _startDate,
+      lastDate: _startDate.add(const Duration(days: 365)),
+    );
+    if (picked != null && picked != _endDate) {
+      setState(() {
+        _endDate = picked;
+        _updateColumnCount();
+      });
+    }
+  }
+
+  void _toggleParticipant(UserModel user) {
+    setState(() {
+      if (_selectedParticipants.contains(user)) {
+        _selectedParticipants.remove(user);
+      } else {
+        _selectedParticipants.add(user);
+      }
+    });
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await ImageService.pickImageFromGallery();
+      if (image != null) {
+        setState(() {
+          _selectedImage = image;
+        });
+        
+        // Validar imagen
+        final validationError = await ImageService.validateImage(image);
+        if (validationError != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(validationError),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+        
+        // Mostrar previsualización
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Imagen seleccionada correctamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar imagen: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeImage() async {
+    setState(() {
+      _selectedImage = null;
+      _imageUrl = null;
+    });
+  }
+
+  Widget _buildImageSelector() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.image, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text(
+                'Imagen del Plan (Opcional)',
+                style: AppTypography.bodyStyle.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_selectedImage == null)
+            // Botón para seleccionar imagen
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isUploadingImage ? null : _pickImage,
+                icon: const Icon(Icons.add_photo_alternate),
+                label: const Text('Seleccionar Imagen'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColorScheme.color2,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            )
+          else
+            // Mostrar imagen seleccionada
+            Column(
+              children: [
+                Container(
+                  height: 120,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(_selectedImage!.path),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: Icon(Icons.error, color: Colors.red),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Imagen seleccionada',
+                      style: AppTypography.bodyStyle.copyWith(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _removeImage,
+                      icon: const Icon(Icons.delete, color: Colors.red, size: 16),
+                      label: const Text('Quitar', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final gridWidth = constraints.maxWidth;
+        final gridHeight = constraints.maxHeight;
+        final columnWidth = gridWidth / 17;
+        final rowHeight = gridHeight / 13;
+        
+        // Modal cubre R1-R17 (17 filas) y C2-C4 (3 columnas)
+        final modalWidth = columnWidth * 3; // C2-C4 = 3 columnas
+        final modalHeight = rowHeight * 17; // R1-R17 = 17 filas
+        final modalX = columnWidth; // Empieza en C2 (índice 1)
+        final modalY = 0.0; // Empieza en R1 (índice 0)
+        
+        return Stack(
+          children: [
+            // Fondo semitransparente
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: Colors.black.withOpacity(0.5),
+            ),
+            // Modal
+            Positioned(
+              left: modalX,
+              top: modalY,
+              child: Material(
+                elevation: 8,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: modalWidth,
+                  height: modalHeight,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColorScheme.color2,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(8),
+                          topRight: Radius.circular(8),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Crear Plan',
+                            style: AppTypography.mediumTitle.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Contenido
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Form(
+                          key: _formKey,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Campo nombre
+                                TextFormField(
+                                  controller: _nameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Nombre del Plan',
+                                    hintText: 'Ej: Plan Zoo 2024',
+                                    border: OutlineInputBorder(),
+                                    prefixIcon: Icon(Icons.edit),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Por favor ingresa un nombre';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                // Campo UNP ID
+                                TextFormField(
+                                  controller: _unpIdController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'UNP ID',
+                                    hintText: 'Ej: UNP001',
+                                    border: OutlineInputBorder(),
+                                    prefixIcon: Icon(Icons.tag),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Por favor ingresa un UNP ID';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                // Selector de imagen
+                                _buildImageSelector(),
+                                const SizedBox(height: 16),
+                                // Selector fecha inicio
+                                InkWell(
+                                  onTap: _selectStartDate,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.calendar_today, color: Colors.green),
+                                        const SizedBox(width: 12),
+                                        Text('Inicio: ${DateFormatter.formatDate(_startDate)}'),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                // Selector fecha fin
+                                InkWell(
+                                  onTap: _selectEndDate,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.event, color: Colors.blue),
+                                        const SizedBox(width: 12),
+                                        Text('Fin: ${DateFormatter.formatDate(_endDate)}'),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                // Duración
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    border: Border.all(color: Colors.blue.shade200),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text('Duración:'),
+                                      Text(
+                                        '$_columnCount día${_columnCount > 1 ? 's' : ''}',
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                // Selector de participantes
+                                Text(
+                                  'Participantes:',
+                                  style: AppTypography.bodyStyle.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                if (_isLoadingUsers)
+                                  const Center(child: CircularProgressIndicator())
+                                else
+                                  Container(
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: ListView.builder(
+                                      itemCount: _allUsers.length,
+                                      itemBuilder: (context, index) {
+                                        final user = _allUsers[index];
+                                        final isSelected = _selectedParticipants.contains(user);
+                                        return CheckboxListTile(
+                                          title: Text(user.displayName ?? user.email),
+                                          subtitle: Text(user.email),
+                                          value: isSelected,
+                                          onChanged: (value) => _toggleParticipant(user),
+                                          dense: true,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                const SizedBox(height: 16),
+                                // Botón crear
+                                ElevatedButton(
+                                  onPressed: _isCreating ? null : _createPlan,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColorScheme.color3,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                  child: _isCreating
+                                      ? const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                              ),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text('Creando...'),
+                                          ],
+                                        )
+                                      : const Text('Crear Plan'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
