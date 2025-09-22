@@ -20,58 +20,74 @@ class PlanCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: isSelected ? 8 : 2,
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+      decoration: BoxDecoration(
+        color: isSelected ? AppColorScheme.color1 : AppColorScheme.color0, // fondo1 si seleccionado, fondo0 si no
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: isSelected ? AppColorScheme.color1 : AppColorScheme.color0,
+          width: 1,
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(4),
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              // Imagen del plan
+              // Imagen del plan (izquierda)
               _buildPlanImage(),
-              const SizedBox(width: 12),
-              // Información del plan
+              const SizedBox(width: 8),
+              // Información del plan (centro)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Nombre del plan (doble línea)
                     Text(
                       plan.name ?? 'Unnamed Plan',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isSelected ? AppColorScheme.color2 : null,
+                        color: AppColorScheme.color2, // texto2
+                        fontSize: 12,
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
+                    // Fechas del plan
                     Text(
-                      plan.unpId ?? 'No ID',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
+                      _formatPlanDates(),
+                      style: TextStyle(
+                        color: AppColorScheme.color2, // texto2
+                        fontSize: 10,
                       ),
                     ),
-                    const SizedBox(height: 4),
-            Text(
+                    const SizedBox(height: 2),
+                    // Duración en días
+                    Text(
                       '${plan.columnCount} días',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade600,
-              ),
-            ),
+                      style: TextStyle(
+                        color: AppColorScheme.color2, // texto2
+                        fontSize: 10,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    // Participantes (fuente pequeña)
+                    Text(
+                      _formatParticipants(),
+                      style: TextStyle(
+                        color: AppColorScheme.color2, // texto2
+                        fontSize: 8,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              // Botón de eliminar
-              if (onDelete != null)
-                IconButton(
-                  onPressed: onDelete,
-                  icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  padding: EdgeInsets.zero,
-                ),
+              // Iconos (derecha) - de momento ninguno según especificación
+              const SizedBox(width: 8),
             ],
           ),
         ),
@@ -79,8 +95,26 @@ class PlanCardWidget extends StatelessWidget {
     );
   }
 
+  String _formatPlanDates() {
+    if (plan.startDate != null && plan.endDate != null) {
+      final start = plan.startDate!;
+      final end = plan.endDate!;
+      return '${_formatDate(start)} - ${_formatDate(end)}';
+    }
+    return 'Sin fechas';
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  String _formatParticipants() {
+    // Por ahora mostramos un placeholder, ya que no tenemos la información de participantes
+    return 'Participantes: 0';
+  }
+
   Widget _buildPlanImage() {
-    const double imageSize = 50.0;
+    const double imageSize = 40.0; // Imagen más pequeña para la lista
     
     if (plan.imageUrl != null && ImageService.isValidImageUrl(plan.imageUrl)) {
       return Container(

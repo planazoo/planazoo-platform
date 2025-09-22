@@ -8,6 +8,7 @@ import 'package:unp_calendario/widgets/wd_accommodation_cell.dart';
 import 'package:unp_calendario/widgets/wd_event_cell.dart';
 import 'package:unp_calendario/widgets/wd_overlapping_events_cell.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
+import 'package:unp_calendario/app/theme/color_scheme.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -27,6 +28,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   
   // Parámetros para el provider de alojamientos
   late AccommodationNotifierParams _accommodationParams;
+  
+  // Controller para el scroll horizontal
+  final ScrollController _scrollController = ScrollController();
+  
+  // Estado para los indicadores de scroll
+  double _scrollOffset = 0.0;
+  double _maxScrollExtent = 0.0;
 
   @override
   void initState() {
@@ -48,6 +56,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _accommodationParams = AccommodationNotifierParams(
       planId: widget.plan.id ?? '',
     );
+    
+    // Inicializar los valores de scroll después de la construcción
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateScrollValues();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Actualiza los valores de scroll para los indicadores
+  void _updateScrollValues() {
+    if (_scrollController.hasClients) {
+      setState(() {
+        _scrollOffset = _scrollController.offset;
+        _maxScrollExtent = _scrollController.position.maxScrollExtent;
+      });
+    }
   }
 
   // Getters para acceder al estado del calendario
@@ -71,7 +100,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         // AppBar del calendario
         Container(
           height: 56,
-          color: const Color(0xFF2196F3), // Azul principal Material Design
+          color: AppColorScheme.color2, // Usar color2 del esquema
           child: Row(
             children: [
               Expanded(
@@ -79,7 +108,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   child: Text(
                     widget.plan.name,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColorScheme.color0, // Usar color0 (blanco) para texto
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -89,7 +118,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               // Botón para agregar alojamiento
               IconButton(
                 onPressed: _showNewAccommodationDialog,
-                icon: const Icon(Icons.hotel, color: Colors.white),
+                icon: const Icon(Icons.hotel, color: AppColorScheme.color0),
                 tooltip: 'Agregar alojamiento',
               ),
               const SizedBox(width: 8),
@@ -98,14 +127,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 onPressed: columnCount > 1 ? _removeColumn : null,
                 icon: Icon(
                   Icons.remove,
-                  color: columnCount > 1 ? Colors.white : Colors.grey,
+                  color: columnCount > 1 ? AppColorScheme.color0 : AppColorScheme.disabledColor,
                 ),
                 tooltip: 'Eliminar día',
               ),
               // Botón para añadir día
               IconButton(
                 onPressed: _addColumn,
-                icon: const Icon(Icons.add, color: Colors.white),
+                icon: const Icon(Icons.add, color: AppColorScheme.color0),
                 tooltip: 'Añadir día',
               ),
               const SizedBox(width: 16),
@@ -134,19 +163,151 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       : const FixedColumnWidth(daysColumnWidth), // Columnas de días
               };
               
-              // Siempre con scroll horizontal para consistencia
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: _buildFixedCalendarTable(
-                  columnWidths: columnWidths,
-                  cellWidth: daysColumnWidth,
-                ),
+              // Siempre con scroll horizontal para consistencia con indicadores
+              return _buildCalendarWithScrollIndicators(
+                columnWidths: columnWidths,
+                cellWidth: daysColumnWidth,
               );
             },
           ),
         ),
       ],
     );
+  }
+
+  /// Construye el calendario con indicadores de scroll horizontal
+  Widget _buildCalendarWithScrollIndicators({
+    required Map<int, TableColumnWidth> columnWidths,
+    required double cellWidth,
+  }) {
+    return Stack(
+      children: [
+        // Calendario con scroll
+        NotificationListener<ScrollNotification>(
+          onNotification: (ScrollNotification notification) {
+            if (notification is ScrollUpdateNotification || notification is ScrollEndNotification) {
+              _updateScrollValues();
+            }
+            return false;
+          },
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            controller: _scrollController,
+            child: _buildFixedCalendarTable(
+              columnWidths: columnWidths,
+              cellWidth: cellWidth,
+            ),
+          ),
+        ),
+        // Indicadores de scroll
+        _buildScrollIndicators(),
+      ],
+    );
+  }
+
+  /// Construye los indicadores de scroll horizontal
+  Widget _buildScrollIndicators() {
+    final showLeftIndicator = _scrollOffset > 0;
+    final showRightIndicator = _scrollOffset < _maxScrollExtent;
+    
+    return Positioned.fill(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Indicador izquierdo (solo si hay contenido hacia la izquierda)
+          if (showLeftIndicator)
+            _buildScrollIndicator(
+              isLeft: true,
+              onTap: () => _scrollLeft(),
+            )
+          else
+            const SizedBox(width: 40), // Espacio reservado
+          
+          // Indicador derecho (solo si hay contenido hacia la derecha)
+          if (showRightIndicator)
+            _buildScrollIndicator(
+              isLeft: false,
+              onTap: () => _scrollRight(),
+            )
+          else
+            const SizedBox(width: 40), // Espacio reservado
+        ],
+      ),
+    );
+  }
+
+  /// Construye un indicador de scroll individual
+  Widget _buildScrollIndicator({
+    required bool isLeft,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 50,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: isLeft ? Alignment.centerLeft : Alignment.centerRight,
+            end: isLeft ? Alignment.centerRight : Alignment.centerLeft,
+            colors: [
+            isLeft 
+                ? AppColorScheme.color4.withOpacity(0.1) 
+                : Colors.transparent,
+            Colors.transparent,
+            ],
+          ),
+        ),
+        child: Center(
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColorScheme.color0,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColorScheme.gridLineColor,
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColorScheme.color4.withOpacity(0.1),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              isLeft ? Icons.chevron_left : Icons.chevron_right,
+              color: AppColorScheme.color4,
+              size: 18,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Scroll hacia la izquierda
+  void _scrollLeft() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.offset - 320, // Ancho de una columna de día
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  /// Scroll hacia la derecha
+  void _scrollRight() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.offset + 320, // Ancho de una columna de día
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   /// Construye una tabla del calendario con filas fijas
@@ -161,10 +322,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           border: TableBorder(
             horizontalInside: BorderSide.none,
             verticalInside: BorderSide.none,
-            top: const BorderSide(color: Color(0xFFE0E0E0)),
-            bottom: const BorderSide(color: Color(0xFFE0E0E0)),
-            left: const BorderSide(color: Color(0xFFE0E0E0)),
-            right: const BorderSide(color: Color(0xFFE0E0E0)),
+            top: const BorderSide(color: AppColorScheme.gridLineColor),
+            bottom: const BorderSide(color: AppColorScheme.gridLineColor),
+            left: const BorderSide(color: AppColorScheme.gridLineColor),
+            right: const BorderSide(color: AppColorScheme.gridLineColor),
           ),
           columnWidths: columnWidths,
           children: [
@@ -179,10 +340,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               border: TableBorder(
                 horizontalInside: BorderSide.none,
                 verticalInside: BorderSide.none,
-                top: const BorderSide(color: Color(0xFFE0E0E0)),
-                bottom: const BorderSide(color: Color(0xFFE0E0E0)),
-                left: const BorderSide(color: Color(0xFFE0E0E0)),
-                right: const BorderSide(color: Color(0xFFE0E0E0)),
+                top: const BorderSide(color: AppColorScheme.gridLineColor),
+                bottom: const BorderSide(color: AppColorScheme.gridLineColor),
+                left: const BorderSide(color: AppColorScheme.gridLineColor),
+                right: const BorderSide(color: AppColorScheme.gridLineColor),
               ),
               columnWidths: columnWidths,
               children: _buildDataRows(cellWidth),
@@ -199,7 +360,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     required double cellWidth,
   }) {
     return Table(
-      border: TableBorder.all(color: Colors.grey.shade300),
+      border: TableBorder.all(color: AppColorScheme.gridLineColor),
       columnWidths: columnWidths,
       children: [
         _buildHeaderRow(),
@@ -211,7 +372,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Construye la fila de encabezado
   TableRow _buildHeaderRow() {
     return TableRow(
-      decoration: BoxDecoration(color: const Color(0xFFBBDEFB)), // Azul claro Material Design
+      decoration: BoxDecoration(color: AppColorScheme.color1), // Usar color1 del esquema
       children: List.generate(columnCount, (col) {
         if (col == 0) {
           return Container(
@@ -240,7 +401,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ),
                   Text(
                     'Día ${col} - ${date.day}/${date.month}/${date.year}',
-                    style: const TextStyle(fontSize: 6, color: Color(0xFF2196F3)), // Azul principal
+                    style: const TextStyle(fontSize: 6, color: AppColorScheme.color2), // Usar color2 del esquema
                   ),
                 ],
               ),
@@ -254,7 +415,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Construye la fila de alojamientos
   TableRow _buildAccommodationRow(double cellWidth) {
     return TableRow(
-      decoration: BoxDecoration(color: const Color(0xFFE8F5E8)), // Verde claro Material Design
+      decoration: BoxDecoration(color: AppColorScheme.color1.withOpacity(0.5)), // Usar color1 con transparencia
       children: List.generate(columnCount, (col) {
         if (col == 0) {
           return Container(
@@ -295,13 +456,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       height: AppConstants.cellHeight,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA), // Gris muy claro Material Design
-        border: Border.all(color: const Color(0xFFE0E0E0)), // Gris claro Material Design
+        color: AppColorScheme.color0, // Usar color0 del esquema
+        border: Border.all(color: AppColorScheme.gridLineColor), // Usar gridLineColor del esquema
       ),
-      child: Center(
-        child: Text(
-          '${row.toString().padLeft(2, '0')}:00',
-          style: const TextStyle(fontSize: 12),
+      child: Align(
+        alignment: Alignment.topCenter, // Alineado a la parte superior
+        child: Padding(
+          padding: const EdgeInsets.only(top: 4), // Pequeño margen superior
+          child: Text(
+            '${row.toString().padLeft(2, '0')}:00',
+            style: const TextStyle(fontSize: 12),
+          ),
         ),
       ),
     );
@@ -375,7 +540,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           height: AppConstants.cellHeight,
           width: cellWidth,
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE0E0E0)),
+            border: Border.all(color: AppColorScheme.gridLineColor),
             color: Colors.transparent,
           ),
           child: Stack(
@@ -609,9 +774,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       height: AppConstants.cellHeight,
       width: cellWidth,
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE0E0E0)), // Gris claro Material Design
+        border: Border.all(color: AppColorScheme.gridLineColor), // Usar gridLineColor del esquema
         color: _hasConflicts(row, col) 
-            ? Colors.red.withValues(alpha: 0.1)
+            ? AppColorScheme.color3.withOpacity(0.1) // Usar color3 con transparencia para conflictos
             : Colors.transparent,
       ),
       child: overlappingGroup != null
@@ -692,7 +857,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         width: cellWidth,
         height: AppConstants.cellHeight,
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFE0E0E0)), // Gris claro Material Design
+          border: Border.all(color: AppColorScheme.gridLineColor), // Usar gridLineColor del esquema
         ),
         child: const Center(
           child: SizedBox(

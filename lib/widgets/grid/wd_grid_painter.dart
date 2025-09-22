@@ -19,8 +19,11 @@ class GridPainter extends CustomPainter {
       ..color = Colors.blue.withOpacity(0.1)
       ..strokeWidth = 1.0;
 
-    // Draw vertical lines
+    // Draw vertical lines (except between W5 and W6)
     for (int i = 0; i <= daysPerWeek; i++) {
+      // Skip the line between column 6 and 7 (W5 and W6)
+      if (i == 6) continue;
+      
       final x = i * cellWidth;
       canvas.drawLine(
         Offset(x, 0),

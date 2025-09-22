@@ -44,6 +44,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   
   // NUEVO: Estado para trackear qué widget de W14-W25 está seleccionado
   String? selectedWidgetId; // 'W14', 'W15', 'W16', etc.
+  String selectedFilter = 'todos'; // 'todos', 'estoy_in', 'pendientes', 'cerrados'
   
   // Servicio de planes
   final PlanService _planService = PlanService();
@@ -67,6 +68,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             planazoos = plans;
             filteredPlanazoos = List.from(plans);
             isLoading = false;
+            
+            // NUEVO: Seleccionar automáticamente el primer plan si no hay ninguno seleccionado
+            if (selectedPlan == null && plans.isNotEmpty) {
+              selectedPlanId = plans.first.id;
+              selectedPlan = plans.first;
+            }
           });
         }
       }, onError: (error) {
@@ -243,6 +250,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 painter: GridPainter(
                   cellWidth: columnWidth,
                   cellHeight: rowHeight,
+                  daysPerWeek: 17, // Total de columnas en el dashboard
                 ),
               ),
               // W1: Barra lateral (C1, R1-R13)
@@ -476,7 +484,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     // W5: C6 (R1) - Foto del plan seleccionado
     final w5X = columnWidth * 5; // Empieza en la columna C6 (índice 5)
     final w5Y = 0.0; // Empieza en la fila R1 (índice 0)
-    final w5Width = columnWidth; // Ancho de 1 columna (C6)
+    final w5Width = columnWidth + 1; // Ancho de 1 columna + 1px para cubrir la línea
     final w5Height = rowHeight; // Alto de 1 fila (R1)
     
     // Calcular el tamaño del círculo (responsive)
@@ -489,8 +497,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w5Width,
         height: w5Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color1,
-          border: Border.all(color: AppColorScheme.color1, width: 2),
+          color: AppColorScheme.color2,
+          // Sin borde - mismo color que el fondo
         ),
         child: Center(
           child: Container(
@@ -536,9 +544,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       color: AppColorScheme.color2.withOpacity(0.1),
       child: Center(
         child: Icon(
-          Icons.image,
-          color: AppColorScheme.color2.withOpacity(0.5),
-          size: 24,
+          Icons.image_outlined,
+          color: AppColorScheme.color1, // Cambiado a color1 para que sea visible
+          size: 28,
         ),
       ),
     );
@@ -546,9 +554,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   Widget _buildW6(double columnWidth, double rowHeight) {
     // W6: C7-C11 (R1) - Información del planazoo seleccionado
-    final w6X = columnWidth * 6; // Empieza en la columna C7 (índice 6)
+    final w6X = columnWidth * 6 - 1; // Empieza en la columna C7 (índice 6) - 1px para superponerse
     final w6Y = 0.0; // Empieza en la fila R1 (índice 0)
-    final w6Width = columnWidth * 5; // Ancho de 5 columnas (C7-C11)
+    final w6Width = columnWidth * 5 + 1; // Ancho de 5 columnas + 1px para cubrir la línea
     final w6Height = rowHeight; // Alto de 1 fila (R1)
     
     return Positioned(
@@ -558,51 +566,92 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w6Width,
         height: w6Height,
         decoration: BoxDecoration(
-          color: Colors.cyan.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.cyan.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color2, // Fondo color2
+          // Sin borde - mismo color que el fondo
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W6',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.cyan.shade800,
-                ),
-              ),
-              Text(
-                'C7-C11 (R1)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.cyan.shade700,
-                ),
-              ),
-              Text(
-                'Info planazoo',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.cyan.shade600,
-                ),
-              ),
-            ],
+        child: selectedPlan != null 
+          ? _buildPlanInfoContent()
+          : _buildNoPlanSelectedInfo(),
+      ),
+    );
+  }
+
+  /// Construye el contenido de información del plan seleccionado
+  Widget _buildPlanInfoContent() {
+    return Padding(
+      padding: const EdgeInsets.all(4.0), // Reducido de 8.0 a 4.0
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Añadido para evitar overflow
+        children: [
+          // Nombre del plan (primera línea) - Más grande
+          Text(
+            selectedPlan!.name,
+            style: TextStyle(
+              fontSize: 14, // Aumentado de 12 a 14
+              fontWeight: FontWeight.bold,
+              color: AppColorScheme.color1, // Texto color1
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
+          const SizedBox(height: 2),
+          // Fechas de inicio y fin (segunda línea, fuente más pequeña)
+          Text(
+            '${_formatDate(selectedPlan!.startDate)} - ${_formatDate(selectedPlan!.endDate)}',
+            style: TextStyle(
+              fontSize: 9,
+              color: AppColorScheme.color1, // Texto color1
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 1),
+          // Email del administrador del plan
+          Text(
+            'Admin: ${_getAdminEmail()}',
+            style: TextStyle(
+              fontSize: 7,
+              color: AppColorScheme.color1.withOpacity(0.8), // Texto color1 con opacidad
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construye el contenido cuando no hay plan seleccionado
+  Widget _buildNoPlanSelectedInfo() {
+    return Center(
+      child: Text(
+        'Selecciona un plan',
+        style: TextStyle(
+          fontSize: 10, // Reducido de 12 a 10
+          color: AppColorScheme.color1.withOpacity(0.6), // Texto color1 con opacidad
         ),
       ),
     );
   }
 
+  /// Formatea una fecha para mostrar
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  /// Obtiene el email del administrador del plan
+  String _getAdminEmail() {
+    final currentUser = ref.read(currentUserProvider);
+    return currentUser?.email ?? 'N/A';
+  }
+
   Widget _buildW7(double columnWidth, double rowHeight) {
-    // W7: C12 (R1) - Info
-    final w7X = columnWidth * 11; // Empieza en la columna C12 (índice 11)
+    // W7: C12 (R1) - Fondo color2, vacío
+    final w7X = columnWidth * 11 - 1; // Empieza en la columna C12 (índice 11) - 1px para superponerse
     final w7Y = 0.0; // Empieza en la fila R1 (índice 0)
-    final w7Width = columnWidth; // Ancho de 1 columna (C12)
+    final w7Width = columnWidth + 1; // Ancho de 1 columna + 1px para cubrir la línea
     final w7Height = rowHeight; // Alto de 1 fila (R1)
     
     return Positioned(
@@ -612,51 +661,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w7Width,
         height: w7Height,
         decoration: BoxDecoration(
-          color: Colors.lime.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.lime.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color2, // Fondo color2
+          // Sin borde
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W7',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.lime.shade800,
-                ),
-              ),
-              Text(
-                'C12 (R1)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.lime.shade700,
-                ),
-              ),
-              Text(
-                'Info',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.lime.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW8(double columnWidth, double rowHeight) {
-    // W8: C13 (R1) - Presupuesto
-    final w8X = columnWidth * 12; // Empieza en la columna C13 (índice 12)
+    // W8: C13 (R1) - Fondo color2, vacío
+    final w8X = columnWidth * 12 - 1; // Empieza en la columna C13 (índice 12) - 1px para superponerse
     final w8Y = 0.0; // Empieza en la fila R1 (índice 0)
-    final w8Width = columnWidth; // Ancho de 1 columna (C13)
+    final w8Width = columnWidth + 1; // Ancho de 1 columna + 1px para cubrir la línea
     final w8Height = rowHeight; // Alto de 1 fila (R1)
     
     return Positioned(
@@ -666,51 +683,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w8Width,
         height: w8Height,
         decoration: BoxDecoration(
-          color: Colors.deepOrange.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.deepOrange.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color2, // Fondo color2
+          // Sin borde
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W8',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepOrange.shade800,
-                ),
-              ),
-              Text(
-                'C13 (R1)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.deepOrange.shade700,
-                ),
-              ),
-              Text(
-                'Presupuesto',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.deepOrange.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW9(double columnWidth, double rowHeight) {
-    // W9: C14 (R1) - Contador participantes
-    final w9X = columnWidth * 13; // Empieza en la columna C14 (índice 13)
+    // W9: C14 (R1) - Fondo color2, vacío
+    final w9X = columnWidth * 13 - 1; // Empieza en la columna C14 (índice 13) - 1px para superponerse
     final w9Y = 0.0; // Empieza en la fila R1 (índice 0)
-    final w9Width = columnWidth; // Ancho de 1 columna (C14)
+    final w9Width = columnWidth + 1; // Ancho de 1 columna + 1px para cubrir la línea
     final w9Height = rowHeight; // Alto de 1 fila (R1)
     
     return Positioned(
@@ -720,51 +705,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w9Width,
         height: w9Height,
         decoration: BoxDecoration(
-          color: Colors.deepPurple.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.deepPurple.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color2, // Fondo color2
+          // Sin borde
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W9',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple.shade800,
-                ),
-              ),
-              Text(
-                'C14 (R1)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.deepPurple.shade700,
-                ),
-              ),
-              Text(
-                'Participantes',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.deepPurple.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW10(double columnWidth, double rowHeight) {
-    // W10: C15 (R1) - Mi estado en el planazoo
-    final w10X = columnWidth * 14; // Empieza en la columna C15 (índice 14)
+    // W10: C15 (R1) - Fondo color2, vacío
+    final w10X = columnWidth * 14 - 1; // Empieza en la columna C15 (índice 14) - 1px para superponerse
     final w10Y = 0.0; // Empieza en la fila R1 (índice 0)
-    final w10Width = columnWidth; // Ancho de 1 columna (C15)
+    final w10Width = columnWidth + 1; // Ancho de 1 columna + 1px para cubrir la línea
     final w10Height = rowHeight; // Alto de 1 fila (R1)
     
     return Positioned(
@@ -774,51 +727,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w10Width,
         height: w10Height,
         decoration: BoxDecoration(
-          color: Colors.blueGrey.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.blueGrey.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color2, // Fondo color2
+          // Sin borde
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W10',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blueGrey.shade800,
-                ),
-              ),
-              Text(
-                'C15 (R1)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.blueGrey.shade700,
-                ),
-              ),
-              Text(
-                'Mi estado',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.blueGrey.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW11(double columnWidth, double rowHeight) {
-    // W11: C16 (R1) - Libre
-    final w11X = columnWidth * 15; // Empieza en la columna C16 (índice 15)
+    // W11: C16 (R1) - Fondo color2, vacío
+    final w11X = columnWidth * 15 - 1; // Empieza en la columna C16 (índice 15) - 1px para superponerse
     final w11Y = 0.0; // Empieza en la fila R1 (índice 0)
-    final w11Width = columnWidth; // Ancho de 1 columna (C16)
+    final w11Width = columnWidth + 1; // Ancho de 1 columna + 1px para cubrir la línea
     final w11Height = rowHeight; // Alto de 1 fila (R1)
     
     return Positioned(
@@ -828,51 +749,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w11Width,
         height: w11Height,
         decoration: BoxDecoration(
-          color: Colors.lightGreen.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.lightGreen.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color2, // Fondo color2
+          // Sin borde
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W11',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.lightGreen.shade800,
-                ),
-              ),
-              Text(
-                'C16 (R1)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.lightGreen.shade700,
-                ),
-              ),
-              Text(
-                'Libre',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.lightGreen.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW12(double columnWidth, double rowHeight) {
-    // W12: C17 (R1) - Menu opciones
-    final w12X = columnWidth * 16; // Empieza en la columna C17 (índice 16)
+    // W12: C17 (R1) - Fondo color2, vacío
+    final w12X = columnWidth * 16 - 1; // Empieza en la columna C17 (índice 16) - 1px para superponerse
     final w12Y = 0.0; // Empieza en la fila R1 (índice 0)
-    final w12Width = columnWidth; // Ancho de 1 columna (C17)
+    final w12Width = columnWidth + 1; // Ancho de 1 columna + 1px para cubrir la línea
     final w12Height = rowHeight; // Alto de 1 fila (R1)
     
     return Positioned(
@@ -882,42 +771,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w12Width,
         height: w12Height,
         decoration: BoxDecoration(
-          color: Colors.grey.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.grey.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color2, // Fondo color2
+          // Sin borde
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W12',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-              Text(
-                'C17 (R1)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-              Text(
-                'Menu opc',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
@@ -932,6 +789,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W14';
     final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
+    final iconColor = AppColorScheme.color2;
     final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
     
     return Positioned(
@@ -941,9 +799,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w14Width,
         height: w14Height,
         decoration: BoxDecoration(
-          color: backgroundColor.withValues(alpha: 0.7),
-          border: Border.all(color: AppColorScheme.color2, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
         child: InkWell(
           onTap: () {
@@ -953,24 +811,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'W14',
-                  style: AppTypography.mediumTitle.copyWith(
-                    color: textColor,
-                    fontSize: 10,
-                  ),
+                // Icono "i" color2
+                Icon(
+                  Icons.info,
+                  color: iconColor,
+                  size: 20,
                 ),
+                const SizedBox(height: 4),
+                // Texto "planazoo" debajo del icono
                 Text(
-                  'C6 (R2)',
-                  style: AppTypography.smallBody.copyWith(
-                    color: textColor,
-                    fontSize: 6,
-                  ),
-                ),
-                Text(
-                  'Info plan',
+                  'planazoo',
                   style: AppTypography.caption.copyWith(
                     color: textColor,
                     fontSize: 6,
@@ -994,6 +846,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W15';
     final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
+    final iconColor = AppColorScheme.color2;
     final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
     
     return Positioned(
@@ -1003,9 +856,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w15Width,
         height: w15Height,
         decoration: BoxDecoration(
-          color: backgroundColor.withValues(alpha: 0.7),
-          border: Border.all(color: AppColorScheme.color2, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
         child: InkWell(
           onTap: () {
@@ -1015,24 +868,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'W15',
-                  style: AppTypography.mediumTitle.copyWith(
-                    color: textColor,
-                    fontSize: 10,
-                  ),
+                // Icono calendario color2
+                Icon(
+                  Icons.calendar_today,
+                  color: iconColor,
+                  size: 20,
                 ),
+                const SizedBox(height: 4),
+                // Texto "calendario" debajo del icono
                 Text(
-                  'C7 (R2)',
-                  style: AppTypography.smallBody.copyWith(
-                    color: textColor,
-                    fontSize: 6,
-                  ),
-                ),
-                Text(
-                  'Calendario',
+                  'calendario',
                   style: AppTypography.caption.copyWith(
                     color: textColor,
                     fontSize: 6,
@@ -1047,11 +894,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildW16(double columnWidth, double rowHeight) {
-    // W16: C8 (R2) - Por definir
+    // W16: C8 (R2) - Participante del plan
     final w16X = columnWidth * 7; // Empieza en la columna C8 (índice 7)
     final w16Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w16Width = columnWidth; // Ancho de 1 columna (C8)
     final w16Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W16';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
+    final iconColor = AppColorScheme.color2;
+    final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
     
     return Positioned(
       left: w16X,
@@ -1060,39 +913,36 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w16Width,
         height: w16Height,
         decoration: BoxDecoration(
-          color: Colors.yellow.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.yellow.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
+        child: InkWell(
+          onTap: () {
+            _selectWidget('W16');
+            _changeScreen('participants');
+          },
+          child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-              Text(
-                'W16',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.yellow.shade800,
+                // Icono "formas de personas" color2
+                Icon(
+                  Icons.group,
+                  color: iconColor,
+                  size: 20,
                 ),
-              ),
-              Text(
-                'C8 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.yellow.shade700,
+                const SizedBox(height: 4),
+                // Texto "in" debajo del icono
+                Text(
+                  'in',
+                  style: AppTypography.caption.copyWith(
+                    color: textColor,
+                    fontSize: 6,
+                  ),
                 ),
-              ),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.yellow.shade600,
-                ),
-              ),
-            ],
+              ],
             ),
           ),
         ),
@@ -1101,11 +951,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildW17(double columnWidth, double rowHeight) {
-    // W17: C9 (R2) - Por definir
+    // W17: C9 (R2) - Widget básico
     final w17X = columnWidth * 8; // Empieza en la columna C9 (índice 8)
     final w17Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w17Width = columnWidth; // Ancho de 1 columna (C9)
     final w17Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W17';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w17X,
@@ -1114,52 +968,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w17Width,
         height: w17Height,
         decoration: BoxDecoration(
-          color: Colors.orange.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.orange.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W17',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange.shade800,
-                ),
-              ),
-              Text(
-                'C9 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.orange.shade700,
-                ),
-              ),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.orange.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW18(double columnWidth, double rowHeight) {
-    // W18: C10 (R2) - Por definir
+    // W18: C10 (R2) - Widget básico
     final w18X = columnWidth * 9; // Empieza en la columna C10 (índice 9)
     final w18Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w18Width = columnWidth; // Ancho de 1 columna (C10)
     final w18Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W18';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w18X,
@@ -1168,52 +995,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w18Width,
         height: w18Height,
         decoration: BoxDecoration(
-          color: Colors.red.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.red.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W18',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red.shade800,
-                ),
-              ),
-              Text(
-                'C10 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.red.shade700,
-                ),
-              ),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.red.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW19(double columnWidth, double rowHeight) {
-    // W19: C11 (R2) - Por definir
+    // W19: C11 (R2) - Widget básico
     final w19X = columnWidth * 10; // Empieza en la columna C11 (índice 10)
     final w19Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w19Width = columnWidth; // Ancho de 1 columna (C11)
     final w19Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W19';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w19X,
@@ -1222,52 +1022,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w19Width,
         height: w19Height,
         decoration: BoxDecoration(
-          color: Colors.purple.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.purple.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W19',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.purple.shade800,
-                ),
-              ),
-              Text(
-                'C11 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.purple.shade700,
-                ),
-              ),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.purple.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW20(double columnWidth, double rowHeight) {
-    // W20: C12 (R2) - Por definir
+    // W20: C12 (R2) - Widget básico
     final w20X = columnWidth * 11; // Empieza en la columna C12 (índice 11)
     final w20Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w20Width = columnWidth; // Ancho de 1 columna (C12)
     final w20Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W20';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w20X,
@@ -1276,52 +1049,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w20Width,
         height: w20Height,
         decoration: BoxDecoration(
-          color: Colors.indigo.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.indigo.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W20',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo.shade800,
-                ),
-              ),
-              Text(
-                'C12 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.indigo.shade700,
-                ),
-              ),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.indigo.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW21(double columnWidth, double rowHeight) {
-    // W21: C13 (R2) - Por definir
+    // W21: C13 (R2) - Widget básico
     final w21X = columnWidth * 12; // Empieza en la columna C13 (índice 12)
     final w21Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w21Width = columnWidth; // Ancho de 1 columna (C13)
     final w21Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W21';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w21X,
@@ -1330,52 +1076,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w21Width,
         height: w21Height,
         decoration: BoxDecoration(
-          color: Colors.teal.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.teal.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W21',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.teal.shade800,
-                ),
-              ),
-              Text(
-                'C13 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.teal.shade700,
-                ),
-              ),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.teal.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW22(double columnWidth, double rowHeight) {
-    // W22: C14 (R2) - Por definir
+    // W22: C14 (R2) - Widget básico
     final w22X = columnWidth * 13; // Empieza en la columna C14 (índice 13)
     final w22Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w22Width = columnWidth; // Ancho de 1 columna (C14)
     final w22Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W22';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w22X,
@@ -1384,52 +1103,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w22Width,
         height: w22Height,
         decoration: BoxDecoration(
-          color: Colors.cyan.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.cyan.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W22',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.cyan.shade800,
-                ),
-              ),
-              Text(
-                'C14 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.cyan.shade700,
-                ),
-              ),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.cyan.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW23(double columnWidth, double rowHeight) {
-    // W23: C15 (R2) - Por definir
+    // W23: C15 (R2) - Widget básico
     final w23X = columnWidth * 14; // Empieza en la columna C15 (índice 14)
     final w23Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w23Width = columnWidth; // Ancho de 1 columna (C15)
     final w23Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W23';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w23X,
@@ -1438,52 +1130,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w23Width,
         height: w23Height,
         decoration: BoxDecoration(
-          color: Colors.amber.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.amber.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W23',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber.shade800,
-                ),
-              ),
-              Text(
-                'C15 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.amber.shade700,
-                ),
-              ),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.amber.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW24(double columnWidth, double rowHeight) {
-    // W24: C16 (R2) - Icono notificaciones
+    // W24: C16 (R2) - Widget básico
     final w24X = columnWidth * 15; // Empieza en la columna C16 (índice 15)
     final w24Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w24Width = columnWidth; // Ancho de 1 columna (C16)
     final w24Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W24';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w24X,
@@ -1492,52 +1157,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w24Width,
         height: w24Height,
         decoration: BoxDecoration(
-          color: Colors.deepOrange.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.deepOrange.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W24',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepOrange.shade800,
-                ),
-              ),
-              Text(
-                'C16 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.deepOrange.shade600,
-                ),
-              ),
-              Text(
-                'Notific',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.deepOrange.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
 
   Widget _buildW25(double columnWidth, double rowHeight) {
-    // W25: C17 (R2) - Icono mensajes
+    // W25: C17 (R2) - Widget básico
     final w25X = columnWidth * 16; // Empieza en la columna C17 (índice 16)
     final w25Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w25Width = columnWidth; // Ancho de 1 columna (C17)
     final w25Height = rowHeight; // Alto de 1 fila (R2)
+    
+    // Determinar colores según el estado de selección
+    final isSelected = selectedWidgetId == 'W25';
+    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w25X,
@@ -1546,42 +1184,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w25Width,
         height: w25Height,
         decoration: BoxDecoration(
-          color: Colors.deepPurple.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.deepPurple.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: backgroundColor,
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W25',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple.shade800,
-                ),
-              ),
-              Text(
-                'C17 (R2)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.deepPurple.shade700,
-                ),
-              ),
-              Text(
-                'Mensajes',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.deepPurple.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
@@ -1600,10 +1207,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w13Width,
         height: w13Height,
         decoration: BoxDecoration(
-          color: Colors.teal.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.teal.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color0, // Fondo color0
+          // Sin borde adicional (el TextField ya tiene sus propios bordes)
+          // Sin borderRadius (el TextField maneja sus propios bordes redondeados)
         ),
+        padding: const EdgeInsets.all(8), // Padding para el TextField
         child: PlanSearchWidget(onSearchChanged: _filterPlanazoos),
       ),
     );
@@ -1623,39 +1231,59 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w26Width,
         height: w26Height,
         decoration: BoxDecoration(
-          color: Colors.indigo.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.indigo.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color0, // Fondo color0
+          // Sin borde adicional
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W26',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo.shade800,
-                ),
+        padding: const EdgeInsets.all(4), // Padding para los botones
+        child: Row(
+          children: [
+            _buildFilterButton('todos', 'Todos', columnWidth, rowHeight),
+            const SizedBox(width: 2),
+            _buildFilterButton('estoy_in', 'Estoy in', columnWidth, rowHeight),
+            const SizedBox(width: 2),
+            _buildFilterButton('pendientes', 'Pendientes', columnWidth, rowHeight),
+            const SizedBox(width: 2),
+            _buildFilterButton('cerrados', 'Cerrados', columnWidth, rowHeight),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterButton(String filterValue, String label, double columnWidth, double rowHeight) {
+    final isSelected = selectedFilter == filterValue;
+    final buttonWidth = (columnWidth * 4 - 6) / 4; // Ancho total menos espacios dividido entre 4 botones
+    
+    return Expanded(
+      child: Container(
+        height: rowHeight * 0.6, // Altura menor (60% de la altura de fila)
+        margin: EdgeInsets.symmetric(vertical: rowHeight * 0.2), // Centrado vertical
+        decoration: BoxDecoration(
+          color: isSelected ? AppColorScheme.color2 : AppColorScheme.color0, // Fondo color2 si seleccionado, color0 si no
+          border: Border.all(
+            color: AppColorScheme.color2, // Borde color2
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(12), // Esquinas más redondeadas
+        ),
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              selectedFilter = filterValue;
+            });
+            // De momento no hacen nada (sin funcionalidad)
+          },
+          borderRadius: BorderRadius.circular(12), // Esquinas más redondeadas
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: AppColorScheme.color1, // Texto color1
+                fontSize: 10, // Texto más grande
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
-              Text(
-                'C2-C5 (R3)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.indigo.shade700,
-                ),
-              ),
-              Text(
-                'Filtros',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.indigo.shade600,
-                ),
-              ),
-            ],
+              textAlign: TextAlign.center,
             ),
           ),
         ),
@@ -1664,7 +1292,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildW27(double columnWidth, double rowHeight) {
-    // W27: C2-C5 (R4) - Espacio extra no definido
+    // W27: C2-C5 (R4) - Auxiliar
     final w27X = columnWidth; // Empieza en la columna C2 (índice 1)
     final w27Y = rowHeight * 3; // Empieza en la fila R4 (índice 3)
     final w27Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
@@ -1677,42 +1305,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w27Width,
         height: w27Height,
         decoration: BoxDecoration(
-          color: Colors.amber.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.amber.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color0, // Fondo color0
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W27',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.amber.shade800,
-                ),
-              ),
-              Text(
-                'C2-C5 (R4)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.amber.shade700,
-                ),
-              ),
-              Text(
-                'Espacio',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.amber.shade600,
-                ),
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
@@ -1731,8 +1328,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w28Width,
         height: w28Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color1.withValues(alpha: 0.7),
-          border: Border.all(color: AppColorScheme.color2, width: 3),
+          color: AppColorScheme.color0, // Fondo blanco
+          border: Border.all(color: AppColorScheme.color0, width: 1), // Bordes blancos
           borderRadius: BorderRadius.circular(4),
         ),
         child: PlanListWidget(
@@ -1747,7 +1344,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildW30(double columnWidth, double rowHeight) {
-    // W30: C6-C17 (R13) - Por definir
+    // W30: C6-C17 (R13) - Pie de página informaciones app
     final w30X = columnWidth * 5; // Empieza en la columna C6 (índice 5)
     final w30Y = rowHeight * 12; // Empieza en la fila R13 (índice 12)
     final w30Width = columnWidth * 12; // Ancho de 12 columnas (C6-C17)
@@ -1760,45 +1357,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w30Width,
         height: w30Height,
         decoration: BoxDecoration(
-          color: Colors.lightGreen.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.lightGreen.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColorScheme.color2, // Fondo color2
+          // Sin borde
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W30',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.lightGreen.shade800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'C6-C17 (R13)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.lightGreen.shade700,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.lightGreen.shade600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            ),
-          ),
-        ),
+        // Sin contenido
       ),
     );
   }
@@ -1837,6 +1400,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return _buildProfileScreen();
       case 'email':
         return _buildEmailScreen();
+      case 'participants':
+        return _buildParticipantsScreen();
       case 'calendar':
       default:
         return _buildCalendarWidget();
@@ -1972,7 +1537,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
 
   Widget _buildW29(double columnWidth, double rowHeight) {
-    // W29: C2-C5 (R13) - Por definir
+    // W29: C2-C5 (R13) - Pie de página publicitario
     final w29X = columnWidth; // Empieza en la columna C2 (índice 1)
     final w29Y = rowHeight * 12; // Empieza en la fila R13 (índice 12)
     final w29Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
@@ -1985,42 +1550,55 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w29Width,
         height: w29Height,
         decoration: BoxDecoration(
-          color: Colors.brown.shade200.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.brown.shade600, width: 3),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Center(
-          child: ClipRect(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              Text(
-                'W29',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.brown.shade800,
-                ),
-              ),
-              Text(
-                'C2-C5 (R13)',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.brown.shade700,
-                ),
-              ),
-              Text(
-                'Por definir',
-                style: TextStyle(
-                  fontSize: 6,
-                  color: Colors.brown.shade600,
-                ),
-              ),
-            ],
+          color: AppColorScheme.color0, // Fondo color0
+          border: Border(
+            top: BorderSide(
+              color: AppColorScheme.color1, // Borde superior color1
+              width: 1,
             ),
           ),
+          // Sin borderRadius (esquinas en ángulo recto)
         ),
+        // Sin contenido
+      ),
+    );
+  }
+
+  // NUEVO: Pantalla de participantes del plan
+  Widget _buildParticipantsScreen() {
+    if (selectedPlan == null) {
+      return const Center(
+        child: Text(
+          'Selecciona un plan para ver los participantes',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18),
+        ),
+      );
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Participantes del Plan: ${selectedPlan!.name}',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Funcionalidad en desarrollo',
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                currentScreen = 'calendar';
+              });
+            },
+            child: const Text('Volver al Calendario'),
+          ),
+        ],
       ),
     );
   }
@@ -2347,10 +1925,12 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
             children: [
               const Icon(Icons.image, color: Colors.grey),
               const SizedBox(width: 8),
-              Text(
-                'Imagen del Plan (Opcional)',
-                style: AppTypography.bodyStyle.copyWith(
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Text(
+                  'Imagen del Plan (Opcional)',
+                  style: AppTypography.bodyStyle.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],

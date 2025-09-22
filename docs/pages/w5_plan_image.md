@@ -14,10 +14,10 @@ El widget **W5** es un contenedor circular que muestra la imagen del plan selecc
   - `w5Width = columnWidth` (Ancho de 1 columna)
   - `w5Height = rowHeight` (Alto de 1 fila)
 
-## 🎨 Diseño Visual (v1.3)
+## 🎨 Diseño Visual (v1.4)
 
-- **Color de Fondo**: Color1 (`AppColorScheme.color1`)
-- **Borde**: Color1 de 2px (`Border.all(color: AppColorScheme.color1, width: 2)`)
+- **Color de Fondo**: Color2 (`AppColorScheme.color2`)
+- **Borde**: Sin borde (mismo color que el fondo)
 - **Forma**: Rectangular con esquinas cuadradas (sin `borderRadius`)
 - **Contenido**: Imagen circular del plan centrada
 
@@ -64,8 +64,8 @@ Widget _buildW5(double columnWidth, double rowHeight) {
       width: w5Width,
       height: w5Height,
       decoration: BoxDecoration(
-        color: AppColorScheme.color1, // Fondo color1
-        border: Border.all(color: AppColorScheme.color1, width: 2),
+        color: AppColorScheme.color2, // Fondo color2
+        // Sin borde - mismo color que el fondo
       ),
       child: Center(
         child: Container(
@@ -134,12 +134,14 @@ Widget _buildDefaultIcon() {
 - **v1.1**: Implementación de `CachedNetworkImage` para optimización
 - **v1.2**: Integración con sistema de gestión de imágenes de Firebase Storage
 - **v1.3**: Cambio de fondo de blanco a color1 para mejor integración visual
+- **v1.4**: Cambio de fondo de color1 a color2 para consistencia con el esquema de colores
+- **v1.5**: Eliminación del borde del contenedor (mismo color que el fondo)
 
 ## 🎨 Consideraciones de UX
 
 ### Visual:
-- **Contraste**: El fondo color1 proporciona buen contraste con la imagen circular
-- **Consistencia**: Mantiene la paleta de colores de la aplicación
+- **Contraste**: El fondo color2 proporciona buen contraste con la imagen circular
+- **Consistencia**: Mantiene la paleta de colores de la aplicación (color2 para elementos interactivos)
 - **Identificación**: Permite identificar rápidamente el plan seleccionado
 
 ### Interacción:
