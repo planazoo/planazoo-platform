@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
-import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
@@ -289,8 +288,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         ),
       );
 
-      final planService = PlanService();
-      final eventService = EventService();
+      final planService = ref.read(planServiceProvider);
+      final eventService = ref.read(eventServiceProvider);
 
       // Eliminar imagen si existe
       if (currentPlan.imageUrl != null) {
@@ -525,7 +524,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         if (uploadedImageUrl != null) {
           // Actualizar el plan con la nueva URL de imagen
           final updatedPlan = currentPlan.copyWith(imageUrl: uploadedImageUrl);
-          final planService = PlanService();
+          final planService = ref.read(planServiceProvider);
           final success = await planService.updatePlan(updatedPlan);
           
           if (success) {

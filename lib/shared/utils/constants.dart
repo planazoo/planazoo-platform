@@ -1,6 +1,6 @@
 class AppConstants {
   // Constantes del calendario
-  static const double cellHeight = 60.0; // altura base - aumentada de 50.0 a 60.0
+  static const double cellHeight = 50.0; // altura base - reducida de 60.0 a 50.0
   static const double minCellHeightForTwoLines = 50.0; // umbral para 2 líneas - aumentado de 40.0 a 50.0
   static const double firstColumnWidth = 80.0; // ancho de la columna fija de horas
   static const double lodgingBandHeight = 14.4; // altura de la banda de alojamiento bajo encabezados (20% más alta)

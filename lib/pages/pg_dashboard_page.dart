@@ -1,11 +1,13 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/features/testing/demo_data_generator.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
@@ -21,7 +23,6 @@ import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
-import 'package:unp_calendario/pages/pg_create_plan_page.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -45,9 +46,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // NUEVO: Estado para trackear qué widget de W14-W25 está seleccionado
   String? selectedWidgetId; // 'W14', 'W15', 'W16', etc.
   String selectedFilter = 'todos'; // 'todos', 'estoy_in', 'pendientes', 'cerrados'
-  
-  // Servicio de planes
-  final PlanService _planService = PlanService();
 
   @override
   void initState() {
@@ -62,7 +60,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       });
       
       // Cargar planazoos desde Firestore usando Stream
-      _planService.getPlans().listen((plans) {
+      final planService = ref.read(planServiceProvider);
+      planService.getPlans().listen((plans) {
         if (mounted) {
           setState(() {
             planazoos = plans;
@@ -190,7 +189,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       
       if (confirmed == true) {
         // Eliminar de Firebase
-        final success = await _planService.deletePlan(planId);
+        final planService = ref.read(planServiceProvider);
+        final success = await planService.deletePlan(planId);
         
         if (success) {
           // Si el plan eliminado estaba seleccionado, limpiar la selección
@@ -224,9 +224,92 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = ref.watch(currentUserProvider);
+    
     return Scaffold(
       body: _buildGrid(),
+      // 🧟 Botón Frankenstein (solo en modo debug)
+      floatingActionButton: kDebugMode
+          ? FloatingActionButton.extended(
+              onPressed: () => _generateFrankensteinPlan(currentUser),
+              icon: const Icon(Icons.science),
+              label: const Text('🧟 Frankenstein'),
+              backgroundColor: Colors.green.shade700,
+              tooltip: 'Generar plan de testing completo',
+            )
+          : null,
     );
+  }
+  
+  /// Genera el plan Frankenstein de testing
+  Future<void> _generateFrankensteinPlan(UserModel? currentUser) async {
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Usuario no autenticado'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    // Mostrar loading
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: Colors.white),
+            SizedBox(width: 16),
+            Text('🧟 Generando plan Frankenstein...'),
+          ],
+        ),
+        duration: Duration(seconds: 10),
+      ),
+    );
+    
+    // Generar plan
+    final planId = await DemoDataGenerator.generateFrankensteinPlan(currentUser.id);
+    
+    if (planId != null) {
+      // Refrescar lista de planes
+      _loadPlanazoos();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('🎉 Plan Frankenstein generado exitosamente!'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Ver',
+              textColor: Colors.white,
+              onPressed: () {
+                // Seleccionar el plan Frankenstein generado
+                setState(() {
+                  selectedPlanId = planId;
+                  selectedPlan = filteredPlanazoos.firstWhere(
+                    (p) => p.id == planId,
+                    orElse: () => filteredPlanazoos.first,
+                  );
+                  currentScreen = 'calendar';
+                  selectedWidgetId = 'W15';
+                });
+              },
+            ),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Error al generar plan Frankenstein'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
 
@@ -1348,7 +1431,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final w30X = columnWidth * 5; // Empieza en la columna C6 (índice 5)
     final w30Y = rowHeight * 12; // Empieza en la fila R13 (índice 12)
     final w30Width = columnWidth * 12; // Ancho de 12 columnas (C6-C17)
-    final w30Height = rowHeight; // Alto de 1 fila (R13)
+    final w30Height = rowHeight * 0.75; // Alto de 0.75 filas (R13)
     
     return Positioned(
       left: w30X,
@@ -1541,7 +1624,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final w29X = columnWidth; // Empieza en la columna C2 (índice 1)
     final w29Y = rowHeight * 12; // Empieza en la fila R13 (índice 12)
     final w29Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
-    final w29Height = rowHeight; // Alto de 1 fila (R13)
+    final w29Height = rowHeight * 0.75; // Alto de 0.75 filas (R13)
     
     return Positioned(
       left: w29X,
@@ -1620,8 +1703,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _unpIdController = TextEditingController();
-  final _planService = PlanService();
-  final _userService = UserService();
+  // Servicios accedidos via providers cuando se necesiten
   bool _isCreating = false;
   
   // Variables para fechas y duración
@@ -1655,7 +1737,8 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
 
   Future<void> _loadUsers() async {
     try {
-      final users = await _userService.getAllUsers();
+      final userService = ref.read(userServiceProvider);
+      final users = await userService.getAllUsers();
       setState(() {
         _allUsers = users;
         _isLoadingUsers = false;
@@ -1718,7 +1801,8 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
         );
         
         // Guardar plan temporal para obtener ID
-        final tempSuccess = await _planService.savePlanByUnpId(tempPlan);
+        final planService = ref.read(planServiceProvider);
+        final tempSuccess = await planService.savePlanByUnpId(tempPlan);
         if (!tempSuccess) {
           throw Exception('Error al crear plan temporal');
         }
@@ -1746,7 +1830,8 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
       );
 
       // Guardar el plan (con o sin imagen)
-      final success = await _planService.savePlanByUnpId(plan);
+      final planService = ref.read(planServiceProvider);
+      final success = await planService.savePlanByUnpId(plan);
       if (!success) {
         throw Exception('Error al guardar el plan');
       }
@@ -1754,7 +1839,8 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
       // Si había imagen, actualizar el plan con la URL de la imagen
       if (_selectedImage != null && uploadedImageUrl != null) {
         final updatedPlan = plan.copyWith(id: plan.id, imageUrl: uploadedImageUrl);
-        await _planService.updatePlan(updatedPlan);
+        final planService2 = ref.read(planServiceProvider);
+        await planService2.updatePlan(updatedPlan);
       }
 
       if (success) {

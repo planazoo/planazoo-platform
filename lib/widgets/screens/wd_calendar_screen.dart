@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
-import 'package:unp_calendario/features/calendar/calendar_exports.dart';
-import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/models/event.dart';
+import 'package:unp_calendario/features/calendar/domain/models/event_segment.dart';
+import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
+import 'package:unp_calendario/features/calendar/domain/models/overlapping_segment_group.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/accommodation_service.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
-import 'package:unp_calendario/widgets/wd_accommodation_cell.dart';
-import 'package:unp_calendario/widgets/wd_event_cell.dart';
-import 'package:unp_calendario/widgets/wd_overlapping_events_cell.dart';
-import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/features/calendar/domain/services/date_service.dart';
+import 'package:unp_calendario/shared/utils/color_utils.dart';
+import 'package:unp_calendario/widgets/wd_event_dialog.dart';
+import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -23,150 +30,272 @@ class CalendarScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
-  // Parámetros para el provider del calendario
-  late CalendarNotifierParams _calendarParams;
+  // Estado para la navegación de días (grupos de 7 días)
+  int _currentDayGroup = 0; // Grupo actual de 7 días (0 = días 1-7, 1 = días 8-14, etc.)
+  static const int _daysPerGroup = 7;
   
-  // Parámetros para el provider de alojamientos
-  late AccommodationNotifierParams _accommodationParams;
+  // Controladores para scroll vertical sincronizado
+  final ScrollController _hoursScrollController = ScrollController();
+  final ScrollController _dataScrollController = ScrollController();
   
-  // Controller para el scroll horizontal
-  final ScrollController _scrollController = ScrollController();
+  // Variables para drag & drop de eventos
+  Event? _draggingEvent;
+  Offset _dragOffset = Offset.zero;
+  bool _isDragging = false;
   
-  // Estado para los indicadores de scroll
-  double _scrollOffset = 0.0;
-  double _maxScrollExtent = 0.0;
+  // Variable para controlar sincronización durante auto-scroll
+  bool _isAutoScrolling = false;
+  
+  // Flag para forzar reconstrucción de eventos
+  int _eventRefreshCounter = 0;
 
   @override
   void initState() {
     super.initState();
+    // Sincronizar controladores de scroll
+    _hoursScrollController.addListener(_syncScrollFromHours);
+    _dataScrollController.addListener(_syncScrollFromData);
     
-    // Obtener el userId del usuario actual
-    final currentUser = ref.read(currentUserProvider);
-    final userId = currentUser?.id ?? '';
-    
-    // Inicializar parámetros del calendario usando la fecha de inicio del plan
-    _calendarParams = CalendarNotifierParams(
-      planId: widget.plan.id ?? '',
-      userId: userId,
-      initialDate: widget.plan.startDate,
-      initialColumnCount: widget.plan.columnCount ?? AppConstants.defaultColumnCount,
-    );
-    
-    // Inicializar parámetros de alojamientos
-    _accommodationParams = AccommodationNotifierParams(
-      planId: widget.plan.id ?? '',
-    );
-    
-    // Inicializar los valores de scroll después de la construcción
+    // Posicionar el scroll en la hora del primer evento
+    // Usar múltiples intentos con delays incrementales para asegurar que los datos estén cargados
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateScrollValues();
+      _scrollToFirstEvent();
+    });
+    
+    // Reintentar después de delays más largos
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _scrollToFirstEvent();
+    });
+    
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) _scrollToFirstEvent();
+    });
+    
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) _scrollToFirstEvent();
     });
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _hoursScrollController.dispose();
+    _dataScrollController.dispose();
     super.dispose();
   }
 
-  /// Actualiza los valores de scroll para los indicadores
-  void _updateScrollValues() {
-    if (_scrollController.hasClients) {
+  /// Sincroniza el scroll desde la columna de horas hacia los datos
+  void _syncScrollFromHours() {
+    // No sincronizar durante auto-scroll
+    if (_isAutoScrolling) {
+      return;
+    }
+    
+    if (_hoursScrollController.hasClients && _dataScrollController.hasClients) {
+      _dataScrollController.jumpTo(_hoursScrollController.offset);
+      // Actualizar la UI para que los eventos se reposicionen
+      setState(() {});
+    }
+  }
+
+  /// Sincroniza el scroll desde los datos hacia la columna de horas
+  void _syncScrollFromData() {
+    // No sincronizar durante auto-scroll
+    if (_isAutoScrolling) {
+      return;
+    }
+    
+    if (_dataScrollController.hasClients && _hoursScrollController.hasClients) {
+      _hoursScrollController.jumpTo(_dataScrollController.offset);
+      // Actualizar la UI para que los eventos se reposicionen
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: _buildCalendarBody(),
+    );
+  }
+
+  /// Construye el AppBar con navegación de días
+  PreferredSizeWidget _buildAppBar() {
+    final startDay = _currentDayGroup * _daysPerGroup + 1;
+    final endDay = (startDay + _daysPerGroup - 1);
+    final totalDays = widget.plan.durationInDays;
+    
+    return AppBar(
+      toolbarHeight: 48.0, // Reducido de 56px (por defecto) a 48px
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            onPressed: _currentDayGroup > 0 ? _previousDayGroup : null,
+            icon: const Icon(Icons.chevron_left),
+            tooltip: 'Días anteriores',
+          ),
+          Text(
+            'Días $startDay-$endDay de $totalDays',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          IconButton(
+            onPressed: endDay < totalDays ? _nextDayGroup : null,
+            icon: const Icon(Icons.chevron_right),
+            tooltip: 'Días siguientes',
+          ),
+        ],
+      ),
+      backgroundColor: AppColorScheme.color1,
+      foregroundColor: Colors.white,
+    );
+  }
+
+  /// Navega al grupo anterior de días
+  void _previousDayGroup() {
+    if (_currentDayGroup > 0) {
       setState(() {
-        _scrollOffset = _scrollController.offset;
-        _maxScrollExtent = _scrollController.position.maxScrollExtent;
+        _currentDayGroup--;
+      });
+      // Reposicionar scroll después del cambio
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToFirstEvent();
       });
     }
   }
 
-  // Getters para acceder al estado del calendario
-  CalendarState get _calendarState => ref.watch(calendarStateProvider(_calendarParams));
-  CalendarNotifier get _calendarNotifier => ref.read(calendarNotifierProvider(_calendarParams).notifier);
-  
-  // Getters para acceder al estado de alojamientos
-  AccommodationState get _accommodationState => ref.watch(accommodationStateProvider(_accommodationParams));
-  AccommodationNotifier get _accommodationNotifier => ref.read(accommodationNotifierProvider(_accommodationParams).notifier);
-  
-  // Getters para propiedades específicas
-  List<Event> get _events => _calendarState.events;
-  List<Accommodation> get _accommodations => _accommodationState.accommodations;
-  DateTime get selectedDate => _calendarState.selectedDate;
-  int get columnCount => _calendarState.columnCount + 1; // +1 para incluir la columna de horas
+  /// Navega al grupo siguiente de días
+  void _nextDayGroup() {
+    final totalDays = widget.plan.durationInDays;
+    final endDay = (_currentDayGroup + 1) * _daysPerGroup;
+    
+    if (endDay <= totalDays) {
+      setState(() {
+        _currentDayGroup++;
+      });
+      // Reposicionar scroll después del cambio
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToFirstEvent();
+      });
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  /// Construye el cuerpo del calendario
+  Widget _buildCalendarBody() {
+    return Stack(
+      children: [
+        // Capa 1: Calendario base (fijo)
+        Row(
+          children: [
+            // Columna FIJO (horas) - fija
+            _buildFixedHoursColumn(),
+            
+            // Columnas de datos - 7 días fijos
+            Expanded(
+              child: _buildDataColumns(),
+            ),
+          ],
+        ),
+        
+      ],
+    );
+  }
+
+  /// Construye la columna fija de horas
+  Widget _buildFixedHoursColumn() {
+    return Container(
+      width: 80.0, // Ancho fijo para mostrar "00:00"
+      child: Column(
+        children: [
+          // Encabezado (primera celda)
+          Container(
+            height: 50,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColorScheme.gridLineColor),
+              color: AppColorScheme.color1,
+            ),
+            child: const Center(
+              child: SizedBox.shrink(), // Celda vacía
+            ),
+          ),
+          
+          // Fila de alojamientos FIJA
+          Container(
+            height: 40,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColorScheme.gridLineColor),
+              color: AppColorScheme.color1.withOpacity(0.5),
+            ),
+            child: const Center(
+              child: Text(
+                'Alojamiento',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+          ),
+          
+        // Filas de horas con scroll vertical
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _hoursScrollController,
+              child: Column(
+                children: List.generate(AppConstants.defaultRowCount, (index) {
+                  return Container(
+                    height: AppConstants.cellHeight,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColorScheme.gridLineColor),
+                      color: AppColorScheme.color0,
+                    ),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          '${index.toString().padLeft(2, '0')}:00',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construye las columnas de datos (7 días)
+  Widget _buildDataColumns() {
     return Column(
       children: [
-        // AppBar del calendario
-        Container(
-          height: 56,
-          color: AppColorScheme.color2, // Usar color2 del esquema
-          child: Row(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Text(
-                    widget.plan.name,
-                    style: const TextStyle(
-                      color: AppColorScheme.color0, // Usar color0 (blanco) para texto
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              // Botón para agregar alojamiento
-              IconButton(
-                onPressed: _showNewAccommodationDialog,
-                icon: const Icon(Icons.hotel, color: AppColorScheme.color0),
-                tooltip: 'Agregar alojamiento',
-              ),
-              const SizedBox(width: 8),
-              // Botón para eliminar día
-              IconButton(
-                onPressed: columnCount > 1 ? _removeColumn : null,
-                icon: Icon(
-                  Icons.remove,
-                  color: columnCount > 1 ? AppColorScheme.color0 : AppColorScheme.disabledColor,
-                ),
-                tooltip: 'Eliminar día',
-              ),
-              // Botón para añadir día
-              IconButton(
-                onPressed: _addColumn,
-                icon: const Icon(Icons.add, color: AppColorScheme.color0),
-                tooltip: 'Añadir día',
-              ),
-              const SizedBox(width: 16),
-              // Selector de fecha
-              DateSelector(
-                selectedDate: selectedDate,
-                onDateChanged: _onDateChanged,
-              ),
-              const SizedBox(width: 16),
-            ],
-          ),
-        ),
-        // Tabla del calendario con filas fijas
+        // Filas fijas (encabezado y alojamientos)
+        _buildFixedRows(),
+        
+        // Filas con scroll vertical (datos de horas)
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // Anchos fijos simplificados
-              const hoursColumnWidth = 80.0;
-              const daysColumnWidth = 320.0; // 4 veces las horas (80 × 4)
-              
-              
-              final columnWidths = {
-                for (int i = 0; i < columnCount; i++)
-                  i: i == 0 
-                      ? const FixedColumnWidth(hoursColumnWidth) // Columna de horas
-                      : const FixedColumnWidth(daysColumnWidth), // Columnas de días
-              };
-              
-              // Siempre con scroll horizontal para consistencia con indicadores
-              return _buildCalendarWithScrollIndicators(
-                columnWidths: columnWidths,
-                cellWidth: daysColumnWidth,
+              return Stack(
+                children: [
+                  // Capa 1: Datos de la tabla
+                  SingleChildScrollView(
+                    controller: _dataScrollController,
+                    child: Stack(
+                      children: [
+                        _buildDataRows(),
+                        // Capa 2: Eventos (Positioned) - Ahora dentro del SingleChildScrollView
+                        ..._buildEventsLayer(constraints.maxWidth),
+                        // Capa 3: Detector invisible para doble clicks en celdas vacías (deshabilitado temporalmente)
+                        // _buildDoubleClickDetector(constraints.maxWidth),
+                      ],
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -175,807 +304,1446 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  /// Construye el calendario con indicadores de scroll horizontal
-  Widget _buildCalendarWithScrollIndicators({
-    required Map<int, TableColumnWidth> columnWidths,
-    required double cellWidth,
-  }) {
-    return Stack(
-      children: [
-        // Calendario con scroll
-        NotificationListener<ScrollNotification>(
-          onNotification: (ScrollNotification notification) {
-            if (notification is ScrollUpdateNotification || notification is ScrollEndNotification) {
-              _updateScrollValues();
-            }
-            return false;
-          },
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            controller: _scrollController,
-            child: _buildFixedCalendarTable(
-              columnWidths: columnWidths,
-              cellWidth: cellWidth,
-            ),
-          ),
-        ),
-        // Indicadores de scroll
-        _buildScrollIndicators(),
-      ],
-    );
-  }
-
-  /// Construye los indicadores de scroll horizontal
-  Widget _buildScrollIndicators() {
-    final showLeftIndicator = _scrollOffset > 0;
-    final showRightIndicator = _scrollOffset < _maxScrollExtent;
-    
-    return Positioned.fill(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Indicador izquierdo (solo si hay contenido hacia la izquierda)
-          if (showLeftIndicator)
-            _buildScrollIndicator(
-              isLeft: true,
-              onTap: () => _scrollLeft(),
-            )
-          else
-            const SizedBox(width: 40), // Espacio reservado
-          
-          // Indicador derecho (solo si hay contenido hacia la derecha)
-          if (showRightIndicator)
-            _buildScrollIndicator(
-              isLeft: false,
-              onTap: () => _scrollRight(),
-            )
-          else
-            const SizedBox(width: 40), // Espacio reservado
-        ],
-      ),
-    );
-  }
-
-  /// Construye un indicador de scroll individual
-  Widget _buildScrollIndicator({
-    required bool isLeft,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 50,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: isLeft ? Alignment.centerLeft : Alignment.centerRight,
-            end: isLeft ? Alignment.centerRight : Alignment.centerLeft,
-            colors: [
-            isLeft 
-                ? AppColorScheme.color4.withOpacity(0.1) 
-                : Colors.transparent,
-            Colors.transparent,
+  /// Construye las filas fijas (encabezado y alojamientos)
+  Widget _buildFixedRows() {
+    return Row(
+      children: List.generate(_daysPerGroup, (dayIndex) {
+        final actualDayIndex = _currentDayGroup * _daysPerGroup + dayIndex + 1;
+        final totalDays = widget.plan.durationInDays;
+        final isEmpty = actualDayIndex > totalDays;
+        
+        return Expanded(
+          child: Column(
+            children: [
+              // Encabezado del día
+              Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColorScheme.gridLineColor),
+                  color: isEmpty ? Colors.grey.shade200 : AppColorScheme.color1,
+                ),
+                child: Center(
+                  child: isEmpty 
+                    ? const Text(
+                        'Vacío',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      )
+                    : Builder(
+                        builder: (context) {
+                          // Calcular la fecha de este día del plan
+                          final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
+                          final formattedDate = '${dayDate.day}/${dayDate.month}/${dayDate.year}';
+                          
+                          // Obtener el nombre del día de la semana (traducible)
+                          final dayOfWeek = DateFormat.E().format(dayDate); // 'lun', 'mar', etc.
+                          
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Día $actualDayIndex - $dayOfWeek',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 9,
+                                ),
+                              ),
+                              Text(
+                                formattedDate,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                ),
+              ),
+              
+              // Alojamiento del día
+              Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColorScheme.gridLineColor),
+                  color: isEmpty ? Colors.grey.shade100 : AppColorScheme.color1.withOpacity(0.5),
+                ),
+                child: Center(
+                  child: isEmpty
+                    ? const Text(
+                        'Sin alojamiento',
+                        style: TextStyle(fontSize: 8, color: Colors.grey),
+                      )
+                    : _buildAccommodationCell(actualDayIndex),
+                ),
+              ),
             ],
           ),
-        ),
-        child: Center(
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColorScheme.color0,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColorScheme.gridLineColor,
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColorScheme.color4.withOpacity(0.1),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
+        );
+      }),
+    );
+  }
+
+  /// Construye las filas de datos (horas)
+  Widget _buildDataRows() {
+    return Row(
+      children: List.generate(_daysPerGroup, (dayIndex) {
+        final actualDayIndex = _currentDayGroup * _daysPerGroup + dayIndex + 1;
+        final totalDays = widget.plan.durationInDays;
+        final isEmpty = actualDayIndex > totalDays;
+        
+        return Expanded(
+          child: Column(
+            children: List.generate(AppConstants.defaultRowCount, (hourIndex) {
+              return Container(
+                height: AppConstants.cellHeight,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColorScheme.gridLineColor),
+                  color: isEmpty ? Colors.grey.shade100 : AppColorScheme.color0,
                 ),
-              ],
-            ),
-            child: Icon(
-              isLeft ? Icons.chevron_left : Icons.chevron_right,
-              color: AppColorScheme.color4,
-              size: 18,
-            ),
+                child: _buildEventCell(hourIndex, actualDayIndex),
+              );
+            }),
           ),
+        );
+      }),
+    );
+  }
+
+  /// Construye la celda de alojamiento
+  Widget _buildAccommodationCell(int dayIndex) {
+    // Obtener la fecha de este día
+    final dayDate = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+    
+    // Obtener alojamientos del plan
+    final accommodations = ref.watch(accommodationsProvider(
+      AccommodationNotifierParams(planId: widget.plan.id ?? ''),
+    ));
+    
+    // Filtrar alojamientos para este día específico
+    final accommodationsForDay = accommodations.where((acc) => acc.isDateInRange(dayDate)).toList();
+    
+    if (accommodationsForDay.isEmpty) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onDoubleTap: () => _showNewAccommodationDialog(dayDate),
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.transparent,
+        ),
+      );
+    }
+    
+    // Mostrar el primer alojamiento (si hay varios, mostrar el más relevante)
+    final accommodation = accommodationsForDay.first;
+    
+    return GestureDetector(
+      onTap: () => _showAccommodationDialog(accommodation),
+      onDoubleTap: () => _showNewAccommodationDialog(dayDate),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+        child: Text(
+          accommodation.hotelName,
+          style: TextStyle(
+            fontSize: 10,
+            color: accommodation.displayColor,
+            fontWeight: FontWeight.bold,
+          ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 2,
+          textAlign: TextAlign.center,
         ),
       ),
     );
   }
 
-  /// Scroll hacia la izquierda
-  void _scrollLeft() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.offset - 320, // Ancho de una columna de día
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+  /// Construye la capa de eventos usando EventSegments (estilo Google Calendar)
+  List<Widget> _buildEventsLayer(double availableWidth) {
+    final startDayIndex = _currentDayGroup * _daysPerGroup + 1;
+    final endDayIndex = startDayIndex + _daysPerGroup - 1;
+    final totalDays = widget.plan.durationInDays;
+    final actualEndDayIndex = endDayIndex > totalDays ? totalDays : endDayIndex;
+    
+    List<Widget> eventWidgets = [];
+    List<Event> previousDayEvents = []; // Cache de eventos del día anterior
+    
+    // Obtener eventos para cada día en el rango actual
+    for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
+      final currentDay = startDayIndex + dayOffset;
+      final eventDate = widget.plan.startDate.add(Duration(days: currentDay - 1));
+      
+      // Obtener eventos para esta fecha usando ref.watch para reaccionar a cambios
+      final eventsForDate = ref.watch(eventsForDateProvider(
+        EventsForDateParams(
+          calendarParams: CalendarNotifierParams(
+            planId: widget.plan.id ?? '',
+            userId: widget.plan.userId,
+            initialDate: widget.plan.startDate,
+            initialColumnCount: widget.plan.columnCount,
+          ),
+          date: eventDate,
+        ),
+      ));
+      
+      // NUEVO: Combinar eventos de hoy + eventos de ayer que continúan hoy
+      final allRelevantEvents = <Event>[
+        ...eventsForDate,
+        ...previousDayEvents.where((e) => _eventCrossesMidnight(e)),
+      ];
+      
+      // Expandir eventos a segmentos para este día específico
+      final segments = _expandEventsToSegments(allRelevantEvents, eventDate);
+      
+      if (segments.isNotEmpty) {
+        // Detectar segmentos solapados
+        final overlappingGroups = _detectOverlappingSegments(segments);
+        
+        // Renderizar grupos de segmentos solapados
+        for (final group in overlappingGroups) {
+          if (group.segments.length > 1) {
+            // Hay solapamiento - renderizar con layout especial
+            eventWidgets.addAll(_buildOverlappingSegmentWidgets(group, dayOffset, availableWidth));
+          } else {
+            // Solo un segmento - renderizado normal
+            final segment = group.segments.first;
+            eventWidgets.add(_buildSegmentWidget(segment, dayOffset, availableWidth));
+          }
+        }
+      }
+      
+      // CORREGIDO: Guardar TODOS los eventos procesados (no solo eventsForDate)
+      // Esto asegura que eventos multi-día se propaguen correctamente al siguiente día
+      previousDayEvents = allRelevantEvents;
     }
+    
+    return eventWidgets;
   }
 
-  /// Scroll hacia la derecha
-  void _scrollRight() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.offset + 320, // Ancho de una columna de día
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+  /// Expande una lista de eventos a segmentos para un día específico
+  /// Incluye eventos que empiezan en este día Y continuaciones de eventos del día anterior
+  List<EventSegment> _expandEventsToSegments(List<Event> events, DateTime date) {
+    final segments = <EventSegment>[];
+    
+    for (final event in events) {
+      // Filtrar alojamientos (se renderizan aparte)
+      if (event.typeFamily == 'alojamiento') continue;
+      
+      // Crear todos los segmentos del evento
+      final eventSegments = EventSegment.createSegmentsForEvent(event);
+      
+      // Filtrar solo el segmento de este día
+      for (final segment in eventSegments) {
+        if (segment.segmentDate.year == date.year &&
+            segment.segmentDate.month == date.month &&
+            segment.segmentDate.day == date.day) {
+          segments.add(segment);
+        }
+      }
     }
+    
+    return segments;
   }
 
-  /// Construye una tabla del calendario con filas fijas
-  Widget _buildFixedCalendarTable({
-    required Map<int, TableColumnWidth> columnWidths,
-    required double cellWidth,
-  }) {
-    return Column(
-      children: [
-        // Filas fijas (encabezado y alojamientos)
-        Table(
-          border: TableBorder(
-            horizontalInside: BorderSide.none,
-            verticalInside: BorderSide.none,
-            top: const BorderSide(color: AppColorScheme.gridLineColor),
-            bottom: const BorderSide(color: AppColorScheme.gridLineColor),
-            left: const BorderSide(color: AppColorScheme.gridLineColor),
-            right: const BorderSide(color: AppColorScheme.gridLineColor),
-          ),
-          columnWidths: columnWidths,
-          children: [
-            _buildHeaderRow(),
-            _buildAccommodationRow(cellWidth),
-          ],
-        ),
-        // Filas con scroll (datos de horas)
-        Expanded(
-          child: SingleChildScrollView(
-            child: Table(
-              border: TableBorder(
-                horizontalInside: BorderSide.none,
-                verticalInside: BorderSide.none,
-                top: const BorderSide(color: AppColorScheme.gridLineColor),
-                bottom: const BorderSide(color: AppColorScheme.gridLineColor),
-                left: const BorderSide(color: AppColorScheme.gridLineColor),
-                right: const BorderSide(color: AppColorScheme.gridLineColor),
-              ),
-              columnWidths: columnWidths,
-              children: _buildDataRows(cellWidth),
-            ),
-          ),
-        ),
-      ],
+  /// Detecta segmentos solapados usando el nuevo sistema
+  List<OverlappingSegmentGroup> _detectOverlappingSegments(List<EventSegment> segments) {
+    return OverlappingSegmentGroup.detectOverlappingGroups(segments);
+  }
+
+
+  /// Construye un evento en una posición específica (para eventos solapados)
+  Widget _buildEventWidgetAtPosition(Event event, double x, double width, double availableWidth) {
+    final cellHeight = AppConstants.cellHeight;
+    final scrollOffset = _dataScrollController.hasClients ? _dataScrollController.offset : 0.0;
+    
+    final totalFixedHeight = 0.0;
+    final y = totalFixedHeight + (event.totalStartMinutes * cellHeight / 60);
+    
+    // Calcular altura del evento
+    double height;
+    if (_eventCrossesMidnight(event)) {
+      final startTime = event.hour * 60 + event.startMinute;
+      final midnightMinutes = 1440;
+      final currentDayDurationMinutes = midnightMinutes - startTime;
+      height = (currentDayDurationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+    } else {
+      height = (event.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+    }
+    
+    return Positioned(
+      left: x,
+      top: y,
+      width: width,
+      height: height,
+      child: _buildDraggableEvent(event),
     );
   }
 
-  /// Construye una tabla del calendario con las especificaciones dadas
-  Widget _buildCalendarTable({
-    required Map<int, TableColumnWidth> columnWidths,
-    required double cellWidth,
-  }) {
-    return Table(
-      border: TableBorder.all(color: AppColorScheme.gridLineColor),
-      columnWidths: columnWidths,
-      children: [
-        _buildHeaderRow(),
-        _buildAccommodationRow(cellWidth),
-      ],
+  /// Construye una continuación en una posición específica (para continuaciones solapadas)
+  Widget _buildContinuationWidgetAtPosition(Event continuationEvent, double x, double width, double availableWidth) {
+    final cellHeight = AppConstants.cellHeight;
+    final scrollOffset = _dataScrollController.hasClients ? _dataScrollController.offset : 0.0;
+    
+    // Las continuaciones siempre empiezan a las 00:00
+    final totalFixedHeight = 0.0;
+    final y = totalFixedHeight + (0 * cellHeight / 60); // Empieza en 00:00
+    
+    // La duración ya está calculada correctamente en el evento virtual
+    final height = (continuationEvent.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+    
+    return Positioned(
+      left: x,
+      top: y - scrollOffset,
+      width: width,
+      height: height,
+      child: _buildDraggableEventForContinuation(continuationEvent, height),
     );
   }
 
-  /// Construye la fila de encabezado
-  TableRow _buildHeaderRow() {
-    return TableRow(
-      decoration: BoxDecoration(color: AppColorScheme.color1), // Usar color1 del esquema
-      children: List.generate(columnCount, (col) {
-        if (col == 0) {
-          return Container(
-            height: 50,
-            padding: const EdgeInsets.all(8),
-            child: const Center(
-              child: Text(
-                'Hora',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
+  /// Construye un evento draggable para continuación (cuando está solapada)
+  Widget _buildDraggableEventForContinuation(Event continuationEvent, double height) {
+    // Las continuaciones NO son draggables por ahora
+    // Solo se puede arrastrar el evento original desde su día inicial
+
+    // Calcular tamaño de fuente basado en la altura del evento
+    double fontSize;
+    if (height < 20) {
+      fontSize = 6;
+    } else if (height < 40) {
+      fontSize = 8;
+    } else {
+      fontSize = 10;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        // Al hacer click, abrir el diálogo del evento ORIGINAL
+        // Necesitamos encontrar el evento original (esto es un hack temporal)
+        // En producción deberíamos pasar el evento original al método
+        _showEventDialog(continuationEvent);
+      },
+      // DESHABILITADO: No permitir drag desde continuaciones
+      // Solo se puede arrastrar desde el evento original en el día anterior
+      // onPanStart, onPanUpdate, onPanEnd están intencionalmente NO implementados
+      child: Container(
+          decoration: BoxDecoration(
+            color: ColorUtils.getEventColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: ColorUtils.getEventBorderColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
+              width: 1,
             ),
-          );
-        } else {
-          final date = DateService.getDateForColumn(selectedDate, col - 1);
-          return Container(
-            height: 50,
-            padding: const EdgeInsets.all(8),
-            child: Center(
+          ),
+          child: ClipRect(
+            child: Padding(
+              padding: const EdgeInsets.all(1),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Descripción del evento
                   Text(
-                    DateService.getDayName(date.date),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+                    continuationEvent.description,
+                    style: TextStyle(
+                      color: ColorUtils.getEventTextColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
+                      fontSize: fontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    'Día ${col} - ${date.day}/${date.month}/${date.year}',
-                    style: const TextStyle(fontSize: 6, color: AppColorScheme.color2), // Usar color2 del esquema
+                  // Hora - para continuaciones siempre es 00:00 - XX:XX
+                  Flexible(
+                    child: Text(
+                      '00:00 - ${continuationEvent.durationMinutes ~/ 60}:${(continuationEvent.durationMinutes % 60).toString().padLeft(2, '0')}',
+                      style: TextStyle(
+                        color: ColorUtils.getEventTextColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
+                        fontSize: fontSize - 2,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
             ),
-          );
-        }
-      }),
+          ),
+      ),
     );
   }
 
-  /// Construye la fila de alojamientos
-  TableRow _buildAccommodationRow(double cellWidth) {
-    return TableRow(
-      decoration: BoxDecoration(color: AppColorScheme.color1.withOpacity(0.5)), // Usar color1 con transparencia
-      children: List.generate(columnCount, (col) {
-        if (col == 0) {
-          return Container(
-            height: 40,
-            padding: const EdgeInsets.all(8),
-            child: const Center(
-              child: Text(
-                'Alojamiento',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+  /// Verifica si un evento cruza medianoche
+  bool _eventCrossesMidnight(Event event) {
+    final startTime = event.hour * 60 + event.startMinute;
+    final endTime = startTime + event.durationMinutes;
+    return endTime > 1440; // 1440 minutos = 24 horas
+  }
+
+  /// Verifica si añadir/mover un evento excedería el límite de 3 eventos solapados
+  /// 
+  /// Regla de negocio: Máximo 3 eventos pueden solaparse simultáneamente en cualquier momento
+  /// 
+  /// [eventToCheck] - El evento que queremos añadir/mover
+  /// [targetDate] - La fecha donde queremos colocar el evento
+  /// [eventIdToExclude] - ID del evento a excluir del conteo (cuando editamos un evento existente)
+  /// 
+  /// Returns true si añadir este evento excedería el límite de 3 solapados
+  bool _wouldExceedOverlapLimit({
+    required Event eventToCheck,
+    required DateTime targetDate,
+    String? eventIdToExclude,
+  }) {
+    const int MAX_OVERLAPPING = 3;
+    
+    // Obtener eventos para la fecha objetivo
+    final eventsForDate = ref.read(eventsForDateProvider(
+      EventsForDateParams(
+        calendarParams: CalendarNotifierParams(
+          planId: widget.plan.id ?? '',
+          userId: widget.plan.userId,
+          initialDate: widget.plan.startDate,
+          initialColumnCount: widget.plan.columnCount,
+        ),
+        date: targetDate,
+      ),
+    ));
+    
+    // Crear segmentos para todos los eventos relevantes (incluyendo continuaciones del día anterior)
+    final allRelevantEvents = <Event>[...eventsForDate];
+    
+    // Si el día anterior tiene eventos que cruzan medianoche, necesitamos incluirlos
+    if (targetDate.isAfter(widget.plan.startDate)) {
+      final previousDate = targetDate.subtract(const Duration(days: 1));
+      final previousDayEvents = ref.read(eventsForDateProvider(
+        EventsForDateParams(
+          calendarParams: CalendarNotifierParams(
+            planId: widget.plan.id ?? '',
+            userId: widget.plan.userId,
+            initialDate: widget.plan.startDate,
+            initialColumnCount: widget.plan.columnCount,
+          ),
+          date: previousDate,
+        ),
+      ));
+      
+      allRelevantEvents.addAll(
+        previousDayEvents.where((e) => _eventCrossesMidnight(e))
+      );
+    }
+    
+    // Añadir el evento a validar a la lista (si no es edición)
+    allRelevantEvents.add(eventToCheck);
+    
+    // Expandir a segmentos para este día
+    final segments = _expandEventsToSegments(allRelevantEvents, targetDate);
+    
+    // Filtrar eventos de alojamiento y el evento a excluir
+    final relevantSegments = segments.where((segment) {
+      if (segment.originalEvent.typeFamily == 'alojamiento') return false;
+      if (eventIdToExclude != null && segment.originalEvent.id == eventIdToExclude) return false;
+      return true;
+    }).toList();
+    
+    // Para cada minuto del día, verificar cuántos eventos están activos
+    final eventToCheckStart = eventToCheck.hour * 60 + eventToCheck.startMinute;
+    final eventToCheckEnd = eventToCheckStart + eventToCheck.durationMinutes;
+    
+    // Solo necesitamos verificar los minutos que ocupa el evento a validar
+    for (int minute = eventToCheckStart; minute < eventToCheckEnd.clamp(0, 1440); minute++) {
+      int overlappingCount = 0;
+      
+      // Contar cuántos segmentos ocupan este minuto específico
+      for (final segment in relevantSegments) {
+        final segmentStart = segment.startMinute;
+        final segmentEnd = segment.endMinute;
+        
+        // ¿Este segmento ocupa este minuto?
+        if (minute >= segmentStart && minute < segmentEnd) {
+          overlappingCount++;
+        }
+      }
+      
+      // Si en algún minuto hay más de MAX_OVERLAPPING eventos, excede el límite
+      if (overlappingCount > MAX_OVERLAPPING) {
+        return true;
+      }
+    }
+    
+    return false; // No excede el límite
+  }
+
+  /// Crea un evento virtual que representa la continuación de un evento que cruza medianoche
+  Event _createContinuationEvent(Event originalEvent) {
+    final startTime = originalEvent.hour * 60 + originalEvent.startMinute;
+    final endTime = startTime + originalEvent.durationMinutes;
+    final continuationDurationMinutes = endTime - 1440; // Duración en el día siguiente
+    
+    // Crear fecha para el día siguiente
+    final nextDayDate = originalEvent.date.add(const Duration(days: 1));
+    
+    return Event(
+      id: '${originalEvent.id}_continuation', // ID único para evitar conflictos en drag & drop
+      planId: originalEvent.planId,
+      userId: originalEvent.userId,
+      date: nextDayDate,
+      description: originalEvent.description,
+      typeFamily: originalEvent.typeFamily,
+      hour: 0, // Empieza a las 00:00
+      duration: 0, // Mantenido por compatibilidad
+      startMinute: 0,
+      durationMinutes: continuationDurationMinutes,
+      color: originalEvent.color,
+      isDraft: originalEvent.isDraft,
+      createdAt: originalEvent.createdAt,
+      updatedAt: originalEvent.updatedAt,
+    );
+  }
+
+  /// Obtiene el evento original a partir del ID de una continuación
+  String _getOriginalEventId(String continuationId) {
+    return continuationId.replaceAll('_continuation', '');
+  }
+
+  /// Verifica si un evento es una continuación virtual
+  bool _isContinuationEvent(Event event) {
+    return event.id?.endsWith('_continuation') ?? false;
+  }
+
+  /// Construye un widget de evento para el día siguiente (parte que cruza medianoche)
+  Widget _buildEventWidgetForNextDay(Event event, int dayOffset, double availableWidth) {
+    final cellWidth = availableWidth / _daysPerGroup;
+    final cellHeight = AppConstants.cellHeight;
+    
+    final x = (dayOffset * cellWidth) + (cellWidth * 0.025);
+    final scrollOffset = _dataScrollController.hasClients ? _dataScrollController.offset : 0.0;
+    
+    // Calcular la parte del evento que está en el día siguiente
+    final startTime = event.hour * 60 + event.startMinute;
+    final endTime = startTime + event.durationMinutes;
+    final midnightMinutes = 1440; // 24:00 = 1440 minutos
+    
+    // La parte que cruza medianoche empieza a las 00:00 del día siguiente
+    final nextDayStartMinutes = 0;
+    final nextDayEndMinutes = endTime - midnightMinutes;
+    final nextDayDurationMinutes = nextDayEndMinutes - nextDayStartMinutes;
+    
+    // Ajustar posición Y: empezar desde el top de las celdas de datos
+    final totalFixedHeight = 0.0; // Ajustado para alineación correcta en 00:00h
+    final baseY = totalFixedHeight + (nextDayStartMinutes * cellHeight / 60);
+    final y = baseY - scrollOffset;
+    
+    final width = cellWidth * 0.95;
+    final height = (nextDayDurationMinutes * cellHeight / 60).clamp(0.0, 1440.0); // Limitar altura máxima
+    
+    return Positioned(
+      left: x,
+      top: y,
+      width: width,
+      height: height,
+      child: _buildDraggableEventForNextDay(event, height),
+    );
+  }
+
+
+  /// Construye un evento draggable para el día siguiente con fuente ajustada
+  Widget _buildDraggableEventForNextDay(Event event, double height) {
+    final isThisEventDragging = _draggingEvent?.id == event.id;
+
+    final displayOffset = isThisEventDragging
+        ? _calculateConsistentPosition(event, _dragOffset)
+        : _dragOffset;
+
+    // Calcular tamaño de fuente basado en la altura del evento
+    double fontSize;
+    if (height < 20) {
+      fontSize = 6; // Muy pequeño para eventos muy pequeños
+    } else if (height < 40) {
+      fontSize = 8; // Pequeño para eventos pequeños
+    } else {
+      fontSize = 10; // Tamaño normal
+    }
+
+    return GestureDetector(
+      onTap: () => _showEventDialog(event),
+      onPanStart: (details) => _startDrag(event, details),
+      onPanUpdate: (details) => _updateDrag(details),
+      onPanEnd: (details) => _endDrag(details),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 50),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(
+          displayOffset.dx,
+          displayOffset.dy,
+          0,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: ColorUtils.getEventColor(event.typeFamily, event.isDraft, customColor: event.color),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: ColorUtils.getEventBorderColor(event.typeFamily, event.isDraft, customColor: event.color),
+              width: 1,
+            ),
+            boxShadow: isThisEventDragging ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              )
+            ] : null,
+          ),
+          child: ClipRect(
+            child: Padding(
+              padding: const EdgeInsets.all(1), // Padding mínimo
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Título del evento
+                  Flexible(
+                    child: Text(
+                      event.description,
+                      style: TextStyle(
+                        color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1, // Solo una línea para eventos pequeños
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  
+                  // Mostrar horas solo si hay espacio suficiente
+                  if (height > 25) ...[
+                    const SizedBox(height: 2),
+                    
+                    // Horas en una sola línea para eventos multi-día
+                    Flexible(
+                      child: Text(
+                        '00:00 - ${_formatNextDayEndTime(event)}',
+                        style: TextStyle(
+                          color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                          fontSize: fontSize - 2,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-          );
-        } else {
-          return _buildAccommodationCell(col - 1, cellWidth);
-        }
-      }),
+          ),
+        ),
+      ),
     );
   }
 
-  /// Construye las filas de datos (horas) con eventos solapados
-  List<TableRow> _buildDataRows(double cellWidth) {
-    return List.generate(AppConstants.defaultRowCount, (row) {
-      return TableRow(
-        children: List.generate(columnCount, (col) {
-          if (col == 0) {
-            return _buildTimeCell(row);
-          } else {
-            return _buildEventCellWithOverlapping(row, col - 1, cellWidth);
+  /// Posiciona el scroll en la hora del primer evento del plan
+  void _scrollToFirstEvent() {
+    // Verificar que el plan tenga ID
+    if (widget.plan.id == null) {
+      return;
+    }
+    
+    // Intentar obtener eventos con un pequeño delay para asegurar que estén cargados
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _performScrollToFirstEvent();
+    });
+  }
+  
+  /// Realiza el scroll al primer evento (llamado con delay)
+  void _performScrollToFirstEvent() {
+    // Verificar que el widget sigue montado
+    if (!mounted) return;
+    
+    // Obtener todos los eventos del plan
+    final allEvents = <Event>[];
+    for (int i = 0; i < widget.plan.durationInDays; i++) {
+      final date = widget.plan.startDate.add(Duration(days: i));
+      try {
+        final events = ref.read(eventsForDateProvider(EventsForDateParams(
+          calendarParams: CalendarNotifierParams(
+            planId: widget.plan.id!,
+            userId: widget.plan.userId,
+            initialDate: widget.plan.startDate,
+          ),
+          date: date,
+        )));
+        allEvents.addAll(events);
+      } catch (e) {
+        // Si hay error al obtener eventos, continuar con el siguiente día
+        continue;
+      }
+    }
+    
+    // Si no hay eventos, no hacer scroll
+    if (allEvents.isEmpty) {
+      return;
+    }
+    
+    // Encontrar el evento que empieza más temprano
+    Event? earliestEvent;
+    int earliestTime = 1440; // 24:00 en minutos
+    
+    for (final event in allEvents) {
+      final eventTime = event.hour * 60 + event.startMinute;
+      if (eventTime < earliestTime) {
+        earliestTime = eventTime;
+        earliestEvent = event;
+      }
+    }
+    
+    if (earliestEvent == null) {
+      return;
+    }
+    
+    // Calcular la posición de scroll
+    final cellHeight = AppConstants.cellHeight;
+    final headerHeight = 60.0; // Altura de la fila de días
+    final accommodationHeight = 30.0; // Altura de la fila de alojamientos
+    final totalFixedHeight = headerHeight + accommodationHeight;
+    
+    // Determinar la posición de scroll basada en el tipo de evento
+    int targetScrollMinutes;
+    
+    // Verificar si es un evento de todo el día
+    final isAllDayEvent = _isAllDayEvent(earliestEvent);
+    
+    if (isAllDayEvent) {
+      // Para eventos de todo el día, mostrar desde las 00:00
+      targetScrollMinutes = 0;
+    } else {
+      // Para eventos normales, mostrar 1 hora antes del primer evento
+      final eventStartMinutes = earliestEvent.hour * 60 + earliestEvent.startMinute;
+      targetScrollMinutes = (eventStartMinutes - 60).clamp(0, 1380); // Máximo hasta 23:00
+    }
+    
+    final scrollPosition = totalFixedHeight + (targetScrollMinutes * cellHeight / 60);
+    
+    // Aplicar el scroll
+    if (_dataScrollController.hasClients) {
+      final maxScrollExtent = _dataScrollController.position.maxScrollExtent;
+      final finalScrollPosition = scrollPosition.clamp(0.0, maxScrollExtent);
+      
+      // Deshabilitar sincronización durante el auto-scroll
+      _isAutoScrolling = true;
+      
+      _dataScrollController.animateTo(
+        finalScrollPosition,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      ).then((_) {
+        // Forzar actualización de la UI para reposicionar eventos
+        if (mounted) {
+          setState(() {});
+        }
+        
+        // Rehabilitar sincronización después del scroll
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _isAutoScrolling = false;
+            // Forzar otra actualización después de reabilitar sincronización
+            setState(() {});
           }
-        }),
-      );
+        });
+      });
+      
+      // Sincronizar también el scroll de horas
+      if (_hoursScrollController.hasClients) {
+        _hoursScrollController.animateTo(
+          finalScrollPosition,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
+  }
+
+  /// Determina si un evento es de todo el día
+  bool _isAllDayEvent(Event event) {
+    // Un evento es de todo el día si:
+    // 1. Empieza a las 00:00 y dura al menos 20 horas, O
+    // 2. Dura al menos 23 horas (independientemente de la hora de inicio)
+    final durationHours = event.durationMinutes / 60;
+    final startsAtMidnight = event.hour == 0 && event.startMinute == 0;
+    
+    return (startsAtMidnight && durationHours >= 20) || durationHours >= 23;
+  }
+
+  /// Formatea la hora de fin para eventos multi-día en el segundo día
+  String _formatNextDayEndTime(Event event) {
+    // Calcular cuántos minutos del evento están en el segundo día
+    final nextDayStartMinutes = 0; // Empieza a las 00:00 del segundo día
+    final nextDayEndMinutes = event.totalEndMinutes - 1440; // Minutos que sobran después de 24:00
+    
+    // Convertir a hora:minuto
+    final endHour = nextDayEndMinutes ~/ 60;
+    final endMinute = nextDayEndMinutes % 60;
+    
+    return '${endHour.toString().padLeft(2, '0')}:${endMinute.toString().padLeft(2, '0')}';
+  }
+  
+  /// Obtiene la hora de fin para mostrar en eventos que cruzan medianoche (día actual)
+  String _getNextDayEndTime(Event event) {
+    final nextDayEndMinutes = event.totalEndMinutes - 1440;
+    final endHour = nextDayEndMinutes ~/ 60;
+    final endMinute = nextDayEndMinutes % 60;
+    return '${endHour.toString().padLeft(2, '0')}:${endMinute.toString().padLeft(2, '0')} +1';
+  }
+
+  /// Construye widgets para segmentos solapados
+  List<Widget> _buildOverlappingSegmentWidgets(OverlappingSegmentGroup group, int dayOffset, double availableWidth) {
+    final cellWidth = availableWidth / _daysPerGroup;
+    final widgets = <Widget>[];
+    
+    // Indicador de límite alcanzado
+    const int MAX_OVERLAPPING = 3;
+    final isAtLimit = group.segments.length >= MAX_OVERLAPPING;
+    
+    // Calcular ancho para cada segmento solapado
+    final segmentWidth = (cellWidth * 0.95) / group.segments.length;
+    
+    for (int i = 0; i < group.segments.length; i++) {
+      final segment = group.segments[i];
+      final x = (dayOffset * cellWidth) + (cellWidth * 0.025) + (i * segmentWidth);
+      
+      widgets.add(_buildSegmentWidgetAtPosition(
+        segment, 
+        x, 
+        segmentWidth, 
+        availableWidth,
+        showLimitIndicator: isAtLimit && i == group.segments.length - 1, // Mostrar en el último
+      ));
+    }
+    
+    return widgets;
+  }
+
+  /// Construye un segmento en una posición específica (para segmentos solapados)
+  Widget _buildSegmentWidgetAtPosition(
+    EventSegment segment, 
+    double x, 
+    double width, 
+    double availableWidth, {
+    bool showLimitIndicator = false,
+  }) {
+    final cellHeight = AppConstants.cellHeight;
+    
+    // NO restar scrollOffset porque los eventos están dentro del SingleChildScrollView
+    final totalFixedHeight = 0.0;
+    final y = totalFixedHeight + (segment.startMinute * cellHeight / 60);
+    
+    // Calcular altura del segmento
+    final height = (segment.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+    
+    return Positioned(
+      left: x,
+      top: y,
+      width: width,
+      height: height,
+      child: _buildDraggableSegment(segment, height, showLimitIndicator: showLimitIndicator),
+    );
+  }
+
+  /// Construye un segmento individual (sin solapamiento)
+  Widget _buildSegmentWidget(EventSegment segment, int dayOffset, double availableWidth) {
+    final cellWidth = availableWidth / _daysPerGroup;
+    final cellHeight = AppConstants.cellHeight;
+    
+    final x = (dayOffset * cellWidth) + (cellWidth * 0.025);
+    final width = cellWidth * 0.95;
+    
+    // NO restar scrollOffset porque los eventos están dentro del SingleChildScrollView
+    final totalFixedHeight = 0.0;
+    final y = totalFixedHeight + (segment.startMinute * cellHeight / 60);
+    
+    // Calcular altura del segmento
+    final height = (segment.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+    
+    return Positioned(
+      left: x,
+      top: y,
+      width: width,
+      height: height,
+      child: _buildDraggableSegment(segment, height),
+    );
+  }
+
+  /// Construye un segmento draggable
+  Widget _buildDraggableSegment(EventSegment segment, double height, {bool showLimitIndicator = false}) {
+    final originalEvent = segment.originalEvent;
+    final isThisEventDragging = _draggingEvent?.id == originalEvent.id;
+    
+    // Calcular posición magnética si está siendo arrastrado
+    final displayOffset = isThisEventDragging 
+        ? _calculateConsistentPosition(originalEvent, _dragOffset)
+        : Offset.zero;
+    
+    // Calcular tamaño de fuente basado en la altura
+    double fontSize;
+    if (height < 20) {
+      fontSize = 6;
+    } else if (height < 40) {
+      fontSize = 8;
+    } else {
+      fontSize = 10;
+    }
+    
+    // IMPORTANTE: Solo permitir drag desde el primer segmento del evento
+    // Continuaciones (isFirst=false) solo son clickeables, no draggables
+    final Widget child = segment.isFirst
+        ? GestureDetector(
+            onTap: () => _showEventDialog(originalEvent),
+            onPanStart: (details) => _startDrag(originalEvent, details),
+            onPanUpdate: (details) => _updateDrag(details),
+            onPanEnd: (details) => _endDrag(details),
+            child: _buildSegmentContainer(segment, height, fontSize, isThisEventDragging, displayOffset, showLimitIndicator),
+          )
+        : GestureDetector(
+            onTap: () => _showEventDialog(originalEvent),
+            // Sin onPanStart/Update/End - las continuaciones NO son draggables
+            child: _buildSegmentContainer(segment, height, fontSize, false, Offset.zero, showLimitIndicator),
+          );
+    
+    return child;
+  }
+
+  /// Construye el container visual del segmento (separado para reutilización)
+  Widget _buildSegmentContainer(EventSegment segment, double height, double fontSize, bool isDragging, Offset displayOffset, bool showLimitIndicator) {
+    return Stack(
+      children: [
+        AnimatedContainer(
+        duration: const Duration(milliseconds: 50),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(
+          displayOffset.dx,
+          displayOffset.dy,
+          0,
+        ),
+        child: Container(
+          height: double.infinity,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: ColorUtils.getEventColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: ColorUtils.getEventBorderColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
+              width: 1,
+            ),
+            boxShadow: isDragging ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              )
+            ] : null,
+          ),
+          child: ClipRect(
+            child: Padding(
+              padding: EdgeInsets.all(height < 15 ? 0.5 : 1),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Descripción del evento
+                  Flexible(
+                    child: Text(
+                      segment.description,
+                      style: TextStyle(
+                        color: ColorUtils.getEventTextColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  // Hora
+                  if (height > 15)
+                    Flexible(
+                      child: Text(
+                        _formatSegmentTime(segment),
+                        style: TextStyle(
+                          color: ColorUtils.getEventTextColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
+                          fontSize: fontSize - 2,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      // Indicador visual de límite alcanzado
+      if (showLimitIndicator)
+        Positioned(
+          top: 2,
+          right: 2,
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: const Icon(
+              Icons.warning_amber_rounded,
+              size: 10,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Formatea el tiempo de un segmento según si es inicio, continuación o fin
+  String _formatSegmentTime(EventSegment segment) {
+    final startHour = segment.startMinute ~/ 60;
+    final startMin = segment.startMinute % 60;
+    final endHour = segment.endMinute ~/ 60;
+    final endMin = segment.endMinute % 60;
+    
+    if (segment.isFirst && segment.isLast) {
+      // Evento normal de un solo día
+      return '${startHour.toString().padLeft(2, '0')}:${startMin.toString().padLeft(2, '0')} - ${endHour.toString().padLeft(2, '0')}:${endMin.toString().padLeft(2, '0')}';
+    } else if (segment.isFirst) {
+      // Primer día de evento multi-día
+      return '${startHour.toString().padLeft(2, '0')}:${startMin.toString().padLeft(2, '0')} - ${endHour.toString().padLeft(2, '0')}:${endMin.toString().padLeft(2, '0')} +1';
+    } else if (segment.isLast) {
+      // Último día de evento multi-día
+      return '00:00 - ${endHour.toString().padLeft(2, '0')}:${endMin.toString().padLeft(2, '0')}';
+    } else {
+      // Día intermedio (raro, pero posible en eventos muy largos)
+      return '00:00 - 23:59';
+    }
+  }
+
+  /// Construye un evento individual como Positioned widget
+  Widget _buildEventWidget(Event event, double availableWidth) {
+    final startDayIndex = _currentDayGroup * _daysPerGroup + 1;
+    final eventDayIndex = event.date.difference(widget.plan.startDate).inDays + 1;
+    final dayIndex = eventDayIndex - startDayIndex;
+    
+    // Si el evento no está en el rango de días actual, no lo mostramos
+    if (dayIndex < 0 || dayIndex >= _daysPerGroup) {
+      return const SizedBox.shrink();
+    }
+    
+        // Usar el ancho real disponible pasado desde LayoutBuilder
+        final cellWidth = availableWidth / _daysPerGroup;
+        
+    final cellHeight = AppConstants.cellHeight;
+    
+    
+    final x = (dayIndex * cellWidth) + (cellWidth * 0.025); // Centrado: 2.5% de margen a cada lado
+    final scrollOffset = _dataScrollController.hasClients ? _dataScrollController.offset : 0.0;
+    
+    // Posición Y: ahora que los eventos están dentro del SingleChildScrollView,
+    // no necesitamos restar el scrollOffset
+    final totalFixedHeight = 0.0; // Ajustado para alineación correcta en 00:00h
+    final y = totalFixedHeight + (event.totalStartMinutes * cellHeight / 60);
+    
+    final width = cellWidth * 0.95; // 5% más estrecho que la columna
+    
+    // Calcular altura del evento - si cruza medianoche, mostrar solo la parte del día actual
+    double height;
+    if (_eventCrossesMidnight(event)) {
+      final startTime = event.hour * 60 + event.startMinute;
+      final midnightMinutes = 1440; // 24:00 = 1440 minutos
+      final endTime = startTime + event.durationMinutes;
+      final currentDayDurationMinutes = midnightMinutes - startTime;
+      height = (currentDayDurationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+    } else {
+      height = (event.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+    }
+    
+    return Positioned(
+      left: x,
+      top: y,
+      width: width,
+      height: height,
+      child: _buildDraggableEvent(event),
+    );
+  }
+
+  /// Construye un evento draggable
+  Widget _buildDraggableEvent(Event event) {
+    final isThisEventDragging = _draggingEvent?.id == event.id;
+    
+    // Calcular posición magnética si está siendo arrastrado
+    final displayOffset = isThisEventDragging 
+        ? _calculateConsistentPosition(event, _dragOffset)
+        : _dragOffset;
+    
+    // Calcular altura del evento para ajustar el tamaño de fuente
+    final eventHeight = (event.durationMinutes * AppConstants.cellHeight / 60);
+    
+    // Calcular tamaño de fuente basado en la altura del evento
+    double fontSize;
+    if (eventHeight < 20) {
+      fontSize = 6; // Muy pequeño para eventos muy pequeños
+    } else if (eventHeight < 40) {
+      fontSize = 8; // Pequeño para eventos pequeños
+    } else {
+      fontSize = 10; // Tamaño normal
+    }
+    
+    return GestureDetector(
+      onTap: () => _showEventDialog(event),
+      onPanStart: (details) => _startDrag(event, details),
+      onPanUpdate: (details) => _updateDrag(details),
+      onPanEnd: (details) => _endDrag(details),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 50),
+        curve: Curves.easeOut,
+        transform: isThisEventDragging ? Matrix4.translationValues(displayOffset.dx, displayOffset.dy, 0) : null,
+        child: Container(
+          decoration: BoxDecoration(
+            color: ColorUtils.getEventColor(event.typeFamily, event.isDraft, customColor: event.color),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: ColorUtils.getEventBorderColor(event.typeFamily, event.isDraft, customColor: event.color),
+              width: 1,
+            ),
+            boxShadow: isThisEventDragging ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ] : null,
+          ),
+          child: ClipRect(
+            child: Padding(
+              padding: EdgeInsets.all(eventHeight < 30 ? 1 : 2), // Padding más pequeño
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Título del evento
+                  Flexible(
+                    child: Text(
+                      event.description,
+                      style: TextStyle(
+                        color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: eventHeight < 30 ? 1 : 2, // Líneas adaptativas
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  
+                  // Mostrar horas solo si hay espacio suficiente
+                  if (eventHeight > 25) ...[
+                    const SizedBox(height: 2),
+                    
+                    // Horas en una sola línea
+                    Flexible(
+                      child: Text(
+                        _eventCrossesMidnight(event)
+                            ? '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')} - ${_getNextDayEndTime(event)}'
+                            : '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')} - ${event.endHour.toString().padLeft(2, '0')}:${event.endMinute.toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                          fontSize: fontSize - 2,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Inicia el drag de un evento
+  void _startDrag(Event event, DragStartDetails details) {
+    setState(() {
+      _draggingEvent = event;
+      _isDragging = true;
+      _dragOffset = Offset.zero;
     });
   }
 
-  /// Construye una celda de hora
-  Widget _buildTimeCell(int row) {
-    return Container(
-      height: AppConstants.cellHeight,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColorScheme.color0, // Usar color0 del esquema
-        border: Border.all(color: AppColorScheme.gridLineColor), // Usar gridLineColor del esquema
-      ),
-      child: Align(
-        alignment: Alignment.topCenter, // Alineado a la parte superior
-        child: Padding(
-          padding: const EdgeInsets.only(top: 4), // Pequeño margen superior
-          child: Text(
-            '${row.toString().padLeft(2, '0')}:00',
-            style: const TextStyle(fontSize: 12),
-          ),
-        ),
-      ),
-    );
+  /// Actualiza la posición durante el drag
+  void _updateDrag(DragUpdateDetails details) {
+    setState(() {
+      _dragOffset += details.delta;
+    });
   }
 
-  /// Construye una celda de evento con soporte para eventos solapados
-  Widget _buildEventCellWithOverlapping(int row, int col, double cellWidth) {
-    final date = DateService.getDateForColumn(selectedDate, col);
-    final hour = row;
+  /// Calcula la posición magnética para el drag visual
+  // Función común para calcular la posición consistente
+  Offset _calculateConsistentPosition(Event event, Offset dragOffset) {
+    // Obtener dimensiones de celda
+    final screenWidth = MediaQuery.of(context).size.width;
+    final availableWidth = screenWidth - 80.0;
+    final cellWidth = availableWidth / _daysPerGroup;
     
-    // Obtener todos los eventos de este día
-    final dayEvents = _events.where((event) {
-      return event.date.year == date.date.year &&
-             event.date.month == date.date.month &&
-             event.date.day == date.date.day;
-    }).toList();
+    // Calcular posición actual del evento
+    final currentDayIndex = event.date.difference(widget.plan.startDate).inDays + 1;
+    final startDayIndex = _currentDayGroup * _daysPerGroup + 1;
+    final currentColumnIndex = currentDayIndex - startDayIndex;
     
-    // Buscar eventos que están activos en esta hora específica
-    final activeEvents = dayEvents.where((event) {
-      return hour >= event.hour && hour < (event.hour + event.duration);
-    }).toList();
+    // Calcular nueva columna basada en el offset horizontal
+    final totalOffsetX = dragOffset.dx;
+    final columnProgress = totalOffsetX / cellWidth;
+    final newColumnOffset = columnProgress.round(); // Inmediato
+    final newColumnIndex = currentColumnIndex + newColumnOffset;
     
-    // Si hay eventos activos, calcular el ancho basado en el grupo de solapamiento
-    if (activeEvents.isNotEmpty) {
-      // Encontrar el grupo de solapamiento para cada evento activo
-      final overlappingGroups = _groupOverlappingEvents(dayEvents);
-      
-      // Si hay más de un evento, mostrar como solapados
-      if (activeEvents.length > 1) {
-        // Crear lista de widgets para todos los eventos activos
-        final eventWidgets = <Widget>[];
-        
-        for (final event in activeEvents) {
-          for (final group in overlappingGroups) {
-            if (group.events.contains(event)) {
-              final eventIndex = group.events.indexOf(event);
-              final totalEvents = group.events.length;
-              final eventWidth = cellWidth / totalEvents;
-              final leftPosition = eventIndex * eventWidth;
-              
-              eventWidgets.add(
-                Positioned(
-                  left: leftPosition,
-                  width: eventWidth,
-                  height: AppConstants.cellHeight,
-                  child: GestureDetector(
-                    onTap: () => _showEventDialog(event),
-                    onPanStart: (details) => _handleEventDragStart(event, details),
-                    onPanUpdate: (details) => _handleEventDragUpdate(event, details),
-                    onPanEnd: (details) => _handleEventDragEnd(event, details),
-                    child: EventCell(
-                      event: event,
-                      planId: widget.plan.id ?? '',
-                      date: date.date,
-                      hour: hour,
-                      cellWidth: eventWidth,
-                      onTap: () => _showEventDialog(event),
-                      onEventMoved: _onEventMoved,
-                      onEventResized: _onEventResized,
-                      onEventDeleted: _onEventDeleted,
-                    ),
-                  ),
-                ),
-              );
-              break; // Salir del bucle interno una vez encontrado el grupo
-            }
-          }
-        }
-        
-        return Container(
-          height: AppConstants.cellHeight,
-          width: cellWidth,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColorScheme.gridLineColor),
-            color: Colors.transparent,
-          ),
-          child: Stack(
-            children: eventWidgets,
-          ),
-        );
-      } else {
-        // Si hay solo un evento, mostrar normalmente
-        return _buildEventCell(row, col, cellWidth);
-      }
+    // Verificar que la nueva columna esté en el rango válido
+    if (newColumnIndex < 0 || newColumnIndex >= _daysPerGroup) {
+      return dragOffset; // Mantener posición actual si está fuera de rango
     }
     
-    // Si no hay eventos, mostrar celda vacía
-    return _buildEventCell(row, col, cellWidth);
-  }
-
-  /// Construye eventos solapados dentro de una celda
-  Widget _buildOverlappingEventsInCell(List<Event> events, double cellWidth, DateTime date, int hour) {
-    return Row(
-      children: events.asMap().entries.map((entry) {
-        final index = entry.key;
-        final event = entry.value;
-        final width = cellWidth / events.length;
-        
-        return Expanded(
-          child: Container(
-            height: AppConstants.cellHeight,
-            width: width,
-            margin: const EdgeInsets.symmetric(horizontal: 1),
-            child: EventCell(
-              event: event,
-              planId: widget.plan.id ?? '',
-              date: date,
-              hour: hour,
-              cellWidth: width,
-              onTap: () => _showEventDialog(event),
-              onEventMoved: _onEventMoved,
-              onEventResized: _onEventResized,
-              onEventDeleted: _onEventDeleted,
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  /// Construye eventos solapados posicionados absolutamente (método no usado)
-  List<Widget> _buildOverlappingEvents(double cellWidth) {
-    final events = <Widget>[];
+    // Calcular offset magnético horizontal - usar el dragOffset directamente
+    final magneticX = dragOffset.dx;
     
-    for (int col = 1; col < columnCount; col++) {
-      final date = DateService.getDateForColumn(selectedDate, col - 1);
+    // Para el magnetismo vertical, usar el dragOffset.dy directamente
+    // SIN cálculos complejos - solo el movimiento del mouse
+    final magneticY = dragOffset.dy;
+    
+    
+    
+    
+    
+    return Offset(magneticX, magneticY);
+  }
+
+  /// Termina el drag y posiciona el evento
+  void _endDrag(DragEndDetails details) async {
+    if (_draggingEvent == null) return;
+    
+    
+    final eventToUpdate = _draggingEvent!;
+    final dragOffset = _dragOffset;
+    
+    try {
+      // Calcular la nueva posición basada en el offset del drag
+      final newPosition = _calculateNewEventPosition(eventToUpdate, dragOffset);
       
-      // Obtener todos los eventos de este día
-      final dayEvents = _events.where((event) {
-        return event.date.year == date.date.year &&
-               event.date.month == date.date.month &&
-               event.date.day == date.date.day;
-      }).toList();
-      
-      // Agrupar eventos solapados
-      final overlappingGroups = _groupOverlappingEvents(dayEvents);
-      
-      for (final group in overlappingGroups) {
-        for (int eventIndex = 0; eventIndex < group.events.length; eventIndex++) {
-          final event = group.events[eventIndex];
-          final totalEvents = group.events.length;
-          
-          // Calcular posición y tamaño
-          final left = (col - 1) * cellWidth + (eventIndex * cellWidth / totalEvents);
-          final top = group.startHour * AppConstants.cellHeight;
-          final width = cellWidth / totalEvents;
-          final height = (group.endHour - group.startHour + 1) * AppConstants.cellHeight;
-          
-          events.add(
-            Positioned(
-              left: left,
-              top: top,
-              width: width,
-              height: height,
-              child: EventCell(
-                event: event,
-                planId: widget.plan.id ?? '',
-                date: date.date,
-                hour: event.hour,
-                cellWidth: width,
-                onTap: () => _showEventDialog(event),
-                onEventMoved: _onEventMoved,
-                onEventResized: _onEventResized,
-                onEventDeleted: _onEventDeleted,
+      if (newPosition != null) {
+        // Crear una copia del evento con la nueva posición
+        final updatedEvent = eventToUpdate.copyWith(
+          date: newPosition['date'] as DateTime,
+          hour: newPosition['hour'] as int,
+          startMinute: newPosition['startMinute'] as int,
+          updatedAt: DateTime.now(),
+        );
+        
+        // VALIDAR: ¿Excedería el límite de 3 solapados en la nueva posición?
+        if (_wouldExceedOverlapLimit(
+          eventToCheck: updatedEvent,
+          targetDate: updatedEvent.date,
+          eventIdToExclude: eventToUpdate.id, // Excluir el evento que estamos moviendo
+        )) {
+          // Mostrar mensaje y cancelar el drag
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  '⚠️ No se puede mover: ya hay 3 eventos en ese horario',
+                ),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 3),
               ),
-            ),
-          );
-        }
-      }
-    }
-    
-    return events;
-  }
-
-  /// Agrupa eventos solapados
-  List<OverlappingEventGroup> _groupOverlappingEvents(List<Event> events) {
-    if (events.isEmpty) return [];
-    
-    final groups = <OverlappingEventGroup>[];
-    final processedEvents = <String>{};
-    
-    for (final event in events) {
-      if (processedEvents.contains(event.id)) continue;
-      
-      final overlappingEvents = <Event>[event];
-      final eventQueue = <Event>[event];
-      processedEvents.add(event.id ?? '');
-      
-      int startHour = event.hour;
-      int endHour = event.hour + event.duration - 1;
-      
-      while (eventQueue.isNotEmpty) {
-        final currentEvent = eventQueue.removeAt(0);
-        
-        for (final otherEvent in events) {
-          if (processedEvents.contains(otherEvent.id)) continue;
-          if (otherEvent.id == currentEvent.id) continue;
-          
-          final otherStart = otherEvent.hour;
-          final otherEnd = otherEvent.hour + otherEvent.duration - 1;
-          
-          if (_hasOverlap(startHour, endHour, otherStart, otherEnd)) {
-            overlappingEvents.add(otherEvent);
-            eventQueue.add(otherEvent);
-            processedEvents.add(otherEvent.id ?? '');
-            
-            startHour = startHour < otherStart ? startHour : otherStart;
-            endHour = endHour > otherEnd ? endHour : otherEnd;
+            );
           }
+          
+          // Limpiar estado (el evento vuelve a su posición original)
+          setState(() {
+            _draggingEvent = null;
+            _isDragging = false;
+            _dragOffset = Offset.zero;
+          });
+          return; // Cancelar el drag
+        }
+        
+        // Si pasa validación, actualizar el evento en la base de datos
+        final eventService = ref.read(eventServiceProvider);
+        final success = await eventService.updateEvent(updatedEvent);
+        
+        if (success) {
+          // Invalidar el CalendarNotifier que es la fuente real de los datos
+          ref.invalidate(calendarNotifierProvider(
+            CalendarNotifierParams(
+              planId: widget.plan.id ?? '',
+              userId: widget.plan.userId,
+              initialDate: widget.plan.startDate,
+              initialColumnCount: widget.plan.columnCount,
+            ),
+          ));
+          
+          // Forzar reconstrucción de la UI
+          setState(() {});
         }
       }
-      
-      if (overlappingEvents.length > 1) {
-        groups.add(OverlappingEventGroup(
-          events: overlappingEvents,
-          date: event.date,
-          startHour: startHour,
-          endHour: endHour,
-          maxOverlap: overlappingEvents.length,
-        ));
-      }
-    }
-    
-    return groups;
-  }
-
-  /// Verifica si dos rangos de tiempo se solapan
-  bool _hasOverlap(int start1, int end1, int start2, int end2) {
-    return (start1 <= end2) && (end1 >= start2);
-  }
-
-  // Variables para drag & drop de eventos solapados
-  bool _isDraggingOverlapping = false;
-  Offset _dragStartPosition = Offset.zero;
-  double _dragOffset = 0.0;
-  double _dragOffsetX = 0.0;
-
-  /// Maneja el inicio del drag de un evento solapado
-  void _handleEventDragStart(Event event, DragStartDetails details) {
-    _dragStartPosition = details.localPosition;
-    _isDraggingOverlapping = true;
-    print('🔄 Inicio drag evento solapado: ${event.description}');
-  }
-
-  /// Maneja la actualización del drag de un evento solapado
-  void _handleEventDragUpdate(Event event, DragUpdateDetails details) {
-    if (_isDraggingOverlapping) {
-      final delta = details.localPosition - _dragStartPosition;
-      _dragOffset = delta.dy;
-      _dragOffsetX = delta.dx;
-      print('🔄 Drag update: deltaY=${delta.dy}, deltaX=${delta.dx}');
+    } catch (e) {
+      // Error updating event
+    } finally {
+      // Limpiar estado después de procesar el drop
+      setState(() {
+        _draggingEvent = null;
+        _isDragging = false;
+        _dragOffset = Offset.zero;
+      });
     }
   }
 
-  /// Maneja el final del drag de un evento solapado
-  void _handleEventDragEnd(Event event, DragEndDetails details) {
-    if (_isDraggingOverlapping) {
-      // Calcular nueva posición basada en el offset
-      final hourDelta = _calculateNewHour(_dragOffset);
-      final dayDelta = _calculateNewDate(_dragOffsetX);
+  /// Calcula la nueva posición del evento basada en el offset del drag
+  Map<String, dynamic>? _calculateNewEventPosition(Event event, Offset dragOffset) {
+    try {
+      // Obtener el ancho de una celda
+      final screenWidth = MediaQuery.of(context).size.width;
+      final availableWidth = screenWidth - 80.0; // Restar columna de horas
+      final cellWidth = availableWidth / _daysPerGroup;
+      final cellHeight = AppConstants.cellHeight;
       
-      // Calcular nueva hora y fecha absolutas
-      final newHour = (event.hour + hourDelta).clamp(0, 23);
-      final newDate = event.date.add(Duration(days: dayDelta));
+      // Usar la misma función común para calcular la posición
+      final consistentPosition = _calculateConsistentPosition(event, dragOffset);
       
-      print('🔄 Drag end: deltaHora=$hourDelta, deltaDias=$dayDelta');
-      print('🔄 Nueva posición: hora=$newHour, fecha=$newDate');
+      // Calcular nueva columna (día) basada en la posición consistente
+      final currentDayIndex = event.date.difference(widget.plan.startDate).inDays + 1;
+      final startDayIndex = _currentDayGroup * _daysPerGroup + 1;
+      final currentColumnIndex = currentDayIndex - startDayIndex;
       
-      // Solo mover si hay cambio significativo
-      if (newHour != event.hour || newDate != event.date) {
-        print('✅ Moviendo evento a nueva posición');
-        _onEventMoved(event, newDate, newHour);
-      } else {
-        print('❌ No hay cambio significativo, cancelando movimiento');
+      // Usar el mismo cálculo que en _calculateConsistentPosition
+      final columnProgress = dragOffset.dx / cellWidth;
+      final newColumnOffset = columnProgress.round();
+      final newColumnIndex = currentColumnIndex + newColumnOffset;
+      
+      // Verificar que la nueva columna esté en el rango válido
+      if (newColumnIndex < 0 || newColumnIndex >= _daysPerGroup) {
+        return null; // Fuera del rango visible
       }
       
-      _isDraggingOverlapping = false;
-      _dragOffset = 0.0;
-      _dragOffsetX = 0.0;
+      // Calcular nueva fila (hora) basada en el dragOffset directamente
+      final currentMinuteOffset = event.totalStartMinutes;
+      final minuteDelta = (dragOffset.dy / cellHeight * 60).round();
+      final newMinuteOffset = currentMinuteOffset + minuteDelta;
+      
+      // NO aplicar clamp aquí - permitir movimiento libre
+      // El clamp se aplicará solo al final después del snap
+      final targetMinuteOffset = newMinuteOffset;
+      
+      // Convertir a hora y minuto
+      final newHour = targetMinuteOffset ~/ 60;
+      final newStartMinute = targetMinuteOffset % 60;
+      
+      // Ajustar a intervalos de 15 minutos
+      final adjustedMinute = (newStartMinute / 15).round() * 15;
+      final finalHour = adjustedMinute >= 60 ? newHour + 1 : newHour;
+      final finalStartMinute = adjustedMinute >= 60 ? 0 : adjustedMinute;
+      
+      // Aplicar clamp solo al final
+      final finalMinuteOffset = finalHour * 60 + finalStartMinute;
+      final clampedFinalOffset = finalMinuteOffset.clamp(0, 1439);
+      final finalHourClamped = clampedFinalOffset ~/ 60;
+      final finalStartMinuteClamped = clampedFinalOffset % 60;
+      
+      // Calcular nueva fecha
+      final newDayIndex = startDayIndex + newColumnIndex;
+      final newDate = widget.plan.startDate.add(Duration(days: newDayIndex - 1));
+      
+      return {
+        'date': newDate,
+        'hour': finalHourClamped,
+        'startMinute': finalStartMinuteClamped,
+      };
+    } catch (e) {
+      return null;
     }
   }
 
-  /// Calcula nueva hora basada en el offset vertical
-  int _calculateNewHour(double offset) {
-    const pixelsPerHour = 60.0;
-    final hourDelta = (offset / pixelsPerHour).round();
-    return hourDelta; // Retorna el delta de horas
-  }
-
-  /// Calcula delta de días basado en el offset horizontal
-  int _calculateNewDate(double offset) {
-    const pixelsPerDay = 120.0; // Aproximado
-    final dayDelta = (offset / pixelsPerDay).round();
-    return dayDelta; // Retorna delta de días
-  }
-
-  /// Construye una celda de evento
-  Widget _buildEventCell(int row, int col, double cellWidth) {
-    final date = DateService.getDateForColumn(selectedDate, col);
-    final hour = row;
-    final overlappingGroup = _getOverlappingGroupForCell(row, col);
-    final eventAtThisHour = _getEventAtHour(date.date, hour);
-
-    return Container(
-      height: AppConstants.cellHeight,
-      width: cellWidth,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColorScheme.gridLineColor), // Usar gridLineColor del esquema
-        color: _hasConflicts(row, col) 
-            ? AppColorScheme.color3.withOpacity(0.1) // Usar color3 con transparencia para conflictos
-            : Colors.transparent,
-      ),
-      child: overlappingGroup != null
-          ? OverlappingEventsCell(
-              group: overlappingGroup,
-              planId: widget.plan.id ?? '',
-              date: date.date,
-              hour: hour,
-              cellWidth: cellWidth,
-              onEventMoved: _onEventMoved,
-              onEventResized: _onEventResized,
-              onEventDeleted: _onEventDeleted,
-            )
-          : eventAtThisHour != null
-              ? EventCell(
-                  event: eventAtThisHour,
-                  planId: widget.plan.id ?? '',
-                  date: date.date,
-                  hour: hour,
-                  cellWidth: cellWidth,
-                  onTap: () => _showEventDialog(eventAtThisHour),
-                  onEventMoved: _onEventMoved,
-                  onEventResized: _onEventResized,
-                  onEventDeleted: _onEventDeleted,
-                )
-              : EventCell(
-                  event: null,
-                  planId: widget.plan.id ?? '',
-                  date: date.date,
-                  hour: hour,
-                  cellWidth: cellWidth,
-                  onTap: () => _showNewEventDialog(date.date, hour),
-                ),
-    );
-  }
-
-  /// Obtiene el grupo de eventos solapados para una celda específica
-  OverlappingEventGroup? _getOverlappingGroupForCell(int row, int col) {
-    final date = DateService.getDateForColumn(selectedDate, col);
-    final hour = row;
-    
-    // Buscar eventos que están activos en esta hora específica
-    final activeEvents = _events.where((event) {
-      return event.date.year == date.date.year &&
-             event.date.month == date.date.month &&
-             event.date.day == date.date.day &&
-             hour >= event.hour &&
-             hour < (event.hour + event.duration);
-    }).toList();
-    
-    // Debug: mostrar eventos activos
-    if (activeEvents.length > 1) {
-      print('🟠 Eventos solapados detectados en ${date.date} hora $hour:');
-      for (final event in activeEvents) {
-        print('  - ${event.description} (${event.hour}:00-${event.hour + event.duration}:00)');
-      }
-    }
-    
-    // Si hay más de un evento en esta hora, crear un grupo solapado
-    if (activeEvents.length > 1) {
-      return OverlappingEventGroup(
-        events: activeEvents,
-        date: date.date,
-        startHour: activeEvents.map((e) => e.hour).reduce((a, b) => a < b ? a : b),
-        endHour: activeEvents.map((e) => e.hour + e.duration - 1).reduce((a, b) => a > b ? a : b),
-        maxOverlap: activeEvents.length,
-      );
-    }
-    
-    return null;
-  }
-
-  /// Construir la celda de alojamiento con el patrón visual específico
-  Widget _buildAccommodationCell(int col, double cellWidth) {
-    // Mostrar indicador de carga si está cargando
-    if (_accommodationState.isLoading) {
-      return Container(
-        width: cellWidth,
+  /// Construye la celda de evento (ahora vacía, los eventos están en la capa separada)
+  Widget _buildEventCell(int hourIndex, int dayIndex) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onDoubleTap: () {
+        // Crear evento con doble click
+        final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+        _showNewEventDialog(date, hourIndex);
+      },
+      child: Container(
         height: AppConstants.cellHeight,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColorScheme.gridLineColor), // Usar gridLineColor del esquema
-        ),
-        child: const Center(
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-    
-    // Obtener alojamientos para esta columna
-    final accommodations = _getAccommodationsForColumn(col);
-    
-    // Usar la nueva AccommodationCell que maneja múltiples alojamientos
-    return AccommodationCell(
-      accommodations: accommodations,
-      onTap: accommodations.isEmpty ? _showNewAccommodationDialog : null,
-      onAccommodationTap: accommodations.isNotEmpty ? _showAccommodationDialog : null,
-      width: cellWidth,
-      height: AppConstants.cellHeight,
+        width: double.infinity,
+        // Celda vacía, los eventos están en la capa separada
+        // Doble click para crear eventos
+      ),
     );
   }
 
-  /// Obtener alojamientos para una columna específica
-  List<Accommodation> _getAccommodationsForColumn(int col) {
-    // Obtener la fecha correspondiente a esta columna
-    final date = DateService.getDateForColumn(selectedDate, col);
-    final normalizedDate = DateTime(date.date.year, date.date.month, date.date.day);
-    
-    // Filtrar alojamientos que estén en esta fecha específica
-    final filteredAccommodations = _accommodations.where((accommodation) {
-      // Normalizar las fechas para comparación
-      final checkIn = DateTime(accommodation.checkIn.year, accommodation.checkIn.month, accommodation.checkIn.day);
-      final checkOut = DateTime(accommodation.checkOut.year, accommodation.checkOut.month, accommodation.checkOut.day);
-      
-      // Un alojamiento se muestra en una columna si:
-      // 1. La fecha de la columna está entre checkIn y checkOut (inclusive)
-      // 2. O si es la fecha de checkIn (para mostrar desde el primer día)
-      final isInRange = (normalizedDate.isAfter(checkIn.subtract(const Duration(days: 1))) && 
-                        normalizedDate.isBefore(checkOut.add(const Duration(days: 1))) &&
-                        (normalizedDate.isAtSameMomentAs(checkIn) || 
-                         normalizedDate.isAtSameMomentAs(checkOut) ||
-                         (normalizedDate.isAfter(checkIn) && normalizedDate.isBefore(checkOut))));
-      
-      return isInRange;
-    }).toList();
-    
-    // Eliminar duplicados por ID para evitar mostrar el mismo alojamiento múltiples veces
-    final uniqueAccommodations = <String, Accommodation>{};
-    for (final accommodation in filteredAccommodations) {
-      if (accommodation.id != null) {
-        uniqueAccommodations[accommodation.id!] = accommodation;
-      }
-    }
-    
-    return uniqueAccommodations.values.toList();
-  }
-
-  /// Verifica si hay conflictos en una celda específica
-  bool _hasConflicts(int row, int col) {
-    final date = DateService.getDateForColumn(selectedDate, col);
-    final hour = row;
-    
-    // Contar eventos en esta celda
-    final eventsInCell = _events.where((event) {
-      return event.date.year == date.date.year &&
-             event.date.month == date.date.month &&
-             event.date.day == date.date.day &&
-             event.hour == hour;
-    }).length;
-    
-    // Si hay más de 1 evento, hay conflicto
-    return eventsInCell > 1;
-  }
-
-  /// Obtiene el evento que está activo en una hora específica
-  Event? _getEventAtHour(DateTime date, int hour) {
-    return _events.where((event) {
-      return event.date.year == date.year &&
-             event.date.month == date.month &&
-             event.date.day == date.day &&
-             hour >= event.hour &&
-             hour < (event.hour + event.duration);
-    }).firstOrNull;
-  }
-
-  // Métodos para manejar eventos
-  void _onEventMoved(Event event, DateTime newDate, int newHour) {
-    _calendarNotifier.moveEvent(event, newDate, newHour);
-  }
-
-  void _onEventResized(Event event, int newDuration) {
-    _calendarNotifier.resizeEvent(event, newDuration);
-  }
-
-  void _onEventDeleted(String eventId) {
-    _calendarNotifier.deleteEvent(eventId);
-  }
-
+  /// Muestra el diálogo para editar un evento existente
   void _showEventDialog(Event event) {
     showDialog(
       context: context,
       builder: (context) => EventDialog(
         event: event,
         planId: widget.plan.id ?? '',
-        onSaved: (updatedEvent) {
-          _calendarNotifier.updateEvent(updatedEvent);
-          Navigator.of(context).pop();
+        onSaved: (updatedEvent) async {
+          // VALIDAR: ¿Excedería el límite de 3 solapados?
+          if (_wouldExceedOverlapLimit(
+            eventToCheck: updatedEvent,
+            targetDate: updatedEvent.date,
+            eventIdToExclude: event.id, // Excluir el evento actual del conteo
+          )) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '⚠️ No se puede guardar: ya hay 3 eventos en ese horario.\n'
+                    'Por favor, elige otra hora o reduce la duración.',
+                  ),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 4),
+                ),
+              );
+            }
+            return; // No guardar
+          }
+          
+          // Si pasa validación, guardar
+          final eventService = ref.read(eventServiceProvider);
+          await eventService.updateEvent(updatedEvent);
+          // Invalidar todos los providers de eventos para esta fecha
+          _invalidateEventProviders();
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
         },
-        onDeleted: (eventId) {
-          _calendarNotifier.deleteEvent(eventId);
-          Navigator.of(context).pop();
+        onDeleted: (eventId) async {
+          final eventService = ref.read(eventServiceProvider);
+          await eventService.deleteEvent(eventId);
+          // Invalidar todos los providers de eventos para esta fecha
+          _invalidateEventProviders();
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
         },
       ),
     );
   }
 
+  /// Muestra el diálogo para crear un nuevo evento
   void _showNewEventDialog(DateTime date, int hour) {
     showDialog(
       context: context,
@@ -984,9 +1752,44 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         planId: widget.plan.id ?? '',
         initialDate: date,
         initialHour: hour,
-        onSaved: (newEvent) {
-          _calendarNotifier.createEvent(newEvent);
-          Navigator.of(context).pop();
+        onSaved: (newEvent) async {
+          // VALIDAR: ¿Excedería el límite de 3 solapados?
+          if (_wouldExceedOverlapLimit(
+            eventToCheck: newEvent,
+            targetDate: newEvent.date,
+            eventIdToExclude: null, // No excluir nada, es evento nuevo
+          )) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '⚠️ No se puede crear: ya hay 3 eventos en ese horario.\n'
+                    'Por favor, elige otra hora o reduce la duración.',
+                  ),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 4),
+                ),
+              );
+            }
+            return; // No guardar
+          }
+          
+          // Si pasa validación, crear evento
+          final eventService = ref.read(eventServiceProvider);
+          await eventService.createEvent(newEvent);
+          
+          // Cerrar el diálogo primero
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          
+          // Esperar un poco y luego invalidar providers
+          await Future.delayed(const Duration(milliseconds: 100));
+          _invalidateEventProviders();
+          
+          // Esperar un poco más y forzar otra actualización
+          await Future.delayed(const Duration(milliseconds: 200));
+          setState(() {});
         },
         onDeleted: (eventId) {
           Navigator.of(context).pop();
@@ -995,24 +1798,115 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  void _showNewAccommodationDialog() {
-    // Implementar diálogo de alojamiento
+  /// Verifica si hay un evento en la posición especificada
+  bool _hasEventAtPosition(int dayIndex, int hourIndex) {
+    final eventDate = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+    
+    try {
+      final eventsForDate = ref.read(eventsForDateProvider(
+        EventsForDateParams(
+          calendarParams: CalendarNotifierParams(
+            planId: widget.plan.id ?? '',
+            userId: widget.plan.userId,
+            initialDate: widget.plan.startDate,
+            initialColumnCount: widget.plan.columnCount,
+          ),
+          date: eventDate,
+        ),
+      ));
+      
+      // Verificar si hay algún evento que ocupe esta hora
+      for (final event in eventsForDate) {
+        final eventStartHour = event.hour;
+        final eventEndHour = event.hour + (event.durationMinutes / 60).ceil();
+        
+        if (hourIndex >= eventStartHour && hourIndex < eventEndHour) {
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (e) {
+      return false;
+    }
   }
 
+  /// Invalida todos los providers de eventos para refrescar la UI
+  void _invalidateEventProviders() {
+    // Incrementar contador para forzar reconstrucción
+    _eventRefreshCounter++;
+    
+    // Invalidar el provider principal de eventos de forma genérica
+    ref.invalidate(eventsForDateProvider);
+    
+    // También invalidar el provider del calendario si existe
+    final calendarParams = CalendarNotifierParams(
+      planId: widget.plan.id!,
+      userId: widget.plan.userId,
+      initialDate: widget.plan.startDate,
+      initialColumnCount: widget.plan.columnCount, // Usar columnCount del plan, no _daysPerGroup
+    );
+    ref.invalidate(calendarNotifierProvider(calendarParams));
+    
+    // Forzar actualización de la UI
+    setState(() {});
+  }
+
+  /// Muestra el diálogo para editar un alojamiento existente
   void _showAccommodationDialog(Accommodation accommodation) {
-    // Implementar diálogo de alojamiento
+    showDialog(
+      context: context,
+      builder: (context) => AccommodationDialog(
+        accommodation: accommodation,
+        planId: widget.plan.id ?? '',
+        planStartDate: widget.plan.startDate,
+        planEndDate: widget.plan.startDate.add(Duration(days: widget.plan.durationInDays)),
+        onSaved: (updatedAccommodation) async {
+          final accommodationService = ref.read(accommodationServiceProvider);
+          await accommodationService.saveAccommodation(updatedAccommodation);
+          Navigator.of(context).pop();
+          // Invalidar providers de alojamientos después de cerrar el diálogo
+          if (mounted) {
+            ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+          }
+        },
+        onDeleted: (accommodationId) async {
+          final accommodationService = ref.read(accommodationServiceProvider);
+          await accommodationService.deleteAccommodation(accommodationId);
+          Navigator.of(context).pop();
+          // Invalidar providers de alojamientos después de cerrar el diálogo
+          if (mounted) {
+            ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+          }
+        },
+      ),
+    );
   }
 
-  // Métodos para la AppBar
-  void _addColumn() {
-    _calendarNotifier.addColumn();
-  }
-
-  void _removeColumn() {
-    _calendarNotifier.removeColumn();
-  }
-
-  void _onDateChanged(DateTime newDate) {
-    _calendarNotifier.changeSelectedDate(newDate);
+  /// Muestra el diálogo para crear un nuevo alojamiento
+  void _showNewAccommodationDialog(DateTime checkInDate) {
+    showDialog(
+      context: context,
+      builder: (context) => AccommodationDialog(
+        accommodation: null,
+        planId: widget.plan.id ?? '',
+        planStartDate: widget.plan.startDate,
+        planEndDate: widget.plan.startDate.add(Duration(days: widget.plan.durationInDays)),
+        initialCheckIn: checkInDate,
+        onSaved: (newAccommodation) async {
+          final accommodationService = ref.read(accommodationServiceProvider);
+          await accommodationService.saveAccommodation(newAccommodation);
+          Navigator.of(context).pop();
+          // Invalidar providers de alojamientos después de cerrar el diálogo
+          if (mounted) {
+            ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+          }
+        },
+        onDeleted: (accommodationId) {
+          Navigator.of(context).pop();
+        },
+      ),
+    );
   }
 }
+

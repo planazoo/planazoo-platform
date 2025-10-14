@@ -2,23 +2,51 @@
 
 ## 🚀 Descripción
 
-Planazoo es una aplicación Flutter para la planificación de viajes y eventos, diseñada para ofrecer una experiencia intuitiva y completa en la organización de itinerarios.
+Planazoo es una aplicación Flutter para la planificación de viajes y eventos, diseñada con arquitectura **Offline First** para ofrecer una experiencia intuitiva y completa en la organización de itinerarios colaborativos.
 
-## ✨ Características
+## ✨ Características Principales
 
-- 📅 **Calendario Interactivo**: Visualización clara de eventos y actividades
-- 🏨 **Gestión de Alojamientos**: Control de reservas y estancias
-- 🎯 **Eventos Multi-hora**: Soporte para actividades de larga duración
-- 📱 **Interfaz Responsiva**: Diseño adaptativo para diferentes dispositivos
-- 🔄 **Estados de Borrador**: Gestión de eventos en desarrollo
-- 🎨 **Temas Personalizables**: Múltiples esquemas de color
+### 📅 **Calendario Inteligente**
+- Visualización clara de eventos y actividades con precisión de minutos
+- Sistema de eventos multi-día (hasta 24h por evento)
+- Detección automática de eventos solapados (máximo 3 simultáneos)
+- Drag & Drop con magnetismo para reorganizar eventos
+- Auto-scroll inteligente al primer evento
+
+### 🏨 **Gestión de Alojamientos**
+- Control de reservas y estancias por día
+- Integración visual con el calendario
+- Tipos predefinidos: Hotel, Apartamento, Hostal, Casa, Resort, Camping
+
+### 👥 **Colaboración y Permisos**
+- Sistema de roles: Admin, Participante, Observador
+- Eventos con parte común (para todos) + parte personal (individual)
+- Permisos granulares por acción y tipo de evento
+
+### 🌍 **Soporte de Timezones**
+- Sistema "UTC del Plan" para eventos internacionales
+- Conversión automática por participante
+- Eventos cross-timezone (vuelos, transportes internacionales)
+
+### 📱 **Offline First**
+- Funcionalidad completa sin conexión a internet
+- Sincronización automática cuando hay conexión
+- Resolución automática de conflictos
+- Cola de sincronización para cambios pendientes
+
+### 🔔 **Notificaciones Push**
+- Cambios en eventos existentes
+- Nuevos eventos y eliminaciones
+- Modificaciones de participantes
+- Configuración personalizable por usuario
 
 ## 🛠️ Tecnologías
 
 - **Flutter**: Framework de desarrollo móvil
 - **Dart**: Lenguaje de programación
-- **Riverpod**: Gestión de estado
-- **Firebase**: Backend y base de datos
+- **Riverpod**: Gestión de estado reactiva
+- **Firebase/Firestore**: Backend y base de datos en la nube
+- **SQLite/Hive**: Base de datos local para offline
 - **Material Design**: Sistema de diseño
 
 ## 📁 Estructura del Proyecto
@@ -87,6 +115,47 @@ lib/
 3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abrir un Pull Request
+
+## 📚 Documentación
+
+### **Documentos Principales**
+- 📖 **[Decisiones Arquitectónicas](docs/ARCHITECTURE_DECISIONS.md)** - Todas las decisiones fundamentales del proyecto
+- 📋 **[Tareas Pendientes](docs/TASKS.md)** - Lista de tareas y próximos pasos (Siguiente: T68)
+- ✅ **[Tareas Completadas](docs/COMPLETED_TASKS.md)** - Historial de implementaciones
+- 📅 **[Capacidades del Calendario](docs/CALENDAR_CAPABILITIES.md)** - Funcionalidades y reglas de negocio
+- 🧟 **[Plan Frankenstein](docs/FRANKENSTEIN_PLAN_SPEC.md)** - Plan de testing completo
+
+### **Conceptos Clave**
+- **Offline First**: La app funciona sin conexión, sincroniza cuando es posible
+- **EventSegment**: Sistema para eventos multi-día (basado en Google Calendar)
+- **Máximo 3 eventos simultáneos**: Regla de negocio para legibilidad del calendario
+- **Eventos máximo 24h**: Para actividades, usa alojamientos para estancias largas
+- **Sistema de Tracks**: Cada participante es un track (columna) en el calendario
+
+## 🏗️ Arquitectura
+
+### **8 Decisiones Fundamentales**
+1. **Duplicación Total (MVP)** → Optimización automática futura
+2. **Sincronización Híbrida** → Transactions + Optimistic Updates
+3. **UTC del Plan** → Timezone base con conversión por participante
+4. **Parte Común + Personal** → Eventos con información compartida e individual
+5. **Notificaciones Push** → Sistema completo de alertas
+6. **Tiempo Real** → Firestore Listeners + Riverpod
+7. **Offline First Completo** → CRUD sin conexión + sincronización automática
+8. **Permisos Granulares** → Roles + permisos específicos por acción
+
+Ver detalles completos en **[ARCHITECTURE_DECISIONS.md](docs/ARCHITECTURE_DECISIONS.md)**
+
+## 🚀 Próximos Pasos
+
+### **En Desarrollo (T56-T67)**
+- **T56-T62**: Implementación Offline First completa
+- **T63-T67**: Sistema de permisos granulares
+
+### **Pendientes**
+- Timezones (T40-T45)
+- Sistema de participantes (T46-T50)
+- Validación y seguridad (T51-T53)
 
 ## 📄 Licencia
 

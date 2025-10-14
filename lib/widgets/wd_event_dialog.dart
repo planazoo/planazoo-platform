@@ -4,6 +4,7 @@ import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/presentation/notifiers/calendar_notifier.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/shared/utils/color_utils.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -34,6 +35,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late DateTime _selectedDate;
   late int _selectedHour;
   late int _selectedDuration;
+  late int _selectedStartMinute;
+  late int _selectedDurationMinutes;
   late String _selectedColor;
   late bool _isDraft;
 
@@ -86,6 +89,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _selectedDate = widget.initialDate ?? widget.event?.date ?? DateTime.now();
     _selectedHour = widget.initialHour ?? widget.event?.hour ?? 9;
     _selectedDuration = widget.event?.duration ?? 1;
+    _selectedStartMinute = widget.event?.startMinute ?? 0;
+    _selectedDurationMinutes = widget.event?.durationMinutes ?? 60;
     _selectedColor = widget.event?.color ?? 'blue';
     _isDraft = widget.event?.isDraft ?? false;
   }
@@ -100,16 +105,16 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+        return AlertDialog(
       title: Text(widget.event == null ? 'Crear Evento' : 'Editar Evento'),
       content: SingleChildScrollView(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // Descripción
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
+          decoration: const InputDecoration(
                 labelText: 'Descripción',
                 hintText: 'Nombre del evento',
                 border: OutlineInputBorder(),
@@ -123,24 +128,24 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               value: _typeFamilyController.text.isEmpty || !_typeFamilies.contains(_typeFamilyController.text) 
                   ? null 
                   : _typeFamilyController.text,
-              decoration: const InputDecoration(
+            decoration: const InputDecoration(
                 labelText: 'Tipo de evento',
-                border: OutlineInputBorder(),
-              ),
+              border: OutlineInputBorder(),
+            ),
               items: _typeFamilies.map((family) {
                 return DropdownMenuItem(
                   value: family,
                   child: Text(family),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
                   _typeFamilyController.text = value ?? '';
                   _typeSubtypeController.text = ''; // Reset subtipo
                 });
-              },
-            ),
-            const SizedBox(height: 16),
+                },
+              ),
+              const SizedBox(height: 16),
             
             // Subtipo
             if (_typeFamilyController.text.isNotEmpty)
@@ -165,41 +170,129 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   });
                 },
               ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
             
-            // Borrador
-            CheckboxListTile(
+            // Borrador - Switch estilo iOS
+            SwitchListTile.adaptive(
               title: const Text('Es borrador'),
+              subtitle: const Text('Los borradores se muestran con menor opacidad'),
               value: _isDraft,
               onChanged: (value) {
                 setState(() {
-                  _isDraft = value ?? false;
+                  _isDraft = value;
                 });
               },
             ),
+            const SizedBox(height: 8),
             
-            // Fecha
-            ListTile(
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('Fecha'),
-              subtitle: Text('${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}'),
+            // Fecha - Con estilo editable
+            InkWell(
               onTap: _selectDate,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_today, color: Theme.of(context).primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Fecha',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.edit, size: 20, color: Colors.grey.shade400),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(height: 12),
             
-            // Hora
-            ListTile(
-              leading: const Icon(Icons.access_time),
-              title: const Text('Hora'),
-              subtitle: Text('${_selectedHour.toString().padLeft(2, '0')}:00'),
-              onTap: _selectHour,
+            // Hora - Con estilo editable
+            InkWell(
+              onTap: _selectStartTime,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.access_time, color: Theme.of(context).primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Hora de inicio',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${_selectedHour.toString().padLeft(2, '0')}:${_selectedStartMinute.toString().padLeft(2, '0')}',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.edit, size: 20, color: Colors.grey.shade400),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(height: 12),
             
-            // Duración
-            ListTile(
-              leading: const Icon(Icons.schedule),
-              title: const Text('Duración'),
-              subtitle: Text('$_selectedDuration hora${_selectedDuration > 1 ? 's' : ''}'),
+            // Duración - Con estilo editable
+            InkWell(
               onTap: _selectDuration,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.schedule, color: Theme.of(context).primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Duración',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatDuration(_selectedDurationMinutes),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.edit, size: 20, color: Colors.grey.shade400),
+                  ],
+                ),
+              ),
             ),
             
             // Color
@@ -231,18 +324,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 }).toList(),
               ),
             ),
-          ],
+            ],
         ),
       ),
       actions: [
         // Botón eliminar (solo si es edición)
         if (widget.event != null)
           TextButton(
-            onPressed: () {
-              if (widget.onDeleted != null && widget.event?.id != null) {
-                widget.onDeleted!(widget.event!.id!);
-              }
-            },
+            onPressed: () => _confirmDelete(),
             child: const Text(
               'Eliminar',
               style: TextStyle(color: Colors.red),
@@ -254,15 +343,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        
-        // Botones de borrador (solo si es un evento existente)
-        if (widget.event != null && widget.event!.id != null) ...[
-          // Botón para cambiar estado de borrador
-          TextButton(
-            onPressed: () => _toggleDraftStatus(),
-            child: Text(widget.event!.isDraft ? 'Confirmar' : 'Marcar como Borrador'),
-          ),
-        ],
         
         // Botón guardar
         ElevatedButton(
@@ -288,95 +368,121 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
   }
 
-  Future<void> _selectHour() async {
+  Future<void> _selectStartTime() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay(hour: _selectedHour, minute: 0),
+      initialTime: TimeOfDay(hour: _selectedHour, minute: _selectedStartMinute),
     );
     
     if (picked != null) {
       setState(() {
         _selectedHour = picked.hour;
+        _selectedStartMinute = picked.minute;
       });
     }
   }
 
   Future<void> _selectDuration() async {
-    final int? duration = await showDialog<int>(
+    final int? durationMinutes = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Duración'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(12, (index) {
-            final hours = index + 1;
-            return ListTile(
-              title: Text('$hours hora${hours > 1 ? 's' : ''}'),
-              onTap: () => Navigator.of(context).pop(hours),
-            );
-          }),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Opciones rápidas comunes (hasta 3 horas = 180 min)
+              const Text('Duración común:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ...List.generate(12, (index) {
+                final minutes = (index + 1) * 15; // 15, 30, 45, 60, 75, 90, etc.
+                return ListTile(
+                  title: Text(_formatDuration(minutes)),
+                  onTap: () => Navigator.of(context).pop(minutes),
+                );
+              }),
+              const Divider(),
+              // Opciones personalizadas (hasta 24 horas)
+              const Text('Duraciones largas:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ...List.generate(21, (index) {
+                final hours = index + 4; // 4h, 5h, 6h... hasta 24h
+                final minutes = hours * 60;
+                return ListTile(
+                  title: Text(_formatDuration(minutes)),
+                  onTap: () => Navigator.of(context).pop(minutes),
+                  trailing: hours == 24 
+                      ? const Text('(máximo)', style: TextStyle(fontSize: 11, color: Colors.grey))
+                      : null,
+                );
+              }),
+              const Divider(),
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text(
+                  '💡 Eventos máximo 24h.\nSi necesitas más → usa Alojamientos',
+                  style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
     
-    if (duration != null) {
+    if (durationMinutes != null) {
       setState(() {
-        _selectedDuration = duration;
+        _selectedDurationMinutes = durationMinutes;
+        _selectedDuration = (durationMinutes / 60).ceil(); // Mantener compatibilidad
       });
     }
   }
 
-  Color _getColorFromName(String colorName) {
-    switch (colorName) {
-      case 'blue': return Colors.blue;
-      case 'green': return Colors.green;
-      case 'orange': return Colors.orange;
-      case 'purple': return Colors.purple;
-      case 'red': return Colors.red;
-      case 'teal': return Colors.teal;
-      case 'indigo': return Colors.indigo;
-      case 'pink': return Colors.pink;
-      default: return Colors.blue;
+  String _formatDuration(int minutes) {
+    if (minutes < 60) {
+      return '${minutes} min';
+    } else if (minutes == 60) {
+      return '1 hora';
+    } else {
+      final hours = minutes ~/ 60;
+      final remainingMinutes = minutes % 60;
+      if (remainingMinutes == 0) {
+        return '${hours}h';
+      } else {
+        return '${hours}h ${remainingMinutes}min';
+      }
     }
   }
 
-  Future<void> _toggleDraftStatus() async {
-    if (widget.event == null || widget.event!.id == null) return;
-    
-    // Obtener el userId del usuario actual
-    final currentUser = ref.read(currentUserProvider);
-    final userId = currentUser?.id ?? '';
-    
-    // Necesitamos los parámetros para el provider family
-    final params = CalendarNotifierParams(
-      planId: widget.event!.planId,
-      userId: userId,
-      initialDate: widget.event!.date,
-      initialColumnCount: 7,
+  Color _getColorFromName(String colorName) {
+    return ColorUtils.colorFromName(colorName);
+  }
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar eliminación'),
+        content: Text('¿Estás seguro de que quieres eliminar el evento "${widget.event?.description}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
     );
-    
-    final calendarNotifier = ref.read(calendarNotifierProvider(params).notifier);
-    final success = await calendarNotifier.toggleEventDraftStatus(widget.event!);
-    
-    if (success) {
-      // Cerrar el diálogo para refrescar la vista
-      Navigator.of(context).pop();
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.event!.isDraft 
-            ? 'Evento confirmado' 
-            : 'Evento marcado como borrador'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error al cambiar el estado del evento'),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+    if (confirmed == true && widget.onDeleted != null && widget.event?.id != null) {
+      widget.onDeleted!(widget.event!.id!);
     }
   }
 
@@ -386,6 +492,22 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         const SnackBar(
           content: Text('La descripción es obligatoria'),
           backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validar que el evento no dure más de 24 horas
+    if (_selectedDurationMinutes > 1440) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '⚠️ Un evento no puede durar más de 24 horas.\n\n'
+            '• Si es alojamiento → usa la fila de Alojamientos\n'
+            '• Si son actividades diferentes → crea eventos separados por día',
+          ),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 6),
         ),
       );
       return;
@@ -403,6 +525,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       date: _selectedDate,
       hour: _selectedHour,
       duration: _selectedDuration,
+      startMinute: _selectedStartMinute,
+      durationMinutes: _selectedDurationMinutes,
       color: _selectedColor,
       typeFamily: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       typeSubtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
@@ -415,4 +539,4 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       widget.onSaved!(event);
     }
   }
-}
+} 

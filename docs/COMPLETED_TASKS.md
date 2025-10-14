@@ -4,6 +4,58 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T55 - Validación de Máximo 3 Eventos Simultáneos ✅
+**Estado:** Completada ✅  
+**Fecha completada:** 9 de octubre de 2025  
+**Descripción:** Implementar validación de regla de negocio: máximo 3 eventos pueden solaparse simultáneamente en cualquier momento.
+
+**Implementación:**
+- Función `_wouldExceedOverlapLimit()` que valida minuto a minuto
+- Integración en EventDialog (crear/editar)
+- Integración en Drag & Drop
+- Indicador visual ⚠️ en grupos de 3 eventos
+- Plan Frankenstein actualizado para cumplir regla
+- Documentación en CALENDAR_CAPABILITIES.md
+
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `docs/CALENDAR_CAPABILITIES.md`
+- `lib/features/testing/demo_data_generator.dart`
+- `docs/FRANKENSTEIN_PLAN_SPEC.md`
+
+**Resultado:** Calendarios legibles y usables, con validación robusta en todos los puntos de entrada.
+
+---
+
+## T54 - Sistema EventSegment (Google Calendar Style) ✅
+**Estado:** Completada ✅  
+**Fecha completada:** 9 de octubre de 2025  
+**Descripción:** Reimplementar el sistema de renderizado de eventos usando EventSegments inspirado en Google Calendar.
+
+**Solución implementada:**
+Clase `EventSegment` que divide eventos multi-día en segmentos (uno por día):
+- Click en cualquier segmento → Abre el mismo diálogo
+- Drag desde primer segmento → Mueve todo el evento
+- Solapamientos funcionan en TODOS los días
+- Formato de hora inteligente: "22:00 - 23:59 +1"
+
+**Archivos creados:**
+- `lib/features/calendar/domain/models/event_segment.dart` (161 líneas)
+- `lib/features/calendar/domain/models/overlapping_segment_group.dart` (90 líneas)
+
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart` (~300 líneas reescritas)
+
+**Bugs corregidos:**
+1. Scroll offset doble compensación
+2. Eventos del día anterior no se propagaban
+3. Container no respetaba altura del Positioned
+4. Memory leak con setState() after dispose()
+
+**Resultado:** Sistema de eventos multi-día completo y funcional, idéntico en comportamiento a Google Calendar.
+
+---
+
 ## T1 - Indicador visual de scroll horizontal en calendario
 **Estado:** Completada ✅  
 **Fecha de finalización:** 2024-12-19  
@@ -398,11 +450,195 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T16 - Duración exacta de eventos
+**Estado:** Completada ✅  
+**Fecha de finalización:** 2024-12-19  
+**Descripción:** Hasta ahora los eventos tenían una duración de hora completa. Esto no es correcto. Deberíamos permitir poner la duración exacta. Eso implica modificar la página de evento y su visualización. Se que este cambio es importante así que lo hemos de hacer con mucho cuidado.  
+**Criterios de aceptación:** 
+- ✅ Permitir duración exacta de eventos (no solo horas completas)
+- ✅ Modificar página de evento
+- ✅ Modificar visualización de eventos
+- ✅ Implementación cuidadosa y bien planificada
+**Implementación:** 
+- Modificado modelo Event para incluir startMinute y durationMinutes
+- Actualizada lógica de visualización para manejar minutos exactos
+- Implementado cálculo de posiciones basado en minutos totales
+- Mantenida compatibilidad con eventos existentes
+
+---
+
+## T25 - Altura mínima de eventos
+**Estado:** Completada ✅  
+**Fecha de finalización:** 2024-12-19  
+**Descripción:** Implementar altura mínima del 25% de la celda para eventos muy cortos (15 min) para mejorar la visibilidad e interactividad.  
+**Criterios de aceptación:**
+- ✅ Eventos de 15 minutos o menos tienen altura mínima del 25% de la celda
+- ✅ Mantiene proporcionalidad visual para eventos más largos
+- ✅ Mejora la experiencia de usuario al interactuar con eventos pequeños
+- ✅ No distorsiona la representación del tiempo
+**Implementación técnica:**
+- Modificada función `_calculateEventHeightInHour()` en `wd_calendar_screen.dart`
+- Añadida constante `minHeightPercentage = 0.25`
+- Aplicada altura mínima solo cuando la altura calculada es menor al 25%
+
+---
+
+## T26 - Drag & Drop de eventos
+**Estado:** Completada ✅  
+**Fecha de finalización:** 2024-12-19  
+**Descripción:** Verificar y mejorar el funcionamiento del drag & drop con eventos de minutos exactos.  
+**Criterios de aceptación:**
+- ✅ Los eventos se pueden arrastrar correctamente a nuevas posiciones
+- ✅ Sistema híbrido simplificado: solo cambia hora/fecha, mantiene minutos originales
+- ✅ Movimiento del evento completo (no solo la porción seleccionada)
+- ✅ Feedback visual durante el arrastre
+- ✅ Validación de posiciones válidas
+- ✅ Cálculos robustos y predecibles
+**Implementación técnica:**
+- Modificadas funciones `_handleEventDragStart`, `_handleEventDragUpdate`, `_handleEventDragEnd`
+- Añadida variable `_draggingEvent` para manejar el evento completo
+- Implementada función `_onEventMovedSimple()` para mantener minutos originales
+- Mejorados cálculos de `_calculateNewHour()` y `_calculateNewDate()` para mayor robustez
+- **NUEVO ENFOQUE**: Movimiento visual directo del evento durante el arrastre
+- **SOLUCIONADO**: EventCell permite eventos de pan pasar al GestureDetector externo
+- **SOLUCIONADO**: Drag & drop a nivel del evento completo con GestureDetector externo
+- **SOLUCIONADO**: Evento se mueve visualmente durante el arrastre con `Matrix4.translationValues()`
+- **SOLUCIONADO**: Sombra y cursor de drag para mejor feedback visual
+- **ELIMINADO**: Sistema de rectángulo rojo - ahora se mueve todo el evento directamente
+
+---
+
+## T30 - Crear, editar y eliminar eventos
+**Estado:** ✅ Completada  
+**Fecha de finalización:** 7 de octubre de 2025  
+**Descripción:** Implementar funcionalidad completa para gestionar eventos. Revisar código existente y hacer cambios si es necesario.  
+**Resultados:**
+- ✅ Crear eventos: Doble click en celdas vacías → Modal de creación → Guarda en Firestore → UI actualizada
+- ✅ Editar eventos: Click en evento → Modal de edición → Actualiza en Firestore → UI actualizada
+- ✅ Eliminar eventos: Botón "Eliminar" en modal → **Diálogo de confirmación** → Elimina de Firestore → UI actualizada
+- ✅ Drag & Drop: Funcionalidad completa y operativa
+**Mejoras implementadas:**
+- 🧹 Eliminados 47 prints de debug del código
+- 🧹 Eliminado método `_buildDoubleClickDetector()` redundante (65 líneas)
+- 🧹 Eliminadas variables no usadas (`_lastTapTime`, `_lastTapPosition`)
+- 🛡️ Añadido diálogo de confirmación antes de eliminar eventos
+- ✅ 0 errores de linter
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `lib/widgets/wd_event_dialog.dart`
+
+---
+
+## T36 - Reducir altura de W29 y W30
+**Estado:** ✅ Completada  
+**Fecha de finalización:** 7 de octubre de 2025  
+**Descripción:** Reducir la altura de los widgets W29 (pie de página publicitario) y W30 (pie de página informaciones app) al 75% de rowHeight.  
+**Resultados:**
+- ✅ W29: Altura reducida de `rowHeight` a `rowHeight * 0.75`
+- ✅ W30: Altura reducida de `rowHeight` a `rowHeight * 0.75`
+- ✅ Libera un 25% de espacio vertical en la fila R13 del dashboard
+**Archivos modificados:**
+- `lib/pages/pg_dashboard_page.dart`
+
+---
+
+## T32 - Mejorar encabezado de tabla calendario
+**Estado:** ✅ Completada  
+**Fecha de finalización:** 7 de octubre de 2025  
+**Descripción:** Mejorar el encabezado de la tabla calendario mostrando "Día X - [día_semana]" y debajo la fecha completa.  
+**Resultados:**
+- ✅ Primera línea: "Día X - [día_semana]" (ej: "Día 2 - lun")
+- ✅ Segunda línea: Fecha completa (DD/MM/YYYY)
+- ✅ Tamaño de fuente: "Día X" reducido a 9px, fecha aumentada a 11px
+- ✅ Día de la semana traducible usando `DateFormat.E()` de `intl`
+- ✅ Cálculo automático basado en `plan.startDate`
+- ✅ Soporta múltiples idiomas (ES: "lun", EN: "Mon", FR: "lun", DE: "Mo")
+**Mejoras visuales:**
+- 📉 "Día n": fontSize 9px (bold)
+- 📈 Fecha: fontSize 11px (medium weight)
+- 🌍 Internacionalización completa
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart` (añadido import `intl`, modificado encabezado)
+
+---
+
+## T33 - Eliminar palabra "fijo" del encabezado
+**Estado:** ✅ Completada  
+**Fecha de finalización:** 7 de octubre de 2025  
+**Descripción:** Eliminar la palabra "FIJO" de la primera celda del encabezado de la tabla calendario.  
+**Resultados:**
+- ✅ Texto "FIJO" eliminado de la primera celda del encabezado
+- ✅ Celda mantiene estructura, tamaño (50px altura) y estilo
+- ✅ Diseño más limpio y minimalista
+- ✅ Consistencia visual con el resto del calendario
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+
+---
+
 ## 📊 Estadísticas de Tareas Completadas
-- **Total completadas:** 16
-- **T1-T12, T15-T16, T17-T25, T21:** Todas completadas exitosamente
+- **Total completadas:** 25
+- **T1-T12, T15-T16, T17-T21, T25-T26, T30, T32-T34, T36, T39:** Todas completadas exitosamente
 - **Documentación:** 100% de las tareas tienen documentación completa
 - **Implementación:** Todas las funcionalidades implementadas según especificaciones
+
+---
+
+## T39 - Integrar sistema de detección de eventos solapados
+**Estado:** ✅ Completada  
+**Fecha de finalización:** 7 de octubre de 2025  
+**Descripción:** Integración del sistema de detección y visualización de eventos solapados en el calendario principal.  
+**Resultados:**
+- ✅ Detección automática de eventos solapados con precisión de minutos
+- ✅ Algoritmo: `eventStart < otherEnd && eventEnd > otherStart`
+- ✅ Distribución horizontal de eventos solapados
+- ✅ Cada evento mantiene su altura según duración
+- ✅ División automática del ancho de columna entre eventos
+- ✅ Funciona con 2, 3, 4+ eventos simultáneos
+- ✅ Mantiene funcionalidad de drag&drop
+- ✅ Mantiene funcionalidad de click para editar
+- ✅ Excluye alojamientos del análisis de solapamiento
+**Métodos implementados:**
+- `_detectOverlappingEvents()`: Detecta y agrupa eventos solapados
+- `_buildOverlappingEventWidgets()`: Renderiza grupos de eventos solapados
+- `_buildEventWidgetAtPosition()`: Posiciona eventos solapados con ancho personalizado
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+
+---
+
+## T34 - Crear, editar, eliminar y mostrar alojamientos
+**Estado:** ✅ Completada  
+**Fecha de finalización:** 7 de octubre de 2025  
+**Descripción:** Implementación completa del sistema de gestión de alojamientos con modelo, servicio, UI y integración en calendario.  
+**Resultados:**
+- ✅ Modelo `Accommodation` con validaciones y métodos utilitarios
+- ✅ `AccommodationService` con CRUD completo y verificación de conflictos
+- ✅ Providers completos (`accommodation_providers.dart`) con StateNotifier
+- ✅ `AccommodationDialog` con formulario completo:
+  - Campos: nombre, tipo, descripción, check-in/check-out, color
+  - Validación de fechas y datos
+  - Confirmación de eliminación
+  - Cálculo automático de duración en noches
+- ✅ Integración con calendario:
+  - Mostrar alojamientos en fila de alojamiento
+  - Click para editar alojamiento existente
+  - Doble click para crear nuevo alojamiento
+  - Actualización automática de UI con providers
+**Características:**
+- 🎨 8 colores predefinidos con preview visual
+- 📅 Validación de fechas dentro del rango del plan
+- 🏨 7 tipos de alojamiento (Hotel, Apartamento, Hostal, Casa, Resort, Camping, Otro)
+- ⚠️ Confirmación antes de eliminar
+- 🔄 Actualización automática con Riverpod
+**Archivos creados/modificados:**
+- `lib/features/calendar/domain/models/accommodation.dart` (existía)
+- `lib/features/calendar/domain/services/accommodation_service.dart` (existía)
+- `lib/features/calendar/presentation/providers/accommodation_providers.dart` (existía)
+- `lib/widgets/wd_accommodation_dialog.dart` (reescrito completamente)
+- `lib/widgets/screens/wd_calendar_screen.dart` (añadida integración completa)
+
+---
 
 ## 📝 Notas
 - Las tareas se movieron aquí una vez completadas para mantener el archivo principal limpio

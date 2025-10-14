@@ -5,7 +5,7 @@ import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/edit_profile_page.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/account_settings_page.dart';
-import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
@@ -182,7 +182,7 @@ class ProfilePage extends ConsumerWidget {
                               'Migrar Eventos',
                               () async {
                                 if (currentUser != null) {
-                                  final eventService = EventService();
+                                  final eventService = ref.read(eventServiceProvider);
                                   final success = await eventService.migrateEventsWithUserId(currentUser!.id);
                                   
                                   if (context.mounted) {

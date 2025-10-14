@@ -6,7 +6,9 @@ class Event {
   final String userId; // nuevo: ID del usuario propietario
   final DateTime date;
   final int hour;
-  final int duration; // Duración en horas
+  final int duration; // Duración en horas (mantenido para compatibilidad)
+  final int startMinute; // nuevo: minutos de inicio (0-59)
+  final int durationMinutes; // nuevo: duración en minutos
   final String description;
   final String? color;
   final String? typeFamily; // nueva: familia (desplazamiento, restauracion, actividad)
@@ -24,6 +26,8 @@ class Event {
     required this.date,
     required this.hour,
     required this.duration,
+    this.startMinute = 0, // por defecto empieza al inicio de la hora
+    this.durationMinutes = 60, // por defecto 1 hora completa
     required this.description,
     this.color,
     this.typeFamily,
@@ -37,13 +41,22 @@ class Event {
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    final duration = data['duration'] ?? 1;
+    
+    // Compatibilidad con datos existentes: si no hay startMinute/durationMinutes,
+    // calcular basado en hour/duration existentes
+    final startMinute = data['startMinute'] ?? 0;
+    final durationMinutes = data['durationMinutes'] ?? (duration * 60);
+    
     return Event(
       id: doc.id,
       planId: data['planId'] ?? '',
       userId: data['userId'] ?? '',
       date: (data['date'] as Timestamp).toDate(),
       hour: data['hour'] ?? 0,
-      duration: data['duration'] ?? 1,
+      duration: duration,
+      startMinute: startMinute,
+      durationMinutes: durationMinutes,
       description: data['description'] ?? '',
       color: data['color'],
       typeFamily: data['typeFamily'],
@@ -65,6 +78,8 @@ class Event {
       'date': Timestamp.fromDate(date),
       'hour': hour,
       'duration': duration,
+      'startMinute': startMinute,
+      'durationMinutes': durationMinutes,
       'description': description,
       'color': color,
       if (typeFamily != null) 'typeFamily': typeFamily,
@@ -84,6 +99,8 @@ class Event {
     DateTime? date,
     int? hour,
     int? duration,
+    int? startMinute,
+    int? durationMinutes,
     String? description,
     String? color,
     String? typeFamily,
@@ -101,6 +118,8 @@ class Event {
       date: date ?? this.date,
       hour: hour ?? this.hour,
       duration: duration ?? this.duration,
+      startMinute: startMinute ?? this.startMinute,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
       description: description ?? this.description,
       color: color ?? this.color,
       typeFamily: typeFamily ?? this.typeFamily,
@@ -115,7 +134,7 @@ class Event {
 
   @override
   String toString() {
-    return 'Event(id: $id, planId: $planId, date: $date, hour: $hour, duration: $duration, description: $description, typeFamily: $typeFamily, typeSubtype: $typeSubtype, documents: ${documents?.length ?? 0})';
+    return 'Event(id: $id, planId: $planId, date: $date, hour: $hour, startMinute: $startMinute, duration: $duration, durationMinutes: $durationMinutes, description: $description, typeFamily: $typeFamily, typeSubtype: $typeSubtype, documents: ${documents?.length ?? 0})';
   }
 
   @override
@@ -127,6 +146,8 @@ class Event {
         other.date == date &&
         other.hour == hour &&
         other.duration == duration &&
+        other.startMinute == startMinute &&
+        other.durationMinutes == durationMinutes &&
         other.description == description &&
         other.color == color &&
         other.typeFamily == typeFamily &&
@@ -142,12 +163,40 @@ class Event {
         date.hashCode ^
         hour.hashCode ^
         duration.hashCode ^
+        startMinute.hashCode ^
+        durationMinutes.hashCode ^
         description.hashCode ^
         color.hashCode ^
         (typeFamily?.hashCode ?? 0) ^
         (typeSubtype?.hashCode ?? 0) ^
         (documents?.hashCode ?? 0) ^
         isDraft.hashCode;
+  }
+
+  // Métodos de utilidad para trabajar con minutos exactos
+  
+  /// Obtiene el minuto total de inicio del evento (hora * 60 + startMinute)
+  int get totalStartMinutes => hour * 60 + startMinute;
+  
+  /// Obtiene el minuto total de fin del evento
+  int get totalEndMinutes => totalStartMinutes + durationMinutes;
+  
+  /// Obtiene la hora de fin del evento
+  int get endHour => totalEndMinutes ~/ 60;
+  
+  /// Obtiene el minuto de fin del evento
+  int get endMinute => totalEndMinutes % 60;
+  
+  /// Verifica si el evento está activo en un minuto específico
+  bool isActiveAt(int hour, int minute) {
+    final checkMinutes = hour * 60 + minute;
+    return checkMinutes >= totalStartMinutes && checkMinutes < totalEndMinutes;
+  }
+  
+  /// Verifica si el evento se solapa con otro evento
+  bool overlapsWith(Event other) {
+    return totalStartMinutes < other.totalEndMinutes && 
+           totalEndMinutes > other.totalStartMinutes;
   }
 }
 
