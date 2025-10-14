@@ -1,6 +1,19 @@
 # 📋 Lista de Tareas - Planazoo
 
-**Siguiente código de tarea: T68**
+**Siguiente código de tarea: T91**
+
+**📊 Resumen de tareas:**
+- T18-T24: Tareas antiguas pendientes (7)
+- T27-T31: Mejoras UX (5)
+- T35, T37-T38: Funcionalidades varias (3)
+- T40-T45: Sistema de Timezones (6)
+- T46-T50: Participantes en eventos (5)
+- T51-T53: Seguridad y validación (3)
+- T56-T62: Offline First (7)
+- T63-T67: Permisos granulares (5)
+- T68-T90: Sistema de Tracks y multi-participante (23)
+
+**Total: 64 tareas documentadas**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -66,6 +79,1039 @@
 - Sincronización automática cuando hay conexión
 - Resolución automática de conflictos (último cambio gana)
 - Cola de sincronización para cambios pendientes
+
+---
+
+## 🗺️ ORDEN DE IMPLEMENTACIÓN RECOMENDADO
+
+### **Opción A: Tracks Primero (Resultados visuales rápidos)**
+```
+1️⃣ Sistema de Tracks (T68-T77)     ← Funcionalidad CORE visual
+2️⃣ Vistas Filtradas (T78-T80)       ← Completar experiencia tracks
+3️⃣ Timezones (T40-T45)              ← Conversión por participante
+4️⃣ Timezone Multi-Track (T81-T82)   ← Integración tracks + timezone
+5️⃣ Permisos (T63-T67)               ← Seguridad y roles
+6️⃣ Offline First (T56-T62)          ← Infraestructura robusta
+7️⃣ Funcionalidades Avanzadas        ← Optimizaciones
+```
+
+### **Opción B: Infraestructura Primero (Robustez desde el inicio)**
+```
+1️⃣ Offline First (T56-T62)          ← Base sólida
+2️⃣ Permisos (T63-T67)               ← Seguridad
+3️⃣ Sistema de Tracks (T68-T77)      ← Funcionalidad CORE
+4️⃣ Timezones (T40-T45, T81-T82)     ← Conversión completa
+5️⃣ Vistas Filtradas (T78-T80)       ← Experiencia usuario
+6️⃣ Funcionalidades Avanzadas        ← Refinamiento
+```
+
+### **Opción C: Incremental (Mezcla de valor y robustez)**
+```
+Fase 1: Base Visual
+- T68 (ParticipantTrack)
+- T69 (CalendarScreen multi-track)
+- T70 (Eventos multi-track)
+
+Fase 2: Infraestructura Crítica
+- T56 (Base de datos local)
+- T63 (Modelo de permisos)
+- T74 (Parte común + personal)
+
+Fase 3: Funcionalidad Completa
+- T71-T73 (Filtros y control)
+- T75-T77 (UI y sincronización)
+- T40-T45 (Timezones)
+
+Fase 4: Refinamiento
+- T78-T82 (Vistas y timezone avanzado)
+- T56-T62 (Offline First completo)
+- T83-T90 (Funcionalidades avanzadas)
+```
+
+**📌 IMPORTANTE:** Las tareas T46-T50 son versiones simplificadas que pueden omitirse si se va directo al sistema de tracks (T68-T90).
+
+---
+
+## 👥 SISTEMA DE TRACKS Y VISUALIZACIÓN MULTI-PARTICIPANTE - Serie de Tareas (T68-T77)
+
+**⚠️ CRÍTICO - FUNCIONALIDAD CORE DEL SISTEMA**
+
+Esta serie implementa el concepto fundamental de "Participante como Track", donde cada participante del plan se visualiza como una columna (track) independiente en el calendario.
+
+**📌 Conceptos Clave:**
+- Cada participante = 1 track (columna en el calendario)
+- Los eventos se muestran en los tracks de sus participantes
+- Eventos multi-participante se extienden (span) por múltiples tracks
+- Los tracks tienen orden fijo dentro del plan
+- Vista filtrable: Todos/Individual/Personalizado
+
+---
+
+### T68 - Modelo ParticipantTrack
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🔴 Bloqueante para T69-T90  
+**Descripción:** Crear modelo `ParticipantTrack` que representa cada participante como una columna/track en el calendario.
+
+**Concepto clave:** 
+- Cada participante del plan = 1 track
+- El track contiene referencia al participante y su posición fija
+- Los tracks mantienen orden consistente en todas las vistas del plan
+
+**Criterios de aceptación:**
+- Crear modelo `ParticipantTrack` con campos:
+  ```dart
+  class ParticipantTrack {
+    String id;
+    String participantId;
+    String participantName;
+    int position; // Orden fijo en el plan (0, 1, 2, ...)
+    Color? customColor;
+    bool isVisible; // Para filtros
+  }
+  ```
+- Método para obtener tracks de un plan
+- Método para reordenar tracks (cambiar position)
+- Guardar configuración de tracks en Firestore
+- Migración: planes existentes crean tracks automáticamente
+
+**Archivos a crear:**
+- `lib/features/calendar/domain/models/participant_track.dart`
+- `lib/features/calendar/domain/services/track_service.dart`
+
+**Reglas de negocio:**
+- El orden de tracks es fijo y se mantiene en todas las vistas
+- Solo admins del plan pueden reordenar tracks
+- Los tracks se crean automáticamente al añadir participante al plan
+- Al eliminar participante, su track se marca como inactivo (no se borra)
+
+---
+
+### T69 - CalendarScreen: Modo Multi-Track
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Muy Alta  
+**Prioridad:** 🔴 Crítico  
+**Depende de:** T68  
+**Descripción:** Rediseñar `wd_calendar_screen.dart` para mostrar múltiples columnas (tracks), una por participante.
+
+**Concepto clave:**
+- Vista horizontal con columnas: [Horas] [Track1] [Track2] [Track3] ... [TrackN]
+- Cada track muestra solo los eventos de ese participante
+- Scroll horizontal para ver más tracks
+- Scroll vertical compartido para las horas
+
+**UI propuesta:**
+```
+┌─────┬─────────┬─────────┬─────────┬─────────┐
+│Horas│  Juan   │  María  │  Pedro  │   Ana   │
+├─────┼─────────┼─────────┼─────────┼─────────┤
+│00:00│         │         │         │         │
+│01:00│         │         │ 🛏️ Vuelo │         │
+│...  │         │         │         │         │
+│09:00│ 🍽️ Desay│ 🍽️ Desay│         │ 🍽️ Desay│
+│10:00│ 🏛️ Museo─────────────────────────────┤│ (evento multi-track)
+│11:00│         │         │         │         │
+└─────┴─────────┴─────────┴─────────┴─────────┘
+```
+
+**Criterios de aceptación:**
+- Rediseñar estructura de columnas del calendario:
+  - Columna fija de horas (izquierda)
+  - Columnas dinámicas para cada track (scroll horizontal)
+- Ancho de track adaptativo según cantidad de días visibles
+- Renderizar eventos en el track correspondiente
+- Scroll horizontal suave para tracks
+- Scroll vertical compartido para todas las columnas
+- Header con nombres de participantes (sticky)
+- Indicador visual de track activo/seleccionado
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart` (rediseño completo)
+- Crear: `lib/widgets/wd_track_column.dart`
+- Crear: `lib/widgets/wd_track_header.dart`
+
+**Consideraciones técnicas:**
+- Usar `SingleChildScrollView` horizontal para tracks
+- Usar `ScrollController` compartido para scroll vertical
+- Calcular ancho dinámico: `trackWidth = (screenWidth - hoursColumnWidth) / visibleDays`
+- Lazy loading de tracks para performance
+- Mantener compatibilidad con drag & drop de eventos
+
+---
+
+### T70 - Eventos Multi-Track (Span Horizontal)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Alta  
+**Prioridad:** 🔴 Crítico  
+**Depende de:** T69  
+**Descripción:** Implementar eventos que se extienden (span) horizontalmente por múltiples tracks cuando tienen varios participantes.
+
+**Concepto clave:**
+- Evento con 3 participantes → se extiende por 3 tracks
+- Evento "Vuelo familiar" con [Padre, Madre, Hijo] → ocupa 3 columnas adyacentes
+- Visual: rectángulo ancho que abarca múltiples tracks
+
+**Visual esperado:**
+```
+│  Padre  │  Madre  │  Hijo   │  Abuelo │
+├─────────┼─────────┼─────────┼─────────┤
+│ ✈️ Vuelo Barcelona - Londres─────────┤│         │
+│ (evento de 3 participantes)           │         │
+```
+
+**Criterios de aceptación:**
+- Detectar eventos multi-participante
+- Calcular ancho del evento: `width = trackWidth * numberOfParticipants`
+- Renderizar evento abarcando múltiples columnas
+- Posicionar evento en el track del primer participante
+- Evitar superposición incorrecta con otros eventos
+- Interacción: click en cualquier parte del evento abre diálogo
+- Drag & drop: mover evento multi-track mantiene participantes
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `lib/features/calendar/domain/models/event_segment.dart` (añadir `spanTracks`)
+
+**Reglas de negocio:**
+- Solo eventos con `isForAllParticipants = false` y múltiples `participantIds`
+- Los tracks de los participantes deben ser consecutivos para span visual
+- Si no son consecutivos, el evento se renderiza en cada track individual
+
+---
+
+### T71 - Filtros de Vista: Individual vs Todos vs Personalizado
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🔴 Crítico  
+**Depende de:** T69  
+**Descripción:** Implementar sistema de filtros para cambiar qué tracks se muestran en el calendario.
+
+**Modos de vista:**
+
+1. **"Plan Completo"** (Vista Organizador)
+   - Muestra todos los tracks de todos los participantes
+   - Eventos multi-participante visibles con span
+   - Scroll horizontal para ver todos
+
+2. **"Mi Agenda"** (Vista Personal)
+   - Solo muestra el track del usuario actual
+   - Vista simplificada, sin scroll horizontal
+   - Solo eventos donde el usuario participa
+
+3. **"Vista Personalizada"**
+   - Usuario selecciona qué tracks ver
+   - Checkbox por participante
+   - Útil para ver "plan de la familia" vs "plan individual"
+
+**UI propuesta (selector en AppBar):**
+```
+┌──────────────────────────────────────┐
+│ 📅 Calendario  [👁️ Vista: Plan Completo ▼] │
+└──────────────────────────────────────┘
+
+Al desplegar:
+┌─────────────────────┐
+│ ✓ Plan Completo     │
+│   Mi Agenda         │
+│   Personalizada...  │
+└─────────────────────┘
+
+Si selecciona "Personalizada":
+┌─────────────────────┐
+│ Seleccionar tracks: │
+│ ☑️ Juan (Yo)        │
+│ ☑️ María           │
+│ ☐ Pedro            │
+│ ☑️ Ana             │
+└─────────────────────┘
+```
+
+**Criterios de aceptación:**
+- Dropdown/BottomSheet con 3 opciones de vista
+- "Plan Completo": cargar todos los tracks
+- "Mi Agenda": solo track del usuario actual
+- "Vista Personalizada": modal con checkboxes de participantes
+- Persistir selección en estado local (no Firestore)
+- Al cambiar filtro, recargar eventos correspondientes
+- Indicador visual del filtro activo
+- Contador de tracks visibles
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- Crear: `lib/widgets/wd_track_filter_selector.dart`
+- Crear: `lib/widgets/wd_track_filter_dialog.dart`
+
+**Consideraciones técnicas:**
+- Estado del filtro: `List<String> selectedTrackIds`
+- Provider para gestionar filtro activo
+- Re-renderizar calendario al cambiar filtro
+- Optimización: solo cargar eventos de tracks visibles
+
+---
+
+### T72 - Control de Días Visibles (1-7 días ajustable)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟠 Alta  
+**Depende de:** T69  
+**Descripción:** Permitir al usuario ajustar cuántos días se muestran simultáneamente en el calendario para optimizar espacio de tracks.
+
+**Concepto clave:**
+- Menos días visibles → más espacio para cada track
+- Más días visibles → tracks más estrechos
+- El usuario decide el balance óptimo
+
+**Cálculo de ancho:**
+```dart
+double trackWidth = (screenWidth - hoursColumnWidth) / (visibleDays * numberOfTracks);
+
+Ejemplo:
+- Pantalla: 1200px
+- Horas: 100px
+- Tracks: 4 participantes
+- Días visibles: 7
+
+trackWidth = (1200 - 100) / (7 * 4) = 1100 / 28 = ~39px (MUY ESTRECHO)
+
+Si reducimos a 3 días:
+trackWidth = (1200 - 100) / (3 * 4) = 1100 / 12 = ~92px (MEJOR)
+```
+
+**UI propuesta:**
+```
+┌────────────────────────────────────┐
+│ [◀] 3 días [▶]   📅 Calendario    │
+└────────────────────────────────────┘
+
+O con slider:
+┌────────────────────────────────────┐
+│ Días: [1]━━●━━━━━[7]               │
+└────────────────────────────────────┘
+```
+
+**Criterios de aceptación:**
+- Selector de días visibles: 1, 2, 3, 5, 7 días
+- Botones +/- o slider para cambiar
+- Recalcular ancho de tracks dinámicamente
+- Persistir preferencia en estado local
+- Indicador visual del número actual
+- Auto-ajuste si tracks no caben (mínimo 1 día)
+- Navegación entre rangos de días (anterior/siguiente)
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- Crear: `lib/widgets/wd_days_selector.dart`
+
+**Reglas de negocio:**
+- Por defecto: 7 días (vista semanal)
+- Si no caben todos los tracks con 7 días, sugerir reducir
+- Mínimo: 1 día
+- Máximo: 7 días
+
+---
+
+### T73 - Gestión de Orden de Tracks (Drag & Drop)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Depende de:** T68, T69  
+**Descripción:** Permitir a los admins reordenar los tracks (participantes) mediante drag & drop para personalizar la visualización del plan.
+
+**Concepto clave:**
+- El orden de tracks es fijo y consistente
+- Admins pueden reordenar arrastrando headers de tracks
+- El orden se guarda y se mantiene para todos los usuarios
+
+**UI propuesta:**
+```
+[Antes del drag]
+│  Juan   │  María  │  Pedro  │  Ana   │
+                ↓ (admin arrastra "María" a la derecha)
+[Después del drag]
+│  Juan   │  Pedro  │  María  │  Ana   │
+```
+
+**Criterios de aceptación:**
+- Solo admins ven icono de drag en track headers
+- Drag & drop funcional en track headers
+- Reordenar tracks actualiza `position` en Firestore
+- Cambio se sincroniza en tiempo real para todos
+- Animación suave al reordenar
+- Confirmación visual del nuevo orden
+- Botón "Restaurar orden original" (alfabético)
+
+**Archivos a modificar:**
+- `lib/widgets/wd_track_header.dart`
+- `lib/features/calendar/domain/services/track_service.dart`
+
+**Permisos:**
+- Admin del plan: ✅ Puede reordenar
+- Participante: ❌ Solo visualización
+- Observador: ❌ Solo visualización
+
+---
+
+### T74 - Modelo Event: Estructura Parte Común + Parte Personal
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Alta  
+**Prioridad:** 🔴 Bloqueante para T75-T77  
+**Depende de:** T68  
+**Descripción:** Modificar modelo Event para separar claramente la "parte común" (editada por creador) y la "parte personal" (editada por cada participante).
+
+**Concepto clave:**
+- **Parte Común:** Información compartida del evento (hora, duración, descripción, ubicación)
+- **Parte Personal:** Información específica de cada participante (asiento, preferencias, notas personales)
+
+**Estructura propuesta:**
+```dart
+class Event {
+  String id;
+  String planId;
+  String createdBy; // Usuario que creó el evento
+  
+  // ============ PARTE COMÚN (editable por creador + admins) ============
+  EventCommonPart commonPart;
+  
+  // ========== PARTE PERSONAL (editable por participante + admins) =========
+  Map<String, EventPersonalPart> personalParts; // Key: participantId
+}
+
+class EventCommonPart {
+  String description;
+  DateTime date;
+  int hour;
+  int startMinute;
+  int durationMinutes;
+  String? location;
+  String? notes;
+  EventFamily family;
+  String? subtype;
+  Color? customColor;
+  List<String> participantIds;
+  bool isForAllParticipants;
+  bool isDraft;
+}
+
+class EventPersonalPart {
+  String participantId;
+  
+  // Campos específicos por tipo de evento:
+  String? asiento;        // Para vuelos, trenes, teatro
+  String? menu;           // Para restaurantes
+  String? preferencias;   // Para actividades
+  String? numeroReserva;  // Para hoteles, vuelos
+  String? gate;           // Para vuelos
+  bool? tarjetaObtenida;  // Para vuelos
+  String? notasPersonales;
+  
+  // Campo genérico para info adicional:
+  Map<String, dynamic>? extraData;
+}
+```
+
+**Criterios de aceptación:**
+- Migrar campos existentes a `EventCommonPart`
+- Crear `EventPersonalPart` con campos personalizables
+- Modificar `toFirestore()` y `fromFirestore()` para nueva estructura
+- Compatibilidad hacia atrás: eventos sin parte personal funcionan
+- Validación: cada participante tiene su `EventPersonalPart`
+- Testing: crear evento con parte común + partes personales
+
+**Archivos a modificar:**
+- `lib/features/calendar/domain/models/event.dart`
+- Crear: `lib/features/calendar/domain/models/event_common_part.dart`
+- Crear: `lib/features/calendar/domain/models/event_personal_part.dart`
+
+**Migración:**
+- Eventos existentes: toda la info va a `commonPart`
+- `personalParts` se crea vacío y se va llenando
+- Al editar evento antiguo, se migra automáticamente
+
+---
+
+### T75 - EventDialog: UI Separada para Parte Común vs Personal
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Muy Alta  
+**Prioridad:** 🔴 Crítico  
+**Depende de:** T74  
+**Descripción:** Rediseñar EventDialog para mostrar claramente qué campos son "parte común" vs "parte personal", con permisos de edición según el rol del usuario.
+
+**Concepto clave:**
+- Creador del evento: edita parte común + su parte personal
+- Participante: solo edita su parte personal (readonly en parte común)
+- Admin: edita parte común + cualquier parte personal
+
+**UI propuesta (con tabs):**
+```
+┌──────────────────────────────────────┐
+│  [📋 Información General] [👤 Mi Info] │
+├──────────────────────────────────────┤
+│                                      │
+│ Tab 1: PARTE COMÚN                   │
+│ ┌──────────────────────────────┐   │
+│ │ 📝 Descripción: Vuelo BCN-LON │   │
+│ │ 🕐 Hora: 07:00               │   │
+│ │ ⏱️ Duración: 2h 30min        │   │
+│ │ 📍 Ubicación: Aeropuerto     │   │
+│ │ 👥 Participantes: 3          │   │
+│ └──────────────────────────────┘   │
+│                                      │
+│ Tab 2: MI INFORMACIÓN PERSONAL       │
+│ ┌──────────────────────────────┐   │
+│ │ 💺 Asiento: 12A              │   │
+│ │ 🚪 Gate: B15                 │   │
+│ │ ✅ Tarjeta: Obtenida         │   │
+│ │ 📝 Notas: Llevar pasaporte   │   │
+│ └──────────────────────────────┘   │
+└──────────────────────────────────────┘
+
+Para ADMINS, aparece tab adicional:
+[📋 General] [👤 Mi Info] [👥 Info de Otros]
+                              ↑
+                    Ver/Editar info personal de otros
+```
+
+**Criterios de aceptación:**
+- **Tab "Información General" (Parte Común):**
+  - Campos: descripción, fecha, hora, duración, ubicación, participantes
+  - Editable si: `user == createdBy` OR `user.isAdmin`
+  - Readonly si: `user != createdBy` AND `!user.isAdmin`
+  - Indicador visual de permisos (🔒 si readonly)
+
+- **Tab "Mi Información" (Parte Personal):**
+  - Campos dinámicos según tipo de evento (vuelo, restaurant, etc.)
+  - Siempre editable (es la parte personal del usuario)
+  - Opcional: campos vacíos si no se ha personalizado
+
+- **Tab "Información de Otros" (Solo Admins):**
+  - Lista de participantes del evento
+  - Click en participante → ver/editar su parte personal
+  - Útil para que admin gestione info de todos (ej: sacar tarjetas)
+
+- **Indicadores visuales:**
+  - 🔓 Campo editable (borde verde claro)
+  - 🔒 Campo readonly (opacidad reducida, borde gris)
+  - Badge "Admin" si el usuario es admin
+  - Badge "Creador" si el usuario creó el evento
+
+**Archivos a modificar:**
+- `lib/widgets/wd_event_dialog.dart` (rediseño completo)
+- Crear: `lib/widgets/event_dialog/event_common_tab.dart`
+- Crear: `lib/widgets/event_dialog/event_personal_tab.dart`
+- Crear: `lib/widgets/event_dialog/event_others_tab.dart` (admins)
+
+**Consideraciones técnicas:**
+- Usar `TabController` con 2-3 tabs según rol
+- Campos readonly: `TextField(enabled: false, ...)`
+- Validación diferente por tab
+- Guardar cambios: solo de tabs editables
+
+---
+
+### T76 - Sincronización Parte Común → Copias de Participantes
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Muy Alta  
+**Prioridad:** 🔴 Crítico  
+**Depende de:** T74, T75  
+**Descripción:** Implementar lógica de sincronización para que cambios en la parte común de un evento se propaguen automáticamente a todas las copias de los participantes.
+
+**Concepto clave:**
+- Evento "Vuelo BCN-LON" tiene 3 copias (Padre, Madre, Hijo)
+- Admin cambia hora de 07:00 → 08:00 en parte común
+- El cambio se propaga automáticamente a las 3 copias
+- Las partes personales NO se modifican
+
+**Flujo de sincronización:**
+```
+1. Admin edita parte común del evento
+   ↓
+2. Sistema detecta que es cambio en "commonPart"
+   ↓
+3. Busca todas las copias del evento (mismo eventId base)
+   ↓
+4. Actualiza "commonPart" en todas las copias
+   ↓
+5. Notifica a los participantes del cambio
+   ↓
+6. UI se actualiza automáticamente (Firestore listeners)
+```
+
+**Criterios de aceptación:**
+- **Detección de cambios:**
+  - Identificar qué eventos son "copias" del mismo evento (mismo `baseEventId`)
+  - Diferenciar cambios en `commonPart` vs `personalPart`
+
+- **Propagación de cambios:**
+  - Método `propagateCommonPartChanges(eventId, newCommonPart)`
+  - Actualizar `commonPart` en todas las copias
+  - Mantener `personalPart` intacta
+  - Usar Firestore Transaction para atomicidad
+
+- **Casos especiales:**
+  - Cambio de participantes → crear/eliminar copias
+  - Cambio de hora/fecha → recalcular overlaps
+  - Evento borrado → eliminar todas las copias
+
+- **Notificaciones:**
+  - Notificar a participantes afectados
+  - Mensaje: "El evento X fue modificado por [Admin]"
+  - Destacar qué cambió (hora, descripción, etc.)
+
+**Archivos a modificar:**
+- `lib/features/calendar/domain/services/event_service.dart`
+- Crear: `lib/features/calendar/domain/services/event_sync_service.dart`
+
+**Estrategia de sincronización:**
+- Usar Firestore Transaction (operación crítica)
+- Batch updates para múltiples copias
+- Retry automático si falla
+- Log de cambios para debugging
+
+---
+
+### T77 - Indicadores Visuales de Permisos en UI
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja-Media  
+**Prioridad:** 🟡 Media  
+**Depende de:** T75  
+**Descripción:** Añadir indicadores visuales claros en la UI para que el usuario sepa qué puede editar y qué no según sus permisos.
+
+**Concepto clave:**
+- Usuario debe saber de un vistazo qué campos puede editar
+- Diferenciación clara entre parte común (puede/no puede) y parte personal (siempre puede)
+
+**Indicadores propuestos:**
+
+1. **Badges de Rol en Event Dialog:**
+   ```
+   ┌──────────────────────────────────┐
+   │ ✈️ Vuelo BCN-LON    [👑 Admin]   │ ← Badge dorado si es admin
+   │ ✈️ Vuelo BCN-LON    [✍️ Creador] │ ← Badge azul si es creador
+   │ ✈️ Vuelo BCN-LON    [👤 Particip]│ ← Badge gris si es participante
+   └──────────────────────────────────┘
+   ```
+
+2. **Iconos en Campos:**
+   ```
+   🔓 Descripción: [___________]  ← Verde claro, editable
+   🔒 Descripción: [___________]  ← Gris, readonly
+   ```
+
+3. **Tooltips Informativos:**
+   ```
+   [Hover en campo readonly]
+   ┌──────────────────────────────┐
+   │ ℹ️ Solo el creador o admins   │
+   │   pueden editar este campo   │
+   └──────────────────────────────┘
+   ```
+
+4. **Color de Borde en Tabs:**
+   ```
+   [📋 Información General]  ← Borde verde si editable
+   [📋 Información General]  ← Borde gris si readonly
+   [👤 Mi Información]       ← Siempre verde (siempre editable)
+   ```
+
+5. **Indicador en Calendario:**
+   ```
+   Eventos creados por mí:  📝 (lápiz pequeño en esquina)
+   Eventos de otros:        👁️ (ojo en esquina)
+   ```
+
+**Criterios de aceptación:**
+- Badge de rol visible en header del EventDialog
+- Iconos 🔓/🔒 en campos según permisos
+- Tooltips explicativos en campos readonly
+- Color de borde diferente en tabs (verde/gris)
+- Opacidad reducida en campos no editables
+- Indicador en evento del calendario (opcional)
+- Consistencia visual en toda la app
+
+**Archivos a modificar:**
+- `lib/widgets/wd_event_dialog.dart`
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- Crear: `lib/widgets/shared/permission_indicator.dart`
+- Crear: `lib/widgets/shared/role_badge.dart`
+
+**Paleta de colores:**
+- 🔓 Editable: `Colors.green[100]` (fondo) + `Colors.green` (borde)
+- 🔒 Readonly: `Colors.grey[200]` (fondo) + `Colors.grey` (borde)
+- Admin: `Colors.amber` (dorado)
+- Creador: `Colors.blue`
+- Participante: `Colors.grey`
+
+---
+
+## 🌐 VISTAS FILTRADAS Y TIMEZONE POR PARTICIPANTE - Serie de Tareas (T78-T82)
+
+### T78 - Vista "Mi Agenda" (Solo mis eventos)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟠 Alta  
+**Depende de:** T69, T71  
+**Descripción:** Implementar vista simplificada "Mi Agenda" que muestra solo el track del usuario actual con sus eventos.
+
+**Concepto clave:**
+- Vista personal y simplificada
+- Solo 1 track (el del usuario)
+- Solo eventos donde el usuario participa
+- Sin scroll horizontal
+- Más espacio para eventos
+
+**UI esperada:**
+```
+┌─────────────────────────────────┐
+│ 📅 Mi Agenda - Juan             │
+├─────┬───────────────────────────┤
+│00:00│                           │
+│...  │                           │
+│09:00│ 🍽️ Desayuno              │
+│10:00│ 🏛️ Museo                 │
+│...  │                           │
+│20:00│ 🍽️ Cena                  │
+└─────┴───────────────────────────┘
+```
+
+**Criterios de aceptación:**
+- Botón/Toggle para activar vista "Mi Agenda"
+- Mostrar solo track del usuario actual
+- Filtrar eventos: solo donde `participantIds.contains(currentUserId)`
+- Ancho completo para el track (sin scroll horizontal)
+- Header personalizado: "Mi Agenda - [Nombre]"
+- Eventos multi-participante se muestran pero sin span
+- Opción para volver a "Plan Completo"
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `lib/widgets/wd_track_filter_selector.dart`
+
+---
+
+### T79 - Vista "Plan Completo" (Todos los tracks)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟠 Alta  
+**Depende de:** T69, T71  
+**Descripción:** Implementar vista "Plan Completo" que muestra todos los tracks de todos los participantes con eventos multi-participante visibles.
+
+**Concepto clave:**
+- Vista de organizador/admin
+- Todos los tracks visibles
+- Eventos multi-participante con span horizontal
+- Scroll horizontal para navegar
+- Vista más compleja pero completa
+
+**UI esperada:**
+```
+┌──────────────────────────────────────────┐
+│ 📅 Plan Completo - Vacaciones Europa     │
+├─────┬────────┬────────┬────────┬─────────┤
+│Horas│  Juan  │ María  │ Pedro  │  Ana    │
+├─────┼────────┼────────┼────────┼─────────┤
+│09:00│ ✈️ Vuelo Barcelona - Londres──────┤│         │
+│     │ (evento multi-participante)       │         │
+│10:00│        │        │        │         │
+│...  │        │ 🛍️ Shop│        │         │
+└─────┴────────┴────────┴────────┴─────────┘
+```
+
+**Criterios de aceptación:**
+- Botón/Toggle para activar vista "Plan Completo"
+- Cargar todos los tracks del plan
+- Mostrar eventos multi-participante con span
+- Scroll horizontal funcional
+- Header con nombres de todos los participantes
+- Indicador de cantidad de tracks visibles
+- Opción para cambiar a otras vistas
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `lib/widgets/wd_track_filter_selector.dart`
+
+---
+
+### T80 - Vista "Personalizada" (Seleccionar tracks)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Depende de:** T69, T71  
+**Descripción:** Implementar vista "Personalizada" donde el usuario puede seleccionar manualmente qué tracks (participantes) quiere visualizar.
+
+**Concepto clave:**
+- Usuario decide qué participantes ver
+- Útil para casos como "ver solo plan familiar" excluyendo otros
+- Combinación flexible de tracks
+
+**UI esperada:**
+```
+1. Selector de tracks:
+┌─────────────────────────┐
+│ Seleccionar participantes:│
+│ ☑️ Juan (Yo)            │
+│ ☑️ María (Pareja)       │
+│ ☐ Pedro (Amigo)         │
+│ ☑️ Ana (Hija)           │
+│                         │
+│ [Aplicar]  [Cancelar]   │
+└─────────────────────────┘
+
+2. Vista resultante:
+│  Juan  │  María │  Ana   │  ← Solo seleccionados
+```
+
+**Criterios de aceptación:**
+- Botón "Vista Personalizada" abre modal/drawer
+- Checkbox por cada participante del plan
+- Indicador de "Yo" en el participante actual
+- Aplicar filtro muestra solo tracks seleccionados
+- Mínimo 1 track seleccionado (validación)
+- Guardar preferencia en estado local
+- Indicador visual de cuántos tracks están ocultos
+
+**Archivos a crear:**
+- `lib/widgets/wd_custom_track_selector_dialog.dart`
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `lib/widgets/wd_track_filter_selector.dart`
+
+---
+
+### T81 - Conversión Timezone por Participante en Multi-Track
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Alta  
+**Prioridad:** 🟠 Alta  
+**Depende de:** T40-T45, T69  
+**Descripción:** Integrar sistema de timezones con visualización multi-track, mostrando cada evento en la timezone local de cada participante.
+
+**Concepto clave:**
+- Plan tiene timezone base (ej: UTC o Europe/Madrid)
+- Cada participante tiene su timezone local
+- Los eventos se muestran en la hora local de cada participante
+
+**Ejemplo:**
+```
+Evento: "Daily Standup" a las 09:00 (timezone base: Europe/Madrid)
+
+│  Dev (Madrid) │  PM (Nueva York) │  QA (Tokio)   │
+├───────────────┼──────────────────┼───────────────┤
+│ 09:00         │ 03:00            │ 17:00         │
+│ Daily Standup │ Daily Standup    │ Daily Standup │
+```
+
+**Criterios de aceptación:**
+- Obtener timezone de cada participante
+- Convertir hora del evento desde timezone base a timezone del participante
+- Mostrar hora convertida en cada track
+- Indicador visual si la hora es diferente entre tracks
+- Tooltip mostrando hora original (timezone base)
+- Funciona con eventos multi-participante
+- Testing con al menos 3 timezones diferentes
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `lib/widgets/wd_track_column.dart`
+- `lib/features/calendar/domain/services/timezone_service.dart`
+
+**Consideraciones técnicas:**
+- Usar paquete `timezone` para conversiones
+- Cachear conversiones para performance
+- Manejar DST (Daylight Saving Time)
+- Mostrar indicador si evento "cruza día" para algún participante
+
+---
+
+### T82 - Indicador Visual de Timezone Diferente
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟡 Baja  
+**Depende de:** T81  
+**Descripción:** Añadir indicadores visuales cuando un evento se muestra en timezones diferentes entre participantes.
+
+**Concepto clave:**
+- Usuario debe saber cuando la hora mostrada es diferente entre tracks
+- Evitar confusión en planes internacionales
+
+**Indicadores propuestos:**
+
+1. **Badge de Timezone en Track Header:**
+   ```
+   │  Dev (Madrid)  │  PM (Nueva York)  │
+   │  🌍 GMT+1      │  🌍 GMT-5         │
+   ```
+
+2. **Indicador en Evento con Horas Diferentes:**
+   ```
+   │ 09:00 🌍       │ 03:00 🌍          │
+   │ Daily Standup  │ Daily Standup     │
+   ```
+
+3. **Tooltip Informativo:**
+   ```
+   [Hover en evento]
+   ┌──────────────────────────────┐
+   │ 🌍 Evento en múltiples zonas │
+   │ Madrid: 09:00                │
+   │ Nueva York: 03:00            │
+   │ Tokio: 17:00                 │
+   └──────────────────────────────┘
+   ```
+
+4. **Línea Vertical de Referencia:**
+   ```
+   Mostrar línea vertical para la hora "base" del plan
+   ayudando a visualizar el offset entre tracks
+   ```
+
+**Criterios de aceptación:**
+- Badge con timezone en header de cada track
+- Icono 🌍 en eventos con múltiples timezones
+- Tooltip mostrando hora en todas las timezones
+- Color diferente para tracks con timezone != base
+- Opción de mostrar/ocultar indicadores (toggle)
+
+**Archivos a modificar:**
+- `lib/widgets/wd_track_header.dart`
+- `lib/widgets/wd_track_column.dart`
+
+---
+
+## 🎯 FUNCIONALIDADES AVANZADAS - Serie de Tareas (T83-T90)
+
+### T83 - Sistema de Grupos de Participantes (Futuro)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟢 Baja (Futuro)  
+**Depende de:** T68-T73  
+**Descripción:** Permitir agrupar participantes en grupos lógicos (ej: "Familia", "Amigos", "Trabajo") para facilitar gestión y filtrado.
+
+**Concepto clave:**
+- Grupos = conjuntos de participantes
+- Útil para planes grandes con muchos participantes
+- Facilita asignación de eventos a grupos completos
+
+**Criterios de aceptación:**
+- Crear modelo `ParticipantGroup`
+- UI para crear/editar grupos
+- Asignar eventos a grupos enteros
+- Filtrar vista por grupo
+- Colores personalizados por grupo
+
+**Archivos a crear:**
+- `lib/features/calendar/domain/models/participant_group.dart`
+- `lib/widgets/wd_group_management_dialog.dart`
+
+---
+
+### T84 - Lógica de Propagación Automática de Cambios
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Alta  
+**Prioridad:** 🟠 Alta  
+**Depende de:** T76  
+**Descripción:** Optimizar y refinar el sistema de propagación de cambios para que sea más eficiente y robusto.
+
+**Mejoras a implementar:**
+- Detección inteligente de qué cambió (diff)
+- Propagación solo de campos modificados
+- Batch updates optimizados
+- Retry con backoff exponencial
+- Notificaciones agrupadas (debouncing)
+
+---
+
+### T85 - Notificaciones de Cambios en Eventos Compartidos
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟠 Alta  
+**Depende de:** T76  
+**Descripción:** Implementar sistema de notificaciones específico para cambios en eventos compartidos entre participantes.
+
+**Tipos de notificaciones:**
+- "Juan cambió la hora del vuelo de 07:00 a 08:00"
+- "María añadió ubicación al evento"
+- "Pedro te añadió al evento 'Cena'"
+
+---
+
+### T86 - Sistema Adaptativo de Días Visibles
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Depende de:** T72  
+**Descripción:** Sistema inteligente que sugiere automáticamente cuántos días mostrar según cantidad de tracks y tamaño de pantalla.
+
+**Lógica:**
+```dart
+int calculateOptimalDays(int numberOfTracks, double screenWidth) {
+  // Ancho mínimo aceptable por track: 80px
+  int maxTracksPerDay = (screenWidth - 100) / 80;
+  return max(1, (numberOfTracks / maxTracksPerDay).ceil());
+}
+```
+
+---
+
+### T87 - Scroll Horizontal Condicional
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟡 Baja  
+**Depende de:** T69  
+**Descripción:** Activar scroll horizontal solo cuando los tracks no caben en pantalla, evitando scroll innecesario.
+
+**Lógica:**
+- Calcular ancho total necesario
+- Si cabe en pantalla → sin scroll
+- Si no cabe → activar scroll horizontal
+- Indicador visual de "más tracks →"
+
+---
+
+### T88 - Rediseño Arquitectura de Capas del Calendario
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Muy Alta  
+**Prioridad:** 🟡 Media  
+**Depende de:** T69  
+**Descripción:** Reorganizar la arquitectura de widgets del calendario en capas claras: Base → Tracks → Eventos → Interacciones.
+
+**Capas propuestas:**
+```
+Layer 1: CalendarBase (grid de horas, fondo)
+Layer 2: TracksLayer (columnas de participantes)
+Layer 3: EventsLayer (eventos en tracks)
+Layer 4: InteractionsLayer (drag & drop, clicks)
+Layer 5: OverlaysLayer (tooltips, menus)
+```
+
+---
+
+### T89 - Indicadores Visuales de Eventos Multi-Participante
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟡 Baja  
+**Depende de:** T70  
+**Descripción:** Mejorar indicadores visuales para eventos que abarcan múltiples participantes.
+
+**Indicadores propuestos:**
+- Gradiente en evento multi-track
+- Iconos de participantes en evento
+- Línea conectora entre tracks
+- Tooltip con lista de participantes
+
+---
+
+### T90 - Resaltado de Track Activo/Seleccionado
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟡 Baja  
+**Depende de:** T69  
+**Descripción:** Resaltar visualmente el track del usuario actual o el track seleccionado para facilitar navegación.
+
+**Visual propuesto:**
+- Fondo levemente diferente en track activo
+- Borde más grueso en track seleccionado
+- Nombre en negrita
+- Animación suave al cambiar selección
 
 ---
 
@@ -525,6 +1571,149 @@ catch (e) {
 
 ---
 
+### T41 - EventDialog: Selector de Timezone
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Depende de:** T40  
+**Descripción:** Añadir selector de timezone en EventDialog para que el usuario pueda especificar en qué timezone ocurre el evento.
+
+**Concepto clave:** 
+- El evento ocurre en una ubicación física específica con su timezone
+- Ej: "Reunión en Nueva York" → timezone: America/New_York
+- Ej: "Vuelo a Tokio" → timezone: Asia/Tokyo
+
+**Criterios de aceptación:**
+- Dropdown de timezone en EventDialog
+- Búsqueda/filtrado de timezones por nombre o ciudad
+- Mostrar offset GMT actual (ej: "GMT-5", "GMT+9")
+- Timezone por defecto: timezone del plan
+- Validación: timezone obligatoria
+- Autocompletado de timezone según ubicación (si se introduce)
+- Visual: mostrar hora local del evento en la timezone seleccionada
+
+**UI propuesta:**
+```
+┌──────────────────────────────────┐
+│ 📍 Ubicación: Nueva York         │
+│ 🌍 Timezone: America/New_York ▼  │
+│    (GMT-5)                       │
+│                                  │
+│ 🕐 Hora: 14:00 (hora local)      │
+└──────────────────────────────────┘
+```
+
+**Archivos a modificar:**
+- `lib/widgets/wd_event_dialog.dart`
+- Crear: `lib/widgets/wd_timezone_selector.dart`
+
+---
+
+### T42 - Conversión de Timezone en Calendario
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Alta  
+**Depende de:** T40, T41  
+**Descripción:** Mostrar eventos en el calendario con conversión automática de timezone según el evento.
+
+**Concepto clave:**
+- Evento guardado en UTC + timezone del evento
+- Calendario muestra hora LOCAL del evento (no del dispositivo)
+- "Reunión en NY a las 14:00" siempre se muestra a las 14:00
+
+**Criterios de aceptación:**
+- Convertir UTC → timezone del evento para mostrar
+- Formato de hora según timezone del evento
+- Indicador visual si timezone del evento != timezone del plan
+- Tooltip mostrando hora en UTC y hora local del dispositivo
+- Manejo correcto de DST (Daylight Saving Time)
+- Performance: cachear conversiones
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `lib/features/calendar/domain/services/timezone_service.dart`
+
+---
+
+### T43 - Migración de Eventos Existentes a Timezone
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Depende de:** T40  
+**Descripción:** Migrar eventos existentes sin timezone al nuevo sistema.
+
+**Concepto clave:**
+- Eventos antiguos no tienen campo timezone
+- Asignar timezone por defecto (timezone del plan)
+- Migración transparente sin pérdida de datos
+
+**Criterios de aceptación:**
+- Script de migración para eventos existentes
+- Asignar timezone del plan como default
+- Convertir fechas/horas existentes correctamente
+- Validación post-migración
+- Rollback automático si falla
+- Log de eventos migrados
+
+**Archivos a crear:**
+- `lib/features/calendar/data/migrations/timezone_migration.dart`
+
+---
+
+### T44 - Testing de Timezones
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Depende de:** T40-T43  
+**Descripción:** Testing exhaustivo del sistema de timezones con múltiples casos.
+
+**Casos de prueba:**
+1. Evento en timezone positiva (GMT+9 Tokio)
+2. Evento en timezone negativa (GMT-5 Nueva York)
+3. Evento cross-timezone (vuelo Londres → Nueva York)
+4. Evento durante cambio DST
+5. Evento en UTC
+6. Múltiples eventos en diferentes timezones
+7. Performance con muchos eventos
+
+**Criterios de aceptación:**
+- Tests unitarios de conversión UTC ↔️ timezone
+- Tests de widget con timezones
+- Tests de migración
+- Tests de performance
+- Casos edge documentados
+- Sin errores de precisión (minutos exactos)
+
+**Archivos a crear:**
+- `test/features/calendar/timezone_test.dart`
+- `test/features/calendar/timezone_widget_test.dart`
+
+---
+
+### T45 - Plan Frankenstein: Casos de Timezone
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Depende de:** T40-T44  
+**Descripción:** Añadir casos de prueba de timezones al Plan Frankenstein.
+
+**Casos a añadir:**
+```dart
+// Día 6: Eventos en diferentes timezones
+- Evento 1: "Llamada con NY" (America/New_York, GMT-5)
+- Evento 2: "Reunión Madrid" (Europe/Madrid, GMT+1)
+- Evento 3: "Call con Tokio" (Asia/Tokyo, GMT+9)
+- Evento 4: "Vuelo cross-timezone" (cambia timezone durante evento)
+```
+
+**Criterios de aceptación:**
+- Al menos 4 eventos con timezones diferentes
+- Incluir timezone positiva, negativa y UTC
+- Evento que cruza cambio de timezone (vuelo)
+- Visual claro de diferencias de timezone
+- Documentar en FRANKENSTEIN_PLAN_SPEC.md
+
+**Archivos a modificar:**
+- `lib/features/testing/demo_data_generator.dart`
+- `docs/FRANKENSTEIN_PLAN_SPEC.md`
+
+---
+
 ### T47 - EventDialog: Selector de participantes
 **Estado:** Pendiente  
 **Complejidad:** ⚠️ Alta  
@@ -634,6 +1823,8 @@ bool shouldShowEvent(Event event, String currentUserId) {
 **Depende de:** T46, T48  
 **Descripción:** Añadir filtro visual en el calendario para ver eventos de participantes específicos o de todos.
 
+**⚠️ NOTA:** Esta es una versión simplificada del filtro. Cuando se implemente el sistema de tracks (T71), esta funcionalidad se reemplazará por los filtros avanzados de T71, T78, T79 y T80. Considerar si implementar esta tarea o pasar directamente al sistema de tracks.
+
 **UI propuesta (en AppBar del calendario):**
 ```
 ┌──────────────────────────────────────┐
@@ -688,6 +1879,8 @@ Al desplegar:
 **Complejidad:** ⚠️ Baja  
 **Depende de:** T46, T47  
 **Descripción:** Añadir indicadores visuales en los eventos del calendario para mostrar rápidamente si un evento es para todos o para participantes específicos.
+
+**⚠️ NOTA:** Esta tarea es para el calendario tradicional (sin tracks). Cuando se implemente el sistema de tracks (T69), esta funcionalidad evolucionará a T89 (Indicadores Visuales de Eventos Multi-Participante). Evaluar si implementar o esperar a tracks.
 
 **Indicadores propuestos:**
 

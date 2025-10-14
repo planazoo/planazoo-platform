@@ -381,6 +381,35 @@ class PermissionService {
 
 ### Tareas Creadas
 
+#### **Sistema de Tracks y Multi-Participante (T68-T77)** ⭐ CORE
+- **T68:** Modelo ParticipantTrack
+- **T69:** CalendarScreen modo multi-track
+- **T70:** Eventos multi-track (span horizontal)
+- **T71:** Filtros de vista (Todos/Individual/Personalizado)
+- **T72:** Control de días visibles
+- **T73:** Gestión de orden de tracks
+- **T74:** Modelo Event - Parte común + personal
+- **T75:** EventDialog - UI parte común vs personal
+- **T76:** Sincronización parte común
+- **T77:** Indicadores visuales de permisos
+
+#### **Vistas Filtradas y Timezone (T78-T82)**
+- **T78:** Vista "Mi Agenda"
+- **T79:** Vista "Plan Completo"
+- **T80:** Vista "Personalizada"
+- **T81:** Conversión timezone por participante
+- **T82:** Indicador visual timezone
+
+#### **Funcionalidades Avanzadas (T83-T90)**
+- **T83:** Sistema de grupos de participantes
+- **T84:** Propagación automática de cambios
+- **T85:** Notificaciones cambios compartidos
+- **T86:** Sistema adaptativo días visibles
+- **T87:** Scroll horizontal condicional
+- **T88:** Rediseño capas calendario
+- **T89:** Indicadores eventos multi-participante
+- **T90:** Resaltado track activo
+
 #### **Offline First (T56-T62)**
 - **T56:** Implementar Base de Datos Local
 - **T57:** Implementar Cola de Sincronización
@@ -399,23 +428,52 @@ class PermissionService {
 
 ### Orden de Implementación
 
-#### **Fase 1: Fundación (Crítico)**
-1. **T56:** Base de Datos Local
-2. **T63:** Modelo de Permisos y Roles
-3. **T64:** UI Condicional Basada en Permisos
+#### **Fase 1: Sistema de Tracks (CORE - Visual)**
+1. **T68:** Modelo ParticipantTrack
+2. **T69:** CalendarScreen modo multi-track
+3. **T70:** Eventos multi-track (span)
+4. **T71:** Filtros de vista
+5. **T72:** Control de días visibles
+6. **T74:** Modelo Event - Parte común + personal
+7. **T75:** EventDialog - UI separada
 
-#### **Fase 2: Funcionalidad Core (Importante)**
-4. **T57:** Cola de Sincronización
-5. **T60:** Sincronización en Tiempo Real
-6. **T65:** Gestión de Admins del Plan
+#### **Fase 2: Sincronización y Permisos (Funcionalidad)**
+8. **T76:** Sincronización parte común
+9. **T77:** Indicadores visuales permisos
+10. **T63:** Modelo de Permisos y Roles
+11. **T64:** UI Condicional Basada en Permisos
 
-#### **Fase 3: Optimizaciones (Deseable)**
-7. **T58:** Resolución de Conflictos
-8. **T59:** Indicadores de Estado Offline
-9. **T61:** Notificaciones Push Offline
-10. **T66:** Transferencia de Propiedad de Eventos
-11. **T67:** Sistema de Observadores
-12. **T62:** Testing Exhaustivo
+#### **Fase 3: Offline First (Infraestructura)**
+12. **T56:** Base de Datos Local
+13. **T57:** Cola de Sincronización
+14. **T60:** Sincronización en Tiempo Real
+15. **T58:** Resolución de Conflictos
+16. **T59:** Indicadores de Estado Offline
+
+#### **Fase 4: Vistas y Timezone (Refinamiento)**
+17. **T78:** Vista "Mi Agenda"
+18. **T79:** Vista "Plan Completo"
+19. **T80:** Vista "Personalizada"
+20. **T81:** Conversión timezone por participante
+21. **T82:** Indicador visual timezone
+
+#### **Fase 5: Funcionalidades Avanzadas (Optimización)**
+22. **T73:** Gestión de orden de tracks
+23. **T84:** Propagación automática optimizada
+24. **T85:** Notificaciones cambios compartidos
+25. **T65:** Gestión de Admins del Plan
+26. **T66:** Transferencia de Propiedad
+27. **T67:** Sistema de Observadores
+28. **T61:** Notificaciones Push Offline
+29. **T62:** Testing Exhaustivo
+
+#### **Fase 6: Funcionalidades Futuras (Opcional)**
+30. **T83:** Sistema de grupos de participantes
+31. **T86:** Sistema adaptativo días visibles
+32. **T87:** Scroll horizontal condicional
+33. **T88:** Rediseño capas calendario
+34. **T89:** Indicadores eventos multi-participante
+35. **T90:** Resaltado track activo
 
 ---
 
@@ -468,7 +526,49 @@ Plan "Proyecto Internacional" con 3 participantes: Dev (Madrid), PM (Nueva York)
 └── QA (Tokio): 17:00 (conversión automática)
 ```
 
-### Escenario 3: Offline First en Acción
+### Escenario 3: Sistema de Tracks Multi-Participante
+
+#### **Contexto**
+Plan "Vacaciones Familia" con 4 participantes: Padre (Admin), Madre, Hijo, Hija
+
+#### **Vista Plan Completo (Organizador)**
+```
+┌─────┬─────────┬─────────┬─────────┬─────────┐
+│Horas│  Padre  │  Madre  │  Hijo   │  Hija   │
+├─────┼─────────┼─────────┼─────────┼─────────┤
+│07:00│ ✈️ Vuelo Barcelona - Londres (todos)──┤
+│     │ Asiento │ Asiento │ Asiento │ Asiento │
+│     │   12A   │   12B   │   12C   │   12D   │
+├─────┼─────────┼─────────┼─────────┼─────────┤
+│10:00│         │ 🛍️ Compr│         │ 🛍️ Compr│
+│     │         │ (Madre + Hija)    │         │
+├─────┼─────────┼─────────┼─────────┼─────────┤
+│14:00│ ⚽ Fútbol────────┤│         │         │
+│     │ (Padre + Hijo)  │         │         │
+└─────┴─────────┴─────────┴─────────┴─────────┘
+```
+
+#### **Vista "Mi Agenda" (Madre)**
+```
+┌─────┬───────────────────────────┐
+│Horas│  Mi Agenda - Madre        │
+├─────┼───────────────────────────┤
+│07:00│ ✈️ Vuelo BCN-LON          │
+│     │ Asiento: 12B              │
+│     │ Gate: B15                 │
+│     │ ✅ Tarjeta obtenida       │
+├─────┼───────────────────────────┤
+│10:00│ 🛍️ Compras con Hija       │
+│     │ Notas: Zara, H&M          │
+└─────┴───────────────────────────┘
+```
+
+#### **Permisos en Acción (Vuelo)**
+- **Padre (Admin):** Edita hora del vuelo (parte común) + su asiento (parte personal) + puede editar asientos de todos
+- **Madre:** Solo edita su asiento y preferencias (parte personal), ve hora del vuelo en readonly
+- **Hijo/Hija:** Solo editan sus partes personales
+
+### Escenario 4: Offline First en Acción
 
 #### **Contexto**
 Usuario en avión sin conexión a internet
