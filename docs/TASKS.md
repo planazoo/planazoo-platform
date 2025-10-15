@@ -2,33 +2,181 @@
 
 **Siguiente código de tarea: T91**
 
-**📊 Resumen de tareas:**
-- T18-T24: Tareas antiguas pendientes (7)
-- T27-T31: Mejoras UX (5)
-- T35, T37-T38: Funcionalidades varias (3)
-- T40-T45: Sistema de Timezones (6)
-- T46-T50: Participantes en eventos (5)
-- T51-T53: Seguridad y validación (3)
-- T56-T62: Offline First (7)
-- T63-T67: Permisos granulares (5)
-- T68-T90: Sistema de Tracks y multi-participante (23)
+**📊 Resumen de tareas por grupos:**
+- **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 tareas)
+- **GRUPO 2:** T71, T73: Filtros y Control (2 tareas)
+- **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (4 tareas)
+- **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 tareas)
+- **GRUPO 5:** T40-T45, T81, T82: Timezones (8 tareas)
+- **GRUPO 6:** T77-T80, T83-T90: Funcionalidades Avanzadas (12 tareas)
+- **Tareas Antiguas:** T18-T38: Varias pendientes (15 tareas)
+- **Seguridad:** T51-T53: Validación (3 tareas)
+- **Participantes:** T47-T50: Sistema básico (4 tareas)
+- **Permisos:** T65-T67: Gestión de permisos (3 tareas)
 
-**Total: 64 tareas documentadas**
+**Total: 64 tareas documentadas en 6 grupos principales**
 
 ## 📋 Reglas del Sistema de Tareas
 
+### **🔢 Identificación y Códigos**
 1. **Códigos únicos**: Cada tarea tiene un código único (T1, T2, T3...)
-2. **Orden de prioridad**: La posición en el documento indica el orden de trabajo (no el código)
-3. **Códigos no reutilizables**: Al eliminar una tarea, su código no se reutiliza para evitar confusiones
-4. **Trabajo iterativo**: Cada vez que acabemos una tarea, vemos cuál es la siguiente y decidimos si continuar
+2. **Códigos no reutilizables**: Al eliminar una tarea, su código no se reutiliza para evitar confusiones
+3. **Seguimiento de códigos**: La primera fila indica el siguiente código a asignar
+
+### **📋 Gestión de Tareas**
+4. **Orden de prioridad**: La posición en el documento indica el orden de trabajo (no el código)
 5. **Gestión dinámica**: Añadir y eliminar tareas según aparezcan nuevas o se finalicen
-6. **Seguimiento de códigos**: La primera fila indica el siguiente código a asignar
+6. **Trabajo iterativo**: Cada vez que acabemos una tarea, vemos cuál es la siguiente y decidimos si continuar
+
+### **🔄 Estados y Proceso**
 7. **Estados de tarea**: Pendiente → En progreso → Completada
 8. **Criterios claros**: Cada tarea debe tener criterios de aceptación definidos
 9. **Aprobación requerida**: Antes de marcar una tarea como completada, se debe pedir aprobación explícita del usuario. Solo se marca como completada después de recibir confirmación.
 10. **Archivo de completadas**: Las tareas completadas se mueven a `docs/COMPLETED_TASKS.md` para mantener este archivo limpio
-11. **Plan Frankenstein:** Al completar una tarea que añade nueva funcionalidad al calendario (eventos, alojamientos, etc.), revisar si es necesario añadir casos de prueba al Plan Frankenstein (`lib/features/testing/demo_data_generator.dart`) para que la nueva funcionalidad esté cubierta en testing
-12. **Arquitectura Offline First:** Todas las nuevas funcionalidades deben implementarse siguiendo el principio "Offline First" - la app debe funcionar completamente sin conexión y sincronizar cuando sea posible.
+
+### **📦 Metodología de Grupos**
+11. **Grupos de Tareas**: Las tareas relacionadas se agrupan y se implementan juntas para optimizar testing y desarrollo. Cada grupo debe tener un resultado funcional completo.
+12. **Testing por Grupos**: Se prueba la funcionalidad completa al final de cada grupo, no después de cada tarea individual.
+13. **Dependencias en Grupos**: Las tareas dentro de un grupo deben ser interdependientes o complementarias, evitando cambios que puedan romper funcionalidad del mismo grupo.
+
+### **🏗️ Arquitectura del Proyecto**
+14. **Arquitectura Offline First**: Todas las nuevas funcionalidades deben implementarse siguiendo el principio "Offline First" - la app debe funcionar completamente sin conexión y sincronizar cuando sea posible.
+15. **Plan Frankenstein**: Al completar una tarea que añade nueva funcionalidad al calendario (eventos, alojamientos, etc.), revisar si es necesario añadir casos de prueba al Plan Frankenstein (`lib/features/testing/demo_data_generator.dart`) para que la nueva funcionalidad esté cubierta en testing
+
+---
+
+## 📦 GRUPOS DE TAREAS DEFINIDOS
+
+### **Metodología de Desarrollo por Grupos**
+
+Para optimizar el tiempo de testing y desarrollo, las tareas se organizan en grupos cohesivos que se implementan y prueban juntos.
+
+#### **Ventajas de los Grupos:**
+- ✅ **Menos tiempo de testing** (1 vez por grupo vs cada tarea)
+- ✅ **Menos riesgo** (grupos cohesivos, menos conflictos)
+- ✅ **Mejor debugging** (contexto completo del grupo)
+- ✅ **Resultados visuales** más significativos
+- ✅ **Menos interrupciones** del flujo de desarrollo
+
+#### **Criterios para Agrupar Tareas:**
+1. **Interdependencia:** Las tareas se necesitan mutuamente
+2. **Resultado funcional:** El grupo completo aporta una funcionalidad usable
+3. **Contexto de testing:** Se puede probar la funcionalidad completa
+4. **Cambios relacionados:** Modificaciones que afectan los mismos archivos/componentes
+
+---
+
+### **GRUPO 1: FUNDAMENTOS DE TRACKS** 🎯
+**Objetivo:** Sistema básico de tracks funcionando
+**Tareas:** T68 → T69 → T70 → T72
+**Duración estimada:** 1 semana
+**Resultado:** Calendario con tracks, eventos multi-track, control de días
+
+**Testing del Grupo:**
+- ✅ Generar Plan Frankenstein
+- ✅ Verificar tracks por participante
+- ✅ Crear evento multi-participante (span)
+- ✅ Probar control de días (1-7)
+- ✅ Verificar performance básica
+
+---
+
+### **GRUPO 2: FILTROS Y CONTROL** 🔍
+**Objetivo:** Navegación y filtrado de tracks
+**Tareas:** T71 → T73
+**Depende de:** Grupo 1
+**Duración estimada:** 3-4 días
+**Resultado:** Filtros de vista completos, reordenamiento de tracks
+
+**Testing del Grupo:**
+- ✅ Filtro "Mi Agenda" (solo mi track)
+- ✅ Filtro "Plan Completo" (todos los tracks)
+- ✅ Filtro "Personalizado" (seleccionar tracks)
+- ✅ Drag & drop para reordenar tracks (admins)
+
+---
+
+### **GRUPO 3: PARTE COMÚN + PERSONAL** 👥
+**Objetivo:** Sistema completo de eventos colaborativos
+**Tareas:** T46 → T74 → T75 → T76
+**Depende de:** Grupo 1
+**Duración estimada:** 1.5 semanas
+**Resultado:** Eventos con parte común/personal, sincronización
+
+**Testing del Grupo:**
+- ✅ Crear evento con participantes específicos
+- ✅ Editar parte común vs parte personal
+- ✅ Sincronización entre copias de participantes
+- ✅ Permisos de edición correctos
+
+---
+
+### **GRUPO 4: INFRAESTRUCTURA OFFLINE** 💾
+**Objetivo:** Base sólida offline + permisos
+**Tareas:** T56 → T57 → T58 → T59 → T60 → T63 → T64
+**Depende de:** Grupo 3
+**Duración estimada:** 2 semanas
+**Resultado:** Sistema offline completo, permisos granulares
+
+**Testing del Grupo:**
+- ✅ Funcionamiento sin conexión
+- ✅ Sincronización automática
+- ✅ Resolución de conflictos
+- ✅ Permisos según roles
+- ✅ Indicadores de estado
+
+---
+
+### **GRUPO 5: TIMEZONES** 🌍
+**Objetivo:** Sistema de timezones completo
+**Tareas:** T40 → T41 → T42 → T43 → T44 → T45 → T81 → T82
+**Depende de:** Grupo 2
+**Duración estimada:** 1.5 semanas
+**Resultado:** Timezones por evento, conversión multi-track
+
+**Testing del Grupo:**
+- ✅ Eventos en diferentes timezones
+- ✅ Conversión automática por participante
+- ✅ Eventos cross-timezone
+- ✅ Indicadores visuales de timezone
+
+---
+
+### **GRUPO 6: FUNCIONALIDADES AVANZADAS** ⚡
+**Objetivo:** Optimizaciones y características avanzadas
+**Tareas:** T77 → T78 → T79 → T80 → T83 → T84 → T85 → T86 → T87 → T88 → T89 → T90
+**Depende de:** Grupos 1-5
+**Duración estimada:** 2-3 semanas
+**Resultado:** Sistema completo y optimizado
+
+---
+
+## 🚀 ORDEN DE IMPLEMENTACIÓN POR GRUPOS
+
+### **Secuencia Recomendada:**
+```
+1️⃣ GRUPO 1: Fundamentos de Tracks (T68→T69→T70→T72)
+2️⃣ GRUPO 2: Filtros y Control (T71→T73)
+3️⃣ GRUPO 3: Parte Común + Personal (T46→T74→T75→T76)
+4️⃣ GRUPO 4: Infraestructura Offline (T56→T57→T58→T59→T60→T63→T64)
+5️⃣ GRUPO 5: Timezones (T40→T41→T42→T43→T44→T45→T81→T82)
+6️⃣ GRUPO 6: Funcionalidades Avanzadas (resto)
+```
+
+**📌 Nota sobre Dependencias:**
+- T69 es bloqueante para T71, T72, T73 (por eso T69 está en Grupo 1)
+- T68 es bloqueante para T69, T73 (por eso T68 está en Grupo 1)
+- T74 es bloqueante para T75, T76 (por eso están en Grupo 3)
+- El orden dentro de cada grupo respeta las dependencias específicas
+
+### **Flujo de Trabajo por Grupo:**
+```
+Día 1-N: Implementar todas las tareas del grupo
+Día N+1: Testing completo del grupo
+Día N+2: Bug fixes si es necesario
+Día N+3: Commit y push del grupo completo
+Día N+4: Planificación del siguiente grupo
+```
 
 ---
 
