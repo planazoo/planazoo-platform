@@ -9,12 +9,14 @@ export 'domain/models/event_segment.dart';
 export 'domain/models/overlapping_segment_group.dart';
 export 'domain/models/calendar_date.dart';
 export 'domain/models/accommodation.dart';
+export 'domain/models/participant_track.dart';
 
 // Domain Services
 export 'domain/services/event_service.dart';
 export 'domain/services/plan_service.dart';
 export 'domain/services/date_service.dart';
 export 'domain/services/accommodation_service.dart';
+export 'domain/services/track_service.dart';
 
 // Presentation Notifiers
 export 'presentation/notifiers/calendar_notifier.dart';

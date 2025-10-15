@@ -6,6 +6,8 @@ import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event_segment.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
 import 'package:unp_calendario/features/calendar/domain/models/overlapping_segment_group.dart';
+import 'package:unp_calendario/features/calendar/domain/models/participant_track.dart';
+import 'package:unp_calendario/features/calendar/domain/services/track_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
@@ -48,10 +50,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   
   // Flag para forzar reconstrucción de eventos
   int _eventRefreshCounter = 0;
+  
+  // Servicio de tracks para gestionar participantes
+  late final TrackService _trackService;
+  
+  // Modo de visualización: 'days' (días) o 'tracks' (participantes)
+  String _viewMode = 'days';
+  
+  // Número de días visibles simultáneamente (1-7)
+  int _visibleDays = 7;
 
   @override
   void initState() {
     super.initState();
+    
+    // Inicializar el servicio de tracks
+    _trackService = TrackService();
+    _initializeTracks();
+    
     // Sincronizar controladores de scroll
     _hoursScrollController.addListener(_syncScrollFromHours);
     _dataScrollController.addListener(_syncScrollFromData);
@@ -81,6 +97,42 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _hoursScrollController.dispose();
     _dataScrollController.dispose();
     super.dispose();
+  }
+
+  /// Inicializa los tracks basándose en los participantes del plan
+  void _initializeTracks() {
+    // Crear tracks para los participantes del plan
+    final participants = widget.plan.participants.map((p) => {
+      'id': p['id'] ?? '',
+      'name': p['name'] ?? 'Participante',
+    }).toList();
+    
+    _trackService.createTracksForParticipants(participants);
+  }
+
+  /// Obtiene las columnas a mostrar según el modo de vista
+  List<dynamic> _getColumnsToShow() {
+    if (_viewMode == 'tracks') {
+      return _trackService.getVisibleTracks();
+    } else {
+      // Modo días: generar lista de días basada en _visibleDays
+      return List.generate(_visibleDays, (dayIndex) {
+        final actualDayIndex = _currentDayGroup * _daysPerGroup + dayIndex + 1;
+        final totalDays = widget.plan.durationInDays;
+        final isEmpty = actualDayIndex > totalDays;
+        return {
+          'type': 'day',
+          'index': actualDayIndex,
+          'isEmpty': isEmpty,
+        };
+      });
+    }
+  }
+
+  /// Obtiene el ancho de cada columna según el modo
+  double _getColumnWidth(double availableWidth) {
+    final columns = _getColumnsToShow();
+    return availableWidth / columns.length;
   }
 
   /// Sincroniza el scroll desde la columna de horas hacia los datos
@@ -136,22 +188,86 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             tooltip: 'Días anteriores',
           ),
           Text(
-            'Días $startDay-$endDay de $totalDays',
+            _viewMode == 'tracks' 
+              ? 'Tracks (${_trackService.getVisibleTracksCount()} participantes)'
+              : 'Días $startDay-${startDay + _visibleDays - 1} de $totalDays ($_visibleDays visibles)',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
           ),
           IconButton(
-            onPressed: endDay < totalDays ? _nextDayGroup : null,
+            onPressed: (startDay + _visibleDays - 1) < totalDays ? _nextDayGroup : null,
             icon: const Icon(Icons.chevron_right),
             tooltip: 'Días siguientes',
           ),
         ],
       ),
+      actions: [
+        // Control de días visibles (solo en modo días)
+        if (_viewMode == 'days')
+          PopupMenuButton<int>(
+            icon: const Icon(Icons.tune, color: Colors.white),
+            tooltip: 'Ajustar días visibles',
+            onSelected: (int value) {
+              setState(() {
+                _visibleDays = value;
+              });
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<int>(
+                value: 1,
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_view_day, size: 16),
+                    const SizedBox(width: 8),
+                    const Text('1 día'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<int>(
+                value: 3,
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_view_week, size: 16),
+                    const SizedBox(width: 8),
+                    const Text('3 días'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<int>(
+                value: 7,
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_view_month, size: 16),
+                    const SizedBox(width: 8),
+                    const Text('7 días'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        
+        // Botón para cambiar modo de vista
+        IconButton(
+          onPressed: _toggleViewMode,
+          icon: Icon(
+            _viewMode == 'tracks' ? Icons.calendar_view_day : Icons.people,
+            color: Colors.white,
+          ),
+          tooltip: _viewMode == 'tracks' ? 'Cambiar a vista días' : 'Cambiar a vista tracks',
+        ),
+      ],
       backgroundColor: AppColorScheme.color1,
       foregroundColor: Colors.white,
     );
+  }
+
+  /// Cambia entre el modo días y tracks
+  void _toggleViewMode() {
+    setState(() {
+      _viewMode = _viewMode == 'days' ? 'tracks' : 'days';
+    });
   }
 
   /// Navega al grupo anterior de días
@@ -170,9 +286,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Navega al grupo siguiente de días
   void _nextDayGroup() {
     final totalDays = widget.plan.durationInDays;
-    final endDay = (_currentDayGroup + 1) * _daysPerGroup;
+    final startDay = _currentDayGroup * _daysPerGroup + 1;
+    final endDay = startDay + _visibleDays - 1;
     
-    if (endDay <= totalDays) {
+    if (endDay < totalDays) {
       setState(() {
         _currentDayGroup++;
       });
@@ -306,92 +423,162 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye las filas fijas (encabezado y alojamientos)
   Widget _buildFixedRows() {
+    final columns = _getColumnsToShow();
+    
     return Row(
-      children: List.generate(_daysPerGroup, (dayIndex) {
-        final actualDayIndex = _currentDayGroup * _daysPerGroup + dayIndex + 1;
-        final totalDays = widget.plan.durationInDays;
-        final isEmpty = actualDayIndex > totalDays;
-        
+      children: columns.map((column) {
         return Expanded(
           child: Column(
             children: [
-              // Encabezado del día
+              // Encabezado de la columna
               Container(
                 height: 50,
                 decoration: BoxDecoration(
                   border: Border.all(color: AppColorScheme.gridLineColor),
-                  color: isEmpty ? Colors.grey.shade200 : AppColorScheme.color1,
+                  color: _getHeaderColor(column),
                 ),
                 child: Center(
-                  child: isEmpty 
-                    ? const Text(
-                        'Vacío',
-                        style: TextStyle(fontSize: 10, color: Colors.grey),
-                      )
-                    : Builder(
-                        builder: (context) {
-                          // Calcular la fecha de este día del plan
-                          final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
-                          final formattedDate = '${dayDate.day}/${dayDate.month}/${dayDate.year}';
-                          
-                          // Obtener el nombre del día de la semana (traducible)
-                          final dayOfWeek = DateFormat.E().format(dayDate); // 'lun', 'mar', etc.
-                          
-                          return Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Día $actualDayIndex - $dayOfWeek',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 9,
-                                ),
-                              ),
-                              Text(
-                                formattedDate,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                  child: _buildHeaderContent(column),
                 ),
               ),
               
-              // Alojamiento del día
+              // Contenido adicional (alojamientos para días, espacio vacío para tracks)
               Container(
                 height: 40,
                 decoration: BoxDecoration(
                   border: Border.all(color: AppColorScheme.gridLineColor),
-                  color: isEmpty ? Colors.grey.shade100 : AppColorScheme.color1.withOpacity(0.5),
+                  color: _getContentColor(column),
                 ),
                 child: Center(
-                  child: isEmpty
-                    ? const Text(
-                        'Sin alojamiento',
-                        style: TextStyle(fontSize: 8, color: Colors.grey),
-                      )
-                    : _buildAccommodationCell(actualDayIndex),
+                  child: _buildAdditionalContent(column),
                 ),
               ),
             ],
           ),
         );
-      }),
+      }).toList(),
     );
+  }
+
+  /// Obtiene el color del header según el tipo de columna
+  Color _getHeaderColor(dynamic column) {
+    if (_viewMode == 'tracks') {
+      final track = column as ParticipantTrack;
+      return ColorUtils.hexToColor(track.customColor ?? TrackColors.getColorForPosition(track.position));
+    } else {
+      final dayData = column as Map<String, dynamic>;
+      final isEmpty = dayData['isEmpty'] as bool;
+      return isEmpty ? Colors.grey.shade200 : AppColorScheme.color1;
+    }
+  }
+
+  /// Obtiene el color del contenido según el tipo de columna
+  Color _getContentColor(dynamic column) {
+    if (_viewMode == 'tracks') {
+      return AppColorScheme.color1.withOpacity(0.5);
+    } else {
+      final dayData = column as Map<String, dynamic>;
+      final isEmpty = dayData['isEmpty'] as bool;
+      return isEmpty ? Colors.grey.shade100 : AppColorScheme.color1.withOpacity(0.5);
+    }
+  }
+
+  /// Construye el contenido del header
+  Widget _buildHeaderContent(dynamic column) {
+    if (_viewMode == 'tracks') {
+      final track = column as ParticipantTrack;
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            track.participantName,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 10,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            'Track ${track.position + 1}',
+            style: const TextStyle(
+              fontSize: 8,
+              color: Colors.white70,
+            ),
+          ),
+        ],
+      );
+    } else {
+      final dayData = column as Map<String, dynamic>;
+      final actualDayIndex = dayData['index'] as int;
+      final isEmpty = dayData['isEmpty'] as bool;
+      
+      if (isEmpty) {
+        return const Text(
+          'Vacío',
+          style: TextStyle(fontSize: 10, color: Colors.grey),
+        );
+      }
+      
+      // Calcular la fecha de este día del plan
+      final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
+      final formattedDate = '${dayDate.day}/${dayDate.month}/${dayDate.year}';
+      
+      // Obtener el nombre del día de la semana (traducible)
+      final dayOfWeek = DateFormat.E().format(dayDate); // 'lun', 'mar', etc.
+      
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Día $actualDayIndex - $dayOfWeek',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 9,
+            ),
+          ),
+          Text(
+            formattedDate,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
+  /// Construye el contenido adicional (alojamientos para días)
+  Widget _buildAdditionalContent(dynamic column) {
+    if (_viewMode == 'tracks') {
+      // Para tracks, solo mostramos espacio vacío
+      return const Text(
+        'Mi Track',
+        style: TextStyle(fontSize: 8, color: Colors.grey),
+      );
+    } else {
+      final dayData = column as Map<String, dynamic>;
+      final actualDayIndex = dayData['index'] as int;
+      final isEmpty = dayData['isEmpty'] as bool;
+      
+      if (isEmpty) {
+        return const Text(
+          'Sin alojamiento',
+          style: TextStyle(fontSize: 8, color: Colors.grey),
+        );
+      }
+      
+      return _buildAccommodationCell(actualDayIndex);
+    }
   }
 
   /// Construye las filas de datos (horas)
   Widget _buildDataRows() {
+    final columns = _getColumnsToShow();
+    
     return Row(
-      children: List.generate(_daysPerGroup, (dayIndex) {
-        final actualDayIndex = _currentDayGroup * _daysPerGroup + dayIndex + 1;
-        final totalDays = widget.plan.durationInDays;
-        final isEmpty = actualDayIndex > totalDays;
-        
+      children: columns.map((column) {
         return Expanded(
           child: Column(
             children: List.generate(AppConstants.defaultRowCount, (hourIndex) {
@@ -399,15 +586,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 height: AppConstants.cellHeight,
                 decoration: BoxDecoration(
                   border: Border.all(color: AppColorScheme.gridLineColor),
-                  color: isEmpty ? Colors.grey.shade100 : AppColorScheme.color0,
+                  color: _getDataCellColor(column),
                 ),
-                child: _buildEventCell(hourIndex, actualDayIndex),
+                child: _buildEventCell(hourIndex, column),
               );
             }),
           ),
         );
-      }),
+      }).toList(),
     );
+  }
+
+  /// Obtiene el color de la celda de datos según el tipo de columna
+  Color _getDataCellColor(dynamic column) {
+    if (_viewMode == 'tracks') {
+      return AppColorScheme.color0;
+    } else {
+      final dayData = column as Map<String, dynamic>;
+      final isEmpty = dayData['isEmpty'] as bool;
+      return isEmpty ? Colors.grey.shade100 : AppColorScheme.color0;
+    }
   }
 
   /// Construye la celda de alojamiento
@@ -460,6 +658,41 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye la capa de eventos usando EventSegments (estilo Google Calendar)
   List<Widget> _buildEventsLayer(double availableWidth) {
+    if (_viewMode == 'tracks') {
+      return _buildTracksEventsLayer(availableWidth);
+    } else {
+      return _buildDaysEventsLayer(availableWidth);
+    }
+  }
+
+  /// Construye la capa de eventos para el modo tracks
+  List<Widget> _buildTracksEventsLayer(double availableWidth) {
+    List<Widget> eventWidgets = [];
+    
+    // Obtener todos los eventos del plan (por ahora, usar todos los eventos)
+    // TODO: Optimizar para obtener solo eventos relevantes
+    final allEvents = ref.watch(eventsProvider(
+      CalendarNotifierParams(
+        planId: widget.plan.id ?? '',
+        userId: widget.plan.userId,
+        initialDate: widget.plan.startDate,
+        initialColumnCount: widget.plan.columnCount,
+      ),
+    ));
+
+    // Procesar cada evento
+    for (final event in allEvents) {
+      final eventWidget = _buildTrackEventWidget(event, availableWidth);
+      if (eventWidget != null) {
+        eventWidgets.add(eventWidget);
+      }
+    }
+
+    return eventWidgets;
+  }
+
+  /// Construye la capa de eventos para el modo días (comportamiento original)
+  List<Widget> _buildDaysEventsLayer(double availableWidth) {
     final startDayIndex = _currentDayGroup * _daysPerGroup + 1;
     final endDayIndex = startDayIndex + _daysPerGroup - 1;
     final totalDays = widget.plan.durationInDays;
@@ -518,6 +751,78 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
     
     return eventWidgets;
+  }
+
+  /// Construye un widget de evento para el modo tracks
+  Widget? _buildTrackEventWidget(Event event, double availableWidth) {
+    // Calcular posición y ancho del evento
+    final positionData = _calculateEventPositionAndWidth(event, availableWidth);
+    final x = positionData['x']!;
+    final width = positionData['width']!;
+
+    // Calcular posición Y basada en la hora del evento
+    final startTime = DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    
+    final planStartTime = DateTime(
+      widget.plan.startDate.year,
+      widget.plan.startDate.month,
+      widget.plan.startDate.day,
+      0, // Empezar desde medianoche
+    );
+    
+    final minutesFromStart = startTime.difference(planStartTime).inMinutes;
+    final y = (minutesFromStart / 60.0) * AppConstants.cellHeight;
+    final height = (event.durationMinutes / 60.0) * AppConstants.cellHeight;
+
+    return Positioned(
+      left: x,
+      top: y,
+      width: width,
+      height: height,
+      child: GestureDetector(
+        onTap: () => _showEventDialog(event),
+        child: Container(
+          margin: const EdgeInsets.all(1),
+          decoration: BoxDecoration(
+            color: ColorUtils.hexToColor(event.color ?? AppColorScheme.color2),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.white, width: 0.5),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.description,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (event.participantTrackIds.length > 1)
+                  Text(
+                    '${event.participantTrackIds.length} participantes',
+                    style: const TextStyle(
+                      fontSize: 8,
+                      color: Colors.white70,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Expande una lista de eventos a segmentos para un día específico
@@ -1675,13 +1980,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// Construye la celda de evento (ahora vacía, los eventos están en la capa separada)
-  Widget _buildEventCell(int hourIndex, int dayIndex) {
+  Widget _buildEventCell(int hourIndex, dynamic column) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onDoubleTap: () {
-        // Crear evento con doble click
-        final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
-        _showNewEventDialog(date, hourIndex);
+        if (_viewMode == 'tracks') {
+          // En modo tracks, crear evento para el track específico
+          final track = column as ParticipantTrack;
+          _showNewEventDialogForTrack(track, hourIndex);
+        } else {
+          // En modo días, crear evento para el día específico
+          final dayData = column as Map<String, dynamic>;
+          final dayIndex = dayData['index'] as int;
+          final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+          _showNewEventDialog(date, hourIndex);
+        }
       },
       child: Container(
         height: AppConstants.cellHeight,
@@ -1690,6 +2003,78 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         // Doble click para crear eventos
       ),
     );
+  }
+
+  /// Muestra el diálogo para crear un nuevo evento para un track específico
+  void _showNewEventDialogForTrack(ParticipantTrack track, int hourIndex) {
+    // Por ahora, usar la fecha actual como referencia
+    // TODO: En T70, esto se integrará con el sistema de eventos multi-track
+    final date = DateTime.now();
+    _showNewEventDialog(date, hourIndex);
+  }
+
+  /// Calcula qué tracks debe abarcar un evento (span horizontal)
+  List<int> _calculateEventTrackSpan(Event event) {
+    if (_viewMode != 'tracks') {
+      // En modo días, no hay span horizontal
+      return [];
+    }
+
+    final visibleTracks = _trackService.getVisibleTracks();
+    final eventTrackIds = event.participantTrackIds;
+    
+    // Si el evento no tiene tracks asignados, asignarlo al primer track
+    if (eventTrackIds.isEmpty) {
+      return [0];
+    }
+
+    // Encontrar las posiciones de los tracks del evento
+    final trackPositions = <int>[];
+    for (int i = 0; i < visibleTracks.length; i++) {
+      final track = visibleTracks[i];
+      if (eventTrackIds.contains(track.id)) {
+        trackPositions.add(i);
+      }
+    }
+
+    // Si no se encontraron tracks, asignar al primer track
+    if (trackPositions.isEmpty) {
+      return [0];
+    }
+
+    // Ordenar las posiciones
+    trackPositions.sort();
+    
+    // Crear lista completa desde la primera posición hasta la última
+    final spanPositions = <int>[];
+    for (int i = trackPositions.first; i <= trackPositions.last; i++) {
+      spanPositions.add(i);
+    }
+
+    return spanPositions;
+  }
+
+  /// Obtiene el ancho y posición X para un evento que abarca múltiples tracks
+  Map<String, double> _calculateEventPositionAndWidth(Event event, double availableWidth) {
+    final spanPositions = _calculateEventTrackSpan(event);
+    
+    if (spanPositions.isEmpty) {
+      // Evento sin span, usar ancho de una columna
+      final columnWidth = _getColumnWidth(availableWidth);
+      return {
+        'x': 0,
+        'width': columnWidth,
+      };
+    }
+
+    final columnWidth = _getColumnWidth(availableWidth);
+    final startX = spanPositions.first * columnWidth;
+    final spanWidth = spanPositions.length * columnWidth;
+
+    return {
+      'x': startX,
+      'width': spanWidth,
+    };
   }
 
   /// Muestra el diálogo para editar un evento existente

@@ -15,6 +15,7 @@ class Event {
   final String? typeSubtype; // nueva: subtipo (taxi, avion, comida, museo...)
   final Map<String, dynamic>? details; // nueva: detalles específicos por tipo
   final List<EventDocument>? documents; // nueva: documentos adjuntos
+  final List<String> participantTrackIds; // nueva: IDs de los tracks participantes
   final bool isDraft; // nuevo: indica si el evento es un borrador
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -34,6 +35,7 @@ class Event {
     this.typeSubtype,
     this.details,
     this.documents,
+    this.participantTrackIds = const [], // por defecto sin tracks asignados
     this.isDraft = false, // por defecto no es borrador
     required this.createdAt,
     required this.updatedAt,
@@ -47,6 +49,11 @@ class Event {
     // calcular basado en hour/duration existentes
     final startMinute = data['startMinute'] ?? 0;
     final durationMinutes = data['durationMinutes'] ?? (duration * 60);
+    
+    // Compatibilidad con datos existentes: si no hay participantTrackIds, usar lista vacía
+    final participantTrackIds = (data['participantTrackIds'] as List<dynamic>?)
+        ?.map((id) => id.toString())
+        .toList() ?? [];
     
     return Event(
       id: doc.id,
@@ -65,6 +72,7 @@ class Event {
       documents: (data['documents'] as List<dynamic>?)
           ?.map((doc) => EventDocument.fromMap(doc))
           .toList(),
+      participantTrackIds: participantTrackIds,
       isDraft: data['isDraft'] ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
@@ -86,6 +94,7 @@ class Event {
       if (typeSubtype != null) 'typeSubtype': typeSubtype,
       if (details != null) 'details': details,
       if (documents != null) 'documents': documents!.map((doc) => doc.toMap()).toList(),
+      'participantTrackIds': participantTrackIds,
       'isDraft': isDraft,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
@@ -107,6 +116,7 @@ class Event {
     String? typeSubtype,
     Map<String, dynamic>? details,
     List<EventDocument>? documents,
+    List<String>? participantTrackIds,
     bool? isDraft,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -126,6 +136,7 @@ class Event {
       typeSubtype: typeSubtype ?? this.typeSubtype,
       details: details ?? this.details,
       documents: documents ?? this.documents,
+      participantTrackIds: participantTrackIds ?? this.participantTrackIds,
       isDraft: isDraft ?? this.isDraft,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

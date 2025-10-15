@@ -1,0 +1,166 @@
+import '../models/participant_track.dart';
+
+/// Servicio para gestionar los tracks de participantes en el calendario
+class TrackService {
+  final List<ParticipantTrack> _tracks = [];
+
+  /// Obtiene todos los tracks ordenados por posición
+  List<ParticipantTrack> getAllTracks() {
+    final sortedTracks = List<ParticipantTrack>.from(_tracks);
+    sortedTracks.sort((a, b) => a.position.compareTo(b.position));
+    return sortedTracks;
+  }
+
+  /// Obtiene solo los tracks visibles ordenados por posición
+  List<ParticipantTrack> getVisibleTracks() {
+    return getAllTracks().where((track) => track.isVisible).toList();
+  }
+
+  /// Obtiene un track por su ID
+  ParticipantTrack? getTrackById(String id) {
+    try {
+      return _tracks.firstWhere((track) => track.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Obtiene un track por el ID del participante
+  ParticipantTrack? getTrackByParticipantId(String participantId) {
+    try {
+      return _tracks.firstWhere((track) => track.participantId == participantId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Crea un nuevo track para un participante
+  ParticipantTrack createTrack({
+    required String participantId,
+    required String participantName,
+    String? customColor,
+  }) {
+    final now = DateTime.now();
+    final newPosition = _getNextPosition();
+    
+    final track = ParticipantTrack(
+      id: _generateTrackId(),
+      participantId: participantId,
+      participantName: participantName,
+      position: newPosition,
+      customColor: customColor ?? TrackColors.getColorForPosition(newPosition),
+      isVisible: true,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    _tracks.add(track);
+    return track;
+  }
+
+  /// Actualiza un track existente
+  ParticipantTrack updateTrack(ParticipantTrack updatedTrack) {
+    final index = _tracks.indexWhere((track) => track.id == updatedTrack.id);
+    if (index == -1) {
+      throw Exception('Track not found: ${updatedTrack.id}');
+    }
+
+    final trackWithUpdatedTime = updatedTrack.copyWith(
+      updatedAt: DateTime.now(),
+    );
+
+    _tracks[index] = trackWithUpdatedTime;
+    return trackWithUpdatedTime;
+  }
+
+  /// Elimina un track
+  void deleteTrack(String trackId) {
+    _tracks.removeWhere((track) => track.id == trackId);
+  }
+
+  /// Reordena los tracks cambiando sus posiciones
+  void reorderTracks(List<String> trackIdsInNewOrder) {
+    for (int i = 0; i < trackIdsInNewOrder.length; i++) {
+      final trackId = trackIdsInNewOrder[i];
+      final track = getTrackById(trackId);
+      if (track != null) {
+        final updatedTrack = track.copyWith(position: i);
+        updateTrack(updatedTrack);
+      }
+    }
+  }
+
+  /// Cambia la visibilidad de un track
+  void toggleTrackVisibility(String trackId) {
+    final track = getTrackById(trackId);
+    if (track != null) {
+      final updatedTrack = track.copyWith(isVisible: !track.isVisible);
+      updateTrack(updatedTrack);
+    }
+  }
+
+  /// Cambia el color de un track
+  void updateTrackColor(String trackId, String color) {
+    final track = getTrackById(trackId);
+    if (track != null) {
+      final updatedTrack = track.copyWith(customColor: color);
+      updateTrack(updatedTrack);
+    }
+  }
+
+  /// Obtiene el número de tracks visibles
+  int getVisibleTracksCount() {
+    return getVisibleTracks().length;
+  }
+
+  /// Verifica si un participante ya tiene un track
+  bool hasTrackForParticipant(String participantId) {
+    return _tracks.any((track) => track.participantId == participantId);
+  }
+
+  /// Crea tracks para todos los participantes de una lista
+  List<ParticipantTrack> createTracksForParticipants(List<Map<String, String>> participants) {
+    final createdTracks = <ParticipantTrack>[];
+    
+    for (final participant in participants) {
+      final participantId = participant['id'] ?? '';
+      final participantName = participant['name'] ?? 'Participante';
+      
+      if (!hasTrackForParticipant(participantId)) {
+        final track = createTrack(
+          participantId: participantId,
+          participantName: participantName,
+        );
+        createdTracks.add(track);
+      }
+    }
+    
+    return createdTracks;
+  }
+
+  /// Obtiene la siguiente posición disponible para un nuevo track
+  int _getNextPosition() {
+    if (_tracks.isEmpty) return 0;
+    final maxPosition = _tracks.map((track) => track.position).reduce((a, b) => a > b ? a : b);
+    return maxPosition + 1;
+  }
+
+  /// Genera un ID único para un track
+  String _generateTrackId() {
+    return 'track_${DateTime.now().millisecondsSinceEpoch}_${_tracks.length}';
+  }
+
+  /// Limpia todos los tracks (útil para testing)
+  void clearAllTracks() {
+    _tracks.clear();
+  }
+
+  /// Obtiene estadísticas de los tracks
+  Map<String, int> getTrackStats() {
+    return {
+      'total': _tracks.length,
+      'visible': getVisibleTracksCount(),
+      'hidden': _tracks.length - getVisibleTracksCount(),
+    };
+  }
+}
