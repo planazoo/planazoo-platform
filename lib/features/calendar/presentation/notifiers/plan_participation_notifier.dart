@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/plan_participation.dart';
 import '../../domain/services/plan_participation_service.dart';
@@ -7,6 +8,7 @@ class PlanParticipationNotifier extends StateNotifier<AsyncValue<List<PlanPartic
   final String _planId;
   final PlanParticipationService _participationService;
   final PlanService _planService;
+  StreamSubscription<List<PlanParticipation>>? _subscription;
 
   PlanParticipationNotifier({
     required String planId,
@@ -19,14 +21,24 @@ class PlanParticipationNotifier extends StateNotifier<AsyncValue<List<PlanPartic
     _loadParticipations();
   }
 
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadParticipations() async {
     state = const AsyncValue.loading();
     try {
-      _participationService.getPlanParticipations(_planId).listen((participations) {
-        state = AsyncValue.data(participations);
-      }, onError: (error, stackTrace) {
-        state = AsyncValue.error(error, stackTrace);
-      });
+      _subscription?.cancel();
+      _subscription = _participationService.getPlanParticipations(_planId).listen(
+        (participations) {
+          state = AsyncValue.data(participations);
+        }, 
+        onError: (error, stackTrace) {
+          state = AsyncValue.error(error, stackTrace);
+        }
+      );
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -35,7 +47,8 @@ class PlanParticipationNotifier extends StateNotifier<AsyncValue<List<PlanPartic
   // Obtener participantes de un plan
   void loadPlanParticipants(String planId) {
     state = const AsyncValue.loading();
-    _participationService.getPlanParticipations(planId).listen(
+    _subscription?.cancel();
+    _subscription = _participationService.getPlanParticipations(planId).listen(
       (participations) {
         state = AsyncValue.data(participations);
       },

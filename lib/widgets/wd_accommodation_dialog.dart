@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 
 class AccommodationDialog extends ConsumerStatefulWidget {
@@ -33,6 +35,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   late DateTime _selectedCheckIn;
   late DateTime _selectedCheckOut;
   late String _selectedColor;
+  late List<String> _selectedParticipantTrackIds;
 
   // Colores predefinidos para alojamientos
   final List<String> _accommodationColors = [
@@ -76,6 +79,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     _selectedCheckOut = widget.accommodation?.checkOut ?? _selectedCheckIn.add(const Duration(days: 1));
     _selectedColor = widget.accommodation?.color ?? 'blue';
     _selectedType = widget.accommodation?.typeSubtype ?? 'Hotel';
+    
+    // Inicializar participantes seleccionados
+    _selectedParticipantTrackIds = widget.accommodation?.participantTrackIds ?? [];
   }
 
   @override
@@ -214,6 +220,11 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 );
               }).toList(),
             ),
+            
+            const SizedBox(height: 24),
+            
+            // Selección de participantes
+            _buildParticipantSelection(),
           ],
         ),
       ),
@@ -281,6 +292,87 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     return ColorUtils.colorFromName(colorName);
   }
 
+  /// Construye la sección de selección de participantes
+  Widget _buildParticipantSelection() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final participationsAsync = ref.watch(planParticipantsProvider(widget.planId));
+        
+        return participationsAsync.when(
+          data: (participations) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Participantes:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: participations.map((participation) {
+                    final isSelected = _selectedParticipantTrackIds.contains(participation.userId);
+                    return FutureBuilder<String>(
+                      future: _getUserDisplayName(participation.userId),
+                      builder: (context, snapshot) {
+                        final displayName = snapshot.data ?? participation.userId;
+                        return FilterChip(
+                          label: Text(displayName),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedParticipantTrackIds.add(participation.userId);
+                              } else {
+                                _selectedParticipantTrackIds.remove(participation.userId);
+                              }
+                            });
+                          },
+                          selectedColor: Colors.blue.shade100,
+                          checkmarkColor: Colors.blue.shade800,
+                        );
+                      },
+                    );
+                  }).toList(),
+                ),
+                if (_selectedParticipantTrackIds.isEmpty)
+                  const Text(
+                    'Sin participantes seleccionados (aparecerá en el primer track)',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+              ],
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (error, stackTrace) => Text(
+            'Error al cargar participantes: $error',
+            style: const TextStyle(color: Colors.red, fontSize: 12),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Obtiene el nombre de visualización de un usuario
+  Future<String> _getUserDisplayName(String userId) async {
+    // Mapeo de user IDs a nombres reales para el plan Frankenstein
+    final userNames = {
+      'uJRMMGniO2bwfbdD3S11QMXQT912': 'Cristian Claraso',
+      'mar_batllori': 'Mar Batllori',
+      'emma_claraso': 'Emma Claraso',
+      'matilde_claraso': 'Matilde Claraso',
+      'jimena_claraso': 'Jimena Claraso',
+    };
+    
+    return userNames[userId] ?? userId;
+  }
+
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -343,6 +435,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       color: _selectedColor,
       typeFamily: 'alojamiento',
       typeSubtype: _selectedType,
+      participantTrackIds: _selectedParticipantTrackIds,
       createdAt: widget.accommodation?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );

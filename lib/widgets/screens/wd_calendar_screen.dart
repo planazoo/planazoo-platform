@@ -7,7 +7,9 @@ import 'package:unp_calendario/features/calendar/domain/models/event_segment.dar
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
 import 'package:unp_calendario/features/calendar/domain/models/overlapping_segment_group.dart';
 import 'package:unp_calendario/features/calendar/domain/models/participant_track.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/domain/services/track_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
@@ -32,9 +34,8 @@ class CalendarScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
-  // Estado para la navegación de días (grupos de 7 días)
-  int _currentDayGroup = 0; // Grupo actual de 7 días (0 = días 1-7, 1 = días 8-14, etc.)
-  static const int _daysPerGroup = 7;
+  // Estado para la navegación de días (grupos dinámicos según días visibles)
+  int _currentDayGroup = 0; // Grupo actual (0 = primeros días, 1 = siguientes días, etc.)
   
   // Controladores para scroll vertical sincronizado
   final ScrollController _hoursScrollController = ScrollController();
@@ -53,9 +54,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   
   // Servicio de tracks para gestionar participantes
   late final TrackService _trackService;
-  
-  // Modo de visualización: 'days' (días) o 'tracks' (participantes)
-  String _viewMode = 'days';
   
   // Número de días visibles simultáneamente (1-7)
   int _visibleDays = 7;
@@ -99,40 +97,82 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     super.dispose();
   }
 
-  /// Inicializa los tracks basándose en los participantes del plan
+  /// Inicializa los tracks basándose en los participantes reales del plan
   void _initializeTracks() {
-    // Crear tracks para los participantes del plan
-    final participants = widget.plan.participants.map((p) => {
-      'id': p['id'] ?? '',
-      'name': p['name'] ?? 'Participante',
-    }).toList();
-    
-    _trackService.createTracksForParticipants(participants);
-  }
-
-  /// Obtiene las columnas a mostrar según el modo de vista
-  List<dynamic> _getColumnsToShow() {
-    if (_viewMode == 'tracks') {
-      return _trackService.getVisibleTracks();
-    } else {
-      // Modo días: generar lista de días basada en _visibleDays
-      return List.generate(_visibleDays, (dayIndex) {
-        final actualDayIndex = _currentDayGroup * _daysPerGroup + dayIndex + 1;
-        final totalDays = widget.plan.durationInDays;
-        final isEmpty = actualDayIndex > totalDays;
-        return {
-          'type': 'day',
-          'index': actualDayIndex,
-          'isEmpty': isEmpty,
-        };
+    // Si no hay plan ID, crear tracks ficticios como fallback
+    if (widget.plan.id == null) {
+      final participantCount = widget.plan.participants ?? 1;
+      final participants = List.generate(participantCount, (index) => {
+        'id': 'participant_$index',
+        'name': 'Participante ${index + 1}',
       });
+      _trackService.createTracksForParticipants(participants);
     }
   }
 
-  /// Obtiene el ancho de cada columna según el modo
+  /// Sincroniza tracks con participantes (llamado desde build)
+  void _syncTracksWithParticipants() {
+    if (widget.plan.id == null) return;
+    
+    final participantsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
+    
+    participantsAsync.when(
+      data: (participations) {
+        // Solo sincronizar si los tracks no están ya sincronizados
+        final currentTracks = _trackService.getVisibleTracks();
+        final currentParticipantIds = currentTracks.map((t) => t.participantId).toSet();
+        final newParticipantIds = participations.map((p) => p.userId).toSet();
+        
+        if (currentParticipantIds.length != newParticipantIds.length || 
+            !currentParticipantIds.containsAll(newParticipantIds)) {
+          final participantIds = participations.map((p) => p.userId).join(', ');
+          _trackService.syncTracksWithPlanParticipants(participations);
+        }
+      },
+      loading: () {
+        // Estado de carga
+      },
+      error: (error, stackTrace) {
+        // En caso de error, usar tracks ficticios como fallback
+        final participantCount = widget.plan.participants ?? 1;
+        final participants = List.generate(participantCount, (index) => {
+          'id': 'participant_$index',
+          'name': 'Participante ${index + 1}',
+        });
+        _trackService.createTracksForParticipants(participants);
+      },
+    );
+  }
+
+
+  /// Obtiene las columnas a mostrar (días con subcolumnas de participantes)
+  List<dynamic> _getColumnsToShow() {
+    // Generar lista de días basada en _visibleDays
+    return List.generate(_visibleDays, (dayIndex) {
+      final actualDayIndex = _currentDayGroup * _visibleDays + dayIndex + 1;
+      final totalDays = widget.plan.durationInDays;
+      final isEmpty = actualDayIndex > totalDays;
+      return {
+        'type': 'day',
+        'index': actualDayIndex,
+        'isEmpty': isEmpty,
+        'participants': _trackService.getVisibleTracks(), // Subcolumnas por participante
+      };
+    });
+  }
+
+  /// Obtiene el ancho de cada columna principal (día)
   double _getColumnWidth(double availableWidth) {
     final columns = _getColumnsToShow();
     return availableWidth / columns.length;
+  }
+
+  /// Obtiene el ancho de cada subcolumna (participante dentro de un día)
+  double _getSubColumnWidth(double availableWidth) {
+    final columns = _getColumnsToShow();
+    final columnWidth = availableWidth / columns.length;
+    final participantCount = widget.plan.participants ?? 5;
+    return columnWidth / participantCount;
   }
 
   /// Sincroniza el scroll desde la columna de horas hacia los datos
@@ -165,6 +205,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Sincronizar tracks con participantes reales
+    _syncTracksWithParticipants();
+    
+    // Forzar inicialización del CalendarNotifier para asegurar que se carguen los eventos
+    final calendarParams = CalendarNotifierParams(
+      planId: widget.plan.id!,
+      userId: widget.plan.userId,
+      initialDate: widget.plan.startDate,
+      initialColumnCount: widget.plan.columnCount,
+    );
+    
+    // Leer el notifier para forzar su inicialización
+    ref.read(calendarNotifierProvider(calendarParams));
+    
     return Scaffold(
       appBar: _buildAppBar(),
       body: _buildCalendarBody(),
@@ -173,8 +227,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye el AppBar con navegación de días
   PreferredSizeWidget _buildAppBar() {
-    final startDay = _currentDayGroup * _daysPerGroup + 1;
-    final endDay = (startDay + _daysPerGroup - 1);
+    final startDay = _currentDayGroup * _visibleDays + 1;
+    final endDay = startDay + _visibleDays - 1;
     final totalDays = widget.plan.durationInDays;
     
     return AppBar(
@@ -188,9 +242,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             tooltip: 'Días anteriores',
           ),
           Text(
-            _viewMode == 'tracks' 
-              ? 'Tracks (${_trackService.getVisibleTracksCount()} participantes)'
-              : 'Días $startDay-${startDay + _visibleDays - 1} de $totalDays ($_visibleDays visibles)',
+            'Días $startDay-${startDay + _visibleDays - 1} de $totalDays ($_visibleDays visibles)',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -204,58 +256,53 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ],
       ),
       actions: [
-        // Control de días visibles (solo en modo días)
-        if (_viewMode == 'days')
-          PopupMenuButton<int>(
-            icon: const Icon(Icons.tune, color: Colors.white),
-            tooltip: 'Ajustar días visibles',
-            onSelected: (int value) {
-              setState(() {
-                _visibleDays = value;
-              });
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem<int>(
-                value: 1,
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_view_day, size: 16),
-                    const SizedBox(width: 8),
-                    const Text('1 día'),
-                  ],
-                ),
+        // Control de días visibles
+        PopupMenuButton<int>(
+          icon: const Icon(Icons.tune, color: Colors.white),
+          tooltip: 'Ajustar días visibles',
+          onSelected: (int value) {
+            setState(() {
+              _visibleDays = value;
+              // Resetear al primer grupo si el grupo actual ya no es válido
+              final totalDays = widget.plan.durationInDays;
+              final currentStartDay = _currentDayGroup * _visibleDays + 1;
+              if (currentStartDay > totalDays) {
+                _currentDayGroup = 0;
+              }
+            });
+          },
+          itemBuilder: (BuildContext context) => [
+            PopupMenuItem<int>(
+              value: 1,
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_view_day, size: 16),
+                  const SizedBox(width: 8),
+                  const Text('1 día'),
+                ],
               ),
-              PopupMenuItem<int>(
-                value: 3,
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_view_week, size: 16),
-                    const SizedBox(width: 8),
-                    const Text('3 días'),
-                  ],
-                ),
+            ),
+            PopupMenuItem<int>(
+              value: 3,
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_view_week, size: 16),
+                  const SizedBox(width: 8),
+                  const Text('3 días'),
+                ],
               ),
-              PopupMenuItem<int>(
-                value: 7,
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_view_month, size: 16),
-                    const SizedBox(width: 8),
-                    const Text('7 días'),
-                  ],
-                ),
+            ),
+            PopupMenuItem<int>(
+              value: 7,
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_view_month, size: 16),
+                  const SizedBox(width: 8),
+                  const Text('7 días'),
+                ],
               ),
-            ],
-          ),
-        
-        // Botón para cambiar modo de vista
-        IconButton(
-          onPressed: _toggleViewMode,
-          icon: Icon(
-            _viewMode == 'tracks' ? Icons.calendar_view_day : Icons.people,
-            color: Colors.white,
-          ),
-          tooltip: _viewMode == 'tracks' ? 'Cambiar a vista días' : 'Cambiar a vista tracks',
+            ),
+          ],
         ),
       ],
       backgroundColor: AppColorScheme.color1,
@@ -263,12 +310,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  /// Cambia entre el modo días y tracks
-  void _toggleViewMode() {
-    setState(() {
-      _viewMode = _viewMode == 'days' ? 'tracks' : 'days';
-    });
-  }
 
   /// Navega al grupo anterior de días
   void _previousDayGroup() {
@@ -286,7 +327,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Navega al grupo siguiente de días
   void _nextDayGroup() {
     final totalDays = widget.plan.durationInDays;
-    final startDay = _currentDayGroup * _daysPerGroup + 1;
+    final startDay = _currentDayGroup * _visibleDays + 1;
     final endDay = startDay + _visibleDays - 1;
     
     if (endDay < totalDays) {
@@ -329,7 +370,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           // Encabezado (primera celda)
           Container(
-            height: 50,
+            height: 60, // Altura original restaurada
             decoration: BoxDecoration(
               border: Border.all(color: AppColorScheme.gridLineColor),
               color: AppColorScheme.color1,
@@ -341,15 +382,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           
           // Fila de alojamientos FIJA
           Container(
-            height: 40,
+            height: 30,
             decoration: BoxDecoration(
               border: Border.all(color: AppColorScheme.gridLineColor),
-              color: AppColorScheme.color1.withOpacity(0.5),
+              color: AppColorScheme.color1.withOpacity(0.3),
             ),
             child: const Center(
               child: Text(
                 'Alojamiento',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
               ),
             ),
           ),
@@ -432,7 +473,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             children: [
               // Encabezado de la columna
               Container(
-                height: 50,
+                height: 60, // Altura original restaurada
                 decoration: BoxDecoration(
                   border: Border.all(color: AppColorScheme.gridLineColor),
                   color: _getHeaderColor(column),
@@ -442,15 +483,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
               ),
               
-              // Contenido adicional (alojamientos para días, espacio vacío para tracks)
+              // Fila de alojamientos con tracks
               Container(
-                height: 40,
+                height: 30,
                 decoration: BoxDecoration(
                   border: Border.all(color: AppColorScheme.gridLineColor),
-                  color: _getContentColor(column),
+                  color: AppColorScheme.color1.withOpacity(0.3),
                 ),
                 child: Center(
-                  child: _buildAdditionalContent(column),
+                  child: _buildAccommodationTracks(column),
                 ),
               ),
             ],
@@ -462,115 +503,258 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Obtiene el color del header según el tipo de columna
   Color _getHeaderColor(dynamic column) {
-    if (_viewMode == 'tracks') {
-      final track = column as ParticipantTrack;
-      return ColorUtils.hexToColor(track.customColor ?? TrackColors.getColorForPosition(track.position));
-    } else {
-      final dayData = column as Map<String, dynamic>;
-      final isEmpty = dayData['isEmpty'] as bool;
-      return isEmpty ? Colors.grey.shade200 : AppColorScheme.color1;
-    }
+    final dayData = column as Map<String, dynamic>;
+    final isEmpty = dayData['isEmpty'] as bool;
+    return isEmpty ? Colors.grey.shade200 : AppColorScheme.color1;
   }
 
-  /// Obtiene el color del contenido según el tipo de columna
-  Color _getContentColor(dynamic column) {
-    if (_viewMode == 'tracks') {
-      return AppColorScheme.color1.withOpacity(0.5);
-    } else {
-      final dayData = column as Map<String, dynamic>;
-      final isEmpty = dayData['isEmpty'] as bool;
-      return isEmpty ? Colors.grey.shade100 : AppColorScheme.color1.withOpacity(0.5);
-    }
-  }
 
   /// Construye el contenido del header
   Widget _buildHeaderContent(dynamic column) {
-    if (_viewMode == 'tracks') {
-      final track = column as ParticipantTrack;
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            track.participantName,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 10,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            'Track ${track.position + 1}',
-            style: const TextStyle(
-              fontSize: 8,
-              color: Colors.white70,
-            ),
-          ),
-        ],
-      );
-    } else {
-      final dayData = column as Map<String, dynamic>;
-      final actualDayIndex = dayData['index'] as int;
-      final isEmpty = dayData['isEmpty'] as bool;
-      
-      if (isEmpty) {
-        return const Text(
-          'Vacío',
-          style: TextStyle(fontSize: 10, color: Colors.grey),
-        );
-      }
-      
-      // Calcular la fecha de este día del plan
-      final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
-      final formattedDate = '${dayDate.day}/${dayDate.month}/${dayDate.year}';
-      
-      // Obtener el nombre del día de la semana (traducible)
-      final dayOfWeek = DateFormat.E().format(dayDate); // 'lun', 'mar', etc.
-      
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Día $actualDayIndex - $dayOfWeek',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 9,
-            ),
-          ),
-          Text(
-            formattedDate,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+    final dayData = column as Map<String, dynamic>;
+    final actualDayIndex = dayData['index'] as int;
+    final isEmpty = dayData['isEmpty'] as bool;
+    final participants = dayData['participants'] as List<ParticipantTrack>;
+    
+    if (isEmpty) {
+      return const Text(
+        'Vacío',
+        style: TextStyle(fontSize: 10, color: Colors.grey),
       );
     }
+    
+    // Calcular la fecha de este día del plan
+    final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
+    final formattedDate = '${dayDate.day}/${dayDate.month}';
+    
+    // Obtener el nombre del día de la semana (traducible)
+    final dayOfWeek = DateFormat.E().format(dayDate); // 'lun', 'mar', etc.
+    
+    // Generar iniciales de participantes
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Día $actualDayIndex - $dayOfWeek $formattedDate',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 9,
+          ),
+        ),
+        const SizedBox(height: 2),
+        // Mini headers de participantes
+        _buildMiniParticipantHeaders(participants),
+      ],
+    );
   }
 
-  /// Construye el contenido adicional (alojamientos para días)
-  Widget _buildAdditionalContent(dynamic column) {
-    if (_viewMode == 'tracks') {
-      // Para tracks, solo mostramos espacio vacío
+  /// Construye mini headers de participantes para el header principal
+  Widget _buildMiniParticipantHeaders(List<ParticipantTrack> participants) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: participants.asMap().entries.map((entry) {
+        final index = entry.key;
+        final participant = entry.value;
+        final isLastTrack = index == participants.length - 1;
+        
+        // Generar iniciales del nombre y apellido
+        final initial = _getParticipantInitials(participant.participantName, participant.position);
+            
+        return Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+            decoration: BoxDecoration(
+              // Agregar línea vertical derecha para separar tracks (excepto el último)
+              border: isLastTrack 
+                  ? null 
+                  : Border(
+                      right: BorderSide(
+                        color: AppColorScheme.gridLineColor.withOpacity(0.3),
+                        width: 0.5,
+                      ),
+                    ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  initial,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  /// Genera las iniciales del nombre y apellido de un participante
+  String _getParticipantInitials(String participantName, int position) {
+    if (participantName.isEmpty) {
+      return 'P${position + 1}';
+    }
+    
+    // Dividir el nombre por espacios
+    final nameParts = participantName.trim().split(' ');
+    
+    if (nameParts.length == 1) {
+      // Solo un nombre, tomar la primera letra
+      return nameParts[0].substring(0, 1).toUpperCase();
+    } else if (nameParts.length >= 2) {
+      // Nombre y apellido, tomar la primera letra de cada uno
+      final firstName = nameParts[0].substring(0, 1).toUpperCase();
+      final lastName = nameParts[1].substring(0, 1).toUpperCase();
+      return '$firstName$lastName';
+    }
+    
+    return 'P${position + 1}';
+  }
+
+  /// Construye los tracks de alojamiento para cada día
+  Widget _buildAccommodationTracks(dynamic column) {
+    final dayData = column as Map<String, dynamic>;
+    final actualDayIndex = dayData['index'] as int;
+    final isEmpty = dayData['isEmpty'] as bool;
+    
+    if (isEmpty) {
       return const Text(
-        'Mi Track',
+        'Sin alojamiento',
         style: TextStyle(fontSize: 8, color: Colors.grey),
       );
-    } else {
-      final dayData = column as Map<String, dynamic>;
-      final actualDayIndex = dayData['index'] as int;
-      final isEmpty = dayData['isEmpty'] as bool;
-      
-      if (isEmpty) {
-        return const Text(
-          'Sin alojamiento',
-          style: TextStyle(fontSize: 8, color: Colors.grey),
-        );
-      }
-      
-      return _buildAccommodationCell(actualDayIndex);
     }
+    
+    // Obtener alojamientos del plan para este día
+    final accommodations = ref.watch(accommodationsProvider(
+      AccommodationNotifierParams(planId: widget.plan.id ?? ''),
+    ));
+    
+    final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
+    final accommodationsForDay = accommodations.where((acc) => acc.isDateInRange(dayDate)).toList();
+    
+    
+    if (accommodationsForDay.isEmpty) {
+      return GestureDetector(
+        onTap: () => _showNewAccommodationDialog(dayDate),
+        child: const Text(
+          'Sin alojamiento - Tap para crear',
+          style: TextStyle(fontSize: 8, color: Colors.grey),
+        ),
+      );
+    }
+    
+    // Mostrar alojamientos como tracks
+    return _buildAccommodationTracksRow(accommodationsForDay);
+  }
+
+  /// Construye la fila de tracks de alojamiento
+  Widget _buildAccommodationTracksRow(List<Accommodation> accommodations) {
+    final visibleTracks = _trackService.getVisibleTracks();
+    
+    
+    return Row(
+      children: visibleTracks.asMap().entries.map((entry) {
+        final trackIndex = entry.key;
+        final track = entry.value;
+        final isLastTrack = trackIndex == visibleTracks.length - 1;
+        
+        // Encontrar alojamientos que deben mostrarse en este track
+        final accommodationsForTrack = accommodations.where((accommodation) => 
+          _shouldShowAccommodationInTrack(accommodation, trackIndex)
+        ).toList();
+        
+        return Expanded(
+          child: GestureDetector(
+            onTap: () {
+              if (accommodationsForTrack.isNotEmpty) {
+                // Si hay alojamientos en este track, editar el primero
+                _showAccommodationDialog(accommodationsForTrack.first);
+              } else {
+                // Si no hay alojamientos, crear uno nuevo
+                final dayDate = accommodations.isNotEmpty 
+                    ? accommodations.first.checkIn 
+                    : DateTime.now();
+                _showNewAccommodationDialog(dayDate);
+              }
+            },
+            onDoubleTap: () {
+              final dayDate = accommodations.isNotEmpty 
+                  ? accommodations.first.checkIn 
+                  : DateTime.now();
+              _showNewAccommodationDialog(dayDate);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+              decoration: BoxDecoration(
+                // Agregar línea vertical derecha para separar tracks (excepto el último)
+                border: isLastTrack 
+                    ? null 
+                    : Border(
+                        right: BorderSide(
+                          color: AppColorScheme.gridLineColor.withOpacity(0.3),
+                          width: 0.5,
+                        ),
+                      ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (accommodationsForTrack.isNotEmpty) ...[
+                    // Mostrar alojamiento asignado a este track
+                    Text(
+                      accommodationsForTrack.first.hotelName,
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: accommodationsForTrack.first.displayColor,
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ] else ...[
+                    // Mostrar indicador de track vacío
+                    Text(
+                      'Tap para crear',
+                      style: TextStyle(
+                        fontSize: 6,
+                        color: Colors.grey.shade600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  /// Determina si un alojamiento debe mostrarse en un track específico
+  bool _shouldShowAccommodationInTrack(Accommodation accommodation, int trackIndex) {
+    // Si no tiene participantes asignados, mostrar en el primer track
+    if (accommodation.participantTrackIds.isEmpty) {
+      return trackIndex == 0;
+    }
+    
+    // Obtener el track actual
+    final visibleTracks = _trackService.getVisibleTracks();
+    if (trackIndex >= visibleTracks.length) return false;
+    
+    final currentTrack = visibleTracks[trackIndex];
+    final shouldShow = accommodation.participantTrackIds.contains(currentTrack.participantId);
+    
+    
+    // Verificar si el track actual está en la lista de participantes del alojamiento
+    return shouldShow;
   }
 
   /// Construye las filas de datos (horas)
@@ -579,6 +763,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     
     return Row(
       children: columns.map((column) {
+        final dayData = column as Map<String, dynamic>;
+        final participants = dayData['participants'] as List<ParticipantTrack>;
+        
         return Expanded(
           child: Column(
             children: List.generate(AppConstants.defaultRowCount, (hourIndex) {
@@ -588,7 +775,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   border: Border.all(color: AppColorScheme.gridLineColor),
                   color: _getDataCellColor(column),
                 ),
-                child: _buildEventCell(hourIndex, column),
+                child: _buildEventCellWithSubColumns(hourIndex, column, participants),
               );
             }),
           ),
@@ -599,13 +786,48 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Obtiene el color de la celda de datos según el tipo de columna
   Color _getDataCellColor(dynamic column) {
-    if (_viewMode == 'tracks') {
-      return AppColorScheme.color0;
-    } else {
-      final dayData = column as Map<String, dynamic>;
-      final isEmpty = dayData['isEmpty'] as bool;
-      return isEmpty ? Colors.grey.shade100 : AppColorScheme.color0;
-    }
+    final dayData = column as Map<String, dynamic>;
+    final isEmpty = dayData['isEmpty'] as bool;
+    return isEmpty ? Colors.grey.shade100 : AppColorScheme.color0;
+  }
+
+  /// Construye la celda de evento con subcolumnas de participantes
+  Widget _buildEventCellWithSubColumns(int hourIndex, dynamic column, List<ParticipantTrack> participants) {
+    final dayData = column as Map<String, dynamic>;
+    final actualDayIndex = dayData['index'] as int;
+    
+    return Row(
+      children: participants.asMap().entries.map((entry) {
+        final index = entry.key;
+        final participant = entry.value;
+        final isLastTrack = index == participants.length - 1;
+        
+        return Expanded(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onDoubleTap: () {
+              final date = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
+              _showNewEventDialogForParticipant(date, hourIndex, participant);
+            },
+            child: Container(
+              height: AppConstants.cellHeight,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                // Agregar línea vertical derecha para separar tracks (excepto el último)
+                border: isLastTrack 
+                    ? null 
+                    : Border(
+                        right: BorderSide(
+                          color: AppColorScheme.gridLineColor.withOpacity(0.3),
+                          width: 0.5,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 
   /// Construye la celda de alojamiento
@@ -658,43 +880,77 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye la capa de eventos usando EventSegments (estilo Google Calendar)
   List<Widget> _buildEventsLayer(double availableWidth) {
-    if (_viewMode == 'tracks') {
-      return _buildTracksEventsLayer(availableWidth);
-    } else {
-      return _buildDaysEventsLayer(availableWidth);
-    }
+    return _buildDaysEventsLayerWithSubColumns(availableWidth);
   }
 
-  /// Construye la capa de eventos para el modo tracks
-  List<Widget> _buildTracksEventsLayer(double availableWidth) {
-    List<Widget> eventWidgets = [];
+  /// Construye la capa de eventos para días con subcolumnas de participantes
+  List<Widget> _buildDaysEventsLayerWithSubColumns(double availableWidth) {
+    final startDayIndex = _currentDayGroup * _visibleDays + 1;
+    final endDayIndex = startDayIndex + _visibleDays - 1;
+    final totalDays = widget.plan.durationInDays;
+    final actualEndDayIndex = endDayIndex > totalDays ? totalDays : endDayIndex;
     
-    // Obtener todos los eventos del plan (por ahora, usar todos los eventos)
-    // TODO: Optimizar para obtener solo eventos relevantes
-    final allEvents = ref.watch(eventsProvider(
-      CalendarNotifierParams(
-        planId: widget.plan.id ?? '',
-        userId: widget.plan.userId,
-        initialDate: widget.plan.startDate,
-        initialColumnCount: widget.plan.columnCount,
-      ),
-    ));
-
-    // Procesar cada evento
-    for (final event in allEvents) {
-      final eventWidget = _buildTrackEventWidget(event, availableWidth);
-      if (eventWidget != null) {
-        eventWidgets.add(eventWidget);
+    
+    List<Widget> eventWidgets = [];
+    List<Event> previousDayEvents = []; // Cache de eventos del día anterior
+    
+    // Obtener eventos para cada día en el rango actual
+    for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
+      final currentDay = startDayIndex + dayOffset;
+      final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+      
+      // Obtener eventos para esta fecha usando ref.watch para reaccionar a cambios
+      final eventsForDate = ref.watch(eventsForDateProvider(
+        EventsForDateParams(
+          calendarParams: CalendarNotifierParams(
+            planId: widget.plan.id ?? '',
+            userId: widget.plan.userId,
+            initialDate: widget.plan.startDate,
+            initialColumnCount: widget.plan.columnCount,
+          ),
+          date: eventDate,
+        ),
+      ));
+      
+      
+      // NUEVO: Combinar eventos de hoy + eventos de ayer que continúan hoy
+      final allRelevantEvents = <Event>[
+        ...eventsForDate,
+        ...previousDayEvents.where((e) => _eventCrossesMidnight(e)),
+      ];
+      
+      // Expandir eventos a segmentos para este día específico
+      final segments = _expandEventsToSegments(allRelevantEvents, eventDate);
+      
+      if (segments.isNotEmpty) {
+        // Detectar segmentos solapados
+        final overlappingGroups = _detectOverlappingSegments(segments);
+        
+        // Renderizar grupos de segmentos solapados
+        for (final group in overlappingGroups) {
+          if (group.segments.length > 1) {
+            // Hay solapamiento - renderizar con layout especial
+            eventWidgets.addAll(_buildOverlappingSegmentWidgetsWithSubColumns(group, dayOffset, availableWidth));
+          } else {
+            // Solo un segmento - renderizado normal
+            final segment = group.segments.first;
+            eventWidgets.addAll(_buildSegmentWidgetWithSubColumns(segment, dayOffset, availableWidth));
+          }
+        }
       }
+      
+      // CORREGIDO: Guardar TODOS los eventos procesados (no solo eventsForDate)
+      // Esto asegura que eventos multi-día se propaguen correctamente al siguiente día
+      previousDayEvents = allRelevantEvents;
     }
-
+    
     return eventWidgets;
   }
 
   /// Construye la capa de eventos para el modo días (comportamiento original)
   List<Widget> _buildDaysEventsLayer(double availableWidth) {
-    final startDayIndex = _currentDayGroup * _daysPerGroup + 1;
-    final endDayIndex = startDayIndex + _daysPerGroup - 1;
+    final startDayIndex = _currentDayGroup * _visibleDays + 1;
+    final endDayIndex = startDayIndex + _visibleDays - 1;
     final totalDays = widget.plan.durationInDays;
     final actualEndDayIndex = endDayIndex > totalDays ? totalDays : endDayIndex;
     
@@ -704,7 +960,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Obtener eventos para cada día en el rango actual
     for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
       final currentDay = startDayIndex + dayOffset;
-      final eventDate = widget.plan.startDate.add(Duration(days: currentDay - 1));
+      final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
       
       // Obtener eventos para esta fecha usando ref.watch para reaccionar a cambios
       final eventsForDate = ref.watch(eventsForDateProvider(
@@ -790,7 +1046,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         child: Container(
           margin: const EdgeInsets.all(1),
           decoration: BoxDecoration(
-            color: ColorUtils.hexToColor(event.color ?? AppColorScheme.color2),
+            color: ColorUtils.colorFromName(event.color ?? 'blue'),
             borderRadius: BorderRadius.circular(4),
             border: Border.all(color: Colors.white, width: 0.5),
           ),
@@ -985,6 +1241,66 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return endTime > 1440; // 1440 minutos = 24 horas
   }
 
+  /// Verifica si un evento crearía conflictos de solapamiento por participante
+  /// 
+  /// Regla de negocio: Un participante no puede tener eventos confirmados solapados
+  /// Los eventos en borrador SÍ pueden solaparse
+  /// 
+  /// [eventToCheck] - El evento que queremos añadir/mover
+  /// [targetDate] - La fecha donde queremos colocar el evento
+  /// [eventIdToExclude] - ID del evento a excluir del conteo (cuando editamos un evento existente)
+  /// 
+  /// Returns true si hay conflicto de solapamiento por participante
+  bool _wouldCreateParticipantConflict({
+    required Event eventToCheck,
+    required DateTime targetDate,
+    String? eventIdToExclude,
+  }) {
+    // Los borradores pueden solaparse, no validar
+    if (eventToCheck.isDraft) return false;
+    
+    // Si no tiene participantes, no hay conflicto
+    if (eventToCheck.participantTrackIds.isEmpty) return false;
+
+    final eventStartMinutes = eventToCheck.hour * 60 + eventToCheck.startMinute;
+    final eventEndMinutes = eventStartMinutes + eventToCheck.durationMinutes;
+
+    // Obtener eventos para la fecha objetivo
+    final eventsForDate = ref.read(eventsForDateProvider(
+      EventsForDateParams(
+        calendarParams: CalendarNotifierParams(
+          planId: widget.plan.id ?? '',
+          userId: widget.plan.userId,
+          initialDate: widget.plan.startDate,
+          initialColumnCount: widget.plan.columnCount,
+        ),
+        date: targetDate,
+      ),
+    ));
+
+    // Buscar eventos existentes en la misma fecha
+    for (final existingEvent in eventsForDate) {
+      if (existingEvent.id == eventIdToExclude) continue; // Excluir el evento que estamos editando
+      if (existingEvent.isDraft) continue; // Ignorar borradores
+      if (existingEvent.date != targetDate) continue;
+
+      final existingStartMinutes = existingEvent.hour * 60 + existingEvent.startMinute;
+      final existingEndMinutes = existingStartMinutes + existingEvent.durationMinutes;
+
+      // Verificar si hay solapamiento temporal
+      if (eventStartMinutes < existingEndMinutes && eventEndMinutes > existingStartMinutes) {
+        // Verificar si hay participantes en común
+        for (final participantId in eventToCheck.participantTrackIds) {
+          if (existingEvent.participantTrackIds.contains(participantId)) {
+            return true; // HAY CONFLICTO
+          }
+        }
+      }
+    }
+
+    return false; // NO HAY CONFLICTO
+  }
+
   /// Verifica si añadir/mover un evento excedería el límite de 3 eventos solapados
   /// 
   /// Regla de negocio: Máximo 3 eventos pueden solaparse simultáneamente en cualquier momento
@@ -1117,7 +1433,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye un widget de evento para el día siguiente (parte que cruza medianoche)
   Widget _buildEventWidgetForNextDay(Event event, int dayOffset, double availableWidth) {
-    final cellWidth = availableWidth / _daysPerGroup;
+    final cellWidth = availableWidth / _visibleDays;
     final cellHeight = AppConstants.cellHeight;
     
     final x = (dayOffset * cellWidth) + (cellWidth * 0.025);
@@ -1403,12 +1719,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye widgets para segmentos solapados
   List<Widget> _buildOverlappingSegmentWidgets(OverlappingSegmentGroup group, int dayOffset, double availableWidth) {
-    final cellWidth = availableWidth / _daysPerGroup;
+    final cellWidth = availableWidth / _visibleDays;
     final widgets = <Widget>[];
-    
-    // Indicador de límite alcanzado
-    const int MAX_OVERLAPPING = 3;
-    final isAtLimit = group.segments.length >= MAX_OVERLAPPING;
     
     // Calcular ancho para cada segmento solapado
     final segmentWidth = (cellWidth * 0.95) / group.segments.length;
@@ -1417,47 +1729,369 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       final segment = group.segments[i];
       final x = (dayOffset * cellWidth) + (cellWidth * 0.025) + (i * segmentWidth);
       
-      widgets.add(_buildSegmentWidgetAtPosition(
-        segment, 
-        x, 
-        segmentWidth, 
-        availableWidth,
-        showLimitIndicator: isAtLimit && i == group.segments.length - 1, // Mostrar en el último
+      final totalFixedHeight = 0.0;
+      widgets.add(Positioned(
+        left: x,
+        top: totalFixedHeight + (segment.startMinute * AppConstants.cellHeight / 60),
+        width: segmentWidth,
+        height: (segment.durationMinutes * AppConstants.cellHeight / 60).clamp(0.0, 1440.0),
+        child: _buildDraggableSegment(segment, (segment.durationMinutes * AppConstants.cellHeight / 60).clamp(0.0, 1440.0), showLimitIndicator: false),
       ));
     }
     
     return widgets;
   }
 
-  /// Construye un segmento en una posición específica (para segmentos solapados)
-  Widget _buildSegmentWidgetAtPosition(
-    EventSegment segment, 
-    double x, 
-    double width, 
-    double availableWidth, {
-    bool showLimitIndicator = false,
-  }) {
+  /// Construye un segmento con subcolumnas de participantes
+  /// Muestra eventos individualmente en cada track de participante
+  List<Widget> _buildSegmentWidgetWithSubColumns(EventSegment segment, int dayOffset, double availableWidth) {
+    final cellWidth = availableWidth / _visibleDays;
+    final subColumnWidth = _getSubColumnWidth(availableWidth);
     final cellHeight = AppConstants.cellHeight;
-    
-    // NO restar scrollOffset porque los eventos están dentro del SingleChildScrollView
+    final dayX = dayOffset * cellWidth;
     final totalFixedHeight = 0.0;
     final y = totalFixedHeight + (segment.startMinute * cellHeight / 60);
-    
-    // Calcular altura del segmento
     final height = (segment.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
     
-    return Positioned(
-      left: x,
-      top: y,
-      width: width,
-      height: height,
-      child: _buildDraggableSegment(segment, height, showLimitIndicator: showLimitIndicator),
-    );
+    final visibleTracks = _trackService.getVisibleTracks();
+    final widgets = <Widget>[];
+    
+    // Obtener todos los grupos de tracks consecutivos donde se muestra este evento
+    final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(segment.originalEvent);
+    
+    if (consecutiveGroups.isNotEmpty) {
+      // Renderizar cada grupo consecutivo como un bloque separado
+      for (final group in consecutiveGroups) {
+        if (group.length > 1) {
+          // Grupo de múltiples tracks consecutivos - mostrar como un bloque ancho
+          final firstTrackIndex = group.first;
+          
+          // Calcular posición y ancho para el evento combinado
+          final positionInfo = _calculateEventPosition(segment.originalEvent, firstTrackIndex, subColumnWidth);
+          final startX = dayX + (positionInfo['startX'] as double);
+          final trackWidth = subColumnWidth;
+          final totalWidth = trackWidth * group.length;
+          
+          widgets.add(
+            Positioned(
+              left: startX,
+              top: y,
+              width: totalWidth,
+              height: height,
+              child: _buildDraggableSegment(segment, height),
+            ),
+          );
+        } else {
+          // Grupo de un solo track - mostrar como bloque individual
+          final trackIndex = group.first;
+          final positionInfo = _calculateEventPosition(segment.originalEvent, trackIndex, subColumnWidth);
+          final x = dayX + (positionInfo['startX'] as double);
+          final width = positionInfo['width'] as double;
+          
+          widgets.add(
+            Positioned(
+              left: x,
+              top: y,
+              width: width,
+              height: height,
+              child: _buildDraggableSegment(segment, height),
+            ),
+          );
+        }
+      }
+    } else {
+      // Fallback: comportamiento original si no hay grupos
+      for (int trackIndex = 0; trackIndex < visibleTracks.length; trackIndex++) {
+        if (_shouldShowEventInTrack(segment.originalEvent, trackIndex)) {
+          final positionInfo = _calculateEventPosition(segment.originalEvent, trackIndex, subColumnWidth);
+          final x = dayX + (positionInfo['startX'] as double);
+          final width = positionInfo['width'] as double;
+          
+          widgets.add(
+            Positioned(
+              left: x,
+              top: y,
+              width: width,
+              height: height,
+              child: _buildDraggableSegment(segment, height),
+            ),
+          );
+        }
+      }
+    }
+    
+    return widgets;
+  }
+
+  /// Construye widgets para segmentos solapados con subcolumnas
+  /// Muestra eventos individualmente en cada track de participante con capas superpuestas
+  List<Widget> _buildOverlappingSegmentWidgetsWithSubColumns(OverlappingSegmentGroup group, int dayOffset, double availableWidth) {
+    final cellWidth = availableWidth / _visibleDays;
+    final subColumnWidth = _getSubColumnWidth(availableWidth);
+    final widgets = <Widget>[];
+    final visibleTracks = _trackService.getVisibleTracks();
+    
+    // Ordenar segmentos por número de participantes (más participantes primero = fondo)
+    final sortedSegments = List<EventSegment>.from(group.segments);
+    sortedSegments.sort((a, b) {
+      final aParticipantCount = a.originalEvent.participantTrackIds.length;
+      final bParticipantCount = b.originalEvent.participantTrackIds.length;
+      return bParticipantCount.compareTo(aParticipantCount); // Descendente
+    });
+    
+    // Para cada segmento en el grupo (ordenados por número de participantes)
+    for (int i = 0; i < sortedSegments.length; i++) {
+      final segment = sortedSegments[i];
+      final dayX = dayOffset * cellWidth;
+      final totalFixedHeight = 0.0;
+      final y = totalFixedHeight + (segment.startMinute * AppConstants.cellHeight / 60);
+      final height = (segment.durationMinutes * AppConstants.cellHeight / 60).clamp(0.0, 1440.0);
+      
+      final event = segment.originalEvent;
+      
+      // Obtener todos los grupos de tracks consecutivos donde se muestra este evento
+      final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(event);
+      
+      if (consecutiveGroups.isNotEmpty) {
+        // Renderizar cada grupo consecutivo como un bloque separado
+        for (final group in consecutiveGroups) {
+          if (group.length > 1) {
+            // Grupo de múltiples tracks consecutivos - mostrar como un bloque ancho
+            final firstTrackIndex = group.first;
+            
+            // Calcular posición y ancho para el evento combinado
+            final positionInfo = _calculateEventPosition(event, firstTrackIndex, subColumnWidth);
+            final startX = dayX + (positionInfo['startX'] as double);
+            final trackWidth = subColumnWidth;
+            final totalWidth = trackWidth * group.length;
+            
+            // Ajustar altura para capas superpuestas
+            double adjustedHeight = height;
+            if (i > 0) {
+              // Eventos superpuestos: altura ligeramente reducida para mostrar capas
+              adjustedHeight = height * (0.8 + (0.1 * (sortedSegments.length - i) / sortedSegments.length));
+            }
+            
+            widgets.add(
+              Positioned(
+                left: startX,
+                top: y,
+                width: totalWidth,
+                height: adjustedHeight,
+                child: _buildDraggableSegment(
+                  segment, 
+                  adjustedHeight, 
+                  showLimitIndicator: false,
+                  isOverlapping: true,
+                  layerIndex: i,
+                ),
+              ),
+            );
+          } else {
+            // Grupo de un solo track - mostrar como bloque individual
+            final trackIndex = group.first;
+            final positionInfo = _calculateEventPosition(event, trackIndex, subColumnWidth);
+            final x = dayX + (positionInfo['startX'] as double);
+            final width = positionInfo['width'] as double;
+            
+            // Ajustar altura para capas superpuestas
+            double adjustedHeight = height;
+            if (i > 0) {
+              // Eventos superpuestos: altura ligeramente reducida para mostrar capas
+              adjustedHeight = height * (0.8 + (0.1 * (sortedSegments.length - i) / sortedSegments.length));
+            }
+            
+            widgets.add(
+              Positioned(
+                left: x,
+                top: y,
+                width: width,
+                height: adjustedHeight,
+                child: _buildDraggableSegment(
+                  segment, 
+                  adjustedHeight, 
+                  showLimitIndicator: false,
+                  isOverlapping: true,
+                  layerIndex: i,
+                ),
+              ),
+            );
+          }
+        }
+      } else {
+        // Fallback: comportamiento original si no hay grupos
+        for (int trackIndex = 0; trackIndex < visibleTracks.length; trackIndex++) {
+          if (_shouldShowEventInTrack(event, trackIndex)) {
+            final positionInfo = _calculateEventPosition(event, trackIndex, subColumnWidth);
+            final x = dayX + (positionInfo['startX'] as double);
+            final width = positionInfo['width'] as double;
+            
+            // Ajustar altura para capas superpuestas
+            double adjustedHeight = height;
+            if (i > 0) {
+              // Eventos superpuestos: altura ligeramente reducida para mostrar capas
+              adjustedHeight = height * (0.8 + (0.1 * (sortedSegments.length - i) / sortedSegments.length));
+            }
+            
+            widgets.add(
+              Positioned(
+                left: x,
+                top: y,
+                width: width,
+                height: adjustedHeight,
+                child: _buildDraggableSegment(
+                  segment, 
+                  adjustedHeight, 
+                  showLimitIndicator: false,
+                  isOverlapping: true,
+                  layerIndex: i,
+                ),
+              ),
+            );
+          }
+        }
+      }
+    }
+    
+    return widgets;
+  }
+
+  /// Obtiene el índice del participante para un evento
+  int _getParticipantIndexForEvent(Event event) {
+    // Si el evento tiene participantTrackIds, usar el primero
+    if (event.participantTrackIds.isNotEmpty) {
+      final tracks = _trackService.getVisibleTracks();
+      for (int i = 0; i < tracks.length; i++) {
+        if (tracks[i].id == event.participantTrackIds.first) {
+          return i;
+        }
+      }
+    }
+    
+    // Por defecto, asignar al primer participante
+    return 0;
+  }
+
+  /// Calcula la posición individual de un evento en un track específico
+  /// Retorna un Map con 'startX' y 'width' para el track individual
+  Map<String, double> _calculateEventPosition(Event event, int trackIndex, double subColumnWidth) {
+    // Para eventos multi-participante, cada instancia ocupa solo su track individual
+    // El ancho es siempre el ancho de una subcolumna
+    final startX = trackIndex * subColumnWidth;
+    
+    return {
+      'startX': startX,
+      'width': subColumnWidth,
+    };
+  }
+
+  /// Calcula la posición y ancho para eventos multi-participante que se extienden horizontalmente
+  /// Retorna un Map con 'startX' y 'width' para el evento completo
+  Map<String, double> _calculateEventSpan(Event event, double subColumnWidth) {
+    final visibleTracks = _trackService.getVisibleTracks();
+    
+    // Encontrar los tracks donde debe mostrarse este evento
+    final relevantTracks = <int>[];
+    for (int trackIndex = 0; trackIndex < visibleTracks.length; trackIndex++) {
+      if (_shouldShowEventInTrack(event, trackIndex)) {
+        relevantTracks.add(trackIndex);
+      }
+    }
+    
+    if (relevantTracks.isEmpty) {
+      // Si no hay tracks relevantes, usar el primer track por defecto
+      return {
+        'startX': 0.0,
+        'width': subColumnWidth,
+      };
+    }
+    
+    // Calcular la posición de inicio (track más a la izquierda)
+    final startTrackIndex = relevantTracks.first;
+    final startX = startTrackIndex * subColumnWidth;
+    
+    // Calcular el ancho total (todos los tracks relevantes)
+    final totalWidth = relevantTracks.length * subColumnWidth;
+    
+    return {
+      'startX': startX,
+      'width': totalWidth,
+    };
+  }
+
+  /// Verifica si un evento debe mostrarse en un track específico
+  bool _shouldShowEventInTrack(Event event, int trackIndex) {
+    final visibleTracks = _trackService.getVisibleTracks();
+    
+    if (trackIndex >= visibleTracks.length) return false;
+    
+    final track = visibleTracks[trackIndex];
+    
+    // Si el evento no tiene participantes definidos, mostrar en el primer track
+    if (event.participantTrackIds.isEmpty) {
+      return trackIndex == 0;
+    }
+    
+    // Verificar si este track corresponde a uno de los participantes del evento
+    return event.participantTrackIds.contains(track.participantId);
+  }
+
+  /// Obtiene todos los grupos de tracks consecutivos donde se muestra un evento
+  /// Cada grupo consecutivo se puede mostrar como un solo bloque
+  List<List<int>> _getConsecutiveTrackGroupsForEvent(Event event) {
+    final visibleTracks = _trackService.getVisibleTracks();
+    final tracksWhereShown = <int>[];
+    
+    // Encontrar todos los tracks donde se muestra el evento
+    for (int trackIndex = 0; trackIndex < visibleTracks.length; trackIndex++) {
+      if (_shouldShowEventInTrack(event, trackIndex)) {
+        tracksWhereShown.add(trackIndex);
+      }
+    }
+    
+    // Si solo aparece en un track, devolverlo como un grupo
+    if (tracksWhereShown.length <= 1) {
+      return tracksWhereShown.isEmpty ? [] : [tracksWhereShown];
+    }
+    
+    // Ordenar tracks
+    final sortedTracks = tracksWhereShown..sort();
+    
+    // Agrupar tracks consecutivos
+    final consecutiveGroups = <List<int>>[];
+    List<int> currentGroup = [sortedTracks.first];
+    
+    for (int i = 1; i < sortedTracks.length; i++) {
+      if (sortedTracks[i] - sortedTracks[i - 1] == 1) {
+        // Es consecutivo, agregar al grupo actual
+        currentGroup.add(sortedTracks[i]);
+      } else {
+        // No es consecutivo, finalizar grupo actual y empezar uno nuevo
+        consecutiveGroups.add(List.from(currentGroup));
+        currentGroup = [sortedTracks[i]];
+      }
+    }
+    // Agregar el último grupo
+    consecutiveGroups.add(currentGroup);
+    
+    return consecutiveGroups;
+  }
+
+  /// Obtiene los tracks consecutivos donde se muestra un evento (método de compatibilidad)
+  /// Si el evento aparece en tracks consecutivos, los agrupa para mostrar como un solo bloque
+  /// Si hay múltiples grupos consecutivos, devuelve el grupo más grande
+  List<int> _getConsecutiveTracksForEvent(Event event) {
+    final groups = _getConsecutiveTrackGroupsForEvent(event);
+    if (groups.isEmpty) return [];
+    
+    // Devolver el grupo más grande
+    groups.sort((a, b) => b.length.compareTo(a.length));
+    return groups.first;
   }
 
   /// Construye un segmento individual (sin solapamiento)
   Widget _buildSegmentWidget(EventSegment segment, int dayOffset, double availableWidth) {
-    final cellWidth = availableWidth / _daysPerGroup;
+    final cellWidth = availableWidth / _visibleDays;
     final cellHeight = AppConstants.cellHeight;
     
     final x = (dayOffset * cellWidth) + (cellWidth * 0.025);
@@ -1480,7 +2114,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// Construye un segmento draggable
-  Widget _buildDraggableSegment(EventSegment segment, double height, {bool showLimitIndicator = false}) {
+  Widget _buildDraggableSegment(EventSegment segment, double height, {bool showLimitIndicator = false, bool isOverlapping = false, int layerIndex = 0}) {
     final originalEvent = segment.originalEvent;
     final isThisEventDragging = _draggingEvent?.id == originalEvent.id;
     
@@ -1507,19 +2141,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             onPanStart: (details) => _startDrag(originalEvent, details),
             onPanUpdate: (details) => _updateDrag(details),
             onPanEnd: (details) => _endDrag(details),
-            child: _buildSegmentContainer(segment, height, fontSize, isThisEventDragging, displayOffset, showLimitIndicator),
+            child: _buildSegmentContainer(segment, height, fontSize, isThisEventDragging, displayOffset, showLimitIndicator, isOverlapping: isOverlapping, layerIndex: layerIndex),
           )
         : GestureDetector(
             onTap: () => _showEventDialog(originalEvent),
             // Sin onPanStart/Update/End - las continuaciones NO son draggables
-            child: _buildSegmentContainer(segment, height, fontSize, false, Offset.zero, showLimitIndicator),
+            child: _buildSegmentContainer(segment, height, fontSize, false, Offset.zero, showLimitIndicator, isOverlapping: isOverlapping, layerIndex: layerIndex),
           );
     
     return child;
   }
 
   /// Construye el container visual del segmento (separado para reutilización)
-  Widget _buildSegmentContainer(EventSegment segment, double height, double fontSize, bool isDragging, Offset displayOffset, bool showLimitIndicator) {
+  Widget _buildSegmentContainer(EventSegment segment, double height, double fontSize, bool isDragging, Offset displayOffset, bool showLimitIndicator, {bool isOverlapping = false, int layerIndex = 0}) {
     return Stack(
       children: [
         AnimatedContainer(
@@ -1538,13 +2172,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
               color: ColorUtils.getEventBorderColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
-              width: 1,
+              width: isOverlapping ? 2 : 1, // Borde más grueso para eventos superpuestos
             ),
             boxShadow: isDragging ? [
               BoxShadow(
                 color: Colors.black.withOpacity(0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
+              )
+            ] : isOverlapping ? [
+              // Sombra para eventos superpuestos (más capas = más sombra)
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1 + (layerIndex * 0.05)),
+                blurRadius: 2 + (layerIndex * 2),
+                offset: Offset(0, 1 + (layerIndex * 0.5)),
               )
             ] : null,
           ),
@@ -1635,17 +2276,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye un evento individual como Positioned widget
   Widget _buildEventWidget(Event event, double availableWidth) {
-    final startDayIndex = _currentDayGroup * _daysPerGroup + 1;
+    final startDayIndex = _currentDayGroup * _visibleDays + 1;
     final eventDayIndex = event.date.difference(widget.plan.startDate).inDays + 1;
     final dayIndex = eventDayIndex - startDayIndex;
     
     // Si el evento no está en el rango de días actual, no lo mostramos
-    if (dayIndex < 0 || dayIndex >= _daysPerGroup) {
+    if (dayIndex < 0 || dayIndex >= _visibleDays) {
       return const SizedBox.shrink();
     }
     
         // Usar el ancho real disponible pasado desde LayoutBuilder
-        final cellWidth = availableWidth / _daysPerGroup;
+        final cellWidth = availableWidth / _visibleDays;
         
     final cellHeight = AppConstants.cellHeight;
     
@@ -1802,11 +2443,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Obtener dimensiones de celda
     final screenWidth = MediaQuery.of(context).size.width;
     final availableWidth = screenWidth - 80.0;
-    final cellWidth = availableWidth / _daysPerGroup;
+    final cellWidth = availableWidth / _visibleDays;
     
     // Calcular posición actual del evento
     final currentDayIndex = event.date.difference(widget.plan.startDate).inDays + 1;
-    final startDayIndex = _currentDayGroup * _daysPerGroup + 1;
+    final startDayIndex = _currentDayGroup * _visibleDays + 1;
     final currentColumnIndex = currentDayIndex - startDayIndex;
     
     // Calcular nueva columna basada en el offset horizontal
@@ -1816,7 +2457,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final newColumnIndex = currentColumnIndex + newColumnOffset;
     
     // Verificar que la nueva columna esté en el rango válido
-    if (newColumnIndex < 0 || newColumnIndex >= _daysPerGroup) {
+    if (newColumnIndex < 0 || newColumnIndex >= _visibleDays) {
       return dragOffset; // Mantener posición actual si está fuera de rango
     }
     
@@ -1855,6 +2496,34 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           updatedAt: DateTime.now(),
         );
         
+        // VALIDAR: ¿Crearía conflicto de participante?
+        if (_wouldCreateParticipantConflict(
+          eventToCheck: updatedEvent,
+          targetDate: updatedEvent.date,
+          eventIdToExclude: eventToUpdate.id, // Excluir el evento que estamos moviendo
+        )) {
+          // Mostrar mensaje y cancelar el drag
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  '⚠️ No se puede mover: un participante ya tiene un evento confirmado en ese horario',
+                ),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+          
+          // Limpiar estado (el evento vuelve a su posición original)
+          setState(() {
+            _draggingEvent = null;
+            _isDragging = false;
+            _dragOffset = Offset.zero;
+          });
+          return; // Cancelar el drag
+        }
+
         // VALIDAR: ¿Excedería el límite de 3 solapados en la nueva posición?
         if (_wouldExceedOverlapLimit(
           eventToCheck: updatedEvent,
@@ -1920,7 +2589,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       // Obtener el ancho de una celda
       final screenWidth = MediaQuery.of(context).size.width;
       final availableWidth = screenWidth - 80.0; // Restar columna de horas
-      final cellWidth = availableWidth / _daysPerGroup;
+      final cellWidth = availableWidth / _visibleDays;
       final cellHeight = AppConstants.cellHeight;
       
       // Usar la misma función común para calcular la posición
@@ -1928,7 +2597,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       
       // Calcular nueva columna (día) basada en la posición consistente
       final currentDayIndex = event.date.difference(widget.plan.startDate).inDays + 1;
-      final startDayIndex = _currentDayGroup * _daysPerGroup + 1;
+      final startDayIndex = _currentDayGroup * _visibleDays + 1;
       final currentColumnIndex = currentDayIndex - startDayIndex;
       
       // Usar el mismo cálculo que en _calculateConsistentPosition
@@ -1937,7 +2606,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       final newColumnIndex = currentColumnIndex + newColumnOffset;
       
       // Verificar que la nueva columna esté en el rango válido
-      if (newColumnIndex < 0 || newColumnIndex >= _daysPerGroup) {
+      if (newColumnIndex < 0 || newColumnIndex >= _visibleDays) {
         return null; // Fuera del rango visible
       }
       
@@ -1967,7 +2636,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       
       // Calcular nueva fecha
       final newDayIndex = startDayIndex + newColumnIndex;
-      final newDate = widget.plan.startDate.add(Duration(days: newDayIndex - 1));
+      final newDate = widget.plan.startDate.add(Duration(days: (newDayIndex - 1).toInt()));
       
       return {
         'date': newDate,
@@ -1981,20 +2650,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye la celda de evento (ahora vacía, los eventos están en la capa separada)
   Widget _buildEventCell(int hourIndex, dynamic column) {
+    final dayData = column as Map<String, dynamic>;
+    final dayIndex = dayData['index'] as int;
+    final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+    
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onDoubleTap: () {
-        if (_viewMode == 'tracks') {
-          // En modo tracks, crear evento para el track específico
-          final track = column as ParticipantTrack;
-          _showNewEventDialogForTrack(track, hourIndex);
-        } else {
-          // En modo días, crear evento para el día específico
-          final dayData = column as Map<String, dynamic>;
-          final dayIndex = dayData['index'] as int;
-          final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
-          _showNewEventDialog(date, hourIndex);
-        }
+        // Crear evento para el día específico (asignado al primer participante por defecto)
+        _showNewEventDialog(date, hourIndex);
       },
       child: Container(
         height: AppConstants.cellHeight,
@@ -2005,53 +2669,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  /// Muestra el diálogo para crear un nuevo evento para un track específico
-  void _showNewEventDialogForTrack(ParticipantTrack track, int hourIndex) {
-    // Por ahora, usar la fecha actual como referencia
-    // TODO: En T70, esto se integrará con el sistema de eventos multi-track
-    final date = DateTime.now();
-    _showNewEventDialog(date, hourIndex);
+  /// Muestra el diálogo para crear un nuevo evento para un participante específico
+  void _showNewEventDialogForParticipant(DateTime date, int hourIndex, ParticipantTrack participant) {
+    _showNewEventDialog(date, hourIndex, participantId: participant.id);
   }
 
   /// Calcula qué tracks debe abarcar un evento (span horizontal)
   List<int> _calculateEventTrackSpan(Event event) {
-    if (_viewMode != 'tracks') {
-      // En modo días, no hay span horizontal
-      return [];
-    }
-
-    final visibleTracks = _trackService.getVisibleTracks();
-    final eventTrackIds = event.participantTrackIds;
-    
-    // Si el evento no tiene tracks asignados, asignarlo al primer track
-    if (eventTrackIds.isEmpty) {
-      return [0];
-    }
-
-    // Encontrar las posiciones de los tracks del evento
-    final trackPositions = <int>[];
-    for (int i = 0; i < visibleTracks.length; i++) {
-      final track = visibleTracks[i];
-      if (eventTrackIds.contains(track.id)) {
-        trackPositions.add(i);
-      }
-    }
-
-    // Si no se encontraron tracks, asignar al primer track
-    if (trackPositions.isEmpty) {
-      return [0];
-    }
-
-    // Ordenar las posiciones
-    trackPositions.sort();
-    
-    // Crear lista completa desde la primera posición hasta la última
-    final spanPositions = <int>[];
-    for (int i = trackPositions.first; i <= trackPositions.last; i++) {
-      spanPositions.add(i);
-    }
-
-    return spanPositions;
+    // En el nuevo sistema, los eventos no abarcan múltiples tracks
+    // Cada evento se asigna a un participante específico
+    return [];
   }
 
   /// Obtiene el ancho y posición X para un evento que abarca múltiples tracks
@@ -2085,6 +2712,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         event: event,
         planId: widget.plan.id ?? '',
         onSaved: (updatedEvent) async {
+          // VALIDAR: ¿Crearía conflicto de participante?
+          if (_wouldCreateParticipantConflict(
+            eventToCheck: updatedEvent,
+            targetDate: updatedEvent.date,
+            eventIdToExclude: event.id, // Excluir el evento actual del conteo
+          )) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '⚠️ No se puede guardar: un participante ya tiene un evento confirmado en ese horario.\n'
+                    'Por favor, elige otra hora, reduce la duración o cambia los participantes.',
+                  ),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 5),
+                ),
+              );
+            }
+            return; // No guardar
+          }
+
           // VALIDAR: ¿Excedería el límite de 3 solapados?
           if (_wouldExceedOverlapLimit(
             eventToCheck: updatedEvent,
@@ -2129,7 +2777,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// Muestra el diálogo para crear un nuevo evento
-  void _showNewEventDialog(DateTime date, int hour) {
+  void _showNewEventDialog(DateTime date, int hour, {String? participantId}) {
     showDialog(
       context: context,
       builder: (context) => EventDialog(
@@ -2138,6 +2786,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         initialDate: date,
         initialHour: hour,
         onSaved: (newEvent) async {
+          // VALIDAR: ¿Crearía conflicto de participante?
+          if (_wouldCreateParticipantConflict(
+            eventToCheck: newEvent,
+            targetDate: newEvent.date,
+            eventIdToExclude: null, // No excluir nada, es evento nuevo
+          )) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '⚠️ No se puede crear: un participante ya tiene un evento confirmado en ese horario.\n'
+                    'Por favor, elige otra hora, reduce la duración o cambia los participantes.',
+                  ),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 5),
+                ),
+              );
+            }
+            return; // No guardar
+          }
+
           // VALIDAR: ¿Excedería el límite de 3 solapados?
           if (_wouldExceedOverlapLimit(
             eventToCheck: newEvent,
@@ -2221,17 +2890,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Incrementar contador para forzar reconstrucción
     _eventRefreshCounter++;
     
-    // Invalidar el provider principal de eventos de forma genérica
-    ref.invalidate(eventsForDateProvider);
-    
-    // También invalidar el provider del calendario si existe
+    // Obtener el notifier existente y refrescar los eventos
     final calendarParams = CalendarNotifierParams(
       planId: widget.plan.id!,
       userId: widget.plan.userId,
       initialDate: widget.plan.startDate,
-      initialColumnCount: widget.plan.columnCount, // Usar columnCount del plan, no _daysPerGroup
+      initialColumnCount: widget.plan.columnCount,
     );
-    ref.invalidate(calendarNotifierProvider(calendarParams));
+    
+    // Refrescar eventos usando el método del notifier existente
+    final calendarNotifier = ref.read(calendarNotifierProvider(calendarParams).notifier);
+    calendarNotifier.refreshEvents();
     
     // Forzar actualización de la UI
     setState(() {});

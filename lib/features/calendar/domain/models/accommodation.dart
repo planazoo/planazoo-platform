@@ -11,6 +11,7 @@ class Accommodation {
   final String? color;
   final String typeFamily;
   final String typeSubtype;
+  final List<String> participantTrackIds; // IDs de tracks de participantes asignados
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -24,6 +25,7 @@ class Accommodation {
     this.color,
     this.typeFamily = 'alojamiento',
     this.typeSubtype = 'hotel',
+    this.participantTrackIds = const [],
     required this.createdAt,
     required this.updatedAt,
   });
@@ -42,6 +44,7 @@ class Accommodation {
       color: data['color'],
       typeFamily: data['typeFamily'] ?? 'alojamiento',
       typeSubtype: data['typeSubtype'] ?? 'hotel',
+      participantTrackIds: List<String>.from(data['participantTrackIds'] ?? []),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );
@@ -58,6 +61,7 @@ class Accommodation {
       'color': color,
       'typeFamily': typeFamily,
       'typeSubtype': typeSubtype,
+      'participantTrackIds': participantTrackIds,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -74,6 +78,7 @@ class Accommodation {
     String? color,
     String? typeFamily,
     String? typeSubtype,
+    List<String>? participantTrackIds,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -87,6 +92,7 @@ class Accommodation {
       color: color ?? this.color,
       typeFamily: typeFamily ?? this.typeFamily,
       typeSubtype: typeSubtype ?? this.typeSubtype,
+      participantTrackIds: participantTrackIds ?? this.participantTrackIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

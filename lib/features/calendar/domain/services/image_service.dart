@@ -22,7 +22,6 @@ class ImageService {
       );
       return image;
     } catch (e) {
-      print('Error picking image: $e');
       return null;
     }
   }
@@ -71,7 +70,6 @@ class ImageService {
       final String downloadUrl = await snapshot.ref.getDownloadURL();
       return downloadUrl;
     } catch (e) {
-      print('Error uploading image: $e');
       return null;
     }
   }
@@ -84,7 +82,6 @@ class ImageService {
       await ref.delete();
       return true;
     } catch (e) {
-      print('Error deleting image: $e');
       return false;
     }
   }
@@ -102,7 +99,6 @@ class ImageService {
       
       return bytes;
     } catch (e) {
-      print('Error compressing image: $e');
       return null;
     }
   }

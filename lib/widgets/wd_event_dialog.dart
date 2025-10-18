@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
+import 'package:unp_calendario/features/calendar/domain/models/participant_track.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
+import 'package:unp_calendario/features/calendar/domain/services/track_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/notifiers/calendar_notifier.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/features/testing/family_users_generator.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
@@ -39,6 +44,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late int _selectedDurationMinutes;
   late String _selectedColor;
   late bool _isDraft;
+  late List<String> _selectedParticipantIds;
 
   // Colores predefinidos para eventos
   final List<String> _eventColors = [
@@ -93,6 +99,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _selectedDurationMinutes = widget.event?.durationMinutes ?? 60;
     _selectedColor = widget.event?.color ?? 'blue';
     _isDraft = widget.event?.isDraft ?? false;
+    
+    // Inicializar participantes seleccionados
+    _selectedParticipantIds = widget.event?.participantTrackIds ?? [];
+    
   }
 
   @override
@@ -295,6 +305,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
             
+            // Participantes
+            _buildParticipantsSection(),
+            const SizedBox(height: 16),
+            
             // Color
             ListTile(
               leading: const Icon(Icons.palette),
@@ -459,6 +473,22 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return ColorUtils.colorFromName(colorName);
   }
 
+  /// Obtiene el nombre de visualización de un usuario por su ID
+  Future<String> _getUserDisplayName(String userId) async {
+    try {
+      // Importar el generador de usuarios para obtener los nombres
+      final userInfo = FamilyUsersGenerator.getUserInfo(userId);
+      if (userInfo != null) {
+        return userInfo['displayName'] ?? userId;
+      }
+      
+      // Si no está en la lista de usuarios generados, devolver el userId
+      return userId;
+    } catch (e) {
+      return userId;
+    }
+  }
+
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -486,11 +516,104 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
   }
 
+  /// Construye la sección de selección de participantes
+  Widget _buildParticipantsSection() {
+    // Si no hay planId, no mostrar selector de participantes
+    if (widget.planId == null) {
+      return const Text(
+        '⚠️ No hay planId disponible',
+        style: TextStyle(color: Colors.orange, fontSize: 12),
+      );
+    }
+    
+    
+    // Obtener participantes reales del plan
+    final participantsAsync = ref.watch(planParticipantsProvider(widget.planId!));
+    
+    return participantsAsync.when(
+      data: (participations) {
+        if (participations.isEmpty) {
+          return const Text(
+            'No hay participantes en este plan',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          );
+        }
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Participantes',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: participations.map((participation) {
+                final isSelected = _selectedParticipantIds.contains(participation.userId);
+                return FutureBuilder<String>(
+                  future: _getUserDisplayName(participation.userId),
+                  builder: (context, snapshot) {
+                    final displayName = snapshot.data ?? participation.userId;
+                    return FilterChip(
+                      label: Text(displayName),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            _selectedParticipantIds.add(participation.userId);
+                          } else {
+                            _selectedParticipantIds.remove(participation.userId);
+                          }
+                        });
+                      },
+                      selectedColor: Colors.blue.shade100,
+                      checkmarkColor: Colors.blue.shade800,
+                    );
+                  },
+                );
+              }).toList(),
+            ),
+            if (_selectedParticipantIds.isEmpty)
+              const Text(
+                'Selecciona al menos un participante',
+                style: TextStyle(color: Colors.red, fontSize: 12),
+              ),
+          ],
+        );
+      },
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (error, stackTrace) => Text(
+        'Error al cargar participantes: $error',
+        style: const TextStyle(color: Colors.red, fontSize: 12),
+      ),
+    );
+  }
+
   void _saveEvent() {
     if (_descriptionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('La descripción es obligatoria'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedParticipantIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes seleccionar al menos un participante'),
           backgroundColor: Colors.red,
         ),
       );
@@ -531,9 +654,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       typeFamily: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       typeSubtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
       isDraft: _isDraft,
+      participantTrackIds: _selectedParticipantIds,
       createdAt: widget.event?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
+
 
     if (widget.onSaved != null) {
       widget.onSaved!(event);

@@ -1,6 +1,6 @@
 # 📋 Lista de Tareas - Planazoo
 
-**Siguiente código de tarea: T91**
+**Siguiente código de tarea: T93**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 tareas)
@@ -13,8 +13,9 @@
 - **Seguridad:** T51-T53: Validación (3 tareas)
 - **Participantes:** T47-T50: Sistema básico (4 tareas)
 - **Permisos:** T65-T67: Gestión de permisos (3 tareas)
+- **Mejoras Visuales:** T91-T92: Colores y tipografía (2 tareas)
 
-**Total: 64 tareas documentadas en 6 grupos principales**
+**Total: 66 tareas documentadas en 6 grupos principales**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -2275,3 +2276,49 @@ class Event {
 - Duración en formato legible (ej: "2h 15min")
 - Texto legible en eventos pequeños
 - Consistencia visual con el diseño
+
+---
+
+## 🎨 MEJORAS VISUALES - Serie de Tareas (T91-T92)
+
+### T91 - Mejorar colores de eventos
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Baja (Aplicar cuando el calendario esté definitivo)  
+**Descripción:** Mejorar la paleta de colores de eventos para una mejor experiencia visual y legibilidad.
+
+**Criterios de aceptación:**
+- Revisar y optimizar colores de eventos existentes
+- Crear paleta de colores consistente y accesible
+- Mejorar contraste para mejor legibilidad
+- Aplicar colores diferenciados por tipo de evento
+- Mantener coherencia visual con el diseño general
+- Testing de accesibilidad de colores
+- Documentar nueva paleta de colores
+
+**Archivos a modificar:**
+- `lib/app/theme/color_scheme.dart`
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `lib/widgets/wd_event_dialog.dart`
+
+---
+
+### T92 - Mejorar tipografía de eventos
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Baja (Aplicar cuando el calendario esté definitivo)  
+**Descripción:** Optimizar la tipografía de eventos para mejorar la legibilidad y experiencia de usuario.
+
+**Criterios de aceptación:**
+- Revisar tamaños de fuente en eventos
+- Optimizar jerarquía tipográfica
+- Mejorar legibilidad en eventos pequeños
+- Aplicar tipografía consistente en toda la app
+- Optimizar para diferentes tamaños de pantalla
+- Testing de legibilidad en diferentes dispositivos
+- Documentar guía de tipografía
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+- `lib/widgets/wd_event_dialog.dart`
+- `lib/app/theme/text_theme.dart` (si existe)

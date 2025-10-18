@@ -149,13 +149,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // Método para limpiar usuarios huérfanos (solo para desarrollo)
   Future<void> clearOrphanedUsers() async {
-    try {
-      print('🧹 Limpiando usuarios huérfanos...');
-      await _authService.signOut();
-      print('✅ Usuarios huérfanos limpiados');
-    } catch (e) {
-      print('❌ Error al limpiar usuarios huérfanos: $e');
-    }
+    await _authService.signOut();
   }
 
   // Enviar email de restablecimiento de contraseña

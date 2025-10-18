@@ -57,7 +57,7 @@ class ParticipantsListWidget extends ConsumerWidget {
                   ),
                 ),
                 title: Text(
-                  participation.userId, // TODO: Mostrar nombre del usuario
+                  participation.userId
                   style: TextStyle(
                     fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
                   ),

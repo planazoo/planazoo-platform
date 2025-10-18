@@ -42,7 +42,6 @@ final allEventsProvider = FutureProvider<List<Event>>((ref) async {
         allEvents.addAll(events);
       } catch (e) {
         // Continuar con el siguiente plan si hay error
-        print('Error obteniendo eventos del plan ${plan.id}: $e');
         continue;
       }
     }
@@ -66,7 +65,6 @@ final allAccommodationsProvider = FutureProvider<List<Accommodation>>((ref) asyn
         allAccommodations.addAll(accommodations);
       } catch (e) {
         // Continuar con el siguiente plan si hay error
-        print('Error obteniendo alojamientos del plan ${plan.id}: $e');
         continue;
       }
     }

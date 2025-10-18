@@ -103,7 +103,6 @@ class EventService {
       // Verificar que el usuario participa en el plan
       final isParticipant = await _participationService.isUserParticipant(event.planId, event.userId);
       if (!isParticipant) {
-        print('User ${event.userId} is not a participant of plan ${event.planId}');
         return null;
       }
 
@@ -123,7 +122,6 @@ class EventService {
       // Verificar que el usuario participa en el plan
       final isParticipant = await _participationService.isUserParticipant(event.planId, event.userId);
       if (!isParticipant) {
-        print('User ${event.userId} is not a participant of plan ${event.planId}');
         return false;
       }
 
@@ -316,10 +314,8 @@ class EventService {
       }
       
       await batch.commit();
-      print('Migrated ${eventsToMigrate.length} events to userId: $userId');
       return true;
     } catch (e) {
-      print('Error migrating events with userId: $e');
       return false;
     }
   }

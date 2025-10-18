@@ -8,15 +8,33 @@ class PlanParticipationService {
 
   // Obtener todas las participaciones de un plan
   Stream<List<PlanParticipation>> getPlanParticipations(String planId) {
-    return _firestore
-        .collection(_collectionName)
-        .where('planId', isEqualTo: planId)
-        .where('isActive', isEqualTo: true)
-        .orderBy('joinedAt', descending: false)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => PlanParticipation.fromFirestore(doc)).toList();
-    });
+    LoggerService.info('🔍 PlanParticipationService: Consultando participantes para planId: $planId');
+    
+    try {
+      return _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .where('isActive', isEqualTo: true)
+          .snapshots()
+          .map((snapshot) {
+        LoggerService.info('📊 PlanParticipationService: Encontrados ${snapshot.docs.length} participantes');
+        final participations = snapshot.docs.map((doc) => PlanParticipation.fromFirestore(doc)).toList();
+        
+        // Ordenar manualmente en lugar de usar orderBy
+        participations.sort((a, b) => a.joinedAt.compareTo(b.joinedAt));
+        
+        for (final p in participations) {
+          LoggerService.info('👤 Participante: ${p.userId} (rol: ${p.role})');
+        }
+        return participations;
+      }).handleError((error) {
+        LoggerService.error('❌ PlanParticipationService: Error en consulta', error: error);
+        throw error;
+      });
+    } catch (e) {
+      LoggerService.error('❌ PlanParticipationService: Error en setup de consulta', error: e);
+      rethrow;
+    }
   }
 
   // Obtener participaciones de un usuario

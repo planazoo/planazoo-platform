@@ -8,6 +8,7 @@ import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/testing/demo_data_generator.dart';
+import 'package:unp_calendario/features/testing/family_users_generator.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
@@ -21,6 +22,7 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/widgets/grid/wd_grid_painter.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
+import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
 import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
@@ -228,17 +230,62 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     return Scaffold(
       body: _buildGrid(),
-      // 🧟 Botón Frankenstein (solo en modo debug)
+      // 🧟 Botones de testing (solo en modo debug)
       floatingActionButton: kDebugMode
-          ? FloatingActionButton.extended(
-              onPressed: () => _generateFrankensteinPlan(currentUser),
-              icon: const Icon(Icons.science),
-              label: const Text('🧟 Frankenstein'),
-              backgroundColor: Colors.green.shade700,
-              tooltip: 'Generar plan de testing completo',
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Botón para generar usuarios invitados
+                FloatingActionButton.extended(
+                  onPressed: () => _generateGuestUsers(),
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('👥 Invitados'),
+                  backgroundColor: Colors.orange.shade700,
+                  tooltip: 'Generar usuarios invitados',
+                ),
+                const SizedBox(height: 8),
+                // Botón Frankenstein
+                FloatingActionButton.extended(
+                  onPressed: () => _generateFrankensteinPlan(currentUser),
+                  icon: const Icon(Icons.science),
+                  label: const Text('🧟 Frankenstein'),
+                  backgroundColor: Colors.green.shade700,
+                  tooltip: 'Generar plan de testing completo',
+                ),
+              ],
             )
           : null,
     );
+  }
+
+  /// Genera usuarios invitados para testing
+  Future<void> _generateGuestUsers() async {
+    // Mostrar loading
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: Colors.white),
+            SizedBox(width: 16),
+            Text('👥 Generando usuarios invitados...'),
+          ],
+        ),
+        duration: Duration(seconds: 5),
+      ),
+    );
+    
+    // Generar usuarios invitados
+    final guestIds = await FamilyUsersGenerator.generateGuestUsers();
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ ${guestIds.length} usuarios invitados generados exitosamente!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
   
   /// Genera el plan Frankenstein de testing
@@ -1659,30 +1706,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       );
     }
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Participantes del Plan: ${selectedPlan!.name}',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Funcionalidad en desarrollo',
-            style: TextStyle(fontSize: 16),
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                currentScreen = 'calendar';
-              });
-            },
-            child: const Text('Volver al Calendario'),
-          ),
-        ],
-      ),
+    return ParticipantsScreen(
+      plan: selectedPlan!,
+      onBack: () {
+        setState(() {
+          currentScreen = 'calendar';
+        });
+      },
     );
   }
 }

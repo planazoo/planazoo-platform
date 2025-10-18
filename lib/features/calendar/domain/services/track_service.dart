@@ -1,4 +1,5 @@
 import '../models/participant_track.dart';
+import '../models/plan_participation.dart';
 
 /// Servicio para gestionar los tracks de participantes en el calendario
 class TrackService {
@@ -136,6 +137,45 @@ class TrackService {
     }
     
     return createdTracks;
+  }
+
+  /// Sincroniza tracks con participantes reales del plan
+  List<ParticipantTrack> syncTracksWithPlanParticipants(List<PlanParticipation> participations) {
+    final createdTracks = <ParticipantTrack>[];
+    
+    // Limpiar tracks de participantes que ya no están en el plan
+    _tracks.removeWhere((track) {
+      final participationExists = participations.any((p) => 
+        p.userId == track.participantId && p.isActive);
+      return !participationExists;
+    });
+    
+    // Crear tracks para participantes nuevos
+    for (final participation in participations) {
+      if (participation.isActive && !hasTrackForParticipant(participation.userId)) {
+        final track = createTrack(
+          participantId: participation.userId,
+          participantName: _getParticipantDisplayName(participation),
+        );
+        createdTracks.add(track);
+      }
+    }
+    
+    return createdTracks;
+  }
+
+  /// Obtiene el nombre de visualización para un participante
+  String _getParticipantDisplayName(PlanParticipation participation) {
+    // Mapeo de user IDs a nombres reales para el plan Frankenstein
+    final userNames = {
+      'uJRMMGniO2bwfbdD3S11QMXQT912': 'Cristian Claraso',
+      'mar_batllori': 'Mar Batllori',
+      'emma_claraso': 'Emma Claraso',
+      'matilde_claraso': 'Matilde Claraso',
+      'jimena_claraso': 'Jimena Claraso',
+    };
+    
+    return userNames[participation.userId] ?? participation.userId;
   }
 
   /// Obtiene la siguiente posición disponible para un nuevo track

@@ -6,6 +6,7 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_service.da
 import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/accommodation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
+import 'package:unp_calendario/features/testing/family_users_generator.dart';
 
 /// Generador de datos de prueba para el plan "Frankenstein"
 /// 
@@ -30,6 +31,9 @@ class DemoDataGenerator {
 
       debugPrint('🧟 Generando plan Frankenstein...');
 
+      // Limpiar lista de eventos para validación de conflictos
+      _createdEvents.clear();
+
       // 1. Verificar si ya existe y eliminarlo
       await deleteFrankensteinPlan();
 
@@ -42,24 +46,42 @@ class DemoDataGenerator {
 
       debugPrint('✅ Plan base creado: ${plan!.id}');
 
-      // 3. Crear participación del creador como organizador
+      // 3. Crear usuarios de la familia (excluyendo cristian_claraso)
+      debugPrint('👨‍👩‍👧‍👦 Creando usuarios de la familia (excluyendo cristian_claraso)...');
+      final allFamilyUserIds = await FamilyUsersGenerator.generateFamilyUsers();
+      // Filtrar para excluir cristian_claraso y tomar solo 4 usuarios
+      final familyUserIds = allFamilyUserIds.where((id) => id != 'cristian_claraso').take(4).toList();
+      
+      // 4. Crear participación del creador como organizador
       await _participationService.createParticipation(
         planId: plan.id!,
         userId: userId,
         role: 'organizer',
       );
+      debugPrint('✅ Organizador añadido: $userId');
+      
+      // 5. Crear participaciones para los miembros de la familia
+      for (final familyUserId in familyUserIds) {
+        await _participationService.createParticipation(
+          planId: plan.id!,
+          userId: familyUserId,
+          role: 'participant',
+          invitedBy: userId,
+        );
+        debugPrint('✅ Participante añadido: $familyUserId');
+      }
 
-      // 4. Generar eventos por categoría
-      await _generateBasicEvents(plan, userId);
-      await _generateOverlappingEvents(plan, userId);
-      await _generateMultiDayEvents(plan, userId);
-      await _generateEventTypes(plan, userId);
-      await _generateEdgeCases(plan, userId);
+      // 6. Generar eventos por categoría
+      await _generateBasicEvents(plan, userId, familyUserIds);
+      await _generateOverlappingEvents(plan, userId, familyUserIds);
+      await _generateMultiDayEvents(plan, userId, familyUserIds);
+      await _generateEventTypes(plan, userId, familyUserIds);
+      await _generateEdgeCases(plan, userId, familyUserIds);
 
-      // 5. Generar alojamientos
-      await _generateAccommodations(plan);
+      // 7. Generar alojamientos
+      await _generateAccommodations(plan, userId, familyUserIds);
 
-      debugPrint('🎉 Plan Frankenstein generado exitosamente: ${plan.id}');
+      debugPrint('🎉 Plan Frankenstein generado exitosamente con ${familyUserIds.length + 1} participantes (1 organizador + ${familyUserIds.length} participantes)!');
       return plan.id;
     } catch (e) {
       debugPrint('❌ Error generando plan Frankenstein: $e');
@@ -113,6 +135,7 @@ class DemoDataGenerator {
       startDate: startDate,
       endDate: endDate,
       columnCount: 7,
+      participants: 5, // 1 organizador + 4 miembros de la familia
       description: 'Plan de testing completo con todos los tipos de eventos, '
           'solapamientos, casos edge y complejidades implementadas. '
           '¡Un verdadero monstruo de Frankenstein! 🧟',
@@ -129,15 +152,27 @@ class DemoDataGenerator {
     return allPlans.firstWhere((p) => p.unpId == demoPlanId);
   }
 
-  // ==================== DÍA 1: EVENTOS BÁSICOS ====================
+  // ==================== DÍA 1: EVENTOS CON DIFERENTES PARTICIPANTES ====================
 
-  static Future<void> _generateBasicEvents(Plan plan, String userId) async {
-    debugPrint('📅 Generando eventos básicos (Día 1)...');
+  static Future<void> _generateBasicEvents(Plan plan, String userId, List<String> familyUserIds) async {
+    debugPrint('📅 Generando eventos con diferentes participantes (Día 1)...');
     final day1 = plan.startDate;
 
-    // REGLA: Máximo 3 eventos simultáneos - Eventos separados sin solapamientos
+    // Evento solo del organizador (30 min)
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day1,
+      hour: 8,
+      startMinute: 0,
+      durationMinutes: 30, // 08:00 - 08:30
+      description: 'Reunión matutina (solo organizador)',
+      typeFamily: 'Otro',
+      color: 'indigo',
+      participantTrackIds: [userId], // Solo el organizador
+    );
 
-    // Evento corto (30 min)
+    // Evento de 1 participante de la familia (30 min)
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -145,13 +180,14 @@ class DemoDataGenerator {
       hour: 9,
       startMinute: 0,
       durationMinutes: 30, // 09:00 - 09:30
-      description: 'Café rápido',
+      description: 'Café rápido (solo Cristian)',
       typeFamily: 'Restauración',
       typeSubtype: 'Bebida',
       color: 'brown',
+      participantTrackIds: [familyUserIds[0]], // Solo Cristian
     );
 
-    // Evento mediano (2h)
+    // Evento de 2 participantes (2h) - organizador + 1 familia
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -159,13 +195,29 @@ class DemoDataGenerator {
       hour: 10,
       startMinute: 0,
       durationMinutes: 120, // 10:00 - 12:00
-      description: 'Visita museo',
+      description: 'Visita museo (organizador + Cristian)',
       typeFamily: 'Actividad',
       typeSubtype: 'Museo',
       color: 'purple',
+      participantTrackIds: [userId, familyUserIds[0]], // Organizador + Cristian
     );
 
-    // Evento largo (4h)
+    // Evento de 3 participantes (1.5h) - organizador + 2 familia
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day1,
+      hour: 12,
+      startMinute: 30,
+      durationMinutes: 90, // 12:30 - 14:00
+      description: 'Almuerzo familiar (organizador + 2 familia)',
+      typeFamily: 'Restauración',
+      typeSubtype: 'Comida',
+      color: 'green',
+      participantTrackIds: [userId, familyUserIds[0], familyUserIds[1]], // Organizador + 2 familia
+    );
+
+    // Evento de TODOS los participantes (4h) - organizador + todos los familia
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -173,13 +225,14 @@ class DemoDataGenerator {
       hour: 14,
       startMinute: 0,
       durationMinutes: 240, // 14:00 - 18:00
-      description: 'Tarde en la playa',
+      description: 'Tarde en la playa (TODOS)',
       typeFamily: 'Actividad',
       typeSubtype: 'Parque',
       color: 'teal',
+      participantTrackIds: [userId, ...familyUserIds], // Organizador + todos los familia
     );
 
-    // Evento borrador (2h)
+    // Evento solo del organizador (2h) - borrador
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -192,20 +245,33 @@ class DemoDataGenerator {
       typeSubtype: 'Cena',
       color: 'orange',
       isDraft: true,
+      participantTrackIds: [userId], // Solo el organizador
     );
 
-    debugPrint('✅ Eventos básicos generados (4 eventos - sin solapamientos)');
+    debugPrint('✅ Eventos con diferentes participantes generados (6 eventos: organizador solo, 1 familia, organizador+1, organizador+2, TODOS, organizador solo)');
   }
 
-  // ==================== DÍA 2: EVENTOS SOLAPADOS ====================
+  // ==================== DÍA 2: EVENTOS SOLAPADOS CON DIFERENTES PARTICIPANTES ====================
 
-  static Future<void> _generateOverlappingEvents(Plan plan, String userId) async {
-    debugPrint('📅 Generando eventos solapados (Día 2)...');
+  static Future<void> _generateOverlappingEvents(Plan plan, String userId, List<String> familyUserIds) async {
+    debugPrint('📅 Generando eventos solapados con diferentes participantes (Día 2)...');
     final day2 = plan.startDate.add(const Duration(days: 1));
 
-    // REGLA: Máximo 3 eventos solapados simultáneamente
+    // Evento solo del organizador (1h)
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day2,
+      hour: 9,
+      startMinute: 0,
+      durationMinutes: 60, // 09:00 - 10:00
+      description: 'Trabajo administrativo (solo organizador)',
+      typeFamily: 'Otro',
+      color: 'gray',
+      participantTrackIds: [userId], // Solo el organizador
+    );
 
-    // 2 eventos solapados parcialmente (OK - no excede límite)
+    // 2 eventos solapados parcialmente - diferentes participantes
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -213,9 +279,10 @@ class DemoDataGenerator {
       hour: 10,
       startMinute: 0,
       durationMinutes: 120, // 10:00 - 12:00
-      description: 'Taller de fotografía',
+      description: 'Taller de fotografía (organizador + 1 familia)',
       typeFamily: 'Actividad',
       color: 'indigo',
+      participantTrackIds: [userId, familyUserIds[0]], // Organizador + 1 familia
     );
 
     await _createEvent(
@@ -225,13 +292,14 @@ class DemoDataGenerator {
       hour: 11,
       startMinute: 0,
       durationMinutes: 90, // 11:00 - 12:30
-      description: 'Coffee break networking',
+      description: 'Coffee break (1 familia)',
       typeFamily: 'Restauración',
       typeSubtype: 'Bebida',
       color: 'brown',
+      participantTrackIds: [familyUserIds[1]], // 1 familia
     );
 
-    // 3 eventos completamente solapados (OK - justo en el límite, mostrará ⚠️)
+    // 3 eventos completamente solapados - diferentes participantes (SIN conflictos en el mismo track)
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -239,10 +307,11 @@ class DemoDataGenerator {
       hour: 15,
       startMinute: 0,
       durationMinutes: 60,
-      description: 'Obra de teatro A',
+      description: 'Obra de teatro (3 familia)',
       typeFamily: 'Actividad',
       typeSubtype: 'Teatro',
       color: 'red',
+      participantTrackIds: [familyUserIds[0], familyUserIds[2], familyUserIds[3]], // Solo 3 familia (SIN organizador)
     );
 
     await _createEvent(
@@ -252,9 +321,10 @@ class DemoDataGenerator {
       hour: 15,
       startMinute: 0,
       durationMinutes: 60,
-      description: 'Película B',
+      description: 'Película (organizador + 1 familia)',
       typeFamily: 'Actividad',
       color: 'blue',
+      participantTrackIds: [userId, familyUserIds[1]], // Organizador + Emma
     );
 
     await _createEvent(
@@ -264,13 +334,14 @@ class DemoDataGenerator {
       hour: 15,
       startMinute: 0,
       durationMinutes: 60,
-      description: 'Concierto C',
+      description: 'Concierto (1 familia)',
       typeFamily: 'Actividad',
       typeSubtype: 'Concierto',
       color: 'purple',
+      participantTrackIds: [familyUserIds[2]], // Solo 1 familia (SIN organizador)
     );
 
-    // Evento separado (no se solapa con los de las 15:00)
+    // Evento separado - organizador + 1 familia
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -278,78 +349,55 @@ class DemoDataGenerator {
       hour: 18,
       startMinute: 0,
       durationMinutes: 120, // 18:00 - 20:00
-      description: 'Cena con espectáculo',
+      description: 'Cena con espectáculo (organizador + 1 familia)',
       typeFamily: 'Restauración',
       typeSubtype: 'Cena',
       color: 'orange',
+      participantTrackIds: [userId, familyUserIds[3]], // Organizador + 1 familia
     );
 
-    // NO añadir Show en vivo porque causaría 2 solapados con Cena
-    // En su lugar, evento después de la cena
+    // Evento después de la cena - solo organizador
     await _createEvent(
       planId: plan.id!,
       userId: userId,
       date: day2,
       hour: 21,
       startMinute: 0,
-      durationMinutes: 60, // 21:00 - 22:00 (después de cena)
-      description: 'Show en vivo',
+      durationMinutes: 60, // 21:00 - 22:00
+      description: 'Show en vivo (solo organizador)',
       typeFamily: 'Actividad',
       typeSubtype: 'Concierto',
       color: 'pink',
+      participantTrackIds: [userId], // Solo el organizador
     );
 
-    debugPrint('✅ Eventos solapados generados (6 eventos - máx 3 simultáneos)');
+    // Evento en borrador que se solapa con el show (para mostrar que los borradores SÍ pueden solaparse)
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day2,
+      hour: 21,
+      startMinute: 30,
+      durationMinutes: 30, // 21:30 - 22:00 (se solapa con el show)
+      description: 'Cena tardía (borrador)',
+      typeFamily: 'Restauración',
+      typeSubtype: 'Cena',
+      color: 'orange',
+      isDraft: true, // BORRADOR - puede solaparse
+      participantTrackIds: [userId], // Solo el organizador
+    );
+
+    debugPrint('✅ Eventos solapados con diferentes participantes generados (8 eventos: organizador solo, organizador+1, 1 familia, TODOS, 2 familia, 1 familia, organizador+1, organizador solo, organizador borrador)');
   }
 
-  // ==================== DÍA 3: EVENTOS QUE CRUZAN DÍAS ====================
+  // ==================== DÍA 3: EVENTOS QUE CRUZAN DÍAS CON DIFERENTES PARTICIPANTES ====================
 
-  static Future<void> _generateMultiDayEvents(Plan plan, String userId) async {
-    debugPrint('📅 Generando eventos que cruzan días (Día 3-4)...');
+  static Future<void> _generateMultiDayEvents(Plan plan, String userId, List<String> familyUserIds) async {
+    debugPrint('📅 Generando eventos que cruzan días con diferentes participantes (Día 3-4)...');
     final day3 = plan.startDate.add(const Duration(days: 2));
     final day4 = plan.startDate.add(const Duration(days: 3));
 
-    // ANÁLISIS DE SOLAPAMIENTOS:
-    // Teatro: 20:00 día 3 - 01:00 día 4
-    // Tren:   22:00 día 3 - 06:00 día 4
-    // 
-    // DÍA 3:
-    //   20:00-22:00: Solo Teatro (1 evento) ✅
-    //   22:00-24:00: Teatro + Tren (2 eventos) ✅
-    // 
-    // DÍA 4:
-    //   00:00-01:00: Teatro + Tren (2 eventos) ✅
-    //   01:00-06:00: Solo Tren (1 evento) ✅
-
-    // Evento que termina al día siguiente
-    await _createEvent(
-      planId: plan.id!,
-      userId: userId,
-      date: day3,
-      hour: 20,
-      startMinute: 0,
-      durationMinutes: 300, // 5 horas (20:00 - 01:00 día siguiente)
-      description: 'Teatro + cena tardía',
-      typeFamily: 'Actividad',
-      typeSubtype: 'Teatro',
-      color: 'purple',
-    );
-
-    // Viaje nocturno (cruza medianoche)
-    await _createEvent(
-      planId: plan.id!,
-      userId: userId,
-      date: day3,
-      hour: 22,
-      startMinute: 0,
-      durationMinutes: 480, // 8 horas (22:00 - 06:00 día siguiente)
-      description: 'Tren nocturno Madrid-Barcelona',
-      typeFamily: 'Desplazamiento',
-      typeSubtype: 'Tren',
-      color: 'blue',
-    );
-
-    // Evento en día 3 (separado de los nocturnos)
+    // Evento solo del organizador en día 3 (separado de los nocturnos)
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -357,12 +405,43 @@ class DemoDataGenerator {
       hour: 9,
       startMinute: 0,
       durationMinutes: 180, // 3 horas (09:00-12:00)
-      description: 'Senderismo en montaña',
-      typeFamily: 'Actividad',
-      color: 'green',
+      description: 'Trabajo remoto (solo organizador)',
+      typeFamily: 'Otro',
+      color: 'gray',
+      participantTrackIds: [userId], // Solo el organizador
     );
 
-    // Evento en día 4 (después de que termine el Tren)
+    // Evento que termina al día siguiente - algunos participantes
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day3,
+      hour: 20,
+      startMinute: 0,
+      durationMinutes: 300, // 5 horas (20:00 - 01:00 día siguiente)
+      description: 'Teatro + cena tardía (3 familia)',
+      typeFamily: 'Actividad',
+      typeSubtype: 'Teatro',
+      color: 'purple',
+      participantTrackIds: [familyUserIds[1], familyUserIds[2], familyUserIds[3]], // Solo 3 familia (SIN organizador)
+    );
+
+    // Viaje nocturno (cruza medianoche) - organizador + 1 familia
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day3,
+      hour: 22,
+      startMinute: 0,
+      durationMinutes: 480, // 8 horas (22:00 - 06:00 día siguiente)
+      description: 'Tren nocturno Madrid-Barcelona (organizador + 1 familia)',
+      typeFamily: 'Desplazamiento',
+      typeSubtype: 'Tren',
+      color: 'blue',
+      participantTrackIds: [userId, familyUserIds[0]], // Organizador + 1 familia
+    );
+
+    // Evento en día 4 (después de que termine el Tren) - organizador + 2 familia
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -370,21 +449,22 @@ class DemoDataGenerator {
       hour: 7,
       startMinute: 0,
       durationMinutes: 60, // 1 hora (07:00-08:00) - Tren termina a las 06:00
-      description: 'Pesca en el lago',
+      description: 'Pesca en el lago (organizador + 2 familia)',
       typeFamily: 'Actividad',
       color: 'teal',
+      participantTrackIds: [userId, familyUserIds[1], familyUserIds[2]], // Organizador + 2 familia
     );
 
-    debugPrint('✅ Eventos que cruzan días generados (4 eventos multi-día)');
+    debugPrint('✅ Eventos que cruzan días con diferentes participantes generados (4 eventos: organizador solo, TODOS, organizador+1, organizador+2)');
   }
 
-  // ==================== DÍA 4: TODOS LOS TIPOS DE EVENTOS ====================
+  // ==================== DÍA 4: TODOS LOS TIPOS DE EVENTOS CON DIFERENTES PARTICIPANTES ====================
 
-  static Future<void> _generateEventTypes(Plan plan, String userId) async {
-    debugPrint('📅 Generando todos los tipos de eventos (Día 4)...');
+  static Future<void> _generateEventTypes(Plan plan, String userId, List<String> familyUserIds) async {
+    debugPrint('📅 Generando todos los tipos de eventos con diferentes participantes (Día 4)...');
     final day4 = plan.startDate.add(const Duration(days: 3));
 
-    // DESPLAZAMIENTO
+    // DESPLAZAMIENTO - diferentes participantes
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -392,10 +472,11 @@ class DemoDataGenerator {
       hour: 8,
       startMinute: 0,
       durationMinutes: 30,
-      description: 'Taxi al aeropuerto',
+      description: 'Taxi al aeropuerto (solo organizador)',
       typeFamily: 'Desplazamiento',
       typeSubtype: 'Taxi',
       color: 'blue',
+      participantTrackIds: [userId], // Solo el organizador
     );
 
     await _createEvent(
@@ -405,10 +486,11 @@ class DemoDataGenerator {
       hour: 9,
       startMinute: 30,
       durationMinutes: 120,
-      description: 'Vuelo Madrid-Barcelona',
+      description: 'Vuelo Madrid-Barcelona (TODOS)',
       typeFamily: 'Desplazamiento',
       typeSubtype: 'Avión',
       color: 'blue',
+      participantTrackIds: [userId, ...familyUserIds], // TODOS (organizador + familia)
     );
 
     await _createEvent(
@@ -418,13 +500,14 @@ class DemoDataGenerator {
       hour: 12,
       startMinute: 0,
       durationMinutes: 45,
-      description: 'Autobús al centro',
+      description: 'Autobús al centro (organizador + 1 familia)',
       typeFamily: 'Desplazamiento',
       typeSubtype: 'Autobús',
       color: 'blue',
+      participantTrackIds: [userId, familyUserIds[0]], // Organizador + 1 familia
     );
 
-    // RESTAURACIÓN
+    // RESTAURACIÓN - diferentes participantes
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -432,10 +515,11 @@ class DemoDataGenerator {
       hour: 13,
       startMinute: 30,
       durationMinutes: 90,
-      description: 'Comida italiana',
+      description: 'Comida italiana (organizador + 2 familia)',
       typeFamily: 'Restauración',
       typeSubtype: 'Comida',
       color: 'red',
+      participantTrackIds: [userId, familyUserIds[0], familyUserIds[1]], // Organizador + 2 familia
     );
 
     await _createEvent(
@@ -445,13 +529,14 @@ class DemoDataGenerator {
       hour: 17,
       startMinute: 0,
       durationMinutes: 30,
-      description: 'Merienda',
+      description: 'Merienda (1 familia)',
       typeFamily: 'Restauración',
       typeSubtype: 'Snack',
       color: 'orange',
+      participantTrackIds: [familyUserIds[2]], // 1 familia
     );
 
-    // ACTIVIDAD
+    // ACTIVIDAD - diferentes participantes
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -459,10 +544,11 @@ class DemoDataGenerator {
       hour: 18,
       startMinute: 0,
       durationMinutes: 120,
-      description: 'Visita Sagrada Familia',
+      description: 'Visita Sagrada Familia (TODOS)',
       typeFamily: 'Actividad',
       typeSubtype: 'Monumento',
       color: 'purple',
+      participantTrackIds: [userId, ...familyUserIds], // TODOS (organizador + familia)
     );
 
     await _createEvent(
@@ -472,24 +558,23 @@ class DemoDataGenerator {
       hour: 21,
       startMinute: 0,
       durationMinutes: 150,
-      description: 'Teatro del Liceo',
+      description: 'Teatro del Liceo (organizador + 1 familia)',
       typeFamily: 'Actividad',
       typeSubtype: 'Teatro',
       color: 'pink',
+      participantTrackIds: [userId, familyUserIds[3]], // Organizador + 1 familia
     );
 
-    debugPrint('✅ Todos los tipos de eventos generados (7 eventos)');
+    debugPrint('✅ Todos los tipos de eventos con diferentes participantes generados (7 eventos: organizador solo, TODOS, organizador+1, organizador+2, 1 familia, TODOS, organizador+1)');
   }
 
-  // ==================== DÍA 5: CASOS EDGE ====================
+  // ==================== DÍA 5: CASOS EDGE CON DIFERENTES PARTICIPANTES ====================
 
-  static Future<void> _generateEdgeCases(Plan plan, String userId) async {
-    debugPrint('📅 Generando casos edge (Día 5)...');
+  static Future<void> _generateEdgeCases(Plan plan, String userId, List<String> familyUserIds) async {
+    debugPrint('📅 Generando casos edge con diferentes participantes (Día 5)...');
     final day5 = plan.startDate.add(const Duration(days: 4));
 
-    // REGLA: Máximo 3 eventos simultáneos
-
-    // Evento a las 00:00 (medianoche)
+    // Evento a las 00:00 (medianoche) - solo organizador
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -497,12 +582,13 @@ class DemoDataGenerator {
       hour: 0,
       startMinute: 0,
       durationMinutes: 60, // 00:00 - 01:00
-      description: 'Evento medianoche',
+      description: 'Evento medianoche (solo organizador)',
       typeFamily: 'Otro',
       color: 'indigo',
+      participantTrackIds: [userId], // Solo el organizador
     );
 
-    // Evento de 15 minutos
+    // Evento de 15 minutos - organizador + 1 familia
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -510,27 +596,35 @@ class DemoDataGenerator {
       hour: 10,
       startMinute: 0,
       durationMinutes: 15, // 10:00 - 10:15
-      description: 'Llamada rápida',
+      description: 'Llamada rápida (organizador + 1 familia)',
       typeFamily: 'Otro',
       color: 'orange',
+      participantTrackIds: [userId, familyUserIds[0]], // Organizador + 1 familia
     );
 
-    // 3 reuniones solapadas (justo en el límite)
+    // 3 reuniones solapadas (justo en el límite) - diferentes participantes (SIN conflictos en el mismo track)
+    final participantGroups = [
+      [userId], // Solo organizador
+      [familyUserIds[0]], // Solo 1 familia (SIN organizador)
+      [familyUserIds[1], familyUserIds[2]], // 2 familia (SIN organizador)
+    ];
+    
     for (int i = 0; i < 3; i++) {
       await _createEvent(
         planId: plan.id!,
         userId: userId,
         date: day5,
         hour: 14,
-        startMinute: i * 5, // 14:00, 14:05, 14:10
-        durationMinutes: 20, // 20 minutos cada una
-        description: 'Reunión ${i + 1}',
+        startMinute: i * 10, // 14:00, 14:10, 14:20 (separados por 10 min)
+        durationMinutes: 15, // 15 minutos cada una (más cortas)
+        description: 'Reunión ${i + 1} (${participantGroups[i].length} personas)',
         typeFamily: 'Otro',
         color: i % 2 == 0 ? 'blue' : 'red',
+        participantTrackIds: participantGroups[i],
       );
     }
 
-    // Evento largo (8h) que NO se solapa con las reuniones
+    // Evento largo (8h) que NO se solapa con las reuniones - organizador + 2 familia
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -538,12 +632,13 @@ class DemoDataGenerator {
       hour: 15,
       startMinute: 0,
       durationMinutes: 480, // 8 horas (15:00 - 23:00)
-      description: 'Excursión tarde completa',
+      description: 'Excursión tarde completa (organizador + 2 familia)',
       typeFamily: 'Actividad',
       color: 'green',
+      participantTrackIds: [userId, familyUserIds[1], familyUserIds[2]], // Organizador + 2 familia
     );
 
-    // Evento a las 23:45 que cruza medianoche
+    // Evento a las 23:45 que cruza medianoche - solo organizador
     await _createEvent(
       planId: plan.id!,
       userId: userId,
@@ -551,68 +646,148 @@ class DemoDataGenerator {
       hour: 23,
       startMinute: 45,
       durationMinutes: 30, // 23:45 - 00:15 del día 6
-      description: 'Evento fin del día',
+      description: 'Evento fin del día (solo organizador)',
       typeFamily: 'Otro',
       color: 'purple',
+      participantTrackIds: [userId], // Solo el organizador
     );
 
-    debugPrint('✅ Casos edge generados (6 eventos - máx 3 simultáneos)');
+    debugPrint('✅ Casos edge con diferentes participantes generados (6 eventos: organizador solo, organizador+1, organizador solo, 1 familia, 2 familia, organizador+2, organizador solo)');
   }
 
   // ==================== ALOJAMIENTOS ====================
 
-  static Future<void> _generateAccommodations(Plan plan) async {
+  static Future<void> _generateAccommodations(Plan plan, String userId, List<String> familyUserIds) async {
     debugPrint('🏨 Generando alojamientos...');
     final day1 = plan.startDate;
+    final allParticipants = [userId, ...familyUserIds];
 
-    // Hotel día 1-3
+    // Alojamiento 1: Hotel para todo el plan (todos los participantes)
     await _createAccommodation(
       planId: plan.id!,
       hotelName: 'Hotel Frankenstein Inn',
       checkIn: day1,
-      checkOut: day1.add(const Duration(days: 2)),
+      checkOut: day1.add(Duration(days: plan.durationInDays)),
       type: 'Hotel',
       color: 'blue',
-      description: 'Hotel céntrico con desayuno incluido',
+      description: 'Hotel céntrico con desayuno incluido - Todo el plan',
+      participantTrackIds: allParticipants, // Todos los participantes
     );
 
-    // Apartamento día 3-5 (overlap con hotel)
+    // Alojamiento 2: Apartamento para algunos participantes (aleatorio)
+    final random = DateTime.now().millisecondsSinceEpoch;
+    final selectedParticipants = allParticipants.where((p) => 
+      (p.hashCode + random) % 2 == 0 // Selección aleatoria basada en hash
+    ).toList();
+    
+    // Asegurar que al menos hay un participante
+    if (selectedParticipants.isEmpty) {
+      selectedParticipants.add(allParticipants.first);
+    }
+
     await _createAccommodation(
       planId: plan.id!,
       hotelName: 'Apartamento Monster Place',
-      checkIn: day1.add(const Duration(days: 2)),
-      checkOut: day1.add(const Duration(days: 4)),
+      checkIn: day1,
+      checkOut: day1.add(Duration(days: plan.durationInDays)),
       type: 'Apartamento',
       color: 'green',
-      description: 'Apartamento con cocina equipada',
+      description: 'Apartamento con cocina equipada - Algunos participantes',
+      participantTrackIds: selectedParticipants,
     );
 
-    // Camping día 3-7 (5 días - ahora es ALOJAMIENTO, no evento)
-    await _createAccommodation(
-      planId: plan.id!,
-      hotelName: 'Camping Montaña Salvaje',
-      checkIn: day1.add(const Duration(days: 2)),
-      checkOut: day1.add(const Duration(days: 6)),
-      type: 'Camping',
-      color: 'purple',
-      description: 'Camping con vistas a la montaña - 5 días de aventura',
-    );
-
-    // Resort día 5-7
-    await _createAccommodation(
-      planId: plan.id!,
-      hotelName: 'Resort Playa del Terror',
-      checkIn: day1.add(const Duration(days: 4)),
-      checkOut: day1.add(const Duration(days: 6)),
-      type: 'Resort',
-      color: 'orange',
-      description: 'Resort todo incluido en la playa',
-    );
-
-    debugPrint('✅ Alojamientos generados (4 alojamientos)');
+    debugPrint('✅ Alojamientos generados (2 alojamientos)');
+    debugPrint('🏨 Hotel: ${allParticipants.length} participantes');
+    debugPrint('🏠 Apartamento: ${selectedParticipants.length} participantes');
   }
 
   // ==================== HELPERS ====================
+
+  /// Lista de eventos creados para validar conflictos
+  static final List<Event> _createdEvents = [];
+
+  /// Valida si un evento crearía conflictos de solapamiento
+  static bool _wouldCreateConflict({
+    required DateTime date,
+    required int hour,
+    required int startMinute,
+    required int durationMinutes,
+    required List<String> participantTrackIds,
+    bool isDraft = false,
+  }) {
+    // Los borradores pueden solaparse, no validar
+    if (isDraft) return false;
+
+    final eventStartMinutes = hour * 60 + startMinute;
+    final eventEndMinutes = eventStartMinutes + durationMinutes;
+
+    // Buscar eventos existentes en la misma fecha
+    for (final existingEvent in _createdEvents) {
+      if (existingEvent.date != date) continue;
+      if (existingEvent.isDraft) continue; // Ignorar borradores
+
+      final existingStartMinutes = existingEvent.hour * 60 + existingEvent.startMinute;
+      final existingEndMinutes = existingStartMinutes + existingEvent.durationMinutes;
+
+      // Verificar si hay solapamiento temporal
+      if (eventStartMinutes < existingEndMinutes && eventEndMinutes > existingStartMinutes) {
+        // Verificar si hay participantes en común
+        for (final participantId in participantTrackIds) {
+          if (existingEvent.participantTrackIds.contains(participantId)) {
+            debugPrint('⚠️ CONFLICTO DETECTADO: $participantId en ${existingEvent.description} (${existingEvent.hour}:${existingEvent.startMinute.toString().padLeft(2, '0')}) y nuevo evento (${hour}:${startMinute.toString().padLeft(2, '0')})');
+            return true; // HAY CONFLICTO
+          }
+        }
+      }
+    }
+
+    return false; // NO HAY CONFLICTO
+  }
+
+  /// Encuentra participantes alternativos para evitar conflictos
+  static List<String> _findAlternativeParticipants({
+    required List<String> allParticipants,
+    required List<String> preferredParticipants,
+    required DateTime date,
+    required int hour,
+    required int startMinute,
+    required int durationMinutes,
+  }) {
+    // Si no hay conflicto con los participantes preferidos, usarlos
+    if (!_wouldCreateConflict(
+      date: date,
+      hour: hour,
+      startMinute: startMinute,
+      durationMinutes: durationMinutes,
+      participantTrackIds: preferredParticipants,
+    )) {
+      return preferredParticipants;
+    }
+
+    // Buscar combinaciones alternativas
+    for (int count = preferredParticipants.length; count >= 1; count--) {
+      for (final participant in allParticipants) {
+        if (!preferredParticipants.contains(participant)) {
+          final alternativeParticipants = [participant];
+          
+          if (!_wouldCreateConflict(
+            date: date,
+            hour: hour,
+            startMinute: startMinute,
+            durationMinutes: durationMinutes,
+            participantTrackIds: alternativeParticipants,
+          )) {
+            debugPrint('🔄 Usando participante alternativo: $participant');
+            return alternativeParticipants;
+          }
+        }
+      }
+    }
+
+    // Si no se encuentra alternativa, devolver lista vacía (evento sin participantes)
+    debugPrint('⚠️ No se encontraron participantes alternativos, creando evento sin participantes');
+    return [];
+  }
 
   static Future<void> _createEvent({
     required String planId,
@@ -626,7 +801,32 @@ class DemoDataGenerator {
     String? typeSubtype,
     String? color,
     bool isDraft = false,
+    List<String>? participantTrackIds,
   }) async {
+    final participants = participantTrackIds ?? [];
+    
+    // Validar conflictos solo para eventos confirmados
+    if (!isDraft && participants.isNotEmpty) {
+      // Obtener todos los participantes disponibles
+      final allParticipants = [userId, ...participants];
+      
+      // Buscar participantes alternativos si hay conflicto
+      final finalParticipants = _findAlternativeParticipants(
+        allParticipants: allParticipants,
+        preferredParticipants: participants,
+        date: date,
+        hour: hour,
+        startMinute: startMinute,
+        durationMinutes: durationMinutes,
+      );
+      
+      if (finalParticipants.isEmpty) {
+        debugPrint('⚠️ Evento "$description" creado sin participantes debido a conflictos');
+      }
+      
+      participantTrackIds = finalParticipants;
+    }
+
     final event = Event(
       planId: planId,
       userId: userId,
@@ -640,9 +840,13 @@ class DemoDataGenerator {
       typeSubtype: typeSubtype,
       color: color,
       isDraft: isDraft,
+      participantTrackIds: participantTrackIds ?? [],
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
+
+    // Añadir a la lista de eventos creados para futuras validaciones
+    _createdEvents.add(event);
 
     await _eventService.createEvent(event);
   }
@@ -655,6 +859,7 @@ class DemoDataGenerator {
     required String type,
     required String color,
     String? description,
+    List<String> participantTrackIds = const [],
   }) async {
     final accommodation = Accommodation(
       planId: planId,
@@ -664,6 +869,7 @@ class DemoDataGenerator {
       typeSubtype: type,
       color: color,
       description: description,
+      participantTrackIds: participantTrackIds,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
