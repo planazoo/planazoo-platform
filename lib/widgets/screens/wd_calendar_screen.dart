@@ -24,7 +24,8 @@ import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mod
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
-import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -68,6 +69,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // Servicio de tracks para gestionar participantes
   late final TrackService _trackService;
   
+  // Clases para manejar filtros y reordenación
+  late final CalendarFilters _calendarFilters;
+  late final CalendarTrackReorder _calendarTrackReorder;
+  
   // Número de días visibles simultáneamente (1-7)
   int _visibleDays = 7;
   
@@ -88,6 +93,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Inicializar el servicio de tracks
     _trackService = TrackService();
     _initializeTracks();
+    
+    // Inicializar clases auxiliares
+    _calendarFilters = CalendarFilters(_trackService);
+    _calendarTrackReorder = CalendarTrackReorder(_trackService);
     
     // Inicializar usuario actual para filtros
     _currentUserId = _trackService.getVisibleTracks().isNotEmpty 
@@ -361,67 +370,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           },
         ),
         // Selector de filtros de vista
-        PopupMenuButton<CalendarViewMode>(
-          icon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(_getCurrentViewIcon(), color: Colors.white, size: 18),
-              const SizedBox(width: 4),
-              Text(
-                _getCurrentViewName(),
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-              const Icon(Icons.arrow_drop_down, color: Colors.white, size: 16),
-            ],
-          ),
-          onSelected: (CalendarViewMode result) {
-            if (result == CalendarViewMode.custom) {
-              _showCustomViewDialog();
-            } else {
-              setState(() {
-                _viewMode = result;
-              });
-            }
+        _calendarFilters.buildFilterMenu(
+          _viewMode,
+          (CalendarViewMode result) {
+            setState(() {
+              _viewMode = result;
+            });
           },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<CalendarViewMode>>[
-            PopupMenuItem<CalendarViewMode>(
-              value: CalendarViewMode.all,
-              child: Row(
-                children: [
-                  Icon(Icons.calendar_view_day, color: AppColorScheme.color1),
-                  const SizedBox(width: 8),
-                  const Text('Plan Completo'),
-                ],
-              ),
-            ),
-            PopupMenuItem<CalendarViewMode>(
-              value: CalendarViewMode.personal,
-              child: Row(
-                children: [
-                  Icon(Icons.person, color: AppColorScheme.color1),
-                  const SizedBox(width: 8),
-                  const Text('Mi Agenda'),
-                ],
-              ),
-            ),
-            PopupMenuItem<CalendarViewMode>(
-              value: CalendarViewMode.custom,
-              child: Row(
-                children: [
-                  Icon(Icons.filter_list, color: AppColorScheme.color1),
-                  const SizedBox(width: 8),
-                  const Text('Personalizada'),
-                ],
-              ),
-            ),
-          ],
+          _showCustomViewDialog,
         ),
         // Botón para reordenar tracks
-        IconButton(
-          icon: const Icon(Icons.swap_vert, color: Colors.white),
-          tooltip: 'Reordenar Tracks',
-          onPressed: () => _showReorderTracksDialog(),
-        ),
+        _calendarTrackReorder.buildReorderButton(_showReorderTracksDialog),
         // Botón de pantalla completa
         IconButton(
           icon: const Icon(Icons.fullscreen, color: Colors.white),
@@ -3283,160 +3242,45 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Obtiene los tracks filtrados según el modo de vista actual
   List<ParticipantTrack> _getFilteredTracks() {
-    switch (_viewMode) {
-      case CalendarViewMode.all:
-        return _trackService.getVisibleTracks();
-      case CalendarViewMode.personal:
-        if (_currentUserId != null) {
-          return _trackService.getVisibleTracks()
-              .where((track) => track.participantId == _currentUserId)
-              .toList();
-        }
-        // Fallback: usar el primer track si no hay usuario actual
-        final tracks = _trackService.getVisibleTracks();
-        return tracks.isNotEmpty ? [tracks.first] : [];
-      case CalendarViewMode.custom:
-        return _trackService.getVisibleTracks()
-            .where((track) => _filteredParticipantIds.contains(track.participantId))
-            .toList();
-    }
+    return _calendarFilters.getFilteredTracks(
+      _viewMode,
+      _currentUserId,
+      _filteredParticipantIds,
+    );
   }
 
   /// Obtiene el nombre del modo de vista actual
   String _getCurrentViewName() {
-    switch (_viewMode) {
-      case CalendarViewMode.all:
-        return 'Plan Completo';
-      case CalendarViewMode.personal:
-        return 'Mi Agenda';
-      case CalendarViewMode.custom:
-        return 'Personalizada';
-    }
+    return _calendarFilters.getCurrentViewName(_viewMode);
   }
 
   /// Obtiene el icono del modo de vista actual
   IconData _getCurrentViewIcon() {
-    switch (_viewMode) {
-      case CalendarViewMode.all:
-        return Icons.calendar_view_day;
-      case CalendarViewMode.personal:
-        return Icons.person;
-      case CalendarViewMode.custom:
-        return Icons.filter_list;
-    }
+    return _calendarFilters.getCurrentViewIcon(_viewMode);
   }
 
   /// Muestra el diálogo de vista personalizada
   void _showCustomViewDialog() {
-    final allTracks = _trackService.getVisibleTracks();
-    final selectedTracks = Set<String>.from(_filteredParticipantIds);
-    
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Seleccionar Participantes'),
-          content: SizedBox(
-            width: 400,
-            height: 300,
-            child: ListView.builder(
-              itemCount: allTracks.length,
-              itemBuilder: (context, index) {
-                final track = allTracks[index];
-                final isSelected = selectedTracks.contains(track.participantId);
-                
-                return CheckboxListTile(
-                  title: Text(track.participantName.isNotEmpty 
-                      ? track.participantName 
-                      : 'Participante ${index + 1}'),
-                  value: isSelected,
-                  onChanged: (bool? value) {
-                    setDialogState(() {
-                      if (value == true) {
-                        selectedTracks.add(track.participantId);
-                      } else {
-                        selectedTracks.remove(track.participantId);
-                      }
-                    });
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: selectedTracks.isNotEmpty ? () {
-                setState(() {
-                  _viewMode = CalendarViewMode.custom;
-                  _filteredParticipantIds = selectedTracks.toList();
-                });
-                Navigator.pop(context);
-              } : null,
-              child: const Text('Aplicar'),
-            ),
-          ],
-        ),
-      ),
+    _calendarFilters.showCustomViewDialog(
+      context,
+      _filteredParticipantIds,
+      (viewMode, participantIds) {
+        setState(() {
+          _viewMode = viewMode;
+          _filteredParticipantIds = participantIds;
+        });
+      },
     );
   }
 
   /// Muestra el diálogo de reordenación de tracks
   void _showReorderTracksDialog() {
-    final tracks = List<ParticipantTrack>.from(_trackService.getVisibleTracks());
-    
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Reordenar Participantes'),
-          content: SizedBox(
-            width: 400,
-            height: 300,
-            child: ReorderableListView.builder(
-              itemCount: tracks.length,
-              onReorder: (int oldIndex, int newIndex) {
-                setDialogState(() {
-                  if (oldIndex < newIndex) {
-                    newIndex -= 1;
-                  }
-                  final item = tracks.removeAt(oldIndex);
-                  tracks.insert(newIndex, item);
-                });
-              },
-              itemBuilder: (context, index) {
-                final track = tracks[index];
-                return ListTile(
-                  key: ValueKey(track.id),
-                  leading: const Icon(Icons.drag_indicator),
-                  title: Text(track.participantName.isNotEmpty 
-                      ? track.participantName 
-                      : 'Participante ${index + 1}'),
-                  subtitle: Text('Track ${index + 1}'),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final newOrderIds = tracks.map((track) => track.participantId).toList();
-                _trackService.reorderTracksByParticipantIds(newOrderIds);
-                setState(() {});
-                Navigator.pop(context);
-              },
-              child: const Text('Aplicar'),
-            ),
-          ],
-        ),
-      ),
+    _calendarTrackReorder.showReorderDialog(
+      context,
+      widget.plan.id!,
+      () {
+        setState(() {});
+      },
     );
   }
 
