@@ -2322,3 +2322,58 @@ class Event {
 - `lib/widgets/screens/wd_calendar_screen.dart`
 - `lib/widgets/wd_event_dialog.dart`
 - `lib/app/theme/text_theme.dart` (si existe)
+
+---
+
+## ✅ TAREAS COMPLETADAS RECIENTEMENTE
+
+### T93 - Implementar iconos de check-in/check-out en alojamientos
+**Estado:** ✅ Completado  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Mejorar la visualización de alojamientos multi-día con iconos que indican check-in y check-out.
+
+**Criterios de aceptación:**
+- ✅ Agregar iconos ➡️ para check-in (primer día)
+- ✅ Agregar iconos ⬅️ para check-out (último día)
+- ✅ Mantener texto normal para días intermedios
+- ✅ Mejorar claridad visual de alojamientos multi-día
+- ✅ Funcionalidad de tap para crear/editar alojamientos
+
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+
+---
+
+### T94 - Optimización y limpieza de código en CalendarScreen
+**Estado:** ✅ Completado  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Refactorización y optimización del código en el archivo principal del calendario.
+
+**Criterios de aceptación:**
+- ✅ Crear constantes para valores repetidos (alturas, opacidades)
+- ✅ Consolidar funciones helper para bordes y decoraciones
+- ✅ Limpiar debug logs temporales
+- ✅ Optimizar imports y estructura del código
+- ✅ Mejorar legibilidad y mantenibilidad
+
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
+
+---
+
+### T95 - Arreglar interacción de tap en fila de alojamientos
+**Estado:** ✅ Completado  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Alta  
+**Descripción:** Solucionar problema de detección de tap en la fila de alojamientos.
+
+**Criterios de aceptación:**
+- ✅ GestureDetector funcional en fila de alojamientos
+- ✅ Modal de crear alojamiento se abre correctamente
+- ✅ Modal de editar alojamiento funciona
+- ✅ Interacción intuitiva y responsiva
+
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart`

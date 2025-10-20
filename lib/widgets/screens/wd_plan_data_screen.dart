@@ -51,8 +51,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       ),
       body: Container(
         color: Colors.grey.shade50,
-        child: Column(
-          children: [
+      child: Column(
+        children: [
             // Header personalizado similar al perfil
             Container(
               width: double.infinity,
@@ -69,7 +69,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+            children: [
                   Text(
                     'Planazoo',
                     style: AppTypography.mediumTitle.copyWith(
@@ -89,19 +89,19 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         Icons.close,
                         color: Colors.grey,
                         size: 20,
-                      ),
-                    ),
                   ),
-                ],
+                ),
               ),
+            ],
+          ),
             ),
             // Contenido principal con scroll
-            Expanded(
-              child: SingleChildScrollView(
+          Expanded(
+            child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     // Imagen del plan
                     _buildPlanImageSection(),
                     const SizedBox(height: 24),
@@ -113,10 +113,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     
                     // Botón de eliminar
                     _buildDeleteButton(),
-                  ],
-                ),
+                ],
               ),
             ),
+          ),
           ],
         ),
       ),

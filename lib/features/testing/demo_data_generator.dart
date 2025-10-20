@@ -658,47 +658,9 @@ class DemoDataGenerator {
   // ==================== ALOJAMIENTOS ====================
 
   static Future<void> _generateAccommodations(Plan plan, String userId, List<String> familyUserIds) async {
-    debugPrint('🏨 Generando alojamientos...');
-    final day1 = plan.startDate;
-    final allParticipants = [userId, ...familyUserIds];
-
-    // Alojamiento 1: Hotel para todo el plan (todos los participantes)
-    await _createAccommodation(
-      planId: plan.id!,
-      hotelName: 'Hotel Frankenstein Inn',
-      checkIn: day1,
-      checkOut: day1.add(Duration(days: plan.durationInDays)),
-      type: 'Hotel',
-      color: 'blue',
-      description: 'Hotel céntrico con desayuno incluido - Todo el plan',
-      participantTrackIds: allParticipants, // Todos los participantes
-    );
-
-    // Alojamiento 2: Apartamento para algunos participantes (aleatorio)
-    final random = DateTime.now().millisecondsSinceEpoch;
-    final selectedParticipants = allParticipants.where((p) => 
-      (p.hashCode + random) % 2 == 0 // Selección aleatoria basada en hash
-    ).toList();
-    
-    // Asegurar que al menos hay un participante
-    if (selectedParticipants.isEmpty) {
-      selectedParticipants.add(allParticipants.first);
-    }
-
-    await _createAccommodation(
-      planId: plan.id!,
-      hotelName: 'Apartamento Monster Place',
-      checkIn: day1,
-      checkOut: day1.add(Duration(days: plan.durationInDays)),
-      type: 'Apartamento',
-      color: 'green',
-      description: 'Apartamento con cocina equipada - Algunos participantes',
-      participantTrackIds: selectedParticipants,
-    );
-
-    debugPrint('✅ Alojamientos generados (2 alojamientos)');
-    debugPrint('🏨 Hotel: ${allParticipants.length} participantes');
-    debugPrint('🏠 Apartamento: ${selectedParticipants.length} participantes');
+    debugPrint('🏨 No generando alojamientos - empezando desde cero...');
+    // No crear ningún alojamiento para empezar desde cero
+    debugPrint('✅ Sin alojamientos generados - plan limpio');
   }
 
   // ==================== HELPERS ====================

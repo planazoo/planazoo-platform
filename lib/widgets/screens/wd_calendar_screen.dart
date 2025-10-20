@@ -20,13 +20,16 @@ import 'package:unp_calendario/features/calendar/domain/services/date_service.da
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
+import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   final Plan plan;
+  final int? initialVisibleDays;
 
   const CalendarScreen({
     super.key,
     required this.plan,
+    this.initialVisibleDays,
   });
 
   @override
@@ -34,6 +37,12 @@ class CalendarScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
+  // Constantes para dimensiones y estilos
+  static const double _accommodationRowHeight = 30.0;
+  static const double _headerHeight = 60.0;
+  static const double _miniHeaderHeight = 40.0;
+  static const double _gridLineOpacity = 0.3;
+  
   // Estado para la navegación de días (grupos dinámicos según días visibles)
   int _currentDayGroup = 0; // Grupo actual (0 = primeros días, 1 = siguientes días, etc.)
   
@@ -61,6 +70,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Usar el número de días visibles inicial si se proporciona
+    if (widget.initialVisibleDays != null) {
+      _visibleDays = widget.initialVisibleDays!;
+    }
     
     // Inicializar el servicio de tracks
     _trackService = TrackService();
@@ -172,7 +186,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final columns = _getColumnsToShow();
     final columnWidth = availableWidth / columns.length;
     final participantCount = widget.plan.participants ?? 5;
-    return columnWidth / participantCount;
+    final result = columnWidth / participantCount;
+    
+    
+    return result;
   }
 
   /// Sincroniza el scroll desde la columna de horas hacia los datos
@@ -304,6 +321,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
           ],
         ),
+        // Botón de pantalla completa
+        IconButton(
+          icon: const Icon(Icons.fullscreen, color: Colors.white),
+          tooltip: 'Pantalla completa',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FullScreenCalendarPage(
+                  plan: widget.plan,
+                  visibleDays: _visibleDays,
+                ),
+                fullscreenDialog: true,
+              ),
+            );
+          },
+        ),
       ],
       backgroundColor: AppColorScheme.color1,
       foregroundColor: Colors.white,
@@ -370,7 +404,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           // Encabezado (primera celda)
           Container(
-            height: 60, // Altura original restaurada
+            height: _headerHeight,
             decoration: BoxDecoration(
               border: Border.all(color: AppColorScheme.gridLineColor),
               color: AppColorScheme.color1,
@@ -382,9 +416,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           
           // Fila de alojamientos FIJA
           Container(
-            height: 30,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColorScheme.gridLineColor),
+            height: _accommodationRowHeight,
+            decoration: _createBorderedDecoration(
               color: AppColorScheme.color1.withOpacity(0.3),
             ),
             child: const Center(
@@ -462,42 +495,96 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
+  /// Crea un borde común para elementos de la grilla
+  Border _createGridBorder({bool includeRight = true}) {
+    return Border(
+      right: includeRight 
+          ? BorderSide(color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity), width: 0.5)
+          : BorderSide.none,
+    );
+  }
+
+  /// Crea un BoxDecoration común para contenedores con borde
+  BoxDecoration _createBorderedDecoration({Color? color}) {
+    return BoxDecoration(
+      border: Border.all(color: AppColorScheme.gridLineColor),
+      color: color,
+    );
+  }
+
+  /// Determina si un día es check-in, check-out, o día intermedio para un alojamiento
+  String _getAccommodationDayText(Accommodation accommodation, DateTime dayDate) {
+    final checkInDate = accommodation.checkIn;
+    final checkOutDate = accommodation.checkOut;
+    
+    // Normalizar fechas para comparación (solo año, mes, día)
+    final normalizedDayDate = DateTime(dayDate.year, dayDate.month, dayDate.day);
+    final normalizedCheckIn = DateTime(checkInDate.year, checkInDate.month, checkInDate.day);
+    final normalizedCheckOut = DateTime(checkOutDate.year, checkOutDate.month, checkOutDate.day);
+    
+    if (normalizedDayDate.isAtSameMomentAs(normalizedCheckIn)) {
+      return '${accommodation.hotelName} ➡️';
+    } else if (normalizedDayDate.isAtSameMomentAs(normalizedCheckOut)) {
+      return '${accommodation.hotelName} ⬅️';
+    } else {
+      return accommodation.hotelName;
+    }
+  }
+
   /// Construye las filas fijas (encabezado y alojamientos)
   Widget _buildFixedRows() {
     final columns = _getColumnsToShow();
     
-    return Row(
-      children: columns.map((column) {
-        return Expanded(
-          child: Column(
-            children: [
-              // Encabezado de la columna
-              Container(
-                height: 60, // Altura original restaurada
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColorScheme.gridLineColor),
-                  color: _getHeaderColor(column),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GestureDetector(
+          onTap: () {
+            // GestureDetector para capturar taps en toda la fila
+          },
+          child: Row(
+            children: columns.map((column) {
+              return Expanded(
+                child: Column(
+                  children: [
+                    // Encabezado de la columna
+                    Container(
+                      height: _headerHeight,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColorScheme.gridLineColor),
+                        color: _getHeaderColor(column),
+                      ),
+                      child: Center(
+                        child: _buildHeaderContent(column),
+                      ),
+                    ),
+                    
+                  // Fila de alojamientos con tracks
+                  GestureDetector(
+                    onTap: () {
+                      // Crear nuevo alojamiento para este día
+                      final dayData = column as Map<String, dynamic>;
+                      final actualDayIndex = dayData['index'] as int;
+                      final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
+                      _showNewAccommodationDialog(dayDate);
+                    },
+                    child: Container(
+                      height: _accommodationRowHeight,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColorScheme.gridLineColor),
+                        color: AppColorScheme.color1.withOpacity(0.3),
+                      ),
+                      child: Center(
+                        child: _buildAccommodationTracks(column, constraints.maxWidth),
+                      ),
+                    ),
+                  ),
+                  ],
                 ),
-                child: Center(
-                  child: _buildHeaderContent(column),
-                ),
-              ),
-              
-              // Fila de alojamientos con tracks
-              Container(
-                height: 30,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColorScheme.gridLineColor),
-                  color: AppColorScheme.color1.withOpacity(0.3),
-                ),
-                child: Center(
-                  child: _buildAccommodationTracks(column),
-                ),
-              ),
-            ],
+              );
+            }).toList(),
           ),
         );
-      }).toList(),
+      },
     );
   }
 
@@ -567,12 +654,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               // Agregar línea vertical derecha para separar tracks (excepto el último)
               border: isLastTrack 
                   ? null 
-                  : Border(
-                      right: BorderSide(
-                        color: AppColorScheme.gridLineColor.withOpacity(0.3),
-                        width: 0.5,
-                      ),
-                    ),
+                  : _createGridBorder(),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -617,7 +699,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// Construye los tracks de alojamiento para cada día
-  Widget _buildAccommodationTracks(dynamic column) {
+  Widget _buildAccommodationTracks(dynamic column, double availableWidth) {
     final dayData = column as Map<String, dynamic>;
     final actualDayIndex = dayData['index'] as int;
     final isEmpty = dayData['isEmpty'] as bool;
@@ -639,104 +721,81 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     
     
     if (accommodationsForDay.isEmpty) {
-      return GestureDetector(
-        onTap: () => _showNewAccommodationDialog(dayDate),
-        child: const Text(
-          'Sin alojamiento - Tap para crear',
-          style: TextStyle(fontSize: 8, color: Colors.grey),
-        ),
-      );
+      return const SizedBox.shrink();
     }
     
     // Mostrar alojamientos como tracks
-    return _buildAccommodationTracksRow(accommodationsForDay);
+    return _buildAccommodationTracksRow(accommodationsForDay, availableWidth, dayDate);
   }
 
   /// Construye la fila de tracks de alojamiento
-  Widget _buildAccommodationTracksRow(List<Accommodation> accommodations) {
+  Widget _buildAccommodationTracksRow(List<Accommodation> accommodations, double availableWidth, DateTime dayDate) {
     final visibleTracks = _trackService.getVisibleTracks();
-    
-    
-    return Row(
-      children: visibleTracks.asMap().entries.map((entry) {
-        final trackIndex = entry.key;
-        final track = entry.value;
-        final isLastTrack = trackIndex == visibleTracks.length - 1;
-        
-        // Encontrar alojamientos que deben mostrarse en este track
-        final accommodationsForTrack = accommodations.where((accommodation) => 
-          _shouldShowAccommodationInTrack(accommodation, trackIndex)
-        ).toList();
-        
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              if (accommodationsForTrack.isNotEmpty) {
-                // Si hay alojamientos en este track, editar el primero
-                _showAccommodationDialog(accommodationsForTrack.first);
-              } else {
-                // Si no hay alojamientos, crear uno nuevo
-                final dayDate = accommodations.isNotEmpty 
-                    ? accommodations.first.checkIn 
-                    : DateTime.now();
-                _showNewAccommodationDialog(dayDate);
-              }
-            },
-            onDoubleTap: () {
-              final dayDate = accommodations.isNotEmpty 
-                  ? accommodations.first.checkIn 
-                  : DateTime.now();
-              _showNewAccommodationDialog(dayDate);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-              decoration: BoxDecoration(
-                // Agregar línea vertical derecha para separar tracks (excepto el último)
-                border: isLastTrack 
-                    ? null 
-                    : Border(
-                        right: BorderSide(
-                          color: AppColorScheme.gridLineColor.withOpacity(0.3),
-                          width: 0.5,
-                        ),
-                      ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (accommodationsForTrack.isNotEmpty) ...[
-                    // Mostrar alojamiento asignado a este track
-                    Text(
-                      accommodationsForTrack.first.hotelName,
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                        color: accommodationsForTrack.first.displayColor,
-                      ),
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+
+    return SizedBox(
+                      height: _accommodationRowHeight,
+      child: GestureDetector(
+        onTap: () {
+          // Outer GestureDetector for debugging
+        },
+        child: ClipRect(
+          child: Stack(
+            children: [
+          // Fondo con tracks individuales
+          Row(
+            children: visibleTracks.asMap().entries.map((entry) {
+              final trackIndex = entry.key;
+              final isLastTrack = trackIndex == visibleTracks.length - 1;
+              
+              return Expanded(
+                child: Container(
+                  height: _accommodationRowHeight,
+                  decoration: BoxDecoration(
+                    border: isLastTrack
+                        ? null
+                        : _createGridBorder(),
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      // Encontrar alojamientos que deben mostrarse en este track
+                      final accommodationsForTrack = accommodations.where((accommodation) =>
+                        _shouldShowAccommodationInTrack(accommodation, trackIndex)
+                      ).toList();
+
+                      if (accommodationsForTrack.isNotEmpty) {
+                        _showAccommodationDialog(accommodationsForTrack.first);
+                      } else {
+                        final dayDate = accommodations.isNotEmpty
+                            ? accommodations.first.checkIn
+                            : DateTime.now();
+                        _showNewAccommodationDialog(dayDate);
+                      }
+                    },
+                    onDoubleTap: () {
+                      final dayDate = accommodations.isNotEmpty
+                          ? accommodations.first.checkIn
+                          : DateTime.now();
+                      _showNewAccommodationDialog(dayDate);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
                     ),
-                  ] else ...[
-                    // Mostrar indicador de track vacío
-                    Text(
-                      'Tap para crear',
-                      style: TextStyle(
-                        fontSize: 6,
-                        color: Colors.grey.shade600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ],
-              ),
-            ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
-        );
-      }).toList(),
+            // Alojamientos individuales usando Row en lugar de Positioned
+            _buildAccommodationTracksWithGrouping(accommodations, visibleTracks, availableWidth, dayDate),
+        ],
+          ),
+        ),
+      ),
     );
   }
+
+
 
   /// Determina si un alojamiento debe mostrarse en un track específico
   bool _shouldShowAccommodationInTrack(Accommodation accommodation, int trackIndex) {
@@ -816,12 +875,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 // Agregar línea vertical derecha para separar tracks (excepto el último)
                 border: isLastTrack 
                     ? null 
-                    : Border(
-                        right: BorderSide(
-                          color: AppColorScheme.gridLineColor.withOpacity(0.3),
-                          width: 0.5,
-                        ),
-                      ),
+                    : _createGridBorder(),
               ),
             ),
           ),
@@ -864,7 +918,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
         child: Text(
-          accommodation.hotelName,
+          _getAccommodationDayText(accommodation, dayDate),
           style: TextStyle(
             fontSize: 10,
             color: accommodation.displayColor,
@@ -1772,6 +1826,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           final trackWidth = subColumnWidth;
           final totalWidth = trackWidth * group.length;
           
+          
           widgets.add(
             Positioned(
               left: startX,
@@ -2087,6 +2142,48 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Devolver el grupo más grande
     groups.sort((a, b) => b.length.compareTo(a.length));
     return groups.first;
+  }
+
+  /// Obtiene todos los grupos de tracks consecutivos donde se muestra un alojamiento
+  /// Cada grupo consecutivo se puede mostrar como un solo bloque
+  List<List<int>> _getConsecutiveTrackGroupsForAccommodation(Accommodation accommodation) {
+    final visibleTracks = _trackService.getVisibleTracks();
+    final tracksWhereShown = <int>[];
+    
+    // Encontrar todos los tracks donde se muestra el alojamiento
+    for (int trackIndex = 0; trackIndex < visibleTracks.length; trackIndex++) {
+      if (_shouldShowAccommodationInTrack(accommodation, trackIndex)) {
+        tracksWhereShown.add(trackIndex);
+      }
+    }
+    
+    // Si solo aparece en un track, devolverlo como un grupo
+    if (tracksWhereShown.length <= 1) {
+      return tracksWhereShown.isEmpty ? <List<int>>[] : <List<int>>[tracksWhereShown];
+    }
+    
+    // Ordenar tracks
+    final sortedTracks = tracksWhereShown..sort();
+    
+    // Agrupar tracks consecutivos
+    final consecutiveGroups = <List<int>>[];
+    List<int> currentGroup = [sortedTracks.first];
+    
+    for (int i = 1; i < sortedTracks.length; i++) {
+      if (sortedTracks[i] - sortedTracks[i - 1] == 1) {
+        // Es consecutivo, agregar al grupo actual
+        currentGroup.add(sortedTracks[i]);
+      } else {
+        // No es consecutivo, finalizar grupo actual y empezar uno nuevo
+        consecutiveGroups.add(List.from(currentGroup));
+        currentGroup = [sortedTracks[i]];
+      }
+    }
+    
+    // Agregar el último grupo
+    consecutiveGroups.add(currentGroup);
+    
+    return consecutiveGroups;
   }
 
   /// Construye un segmento individual (sin solapamiento)
@@ -2922,6 +3019,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // Invalidar providers de alojamientos después de cerrar el diálogo
           if (mounted) {
             ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+            // Forzar actualización de la UI
+            setState(() {});
           }
         },
         onDeleted: (accommodationId) async {
@@ -2954,6 +3053,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // Invalidar providers de alojamientos después de cerrar el diálogo
           if (mounted) {
             ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+            // Forzar actualización de la UI
+            setState(() {});
           }
         },
         onDeleted: (accommodationId) {
@@ -2962,5 +3063,121 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ),
     );
   }
-}
 
+  /// Construye los tracks de alojamiento con agrupación para tracks consecutivos
+  Widget _buildAccommodationTracksWithGrouping(List<Accommodation> accommodations, List<dynamic> visibleTracks, double availableWidth, DateTime dayDate) {
+    if (accommodations.isEmpty) {
+      // Si no hay alojamientos, mostrar solo "Tap para crear" en todos los tracks
+      return Row(
+        children: visibleTracks.asMap().entries.map((entry) {
+          final trackIndex = entry.key;
+          final isLastTrack = trackIndex == visibleTracks.length - 1;
+          
+          return Expanded(
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                border: isLastTrack
+                    ? null
+                    : _createGridBorder(),
+              ),
+              child: GestureDetector(
+                onTap: () => _showNewAccommodationDialog(DateTime.now()),
+                onDoubleTap: () => _showNewAccommodationDialog(DateTime.now()),
+                child: Center(
+                  child: Text(
+                    'Tap para crear',
+                    style: TextStyle(
+                      fontSize: 6,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    // Para cada alojamiento, crear sus grupos de tracks consecutivos
+    final allGroups = <Map<String, dynamic>>[];
+    
+    for (final accommodation in accommodations) {
+      final groups = _getConsecutiveTrackGroupsForAccommodation(accommodation);
+      for (final group in groups) {
+        allGroups.add({
+          'accommodation': accommodation,
+          'group': group,
+        });
+      }
+    }
+    
+    // Ordenar grupos por el primer track
+    allGroups.sort((a, b) => (a['group'] as List<int>).first.compareTo((b['group'] as List<int>).first));
+    
+    // Calcular el ancho de cada subcolumna (igual que los eventos)
+    final subColumnWidth = _getSubColumnWidth(availableWidth);
+    
+    
+    return Stack(
+      children: allGroups.map((groupData) {
+        final accommodation = groupData['accommodation'] as Accommodation;
+        final group = groupData['group'] as List<int>;
+        final startTrack = group.first;
+        final groupWidth = group.length;
+        
+        // Calcular posición y ancho (igual que los eventos)
+        // Para alojamientos, no hay dayX porque están en la fila fija
+        final left = startTrack * subColumnWidth;
+        final width = subColumnWidth * groupWidth;
+        
+        
+        return Positioned(
+          left: left,
+          top: 5,
+          width: width,
+          height: 20,
+          child: GestureDetector(
+            onTap: () => _showAccommodationDialog(accommodation),
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: 0),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: BoxDecoration(
+                color: accommodation.displayColor.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: accommodation.displayColor.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(1),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _getAccommodationDayText(accommodation, dayDate),
+                        style: TextStyle(
+                          fontSize: 8, // Mismo tamaño que eventos para altura < 40
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+}

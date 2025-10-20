@@ -237,6 +237,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               children: [
                 // Botón para generar usuarios invitados
                 FloatingActionButton.extended(
+                  heroTag: "dashboard_guest_users_button",
                   onPressed: () => _generateGuestUsers(),
                   icon: const Icon(Icons.person_add),
                   label: const Text('👥 Invitados'),
@@ -246,6 +247,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 const SizedBox(height: 8),
                 // Botón Frankenstein
                 FloatingActionButton.extended(
+                  heroTag: "dashboard_frankenstein_button",
                   onPressed: () => _generateFrankensteinPlan(currentUser),
                   icon: const Icon(Icons.science),
                   label: const Text('🧟 Frankenstein'),
