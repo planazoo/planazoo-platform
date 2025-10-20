@@ -33,6 +33,6 @@ class CalendarConstants {
   static const int defaultVisibleDays = 7;
   
   // Colores de estado
-  static const int todayHighlightOpacity = 0.1;
-  static const int trackHighlightOpacity = 0.05;
+  static const double todayHighlightOpacity = 0.1;
+  static const double trackHighlightOpacity = 0.05;
 }

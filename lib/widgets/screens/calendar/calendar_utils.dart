@@ -55,7 +55,10 @@ class CalendarUtils {
 
   /// Obtiene el color de un track
   static Color getTrackColor(ParticipantTrack track) {
-    return track.customColor ?? AppColorScheme.color1;
+    if (track.customColor is Color) {
+      return track.customColor as Color;
+    }
+    return AppColorScheme.color1;
   }
 
   /// Calcula la altura de una fila de eventos
