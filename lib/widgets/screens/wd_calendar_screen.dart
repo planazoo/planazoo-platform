@@ -74,7 +74,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // Clases para manejar filtros y reordenación
   late final CalendarFilters _calendarFilters;
   late final CalendarTrackReorder _calendarTrackReorder;
-  late final CalendarAppBar _calendarAppBar;
+  CalendarAppBar? _calendarAppBar;
   
   // Número de días visibles simultáneamente (1-7)
   int _visibleDays = 7;
@@ -281,7 +281,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   PreferredSizeWidget _buildAppBar() {
     _updateCalendarAppBar();
     
-    return _calendarAppBar.buildAppBar(
+    return _calendarAppBar!.buildAppBar(
       onPreviousDayGroup: _previousDayGroup,
       onNextDayGroup: _nextDayGroup,
       onVisibleDaysChanged: (int value) {
