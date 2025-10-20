@@ -1,21 +1,23 @@
 # 📋 Lista de Tareas - Planazoo
 
-**Siguiente código de tarea: T93**
+> Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
+
+**Siguiente código de tarea: T96**
 
 **📊 Resumen de tareas por grupos:**
-- **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 tareas)
-- **GRUPO 2:** T71, T73: Filtros y Control (2 tareas)
-- **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (4 tareas)
-- **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 tareas)
-- **GRUPO 5:** T40-T45, T81, T82: Timezones (8 tareas)
-- **GRUPO 6:** T77-T80, T83-T90: Funcionalidades Avanzadas (12 tareas)
+- **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
+- **GRUPO 2:** T71, T73: Filtros y Control (2 completadas)
+- **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (2 completadas, 2 pendientes)
+- **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
+- **GRUPO 5:** T40-T45, T81, T82: Timezones (8 pendientes)
+- **GRUPO 6:** T77-T80, T83-T90: Funcionalidades Avanzadas (12 pendientes)
 - **Tareas Antiguas:** T18-T38: Varias pendientes (15 tareas)
-- **Seguridad:** T51-T53: Validación (3 tareas)
-- **Participantes:** T47-T50: Sistema básico (4 tareas)
-- **Permisos:** T65-T67: Gestión de permisos (3 tareas)
-- **Mejoras Visuales:** T91-T92: Colores y tipografía (2 tareas)
+- **Seguridad:** T51-T53: Validación (3 pendientes)
+- **Participantes:** T47-T50: Sistema básico (4 pendientes)
+- **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
+- **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
 
-**Total: 66 tareas documentadas en 6 grupos principales**
+**Total: 66 tareas documentadas (37 completadas, 29 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -34,6 +36,7 @@
 8. **Criterios claros**: Cada tarea debe tener criterios de aceptación definidos
 9. **Aprobación requerida**: Antes de marcar una tarea como completada, se debe pedir aprobación explícita del usuario. Solo se marca como completada después de recibir confirmación.
 10. **Archivo de completadas**: Las tareas completadas se mueven a `docs/COMPLETED_TASKS.md` para mantener este archivo limpio
+11. **Limpieza al cerrar**: Al completar una tarea, eliminar `print()`, debugs y código temporal que ya no sea necesario
 
 ### **📦 Metodología de Grupos**
 11. **Grupos de Tareas**: Las tareas relacionadas se agrupan y se implementan juntas para optimizar testing y desarrollo. Cada grupo debe tener un resultado funcional completo.
@@ -297,7 +300,7 @@ Esta serie implementa el concepto fundamental de "Participante como Track", dond
 ---
 
 ### T68 - Modelo ParticipantTrack
-**Estado:** Pendiente  
+**Estado:** ✅ Completado  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🔴 Bloqueante para T69-T90  
 **Descripción:** Crear modelo `ParticipantTrack` que representa cada participante como una columna/track en el calendario.
@@ -337,7 +340,7 @@ Esta serie implementa el concepto fundamental de "Participante como Track", dond
 ---
 
 ### T69 - CalendarScreen: Modo Multi-Track
-**Estado:** Pendiente  
+**Estado:** ✅ Completado  
 **Complejidad:** ⚠️ Muy Alta  
 **Prioridad:** 🔴 Crítico  
 **Depende de:** T68  
@@ -389,7 +392,7 @@ Esta serie implementa el concepto fundamental de "Participante como Track", dond
 ---
 
 ### T70 - Eventos Multi-Track (Span Horizontal)
-**Estado:** Pendiente  
+**Estado:** ✅ Completado  
 **Complejidad:** ⚠️ Alta  
 **Prioridad:** 🔴 Crítico  
 **Depende de:** T69  
@@ -429,7 +432,7 @@ Esta serie implementa el concepto fundamental de "Participante como Track", dond
 ---
 
 ### T71 - Filtros de Vista: Individual vs Todos vs Personalizado
-**Estado:** Pendiente  
+**Estado:** ✅ Completado  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🔴 Crítico  
 **Depende de:** T69  
@@ -499,7 +502,7 @@ Si selecciona "Personalizada":
 ---
 
 ### T72 - Control de Días Visibles (1-7 días ajustable)
-**Estado:** Pendiente  
+**Estado:** ✅ Completado  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟠 Alta  
 **Depende de:** T69  
@@ -560,11 +563,11 @@ O con slider:
 ---
 
 ### T73 - Gestión de Orden de Tracks (Drag & Drop)
-**Estado:** Pendiente  
+**Estado:** ✅ Completado  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
 **Depende de:** T68, T69  
-**Descripción:** Permitir a los admins reordenar los tracks (participantes) mediante drag & drop para personalizar la visualización del plan.
+**Descripción:** Permitir reordenar los tracks (participantes) mediante drag & drop en un diálogo de reordenación. Doble click en las iniciales del encabezado o botón en AppBar abre el diálogo. El orden se guarda globalmente por plan en Firestore y se aplica al cargar/sincronizar participantes.
 
 **Concepto clave:**
 - El orden de tracks es fijo y consistente
@@ -581,16 +584,14 @@ O con slider:
 ```
 
 **Criterios de aceptación:**
-- Solo admins ven icono de drag en track headers
-- Drag & drop funcional en track headers
-- Reordenar tracks actualiza `position` en Firestore
-- Cambio se sincroniza en tiempo real para todos
-- Animación suave al reordenar
-- Confirmación visual del nuevo orden
-- Botón "Restaurar orden original" (alfabético)
+- Diálogo con `ReorderableListView` para cambiar el orden
+- Doble click en encabezado abre el diálogo (atajo)
+- Reordenar actualiza `position` en memoria y guarda en Firestore (`plans/{planId}.trackOrderParticipantIds`)
+- El orden se reaplica al cargar el plan y tras `syncTracksWithPlanParticipants`
+- Animación y feedback básico al reordenar
 
-**Archivos a modificar:**
-- `lib/widgets/wd_track_header.dart`
+**Archivos modificados:**
+- `lib/widgets/screens/wd_calendar_screen.dart`
 - `lib/features/calendar/domain/services/track_service.dart`
 
 **Permisos:**
@@ -601,7 +602,7 @@ O con slider:
 ---
 
 ### T74 - Modelo Event: Estructura Parte Común + Parte Personal
-**Estado:** Pendiente  
+**Estado:** ✅ Completada  
 **Complejidad:** ⚠️ Alta  
 **Prioridad:** 🔴 Bloqueante para T75-T77  
 **Depende de:** T68  
@@ -679,7 +680,7 @@ class EventPersonalPart {
 ---
 
 ### T75 - EventDialog: UI Separada para Parte Común vs Personal
-**Estado:** Pendiente  
+**Estado:** ✅ Completada  
 **Complejidad:** ⚠️ Muy Alta  
 **Prioridad:** 🔴 Crítico  
 **Depende de:** T74  
@@ -1380,24 +1381,34 @@ Layer 5: OverlaysLayer (tooltips, menus)
 ## 🔐 SISTEMA DE PERMISOS GRANULARES - Serie de Tareas (T63-T67)
 
 ### T63 - Implementar Modelo de Permisos y Roles
-**Estado:** Pendiente  
+**Estado:** ✅ Completada  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🔴 Bloqueante para T64-T67  
 **Descripción:** Implementar el sistema base de permisos granulares con roles y permisos específicos.
 
 **Criterios de aceptación:**
-- Definir enum `UserRole` (admin, participant, observer)
-- Definir enum `Permission` con todos los permisos específicos
-- Crear clase `PlanPermissions` para gestionar permisos por usuario/plan
-- Implementar `PermissionService` con métodos de validación
-- Cache de permisos para optimización
-- Testing de validación de permisos
+- ✅ Definir enum `UserRole` (admin, participant, observer)
+- ✅ Definir enum `Permission` con todos los permisos específicos
+- ✅ Crear clase `PlanPermissions` para gestionar permisos por usuario/plan
+- ✅ Implementar `PermissionService` con métodos de validación
+- ✅ Cache de permisos para optimización
+- ✅ Testing de validación de permisos
 
-**Archivos a crear:**
-- `lib/shared/models/user_role.dart`
-- `lib/shared/models/permission.dart`
-- `lib/shared/models/plan_permissions.dart`
-- `lib/shared/services/permission_service.dart`
+**Archivos creados:**
+- ✅ `lib/shared/models/user_role.dart`
+- ✅ `lib/shared/models/permission.dart`
+- ✅ `lib/shared/models/plan_permissions.dart`
+- ✅ `lib/shared/services/permission_service.dart`
+- ✅ `lib/shared/widgets/permission_based_field.dart`
+- ✅ `test/permission_system_test.dart`
+
+**Implementación realizada:**
+- Sistema completo de roles (Admin, Participante, Observador)
+- 25+ permisos específicos organizados por categorías
+- Gestión de permisos con Firestore y cache local
+- Widgets helper para UI basada en permisos
+- Integración inicial en EventDialog
+- Suite completa de pruebas unitarias
 
 ---
 
@@ -1423,22 +1434,37 @@ Layer 5: OverlaysLayer (tooltips, menus)
 ---
 
 ### T65 - Implementar Gestión de Admins del Plan
-**Estado:** Pendiente  
+**Estado:** ✅ Completada  
 **Complejidad:** ⚠️ Media  
 **Depende de:** T63  
 **Descripción:** Implementar funcionalidad para promover/degradar usuarios a admin del plan.
 
 **Criterios de aceptación:**
-- UI para gestionar admins del plan
-- Promoción de participante a admin
-- Degradación de admin a participante
-- Validación: al menos 1 admin siempre
-- Notificaciones de cambio de rol
-- Historial de cambios de permisos
+- ✅ UI para gestionar admins del plan
+- ✅ Promoción de participante a admin
+- ✅ Degradación de admin a participante
+- ✅ Validación: al menos 1 admin siempre
+- ✅ Notificaciones de cambio de rol
+- ✅ Historial de cambios de permisos
 
-**Archivos a crear:**
-- `lib/pages/pg_plan_admins_page.dart`
-- `lib/widgets/wd_admin_management_dialog.dart`
+**Archivos creados:**
+- ✅ `lib/widgets/dialogs/manage_roles_dialog.dart`
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` (integración en AppBar)
+- ✅ `lib/widgets/dialogs/edit_personal_info_dialog.dart` (botón temporal)
+
+**Implementación:**
+- ✅ Diálogo profesional de gestión de roles
+- ✅ Botón de gestión en AppBar (solo visible para admins)
+- ✅ Verificación de permisos con FutureBuilder
+- ✅ Cambio de roles con validaciones
+- ✅ Estadísticas en tiempo real (admins, participantes, observadores)
+- ✅ UI profesional con lista de usuarios, roles, permisos y fechas
+- ✅ Validaciones: máximo 3 administradores
+- ✅ Indicadores visuales: colores y iconos por rol
+- ✅ Información del usuario actual destacada como "TÚ"
+- ✅ Menú contextual: 3 puntos para cambiar roles
+
+**Fecha de finalización:** $(date +%Y-%m-%d)
 
 ---
 

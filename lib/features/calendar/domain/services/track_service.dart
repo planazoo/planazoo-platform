@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/participant_track.dart';
 import '../models/plan_participation.dart';
 
@@ -79,11 +80,11 @@ class TrackService {
     _tracks.removeWhere((track) => track.id == trackId);
   }
 
-  /// Reordena los tracks cambiando sus posiciones
-  void reorderTracks(List<String> trackIdsInNewOrder) {
-    for (int i = 0; i < trackIdsInNewOrder.length; i++) {
-      final trackId = trackIdsInNewOrder[i];
-      final track = getTrackById(trackId);
+  /// Reordena los tracks cambiando sus posiciones según participantIds
+  void reorderTracksByParticipantIds(List<String> participantIdsInNewOrder) {
+    for (int i = 0; i < participantIdsInNewOrder.length; i++) {
+      final participantId = participantIdsInNewOrder[i];
+      final track = getTrackByParticipantId(participantId);
       if (track != null) {
         final updatedTrack = track.copyWith(position: i);
         updateTrack(updatedTrack);
@@ -137,6 +138,36 @@ class TrackService {
     }
     
     return createdTracks;
+  }
+
+  /// Carga el orden global (por participantIds) desde Firestore y lo aplica
+  Future<void> loadOrderFromFirestore(String planId) async {
+    final doc = await FirebaseFirestore.instance.collection('plans').doc(planId).get();
+    if (!doc.exists) return;
+    final data = doc.data();
+    if (data == null) return;
+    final List<dynamic>? ids = data['trackOrderParticipantIds'] as List<dynamic>?;
+    if (ids == null || ids.isEmpty) return;
+    final savedIds = ids.map((e) => e.toString()).toList();
+    final existingParticipantIds = _tracks.map((t) => t.participantId).toSet();
+    final filtered = savedIds.where((id) => existingParticipantIds.contains(id)).toList();
+    for (int i = 0; i < filtered.length; i++) {
+      final track = getTrackByParticipantId(filtered[i]);
+      if (track != null) {
+        _tracks[_tracks.indexWhere((t) => t.id == track.id)] = track.copyWith(position: i);
+      }
+    }
+  }
+
+  /// Guarda el orden global (por participantIds) en Firestore
+  Future<void> saveOrderToFirestore(String planId, List<String> participantIdsInNewOrder) async {
+    await FirebaseFirestore.instance.collection('plans').doc(planId).set(
+      {
+        'trackOrderParticipantIds': participantIdsInNewOrder,
+        'trackOrderUpdatedAt': DateTime.now().toIso8601String(),
+      },
+      SetOptions(merge: true),
+    );
   }
 
   /// Sincroniza tracks con participantes reales del plan

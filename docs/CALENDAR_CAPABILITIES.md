@@ -13,6 +13,7 @@ Este documento describe de forma funcional (sin código) qué puede hacer el cal
 - **Planificación visual** por días y horas con soporte de eventos y alojamientos.
 - **Interacciones clave**: crear, editar, mover (drag & drop) y visualizar eventos; mostrar alojamientos por día.
 - **Fuente de datos**: Firestore (lectura/escritura de eventos y alojamientos).
+- **Sistema de permisos**: Roles granulares (Admin, Participante, Observador) con permisos específicos por funcionalidad.
 
 ---
 
@@ -88,9 +89,12 @@ Estado: **Parcial** (pendiente el formato exacto "Día X" + fecha).
 
 ## 🏨 Alojamientos por Día
 - Franja fija bajo el encabezado para mostrar alojamiento por día (nombre y color).
-- Interacción prevista: click para ver/editar; botón en AppBar para crear.
+- **Interacción funcional:** Click para crear/editar alojamiento existente.
+- **Iconos visuales:** ➡️ para check-in (primer día), ⬅️ para check-out (último día).
+- **Sistema de tracks:** Alojamientos se muestran en tracks de participantes seleccionados.
+- **Agrupación:** Alojamientos en tracks consecutivos se muestran como un solo bloque.
 
-Estado: **Degradado/Pendiente de verificación** (crear/editar/eliminar puede no estar operativo ahora mismo).
+Estado: **Funciona** (crear/editar/eliminar completamente operativo).
 
 ---
 
@@ -151,7 +155,7 @@ Estado: **Funciona**.
 - **Click** sobre un evento abre diálogo de edición con datos actuales.
 - Guardar actualiza en Firestore y refresca la UI.
 
-Estado: **Puede estar degradado** si un overlay intercepta toques o si la invalidación de providers no se dispara en algunos flujos. Revisión recomendada tras últimos cambios.
+Estado: **Funciona** (interacción de click completamente operativa).
 
 ### Eliminar Evento
 - Desde el diálogo de edición (botón Eliminar) con confirmación implícita.
@@ -163,7 +167,7 @@ Estado: **Funciona** (revisar refresco inmediato de UI en todos los casos).
 - **Arrastre horizontal**: mueve entre días; magnetismo a columnas.
 - **Visual**: feedback con sombra y traslación suave durante el arrastre; al soltar, se persiste y refresca la UI.
 
-Estado: **Degradado** (tras los cambios para doble click, el drag & drop puede verse interferido si un detector superior capta los gestos; actualmente el detector global de doble click está deshabilitado y el doble click se maneja en las celdas, mitigando el conflicto, pero hay que validar edición/drag en todos los casos).
+Estado: **Funciona** (drag & drop completamente operativo tras optimizaciones de código).
 
 ---
 
@@ -212,20 +216,85 @@ Estado: **Funciona**.
 
 ## ✅ Resumen de Estado (alto nivel)
 - **Crear eventos**: Funciona (doble click con HitTestBehavior.opaque)
-- **Editar eventos**: Puede estar degradado (validar tras últimos ajustes)
+- **Editar eventos**: Funciona (interacción de click completamente operativa)
 - **Eliminar eventos**: Funciona (revisar refresco inmediato)
-- **Drag & drop**: Degradado/pendiente de validación completa tras cambios recientes
+- **Drag & drop**: Funciona (completamente operativo tras optimizaciones)
 - **Multi-día**: Funciona
 - **Auto-scroll**: Funciona
-- **Alojamientos**: Pendiente de verificación (posible regress)
+- **Alojamientos**: Funciona (crear/editar/eliminar completamente operativo)
 - **Encabezado "Día X + fecha"**: Pendiente
 
 ---
 
 ## ✅ Próximos Pasos Recomendados
-1. Validar y, si es necesario, restaurar completamente edición y drag & drop (prioridad alta).
-2. Confirmar el flujo completo de alojamientos (crear/editar/eliminar/mostrar) y documentar su UX.
+1. ✅ **Completado:** Edición y drag & drop funcionan correctamente.
+2. ✅ **Completado:** Flujo completo de alojamientos operativo con iconos visuales.
 3. Completar encabezado de días con formato "Día X" + fecha (alineado con la UX).
 4. Mantener este documento como fuente de verdad; actualizarlo en cada cambio funcional.
+
+---
+
+## 👥 Tracks: Filtros y Reordenación
+
+### Filtros de Vista (Plan Completo / Mi Agenda / Personalizada)
+- Selector en AppBar para cambiar de modo de vista.
+- Personalizada: diálogo con checkboxes; botón Aplicar refresca inmediatamente la UI.
+- Ancho de columnas se ajusta al número de tracks visibles.
+Estado: Funciona.
+
+---
+
+## 🔐 Sistema de Permisos Granulares
+
+### Roles de Usuario
+- **Administrador**: Acceso completo al plan, puede gestionar participantes, eventos, alojamientos y configuración.
+- **Participante**: Puede crear y editar eventos propios, gestionar su información personal.
+- **Observador**: Solo lectura, puede ver eventos pero no modificarlos.
+
+### Permisos por Categoría
+- **Plan**: Ver, editar, eliminar, gestionar participantes y administradores.
+- **Eventos**: Ver, crear, editar propios/cualquiera, eliminar propios/cualquiera, ver/editar información personal de otros.
+- **Alojamientos**: Ver, crear, editar propios/cualquiera, eliminar propios/cualquiera.
+- **Tracks**: Ver, reordenar, gestionar visibilidad.
+- **Filtros**: Usar filtros, guardar filtros personalizados.
+
+### Implementación en UI
+- **EventDialog**: Campos editables/readonly según permisos, badges de rol en título, indicadores visuales.
+- **Validación**: Verificación de permisos antes de operaciones críticas.
+- **Cache**: Permisos cacheados localmente para optimización de rendimiento.
+- **Persistencia**: Permisos almacenados en Firestore con soporte para expiración temporal.
+
+Estado: Funciona (T63 completada).
+
+### Reordenación de Tracks (Drag & Drop en diálogo)
+- Accesos: botón en AppBar o doble click en iniciales del encabezado.
+- Diálogo con ReorderableListView; arrastrar para reordenar.
+- Persistencia global por plan en Firestore (`plans/{planId}.trackOrderParticipantIds`).
+- Aplicación del orden: al iniciar pantalla y tras sincronizar participantes.
+Estado: Funciona.
+
+---
+
+## 🔐 Sistema de Permisos Granulares
+
+### Roles de Usuario
+- **Administrador**: Acceso completo al plan, puede gestionar participantes, eventos, alojamientos y configuración.
+- **Participante**: Puede crear y editar eventos propios, gestionar su información personal.
+- **Observador**: Solo lectura, puede ver eventos pero no modificarlos.
+
+### Permisos por Categoría
+- **Plan**: Ver, editar, eliminar, gestionar participantes y administradores.
+- **Eventos**: Ver, crear, editar propios/cualquiera, eliminar propios/cualquiera, ver/editar información personal de otros.
+- **Alojamientos**: Ver, crear, editar propios/cualquiera, eliminar propios/cualquiera.
+- **Tracks**: Ver, reordenar, gestionar visibilidad.
+- **Filtros**: Usar filtros, guardar filtros personalizados.
+
+### Implementación en UI
+- **EventDialog**: Campos editables/readonly según permisos, badges de rol en título, indicadores visuales.
+- **Validación**: Verificación de permisos antes de operaciones críticas.
+- **Cache**: Permisos cacheados localmente para optimización de rendimiento.
+- **Persistencia**: Permisos almacenados en Firestore con soporte para expiración temporal.
+
+Estado: Funciona (T63 completada).
 
 

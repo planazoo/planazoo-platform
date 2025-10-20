@@ -20,6 +20,10 @@ import 'package:unp_calendario/features/calendar/domain/services/date_service.da
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
+import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mode.dart';
+import 'package:unp_calendario/shared/models/permission.dart';
+import 'package:unp_calendario/shared/services/permission_service.dart';
+import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -66,6 +70,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   
   // Número de días visibles simultáneamente (1-7)
   int _visibleDays = 7;
+  
+  // Variables para filtros de vista
+  CalendarViewMode _viewMode = CalendarViewMode.all;
+  String? _currentUserId;
+  List<String> _filteredParticipantIds = [];
 
   @override
   void initState() {
@@ -79,6 +88,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Inicializar el servicio de tracks
     _trackService = TrackService();
     _initializeTracks();
+    
+    // Inicializar usuario actual para filtros
+    _currentUserId = _trackService.getVisibleTracks().isNotEmpty 
+        ? _trackService.getVisibleTracks().first.participantId 
+        : null;
     
     // Sincronizar controladores de scroll
     _hoursScrollController.addListener(_syncScrollFromHours);
@@ -170,7 +184,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         'type': 'day',
         'index': actualDayIndex,
         'isEmpty': isEmpty,
-        'participants': _trackService.getVisibleTracks(), // Subcolumnas por participante
+        'participants': _getFilteredTracks(), // Subcolumnas por participante
       };
     });
   }
@@ -185,7 +199,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   double _getSubColumnWidth(double availableWidth) {
     final columns = _getColumnsToShow();
     final columnWidth = availableWidth / columns.length;
-    final participantCount = widget.plan.participants ?? 5;
+    final filteredTracks = _getFilteredTracks();
+    final participantCount = filteredTracks.length;
     final result = columnWidth / participantCount;
     
     
@@ -320,6 +335,92 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ),
             ),
           ],
+        ),
+        // Gestión de roles (solo para admins)
+        FutureBuilder<bool>(
+          future: _canManageRoles(),
+          builder: (context, snapshot) {
+            if (snapshot.data == true) {
+              return IconButton(
+                icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
+                tooltip: 'Gestión de Roles',
+                onPressed: () => _showManageRolesDialog(),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+        // Acceso rápido a Mi Agenda
+        IconButton(
+          icon: const Icon(Icons.person, color: Colors.white),
+          tooltip: 'Mi Agenda',
+          onPressed: () {
+            setState(() {
+              _viewMode = CalendarViewMode.personal;
+            });
+          },
+        ),
+        // Selector de filtros de vista
+        PopupMenuButton<CalendarViewMode>(
+          icon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_getCurrentViewIcon(), color: Colors.white, size: 18),
+              const SizedBox(width: 4),
+              Text(
+                _getCurrentViewName(),
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              const Icon(Icons.arrow_drop_down, color: Colors.white, size: 16),
+            ],
+          ),
+          onSelected: (CalendarViewMode result) {
+            if (result == CalendarViewMode.custom) {
+              _showCustomViewDialog();
+            } else {
+              setState(() {
+                _viewMode = result;
+              });
+            }
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<CalendarViewMode>>[
+            PopupMenuItem<CalendarViewMode>(
+              value: CalendarViewMode.all,
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_view_day, color: AppColorScheme.color1),
+                  const SizedBox(width: 8),
+                  const Text('Plan Completo'),
+                ],
+              ),
+            ),
+            PopupMenuItem<CalendarViewMode>(
+              value: CalendarViewMode.personal,
+              child: Row(
+                children: [
+                  Icon(Icons.person, color: AppColorScheme.color1),
+                  const SizedBox(width: 8),
+                  const Text('Mi Agenda'),
+                ],
+              ),
+            ),
+            PopupMenuItem<CalendarViewMode>(
+              value: CalendarViewMode.custom,
+              child: Row(
+                children: [
+                  Icon(Icons.filter_list, color: AppColorScheme.color1),
+                  const SizedBox(width: 8),
+                  const Text('Personalizada'),
+                ],
+              ),
+            ),
+          ],
+        ),
+        // Botón para reordenar tracks
+        IconButton(
+          icon: const Icon(Icons.swap_vert, color: Colors.white),
+          tooltip: 'Reordenar Tracks',
+          onPressed: () => _showReorderTracksDialog(),
         ),
         // Botón de pantalla completa
         IconButton(
@@ -730,7 +831,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye la fila de tracks de alojamiento
   Widget _buildAccommodationTracksRow(List<Accommodation> accommodations, double availableWidth, DateTime dayDate) {
-    final visibleTracks = _trackService.getVisibleTracks();
+    final visibleTracks = _getFilteredTracks();
 
     return SizedBox(
                       height: _accommodationRowHeight,
@@ -805,7 +906,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
     
     // Obtener el track actual
-    final visibleTracks = _trackService.getVisibleTracks();
+    final visibleTracks = _getFilteredTracks();
     if (trackIndex >= visibleTracks.length) return false;
     
     final currentTrack = visibleTracks[trackIndex];
@@ -1807,7 +1908,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final y = totalFixedHeight + (segment.startMinute * cellHeight / 60);
     final height = (segment.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
     
-    final visibleTracks = _trackService.getVisibleTracks();
+    final visibleTracks = _getFilteredTracks();
     final widgets = <Widget>[];
     
     // Obtener todos los grupos de tracks consecutivos donde se muestra este evento
@@ -1884,7 +1985,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final cellWidth = availableWidth / _visibleDays;
     final subColumnWidth = _getSubColumnWidth(availableWidth);
     final widgets = <Widget>[];
-    final visibleTracks = _trackService.getVisibleTracks();
+    final visibleTracks = _getFilteredTracks();
     
     // Ordenar segmentos por número de participantes (más participantes primero = fondo)
     final sortedSegments = List<EventSegment>.from(group.segments);
@@ -2043,7 +2144,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Calcula la posición y ancho para eventos multi-participante que se extienden horizontalmente
   /// Retorna un Map con 'startX' y 'width' para el evento completo
   Map<String, double> _calculateEventSpan(Event event, double subColumnWidth) {
-    final visibleTracks = _trackService.getVisibleTracks();
+    final visibleTracks = _getFilteredTracks();
     
     // Encontrar los tracks donde debe mostrarse este evento
     final relevantTracks = <int>[];
@@ -2076,7 +2177,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Verifica si un evento debe mostrarse en un track específico
   bool _shouldShowEventInTrack(Event event, int trackIndex) {
-    final visibleTracks = _trackService.getVisibleTracks();
+    final visibleTracks = _getFilteredTracks();
     
     if (trackIndex >= visibleTracks.length) return false;
     
@@ -2094,7 +2195,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Obtiene todos los grupos de tracks consecutivos donde se muestra un evento
   /// Cada grupo consecutivo se puede mostrar como un solo bloque
   List<List<int>> _getConsecutiveTrackGroupsForEvent(Event event) {
-    final visibleTracks = _trackService.getVisibleTracks();
+    final visibleTracks = _getFilteredTracks();
     final tracksWhereShown = <int>[];
     
     // Encontrar todos los tracks donde se muestra el evento
@@ -2147,7 +2248,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Obtiene todos los grupos de tracks consecutivos donde se muestra un alojamiento
   /// Cada grupo consecutivo se puede mostrar como un solo bloque
   List<List<int>> _getConsecutiveTrackGroupsForAccommodation(Accommodation accommodation) {
-    final visibleTracks = _trackService.getVisibleTracks();
+    final visibleTracks = _getFilteredTracks();
     final tracksWhereShown = <int>[];
     
     // Encontrar todos los tracks donde se muestra el alojamiento
@@ -3180,4 +3281,196 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
+  /// Obtiene los tracks filtrados según el modo de vista actual
+  List<ParticipantTrack> _getFilteredTracks() {
+    switch (_viewMode) {
+      case CalendarViewMode.all:
+        return _trackService.getVisibleTracks();
+      case CalendarViewMode.personal:
+        if (_currentUserId != null) {
+          return _trackService.getVisibleTracks()
+              .where((track) => track.participantId == _currentUserId)
+              .toList();
+        }
+        // Fallback: usar el primer track si no hay usuario actual
+        final tracks = _trackService.getVisibleTracks();
+        return tracks.isNotEmpty ? [tracks.first] : [];
+      case CalendarViewMode.custom:
+        return _trackService.getVisibleTracks()
+            .where((track) => _filteredParticipantIds.contains(track.participantId))
+            .toList();
+    }
+  }
+
+  /// Obtiene el nombre del modo de vista actual
+  String _getCurrentViewName() {
+    switch (_viewMode) {
+      case CalendarViewMode.all:
+        return 'Plan Completo';
+      case CalendarViewMode.personal:
+        return 'Mi Agenda';
+      case CalendarViewMode.custom:
+        return 'Personalizada';
+    }
+  }
+
+  /// Obtiene el icono del modo de vista actual
+  IconData _getCurrentViewIcon() {
+    switch (_viewMode) {
+      case CalendarViewMode.all:
+        return Icons.calendar_view_day;
+      case CalendarViewMode.personal:
+        return Icons.person;
+      case CalendarViewMode.custom:
+        return Icons.filter_list;
+    }
+  }
+
+  /// Muestra el diálogo de vista personalizada
+  void _showCustomViewDialog() {
+    final allTracks = _trackService.getVisibleTracks();
+    final selectedTracks = Set<String>.from(_filteredParticipantIds);
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Seleccionar Participantes'),
+          content: SizedBox(
+            width: 400,
+            height: 300,
+            child: ListView.builder(
+              itemCount: allTracks.length,
+              itemBuilder: (context, index) {
+                final track = allTracks[index];
+                final isSelected = selectedTracks.contains(track.participantId);
+                
+                return CheckboxListTile(
+                  title: Text(track.participantName.isNotEmpty 
+                      ? track.participantName 
+                      : 'Participante ${index + 1}'),
+                  value: isSelected,
+                  onChanged: (bool? value) {
+                    setDialogState(() {
+                      if (value == true) {
+                        selectedTracks.add(track.participantId);
+                      } else {
+                        selectedTracks.remove(track.participantId);
+                      }
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: selectedTracks.isNotEmpty ? () {
+                setState(() {
+                  _viewMode = CalendarViewMode.custom;
+                  _filteredParticipantIds = selectedTracks.toList();
+                });
+                Navigator.pop(context);
+              } : null,
+              child: const Text('Aplicar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Muestra el diálogo de reordenación de tracks
+  void _showReorderTracksDialog() {
+    final tracks = List<ParticipantTrack>.from(_trackService.getVisibleTracks());
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Reordenar Participantes'),
+          content: SizedBox(
+            width: 400,
+            height: 300,
+            child: ReorderableListView.builder(
+              itemCount: tracks.length,
+              onReorder: (int oldIndex, int newIndex) {
+                setDialogState(() {
+                  if (oldIndex < newIndex) {
+                    newIndex -= 1;
+                  }
+                  final item = tracks.removeAt(oldIndex);
+                  tracks.insert(newIndex, item);
+                });
+              },
+              itemBuilder: (context, index) {
+                final track = tracks[index];
+                return ListTile(
+                  key: ValueKey(track.id),
+                  leading: const Icon(Icons.drag_indicator),
+                  title: Text(track.participantName.isNotEmpty 
+                      ? track.participantName 
+                      : 'Participante ${index + 1}'),
+                  subtitle: Text('Track ${index + 1}'),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final newOrderIds = tracks.map((track) => track.participantId).toList();
+                _trackService.reorderTracksByParticipantIds(newOrderIds);
+                setState(() {});
+                Navigator.pop(context);
+              },
+              child: const Text('Aplicar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Verifica si el usuario actual puede gestionar roles
+  Future<bool> _canManageRoles() async {
+    try {
+      final permissionService = PermissionService();
+      final currentUserId = 'cristian_claraso'; // TODO: Obtener del contexto de auth
+      
+      return await permissionService.hasPermission(
+        planId: widget.plan.id!,
+        userId: currentUserId,
+        permission: Permission.planManageAdmins,
+      );
+    } catch (e) {
+      debugPrint('Error verificando permisos de gestión de roles: $e');
+      return false;
+    }
+  }
+
+  /// Muestra el diálogo de gestión de roles
+  void _showManageRolesDialog() {
+    final currentUserId = 'cristian_claraso'; // TODO: Obtener del contexto de auth
+    
+    showDialog(
+      context: context,
+      builder: (context) => ManageRolesDialog(
+        planId: widget.plan.id!,
+        currentUserId: currentUserId,
+        onRolesChanged: () {
+          // Refrescar la UI si es necesario
+          setState(() {});
+        },
+      ),
+    );
+  }
 }

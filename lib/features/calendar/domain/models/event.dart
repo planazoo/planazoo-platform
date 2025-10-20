@@ -19,6 +19,9 @@ class Event {
   final bool isDraft; // nuevo: indica si el evento es un borrador
   final DateTime createdAt;
   final DateTime updatedAt;
+  // NUEVO: estructura parte común + parte personal (compatibilidad hacia atrás)
+  final EventCommonPart? commonPart;
+  final Map<String, EventPersonalPart>? personalParts; // key: participantId
 
   const Event({
     this.id,
@@ -39,6 +42,8 @@ class Event {
     this.isDraft = false, // por defecto no es borrador
     required this.createdAt,
     required this.updatedAt,
+    this.commonPart,
+    this.personalParts,
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
@@ -55,20 +60,33 @@ class Event {
         ?.map((id) => id.toString())
         .toList() ?? [];
     
+    // Cargar parte común si existe (compatibilidad)
+    EventCommonPart? commonPart;
+    if (data['commonPart'] != null) {
+      final Map<String, dynamic> cp = Map<String, dynamic>.from(data['commonPart'] as Map);
+      commonPart = EventCommonPart.fromMap(cp);
+    }
+    // Cargar partes personales si existen
+    Map<String, EventPersonalPart>? personalParts;
+    if (data['personalParts'] != null) {
+      final raw = Map<String, dynamic>.from(data['personalParts'] as Map);
+      personalParts = raw.map((key, value) => MapEntry(key, EventPersonalPart.fromMap(Map<String, dynamic>.from(value as Map))));
+    }
+
     return Event(
       id: doc.id,
       planId: data['planId'] ?? '',
       userId: data['userId'] ?? '',
       date: (data['date'] as Timestamp).toDate(),
-      hour: data['hour'] ?? 0,
+      hour: data['hour'] ?? (commonPart?.startHour ?? 0),
       duration: duration,
       startMinute: startMinute,
       durationMinutes: durationMinutes,
-      description: data['description'] ?? '',
-      color: data['color'],
-      typeFamily: data['typeFamily'],
-      typeSubtype: data['typeSubtype'],
-      details: (data['details'] as Map<String, dynamic>?),
+      description: data['description'] ?? commonPart?.description ?? '',
+      color: data['color'] ?? commonPart?.customColor,
+      typeFamily: data['typeFamily'] ?? commonPart?.family,
+      typeSubtype: data['typeSubtype'] ?? commonPart?.subtype,
+      details: (data['details'] as Map<String, dynamic>?) ?? commonPart?.extraData,
       documents: (data['documents'] as List<dynamic>?)
           ?.map((doc) => EventDocument.fromMap(doc))
           .toList(),
@@ -76,11 +94,13 @@ class Event {
       isDraft: data['isDraft'] ?? false,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      commonPart: commonPart,
+      personalParts: personalParts,
     );
   }
 
   Map<String, dynamic> toFirestore() {
-    return {
+    final map = <String, dynamic>{
       'planId': planId,
       'userId': userId,
       'date': Timestamp.fromDate(date),
@@ -99,6 +119,14 @@ class Event {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
+    // Escribir estructura nueva si está presente
+    if (commonPart != null) {
+      map['commonPart'] = commonPart!.toMap();
+    }
+    if (personalParts != null && personalParts!.isNotEmpty) {
+      map['personalParts'] = personalParts!.map((k, v) => MapEntry(k, v.toMap()));
+    }
+    return map;
   }
 
   Event copyWith({
@@ -120,6 +148,8 @@ class Event {
     bool? isDraft,
     DateTime? createdAt,
     DateTime? updatedAt,
+    EventCommonPart? commonPart,
+    Map<String, EventPersonalPart>? personalParts,
   }) {
     return Event(
       id: id ?? this.id,
@@ -140,6 +170,8 @@ class Event {
       isDraft: isDraft ?? this.isDraft,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      commonPart: commonPart ?? this.commonPart,
+      personalParts: personalParts ?? this.personalParts,
     );
   }
 
@@ -164,7 +196,8 @@ class Event {
         other.typeFamily == typeFamily &&
         other.typeSubtype == typeSubtype &&
         other.documents == documents &&
-        other.isDraft == isDraft;
+        other.isDraft == isDraft &&
+        other.commonPart == commonPart;
   }
 
   @override
@@ -181,7 +214,8 @@ class Event {
         (typeFamily?.hashCode ?? 0) ^
         (typeSubtype?.hashCode ?? 0) ^
         (documents?.hashCode ?? 0) ^
-        isDraft.hashCode;
+        isDraft.hashCode ^
+        (commonPart?.hashCode ?? 0);
   }
 
   // Métodos de utilidad para trabajar con minutos exactos
@@ -296,3 +330,100 @@ class EventDocument {
     return id.hashCode ^ name.hashCode ^ url.hashCode ^ type.hashCode ^ size.hashCode;
   }
 } 
+
+// NUEVOS MODELOS: Parte común y parte personal
+class EventCommonPart {
+  final String description;
+  final DateTime date;
+  final int startHour;
+  final int startMinute;
+  final int durationMinutes;
+  final String? location;
+  final String? notes;
+  final String? family;
+  final String? subtype;
+  final String? customColor;
+  final List<String> participantIds; // participantes incluidos en la parte común
+  final bool isForAllParticipants;
+  final bool isDraft;
+  final Map<String, dynamic>? extraData;
+
+  const EventCommonPart({
+    required this.description,
+    required this.date,
+    required this.startHour,
+    required this.startMinute,
+    required this.durationMinutes,
+    this.location,
+    this.notes,
+    this.family,
+    this.subtype,
+    this.customColor,
+    this.participantIds = const [],
+    this.isForAllParticipants = true,
+    this.isDraft = false,
+    this.extraData,
+  });
+
+  factory EventCommonPart.fromMap(Map<String, dynamic> map) {
+    return EventCommonPart(
+      description: map['description'] ?? '',
+      date: (map['date'] is Timestamp) ? (map['date'] as Timestamp).toDate() : DateTime.parse(map['date'] as String),
+      startHour: map['startHour'] ?? 0,
+      startMinute: map['startMinute'] ?? 0,
+      durationMinutes: map['durationMinutes'] ?? 60,
+      location: map['location'],
+      notes: map['notes'],
+      family: map['family'],
+      subtype: map['subtype'],
+      customColor: map['customColor'],
+      participantIds: (map['participantIds'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
+      isForAllParticipants: map['isForAllParticipants'] ?? true,
+      isDraft: map['isDraft'] ?? false,
+      extraData: map['extraData'] as Map<String, dynamic>?,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'description': description,
+      'date': Timestamp.fromDate(date),
+      'startHour': startHour,
+      'startMinute': startMinute,
+      'durationMinutes': durationMinutes,
+      if (location != null) 'location': location,
+      if (notes != null) 'notes': notes,
+      if (family != null) 'family': family,
+      if (subtype != null) 'subtype': subtype,
+      if (customColor != null) 'customColor': customColor,
+      'participantIds': participantIds,
+      'isForAllParticipants': isForAllParticipants,
+      'isDraft': isDraft,
+      if (extraData != null) 'extraData': extraData,
+    };
+  }
+}
+
+class EventPersonalPart {
+  final String participantId;
+  final Map<String, dynamic>? fields; // campos específicos (asiento, menú, notas...)
+
+  const EventPersonalPart({
+    required this.participantId,
+    this.fields,
+  });
+
+  factory EventPersonalPart.fromMap(Map<String, dynamic> map) {
+    return EventPersonalPart(
+      participantId: map['participantId'] ?? '',
+      fields: map['fields'] as Map<String, dynamic>?,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'participantId': participantId,
+      if (fields != null) 'fields': fields,
+    };
+  }
+}

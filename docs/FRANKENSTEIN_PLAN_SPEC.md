@@ -17,11 +17,31 @@ El plan **"🧟 Frankenstein"** es un plan artificial diseñado específicamente
 - **Generación:** Automática via `DemoDataGenerator`
 - **Disponibilidad:** Solo en modo debug (`kDebugMode`)
 - **Regenerable:** Se puede eliminar y volver a generar
+- **Roles:** Sistema de permisos granulares con Admin, Participante y Observador
 
 **⚠️ REGLAS DE NEGOCIO APLICADAS:**
 - ✅ **Máximo 3 eventos simultáneos** en cualquier momento (validación activa)
 - ✅ **Eventos máximo 24h** de duración
 - ✅ **Sin emojis en nombres** de eventos (desde v2.0)
+- ✅ **Sistema de permisos granulares** con roles específicos
+
+---
+
+## 🔐 **Sistema de Roles y Permisos**
+
+### **Distribución de Roles:**
+- **👑 Administrador 1:** Creador del plan (acceso completo)
+- **👑 Administrador 2:** Primer participante (acceso completo para testing)
+- **👤 Participante 1:** Segundo participante (permisos normales)
+- **👤 Participante 2:** Tercer participante (permisos normales)
+- **👁️ Observador:** Cuarto participante (solo lectura)
+
+### **Casos de Prueba de Permisos:**
+- ✅ **EventDialog:** Campos editables/readonly según rol
+- ✅ **Badges de rol:** Indicadores visuales en UI
+- ✅ **Validación:** Verificación de permisos antes de operaciones
+- ✅ **Cache:** Permisos cacheados para optimización
+- ✅ **Persistencia:** Roles almacenados en Firestore
 
 ---
 
@@ -168,6 +188,9 @@ El plan **"🧟 Frankenstein"** es un plan artificial diseñado específicamente
 - ✅ Diferentes tipos (Hotel, Apartamento, Hostal, Camping)
 - ✅ Colores personalizados (blue, green, orange, purple)
 - ✅ Solapamiento de alojamientos (día 3)
+- ✅ **Iconos visuales:** ➡️ check-in, ⬅️ check-out
+- ✅ **Interacción:** Click para crear/editar alojamientos
+- ✅ **Sistema de tracks:** Alojamientos en tracks de participantes
 
 ---
 
@@ -250,6 +273,9 @@ Usar este checklist para verificar que todas las funcionalidades funcionan:
 - [ ] Solapamiento de alojamientos funciona
 - [ ] Colores se aplican correctamente
 - [ ] Duración en días es correcta
+- [ ] Iconos ➡️⬅️ se muestran en check-in/check-out
+- [ ] Click en alojamiento abre diálogo de edición
+- [ ] Doble click crea nuevo alojamiento
 
 ### **Interacciones:**
 - [ ] Click en evento abre diálogo de edición

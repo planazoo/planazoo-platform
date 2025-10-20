@@ -10,6 +10,11 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/testing/family_users_generator.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
+import 'package:unp_calendario/shared/models/user_role.dart';
+import 'package:unp_calendario/shared/models/permission.dart';
+import 'package:unp_calendario/shared/models/plan_permissions.dart';
+import 'package:unp_calendario/shared/services/permission_service.dart';
+import 'package:unp_calendario/widgets/dialogs/edit_personal_info_dialog.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -45,6 +50,19 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late String _selectedColor;
   late bool _isDraft;
   late List<String> _selectedParticipantIds;
+  bool _canEditGeneral = false;
+  bool _isAdmin = false;
+  bool _isCreator = false;
+  PlanPermissions? _userPermissions;
+  
+  // Campos de información personal
+  late TextEditingController _asientoController;
+  late TextEditingController _menuController;
+  late TextEditingController _preferenciasController;
+  late TextEditingController _numeroReservaController;
+  late TextEditingController _gateController;
+  late TextEditingController _notasPersonalesController;
+  late bool _tarjetaObtenida;
 
   // Colores predefinidos para eventos
   final List<String> _eventColors = [
@@ -82,27 +100,104 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     
     // Inicializar controladores
     _descriptionController = TextEditingController(
-      text: widget.event?.description ?? '',
+      text: widget.event?.commonPart?.description ?? '',
     );
     _typeFamilyController = TextEditingController(
-      text: widget.event?.typeFamily ?? '',
+      text: widget.event?.commonPart?.family ?? '',
     );
     _typeSubtypeController = TextEditingController(
-      text: widget.event?.typeSubtype ?? '',
+      text: widget.event?.commonPart?.subtype ?? '',
     );
     
+    // Inicializar controladores de información personal
+    final currentUser = ref.read(currentUserProvider);
+    final currentUserId = currentUser?.id ?? '';
+    final personalPart = widget.event?.personalParts?[currentUserId];
+    final personalFields = personalPart?.fields ?? {};
+    
+    _asientoController = TextEditingController(
+      text: personalFields['asiento'] ?? '',
+    );
+    _menuController = TextEditingController(
+      text: personalFields['menu'] ?? '',
+    );
+    _preferenciasController = TextEditingController(
+      text: personalFields['preferencias'] ?? '',
+    );
+    _numeroReservaController = TextEditingController(
+      text: personalFields['numeroReserva'] ?? '',
+    );
+    _gateController = TextEditingController(
+      text: personalFields['gate'] ?? '',
+    );
+    _notasPersonalesController = TextEditingController(
+      text: personalFields['notasPersonales'] ?? '',
+    );
+    _tarjetaObtenida = personalFields['tarjetaObtenida'] ?? false;
+    
     // Inicializar valores
-    _selectedDate = widget.initialDate ?? widget.event?.date ?? DateTime.now();
-    _selectedHour = widget.initialHour ?? widget.event?.hour ?? 9;
-    _selectedDuration = widget.event?.duration ?? 1;
-    _selectedStartMinute = widget.event?.startMinute ?? 0;
-    _selectedDurationMinutes = widget.event?.durationMinutes ?? 60;
-    _selectedColor = widget.event?.color ?? 'blue';
-    _isDraft = widget.event?.isDraft ?? false;
+    _selectedDate = widget.initialDate ?? widget.event?.commonPart?.date ?? DateTime.now();
+    _selectedHour = widget.initialHour ?? widget.event?.commonPart?.startHour ?? 9;
+    _selectedDuration = (widget.event?.commonPart?.durationMinutes ?? 60) ~/ 60;
+    _selectedStartMinute = widget.event?.commonPart?.startMinute ?? 0;
+    _selectedDurationMinutes = widget.event?.commonPart?.durationMinutes ?? 60;
+    _selectedColor = widget.event?.commonPart?.customColor ?? 'blue';
+    _isDraft = widget.event?.commonPart?.isDraft ?? false;
     
     // Inicializar participantes seleccionados
-    _selectedParticipantIds = widget.event?.participantTrackIds ?? [];
+    _selectedParticipantIds = widget.event?.commonPart?.participantIds ?? [];
     
+    // Inicializar permisos del usuario
+    _initializePermissions();
+  }
+
+  /// Inicializa los permisos del usuario en el plan
+  Future<void> _initializePermissions() async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser?.id == null || widget.planId == null) return;
+
+    final permissionService = PermissionService();
+    _userPermissions = await permissionService.getUserPermissions(
+      widget.planId!,
+      currentUser!.id,
+    );
+
+    // Si no hay permisos específicos, usar permisos por defecto según el rol
+    if (_userPermissions == null) {
+      // Por defecto, asumir que es participante si no hay permisos específicos
+      _userPermissions = PlanPermissions(
+        planId: widget.planId!,
+        userId: currentUser.id,
+        role: UserRole.participant,
+        permissions: DefaultPermissions.getDefaultPermissions(UserRole.participant),
+        assignedAt: DateTime.now(),
+      );
+    }
+
+    // Determinar permisos de edición
+    final isCreating = widget.event == null;
+    final isOwner = widget.event?.userId == currentUser.id;
+    
+    _isCreator = isOwner;
+    _isAdmin = _userPermissions?.isAdmin ?? false;
+    
+    // Puede editar la parte general si:
+    // - Es admin
+    // - Está creando un evento nuevo
+    // - Es el creador del evento
+    _canEditGeneral = _isAdmin || isCreating || isOwner;
+
+    if (mounted) {
+      setState(() {});
+      
+      // Debug: Mostrar permisos del usuario
+      debugPrint('🔐 Permisos del usuario:');
+      debugPrint('  - Rol: ${_userPermissions?.role.displayName}');
+      debugPrint('  - Es Admin: $_isAdmin');
+      debugPrint('  - Es Creador: $_isCreator');
+      debugPrint('  - Puede editar general: $_canEditGeneral');
+      debugPrint('  - Permisos activos: ${_userPermissions?.permissions.length}');
+    }
   }
 
   @override
@@ -110,37 +205,143 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _descriptionController.dispose();
     _typeFamilyController.dispose();
     _typeSubtypeController.dispose();
+    _asientoController.dispose();
+    _menuController.dispose();
+    _preferenciasController.dispose();
+    _numeroReservaController.dispose();
+    _gateController.dispose();
+    _notasPersonalesController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-        return AlertDialog(
-      title: Text(widget.event == null ? 'Crear Evento' : 'Editar Evento'),
-      content: SingleChildScrollView(
-        child: Column(
+    return AlertDialog(
+      title: Row(
+        children: [
+          Text(widget.event == null ? 'Crear Evento' : 'Editar Evento'),
+          const SizedBox(width: 8),
+          if (_isCreator) 
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade100,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'Creador',
+                style: TextStyle(fontSize: 10, color: Colors.blue),
+              ),
+            ),
+          if (_isAdmin) 
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.red.shade100,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'Admin',
+                style: TextStyle(fontSize: 10, color: Colors.red),
+              ),
+            ),
+        ],
+      ),
+      content: SizedBox(
+        width: 520,
+        child: DefaultTabController(
+          length: _isAdmin ? 3 : 2,
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              TabBar(
+                tabs: [
+                  const Tab(text: 'General'),
+                  const Tab(text: 'Mi información'),
+                  if (_isAdmin) const Tab(text: 'Info de Otros'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 520,
+                child: TabBarView(
+                  children: [
+                    // Tab 1: General (Parte Común)
+                    SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Indicador de permisos
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _canEditGeneral ? Colors.green.shade50 : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _canEditGeneral ? Colors.green.shade200 : Colors.grey.shade300,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _canEditGeneral ? Icons.lock_open : Icons.lock,
+                                  size: 16,
+                                  color: _canEditGeneral ? Colors.green : Colors.grey,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _canEditGeneral ? 'Puedes editar esta información' : 'Solo lectura - información común',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _canEditGeneral ? Colors.green.shade700 : Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
             // Descripción
             TextField(
               controller: _descriptionController,
-          decoration: const InputDecoration(
+              readOnly: !_canEditGeneral,
+              decoration: InputDecoration(
                 labelText: 'Descripción',
                 hintText: 'Nombre del evento',
-                border: OutlineInputBorder(),
+                prefixIcon: Icon(
+                  _canEditGeneral ? Icons.edit : Icons.lock,
+                  color: _canEditGeneral ? Colors.green : Colors.grey,
+                ),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: _canEditGeneral ? Colors.green.shade300 : Colors.grey.shade300,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: _canEditGeneral ? Colors.green.shade300 : Colors.grey.shade300,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: _canEditGeneral ? Colors.green.shade500 : Colors.grey.shade400,
+                  ),
+                ),
+                filled: true,
+                fillColor: _canEditGeneral ? Colors.green.shade50 : Colors.grey.shade50,
               ),
               maxLines: 2,
             ),
             const SizedBox(height: 16),
             
             // Tipo de familia
-            DropdownButtonFormField<String>(
+        DropdownButtonFormField<String>(
               value: _typeFamilyController.text.isEmpty || !_typeFamilies.contains(_typeFamilyController.text) 
                   ? null 
                   : _typeFamilyController.text,
-            decoration: const InputDecoration(
+          decoration: const InputDecoration(
                 labelText: 'Tipo de evento',
-              border: OutlineInputBorder(),
+            border: OutlineInputBorder(),
             ),
               items: _typeFamilies.map((family) {
                 return DropdownMenuItem(
@@ -148,8 +349,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   child: Text(family),
                         );
                       }).toList(),
-                      onChanged: (value) {
-                        setState(() {
+          onChanged: !_canEditGeneral ? null : (value) {
+            setState(() {
                   _typeFamilyController.text = value ?? '';
                   _typeSubtypeController.text = ''; // Reset subtipo
                 });
@@ -159,14 +360,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             
             // Subtipo
             if (_typeFamilyController.text.isNotEmpty)
-              DropdownButtonFormField<String>(
+        DropdownButtonFormField<String>(
                 value: _typeSubtypeController.text.isEmpty || 
                        !(_typeSubtypes[_typeFamilyController.text] ?? []).contains(_typeSubtypeController.text)
                     ? null 
                     : _typeSubtypeController.text,
-                decoration: const InputDecoration(
+          decoration: const InputDecoration(
                   labelText: 'Subtipo',
-                  border: OutlineInputBorder(),
+            border: OutlineInputBorder(),
                 ),
                 items: (_typeSubtypes[_typeFamilyController.text] ?? []).map((subtype) {
                   return DropdownMenuItem(
@@ -174,8 +375,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     child: Text(subtype),
                   );
                 }).toList(),
-                onChanged: (value) {
-                  setState(() {
+          onChanged: !_canEditGeneral ? null : (value) {
+            setState(() {
                     _typeSubtypeController.text = value ?? '';
                   });
                 },
@@ -187,7 +388,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               title: const Text('Es borrador'),
               subtitle: const Text('Los borradores se muestran con menor opacidad'),
               value: _isDraft,
-              onChanged: (value) {
+              onChanged: !_canEditGeneral ? null : (value) {
                 setState(() {
                   _isDraft = value;
                 });
@@ -197,7 +398,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             
             // Fecha - Con estilo editable
             InkWell(
-              onTap: _selectDate,
+              onTap: _canEditGeneral ? _selectDate : null,
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.all(12),
@@ -206,7 +407,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
-                  children: [
+        children: [
                     Icon(Icons.calendar_today, color: Theme.of(context).primaryColor),
                     const SizedBox(width: 12),
                     Expanded(
@@ -234,7 +435,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             
             // Hora - Con estilo editable
             InkWell(
-              onTap: _selectStartTime,
+              onTap: _canEditGeneral ? _selectStartTime : null,
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.all(12),
@@ -243,25 +444,25 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
-                  children: [
+            children: [
                     Icon(Icons.access_time, color: Theme.of(context).primaryColor),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
+              Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
                             'Hora de inicio',
                             style: TextStyle(fontSize: 12, color: Colors.grey),
                           ),
                           const SizedBox(height: 4),
-                          Text(
+                            Text(
                             '${_selectedHour.toString().padLeft(2, '0')}:${_selectedStartMinute.toString().padLeft(2, '0')}',
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     Icon(Icons.edit, size: 20, color: Colors.grey.shade400),
                   ],
                 ),
@@ -271,7 +472,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             
             // Duración - Con estilo editable
             InkWell(
-              onTap: _selectDuration,
+              onTap: _canEditGeneral ? _selectDuration : null,
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.all(12),
@@ -280,25 +481,25 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
-                  children: [
+                children: [
                     Icon(Icons.schedule, color: Theme.of(context).primaryColor),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
                             'Duración',
                             style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
+                        ),
                           const SizedBox(height: 4),
-                          Text(
+                        Text(
                             _formatDuration(_selectedDurationMinutes),
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
                     Icon(Icons.edit, size: 20, color: Colors.grey.shade400),
                   ],
                 ),
@@ -317,8 +518,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 children: _eventColors.map((colorName) {
                   final color = _getColorFromName(colorName);
                   return GestureDetector(
-                    onTap: () {
-                      setState(() {
+                    onTap: !_canEditGeneral ? null : () {
+          setState(() {
                         _selectedColor = colorName;
                       });
                     },
@@ -336,9 +537,147 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     ),
                   );
                 }).toList(),
+                ),
               ),
-            ),
             ],
+          ),
+                    ),
+                    // Tab "Mi información"
+                    SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+                          const SizedBox(height: 16),
+                            Text(
+                            'Información personal para este evento',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Campo: Asiento
+                          TextField(
+                            controller: _asientoController,
+                            decoration: const InputDecoration(
+                              labelText: 'Asiento',
+                              hintText: 'Ej: 12A, Ventana',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.chair),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Campo: Menú/Comida
+                          TextField(
+                            controller: _menuController,
+                            decoration: const InputDecoration(
+                              labelText: 'Menú/Comida',
+                              hintText: 'Ej: Vegetariano, Sin gluten',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.restaurant),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Campo: Preferencias
+                          TextField(
+                            controller: _preferenciasController,
+                      decoration: const InputDecoration(
+                              labelText: 'Preferencias',
+                              hintText: 'Ej: Cerca de la salida, Silencioso',
+                        border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.favorite),
+                            ),
+                            maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+
+                          // Campo: Número de reserva
+                          TextField(
+                            controller: _numeroReservaController,
+                decoration: const InputDecoration(
+                              labelText: 'Número de reserva',
+                              hintText: 'Ej: ABC123, 456789',
+                  border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.confirmation_number),
+                            ),
+              ),
+              const SizedBox(height: 16),
+                          
+                          // Campo: Puerta/Gate
+                          TextField(
+                            controller: _gateController,
+                decoration: const InputDecoration(
+                              labelText: 'Puerta/Gate',
+                              hintText: 'Ej: Gate A12, Puerta 3',
+                  border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.door_front_door),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Switch: Tarjeta obtenida
+                          SwitchListTile.adaptive(
+                            title: const Text('Tarjeta obtenida'),
+                            subtitle: const Text('Marcar si ya tienes la tarjeta/entrada'),
+                            value: _tarjetaObtenida,
+                onChanged: (value) {
+                  setState(() {
+                                _tarjetaObtenida = value;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Campo: Notas personales
+                          TextField(
+                            controller: _notasPersonalesController,
+                            decoration: const InputDecoration(
+                              labelText: 'Notas personales',
+                              hintText: 'Información adicional solo para ti',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.note),
+                            ),
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 24),
+                          
+                          // Info sobre privacidad
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: Row(
+                children: [
+                                Icon(Icons.info_outline, color: Colors.blue.shade700),
+                  const SizedBox(width: 8),
+                  Expanded(
+                                  child: Text(
+                                    'Esta información es solo tuya. Otros participantes no la verán.',
+                          style: TextStyle(
+                                      color: Colors.blue.shade700,
+                            fontSize: 12,
+                                    ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+                    ),
+                    // Tab 3: Info de Otros (Solo Admins)
+                    if (_isAdmin)
+                      _buildOthersInfoTab(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -365,6 +704,202 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ),
       ],
     );
+  }
+
+  /// Construye el tab de información de otros participantes (solo para admins)
+  Widget _buildOthersInfoTab() {
+    final currentUser = ref.read(currentUserProvider);
+    final currentUserId = currentUser?.id ?? '';
+    
+    // Filtrar participantes excluyendo al usuario actual
+    final otherParticipants = _selectedParticipantIds.where((id) => id != currentUserId).toList();
+    
+    if (otherParticipants.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Text(
+            'No hay otros participantes en este evento',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+    
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.admin_panel_settings, color: Colors.orange.shade700),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Como administrador, puedes ver y editar la información personal de otros participantes.',
+                    style: TextStyle(
+                      color: Colors.orange.shade700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...otherParticipants.map((participantId) => _buildParticipantCard(participantId)),
+        ],
+      ),
+    );
+  }
+
+  /// Construye una tarjeta para mostrar/editar la información de un participante
+  Widget _buildParticipantCard(String participantId) {
+    final personalPart = widget.event?.personalParts?[participantId];
+    final personalFields = personalPart?.fields ?? {};
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.person, color: Colors.blue.shade600),
+                const SizedBox(width: 8),
+                FutureBuilder<String>(
+                  future: _getUserDisplayName(participantId),
+                  builder: (context, snapshot) {
+                    final displayName = snapshot.data ?? participantId;
+                    return Text(
+                      displayName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Campos de información personal del participante
+            _buildReadOnlyField('Asiento', personalFields['asiento']),
+            _buildReadOnlyField('Menú', personalFields['menu']),
+            _buildReadOnlyField('Preferencias', personalFields['preferencias']),
+            _buildReadOnlyField('Número de reserva', personalFields['numeroReserva']),
+            _buildReadOnlyField('Gate', personalFields['gate']),
+            _buildReadOnlyField('Tarjeta obtenida', personalFields['tarjetaObtenida'] == true ? 'Sí' : 'No'),
+            _buildReadOnlyField('Notas personales', personalFields['notasPersonales']),
+            
+            const SizedBox(height: 16),
+            // Solo mostrar botón de editar si el usuario tiene permisos
+            if (_userPermissions?.hasPermission(Permission.eventEditOthersPersonal) ?? false)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _editParticipantInfo(participantId),
+                  icon: const Icon(Icons.edit, size: 16),
+                  label: const Text('Editar información'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade100,
+                    foregroundColor: Colors.blue.shade800,
+                  ),
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.lock, color: Colors.grey.shade600, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Sin permisos para editar',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Construye un campo de solo lectura
+  Widget _buildReadOnlyField(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value ?? 'No especificado',
+              style: TextStyle(
+                color: value != null ? Colors.black87 : Colors.grey.shade500,
+                fontStyle: value == null ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Edita la información personal de un participante específico
+  void _editParticipantInfo(String participantId) async {
+    if (widget.event == null || widget.planId == null) return;
+    
+    final participantName = await _getUserDisplayName(participantId);
+    
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => EditPersonalInfoDialog(
+          event: widget.event!,
+          participantId: participantId,
+          participantName: participantName,
+          planId: widget.planId!,
+          onSaved: (updatedEvent) {
+            // Actualizar el evento en el estado local si es necesario
+            setState(() {});
+          },
+        ),
+      );
+    }
   }
 
   Future<void> _selectDate() async {
@@ -404,10 +939,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
+      children: [
               // Opciones rápidas comunes (hasta 3 horas = 180 min)
               const Text('Duración común:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
+        const SizedBox(height: 8),
               ...List.generate(12, (index) {
                 final minutes = (index + 1) * 15; // 15, 30, 45, 60, 75, 90, etc.
                 return ListTile(
@@ -433,7 +968,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               const Divider(),
               const Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Text(
+              child: Text(
                   '💡 Eventos máximo 24h.\nSi necesitas más → usa Alojamientos',
                   style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
                   textAlign: TextAlign.center,
@@ -549,7 +1084,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -600,6 +1135,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   void _saveEvent() {
+    // Validar permisos antes de proceder
+    if (!_canEditGeneral) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No tienes permisos para editar este evento'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (_descriptionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -640,23 +1186,57 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser?.id ?? '';
 
+    // Construir EventCommonPart
+    final commonPart = EventCommonPart(
+      description: _descriptionController.text.trim(),
+      date: _selectedDate,
+      startHour: _selectedHour,
+      startMinute: _selectedStartMinute,
+      durationMinutes: _selectedDurationMinutes,
+      customColor: _selectedColor,
+      family: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
+      subtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
+      isDraft: _isDraft,
+      participantIds: _selectedParticipantIds,
+    );
+
+    // Construir EventPersonalPart para el usuario actual
+    final personalPart = EventPersonalPart(
+      participantId: userId,
+      fields: {
+        'asiento': _asientoController.text.trim().isEmpty ? null : _asientoController.text.trim(),
+        'menu': _menuController.text.trim().isEmpty ? null : _menuController.text.trim(),
+        'preferencias': _preferenciasController.text.trim().isEmpty ? null : _preferenciasController.text.trim(),
+        'numeroReserva': _numeroReservaController.text.trim().isEmpty ? null : _numeroReservaController.text.trim(),
+        'gate': _gateController.text.trim().isEmpty ? null : _gateController.text.trim(),
+        'tarjetaObtenida': _tarjetaObtenida,
+        'notasPersonales': _notasPersonalesController.text.trim().isEmpty ? null : _notasPersonalesController.text.trim(),
+      },
+    );
+
+    // Construir mapa de personalParts (mantener existentes + añadir/actualizar el actual)
+    final Map<String, EventPersonalPart> personalParts = Map.from(widget.event?.personalParts ?? {});
+    personalParts[userId] = personalPart;
+
     final event = Event(
-      id: widget.event?.id, // Mantener el ID original si existe
+      id: widget.event?.id,
       planId: widget.planId ?? '',
       userId: userId,
-      description: _descriptionController.text.trim(),
       date: _selectedDate,
       hour: _selectedHour,
       duration: _selectedDuration,
       startMinute: _selectedStartMinute,
       durationMinutes: _selectedDurationMinutes,
+      description: _descriptionController.text.trim(),
       color: _selectedColor,
       typeFamily: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       typeSubtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
-      isDraft: _isDraft,
       participantTrackIds: _selectedParticipantIds,
+      isDraft: _isDraft,
       createdAt: widget.event?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
+      commonPart: commonPart,
+      personalParts: personalParts,
     );
 
 

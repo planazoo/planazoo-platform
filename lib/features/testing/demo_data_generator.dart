@@ -7,6 +7,8 @@ import 'package:unp_calendario/features/calendar/domain/services/event_service.d
 import 'package:unp_calendario/features/calendar/domain/services/accommodation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/testing/family_users_generator.dart';
+import 'package:unp_calendario/shared/models/user_role.dart';
+import 'package:unp_calendario/shared/services/permission_service.dart';
 
 /// Generador de datos de prueba para el plan "Frankenstein"
 /// 
@@ -20,6 +22,7 @@ class DemoDataGenerator {
   static final EventService _eventService = EventService();
   static final AccommodationService _accommodationService = AccommodationService();
   static final PlanParticipationService _participationService = PlanParticipationService();
+  static final PermissionService _permissionService = PermissionService();
 
   /// Genera el plan completo "Frankenstein" con todos los datos de prueba
   static Future<String?> generateFrankensteinPlan(String userId) async {
@@ -71,14 +74,18 @@ class DemoDataGenerator {
         debugPrint('✅ Participante añadido: $familyUserId');
       }
 
-      // 6. Generar eventos por categoría
+      // 6. Asignar roles de permisos granulares
+      debugPrint('🔐 Asignando roles de permisos granulares...');
+      await _assignPermissionRoles(plan.id!, userId, familyUserIds);
+
+      // 7. Generar eventos por categoría
       await _generateBasicEvents(plan, userId, familyUserIds);
       await _generateOverlappingEvents(plan, userId, familyUserIds);
       await _generateMultiDayEvents(plan, userId, familyUserIds);
       await _generateEventTypes(plan, userId, familyUserIds);
       await _generateEdgeCases(plan, userId, familyUserIds);
 
-      // 7. Generar alojamientos
+      // 8. Generar alojamientos
       await _generateAccommodations(plan, userId, familyUserIds);
 
       debugPrint('🎉 Plan Frankenstein generado exitosamente con ${familyUserIds.length + 1} participantes (1 organizador + ${familyUserIds.length} participantes)!');
@@ -789,22 +796,55 @@ class DemoDataGenerator {
       participantTrackIds = finalParticipants;
     }
 
+    // Construir EventCommonPart
+    final commonPart = EventCommonPart(
+      description: description,
+      date: date,
+      startHour: hour,
+      startMinute: startMinute,
+      durationMinutes: durationMinutes,
+      customColor: color,
+      family: typeFamily,
+      subtype: typeSubtype,
+      isDraft: isDraft,
+      participantIds: participantTrackIds ?? [],
+    );
+
+    // Construir EventPersonalPart para cada participante con datos de ejemplo
+    final Map<String, EventPersonalPart> personalParts = {};
+    for (final participantId in participantTrackIds ?? []) {
+      personalParts[participantId] = EventPersonalPart(
+        participantId: participantId,
+        fields: {
+          'asiento': _generateSampleSeat(typeFamily, typeSubtype),
+          'menu': _generateSampleMenu(typeFamily),
+          'preferencias': _generateSamplePreferences(typeFamily),
+          'numeroReserva': _generateSampleReservationNumber(),
+          'gate': _generateSampleGate(typeFamily),
+          'tarjetaObtenida': _generateSampleCardStatus(),
+          'notasPersonales': _generateSamplePersonalNotes(description, participantId),
+        },
+      );
+    }
+
     final event = Event(
       planId: planId,
       userId: userId,
       date: date,
       hour: hour,
-      startMinute: startMinute,
       duration: (durationMinutes / 60).ceil(),
+      startMinute: startMinute,
       durationMinutes: durationMinutes,
       description: description,
+      color: color,
       typeFamily: typeFamily,
       typeSubtype: typeSubtype,
-      color: color,
-      isDraft: isDraft,
       participantTrackIds: participantTrackIds ?? [],
+      isDraft: isDraft,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
+      commonPart: commonPart,
+      personalParts: personalParts,
     );
 
     // Añadir a la lista de eventos creados para futuras validaciones
@@ -837,6 +877,201 @@ class DemoDataGenerator {
     );
 
     await _accommodationService.saveAccommodation(accommodation);
+  }
+
+  // ==================== GENERADORES DE DATOS PERSONALES ====================
+
+  /// Genera un asiento de ejemplo según el tipo de evento
+  static String? _generateSampleSeat(String? typeFamily, String? typeSubtype) {
+    if (typeFamily == 'Desplazamiento') {
+      switch (typeSubtype) {
+        case 'Avión':
+          return '${_randomInt(1, 30)}${_randomLetter()}'; // Ej: 12A, 25F
+        case 'Tren':
+          return 'Vagón ${_randomInt(1, 8)}, Asiento ${_randomInt(1, 60)}';
+        case 'Autobús':
+          return 'Asiento ${_randomInt(1, 50)}';
+        default:
+          return null;
+      }
+    } else if (typeFamily == 'Actividad') {
+      switch (typeSubtype) {
+        case 'Teatro':
+        case 'Concierto':
+          return 'Fila ${_randomInt(1, 20)}, Asiento ${_randomInt(1, 30)}';
+        default:
+          return null;
+      }
+    }
+    return null;
+  }
+
+  /// Genera un menú de ejemplo según el tipo de evento
+  static String? _generateSampleMenu(String? typeFamily) {
+    if (typeFamily == 'Restauración') {
+      final menus = [
+        'Menú vegetariano',
+        'Sin gluten',
+        'Menú del día',
+        'Especialidad local',
+        'Menú infantil',
+        'Dieta mediterránea',
+      ];
+      return menus[_randomInt(0, menus.length - 1)];
+    } else if (typeFamily == 'Desplazamiento') {
+      final meals = [
+        'Comida vegetariana',
+        'Snack sin azúcar',
+        'Bebida caliente',
+        'Fruta fresca',
+      ];
+      return meals[_randomInt(0, meals.length - 1)];
+    }
+    return null;
+  }
+
+  /// Genera preferencias de ejemplo según el tipo de evento
+  static String? _generateSamplePreferences(String? typeFamily) {
+    final preferences = [
+      'Cerca de la salida',
+      'Zona silenciosa',
+      'Vista panorámica',
+      'Acceso fácil',
+      'Zona familiar',
+      'Sin humo',
+    ];
+    return preferences[_randomInt(0, preferences.length - 1)];
+  }
+
+  /// Genera un número de reserva de ejemplo
+  static String? _generateSampleReservationNumber() {
+    final prefixes = ['ABC', 'XYZ', 'RES', 'BOOK', 'CONF'];
+    final prefix = prefixes[_randomInt(0, prefixes.length - 1)];
+    final number = _randomInt(100000, 999999);
+    return '$prefix$number';
+  }
+
+  /// Genera una puerta/gate de ejemplo según el tipo de evento
+  static String? _generateSampleGate(String? typeFamily) {
+    if (typeFamily == 'Desplazamiento') {
+      final gates = ['Gate A12', 'Gate B8', 'Puerta 3', 'Terminal 2', 'Sala 15'];
+      return gates[_randomInt(0, gates.length - 1)];
+    } else if (typeFamily == 'Actividad') {
+      final entrances = ['Entrada Principal', 'Acceso VIP', 'Puerta Norte', 'Entrada Lateral'];
+      return entrances[_randomInt(0, entrances.length - 1)];
+    }
+    return null;
+  }
+
+  /// Genera el estado de tarjeta obtenida (70% probabilidad de true)
+  static bool _generateSampleCardStatus() {
+    return _randomInt(1, 10) <= 7; // 70% probabilidad
+  }
+
+  /// Genera notas personales de ejemplo
+  static String? _generateSamplePersonalNotes(String description, String participantId) {
+    final notes = [
+      'Recordar llevar documento de identidad',
+      'Confirmar horario 1 hora antes',
+      'Llevar cámara de fotos',
+      'Revisar pronóstico del tiempo',
+      'Coordenadas GPS guardadas',
+      'Contacto de emergencia: +34 600 123 456',
+    ];
+    return notes[_randomInt(0, notes.length - 1)];
+  }
+
+  /// Genera un número aleatorio entre min y max (ambos incluidos)
+  static int _randomInt(int min, int max) {
+    return min + (DateTime.now().millisecondsSinceEpoch % (max - min + 1));
+  }
+
+  /// Genera una letra aleatoria
+  static String _randomLetter() {
+    final letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+    return letters[_randomInt(0, letters.length - 1)];
+  }
+
+  /// Asigna roles de permisos granulares a los usuarios del plan Frankenstein
+  static Future<void> _assignPermissionRoles(String planId, String creatorUserId, List<String> familyUserIds) async {
+    try {
+      // 1. Creador del plan = Administrador (acceso completo)
+      await _permissionService.assignPermissions(
+        planId: planId,
+        userId: creatorUserId,
+        role: UserRole.admin,
+        assignedBy: creatorUserId,
+        metadata: {
+          'assignedReason': 'Plan creator',
+          'frankensteinPlan': true,
+        },
+      );
+      debugPrint('🔐 Admin asignado: $creatorUserId (creador del plan)');
+
+      // 2. Primer participante = Administrador (para testing de múltiples admins)
+      if (familyUserIds.isNotEmpty) {
+        await _permissionService.assignPermissions(
+          planId: planId,
+          userId: familyUserIds[0],
+          role: UserRole.admin,
+          assignedBy: creatorUserId,
+          metadata: {
+            'assignedReason': 'Secondary admin for testing',
+            'frankensteinPlan': true,
+          },
+        );
+        debugPrint('🔐 Admin asignado: ${familyUserIds[0]} (admin secundario)');
+      }
+
+      // 3. Segundo participante = Participante activo (permisos normales)
+      if (familyUserIds.length > 1) {
+        await _permissionService.assignPermissions(
+          planId: planId,
+          userId: familyUserIds[1],
+          role: UserRole.participant,
+          assignedBy: creatorUserId,
+          metadata: {
+            'assignedReason': 'Active participant',
+            'frankensteinPlan': true,
+          },
+        );
+        debugPrint('🔐 Participante asignado: ${familyUserIds[1]}');
+      }
+
+      // 4. Tercer participante = Participante activo (permisos normales)
+      if (familyUserIds.length > 2) {
+        await _permissionService.assignPermissions(
+          planId: planId,
+          userId: familyUserIds[2],
+          role: UserRole.participant,
+          assignedBy: creatorUserId,
+          metadata: {
+            'assignedReason': 'Active participant',
+            'frankensteinPlan': true,
+          },
+        );
+        debugPrint('🔐 Participante asignado: ${familyUserIds[2]}');
+      }
+
+      // 5. Cuarto participante = Observador (solo lectura)
+      if (familyUserIds.length > 3) {
+        await _permissionService.assignPermissions(
+          planId: planId,
+          userId: familyUserIds[3],
+          role: UserRole.observer,
+          assignedBy: creatorUserId,
+          metadata: {
+            'assignedReason': 'Observer for testing read-only access',
+            'frankensteinPlan': true,
+          },
+        );
+        debugPrint('🔐 Observador asignado: ${familyUserIds[3]}');
+      }
+
+      debugPrint('✅ Roles de permisos asignados correctamente');
+    } catch (e) {
+      debugPrint('❌ Error asignando roles de permisos: $e');
+    }
   }
 }
 
