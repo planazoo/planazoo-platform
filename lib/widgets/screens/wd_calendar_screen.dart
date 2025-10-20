@@ -26,6 +26,7 @@ import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.dart';
+import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   final Plan plan;
