@@ -26,6 +26,7 @@ import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_app_bar.dart';
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -73,6 +74,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // Clases para manejar filtros y reordenación
   late final CalendarFilters _calendarFilters;
   late final CalendarTrackReorder _calendarTrackReorder;
+  late final CalendarAppBar _calendarAppBar;
   
   // Número de días visibles simultáneamente (1-7)
   int _visibleDays = 7;
@@ -98,6 +100,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Inicializar clases auxiliares
     _calendarFilters = CalendarFilters(_trackService);
     _calendarTrackReorder = CalendarTrackReorder(_trackService);
+    _calendarAppBar = CalendarAppBar(
+      plan: widget.plan,
+      currentDayGroup: _currentDayGroup,
+      visibleDays: _visibleDays,
+      viewMode: _viewMode,
+      calendarFilters: _calendarFilters,
+      calendarTrackReorder: _calendarTrackReorder,
+    );
     
     // Inicializar usuario actual para filtros
     _currentUserId = _trackService.getVisibleTracks().isNotEmpty 
@@ -269,139 +279,43 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye el AppBar con navegación de días
   PreferredSizeWidget _buildAppBar() {
-    final startDay = _currentDayGroup * _visibleDays + 1;
-    final endDay = startDay + _visibleDays - 1;
-    final totalDays = widget.plan.durationInDays;
+    _updateCalendarAppBar();
     
-    return AppBar(
-      toolbarHeight: 48.0, // Reducido de 56px (por defecto) a 48px
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            onPressed: _currentDayGroup > 0 ? _previousDayGroup : null,
-            icon: const Icon(Icons.chevron_left),
-            tooltip: 'Días anteriores',
+    return _calendarAppBar.buildAppBar(
+      onPreviousDayGroup: _previousDayGroup,
+      onNextDayGroup: _nextDayGroup,
+      onVisibleDaysChanged: (int value) {
+        setState(() {
+          _visibleDays = value;
+          // Resetear al primer grupo si el grupo actual ya no es válido
+          final totalDays = widget.plan.durationInDays;
+          final currentStartDay = _currentDayGroup * _visibleDays + 1;
+          if (currentStartDay > totalDays) {
+            _currentDayGroup = 0;
+          }
+        });
+      },
+      canManageRoles: _canManageRoles,
+      onManageRoles: _showManageRolesDialog,
+      onFilterChanged: (CalendarViewMode result) {
+        setState(() {
+          _viewMode = result;
+        });
+      },
+      onCustomFilter: _showCustomViewDialog,
+      onReorderTracks: _showReorderTracksDialog,
+      onFullscreen: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullScreenCalendarPage(
+              plan: widget.plan,
+              visibleDays: _visibleDays,
+            ),
+            fullscreenDialog: true,
           ),
-          Text(
-            'Días $startDay-${startDay + _visibleDays - 1} de $totalDays ($_visibleDays visibles)',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          IconButton(
-            onPressed: (startDay + _visibleDays - 1) < totalDays ? _nextDayGroup : null,
-            icon: const Icon(Icons.chevron_right),
-            tooltip: 'Días siguientes',
-          ),
-        ],
-      ),
-      actions: [
-        // Control de días visibles
-        PopupMenuButton<int>(
-          icon: const Icon(Icons.tune, color: Colors.white),
-          tooltip: 'Ajustar días visibles',
-          onSelected: (int value) {
-            setState(() {
-              _visibleDays = value;
-              // Resetear al primer grupo si el grupo actual ya no es válido
-              final totalDays = widget.plan.durationInDays;
-              final currentStartDay = _currentDayGroup * _visibleDays + 1;
-              if (currentStartDay > totalDays) {
-                _currentDayGroup = 0;
-              }
-            });
-          },
-          itemBuilder: (BuildContext context) => [
-            PopupMenuItem<int>(
-              value: 1,
-              child: Row(
-                children: [
-                  Icon(Icons.calendar_view_day, size: 16),
-                  const SizedBox(width: 8),
-                  const Text('1 día'),
-                ],
-              ),
-            ),
-            PopupMenuItem<int>(
-              value: 3,
-              child: Row(
-                children: [
-                  Icon(Icons.calendar_view_week, size: 16),
-                  const SizedBox(width: 8),
-                  const Text('3 días'),
-                ],
-              ),
-            ),
-            PopupMenuItem<int>(
-              value: 7,
-              child: Row(
-                children: [
-                  Icon(Icons.calendar_view_month, size: 16),
-                  const SizedBox(width: 8),
-                  const Text('7 días'),
-                ],
-              ),
-            ),
-          ],
-        ),
-        // Gestión de roles (solo para admins)
-        FutureBuilder<bool>(
-          future: _canManageRoles(),
-          builder: (context, snapshot) {
-            if (snapshot.data == true) {
-              return IconButton(
-                icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
-                tooltip: 'Gestión de Roles',
-                onPressed: () => _showManageRolesDialog(),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-        // Acceso rápido a Mi Agenda
-        IconButton(
-          icon: const Icon(Icons.person, color: Colors.white),
-          tooltip: 'Mi Agenda',
-          onPressed: () {
-            setState(() {
-              _viewMode = CalendarViewMode.personal;
-            });
-          },
-        ),
-        // Selector de filtros de vista
-        _calendarFilters.buildFilterMenu(
-          _viewMode,
-          (CalendarViewMode result) {
-            setState(() {
-              _viewMode = result;
-            });
-          },
-          _showCustomViewDialog,
-        ),
-        // Botón para reordenar tracks
-        _calendarTrackReorder.buildReorderButton(_showReorderTracksDialog),
-        // Botón de pantalla completa
-        IconButton(
-          icon: const Icon(Icons.fullscreen, color: Colors.white),
-          tooltip: 'Pantalla completa',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => FullScreenCalendarPage(
-                  plan: widget.plan,
-                  visibleDays: _visibleDays,
-                ),
-                fullscreenDialog: true,
-              ),
-            );
-          },
-        ),
-      ],
-      backgroundColor: AppColorScheme.color1,
-      foregroundColor: Colors.white,
+        );
+      },
     );
   }
 
@@ -3241,7 +3155,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  /// Obtiene los tracks filtrados según el modo de vista actual
+  /// Actualiza la instancia de CalendarAppBar cuando cambian las variables
+  void _updateCalendarAppBar() {
+    _calendarAppBar = CalendarAppBar(
+      plan: widget.plan,
+      currentDayGroup: _currentDayGroup,
+      visibleDays: _visibleDays,
+      viewMode: _viewMode,
+      calendarFilters: _calendarFilters,
+      calendarTrackReorder: _calendarTrackReorder,
+    );
+  }
   List<ParticipantTrack> _getFilteredTracks() {
     return _calendarFilters.getFilteredTracks(
       _viewMode,
