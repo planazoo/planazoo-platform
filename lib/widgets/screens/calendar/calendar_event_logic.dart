@@ -82,9 +82,11 @@ class CalendarEventLogic {
 
   /// Obtiene el color de un evento
   static Color getEventColor(Event event) {
-    final customColor = event.commonPart?.customColor;
-    if (customColor is Color) {
-      return customColor;
+    final customColorString = event.commonPart?.customColor;
+    if (customColorString != null && customColorString.isNotEmpty) {
+      // TODO: Convertir string a Color si es necesario
+      // Por ahora retornamos el color por defecto
+      return AppColorScheme.color1;
     }
     return AppColorScheme.color1;
   }
