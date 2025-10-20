@@ -27,6 +27,14 @@ import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_app_bar.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_event_logic.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_accommodation_logic.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_styles.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_navigation.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_validations.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_calculations.dart';
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -45,10 +53,11 @@ class CalendarScreen extends ConsumerStatefulWidget {
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // Constantes para dimensiones y estilos
-  static const double _accommodationRowHeight = 30.0;
-  static const double _headerHeight = 60.0;
-  static const double _miniHeaderHeight = 40.0;
-  static const double _gridLineOpacity = 0.3;
+  // Constantes para alturas y dimensiones
+  static const double _accommodationRowHeight = CalendarConstants.accommodationRowHeight;
+  static const double _headerHeight = CalendarConstants.headerHeight;
+  static const double _miniHeaderHeight = CalendarConstants.miniHeaderHeight;
+  static const double _gridLineOpacity = CalendarConstants.gridLineOpacity;
   
   // Estado para la navegación de días (grupos dinámicos según días visibles)
   int _currentDayGroup = 0; // Grupo actual (0 = primeros días, 1 = siguientes días, etc.)
@@ -221,10 +230,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final columnWidth = availableWidth / columns.length;
     final filteredTracks = _getFilteredTracks();
     final participantCount = filteredTracks.length;
-    final result = columnWidth / participantCount;
-    
-    
-    return result;
+    return CalendarUtils.getSubColumnWidth(columnWidth, participantCount);
   }
 
   /// Sincroniza el scroll desde la columna de horas hacia los datos
@@ -774,21 +780,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Determina si un alojamiento debe mostrarse en un track específico
   bool _shouldShowAccommodationInTrack(Accommodation accommodation, int trackIndex) {
-    // Si no tiene participantes asignados, mostrar en el primer track
-    if (accommodation.participantTrackIds.isEmpty) {
-      return trackIndex == 0;
-    }
-    
-    // Obtener el track actual
     final visibleTracks = _getFilteredTracks();
     if (trackIndex >= visibleTracks.length) return false;
     
     final currentTrack = visibleTracks[trackIndex];
-    final shouldShow = accommodation.participantTrackIds.contains(currentTrack.participantId);
-    
-    
-    // Verificar si el track actual está en la lista de participantes del alojamiento
-    return shouldShow;
+    return CalendarAccommodationLogic.shouldShowAccommodationInTrack(accommodation, currentTrack);
   }
 
   /// Construye las filas de datos (horas)
@@ -2056,14 +2052,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (trackIndex >= visibleTracks.length) return false;
     
     final track = visibleTracks[trackIndex];
-    
-    // Si el evento no tiene participantes definidos, mostrar en el primer track
-    if (event.participantTrackIds.isEmpty) {
-      return trackIndex == 0;
-    }
-    
-    // Verificar si este track corresponde a uno de los participantes del evento
-    return event.participantTrackIds.contains(track.participantId);
+    return CalendarEventLogic.shouldShowEventInTrack(event, track);
   }
 
   /// Obtiene todos los grupos de tracks consecutivos donde se muestra un evento
