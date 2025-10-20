@@ -27,6 +27,7 @@ import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_app_bar.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_grid_renderer.dart';
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -75,6 +76,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   late final CalendarFilters _calendarFilters;
   late final CalendarTrackReorder _calendarTrackReorder;
   CalendarAppBar? _calendarAppBar;
+  CalendarGridRenderer? _calendarGridRenderer;
   
   // Número de días visibles simultáneamente (1-7)
   int _visibleDays = 7;
@@ -3164,6 +3166,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       viewMode: _viewMode,
       calendarFilters: _calendarFilters,
       calendarTrackReorder: _calendarTrackReorder,
+    );
+  }
+
+  /// Actualiza la instancia de CalendarGridRenderer cuando cambian las variables
+  void _updateCalendarGridRenderer() {
+    _calendarGridRenderer = CalendarGridRenderer(
+      plan: widget.plan,
+      currentDayGroup: _currentDayGroup,
+      visibleDays: _visibleDays,
+      viewMode: _viewMode,
+      filteredTracks: _getFilteredTracks(),
+      events: [], // TODO: Obtener eventos del servicio
+      accommodations: [], // TODO: Obtener alojamientos del servicio
     );
   }
   List<ParticipantTrack> _getFilteredTracks() {
