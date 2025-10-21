@@ -10,14 +10,14 @@
 - **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (2 completadas, 2 pendientes)
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
 - **GRUPO 5:** T40-T45, T81, T82: Timezones (8 pendientes)
-- **GRUPO 6:** T77-T80, T83-T90: Funcionalidades Avanzadas (1 completada, 11 pendientes)
+- **GRUPO 6:** T77-T80, T83-T90: Funcionalidades Avanzadas (3 completadas, 9 pendientes)
 - **Tareas Antiguas:** T18-T38: Varias pendientes (15 tareas)
 - **Seguridad:** T51-T53: Validación (3 pendientes)
 - **Participantes:** T47-T50: Sistema básico (4 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
 
-**Total: 66 tareas documentadas (38 completadas, 28 pendientes)**
+**Total: 66 tareas documentadas (40 completadas, 26 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -895,91 +895,6 @@ Para ADMINS, aparece tab adicional:
 
 ## 🌐 VISTAS FILTRADAS Y TIMEZONE POR PARTICIPANTE - Serie de Tareas (T78-T82)
 
-### T78 - Vista "Mi Agenda" (Solo mis eventos)
-**Estado:** Pendiente  
-**Complejidad:** ⚠️ Baja  
-**Prioridad:** 🟠 Alta  
-**Depende de:** T69, T71  
-**Descripción:** Implementar vista simplificada "Mi Agenda" que muestra solo el track del usuario actual con sus eventos.
-
-**Concepto clave:**
-- Vista personal y simplificada
-- Solo 1 track (el del usuario)
-- Solo eventos donde el usuario participa
-- Sin scroll horizontal
-- Más espacio para eventos
-
-**UI esperada:**
-```
-┌─────────────────────────────────┐
-│ 📅 Mi Agenda - Juan             │
-├─────┬───────────────────────────┤
-│00:00│                           │
-│...  │                           │
-│09:00│ 🍽️ Desayuno              │
-│10:00│ 🏛️ Museo                 │
-│...  │                           │
-│20:00│ 🍽️ Cena                  │
-└─────┴───────────────────────────┘
-```
-
-**Criterios de aceptación:**
-- Botón/Toggle para activar vista "Mi Agenda"
-- Mostrar solo track del usuario actual
-- Filtrar eventos: solo donde `participantIds.contains(currentUserId)`
-- Ancho completo para el track (sin scroll horizontal)
-- Header personalizado: "Mi Agenda - [Nombre]"
-- Eventos multi-participante se muestran pero sin span
-- Opción para volver a "Plan Completo"
-
-**Archivos a modificar:**
-- `lib/widgets/screens/wd_calendar_screen.dart`
-- `lib/widgets/wd_track_filter_selector.dart`
-
----
-
-### T79 - Vista "Plan Completo" (Todos los tracks)
-**Estado:** Pendiente  
-**Complejidad:** ⚠️ Baja  
-**Prioridad:** 🟠 Alta  
-**Depende de:** T69, T71  
-**Descripción:** Implementar vista "Plan Completo" que muestra todos los tracks de todos los participantes con eventos multi-participante visibles.
-
-**Concepto clave:**
-- Vista de organizador/admin
-- Todos los tracks visibles
-- Eventos multi-participante con span horizontal
-- Scroll horizontal para navegar
-- Vista más compleja pero completa
-
-**UI esperada:**
-```
-┌──────────────────────────────────────────┐
-│ 📅 Plan Completo - Vacaciones Europa     │
-├─────┬────────┬────────┬────────┬─────────┤
-│Horas│  Juan  │ María  │ Pedro  │  Ana    │
-├─────┼────────┼────────┼────────┼─────────┤
-│09:00│ ✈️ Vuelo Barcelona - Londres──────┤│         │
-│     │ (evento multi-participante)       │         │
-│10:00│        │        │        │         │
-│...  │        │ 🛍️ Shop│        │         │
-└─────┴────────┴────────┴────────┴─────────┘
-```
-
-**Criterios de aceptación:**
-- Botón/Toggle para activar vista "Plan Completo"
-- Cargar todos los tracks del plan
-- Mostrar eventos multi-participante con span
-- Scroll horizontal funcional
-- Header con nombres de todos los participantes
-- Indicador de cantidad de tracks visibles
-- Opción para cambiar a otras vistas
-
-**Archivos a modificar:**
-- `lib/widgets/screens/wd_calendar_screen.dart`
-- `lib/widgets/wd_track_filter_selector.dart`
-
----
 
 ### T80 - Vista "Personalizada" (Seleccionar tracks)
 **Estado:** Pendiente  

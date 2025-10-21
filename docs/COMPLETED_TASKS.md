@@ -4,6 +4,69 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T78 - Vista "Mi Agenda" (Solo mis eventos)
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación de vista simplificada "Mi Agenda" que muestra solo el track del usuario actual con sus eventos, proporcionando una vista personal y simplificada del calendario.
+
+**Criterios de aceptación:**
+- ✅ Botón/Toggle para activar vista "Mi Agenda"
+- ✅ Mostrar solo track del usuario actual
+- ✅ Filtrar eventos: solo donde `participantIds.contains(currentUserId)`
+- ✅ Ancho completo para el track (sin scroll horizontal)
+- ✅ Header personalizado: "Mi Agenda - [Nombre]"
+- ✅ Eventos multi-participante se muestran pero sin span
+- ✅ Opción para volver a "Plan Completo"
+
+**Implementación técnica:**
+- ✅ `CalendarViewMode.personal` - Modo de vista personal
+- ✅ `CalendarFilters.getFilteredTracks()` - Lógica de filtrado por usuario
+- ✅ Integración en `CalendarScreen` con `_viewMode`
+- ✅ PopupMenuButton en AppBar para selección de vista
+- ✅ Filtrado dinámico de eventos según vista seleccionada
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/models/calendar_view_mode.dart` - Enum de modos de vista
+- ✅ `lib/widgets/screens/calendar/calendar_filters.dart` - Lógica de filtrado
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Integración en UI
+
+**Resultado:**
+Los usuarios pueden cambiar a una vista personal simplificada que muestra solo sus eventos, proporcionando una experiencia más enfocada y menos abrumadora cuando solo necesitan ver su propia agenda.
+
+---
+
+## T79 - Vista "Plan Completo" (Todos los tracks)
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación de vista "Plan Completo" que muestra todos los tracks de todos los participantes con eventos multi-participante visibles, proporcionando una vista completa del plan para organizadores y administradores.
+
+**Criterios de aceptación:**
+- ✅ Botón/Toggle para activar vista "Plan Completo"
+- ✅ Cargar todos los tracks del plan
+- ✅ Mostrar eventos multi-participante con span
+- ✅ Scroll horizontal funcional
+- ✅ Header con nombres de todos los participantes
+- ✅ Indicador de cantidad de tracks visibles
+- ✅ Opción para cambiar a otras vistas
+
+**Implementación técnica:**
+- ✅ `CalendarViewMode.all` - Modo de vista completa
+- ✅ `CalendarFilters.getFilteredTracks()` - Lógica de filtrado para todos los tracks
+- ✅ Integración en `CalendarScreen` con `_viewMode`
+- ✅ PopupMenuButton en AppBar para selección de vista
+- ✅ Scroll horizontal para navegación entre tracks
+- ✅ Renderizado de eventos multi-participante con span
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/models/calendar_view_mode.dart` - Enum de modos de vista
+- ✅ `lib/widgets/screens/calendar/calendar_filters.dart` - Lógica de filtrado
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Integración en UI
+
+**Resultado:**
+Los organizadores y administradores pueden ver una vista completa del plan con todos los participantes y eventos multi-participante, facilitando la gestión y coordinación del plan completo.
+
+---
+
 ## T77 - Indicadores Visuales de Permisos en UI
 **Estado:** ✅ Completado  
 **Fecha de finalización:** 21 de octubre de 2025  
