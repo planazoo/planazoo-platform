@@ -656,6 +656,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ),
                 ],
               ),
+            ),
           ),
         );
       }).toList(),
