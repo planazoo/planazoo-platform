@@ -5,6 +5,7 @@ import '../models/plan_participation.dart';
 /// Servicio para gestionar los tracks de participantes en el calendario
 class TrackService {
   final List<ParticipantTrack> _tracks = [];
+  final Set<String> _selectedParticipantIds = <String>{};
 
   /// Obtiene todos los tracks ordenados por posición
   List<ParticipantTrack> getAllTracks() {
@@ -15,7 +16,15 @@ class TrackService {
 
   /// Obtiene solo los tracks visibles ordenados por posición
   List<ParticipantTrack> getVisibleTracks() {
-    return getAllTracks().where((track) => track.isVisible).toList();
+    if (_selectedParticipantIds.isEmpty) {
+      // Si no hay selección específica, mostrar todos los tracks que están marcados como visibles
+      return getAllTracks().where((track) => track.isVisible).toList();
+    } else {
+      // Mostrar solo los tracks seleccionados
+      return getAllTracks().where((track) => 
+        track.isVisible && _selectedParticipantIds.contains(track.participantId)
+      ).toList();
+    }
   }
 
   /// Obtiene un track por su ID
@@ -228,19 +237,33 @@ class TrackService {
 
   /// Establece qué tracks están seleccionados para mostrar
   void setSelectedTracks(List<String> selectedParticipantIds) {
-    for (final track in _tracks) {
-      track.isVisible = selectedParticipantIds.contains(track.participantId);
-    }
+    _selectedParticipantIds.clear();
+    _selectedParticipantIds.addAll(selectedParticipantIds);
   }
 
   /// Obtiene los tracks seleccionados actualmente
   List<ParticipantTrack> getSelectedTracks() {
-    return _tracks.where((track) => track.isVisible).toList();
+    if (_selectedParticipantIds.isEmpty) {
+      return getAllTracks().where((track) => track.isVisible).toList();
+    } else {
+      return getAllTracks().where((track) => 
+        _selectedParticipantIds.contains(track.participantId)
+      ).toList();
+    }
   }
 
   /// Obtiene los IDs de participantes seleccionados
   List<String> getSelectedParticipantIds() {
-    return getSelectedTracks().map((track) => track.participantId).toList();
+    if (_selectedParticipantIds.isEmpty) {
+      return getAllTracks().where((track) => track.isVisible).map((track) => track.participantId).toList();
+    } else {
+      return _selectedParticipantIds.toList();
+    }
+  }
+
+  /// Limpia la selección de tracks (muestra todos los visibles)
+  void clearSelection() {
+    _selectedParticipantIds.clear();
   }
 
   /// Obtiene estadísticas de los tracks

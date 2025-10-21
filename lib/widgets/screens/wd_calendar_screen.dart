@@ -3193,7 +3193,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _calendarTrackReorder.showParticipantManagementDialog(
       context,
       widget.plan.id!,
-      widget.currentUserId,
+      _currentUserId ?? '',
       () {
         // Callback para reordenación
         setState(() {});

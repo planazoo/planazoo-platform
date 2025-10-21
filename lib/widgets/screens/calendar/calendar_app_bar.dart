@@ -131,8 +131,8 @@ class CalendarAppBar {
         onCustomFilter,
       ),
       
-      // Botón para reordenar tracks
-      calendarTrackReorder.buildReorderButton(onReorderTracks),
+      // Botón para gestionar participantes
+      calendarTrackReorder.buildParticipantManagementButton(onReorderTracks),
       
       // Botón de pantalla completa
       IconButton(
