@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T96**
+**Siguiente código de tarea: T100**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -16,8 +16,9 @@
 - **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
+- **Testing y Mantenimiento:** T96-T99: Refactoring, testing y documentación (4 pendientes)
 
-**Total: 64 tareas documentadas (57 completadas, 7 pendientes)**
+**Total: 68 tareas documentadas (57 completadas, 11 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -1303,5 +1304,290 @@ Al desplegar:
 - `lib/widgets/screens/wd_calendar_screen.dart`
 - `lib/widgets/wd_event_dialog.dart`
 - `lib/app/theme/text_theme.dart` (si existe)
+
+---
+
+## 🧪 TESTING Y MANTENIMIENTO - Serie de Tareas (T96-T99)
+
+### T96 - Refactoring de CalendarScreen
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Alta  
+**Prioridad:** 🔴 Alta  
+**Depende de:** T80  
+**Descripción:** Dividir `wd_calendar_screen.dart` (3000+ líneas) en componentes más pequeños y mantenibles.
+
+**Problema actual:**
+- Archivo monolítico de 3000+ líneas
+- Difícil mantenimiento y debugging
+- Violación de principios SOLID
+- Testing complejo
+
+**Componentes propuestos:**
+```
+CalendarScreen (orchestrator)
+├── CalendarHeader (AppBar + navegación)
+├── CalendarGrid (estructura base)
+├── CalendarTracks (columnas de participantes)
+├── CalendarEvents (eventos y overlays)
+├── CalendarInteractions (drag & drop, clicks)
+└── CalendarUtils (helpers y cálculos)
+```
+
+**Criterios de aceptación:**
+- Dividir en al menos 6 componentes independientes
+- Mantener funcionalidad exacta actual
+- Mejorar legibilidad y mantenibilidad
+- Facilitar testing individual
+- Reducir complejidad ciclomática
+
+**Archivos a crear:**
+- `lib/widgets/screens/calendar/components/calendar_header.dart`
+- `lib/widgets/screens/calendar/components/calendar_grid.dart`
+- `lib/widgets/screens/calendar/components/calendar_tracks.dart`
+- `lib/widgets/screens/calendar/components/calendar_events.dart`
+- `lib/widgets/screens/calendar/components/calendar_interactions.dart`
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_calendar_screen.dart` (refactorizar)
+
+---
+
+### T97 - Testing de Integración
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🔴 Alta  
+**Depende de:** T96  
+**Descripción:** Implementar tests de integración para funcionalidades críticas del calendario.
+
+**Funcionalidades a testear:**
+- Creación y gestión de planes
+- Sistema de tracks y participantes
+- Eventos con parte común/personal
+- Filtros y vistas (T80)
+- Sincronización de eventos
+- Permisos y roles
+
+**Criterios de aceptación:**
+- Tests de integración para flujos completos
+- Tests de regresión para funcionalidades existentes
+- Cobertura mínima del 80% en funcionalidades críticas
+- Tests automatizados en CI/CD
+- Documentación de casos de prueba
+
+**Archivos a crear:**
+- `test/integration/plan_management_test.dart`
+- `test/integration/event_management_test.dart`
+- `test/integration/track_system_test.dart`
+- `test/integration/permissions_test.dart`
+
+---
+
+### T98 - Plan de Pruebas Detallado
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🔴 Alta  
+**Depende de:** T97  
+**Descripción:** Crear un plan de pruebas exhaustivo que cubra todos los casos edge y posibles fallos de la aplicación.
+
+**Plan de pruebas propuesto:**
+
+#### **1. GESTIÓN DE PLANES**
+**1.1 Crear Plan**
+- ✅ Nombre válido (texto normal)
+- ❌ Nombre vacío (debe mostrar error)
+- ❌ Nombre solo espacios (debe mostrar error)
+- ❌ Nombre muy largo (>100 caracteres)
+- ❌ Caracteres especiales peligrosos (<>'"&)
+- ✅ Fechas válidas (inicio < fin)
+- ❌ Fecha inicio > fecha fin
+- ❌ Fechas en el pasado
+- ❌ Fechas muy futuras (>2 años)
+- ✅ Número de participantes válido (1-20)
+- ❌ Número de participantes inválido (0, negativo, >20)
+
+**1.2 Editar Plan**
+- ✅ Cambiar nombre del plan
+- ✅ Cambiar fechas del plan
+- ✅ Añadir participantes
+- ✅ Eliminar participantes
+- ❌ Eliminar todos los participantes
+- ❌ Eliminar el creador del plan
+- ✅ Cambiar descripción
+- ❌ Cambiar fechas a fechas inválidas
+
+**1.3 Eliminar Plan**
+- ✅ Eliminar plan como creador
+- ❌ Eliminar plan como participante (sin permisos)
+- ❌ Eliminar plan como observador
+- ✅ Confirmar eliminación
+- ❌ Cancelar eliminación
+- ✅ Verificar que se eliminan todos los eventos asociados
+
+#### **2. GESTIÓN DE PARTICIPANTES**
+**2.1 Añadir Participantes**
+- ✅ Añadir participante válido
+- ❌ Añadir participante duplicado
+- ❌ Añadir participante con email inválido
+- ❌ Añadir más de 20 participantes
+- ✅ Añadir participante como admin
+- ✅ Añadir participante como observador
+
+**2.2 Cambiar Roles**
+- ✅ Promover a admin (máximo 3)
+- ❌ Promover a admin cuando ya hay 3
+- ✅ Degradar de admin a participante
+- ✅ Cambiar a observador
+- ❌ Degradar al creador del plan
+- ✅ Verificar permisos después del cambio
+
+**2.3 Eliminar Participantes**
+- ✅ Eliminar participante normal
+- ❌ Eliminar último admin
+- ❌ Eliminar creador del plan
+- ✅ Verificar que se eliminan sus eventos personales
+
+#### **3. GESTIÓN DE EVENTOS**
+**3.1 Crear Evento**
+- ✅ Evento básico válido
+- ❌ Evento sin descripción
+- ❌ Evento sin fecha
+- ❌ Evento con fecha inválida
+- ❌ Evento con hora inválida
+- ❌ Evento con duración negativa
+- ❌ Evento con duración muy larga (>24h)
+- ✅ Evento para todos los participantes
+- ✅ Evento para participantes específicos
+- ❌ Evento sin participantes seleccionados
+
+**3.2 Editar Evento**
+- ✅ Editar descripción
+- ✅ Editar fecha y hora
+- ✅ Cambiar participantes
+- ❌ Editar evento de otro usuario (sin permisos)
+- ✅ Editar evento como admin
+- ✅ Editar parte personal del evento
+- ❌ Editar parte común sin permisos
+
+**3.3 Eliminar Evento**
+- ✅ Eliminar evento propio
+- ❌ Eliminar evento de otro usuario (sin permisos)
+- ✅ Eliminar evento como admin
+- ✅ Eliminar evento base (debe eliminar copias)
+- ✅ Verificar eliminación de copias
+
+#### **4. SISTEMA DE TRACKS**
+**4.1 Reordenar Tracks**
+- ✅ Arrastrar y soltar tracks
+- ✅ Mantener orden después de recargar
+- ✅ Verificar que eventos se mueven con tracks
+- ❌ Reordenar con tracks ocultos
+
+**4.2 Seleccionar Tracks**
+- ✅ Seleccionar todos los tracks
+- ✅ Seleccionar tracks específicos
+- ❌ Deseleccionar todos los tracks
+- ❌ Deseleccionar track del usuario actual
+- ✅ Mantener selección después de recargar
+- ✅ Aplicar filtro correctamente
+
+#### **5. VISTAS Y FILTROS**
+**5.1 Vista "Todos"**
+- ✅ Mostrar todos los eventos
+- ✅ Mostrar todos los tracks
+- ✅ Navegación entre días
+
+**5.2 Vista "Personal"**
+- ✅ Mostrar solo eventos del usuario
+- ✅ Ocultar eventos de otros usuarios
+- ✅ Mantener filtro al navegar
+
+**5.3 Vista "Personalizada"**
+- ✅ Seleccionar tracks específicos
+- ✅ Aplicar filtro correctamente
+- ✅ Mantener selección
+- ❌ Deseleccionar todos los tracks
+
+#### **6. CASOS EDGE Y ERRORES**
+**6.1 Conexión de Red**
+- ❌ Crear evento sin conexión
+- ❌ Editar evento sin conexión
+- ❌ Eliminar evento sin conexión
+- ✅ Mostrar mensaje de error apropiado
+- ✅ Reintentar cuando se recupere conexión
+
+**6.2 Datos Corruptos**
+- ❌ Evento con datos inválidos en Firestore
+- ❌ Plan con datos inválidos
+- ❌ Participante con datos inválidos
+- ✅ Manejar errores gracefully
+- ✅ Mostrar mensaje de error claro
+
+**6.3 Límites del Sistema**
+- ❌ Crear más de 100 eventos por día
+- ❌ Crear evento con descripción muy larga (>1000 caracteres)
+- ❌ Crear evento con muchos participantes (>50)
+- ✅ Mostrar límites apropiados
+
+**6.4 Concurrencia**
+- ✅ Dos usuarios editando el mismo evento
+- ✅ Dos usuarios añadiendo participantes simultáneamente
+- ✅ Dos usuarios cambiando roles simultáneamente
+- ✅ Resolver conflictos correctamente
+
+#### **7. PERFORMANCE**
+**7.1 Carga de Datos**
+- ✅ Plan con muchos eventos (100+)
+- ✅ Plan con muchos participantes (20)
+- ✅ Navegación rápida entre días
+- ✅ Carga inicial del calendario
+
+**7.2 Interacciones**
+- ✅ Scroll suave en calendario
+- ✅ Drag & drop fluido
+- ✅ Apertura rápida de modales
+- ✅ Respuesta rápida a clicks
+
+**Criterios de aceptación:**
+- Documentar cada caso de prueba
+- Crear tests automatizados para casos críticos
+- Documentar casos de fallo esperados
+- Crear guía de testing manual
+- Establecer métricas de performance
+
+**Archivos a crear:**
+- `docs/TESTING_PLAN.md` - Plan detallado de pruebas
+- `test/manual_testing_guide.md` - Guía de testing manual
+- `test/performance_benchmarks.md` - Benchmarks de performance
+
+---
+
+### T99 - Documentación de API
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟡 Baja  
+**Depende de:** T98  
+**Descripción:** Documentar APIs, servicios y modelos para facilitar mantenimiento y onboarding.
+
+**Documentación a crear:**
+- EventService API
+- TrackService API
+- PermissionService API
+- EventSyncService API
+- Modelos de datos (Event, ParticipantTrack, etc.)
+- Guía de arquitectura
+- Guía de contribución
+
+**Criterios de aceptación:**
+- Documentar todos los servicios públicos
+- Incluir ejemplos de uso
+- Documentar parámetros y retornos
+- Crear diagramas de arquitectura
+- Guía de contribución clara
+
+**Archivos a crear:**
+- `docs/API_DOCUMENTATION.md`
+- `docs/ARCHITECTURE.md`
+- `docs/CONTRIBUTING.md`
+- `docs/SERVICE_EXAMPLES.md`
 
 ---
