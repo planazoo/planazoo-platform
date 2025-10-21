@@ -629,23 +629,28 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         final initial = _getParticipantInitials(participant.participantName, participant.position);
             
         return Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-            decoration: BoxDecoration(
-              // Agregar línea vertical derecha para separar tracks (excepto el último)
-              border: isLastTrack 
-                  ? null 
-                  : _createGridBorder(),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  initial,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+          child: GestureDetector(
+            onTap: () {
+              // Abrir modal de gestión de participantes al hacer click en el header
+              _showParticipantManagementDialog();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+              decoration: BoxDecoration(
+                // Agregar línea vertical derecha para separar tracks (excepto el último)
+                border: isLastTrack 
+                    ? null 
+                    : _createGridBorder(),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                   ),
                   textAlign: TextAlign.center,
                 ),

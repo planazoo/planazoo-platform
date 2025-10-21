@@ -27,30 +27,7 @@ class CalendarTrackReorder {
           content: SizedBox(
             width: 500,
             height: 400,
-            child: DefaultTabController(
-              length: 3,
-              child: Column(
-                children: [
-                  const TabBar(
-                    tabs: [
-                      Tab(text: 'Reordenar', icon: Icon(Icons.swap_vert)),
-                      Tab(text: 'Seleccionar', icon: Icon(Icons.checklist)),
-                      Tab(text: 'Todos', icon: Icon(Icons.visibility)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        _buildReorderTab(tracks, setDialogState),
-                        _buildSelectTab(tracks, selectedTracks, currentUserId, setDialogState),
-                        _buildViewAllTab(tracks, currentUserId),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            child: _buildUnifiedView(tracks, selectedTracks, currentUserId, setDialogState),
           ),
           actions: [
             TextButton(
@@ -59,18 +36,12 @@ class CalendarTrackReorder {
             ),
             ElevatedButton(
               onPressed: () {
-                // Aplicar cambios según el tab activo
-                final tabController = DefaultTabController.of(context);
-                if (tabController.index == 0) {
-                  // Reordenar
-                  final newOrderIds = tracks.map((track) => track.participantId).toList();
-                  _trackService.reorderTracksByParticipantIds(newOrderIds);
-                  onReorderComplete();
-                } else if (tabController.index == 1) {
-                  // Seleccionar
-                  _trackService.setSelectedTracks(selectedTracks.toList());
-                  onSelectionComplete();
-                }
+                // Aplicar cambios de reordenación y selección
+                final newOrderIds = tracks.map((track) => track.participantId).toList();
+                _trackService.reorderTracksByParticipantIds(newOrderIds);
+                _trackService.setSelectedTracks(selectedTracks.toList());
+                onReorderComplete();
+                onSelectionComplete();
                 Navigator.pop(context);
               },
               child: const Text('Aplicar'),
@@ -81,35 +52,8 @@ class CalendarTrackReorder {
     );
   }
 
-  /// Tab de reordenación (funcionalidad original)
-  Widget _buildReorderTab(List<ParticipantTrack> tracks, StateSetter setDialogState) {
-    return ReorderableListView.builder(
-      itemCount: tracks.length,
-      onReorder: (int oldIndex, int newIndex) {
-        setDialogState(() {
-          if (oldIndex < newIndex) {
-            newIndex -= 1;
-          }
-          final item = tracks.removeAt(oldIndex);
-          tracks.insert(newIndex, item);
-        });
-      },
-      itemBuilder: (context, index) {
-        final track = tracks[index];
-        return ListTile(
-          key: ValueKey(track.id),
-          leading: const Icon(Icons.drag_indicator),
-          title: Text(track.participantName.isNotEmpty 
-              ? track.participantName 
-              : 'Participante ${index + 1}'),
-          subtitle: Text('Track ${index + 1}'),
-        );
-      },
-    );
-  }
-
-  /// Tab de selección (nueva funcionalidad T80)
-  Widget _buildSelectTab(
+  /// Vista unificada con drag & drop + checkboxes
+  Widget _buildUnifiedView(
     List<ParticipantTrack> tracks, 
     Set<String> selectedTracks, 
     String currentUserId,
@@ -117,10 +61,14 @@ class CalendarTrackReorder {
   ) {
     return Column(
       children: [
+        // Botones de selección rápida
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Seleccionar participantes a mostrar:'),
+            const Text(
+              'Arrastra para reordenar • Marca para seleccionar',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
             Row(
               children: [
                 TextButton(
@@ -146,54 +94,85 @@ class CalendarTrackReorder {
           ],
         ),
         const SizedBox(height: 8),
+        
+        // Lista con drag & drop + checkboxes
         Expanded(
-          child: ListView.builder(
+          child: ReorderableListView.builder(
             itemCount: tracks.length,
+            onReorder: (int oldIndex, int newIndex) {
+              setDialogState(() {
+                if (oldIndex < newIndex) {
+                  newIndex -= 1;
+                }
+                final item = tracks.removeAt(oldIndex);
+                tracks.insert(newIndex, item);
+              });
+            },
             itemBuilder: (context, index) {
               final track = tracks[index];
               final isSelected = selectedTracks.contains(track.participantId);
               final isCurrentUser = track.participantId == currentUserId;
               
-              return CheckboxListTile(
-                value: isSelected,
-                onChanged: isCurrentUser ? null : (value) {
-                  setDialogState(() {
-                    if (value == true) {
-                      selectedTracks.add(track.participantId);
-                    } else {
-                      selectedTracks.remove(track.participantId);
-                    }
-                  });
-                },
-                title: Row(
-                  children: [
-                    Text(track.participantName.isNotEmpty 
-                        ? track.participantName 
-                        : 'Participante ${index + 1}'),
-                    if (isCurrentUser) ...[
+              return Container(
+                key: ValueKey(track.id),
+                margin: const EdgeInsets.symmetric(vertical: 2),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                  color: isSelected ? Colors.blue.shade50 : Colors.white,
+                ),
+                child: ListTile(
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.drag_indicator, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'TÚ',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
+                      Checkbox(
+                        value: isSelected,
+                        onChanged: isCurrentUser ? null : (value) {
+                          setDialogState(() {
+                            if (value == true) {
+                              selectedTracks.add(track.participantId);
+                            } else {
+                              selectedTracks.remove(track.participantId);
+                            }
+                          });
+                        },
                       ),
                     ],
-                  ],
+                  ),
+                  title: Row(
+                    children: [
+                      Text(track.participantName.isNotEmpty 
+                          ? track.participantName 
+                          : 'Participante ${index + 1}'),
+                      if (isCurrentUser) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'TÚ',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  subtitle: Text('Track ${index + 1}'),
+                  trailing: isCurrentUser 
+                      ? const Icon(Icons.person, color: Colors.blue)
+                      : const Icon(Icons.person_outline),
                 ),
-                subtitle: Text('Track ${index + 1}'),
-                secondary: isCurrentUser 
-                    ? const Icon(Icons.person, color: Colors.blue)
-                    : const Icon(Icons.person_outline),
               );
             },
           ),
         ),
+        
+        // Validación
         if (selectedTracks.isEmpty)
           const Padding(
             padding: EdgeInsets.all(16.0),
@@ -203,46 +182,6 @@ class CalendarTrackReorder {
             ),
           ),
       ],
-    );
-  }
-
-  /// Tab de vista de todos (solo lectura)
-  Widget _buildViewAllTab(List<ParticipantTrack> tracks, String currentUserId) {
-    return ListView.builder(
-      itemCount: tracks.length,
-      itemBuilder: (context, index) {
-        final track = tracks[index];
-        final isCurrentUser = track.participantId == currentUserId;
-        
-        return ListTile(
-          leading: isCurrentUser 
-              ? const Icon(Icons.person, color: Colors.blue)
-              : const Icon(Icons.person_outline),
-          title: Row(
-            children: [
-              Text(track.participantName.isNotEmpty 
-                  ? track.participantName 
-                  : 'Participante ${index + 1}'),
-              if (isCurrentUser) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'TÚ',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          subtitle: Text('Track ${index + 1}'),
-          trailing: const Icon(Icons.visibility, color: Colors.grey),
-        );
-      },
     );
   }
 
