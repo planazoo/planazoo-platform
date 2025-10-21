@@ -385,6 +385,37 @@ Interacción de tap en alojamientos completamente funcional, permitiendo crear y
 
 ---
 
+## T46 - Modelo Event: Añadir participantes y campos multiusuario
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Modificación del modelo Event para incluir sistema de participantes, permitiendo gestionar qué participantes del plan están incluidos en cada evento.
+
+**Criterios de aceptación:**
+- ✅ Añadir `participantIds` (List<String>) al modelo Event
+- ✅ Añadir `isForAllParticipants` (bool) al modelo Event
+- ✅ Modificar `toFirestore()` para guardar nuevos campos
+- ✅ Modificar `fromFirestore()` para leer nuevos campos (con compatibilidad hacia atrás)
+- ✅ Actualizar `copyWith()` para incluir nuevos campos
+- ✅ Actualizar `==` operator y `hashCode`
+- ✅ Migración suave: eventos existentes se interpretan como `isForAllParticipants = true`
+- ✅ Testing: crear evento con todos los participantes vs solo algunos
+
+**Implementación técnica:**
+- ✅ Campos implementados en `EventCommonPart` como parte de T74
+- ✅ `participantIds` - Lista de IDs de participantes incluidos
+- ✅ `isForAllParticipants` - Boolean para indicar si es para todos o seleccionados
+- ✅ Valores por defecto: `participantIds = []`, `isForAllParticipants = true`
+- ✅ Compatibilidad hacia atrás mantenida
+- ✅ Integración con sistema de permisos
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/models/event.dart` - EventCommonPart
+
+**Resultado:**
+Sistema de participantes completamente implementado, permitiendo eventos para todos los participantes o solo para seleccionados, con compatibilidad hacia atrás y integración con el sistema de permisos.
+
+---
+
 ## T78 - Vista "Mi Agenda" (Solo mis eventos)
 **Estado:** ✅ Completado  
 **Fecha de finalización:** 21 de octubre de 2025  

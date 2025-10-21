@@ -7,7 +7,7 @@
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
 - **GRUPO 2:** T71, T73: Filtros y Control (2 completadas)
-- **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (2 completadas, 2 pendientes)
+- **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (3 completadas, 1 pendiente)
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
 - **GRUPO 5:** T40-T45, T81, T82: Timezones (8 pendientes)
 - **GRUPO 6:** T77-T80, T83-T90: Funcionalidades Avanzadas (3 completadas, 9 pendientes)
@@ -17,7 +17,7 @@
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
 
-**Total: 66 tareas documentadas (53 completadas, 13 pendientes)**
+**Total: 66 tareas documentadas (54 completadas, 12 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -1188,46 +1188,6 @@ Al desplegar:
 
 **📌 Nota:** Se recomienda implementar T40-T45 (Timezones) ANTES de esta serie, ya que cada participante puede tener su timezone local.
 
-### T46 - Modelo Event: Añadir participantes y campos multiusuario
-**Estado:** Pendiente  
-**Complejidad:** ⚠️ Media  
-**Prioridad:** 🔴 Bloqueante para T47-T50  
-**Descripción:** Modificar el modelo Event para incluir sistema de participantes. Añadir campos para gestionar qué participantes del plan están incluidos en cada evento.
-
-**Concepto clave:** Un evento puede ser para:
-- **Todos los participantes del plan** (por defecto) - `isForAllParticipants = true`
-- **Solo algunos participantes seleccionados** - `isForAllParticipants = false` + lista `participantIds`
-- El `userId` sigue siendo el creador/propietario del evento
-
-**Campos a añadir:**
-```dart
-class Event {
-  final String userId;                    // Creador (ya existe)
-  final List<String> participantIds;      // NUEVO: IDs de participantes incluidos
-  final bool isForAllParticipants;        // NUEVO: true = todos, false = solo seleccionados
-  // ... resto de campos existentes
-}
-```
-
-**Criterios de aceptación:**
-- Añadir `participantIds` (List<String>, nullable o vacía por defecto) al modelo Event
-- Añadir `isForAllParticipants` (bool, default: true) al modelo Event
-- Modificar `toFirestore()` para guardar nuevos campos
-- Modificar `fromFirestore()` para leer nuevos campos (con compatibilidad hacia atrás)
-- Actualizar `copyWith()` para incluir nuevos campos
-- Actualizar `==` operator y `hashCode`
-- **Migración suave:** Eventos existentes sin estos campos se interpretan como `isForAllParticipants = true`
-- Testing: crear evento con todos los participantes vs solo algunos
-
-**Archivos a modificar:**
-- `lib/features/calendar/domain/models/event.dart`
-
-**Reglas de negocio:**
-- Si `isForAllParticipants = true` → `participantIds` puede estar vacía (se ignora)
-- Si `isForAllParticipants = false` → `participantIds` debe tener al menos 1 ID (el creador por defecto)
-- El creador (`userId`) siempre está incluido implícitamente
-
----
 
 ## T35 - Copiar y pegar eventos en el calendario
 **Estado:** Pendiente  
