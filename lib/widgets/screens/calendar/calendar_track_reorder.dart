@@ -16,8 +16,10 @@ class CalendarTrackReorder {
     VoidCallback onReorderComplete,
     VoidCallback onSelectionComplete,
   ) {
-    final tracks = List<ParticipantTrack>.from(_trackService.getVisibleTracks());
-    final selectedTracks = Set<String>.from(tracks.map((t) => t.participantId));
+    // Mostrar TODOS los tracks, no solo los visibles
+    final allTracks = List<ParticipantTrack>.from(_trackService.getAllTracks());
+    // Inicializar con los tracks actualmente seleccionados
+    final selectedTracks = Set<String>.from(_trackService.getSelectedParticipantIds());
     
     showDialog(
       context: context,
@@ -27,7 +29,7 @@ class CalendarTrackReorder {
           content: SizedBox(
             width: 500,
             height: 400,
-            child: _buildUnifiedView(tracks, selectedTracks, currentUserId, setDialogState),
+            child: _buildUnifiedView(allTracks, selectedTracks, currentUserId, setDialogState),
           ),
           actions: [
             TextButton(
@@ -37,7 +39,7 @@ class CalendarTrackReorder {
             ElevatedButton(
               onPressed: () {
                 // Aplicar cambios de reordenación y selección
-                final newOrderIds = tracks.map((track) => track.participantId).toList();
+                final newOrderIds = allTracks.map((track) => track.participantId).toList();
                 _trackService.reorderTracksByParticipantIds(newOrderIds);
                 _trackService.setSelectedTracks(selectedTracks.toList());
                 onReorderComplete();
