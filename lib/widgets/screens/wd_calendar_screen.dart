@@ -654,8 +654,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-              ],
-            ),
+                ],
+              ),
           ),
         );
       }).toList(),
