@@ -10,14 +10,14 @@
 - **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (3 completadas, 1 pendiente)
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
 - **GRUPO 5:** T40-T45, T81, T82: Timezones (8 pendientes)
-- **GRUPO 6:** T77-T80, T83-T90: Funcionalidades Avanzadas (4 completadas, 8 pendientes)
+- **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 8 pendientes)
 - **Tareas Antiguas:** T18-T38: Varias pendientes (15 tareas)
 - **Seguridad:** T51-T53: Validación (3 pendientes)
 - **Participantes:** T47-T50: Sistema básico (4 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
 
-**Total: 66 tareas documentadas (55 completadas, 11 pendientes)**
+**Total: 65 tareas documentadas (55 completadas, 10 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -311,52 +311,6 @@ Esta serie implementa el concepto fundamental de "Participante como Track", dond
 
 ## 🌐 VISTAS FILTRADAS Y TIMEZONE POR PARTICIPANTE - Serie de Tareas (T78-T82)
 
-### T80 - Vista "Personalizada" (Seleccionar tracks)
-**Estado:** ✅ Completada  
-**Complejidad:** ⚠️ Media  
-**Prioridad:** 🟡 Media  
-**Depende de:** T69, T71  
-**Descripción:** Implementar vista "Personalizada" donde el usuario puede seleccionar manualmente qué tracks (participantes) quiere visualizar.
-
-**Concepto clave:**
-- Usuario decide qué participantes ver
-- Útil para casos como "ver solo plan familiar" excluyendo otros
-- Combinación flexible de tracks
-
-**UI esperada:**
-```
-1. Selector de tracks:
-┌─────────────────────────┐
-│ Seleccionar participantes:│
-│ ☑️ Juan (Yo)            │
-│ ☑️ María (Pareja)       │
-│ ☐ Pedro (Amigo)         │
-│ ☑️ Ana (Hija)           │
-│                         │
-│ [Aplicar]  [Cancelar]   │
-└─────────────────────────┘
-
-2. Vista resultante:
-│  Juan  │  María │  Ana   │  ← Solo seleccionados
-```
-
-**Criterios de aceptación:**
-- Botón "Vista Personalizada" abre modal/drawer
-- Checkbox por cada participante del plan
-- Indicador de "Yo" en el participante actual
-- Aplicar filtro muestra solo tracks seleccionados
-- Mínimo 1 track seleccionado (validación)
-- Guardar preferencia en estado local
-- Indicador visual de cuántos tracks están ocultos
-
-**Archivos a crear:**
-- `lib/widgets/wd_custom_track_selector_dialog.dart`
-
-**Archivos a modificar:**
-- `lib/widgets/screens/wd_calendar_screen.dart`
-- `lib/widgets/wd_track_filter_selector.dart`
-
----
 
 
 
