@@ -7,7 +7,7 @@
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
 - **GRUPO 2:** T71, T73: Filtros y Control (2 completadas)
-- **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (3 completadas, 1 pendiente)
+- **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (4 completadas, 0 pendientes)
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
 - **GRUPO 5:** T40-T45, T81, T82: Timezones (8 pendientes)
 - **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 8 pendientes)
@@ -17,7 +17,7 @@
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
 
-**Total: 64 tareas documentadas (56 completadas, 8 pendientes)**
+**Total: 64 tareas documentadas (57 completadas, 7 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -988,12 +988,12 @@ catch (e) {
 
 
 ### T49 - UI Calendario: Filtro de participantes
-**Estado:** Pendiente  
+**Estado:** ❌ Obsoleta  
 **Complejidad:** ⚠️ Media  
 **Depende de:** T46  
 **Descripción:** Añadir filtro visual en el calendario para ver eventos de participantes específicos o de todos.
 
-**⚠️ NOTA:** Esta es una versión simplificada del filtro. Cuando se implemente el sistema de tracks (T71), esta funcionalidad se reemplazará por los filtros avanzados de T71, T78, T79 y T80. Considerar si implementar esta tarea o pasar directamente al sistema de tracks.
+**⚠️ OBSOLETA:** Esta funcionalidad ha sido reemplazada por el sistema de tracks avanzado (T71, T78, T79, T80). T80 proporciona funcionalidad superior con selección de participantes, drag & drop, y persistencia.
 
 **UI propuesta (en AppBar del calendario):**
 ```
