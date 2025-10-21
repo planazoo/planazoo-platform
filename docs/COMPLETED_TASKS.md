@@ -1574,3 +1574,37 @@ Clase `EventSegment` que divide eventos multi-día en segmentos (uno por día):
 - ✅ Persistencia entre sesiones funciona
 - ✅ Usuario actual no se puede deseleccionar
 - ✅ Validación de al menos un participante seleccionado
+
+---
+
+## T48 - Lógica de filtrado: Eventos por participante
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Lógica de filtrado de eventos según el participante seleccionado implementada como parte del sistema de tracks. Un usuario solo ve eventos donde está incluido.
+
+**Criterios de aceptación:**
+- ✅ Lógica de filtrado implementada en `CalendarEventLogic.shouldShowEventInTrack()`
+- ✅ Verificación de `participantIds.contains(track.participantId)`
+- ✅ Función `isEventForAllParticipants()` para eventos globales
+- ✅ Integración con sistema de tracks existente
+- ✅ Filtrado automático en `_shouldShowEventInTrack()`
+- ✅ Aplicación en providers de eventos del calendario
+
+**Implementación técnica:**
+- 🎯 Lógica implementada en `CalendarEventLogic` como métodos estáticos
+- 🔄 Filtrado por `participantIds` en `shouldShowEventInTrack()`
+- 🌐 Soporte para `isForAllParticipants` en `isEventForAllParticipants()`
+- 🔧 Integración completa con sistema de tracks de T80
+- 📱 Aplicación automática en `wd_calendar_screen.dart`
+
+**Archivos modificados:**
+- `lib/widgets/screens/calendar/calendar_event_logic.dart` - Lógica de filtrado
+- `lib/widgets/screens/wd_calendar_screen.dart` - Integración con calendario
+
+**Nota:** Esta funcionalidad está integrada con el sistema de tracks (T80) que proporciona una funcionalidad más avanzada y flexible que el filtrado simple originalmente propuesto.
+
+**Testing:**
+- ✅ Eventos se muestran solo en tracks de participantes incluidos
+- ✅ Eventos para todos los participantes se muestran correctamente
+- ✅ Filtrado funciona con sistema de selección de T80
+- ✅ Integración correcta con providers de eventos

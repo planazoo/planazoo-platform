@@ -13,11 +13,11 @@
 - **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 8 pendientes)
 - **Tareas Antiguas:** T18-T38: Varias pendientes (15 tareas)
 - **Seguridad:** T51-T53: Validación (3 pendientes)
-- **Participantes:** T47-T50: Sistema básico (4 pendientes)
+- **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
 
-**Total: 65 tareas documentadas (55 completadas, 10 pendientes)**
+**Total: 64 tareas documentadas (56 completadas, 8 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -986,56 +986,11 @@ catch (e) {
 
 ---
 
-### T48 - Lógica de filtrado: Eventos por participante
-**Estado:** Pendiente  
-**Complejidad:** ⚠️ Media  
-**Depende de:** T46  
-**Descripción:** Implementar lógica de filtrado de eventos según el participante seleccionado. Un usuario solo debe ver eventos donde está incluido.
-
-**Lógica de filtrado:**
-```dart
-bool shouldShowEvent(Event event, String currentUserId) {
-  // Caso 1: Evento para todos
-  if (event.isForAllParticipants) return true;
-  
-  // Caso 2: Usuario es el creador
-  if (event.userId == currentUserId) return true;
-  
-  // Caso 3: Usuario está en la lista de participantes
-  if (event.participantIds.contains(currentUserId)) return true;
-  
-  // No mostrar
-  return false;
-}
-```
-
-**Criterios de aceptación:**
-- Crear método de filtrado en `EventService` o como extensión de `Event`
-- Aplicar filtro en providers que sirven eventos (`eventsForDateProvider`, etc.)
-- **Filtro automático:** Por defecto, un usuario solo ve:
-  1. Eventos con `isForAllParticipants = true`
-  2. Eventos donde `event.participantIds.contains(userId)`
-  3. Eventos creados por él (`event.userId == userId`)
-
-- **Respetar permisos:** No mostrar eventos privados de otros usuarios
-- Testing: Verificar que cada usuario ve solo sus eventos relevantes
-- Performance: Filtrar en query de Firestore si es posible (evaluar índices)
-
-**Archivos a modificar:**
-- `lib/features/calendar/domain/services/event_service.dart`
-- `lib/features/calendar/presentation/providers/calendar_providers.dart`
-
-**Consideraciones técnicas:**
-- Si Firestore no puede hacer query compuesta (isForAllParticipants OR participantIds contains), filtrar en cliente
-- Cachear resultados para evitar recálculos
-- Documentar comportamiento del filtro
-
----
 
 ### T49 - UI Calendario: Filtro de participantes
 **Estado:** Pendiente  
 **Complejidad:** ⚠️ Media  
-**Depende de:** T46, T48  
+**Depende de:** T46  
 **Descripción:** Añadir filtro visual en el calendario para ver eventos de participantes específicos o de todos.
 
 **⚠️ NOTA:** Esta es una versión simplificada del filtro. Cuando se implemente el sistema de tracks (T71), esta funcionalidad se reemplazará por los filtros avanzados de T71, T78, T79 y T80. Considerar si implementar esta tarea o pasar directamente al sistema de tracks.
