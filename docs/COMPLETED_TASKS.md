@@ -4,6 +4,53 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T76 - Infraestructura de Sincronización (Parcial)
+**Estado:** ⏸️ Pausada (Infraestructura completa, sincronización automática deshabilitada)  
+**Fecha de implementación:** 21 de octubre de 2025  
+**Descripción:** Implementación completa de la infraestructura de sincronización para eventos con parte común y personal. La sincronización automática se deshabilitó temporalmente para evitar bucles infinitos y se rehabilitará cuando se implemente offline-first.
+
+**Criterios de aceptación implementados:**
+- ✅ Añadir `baseEventId` e `isBaseEvent` al modelo Event
+- ✅ Crear `EventSyncService` para gestión de sincronización
+- ✅ Crear `EventNotificationService` para notificaciones
+- ✅ Implementar detección de cambios en parte común vs personal
+- ✅ Crear métodos para propagación de cambios (deshabilitados)
+- ✅ Crear métodos para gestión de copias de eventos
+- ✅ Testing unitario completo
+- ✅ Resolver dependencias circulares
+- ✅ Aplicación estable sin Stack Overflow
+
+**Implementación técnica:**
+- ✅ Modelo `Event` actualizado con campos de sincronización
+- ✅ `EventSyncService` independiente para sincronización
+- ✅ `EventNotificationService` para notificaciones
+- ✅ Métodos de detección de cambios implementados
+- ✅ Arquitectura sin dependencias circulares
+- ✅ Tests unitarios para verificación de funcionalidad
+
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/services/event_sync_service.dart`
+- ✅ `lib/features/calendar/domain/services/event_notification_service.dart`
+- ✅ `test/features/calendar/event_sync_test.dart`
+- ✅ `test/features/calendar/circular_dependency_test.dart`
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/models/event.dart` - añadido baseEventId e isBaseEvent
+- ✅ `lib/features/calendar/domain/services/event_service.dart` - integrada infraestructura
+
+**Estado actual:**
+- ✅ **Infraestructura completa** - todos los servicios y métodos implementados
+- ✅ **Aplicación funcional** - sin errores de compilación ni Stack Overflow
+- ⏸️ **Sincronización automática deshabilitada** - para evitar bucles infinitos
+- ✅ **Lista para offline-first** - infraestructura preparada para rehabilitación
+
+**Notas:**
+- La sincronización automática se deshabilitó temporalmente debido a bucles infinitos causados por listeners de Firestore
+- Se rehabilitará cuando se implemente offline-first con un sistema de control de bucles más robusto
+- Toda la funcionalidad core (crear/editar eventos) funciona perfectamente
+
+---
+
 ## T63 - Implementar Modelo de Permisos y Roles
 **Estado:** ✅ Completado  
 **Fecha de finalización:** 20 de octubre de 2025  

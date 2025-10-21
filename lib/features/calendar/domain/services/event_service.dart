@@ -115,14 +115,16 @@ class EventService {
   }
 
   // Actualizar un evento existente (solo para participantes del plan)
-  Future<bool> updateEvent(Event event) async {
+  Future<bool> updateEvent(Event event, {bool skipSync = false}) async {
     try {
       if (event.id == null) return false;
       
-      // Verificar que el usuario participa en el plan
-      final isParticipant = await _participationService.isUserParticipant(event.planId, event.userId);
-      if (!isParticipant) {
-        return false;
+      // Verificar que el usuario participa en el plan (solo si no es actualización de sincronización)
+      if (!skipSync) {
+        final isParticipant = await _participationService.isUserParticipant(event.planId, event.userId);
+        if (!isParticipant) {
+          return false;
+        }
       }
 
       await _firestore.collection(_collectionName).doc(event.id).update(event.toFirestore());
@@ -136,6 +138,15 @@ class EventService {
   // Eliminar un evento
   Future<bool> deleteEvent(String eventId) async {
     try {
+      final event = await getEventById(eventId);
+      if (event == null) return false;
+      
+      // TODO: Implementar eliminación de copias cuando se habilite la sincronización
+      // if (event.isBaseEvent) {
+      //   // Es evento base - eliminar también todas las copias
+      //   await EventSyncService().deleteEventCopies(eventId);
+      // }
+      
       await _firestore.collection(_collectionName).doc(eventId).delete();
       return true;
     } catch (e) {
@@ -144,24 +155,59 @@ class EventService {
     }
   }
 
-  // Guardar evento (crear o actualizar)
-  Future<Event?> saveEvent(Event event) async {
+  // Guardar evento (crear o actualizar) con sincronización automática
+  Future<Event?> saveEvent(Event event, {bool skipSync = false}) async {
     if (event.id == null) {
+      // CREAR NUEVO EVENTO
       final now = DateTime.now();
       final newEvent = event.copyWith(
         createdAt: now,
         updatedAt: now,
+        isBaseEvent: true, // Asegurar que es evento base
+        baseEventId: null, // No tiene evento base
       );
+      
       final id = await createEvent(newEvent);
       if (id != null) {
-        return newEvent.copyWith(id: id);
+        final createdEvent = newEvent.copyWith(id: id);
+        
+        // TEMPORALMENTE DESHABILITADO: Crear copias automáticamente
+        // TODO: Rehabilitar cuando se resuelva el problema de bucle infinito
+        // if (!skipSync && event.commonPart?.participantIds.isNotEmpty == true) {
+        //   await _syncService.createEventCopies(
+        //     baseEvent: createdEvent,
+        //     participantIds: event.commonPart!.participantIds,
+        //   );
+        // }
+        
+        return createdEvent;
       }
       return null;
     } else {
+      // ACTUALIZAR EVENTO EXISTENTE
+      final oldEvent = await getEventById(event.id!);
+      if (oldEvent == null) return null;
+      
       final updatedEvent = event.copyWith(
         updatedAt: DateTime.now(),
       );
-      final success = await updateEvent(updatedEvent);
+      
+      // TEMPORALMENTE DESHABILITADO: Verificar si es cambio en parte común o personal
+      // TODO: Rehabilitar cuando se resuelva el problema de bucle infinito
+      // if (!skipSync && event.isBaseEvent && _syncService.isCommonPartChange(oldEvent, updatedEvent)) {
+      //   // Cambio en parte común - propagar a todas las copias
+      //   if (event.commonPart != null) {
+      //     final success = await _syncService.propagateCommonPartChanges(
+      //       eventId: event.id!,
+      //       newCommonPart: event.commonPart!,
+      //       changedBy: event.userId,
+      //     );
+      //     if (!success) return null;
+      //   }
+      // }
+      
+      // Actualizar el evento
+      final success = await updateEvent(updatedEvent, skipSync: skipSync);
       return success ? updatedEvent : null;
     }
   }
@@ -319,4 +365,8 @@ class EventService {
       return false;
     }
   }
+
+  // ========== MÉTODOS DE SINCRONIZACIÓN ==========
+  // NOTA: Los métodos de sincronización se han movido a EventSyncService
+  // para evitar dependencias circulares. Usar EventSyncService directamente.
 } 

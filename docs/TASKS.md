@@ -759,11 +759,11 @@ Para ADMINS, aparece tab adicional:
 ---
 
 ### T76 - Sincronización Parte Común → Copias de Participantes
-**Estado:** Pendiente  
+**Estado:** ⏸️ Pausada (Infraestructura completa, sincronización automática deshabilitada)  
 **Complejidad:** ⚠️ Muy Alta  
-**Prioridad:** 🔴 Crítico  
+**Prioridad:** 🟡 Media (Se implementará con offline-first)  
 **Depende de:** T74, T75  
-**Descripción:** Implementar lógica de sincronización para que cambios en la parte común de un evento se propaguen automáticamente a todas las copias de los participantes.
+**Descripción:** Infraestructura de sincronización implementada. La sincronización automática se deshabilitó temporalmente para evitar bucles infinitos. Se rehabilitará cuando se implemente offline-first.
 
 **Concepto clave:**
 - Evento "Vuelo BCN-LON" tiene 3 copias (Padre, Madre, Hijo)

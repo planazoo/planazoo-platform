@@ -22,6 +22,9 @@ class Event {
   // NUEVO: estructura parte común + parte personal (compatibilidad hacia atrás)
   final EventCommonPart? commonPart;
   final Map<String, EventPersonalPart>? personalParts; // key: participantId
+  // NUEVO: sistema de sincronización
+  final String? baseEventId; // ID del evento original (null si es el original)
+  final bool isBaseEvent; // true si es el evento original, false si es copia
 
   const Event({
     this.id,
@@ -44,6 +47,8 @@ class Event {
     required this.updatedAt,
     this.commonPart,
     this.personalParts,
+    this.baseEventId, // null por defecto (evento original)
+    this.isBaseEvent = true, // por defecto es evento original
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
@@ -96,6 +101,8 @@ class Event {
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       commonPart: commonPart,
       personalParts: personalParts,
+      baseEventId: data['baseEventId'],
+      isBaseEvent: data['isBaseEvent'] ?? true, // por defecto true para compatibilidad
     );
   }
 
@@ -118,6 +125,7 @@ class Event {
       'isDraft': isDraft,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'isBaseEvent': isBaseEvent,
     };
     // Escribir estructura nueva si está presente
     if (commonPart != null) {
@@ -125,6 +133,9 @@ class Event {
     }
     if (personalParts != null && personalParts!.isNotEmpty) {
       map['personalParts'] = personalParts!.map((k, v) => MapEntry(k, v.toMap()));
+    }
+    if (baseEventId != null) {
+      map['baseEventId'] = baseEventId;
     }
     return map;
   }
@@ -150,6 +161,8 @@ class Event {
     DateTime? updatedAt,
     EventCommonPart? commonPart,
     Map<String, EventPersonalPart>? personalParts,
+    String? baseEventId,
+    bool? isBaseEvent,
   }) {
     return Event(
       id: id ?? this.id,
@@ -172,6 +185,8 @@ class Event {
       updatedAt: updatedAt ?? this.updatedAt,
       commonPart: commonPart ?? this.commonPart,
       personalParts: personalParts ?? this.personalParts,
+      baseEventId: baseEventId ?? this.baseEventId,
+      isBaseEvent: isBaseEvent ?? this.isBaseEvent,
     );
   }
 
@@ -197,7 +212,9 @@ class Event {
         other.typeSubtype == typeSubtype &&
         other.documents == documents &&
         other.isDraft == isDraft &&
-        other.commonPart == commonPart;
+        other.commonPart == commonPart &&
+        other.baseEventId == baseEventId &&
+        other.isBaseEvent == isBaseEvent;
   }
 
   @override
@@ -215,7 +232,9 @@ class Event {
         (typeSubtype?.hashCode ?? 0) ^
         (documents?.hashCode ?? 0) ^
         isDraft.hashCode ^
-        (commonPart?.hashCode ?? 0);
+        (commonPart?.hashCode ?? 0) ^
+        (baseEventId?.hashCode ?? 0) ^
+        isBaseEvent.hashCode;
   }
 
   // Métodos de utilidad para trabajar con minutos exactos
@@ -242,6 +261,32 @@ class Event {
   bool overlapsWith(Event other) {
     return totalStartMinutes < other.totalEndMinutes && 
            totalEndMinutes > other.totalStartMinutes;
+  }
+  
+  // ========== MÉTODOS DE SINCRONIZACIÓN ==========
+  
+  /// Obtiene el ID del evento base (el original)
+  String? get eventBaseId => isBaseEvent ? id : baseEventId;
+  
+  /// Verifica si este evento es una copia de otro
+  bool get isEventCopy => !isBaseEvent && baseEventId != null;
+  
+  /// Verifica si este evento es el original
+  bool get isEventOriginal => isBaseEvent && baseEventId == null;
+  
+  /// Crea una copia de este evento para un participante específico
+  Event createCopyForParticipant(String participantId) {
+    if (!isBaseEvent) {
+      throw StateError('Solo se pueden crear copias desde el evento original');
+    }
+    
+    return copyWith(
+      id: null, // Se asignará al guardar
+      userId: participantId,
+      isBaseEvent: false,
+      baseEventId: id, // Referencia al evento original
+      personalParts: {participantId: EventPersonalPart(participantId: participantId)},
+    );
   }
 }
 
