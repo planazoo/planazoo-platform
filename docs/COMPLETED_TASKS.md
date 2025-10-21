@@ -1533,3 +1533,44 @@ Clase `EventSegment` que divide eventos multi-día en segmentos (uno por día):
 - ✅ Indicadores visuales claros por rol
 - ✅ Estadísticas en tiempo real
 - ✅ Usuario actual marcado correctamente
+
+---
+
+## T80 - Vista "Personalizada" (Seleccionar tracks)
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación de vista "Personalizada" donde el usuario puede seleccionar manualmente qué tracks (participantes) quiere visualizar, integrada en el modal de gestión de participantes.
+
+**Criterios de aceptación:**
+- ✅ Modal integrado con drag & drop + checkboxes en una sola vista
+- ✅ Click en header de participantes para abrir modal
+- ✅ Botón "people" en AppBar como alternativa
+- ✅ Botones rápidos "Todos" y "Solo Yo" para selección
+- ✅ Lista completa de participantes siempre visible (no desaparecen al deseleccionar)
+- ✅ Indicador visual "TÚ" para el usuario actual
+- ✅ Validación: al menos un participante debe estar seleccionado
+- ✅ El usuario actual no se puede deseleccionar
+- ✅ Persistencia completa: orden y selección guardados en Firestore
+- ✅ Carga automática de configuración guardada al inicializar calendario
+
+**Implementación técnica:**
+- 🎯 Modal unificado con ReorderableListView + Checkboxes
+- 🔄 Gestión de estado con Set<String> _selectedParticipantIds
+- 💾 Persistencia en Firestore con campos trackOrderParticipantIds y selectedTrackParticipantIds
+- 🎨 UI mejorada con bordes, colores y feedback visual
+- 🔧 Integración completa con TrackService y CalendarScreen
+
+**Archivos modificados:**
+- `lib/widgets/screens/calendar/calendar_track_reorder.dart` - Modal unificado
+- `lib/features/calendar/domain/services/track_service.dart` - Persistencia
+- `lib/widgets/screens/wd_calendar_screen.dart` - Integración y carga
+
+**Testing:**
+- ✅ Click en header abre modal correctamente
+- ✅ Drag & drop para reordenar participantes
+- ✅ Checkboxes para seleccionar/deseleccionar
+- ✅ Botones "Todos" y "Solo Yo" funcionan
+- ✅ Participantes deseleccionados permanecen en lista
+- ✅ Persistencia entre sesiones funciona
+- ✅ Usuario actual no se puede deseleccionar
+- ✅ Validación de al menos un participante seleccionado
