@@ -179,6 +179,34 @@ class TrackService {
     );
   }
 
+  /// Guarda la selección de tracks en Firestore
+  Future<void> saveSelectionToFirestore(String planId, List<String> selectedParticipantIds) async {
+    await FirebaseFirestore.instance.collection('plans').doc(planId).set(
+      {
+        'selectedTrackParticipantIds': selectedParticipantIds,
+        'trackSelectionUpdatedAt': DateTime.now().toIso8601String(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  /// Carga la selección de tracks desde Firestore
+  Future<void> loadSelectionFromFirestore(String planId) async {
+    final doc = await FirebaseFirestore.instance.collection('plans').doc(planId).get();
+    if (!doc.exists) return;
+    final data = doc.data();
+    if (data == null) return;
+    final List<dynamic>? ids = data['selectedTrackParticipantIds'] as List<dynamic>?;
+    if (ids == null || ids.isEmpty) {
+      // Si no hay selección guardada, mostrar todos los tracks visibles
+      _selectedParticipantIds.clear();
+      return;
+    }
+    final savedIds = ids.map((e) => e.toString()).toList();
+    _selectedParticipantIds.clear();
+    _selectedParticipantIds.addAll(savedIds);
+  }
+
   /// Sincroniza tracks con participantes reales del plan
   List<ParticipantTrack> syncTracksWithPlanParticipants(List<PlanParticipation> participations) {
     final createdTracks = <ParticipantTrack>[];

@@ -37,11 +37,19 @@ class CalendarTrackReorder {
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 // Aplicar cambios de reordenación y selección
                 final newOrderIds = allTracks.map((track) => track.participantId).toList();
+                final selectedIds = selectedTracks.toList();
+                
+                // Guardar en memoria
                 _trackService.reorderTracksByParticipantIds(newOrderIds);
-                _trackService.setSelectedTracks(selectedTracks.toList());
+                _trackService.setSelectedTracks(selectedIds);
+                
+                // Persistir en Firestore
+                await _trackService.saveOrderToFirestore(planId, newOrderIds);
+                await _trackService.saveSelectionToFirestore(planId, selectedIds);
+                
                 onReorderComplete();
                 onSelectionComplete();
                 Navigator.pop(context);

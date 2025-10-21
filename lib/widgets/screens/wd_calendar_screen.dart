@@ -184,6 +184,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             !currentParticipantIds.containsAll(newParticipantIds)) {
           final participantIds = participations.map((p) => p.userId).join(', ');
           _trackService.syncTracksWithPlanParticipants(participations);
+          
+          // Cargar orden y selección guardados desde Firestore
+          _trackService.loadOrderFromFirestore(widget.plan.id!);
+          _trackService.loadSelectionFromFirestore(widget.plan.id!);
         }
       },
       loading: () {
