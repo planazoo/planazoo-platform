@@ -4,6 +4,51 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T77 - Indicadores Visuales de Permisos en UI
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación completa de indicadores visuales claros en la UI para que el usuario sepa qué puede editar y qué no según sus permisos, con badges de rol, iconos de permisos, tooltips explicativos y colores diferenciados.
+
+**Criterios de aceptación:**
+- ✅ Badges de rol mejorados en EventDialog (Creador/Admin)
+- ✅ Indicadores de tipo de campo (Común vs Personal)
+- ✅ Iconos de permisos claros (🔓/🔒) con colores
+- ✅ Tooltips explicativos para cada campo
+- ✅ Colores diferenciados por tipo de campo
+- ✅ Widgets reutilizables para campos con permisos
+- ✅ Indicadores visuales para campos de solo lectura
+
+**Implementación técnica:**
+- ✅ `PermissionField` - Widget base con indicadores visuales
+- ✅ `PermissionTextField` - Campo de texto con permisos
+- ✅ `PermissionDropdownField` - Dropdown con permisos
+- ✅ Badges de rol con iconos y colores distintivos
+- ✅ Sistema de tooltips contextuales
+- ✅ Colores consistentes (verde editable, gris solo lectura)
+
+**Archivos creados:**
+- ✅ `lib/widgets/permission_field.dart` - Widgets de permisos reutilizables
+
+**Archivos modificados:**
+- ✅ `lib/widgets/wd_event_dialog.dart` - Integración de indicadores visuales
+
+**Mejoras visuales implementadas:**
+- ✅ **Badges de rol** - Creador (azul) y Admin (rojo) con iconos
+- ✅ **Indicadores de tipo** - Común (azul) vs Personal (verde)
+- ✅ **Iconos de permisos** - Lock/unlock con colores contextuales
+- ✅ **Tooltips** - Explicaciones para cada campo
+- ✅ **Colores consistentes** - Verde para editable, gris para solo lectura
+- ✅ **Iconos específicos** - Cada campo tiene su icono representativo
+
+**Campos actualizados:**
+- ✅ **Parte Común:** Descripción, Tipo, Subtipo (con indicadores de permisos)
+- ✅ **Parte Personal:** Asiento, Menú, Preferencias, Reserva, Gate, Notas (siempre editables)
+
+**Resultado:**
+Los usuarios ahora tienen indicadores visuales claros y profesionales que les permiten entender inmediatamente qué campos pueden editar y cuáles son de solo lectura, mejorando significativamente la experiencia de usuario.
+
+---
+
 ## T76 - Infraestructura de Sincronización (Parcial)
 **Estado:** ⏸️ Pausada (Infraestructura completa, sincronización automática deshabilitada)  
 **Fecha de implementación:** 21 de octubre de 2025  

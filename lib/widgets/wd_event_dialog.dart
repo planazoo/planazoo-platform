@@ -15,6 +15,7 @@ import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/models/plan_permissions.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/edit_personal_info_dialog.dart';
+import 'package:unp_calendario/widgets/permission_field.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -219,30 +220,62 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return AlertDialog(
       title: Row(
         children: [
-          Text(widget.event == null ? 'Crear Evento' : 'Editar Evento'),
+          Expanded(
+            child: Text(
+              widget.event == null ? 'Crear Evento' : 'Editar Evento',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
           const SizedBox(width: 8),
+          // Badge de Creador
           if (_isCreator) 
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.blue.shade100,
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.shade200, width: 1),
               ),
-              child: const Text(
-                'Creador',
-                style: TextStyle(fontSize: 10, color: Colors.blue),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.person, size: 14, color: Colors.blue.shade700),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Creador',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                ],
               ),
             ),
+          const SizedBox(width: 6),
+          // Badge de Admin
           if (_isAdmin) 
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.red.shade100,
-                borderRadius: BorderRadius.circular(4),
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.shade200, width: 1),
               ),
-              child: const Text(
-                'Admin',
-                style: TextStyle(fontSize: 10, color: Colors.red),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.admin_panel_settings, size: 14, color: Colors.red.shade700),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Admin',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red.shade700,
+                    ),
+                  ),
+                ],
               ),
             ),
         ],
@@ -302,81 +335,63 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           ),
                           const SizedBox(height: 16),
             // Descripción
-            TextField(
+            PermissionTextField(
               controller: _descriptionController,
-              readOnly: !_canEditGeneral,
-              decoration: InputDecoration(
-                labelText: 'Descripción',
-                hintText: 'Nombre del evento',
-                prefixIcon: Icon(
-                  _canEditGeneral ? Icons.edit : Icons.lock,
-                  color: _canEditGeneral ? Colors.green : Colors.grey,
-                ),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: _canEditGeneral ? Colors.green.shade300 : Colors.grey.shade300,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: _canEditGeneral ? Colors.green.shade300 : Colors.grey.shade300,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: _canEditGeneral ? Colors.green.shade500 : Colors.grey.shade400,
-                  ),
-                ),
-                filled: true,
-                fillColor: _canEditGeneral ? Colors.green.shade50 : Colors.grey.shade50,
-              ),
+              labelText: 'Descripción',
+              hintText: 'Nombre del evento',
+              canEdit: _canEditGeneral,
+              fieldType: 'common',
+              tooltipText: 'Información compartida entre todos los participantes',
+              prefixIcon: Icons.title,
               maxLines: 2,
             ),
             const SizedBox(height: 16),
             
             // Tipo de familia
-        DropdownButtonFormField<String>(
+            PermissionDropdownField<String>(
               value: _typeFamilyController.text.isEmpty || !_typeFamilies.contains(_typeFamilyController.text) 
                   ? null 
                   : _typeFamilyController.text,
-          decoration: const InputDecoration(
-                labelText: 'Tipo de evento',
-            border: OutlineInputBorder(),
-            ),
+              labelText: 'Tipo de evento',
+              canEdit: _canEditGeneral,
+              fieldType: 'common',
+              tooltipText: 'Categoría general del evento (compartida)',
+              prefixIcon: Icons.category,
               items: _typeFamilies.map((family) {
                 return DropdownMenuItem(
                   value: family,
                   child: Text(family),
-                        );
-                      }).toList(),
-          onChanged: !_canEditGeneral ? null : (value) {
-            setState(() {
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
                   _typeFamilyController.text = value ?? '';
                   _typeSubtypeController.text = ''; // Reset subtipo
                 });
-                },
-              ),
+              },
+            ),
               const SizedBox(height: 16),
             
             // Subtipo
             if (_typeFamilyController.text.isNotEmpty)
-        DropdownButtonFormField<String>(
+              PermissionDropdownField<String>(
                 value: _typeSubtypeController.text.isEmpty || 
                        !(_typeSubtypes[_typeFamilyController.text] ?? []).contains(_typeSubtypeController.text)
                     ? null 
                     : _typeSubtypeController.text,
-          decoration: const InputDecoration(
-                  labelText: 'Subtipo',
-            border: OutlineInputBorder(),
-                ),
+                labelText: 'Subtipo',
+                canEdit: _canEditGeneral,
+                fieldType: 'common',
+                tooltipText: 'Especificación detallada del tipo de evento',
+                prefixIcon: Icons.label,
                 items: (_typeSubtypes[_typeFamilyController.text] ?? []).map((subtype) {
                   return DropdownMenuItem(
                     value: subtype,
                     child: Text(subtype),
                   );
                 }).toList(),
-          onChanged: !_canEditGeneral ? null : (value) {
-            setState(() {
+                onChanged: (value) {
+                  setState(() {
                     _typeSubtypeController.text = value ?? '';
                   });
                 },
@@ -557,63 +572,63 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           const SizedBox(height: 16),
                           
                           // Campo: Asiento
-                          TextField(
+                          PermissionTextField(
                             controller: _asientoController,
-                            decoration: const InputDecoration(
-                              labelText: 'Asiento',
-                              hintText: 'Ej: 12A, Ventana',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.chair),
-                            ),
+                            labelText: 'Asiento',
+                            hintText: 'Ej: 12A, Ventana',
+                            canEdit: true, // Siempre editable en parte personal
+                            fieldType: 'personal',
+                            tooltipText: 'Tu asiento específico para este evento',
+                            prefixIcon: Icons.chair,
                           ),
                           const SizedBox(height: 16),
                           
                           // Campo: Menú/Comida
-                          TextField(
+                          PermissionTextField(
                             controller: _menuController,
-                            decoration: const InputDecoration(
-                              labelText: 'Menú/Comida',
-                              hintText: 'Ej: Vegetariano, Sin gluten',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.restaurant),
-                            ),
+                            labelText: 'Menú/Comida',
+                            hintText: 'Ej: Vegetariano, Sin gluten',
+                            canEdit: true,
+                            fieldType: 'personal',
+                            tooltipText: 'Tus preferencias alimentarias para este evento',
+                            prefixIcon: Icons.restaurant,
                           ),
                           const SizedBox(height: 16),
                           
                           // Campo: Preferencias
-                          TextField(
+                          PermissionTextField(
                             controller: _preferenciasController,
-                      decoration: const InputDecoration(
-                              labelText: 'Preferencias',
-                              hintText: 'Ej: Cerca de la salida, Silencioso',
-                        border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.favorite),
-                            ),
+                            labelText: 'Preferencias',
+                            hintText: 'Ej: Cerca de la salida, Silencioso',
+                            canEdit: true,
+                            fieldType: 'personal',
+                            tooltipText: 'Tus preferencias específicas para este evento',
+                            prefixIcon: Icons.favorite,
                             maxLines: 2,
-              ),
+                          ),
               const SizedBox(height: 16),
 
                           // Campo: Número de reserva
-                          TextField(
+                          PermissionTextField(
                             controller: _numeroReservaController,
-                decoration: const InputDecoration(
-                              labelText: 'Número de reserva',
-                              hintText: 'Ej: ABC123, 456789',
-                  border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.confirmation_number),
-                            ),
-              ),
+                            labelText: 'Número de reserva',
+                            hintText: 'Ej: ABC123, 456789',
+                            canEdit: true,
+                            fieldType: 'personal',
+                            tooltipText: 'Tu número de reserva específico',
+                            prefixIcon: Icons.confirmation_number,
+                          ),
               const SizedBox(height: 16),
                           
                           // Campo: Puerta/Gate
-                          TextField(
+                          PermissionTextField(
                             controller: _gateController,
-                decoration: const InputDecoration(
-                              labelText: 'Puerta/Gate',
-                              hintText: 'Ej: Gate A12, Puerta 3',
-                  border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.door_front_door),
-                            ),
+                            labelText: 'Puerta/Gate',
+                            hintText: 'Ej: Gate A12, Puerta 3',
+                            canEdit: true,
+                            fieldType: 'personal',
+                            tooltipText: 'Tu puerta o gate específico',
+                            prefixIcon: Icons.door_front_door,
                           ),
                           const SizedBox(height: 16),
                           
@@ -631,14 +646,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           const SizedBox(height: 16),
                           
                           // Campo: Notas personales
-                          TextField(
+                          PermissionTextField(
                             controller: _notasPersonalesController,
-                            decoration: const InputDecoration(
-                              labelText: 'Notas personales',
-                              hintText: 'Información adicional solo para ti',
-                              border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.note),
-                            ),
+                            labelText: 'Notas personales',
+                            hintText: 'Información adicional solo para ti',
+                            canEdit: true,
+                            fieldType: 'personal',
+                            tooltipText: 'Notas privadas que solo tú puedes ver',
+                            prefixIcon: Icons.note,
                             maxLines: 3,
                           ),
                           const SizedBox(height: 24),

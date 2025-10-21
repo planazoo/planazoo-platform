@@ -10,14 +10,14 @@
 - **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (2 completadas, 2 pendientes)
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
 - **GRUPO 5:** T40-T45, T81, T82: Timezones (8 pendientes)
-- **GRUPO 6:** T77-T80, T83-T90: Funcionalidades Avanzadas (12 pendientes)
+- **GRUPO 6:** T77-T80, T83-T90: Funcionalidades Avanzadas (1 completada, 11 pendientes)
 - **Tareas Antiguas:** T18-T38: Varias pendientes (15 tareas)
 - **Seguridad:** T51-T53: Validación (3 pendientes)
 - **Participantes:** T47-T50: Sistema básico (4 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
 
-**Total: 66 tareas documentadas (37 completadas, 29 pendientes)**
+**Total: 66 tareas documentadas (38 completadas, 28 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -820,7 +820,7 @@ Para ADMINS, aparece tab adicional:
 ---
 
 ### T77 - Indicadores Visuales de Permisos en UI
-**Estado:** Pendiente  
+**Estado:** ✅ Completada  
 **Complejidad:** ⚠️ Baja-Media  
 **Prioridad:** 🟡 Media  
 **Depende de:** T75  
