@@ -4,6 +4,387 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T68 - Modelo ParticipantTrack
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Creación del modelo `ParticipantTrack` que representa cada participante como una columna/track en el calendario, estableciendo la base para el sistema multi-track.
+
+**Criterios de aceptación:**
+- ✅ Crear modelo `ParticipantTrack` con campos requeridos
+- ✅ Método para obtener tracks de un plan
+- ✅ Método para reordenar tracks (cambiar position)
+- ✅ Guardar configuración de tracks en Firestore
+- ✅ Migración: planes existentes crean tracks automáticamente
+
+**Implementación técnica:**
+- ✅ `ParticipantTrack` model con campos id, participantId, participantName, position, customColor, isVisible
+- ✅ `TrackService` para gestión de tracks
+- ✅ Integración con Firestore para persistencia
+- ✅ Migración automática de planes existentes
+
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/models/participant_track.dart`
+- ✅ `lib/features/calendar/domain/services/track_service.dart`
+
+**Resultado:**
+Base sólida para el sistema multi-track del calendario, permitiendo que cada participante tenga su propia columna con orden consistente y configuración personalizable.
+
+---
+
+## T69 - CalendarScreen: Modo Multi-Track
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Rediseño completo de `wd_calendar_screen.dart` para mostrar múltiples columnas (tracks), una por participante, estableciendo la base visual del sistema multi-track.
+
+**Criterios de aceptación:**
+- ✅ Rediseñar estructura de columnas del calendario
+- ✅ Columna fija de horas (izquierda)
+- ✅ Columnas dinámicas para cada track (scroll horizontal)
+- ✅ Ancho de track adaptativo según cantidad de días visibles
+- ✅ Renderizar eventos en el track correspondiente
+- ✅ Scroll horizontal suave para tracks
+- ✅ Scroll vertical compartido para todas las columnas
+- ✅ Header con nombres de participantes (sticky)
+- ✅ Indicador visual de track activo/seleccionado
+
+**Implementación técnica:**
+- ✅ Rediseño completo de `CalendarScreen`
+- ✅ `SingleChildScrollView` horizontal para tracks
+- ✅ `ScrollController` compartido para scroll vertical
+- ✅ Cálculo dinámico de ancho de tracks
+- ✅ Lazy loading de tracks para performance
+- ✅ Compatibilidad con drag & drop de eventos
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Rediseño completo
+- ✅ `lib/widgets/screens/calendar/` - Múltiples archivos de soporte
+
+**Resultado:**
+Calendario completamente rediseñado con sistema multi-track funcional, permitiendo visualizar múltiples participantes simultáneamente con scroll horizontal y vertical optimizado.
+
+---
+
+## T70 - Eventos Multi-Track (Span Horizontal)
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación de eventos que se extienden (span) horizontalmente por múltiples tracks cuando tienen varios participantes, permitiendo visualizar eventos compartidos de forma intuitiva.
+
+**Criterios de aceptación:**
+- ✅ Detectar eventos multi-participante
+- ✅ Calcular ancho del evento: `width = trackWidth * numberOfParticipants`
+- ✅ Renderizar evento abarcando múltiples columnas
+- ✅ Posicionar evento en el track del primer participante
+- ✅ Evitar superposición incorrecta con otros eventos
+- ✅ Interacción: click en cualquier parte del evento abre diálogo
+- ✅ Drag & drop: mover evento multi-track mantiene participantes
+
+**Implementación técnica:**
+- ✅ Lógica de detección de eventos multi-participante
+- ✅ Cálculo dinámico de ancho basado en número de participantes
+- ✅ Renderizado de eventos con span horizontal
+- ✅ Posicionamiento correcto en tracks consecutivos
+- ✅ Gestión de interacciones (click, drag & drop)
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Lógica de span
+- ✅ `lib/features/calendar/domain/models/event_segment.dart` - Añadido `spanTracks`
+
+**Resultado:**
+Eventos multi-participante se visualizan correctamente abarcando múltiples tracks, mejorando la comprensión visual de eventos compartidos entre participantes.
+
+---
+
+## T71 - Filtros de Vista: Individual vs Todos vs Personalizado
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación de sistema de filtros para cambiar qué tracks se muestran en el calendario, proporcionando flexibilidad en la visualización.
+
+**Criterios de aceptación:**
+- ✅ Modo "Plan Completo" - Muestra todos los tracks
+- ✅ Modo "Mi Agenda" - Solo track del usuario actual
+- ✅ Modo "Personalizada" - Usuario selecciona tracks
+- ✅ Selector en AppBar con dropdown
+- ✅ Filtrado dinámico de eventos según vista
+- ✅ Persistencia de preferencias de vista
+
+**Implementación técnica:**
+- ✅ `CalendarViewMode` enum con modos de vista
+- ✅ `CalendarFilters` para lógica de filtrado
+- ✅ PopupMenuButton en AppBar para selección
+- ✅ Filtrado dinámico de tracks y eventos
+- ✅ Integración con `CalendarScreen`
+
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/models/calendar_view_mode.dart`
+- ✅ `lib/widgets/screens/calendar/calendar_filters.dart`
+
+**Resultado:**
+Sistema de filtros completo que permite a los usuarios personalizar la vista del calendario según sus necesidades, desde vista personal hasta vista completa del plan.
+
+---
+
+## T72 - Control de Días Visibles (1-7 días ajustable)
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación de control para ajustar cuántos días se muestran simultáneamente en el calendario, optimizando el espacio disponible para tracks.
+
+**Criterios de aceptación:**
+- ✅ Selector de días visibles: 1, 2, 3, 5, 7 días
+- ✅ Botones +/- o slider para cambiar
+- ✅ Recalcular ancho de tracks dinámicamente
+- ✅ Persistir preferencia en estado local
+- ✅ Indicador visual del número actual
+- ✅ Auto-ajuste si tracks no caben (mínimo 1 día)
+- ✅ Navegación entre rangos de días (anterior/siguiente)
+
+**Implementación técnica:**
+- ✅ Control de días visibles en AppBar
+- ✅ Cálculo dinámico de ancho de tracks
+- ✅ Navegación entre rangos de días
+- ✅ Persistencia de preferencias
+- ✅ Auto-ajuste inteligente según espacio disponible
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Control de días
+- ✅ `lib/widgets/screens/calendar/calendar_app_bar.dart` - UI de control
+
+**Resultado:**
+Los usuarios pueden ajustar dinámicamente el número de días visibles para optimizar el espacio de tracks, mejorando la legibilidad según el número de participantes.
+
+---
+
+## T73 - Gestión de Orden de Tracks (Drag & Drop)
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación de sistema de reordenación de tracks mediante drag & drop, permitiendo a los usuarios personalizar el orden de los participantes.
+
+**Criterios de aceptación:**
+- ✅ Modal/drawer para reordenar tracks
+- ✅ Drag & drop funcional entre tracks
+- ✅ Indicadores visuales durante el arrastre
+- ✅ Validación: solo admins pueden reordenar
+- ✅ Persistir nuevo orden en Firestore
+- ✅ Actualizar UI inmediatamente
+- ✅ Feedback visual de éxito/error
+
+**Implementación técnica:**
+- ✅ `CalendarTrackReorder` para lógica de reordenación
+- ✅ Modal con lista reordenable
+- ✅ Drag & drop con `ReorderableListView`
+- ✅ Validación de permisos de admin
+- ✅ Persistencia en Firestore
+- ✅ Actualización inmediata de UI
+
+**Archivos creados:**
+- ✅ `lib/widgets/screens/calendar/calendar_track_reorder.dart`
+
+**Resultado:**
+Los administradores pueden reordenar los tracks de participantes mediante drag & drop, personalizando la visualización del calendario según sus preferencias.
+
+---
+
+## T74 - Modelo Event: Estructura Parte Común + Parte Personal
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Modificación del modelo Event para separar claramente la "parte común" (editada por creador) y la "parte personal" (editada por cada participante), estableciendo la base para el sistema de permisos granular.
+
+**Criterios de aceptación:**
+- ✅ Migrar campos existentes a `EventCommonPart`
+- ✅ Crear `EventPersonalPart` con campos personalizables
+- ✅ Modificar `toFirestore()` y `fromFirestore()` para nueva estructura
+- ✅ Compatibilidad hacia atrás: eventos sin parte personal funcionan
+- ✅ Validación: cada participante tiene su `EventPersonalPart`
+- ✅ Testing: crear evento con parte común + partes personales
+
+**Implementación técnica:**
+- ✅ `EventCommonPart` - Información compartida del evento
+- ✅ `EventPersonalPart` - Información específica por participante
+- ✅ Migración automática de eventos existentes
+- ✅ Compatibilidad hacia atrás mantenida
+- ✅ Validación de estructura de datos
+
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/models/event_common_part.dart`
+- ✅ `lib/features/calendar/domain/models/event_personal_part.dart`
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/models/event.dart` - Estructura actualizada
+
+**Resultado:**
+Modelo Event completamente refactorizado con separación clara entre información común y personal, estableciendo la base para el sistema de permisos granular.
+
+---
+
+## T75 - EventDialog: UI Separada para Parte Común vs Personal
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Rediseño del EventDialog para mostrar claramente qué campos son "parte común" vs "parte personal", con permisos de edición según el rol del usuario.
+
+**Criterios de aceptación:**
+- ✅ Tabs separados: "General" (parte común) y "Mi información" (parte personal)
+- ✅ Tab "Info de Otros" para admins (editar info personal de otros)
+- ✅ Validación diferente por tab
+- ✅ Guardar cambios: solo de tabs editables
+- ✅ Indicadores visuales de permisos
+- ✅ Campos de solo lectura según rol
+
+**Implementación técnica:**
+- ✅ Rediseño completo del EventDialog con tabs
+- ✅ Lógica de permisos por tab
+- ✅ Validación diferenciada por tipo de campo
+- ✅ Indicadores visuales de estado de edición
+- ✅ Integración con sistema de permisos
+
+**Archivos modificados:**
+- ✅ `lib/widgets/wd_event_dialog.dart` - Rediseño completo
+
+**Resultado:**
+EventDialog completamente rediseñado con separación clara entre parte común y personal, proporcionando una experiencia de usuario intuitiva basada en permisos.
+
+---
+
+## T63 - Implementar Modelo de Permisos y Roles
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación del sistema base de permisos granulares con roles y permisos específicos, estableciendo la base para el control de acceso en toda la aplicación.
+
+**Criterios de aceptación:**
+- ✅ Definir enum `UserRole` (admin, participant, observer)
+- ✅ Definir enum `Permission` con todos los permisos específicos
+- ✅ Crear clase `PlanPermissions` para gestionar permisos por usuario/plan
+- ✅ Implementar `PermissionService` con métodos de validación
+- ✅ Cache de permisos para optimización
+- ✅ Testing de validación de permisos
+
+**Implementación técnica:**
+- ✅ Sistema completo de roles (Admin, Participante, Observador)
+- ✅ 25+ permisos específicos organizados por categorías
+- ✅ Gestión de permisos con Firestore y cache local
+- ✅ Widgets helper para UI basada en permisos
+- ✅ Integración inicial en EventDialog
+- ✅ Suite completa de pruebas unitarias
+
+**Archivos creados:**
+- ✅ `lib/shared/models/user_role.dart`
+- ✅ `lib/shared/models/permission.dart`
+- ✅ `lib/shared/models/plan_permissions.dart`
+- ✅ `lib/shared/services/permission_service.dart`
+- ✅ `lib/shared/widgets/permission_based_field.dart`
+- ✅ `test/permission_system_test.dart`
+
+**Resultado:**
+Sistema completo de permisos granulares implementado, proporcionando control de acceso detallado y base sólida para la implementación de funcionalidades de seguridad.
+
+---
+
+## T65 - Implementar Gestión de Admins del Plan
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Implementación de funcionalidad para promover/degradar usuarios a admin del plan, permitiendo gestión dinámica de roles y permisos.
+
+**Criterios de aceptación:**
+- ✅ UI para mostrar lista de participantes con roles actuales
+- ✅ Botones para promover/degradar a admin
+- ✅ Validación: solo admins pueden cambiar roles
+- ✅ Límite máximo de 3 admins por plan
+- ✅ Confirmación antes de cambiar roles
+- ✅ Actualización inmediata de UI
+- ✅ Persistencia en Firestore
+
+**Implementación técnica:**
+- ✅ `PlanAdminManagement` widget para gestión de admins
+- ✅ Validación de límites y permisos
+- ✅ UI intuitiva con confirmaciones
+- ✅ Integración con sistema de permisos
+- ✅ Persistencia en Firestore
+- ✅ Actualización inmediata de UI
+
+**Archivos creados:**
+- ✅ `lib/widgets/plan_admin_management.dart`
+
+**Resultado:**
+Sistema completo de gestión de administradores implementado, permitiendo a los usuarios con permisos apropiados gestionar roles y permisos de forma dinámica.
+
+---
+
+## T93 - Implementar iconos de check-in/check-out en alojamientos
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Mejora de la visualización de alojamientos multi-día con iconos que indican check-in y check-out, mejorando la claridad visual.
+
+**Criterios de aceptación:**
+- ✅ Agregar iconos ➡️ para check-in (primer día)
+- ✅ Agregar iconos ⬅️ para check-out (último día)
+- ✅ Mantener texto normal para días intermedios
+- ✅ Mejorar claridad visual de alojamientos multi-día
+- ✅ Funcionalidad de tap para crear/editar alojamientos
+
+**Implementación técnica:**
+- ✅ Iconos visuales para check-in/check-out
+- ✅ Lógica de detección de primer/último día
+- ✅ Mejora de claridad visual
+- ✅ Mantenimiento de funcionalidad de tap
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart`
+
+**Resultado:**
+Alojamientos multi-día ahora muestran claramente los días de check-in y check-out con iconos intuitivos, mejorando la experiencia de usuario.
+
+---
+
+## T94 - Optimización y limpieza de código en CalendarScreen
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Refactorización y optimización del código en el archivo principal del calendario para mejorar mantenibilidad y legibilidad.
+
+**Criterios de aceptación:**
+- ✅ Crear constantes para valores repetidos (alturas, opacidades)
+- ✅ Consolidar funciones helper para bordes y decoraciones
+- ✅ Limpiar debug logs temporales
+- ✅ Optimizar imports y estructura del código
+- ✅ Mejorar legibilidad y mantenibilidad
+
+**Implementación técnica:**
+- ✅ Extracción de constantes reutilizables
+- ✅ Consolidación de funciones helper
+- ✅ Limpieza de código temporal
+- ✅ Optimización de estructura e imports
+- ✅ Mejora general de legibilidad
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart`
+
+**Resultado:**
+Código del CalendarScreen optimizado y limpio, mejorando la mantenibilidad y facilitando futuras modificaciones.
+
+---
+
+## T95 - Arreglar interacción de tap en fila de alojamientos
+**Estado:** ✅ Completado  
+**Fecha de finalización:** 21 de octubre de 2025  
+**Descripción:** Solución del problema de detección de tap en la fila de alojamientos, restaurando la funcionalidad de interacción.
+
+**Criterios de aceptación:**
+- ✅ GestureDetector funcional en fila de alojamientos
+- ✅ Modal de crear alojamiento se abre correctamente
+- ✅ Modal de editar alojamiento funciona
+- ✅ Interacción intuitiva y responsiva
+
+**Implementación técnica:**
+- ✅ Corrección de GestureDetector
+- ✅ Restauración de funcionalidad de modales
+- ✅ Mejora de interacción de usuario
+- ✅ Testing de funcionalidad completa
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart`
+
+**Resultado:**
+Interacción de tap en alojamientos completamente funcional, permitiendo crear y editar alojamientos de forma intuitiva.
+
+---
+
 ## T78 - Vista "Mi Agenda" (Solo mis eventos)
 **Estado:** ✅ Completado  
 **Fecha de finalización:** 21 de octubre de 2025  
