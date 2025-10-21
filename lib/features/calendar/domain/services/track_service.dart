@@ -226,6 +226,23 @@ class TrackService {
     _tracks.clear();
   }
 
+  /// Establece qué tracks están seleccionados para mostrar
+  void setSelectedTracks(List<String> selectedParticipantIds) {
+    for (final track in _tracks) {
+      track.isVisible = selectedParticipantIds.contains(track.participantId);
+    }
+  }
+
+  /// Obtiene los tracks seleccionados actualmente
+  List<ParticipantTrack> getSelectedTracks() {
+    return _tracks.where((track) => track.isVisible).toList();
+  }
+
+  /// Obtiene los IDs de participantes seleccionados
+  List<String> getSelectedParticipantIds() {
+    return getSelectedTracks().map((track) => track.participantId).toList();
+  }
+
   /// Obtiene estadísticas de los tracks
   Map<String, int> getTrackStats() {
     return {

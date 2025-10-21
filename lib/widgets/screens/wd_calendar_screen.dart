@@ -309,7 +309,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         });
       },
       onCustomFilter: _showCustomViewDialog,
-      onReorderTracks: _showReorderTracksDialog,
+      onReorderTracks: _showParticipantManagementDialog,
       onFullscreen: () {
         Navigator.push(
           context,
@@ -3188,12 +3188,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  /// Muestra el diálogo de reordenación de tracks
-  void _showReorderTracksDialog() {
-    _calendarTrackReorder.showReorderDialog(
+  /// Muestra el diálogo integrado de gestión de participantes
+  void _showParticipantManagementDialog() {
+    _calendarTrackReorder.showParticipantManagementDialog(
       context,
       widget.plan.id!,
+      widget.currentUserId,
       () {
+        // Callback para reordenación
+        setState(() {});
+      },
+      () {
+        // Callback para selección
         setState(() {});
       },
     );
