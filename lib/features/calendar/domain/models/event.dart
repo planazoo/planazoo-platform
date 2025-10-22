@@ -26,7 +26,8 @@ class Event {
   final String? baseEventId; // ID del evento original (null si es el original)
   final bool isBaseEvent; // true si es el evento original, false si es copia
   // NUEVO: sistema de timezones
-  final String? timezone; // IANA timezone (ej: "Europe/Madrid", "America/New_York")
+  final String? timezone; // IANA timezone de salida (ej: "Europe/Madrid", "America/New_York")
+  final String? arrivalTimezone; // IANA timezone de llegada (para vuelos, viajes, etc.)
 
   const Event({
     this.id,
@@ -52,6 +53,7 @@ class Event {
     this.baseEventId, // null por defecto (evento original)
     this.isBaseEvent = true, // por defecto es evento original
     this.timezone, // null por defecto (usará timezone del plan)
+    this.arrivalTimezone, // null por defecto (mismo que timezone)
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
@@ -107,6 +109,7 @@ class Event {
       baseEventId: data['baseEventId'],
       isBaseEvent: data['isBaseEvent'] ?? true, // por defecto true para compatibilidad
       timezone: data['timezone'], // null por defecto para compatibilidad
+      arrivalTimezone: data['arrivalTimezone'], // null por defecto para compatibilidad
     );
   }
 
@@ -131,6 +134,7 @@ class Event {
       'updatedAt': Timestamp.fromDate(updatedAt),
       'isBaseEvent': isBaseEvent,
       if (timezone != null) 'timezone': timezone,
+      if (arrivalTimezone != null) 'arrivalTimezone': arrivalTimezone,
     };
     // Escribir estructura nueva si está presente
     if (commonPart != null) {
@@ -169,6 +173,7 @@ class Event {
     String? baseEventId,
     bool? isBaseEvent,
     String? timezone,
+    String? arrivalTimezone,
   }) {
     return Event(
       id: id ?? this.id,
@@ -194,6 +199,7 @@ class Event {
       baseEventId: baseEventId ?? this.baseEventId,
       isBaseEvent: isBaseEvent ?? this.isBaseEvent,
       timezone: timezone ?? this.timezone,
+      arrivalTimezone: arrivalTimezone ?? this.arrivalTimezone,
     );
   }
 
@@ -222,7 +228,8 @@ class Event {
         other.commonPart == commonPart &&
         other.baseEventId == baseEventId &&
         other.isBaseEvent == isBaseEvent &&
-        other.timezone == timezone;
+        other.timezone == timezone &&
+        other.arrivalTimezone == arrivalTimezone;
   }
 
   @override
@@ -243,7 +250,8 @@ class Event {
         (commonPart?.hashCode ?? 0) ^
         (baseEventId?.hashCode ?? 0) ^
         isBaseEvent.hashCode ^
-        (timezone?.hashCode ?? 0);
+        (timezone?.hashCode ?? 0) ^
+        (arrivalTimezone?.hashCode ?? 0);
   }
 
   // Métodos de utilidad para trabajar con minutos exactos

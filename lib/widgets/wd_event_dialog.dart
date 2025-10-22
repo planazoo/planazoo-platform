@@ -53,6 +53,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late bool _isDraft;
   late List<String> _selectedParticipantIds;
   late String _selectedTimezone;
+  late String _selectedArrivalTimezone;
   bool _canEditGeneral = false;
   bool _isAdmin = false;
   bool _isCreator = false;
@@ -147,6 +148,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _selectedColor = widget.event?.commonPart?.customColor ?? 'blue';
     _isDraft = widget.event?.commonPart?.isDraft ?? false;
     _selectedTimezone = widget.event?.timezone ?? 'Europe/Madrid';
+    _selectedArrivalTimezone = widget.event?.arrivalTimezone ?? 'Europe/Madrid';
     
     // Inicializar participantes seleccionados
     _selectedParticipantIds = widget.event?.commonPart?.participantIds ?? [];
@@ -545,6 +547,29 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 });
               },
             ),
+            const SizedBox(height: 12),
+            
+            // Timezone de llegada (solo para vuelos/viajes)
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
+              PermissionDropdownField<String>(
+                value: _selectedArrivalTimezone,
+                labelText: 'Timezone de llegada',
+                canEdit: _canEditGeneral,
+                fieldType: 'common',
+                tooltipText: 'Zona horaria del destino (para vuelos internacionales)',
+                prefixIcon: Icons.flight_land,
+                items: TimezoneService.getCommonTimezones().map((tz) {
+                  return DropdownMenuItem(
+                    value: tz,
+                    child: Text(TimezoneService.getTimezoneDisplayName(tz)),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedArrivalTimezone = value ?? 'Europe/Madrid';
+                  });
+                },
+              ),
             
             // Participantes
             _buildParticipantsSection(),
@@ -1274,6 +1299,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       participantTrackIds: _selectedParticipantIds,
       isDraft: _isDraft,
       timezone: _selectedTimezone,
+      arrivalTimezone: _selectedArrivalTimezone,
       createdAt: widget.event?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
       commonPart: commonPart,

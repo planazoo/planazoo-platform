@@ -3313,7 +3313,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // 3. Calcular llegada en UTC (añadir duración)
     final arrivalUtc = departureUtc.add(Duration(minutes: event.durationMinutes));
     
-    // 4. Convertir llegada a timezone del organizador
+    // 4. Si hay timezone de llegada específica, convertir a esa timezone primero
+    if (event.arrivalTimezone != null && event.arrivalTimezone!.isNotEmpty) {
+      final arrivalInDestinationTimezone = TimezoneService.utcToLocal(arrivalUtc, event.arrivalTimezone!);
+      
+      // 5. Convertir de timezone de llegada a timezone del organizador
+      final arrivalInOrganizerTimezone = TimezoneService.localToUtc(arrivalInDestinationTimezone, event.arrivalTimezone!);
+      return TimezoneService.utcToLocal(arrivalInOrganizerTimezone, organizerTimezone);
+    }
+    
+    // 4. Convertir llegada a timezone del organizador (sin timezone de llegada específica)
     final arrivalInOrganizerTimezone = TimezoneService.utcToLocal(arrivalUtc, organizerTimezone);
     
     return arrivalInOrganizerTimezone;
