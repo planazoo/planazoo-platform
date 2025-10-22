@@ -56,6 +56,11 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - Respetar roles (admin/participante/observador) cuando estén activos.
 - No exponer acciones no permitidas en UI.
 
+### 10) Configuración del Entorno de Desarrollo
+- **Ruta de Flutter**: `C:\Users\cclaraso\Downloads\flutter`
+- Usar esta ruta para ejecutar comandos `flutter` cuando sea necesario.
+- Añadir al PATH del sistema si es necesario para desarrollo futuro.
+
 ---
 
 Mantenemos este documento corto y de alto impacto. Cualquier nueva norma estable se añade aquí.
