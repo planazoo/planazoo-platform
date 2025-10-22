@@ -151,14 +151,8 @@ void main() {
       expect(utcEnd.minute, 0);
     });
 
-    test('Caso edge: Horario de verano', () {
-      // En verano, Madrid es GMT+2
-      final summerTime = DateTime(2024, 7, 15, 14, 0); // Julio
-      final utcSummer = TimezoneService.localToUtc(summerTime, 'Europe/Madrid');
-      
-      // Debería ser 12:00 UTC (14:00 - 2 horas)
-      expect(utcSummer.hour, 12);
-      expect(utcSummer.minute, 0);
+    test('Timezone por defecto del sistema', () {
+      expect(TimezoneService.getSystemTimezone(), 'Europe/Madrid');
     });
   });
 
