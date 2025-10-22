@@ -152,7 +152,33 @@ void main() {
     });
 
     test('Timezone por defecto del sistema', () {
-      expect(TimezoneService.getSystemTimezone(), 'Europe/Madrid');
+      final systemTimezone = TimezoneService.getSystemTimezone();
+      expect(systemTimezone, isNotEmpty);
+      expect(TimezoneService.isValidTimezone(systemTimezone), true);
+    });
+
+    test('Offset UTC para fecha específica (considera DST)', () {
+      // En invierno, Madrid es GMT+1
+      final winterDate = DateTime(2024, 1, 15);
+      final winterOffset = TimezoneService.getUtcOffsetForDate('Europe/Madrid', winterDate);
+      expect(winterOffset, 1.0);
+      
+      // En verano, Madrid es GMT+2
+      final summerDate = DateTime(2024, 7, 15);
+      final summerOffset = TimezoneService.getUtcOffsetForDate('Europe/Madrid', summerDate);
+      expect(summerOffset, 2.0);
+    });
+
+    test('Detección de horario de verano', () {
+      // En invierno, Madrid NO está en horario de verano
+      final winterDate = DateTime(2024, 1, 15);
+      final isDSTWinter = TimezoneService.isDaylightSavingTime('Europe/Madrid', winterDate);
+      expect(isDSTWinter, false);
+      
+      // En verano, Madrid SÍ está en horario de verano
+      final summerDate = DateTime(2024, 7, 15);
+      final isDSTSummer = TimezoneService.isDaylightSavingTime('Europe/Madrid', summerDate);
+      expect(isDSTSummer, true);
     });
   });
 

@@ -1,18 +1,21 @@
-/// Servicio simplificado para manejar conversiones de timezone
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
+
+/// Servicio completo para manejar conversiones de timezone
 /// 
-/// NOTA: Esta es una implementación básica sin el paquete timezone externo.
-/// Para una implementación completa, instalar: flutter pub get
+/// Usa el paquete oficial 'timezone' para manejo completo de DST y offsets dinámicos
 class TimezoneService {
   static bool _initialized = false;
 
-  /// Inicializa el servicio de timezones
+  /// Inicializa la base de datos de timezones
   static void initialize() {
     if (!_initialized) {
+      tz_data.initializeTimeZones();
       _initialized = true;
     }
   }
 
-  /// Convierte una fecha/hora local a UTC (implementación básica)
+  /// Convierte una fecha/hora local a UTC
   /// 
   /// [localDateTime] - Fecha/hora en timezone local del evento
   /// [timezone] - IANA timezone (ej: "Europe/Madrid", "America/New_York")
@@ -21,12 +24,12 @@ class TimezoneService {
   static DateTime localToUtc(DateTime localDateTime, String timezone) {
     initialize();
     
-    // Implementación básica con offsets fijos
-    final offset = _getTimezoneOffset(timezone);
-    return localDateTime.subtract(Duration(hours: offset));
+    final location = tz.getLocation(timezone);
+    final tzDateTime = tz.TZDateTime.from(localDateTime, location);
+    return tzDateTime.toUtc();
   }
 
-  /// Convierte una fecha/hora UTC a timezone local (implementación básica)
+  /// Convierte una fecha/hora UTC a timezone local
   /// 
   /// [utcDateTime] - Fecha/hora en UTC
   /// [timezone] - IANA timezone (ej: "Europe/Madrid", "America/New_York")
@@ -35,19 +38,22 @@ class TimezoneService {
   static DateTime utcToLocal(DateTime utcDateTime, String timezone) {
     initialize();
     
-    // Implementación básica con offsets fijos
-    final offset = _getTimezoneOffset(timezone);
-    return utcDateTime.add(Duration(hours: offset));
+    final location = tz.getLocation(timezone);
+    final tzDateTime = tz.TZDateTime.from(utcDateTime, location);
+    return tzDateTime.toLocal();
   }
 
-  /// Obtiene el offset UTC actual para una timezone (implementación básica)
+  /// Obtiene el offset UTC actual para una timezone
   /// 
   /// [timezone] - IANA timezone
   /// 
   /// Retorna: Offset en horas (ej: 1.0 para GMT+1, -5.0 para GMT-5)
   static double getUtcOffset(String timezone) {
     initialize();
-    return _getTimezoneOffset(timezone).toDouble();
+    
+    final location = tz.getLocation(timezone);
+    final now = tz.TZDateTime.now(location);
+    return now.timeZoneOffset.inHours.toDouble();
   }
 
   /// Obtiene el offset UTC formateado para una timezone
@@ -67,14 +73,36 @@ class TimezoneService {
   /// 
   /// Retorna: true si la timezone es válida
   static bool isValidTimezone(String timezone) {
-    return _timezoneOffsets.containsKey(timezone);
+    try {
+      initialize();
+      tz.getLocation(timezone);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// Obtiene la lista de timezones más comunes
   /// 
   /// Retorna: Lista de timezones con formato "Ciudad (GMT±X)"
   static List<String> getCommonTimezones() {
-    return _timezoneOffsets.keys.toList();
+    return [
+      'Europe/Madrid',      // GMT+1/+2
+      'Europe/London',      // GMT+0/+1
+      'Europe/Paris',       // GMT+1/+2
+      'Europe/Berlin',      // GMT+1/+2
+      'Europe/Rome',        // GMT+1/+2
+      'America/New_York',   // GMT-5/-4
+      'America/Los_Angeles', // GMT-8/-7
+      'America/Chicago',    // GMT-6/-5
+      'America/Toronto',    // GMT-5/-4
+      'Asia/Tokyo',         // GMT+9
+      'Asia/Shanghai',      // GMT+8
+      'Asia/Kolkata',       // GMT+5:30
+      'Asia/Dubai',         // GMT+4
+      'Australia/Sydney',   // GMT+10/+11
+      'Pacific/Auckland',   // GMT+12/+13
+    ];
   }
 
   /// Obtiene el nombre legible de una timezone
@@ -112,7 +140,36 @@ class TimezoneService {
   /// 
   /// Retorna: IANA timezone del sistema
   static String getSystemTimezone() {
-    return 'Europe/Madrid'; // Por defecto Madrid
+    initialize();
+    return tz.local.name;
+  }
+
+  /// Obtiene el offset UTC para una fecha específica (considera DST)
+  /// 
+  /// [timezone] - IANA timezone
+  /// [date] - Fecha específica para calcular el offset
+  /// 
+  /// Retorna: Offset en horas para esa fecha específica
+  static double getUtcOffsetForDate(String timezone, DateTime date) {
+    initialize();
+    
+    final location = tz.getLocation(timezone);
+    final tzDateTime = tz.TZDateTime.from(date, location);
+    return tzDateTime.timeZoneOffset.inHours.toDouble();
+  }
+
+  /// Verifica si una timezone está en horario de verano en una fecha específica
+  /// 
+  /// [timezone] - IANA timezone
+  /// [date] - Fecha específica
+  /// 
+  /// Retorna: true si está en horario de verano
+  static bool isDaylightSavingTime(String timezone, DateTime date) {
+    initialize();
+    
+    final location = tz.getLocation(timezone);
+    final tzDateTime = tz.TZDateTime.from(date, location);
+    return tzDateTime.timeZoneOffset.inHours > _getStandardOffset(timezone);
   }
 
   /// Convierte un evento a UTC para almacenamiento
@@ -181,28 +238,27 @@ class TimezoneService {
 
   // ========== MÉTODOS PRIVADOS ==========
 
-  /// Obtiene el offset de una timezone (implementación básica)
-  static int _getTimezoneOffset(String timezone) {
-    return _timezoneOffsets[timezone] ?? 0;
+  /// Obtiene el offset estándar de una timezone (sin DST)
+  static int _getStandardOffset(String timezone) {
+    // Offsets estándar (sin DST)
+    const standardOffsets = {
+      'Europe/Madrid': 1,      // GMT+1
+      'Europe/London': 0,      // GMT+0
+      'Europe/Paris': 1,       // GMT+1
+      'Europe/Berlin': 1,      // GMT+1
+      'Europe/Rome': 1,        // GMT+1
+      'America/New_York': -5,  // GMT-5
+      'America/Los_Angeles': -8, // GMT-8
+      'America/Chicago': -6,   // GMT-6
+      'America/Toronto': -5,   // GMT-5
+      'Asia/Tokyo': 9,         // GMT+9
+      'Asia/Shanghai': 8,      // GMT+8
+      'Asia/Kolkata': 5,       // GMT+5 (simplificado)
+      'Asia/Dubai': 4,         // GMT+4
+      'Australia/Sydney': 10,  // GMT+10
+      'Pacific/Auckland': 12,  // GMT+12
+    };
+    
+    return standardOffsets[timezone] ?? 0;
   }
-
-  /// Mapeo de timezones a offsets (implementación básica)
-  /// NOTA: Esta es una implementación simplificada sin DST
-  static const Map<String, int> _timezoneOffsets = {
-    'Europe/Madrid': 1,      // GMT+1
-    'Europe/London': 0,      // GMT+0
-    'Europe/Paris': 1,       // GMT+1
-    'Europe/Berlin': 1,      // GMT+1
-    'Europe/Rome': 1,        // GMT+1
-    'America/New_York': -5,  // GMT-5
-    'America/Los_Angeles': -8, // GMT-8
-    'America/Chicago': -6,   // GMT-6
-    'America/Toronto': -5,   // GMT-5
-    'Asia/Tokyo': 9,         // GMT+9
-    'Asia/Shanghai': 8,      // GMT+8
-    'Asia/Kolkata': 5,       // GMT+5 (simplificado, debería ser +5:30)
-    'Asia/Dubai': 4,         // GMT+4
-    'Australia/Sydney': 10,  // GMT+10
-    'Pacific/Auckland': 12,  // GMT+12
-  };
 }
