@@ -16,6 +16,7 @@ import 'package:unp_calendario/shared/models/plan_permissions.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/edit_personal_info_dialog.dart';
 import 'package:unp_calendario/widgets/permission_field.dart';
+import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -51,6 +52,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late String _selectedColor;
   late bool _isDraft;
   late List<String> _selectedParticipantIds;
+  late String _selectedTimezone;
   bool _canEditGeneral = false;
   bool _isAdmin = false;
   bool _isCreator = false;
@@ -144,6 +146,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _selectedDurationMinutes = widget.event?.commonPart?.durationMinutes ?? 60;
     _selectedColor = widget.event?.commonPart?.customColor ?? 'blue';
     _isDraft = widget.event?.commonPart?.isDraft ?? false;
+    _selectedTimezone = widget.event?.timezone ?? 'Europe/Madrid';
     
     // Inicializar participantes seleccionados
     _selectedParticipantIds = widget.event?.commonPart?.participantIds ?? [];
@@ -519,6 +522,28 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   ],
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            
+            // Timezone
+            PermissionDropdownField<String>(
+              value: _selectedTimezone,
+              labelText: 'Timezone',
+              canEdit: _canEditGeneral,
+              fieldType: 'common',
+              tooltipText: 'Zona horaria del evento (se usa para conversiones UTC)',
+              prefixIcon: Icons.public,
+              items: TimezoneService.getCommonTimezones().map((tz) {
+                return DropdownMenuItem(
+                  value: tz,
+                  child: Text(TimezoneService.getTimezoneDisplayName(tz)),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedTimezone = value ?? 'Europe/Madrid';
+                });
+              },
             ),
             
             // Participantes
@@ -1248,6 +1273,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       typeSubtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
       participantTrackIds: _selectedParticipantIds,
       isDraft: _isDraft,
+      timezone: _selectedTimezone,
       createdAt: widget.event?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
       commonPart: commonPart,
