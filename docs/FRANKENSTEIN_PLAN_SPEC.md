@@ -132,7 +132,13 @@ El plan **"🧟 Frankenstein"** es un plan artificial diseñado específicamente
 
 #### **Familia: Desplazamiento**
 - 🚕 Taxi (08:00, 30min)
-- ✈️ Avión (09:30, 2h)
+- ✈️ **Vuelo Madrid → Buenos Aires** (20:00, 10h) - **TIMEZONES DIFERENTES**
+  - **Salida**: Madrid 20:00h (Europe/Madrid)
+  - **Llegada**: Buenos Aires 06:00h+1 (America/Argentina/Buenos_Aires)
+  - **Duración**: 10 horas
+  - **Cruza medianoche**: Sí (20:00 → 06:00+1)
+  - **Timezone salida**: Europe/Madrid (GMT+1)
+  - **Timezone llegada**: America/Argentina/Buenos_Aires (GMT-3)
 - 🚌 Autobús (12:00, 45min)
 
 #### **Familia: Restauración**
@@ -147,6 +153,10 @@ El plan **"🧟 Frankenstein"** es un plan artificial diseñado específicamente
 - ✅ Colores por tipo de familia
 - ✅ Subtipos de eventos
 - ✅ Iconos según familia (si se implementan)
+- ✅ **Sistema de timezones**: Vuelo con 2 timezones diferentes
+- ✅ **Conversiones UTC**: Salida/llegada en diferentes timezones
+- ✅ **Eventos que cruzan medianoche**: Con timezones específicas
+- ✅ **Cálculo de llegada**: En timezone del organizador
 
 ---
 

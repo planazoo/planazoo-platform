@@ -491,14 +491,16 @@ class DemoDataGenerator {
       planId: plan.id!,
       userId: userId,
       date: day4,
-      hour: 9,
-      startMinute: 30,
-      durationMinutes: 120,
-      description: 'Vuelo Madrid-Barcelona (TODOS)',
+      hour: 20,
+      startMinute: 0,
+      durationMinutes: 600, // 10 horas
+      description: 'Vuelo Madrid → Buenos Aires (TODOS)',
       typeFamily: 'Desplazamiento',
       typeSubtype: 'Avión',
       color: 'blue',
       participantTrackIds: [userId, ...familyUserIds], // TODOS (organizador + familia)
+      timezone: 'Europe/Madrid', // Timezone de salida
+      arrivalTimezone: 'America/Argentina/Buenos_Aires', // Timezone de llegada
     );
 
     await _createEvent(
@@ -773,6 +775,7 @@ class DemoDataGenerator {
     bool isDraft = false,
     List<String>? participantTrackIds,
     String? timezone,
+    String? arrivalTimezone,
   }) async {
     final participants = participantTrackIds ?? [];
     
@@ -848,6 +851,7 @@ class DemoDataGenerator {
       commonPart: commonPart,
       personalParts: personalParts,
       timezone: timezone,
+      arrivalTimezone: arrivalTimezone,
     );
 
     // Añadir a la lista de eventos creados para futuras validaciones
