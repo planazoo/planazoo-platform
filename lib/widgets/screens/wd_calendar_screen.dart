@@ -2473,9 +2473,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     // Horas en una sola línea
                     Flexible(
                       child: Text(
-                        _eventCrossesMidnight(event)
-                            ? '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')} - ${_getNextDayEndTime(event)}'
-                            : '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')} - ${event.endHour.toString().padLeft(2, '0')}:${event.endMinute.toString().padLeft(2, '0')}',
+                        _getEventTimeRange(event),
                         style: TextStyle(
                           color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
                           fontSize: fontSize - 2,
@@ -3279,5 +3277,78 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       hour: localDateTime.hour,
       startMinute: localDateTime.minute,
     );
+  }
+
+  /// Calcula la hora de llegada en la timezone del organizador
+  /// 
+  /// [event] - Evento con timezone específica
+  /// [organizerTimezone] - Timezone del organizador (quien ve el calendario)
+  /// 
+  /// Retorna: DateTime de llegada en la timezone del organizador
+  DateTime _calculateArrivalTimeInOrganizerTimezone(Event event, String organizerTimezone) {
+    if (event.timezone == null || event.timezone!.isEmpty) {
+      // Si no hay timezone, usar la hora de fin normal
+      final arrivalDateTime = DateTime(
+        event.date.year,
+        event.date.month,
+        event.date.day,
+        event.hour,
+        event.startMinute,
+      ).add(Duration(minutes: event.durationMinutes));
+      return arrivalDateTime;
+    }
+    
+    // 1. Crear DateTime de salida en la timezone del evento
+    final departureDateTime = DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    
+    // 2. Convertir salida a UTC
+    final departureUtc = TimezoneService.localToUtc(departureDateTime, event.timezone!);
+    
+    // 3. Calcular llegada en UTC (añadir duración)
+    final arrivalUtc = departureUtc.add(Duration(minutes: event.durationMinutes));
+    
+    // 4. Convertir llegada a timezone del organizador
+    final arrivalInOrganizerTimezone = TimezoneService.utcToLocal(arrivalUtc, organizerTimezone);
+    
+    return arrivalInOrganizerTimezone;
+  }
+
+  /// Obtiene la hora de llegada formateada en la timezone del organizador
+  String _getArrivalTimeInOrganizerTimezone(Event event, String organizerTimezone) {
+    final arrivalTime = _calculateArrivalTimeInOrganizerTimezone(event, organizerTimezone);
+    return '${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// Obtiene el rango de tiempo del evento considerando timezones
+  String _getEventTimeRange(Event event) {
+    // Obtener timezone del organizador (por defecto Madrid)
+    final organizerTimezone = TimezoneService.getSystemTimezone();
+    
+    // Si el evento tiene timezone específica, calcular llegada en timezone del organizador
+    if (event.timezone != null && event.timezone!.isNotEmpty && event.timezone != organizerTimezone) {
+      final arrivalTime = _calculateArrivalTimeInOrganizerTimezone(event, organizerTimezone);
+      final startTime = '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')}';
+      final endTime = '${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}';
+      
+      // Si cruza medianoche, mostrar con +1
+      if (arrivalTime.day > event.date.day) {
+        return '$startTime - $endTime +1';
+      } else {
+        return '$startTime - $endTime';
+      }
+    }
+    
+    // Si no hay timezone específica o es la misma que el organizador, usar lógica normal
+    if (_eventCrossesMidnight(event)) {
+      return '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')} - ${_getNextDayEndTime(event)}';
+    } else {
+      return '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')} - ${event.endHour.toString().padLeft(2, '0')}:${event.endMinute.toString().padLeft(2, '0')}';
+    }
   }
 }
