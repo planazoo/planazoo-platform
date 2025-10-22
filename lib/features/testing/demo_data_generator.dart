@@ -84,6 +84,7 @@ class DemoDataGenerator {
       await _generateMultiDayEvents(plan, userId, familyUserIds);
       await _generateEventTypes(plan, userId, familyUserIds);
       await _generateEdgeCases(plan, userId, familyUserIds);
+      await generateTimezoneEvents(plan, userId, familyUserIds);
 
       // 8. Generar alojamientos
       await _generateAccommodations(plan, userId, familyUserIds);
@@ -771,6 +772,7 @@ class DemoDataGenerator {
     String? color,
     bool isDraft = false,
     List<String>? participantTrackIds,
+    String? timezone,
   }) async {
     final participants = participantTrackIds ?? [];
     
@@ -845,6 +847,7 @@ class DemoDataGenerator {
       updatedAt: DateTime.now(),
       commonPart: commonPart,
       personalParts: personalParts,
+      timezone: timezone,
     );
 
     // Añadir a la lista de eventos creados para futuras validaciones
@@ -1072,6 +1075,77 @@ class DemoDataGenerator {
     } catch (e) {
       debugPrint('❌ Error asignando roles de permisos: $e');
     }
+  }
+
+  // ==================== EVENTOS CON TIMEZONES ====================
+
+  /// Genera eventos de prueba con diferentes timezones
+  static Future<void> generateTimezoneEvents(Plan plan, String userId, List<String> familyUserIds) async {
+    debugPrint('🌍 Generando eventos con diferentes timezones...');
+    
+    final day5 = plan.startDate.add(const Duration(days: 4));
+
+    // Evento en Madrid (GMT+1/+2)
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day5,
+      hour: 10,
+      startMinute: 0,
+      durationMinutes: 120,
+      description: 'Reunión en Madrid (GMT+1)',
+      typeFamily: 'Otro',
+      color: 'blue',
+      participantTrackIds: [userId, familyUserIds[0]],
+      timezone: 'Europe/Madrid',
+    );
+
+    // Evento en Nueva York (GMT-5/-4)
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day5,
+      hour: 14,
+      startMinute: 0,
+      durationMinutes: 90,
+      description: 'Conferencia en Nueva York (GMT-5)',
+      typeFamily: 'Actividad',
+      color: 'red',
+      participantTrackIds: [userId, familyUserIds[1]],
+      timezone: 'America/New_York',
+    );
+
+    // Evento en Tokio (GMT+9)
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day5,
+      hour: 18,
+      startMinute: 0,
+      durationMinutes: 60,
+      description: 'Cena en Tokio (GMT+9)',
+      typeFamily: 'Restauración',
+      color: 'green',
+      participantTrackIds: [userId, familyUserIds[2]],
+      timezone: 'Asia/Tokyo',
+    );
+
+    // Evento en Londres (GMT+0/+1)
+    await _createEvent(
+      planId: plan.id!,
+      userId: userId,
+      date: day5,
+      hour: 20,
+      startMinute: 0,
+      durationMinutes: 120,
+      description: 'Teatro en Londres (GMT+0)',
+      typeFamily: 'Actividad',
+      color: 'purple',
+      participantTrackIds: [userId, familyUserIds[3]],
+      timezone: 'Europe/London',
+    );
+
+    debugPrint('✅ Eventos con timezones generados (4 eventos: Madrid, Nueva York, Tokio, Londres)');
   }
 }
 

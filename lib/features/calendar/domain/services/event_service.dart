@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/event.dart';
 import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
+import 'timezone_service.dart';
 
 class EventService {
   static const String _collectionName = 'events';
@@ -106,7 +107,13 @@ class EventService {
         return null;
       }
 
-      final docRef = await _firestore.collection(_collectionName).add(event.toFirestore());
+      // Convertir evento a UTC si tiene timezone
+      Event eventToSave = event;
+      if (event.timezone != null && event.timezone!.isNotEmpty) {
+        eventToSave = _convertEventToUtc(event);
+      }
+
+      final docRef = await _firestore.collection(_collectionName).add(eventToSave.toFirestore());
       return docRef.id;
     } catch (e) {
       // Error creating event: $e
@@ -127,7 +134,13 @@ class EventService {
         }
       }
 
-      await _firestore.collection(_collectionName).doc(event.id).update(event.toFirestore());
+      // Convertir evento a UTC si tiene timezone
+      Event eventToSave = event;
+      if (event.timezone != null && event.timezone!.isNotEmpty) {
+        eventToSave = _convertEventToUtc(event);
+      }
+
+      await _firestore.collection(_collectionName).doc(event.id).update(eventToSave.toFirestore());
       return true;
     } catch (e) {
       // Error updating event: $e
@@ -364,6 +377,60 @@ class EventService {
     } catch (e) {
       return false;
     }
+  }
+
+  // ========== MÉTODOS DE TIMEZONE ==========
+  
+  /// Convierte un evento de timezone local a UTC para almacenamiento
+  Event _convertEventToUtc(Event event) {
+    if (event.timezone == null || event.timezone!.isEmpty) {
+      return event;
+    }
+    
+    // Crear DateTime local del evento
+    final localDateTime = DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    
+    // Convertir a UTC
+    final utcDateTime = TimezoneService.localToUtc(localDateTime, event.timezone!);
+    
+    // Crear evento con fecha/hora UTC
+    return event.copyWith(
+      date: utcDateTime,
+      hour: utcDateTime.hour,
+      startMinute: utcDateTime.minute,
+    );
+  }
+  
+  /// Convierte un evento de UTC a timezone local para mostrar
+  Event _convertEventFromUtc(Event event) {
+    if (event.timezone == null || event.timezone!.isEmpty) {
+      return event;
+    }
+    
+    // Crear DateTime UTC del evento
+    final utcDateTime = DateTime.utc(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    
+    // Convertir a timezone local
+    final localDateTime = TimezoneService.utcToLocal(utcDateTime, event.timezone!);
+    
+    // Crear evento con fecha/hora local
+    return event.copyWith(
+      date: localDateTime,
+      hour: localDateTime.hour,
+      startMinute: localDateTime.minute,
+    );
   }
 
   // ========== MÉTODOS DE SINCRONIZACIÓN ==========

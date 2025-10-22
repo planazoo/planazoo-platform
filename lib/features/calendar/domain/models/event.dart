@@ -25,6 +25,8 @@ class Event {
   // NUEVO: sistema de sincronización
   final String? baseEventId; // ID del evento original (null si es el original)
   final bool isBaseEvent; // true si es el evento original, false si es copia
+  // NUEVO: sistema de timezones
+  final String? timezone; // IANA timezone (ej: "Europe/Madrid", "America/New_York")
 
   const Event({
     this.id,
@@ -49,6 +51,7 @@ class Event {
     this.personalParts,
     this.baseEventId, // null por defecto (evento original)
     this.isBaseEvent = true, // por defecto es evento original
+    this.timezone, // null por defecto (usará timezone del plan)
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
@@ -103,6 +106,7 @@ class Event {
       personalParts: personalParts,
       baseEventId: data['baseEventId'],
       isBaseEvent: data['isBaseEvent'] ?? true, // por defecto true para compatibilidad
+      timezone: data['timezone'], // null por defecto para compatibilidad
     );
   }
 
@@ -126,6 +130,7 @@ class Event {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'isBaseEvent': isBaseEvent,
+      if (timezone != null) 'timezone': timezone,
     };
     // Escribir estructura nueva si está presente
     if (commonPart != null) {
@@ -163,6 +168,7 @@ class Event {
     Map<String, EventPersonalPart>? personalParts,
     String? baseEventId,
     bool? isBaseEvent,
+    String? timezone,
   }) {
     return Event(
       id: id ?? this.id,
@@ -187,6 +193,7 @@ class Event {
       personalParts: personalParts ?? this.personalParts,
       baseEventId: baseEventId ?? this.baseEventId,
       isBaseEvent: isBaseEvent ?? this.isBaseEvent,
+      timezone: timezone ?? this.timezone,
     );
   }
 
@@ -214,7 +221,8 @@ class Event {
         other.isDraft == isDraft &&
         other.commonPart == commonPart &&
         other.baseEventId == baseEventId &&
-        other.isBaseEvent == isBaseEvent;
+        other.isBaseEvent == isBaseEvent &&
+        other.timezone == timezone;
   }
 
   @override
@@ -234,7 +242,8 @@ class Event {
         isDraft.hashCode ^
         (commonPart?.hashCode ?? 0) ^
         (baseEventId?.hashCode ?? 0) ^
-        isBaseEvent.hashCode;
+        isBaseEvent.hashCode ^
+        (timezone?.hashCode ?? 0);
   }
 
   // Métodos de utilidad para trabajar con minutos exactos

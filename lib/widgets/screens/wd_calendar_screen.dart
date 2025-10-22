@@ -14,6 +14,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/accommodation_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/features/calendar/domain/services/date_service.dart';
@@ -2347,8 +2348,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye un evento individual como Positioned widget
   Widget _buildEventWidget(Event event, double availableWidth) {
+    // Convertir evento de UTC a timezone local para mostrar
+    final localEvent = _convertEventFromUtc(event);
+    
     final startDayIndex = _currentDayGroup * _visibleDays + 1;
-    final eventDayIndex = event.date.difference(widget.plan.startDate).inDays + 1;
+    final eventDayIndex = localEvent.date.difference(widget.plan.startDate).inDays + 1;
     final dayIndex = eventDayIndex - startDayIndex;
     
     // Si el evento no está en el rango de días actual, no lo mostramos
@@ -2368,20 +2372,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Posición Y: ahora que los eventos están dentro del SingleChildScrollView,
     // no necesitamos restar el scrollOffset
     final totalFixedHeight = 0.0; // Ajustado para alineación correcta en 00:00h
-    final y = totalFixedHeight + (event.totalStartMinutes * cellHeight / 60);
+    final y = totalFixedHeight + (localEvent.totalStartMinutes * cellHeight / 60);
     
     final width = cellWidth * 0.95; // 5% más estrecho que la columna
     
     // Calcular altura del evento - si cruza medianoche, mostrar solo la parte del día actual
     double height;
-    if (_eventCrossesMidnight(event)) {
-      final startTime = event.hour * 60 + event.startMinute;
+    if (_eventCrossesMidnight(localEvent)) {
+      final startTime = localEvent.hour * 60 + localEvent.startMinute;
       final midnightMinutes = 1440; // 24:00 = 1440 minutos
-      final endTime = startTime + event.durationMinutes;
+      final endTime = startTime + localEvent.durationMinutes;
       final currentDayDurationMinutes = midnightMinutes - startTime;
       height = (currentDayDurationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
     } else {
-      height = (event.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+      height = (localEvent.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
     }
     
     return Positioned(
@@ -2389,7 +2393,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       top: y,
       width: width,
       height: height,
-      child: _buildDraggableEvent(event),
+      child: _buildDraggableEvent(localEvent),
     );
   }
 
@@ -3246,6 +3250,34 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           setState(() {});
         },
       ),
+    );
+  }
+
+  // ========== MÉTODOS DE TIMEZONE ==========
+  
+  /// Convierte un evento de UTC a timezone local para mostrar
+  Event _convertEventFromUtc(Event event) {
+    if (event.timezone == null || event.timezone!.isEmpty) {
+      return event;
+    }
+    
+    // Crear DateTime UTC del evento
+    final utcDateTime = DateTime.utc(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    
+    // Convertir a timezone local
+    final localDateTime = TimezoneService.utcToLocal(utcDateTime, event.timezone!);
+    
+    // Crear evento con fecha/hora local
+    return event.copyWith(
+      date: localDateTime,
+      hour: localDateTime.hour,
+      startMinute: localDateTime.minute,
     );
   }
 }
