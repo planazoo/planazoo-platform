@@ -26,6 +26,7 @@
 1. **Códigos únicos**: Cada tarea tiene un código único (T1, T2, T3...)
 2. **Códigos no reutilizables**: Al eliminar una tarea, su código no se reutiliza para evitar confusiones
 3. **Seguimiento de códigos**: La primera fila indica el siguiente código a asignar
+4. **⚠️ IMPORTANTE**: El contador total solo se actualiza cuando se CREA una nueva tarea, no cuando se completa o elimina
 
 ### **📋 Gestión de Tareas**
 4. **Orden de prioridad**: La posición en el documento indica el orden de trabajo (no el código)
