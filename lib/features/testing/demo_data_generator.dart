@@ -493,14 +493,14 @@ class DemoDataGenerator {
       date: day4,
       hour: 20,
       startMinute: 0,
-      durationMinutes: 600, // 10 horas
-      description: 'Vuelo Madrid → Buenos Aires (TODOS)',
+      durationMinutes: 1320, // 22 horas (Madrid-Sídney típico)
+      description: 'Vuelo Madrid → Sídney (TODOS)',
       typeFamily: 'Desplazamiento',
       typeSubtype: 'Avión',
       color: 'blue',
       participantTrackIds: [userId, ...familyUserIds], // TODOS (organizador + familia)
       timezone: 'Europe/Madrid', // Timezone de salida
-      arrivalTimezone: 'America/Argentina/Buenos_Aires', // Timezone de llegada
+      arrivalTimezone: 'Australia/Sydney', // Timezone de llegada
     );
 
     await _createEvent(

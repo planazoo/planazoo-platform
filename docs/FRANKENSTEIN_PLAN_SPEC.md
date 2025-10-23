@@ -132,13 +132,13 @@ El plan **"🧟 Frankenstein"** es un plan artificial diseñado específicamente
 
 #### **Familia: Desplazamiento**
 - 🚕 Taxi (08:00, 30min)
-- ✈️ **Vuelo Madrid → Buenos Aires** (20:00, 10h) - **TIMEZONES DIFERENTES**
+- ✈️ **Vuelo Madrid → Sídney** (20:00, 22h) - **TIMEZONES DIFERENTES + CRUZA DÍAS**
   - **Salida**: Madrid 20:00h (Europe/Madrid)
-  - **Llegada**: Buenos Aires 06:00h+1 (America/Argentina/Buenos_Aires)
-  - **Duración**: 10 horas
-  - **Cruza medianoche**: Sí (20:00 → 06:00+1)
+  - **Llegada**: Sídney 18:00h+1 (Australia/Sydney)
+  - **Duración**: 22 horas (vuelo típico Madrid-Sídney)
+  - **Cruza medianoche**: Sí (20:00 → 18:00+1)
   - **Timezone salida**: Europe/Madrid (GMT+1)
-  - **Timezone llegada**: America/Argentina/Buenos_Aires (GMT-3)
+  - **Timezone llegada**: Australia/Sydney (GMT+10)
 - 🚌 Autobús (12:00, 45min)
 
 #### **Familia: Restauración**
