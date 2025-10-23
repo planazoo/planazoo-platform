@@ -96,6 +96,7 @@ class TimezoneService {
       'America/Los_Angeles', // GMT-8/-7
       'America/Chicago',    // GMT-6/-5
       'America/Toronto',    // GMT-5/-4
+      'America/Argentina/Buenos_Aires', // GMT-3
       'Asia/Tokyo',         // GMT+9
       'Asia/Shanghai',      // GMT+8
       'Asia/Kolkata',       // GMT+5:30
@@ -124,6 +125,7 @@ class TimezoneService {
       'America/Los_Angeles': 'Los Ángeles',
       'America/Chicago': 'Chicago',
       'America/Toronto': 'Toronto',
+      'America/Argentina/Buenos_Aires': 'Buenos Aires',
       'Asia/Tokyo': 'Tokio',
       'Asia/Shanghai': 'Shanghái',
       'Asia/Kolkata': 'Nueva Delhi',
