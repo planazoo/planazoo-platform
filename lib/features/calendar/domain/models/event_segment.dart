@@ -1,4 +1,5 @@
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
+import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 
 /// Representa un "segmento" de un evento para un día específico.
 /// 
@@ -68,10 +69,18 @@ class EventSegment {
   /// 
   /// Si el evento solo ocupa 1 día, devuelve 1 segmento.
   /// Si cruza medianoche, devuelve múltiples segmentos (uno por día).
+  /// 
+  /// NUEVO: Aplica lógica de timezones antes de crear segmentos para eventos
+  /// con timezones diferentes (ej: vuelos Madrid-Sídney).
   static List<EventSegment> createSegmentsForEvent(Event event, {DateTime? startDate, DateTime? endDate}) {
     final segments = <EventSegment>[];
     
-    // Calcular inicio y fin del evento en minutos absolutos
+    // PASO 1: Aplicar lógica de timezones si el evento tiene timezones diferentes
+    if (_hasDifferentTimezones(event)) {
+      return _createSegmentsForTimezoneEvent(event, startDate: startDate, endDate: endDate);
+    }
+    
+    // PASO 2: Lógica original para eventos sin timezones diferentes
     final eventStartMinutes = event.hour * 60 + event.startMinute;
     
     // FALLBACK: Si durationMinutes es 0 o muy pequeño, usar duration (en horas) como backup
@@ -170,5 +179,113 @@ class EventSegment {
 
   @override
   int get hashCode => id.hashCode;
+
+  // ========== MÉTODOS HELPER PARA TIMEZONES ==========
+
+  /// Verifica si un evento tiene timezones diferentes
+  static bool _hasDifferentTimezones(Event event) {
+    return event.timezone != null && 
+           event.timezone!.isNotEmpty && 
+           event.arrivalTimezone != null && 
+           event.arrivalTimezone!.isNotEmpty &&
+           event.timezone != event.arrivalTimezone;
+  }
+
+  /// Crea segmentos para eventos con timezones diferentes
+  /// 
+  /// Para eventos como vuelos Madrid-Sídney, calcula las fechas reales
+  /// de salida y llegada antes de crear los segmentos.
+  static List<EventSegment> _createSegmentsForTimezoneEvent(Event event, {DateTime? startDate, DateTime? endDate}) {
+    final segments = <EventSegment>[];
+    
+    // 1. Calcular fechas reales usando timezones
+    final departureDateTime = DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    
+    // 2. Convertir salida a UTC
+    final departureUtc = TimezoneService.localToUtc(departureDateTime, event.timezone!);
+    
+    // 3. Calcular llegada en UTC (añadir duración)
+    final arrivalUtc = departureUtc.add(Duration(minutes: event.durationMinutes));
+    
+    // 4. Convertir llegada a timezone de destino
+    final arrivalInDestinationTimezone = TimezoneService.utcToLocal(arrivalUtc, event.arrivalTimezone!);
+    
+    // 5. Crear segmentos basados en las fechas reales
+    final departureDate = DateTime(departureDateTime.year, departureDateTime.month, departureDateTime.day);
+    final arrivalDate = DateTime(arrivalInDestinationTimezone.year, arrivalInDestinationTimezone.month, arrivalInDestinationTimezone.day);
+    
+    // 6. Calcular días de diferencia
+    final daysDifference = arrivalDate.difference(departureDate).inDays;
+    
+    if (daysDifference == 0) {
+      // Mismo día - un solo segmento
+      final startMinutes = event.hour * 60 + event.startMinute;
+      final endMinutes = arrivalInDestinationTimezone.hour * 60 + arrivalInDestinationTimezone.minute;
+      
+      segments.add(EventSegment(
+        originalEvent: event,
+        segmentDate: departureDate,
+        startMinute: startMinutes,
+        endMinute: endMinutes,
+        isFirst: true,
+        isLast: true,
+      ));
+    } else {
+      // Múltiples días - crear segmentos
+      
+      // Segmento 1: Día de salida
+      final startMinutes = event.hour * 60 + event.startMinute;
+      segments.add(EventSegment(
+        originalEvent: event,
+        segmentDate: departureDate,
+        startMinute: startMinutes,
+        endMinute: 1440, // Hasta medianoche
+        isFirst: true,
+        isLast: false,
+      ));
+      
+      // Segmentos intermedios (si los hay)
+      for (int dayOffset = 1; dayOffset < daysDifference; dayOffset++) {
+        final intermediateDate = departureDate.add(Duration(days: dayOffset));
+        segments.add(EventSegment(
+          originalEvent: event,
+          segmentDate: intermediateDate,
+          startMinute: 0, // Empieza a las 00:00
+          endMinute: 1440, // Hasta medianoche
+          isFirst: false,
+          isLast: false,
+        ));
+      }
+      
+      // Segmento final: Día de llegada
+      final arrivalMinutes = arrivalInDestinationTimezone.hour * 60 + arrivalInDestinationTimezone.minute;
+      segments.add(EventSegment(
+        originalEvent: event,
+        segmentDate: arrivalDate,
+        startMinute: 0, // Empieza a las 00:00
+        endMinute: arrivalMinutes,
+        isFirst: false,
+        isLast: true,
+      ));
+    }
+    
+    // Filtrar por rango de fechas si se especifica
+    if (startDate != null || endDate != null) {
+      return segments.where((segment) {
+        final date = segment.segmentDate;
+        final afterStart = startDate == null || date.isAfter(startDate.subtract(const Duration(days: 1)));
+        final beforeEnd = endDate == null || date.isBefore(endDate.add(const Duration(days: 1)));
+        return afterStart && beforeEnd;
+      }).toList();
+    }
+    
+    return segments;
+  }
 }
 

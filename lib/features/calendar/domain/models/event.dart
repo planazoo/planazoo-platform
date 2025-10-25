@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 
 class Event {
   final String? id;
@@ -257,9 +258,17 @@ class Event {
   // Métodos de utilidad para trabajar con minutos exactos
   
   /// Obtiene el minuto total de inicio del evento (hora * 60 + startMinute)
+  /// 
+  /// NOTA: Para eventos con timezones diferentes, este método devuelve los minutos
+  /// en la timezone de salida. Para comparaciones entre eventos con timezones diferentes,
+  /// usar overlapsWith() que maneja la conversión automáticamente.
   int get totalStartMinutes => hour * 60 + startMinute;
   
   /// Obtiene el minuto total de fin del evento
+  /// 
+  /// NOTA: Para eventos con timezones diferentes, este método devuelve los minutos
+  /// en la timezone de salida. Para comparaciones entre eventos con timezones diferentes,
+  /// usar overlapsWith() que maneja la conversión automáticamente.
   int get totalEndMinutes => totalStartMinutes + durationMinutes;
   
   /// Obtiene la hora de fin del evento
@@ -269,15 +278,152 @@ class Event {
   int get endMinute => totalEndMinutes % 60;
   
   /// Verifica si el evento está activo en un minuto específico
+  /// 
+  /// Para eventos con timezones diferentes, este método verifica si el minuto
+  /// especificado está dentro del rango del evento en la timezone de salida.
   bool isActiveAt(int hour, int minute) {
     final checkMinutes = hour * 60 + minute;
     return checkMinutes >= totalStartMinutes && checkMinutes < totalEndMinutes;
   }
+
+  /// Verifica si el evento está activo en una fecha/hora específica considerando timezones
+  /// 
+  /// Este método es más preciso para eventos con timezones diferentes ya que
+  /// convierte la fecha/hora de verificación a la timezone del evento.
+  bool isActiveAtDateTime(DateTime dateTime) {
+    if (!_hasDifferentTimezones(this)) {
+      // Sin timezones diferentes, usar lógica normal
+      return isActiveAt(dateTime.hour, dateTime.minute);
+    }
+    
+    // Con timezones diferentes, verificar en tiempo real
+    final eventStart = _getRealStartDateTime(this);
+    final eventEnd = _getRealEndDateTime(this);
+    
+    // Convertir la fecha de verificación a UTC para comparación
+    final checkUtc = TimezoneService.localToUtc(dateTime, timezone!);
+    
+    return checkUtc.isAfter(eventStart) && checkUtc.isBefore(eventEnd);
+  }
   
   /// Verifica si el evento se solapa con otro evento
   bool overlapsWith(Event other) {
+    // Si ambos eventos tienen timezones diferentes, usar lógica especial
+    if (_hasDifferentTimezones(this) || _hasDifferentTimezones(other)) {
+      return _overlapsWithTimezoneAware(other);
+    }
+    
+    // Lógica original para eventos sin timezones diferentes
     return totalStartMinutes < other.totalEndMinutes && 
            totalEndMinutes > other.totalStartMinutes;
+  }
+
+  /// Verifica si un evento tiene timezones diferentes
+  bool _hasDifferentTimezones(Event event) {
+    return event.timezone != null && 
+           event.timezone!.isNotEmpty && 
+           event.arrivalTimezone != null && 
+           event.arrivalTimezone!.isNotEmpty &&
+           event.timezone != event.arrivalTimezone;
+  }
+
+  /// Verifica solapamiento considerando timezones
+  bool _overlapsWithTimezoneAware(Event other) {
+    // Para eventos con timezones diferentes, necesitamos verificar
+    // si se solapan en el tiempo real (no en minutos locales)
+    
+    // Calcular fechas reales de inicio y fin para ambos eventos
+    final thisStart = _getRealStartDateTime(this);
+    final thisEnd = _getRealEndDateTime(this);
+    final otherStart = _getRealStartDateTime(other);
+    final otherEnd = _getRealEndDateTime(other);
+    
+    // Verificar solapamiento en tiempo real
+    return thisStart.isBefore(otherEnd) && thisEnd.isAfter(otherStart);
+  }
+
+  /// Obtiene la fecha/hora real de inicio considerando timezones
+  DateTime _getRealStartDateTime(Event event) {
+    if (!_hasDifferentTimezones(event)) {
+      return DateTime(
+        event.date.year,
+        event.date.month,
+        event.date.day,
+        event.hour,
+        event.startMinute,
+      );
+    }
+    
+    // Con timezones diferentes, convertir a UTC para comparación
+    final localDateTime = DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    
+    return TimezoneService.localToUtc(localDateTime, event.timezone!);
+  }
+
+  /// Obtiene la fecha/hora real de fin considerando timezones
+  DateTime _getRealEndDateTime(Event event) {
+    if (!_hasDifferentTimezones(event)) {
+      return DateTime(
+        event.date.year,
+        event.date.month,
+        event.date.day,
+        event.hour,
+        event.startMinute,
+      ).add(Duration(minutes: event.durationMinutes));
+    }
+    
+    // Con timezones diferentes, calcular llegada real y convertir a UTC
+    final departureDateTime = DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    
+    final departureUtc = TimezoneService.localToUtc(departureDateTime, event.timezone!);
+    final arrivalUtc = departureUtc.add(Duration(minutes: event.durationMinutes));
+    
+    return arrivalUtc;
+  }
+
+  /// Obtiene la fecha/hora de salida real considerando timezones
+  DateTime get realDepartureDateTime => _getRealStartDateTime(this);
+  
+  /// Obtiene la fecha/hora de llegada real considerando timezones
+  DateTime get realArrivalDateTime => _getRealEndDateTime(this);
+  
+  /// Obtiene la duración real del evento en minutos considerando timezones
+  int get realDurationMinutes {
+    if (!_hasDifferentTimezones(this)) {
+      return durationMinutes;
+    }
+    
+    final start = _getRealStartDateTime(this);
+    final end = _getRealEndDateTime(this);
+    return end.difference(start).inMinutes;
+  }
+  
+  /// Verifica si el evento cruza medianoche considerando timezones
+  bool get crossesMidnightWithTimezone {
+    if (!_hasDifferentTimezones(this)) {
+      return totalEndMinutes > 1440;
+    }
+    
+    final departureDate = DateTime(date.year, date.month, date.day);
+    final arrivalDate = DateTime(
+      realArrivalDateTime.year,
+      realArrivalDateTime.month,
+      realArrivalDateTime.day,
+    );
+    
+    return !departureDate.isAtSameMomentAs(arrivalDate);
   }
   
   // ========== MÉTODOS DE SINCRONIZACIÓN ==========

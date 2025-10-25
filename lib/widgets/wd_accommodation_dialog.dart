@@ -296,7 +296,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   Widget _buildParticipantSelection() {
     return Consumer(
       builder: (context, ref, child) {
-        final participationsAsync = ref.watch(planParticipantsProvider(widget.planId));
+        final participationsAsync = ref.watch(planRealParticipantsProvider(widget.planId));
         
         return participationsAsync.when(
           data: (participations) {

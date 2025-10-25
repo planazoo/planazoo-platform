@@ -48,7 +48,7 @@ class PermissionService {
       
       return permissions;
     } catch (e) {
-      print('Error obteniendo permisos: $e');
+
       return null;
     }
   }
@@ -89,7 +89,7 @@ class PermissionService {
 
       return true;
     } catch (e) {
-      print('Error asignando permisos: $e');
+
       return false;
     }
   }
@@ -126,7 +126,7 @@ class PermissionService {
 
       return true;
     } catch (e) {
-      print('Error actualizando rol: $e');
+
       return false;
     }
   }
@@ -163,7 +163,7 @@ class PermissionService {
 
       return true;
     } catch (e) {
-      print('Error añadiendo permisos: $e');
+
       return false;
     }
   }
@@ -200,7 +200,7 @@ class PermissionService {
 
       return true;
     } catch (e) {
-      print('Error quitando permisos: $e');
+
       return false;
     }
   }
@@ -220,7 +220,7 @@ class PermissionService {
 
       return true;
     } catch (e) {
-      print('Error revocando permisos: $e');
+
       return false;
     }
   }
@@ -267,7 +267,7 @@ class PermissionService {
           .map((doc) => PlanPermissions.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error obteniendo usuarios del plan: $e');
+
       return [];
     }
   }
@@ -285,7 +285,7 @@ class PermissionService {
           .map((doc) => PlanPermissions.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Error obteniendo usuarios por rol: $e');
+
       return [];
     }
   }
@@ -346,7 +346,7 @@ class PermissionService {
       
       return stats;
     } catch (e) {
-      print('Error obteniendo estadísticas: $e');
+
       return {};
     }
   }

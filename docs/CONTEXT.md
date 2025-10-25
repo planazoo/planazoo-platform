@@ -2,6 +2,9 @@
 
 Este documento fija criterios estables para trabajar juntos sin olvidar pasos clave, manteniendo consistencia entre código, documentación y comunicación.
 
+**📋 DOCUMENTO COMPLEMENTARIO:**
+- `PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
+
 ---
 
 ### 1) Idioma y Estilo de Comunicación

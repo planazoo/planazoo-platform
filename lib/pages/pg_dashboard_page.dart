@@ -9,6 +9,7 @@ import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/testing/demo_data_generator.dart';
 import 'package:unp_calendario/features/testing/family_users_generator.dart';
+import 'package:unp_calendario/features/testing/mini_frank_simple_generator.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
@@ -245,6 +246,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   tooltip: 'Generar usuarios invitados',
                 ),
                 const SizedBox(height: 8),
+                // Botón Mini-Frank
+                FloatingActionButton.extended(
+                  heroTag: "dashboard_mini_frank_button",
+                  onPressed: () => _generateMiniFrankPlan(currentUser),
+                  icon: const Icon(Icons.science),
+                  label: const Text('🧬 Mini-Frank'),
+                  backgroundColor: Colors.blue.shade700,
+                  tooltip: 'Generar plan de prueba paso a paso',
+                ),
+                const SizedBox(height: 8),
                 // Botón Frankenstein
                 FloatingActionButton.extended(
                   heroTag: "dashboard_frankenstein_button",
@@ -290,6 +301,88 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
   }
   
+  /// Genera el plan Mini-Frank de testing paso a paso
+  Future<void> _generateMiniFrankPlan(UserModel? currentUser) async {
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Usuario no autenticado'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    // Mostrar loading
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: Colors.white),
+            SizedBox(width: 16),
+            Text('🧬 Generando plan Mini-Frank...'),
+          ],
+        ),
+        duration: Duration(seconds: 5),
+      ),
+    );
+    
+    try {
+      // Generar plan Mini-Frank
+        final plan = await MiniFrankSimpleGenerator.generateMiniFrankPlan(currentUser.id);
+      
+      // Invalidar providers del calendario para forzar actualización
+      if (plan.id != null) {
+        final calendarParams = CalendarNotifierParams(
+          planId: plan.id!,
+          userId: plan.userId,
+          initialDate: plan.startDate,
+          initialColumnCount: plan.columnCount,
+        );
+        ref.invalidate(calendarNotifierProvider(calendarParams));
+      }
+      
+      // Refrescar lista de planes
+      _loadPlanazoos();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('🎉 Plan Mini-Frank generado exitosamente!'),
+            backgroundColor: Colors.blue,
+            action: SnackBarAction(
+              label: 'Ver',
+              textColor: Colors.white,
+              onPressed: () {
+                // Seleccionar el plan Mini-Frank generado
+                setState(() {
+                  selectedPlanId = plan.id;
+                  selectedPlan = filteredPlanazoos.firstWhere(
+                    (p) => p.id == plan.id,
+                    orElse: () => filteredPlanazoos.first,
+                  );
+                  currentScreen = 'calendar';
+                  selectedWidgetId = 'W15';
+                });
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error al generar plan Mini-Frank: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   /// Genera el plan Frankenstein de testing
   Future<void> _generateFrankensteinPlan(UserModel? currentUser) async {
     if (currentUser == null) {

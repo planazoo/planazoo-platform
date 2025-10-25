@@ -15,6 +15,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/accommod
 import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/accommodation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/perspective_service.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/features/calendar/domain/services/date_service.dart';
@@ -93,6 +94,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   CalendarViewMode _viewMode = CalendarViewMode.all;
   String? _currentUserId;
   List<String> _filteredParticipantIds = [];
+  
+  // Variables para perspectiva de usuario
+  String? _selectedPerspectiveUserId;
+  String? _currentPerspectiveTimezone;
 
   @override
   void initState() {
@@ -110,14 +115,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Inicializar clases auxiliares
     _calendarFilters = CalendarFilters(_trackService);
     _calendarTrackReorder = CalendarTrackReorder(_trackService);
-    _calendarAppBar = CalendarAppBar(
-      plan: widget.plan,
-      currentDayGroup: _currentDayGroup,
-      visibleDays: _visibleDays,
-      viewMode: _viewMode,
-      calendarFilters: _calendarFilters,
-      calendarTrackReorder: _calendarTrackReorder,
-    );
+    // CalendarAppBar se inicializará en _updateCalendarAppBar()
     
     // Inicializar usuario actual para filtros
     _currentUserId = _trackService.getVisibleTracks().isNotEmpty 
@@ -172,7 +170,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   void _syncTracksWithParticipants() {
     if (widget.plan.id == null) return;
     
-    final participantsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
+    final participantsAsync = ref.watch(planRealParticipantsProvider(widget.plan.id!));
     
     participantsAsync.when(
       data: (participations) {
@@ -327,6 +325,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         );
       },
+      onUserSelected: _onUserPerspectiveChanged,
     );
   }
 
@@ -955,6 +954,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ...previousDayEvents.where((e) => _eventCrossesMidnight(e)),
       ];
       
+      // AÑADIDO: Incluir eventos multi-día con timezones diferentes
+      final multiDayEvents = _getMultiDayEventsForDay(currentDay, dayOffset);
+      for (final event in multiDayEvents) {
+        if (!allRelevantEvents.any((e) => e.id == event.id)) {
+          allRelevantEvents.add(event);
+        }
+      }
+      
       // Expandir eventos a segmentos para este día específico
       final segments = _expandEventsToSegments(allRelevantEvents, eventDate);
       
@@ -975,8 +982,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         }
       }
       
-      // CORREGIDO: Guardar TODOS los eventos procesados (no solo eventsForDate)
-      // Esto asegura que eventos multi-día se propaguen correctamente al siguiente día
+      // Guardar todos los eventos procesados para propagación multi-día
       previousDayEvents = allRelevantEvents;
     }
     
@@ -1037,8 +1043,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         }
       }
       
-      // CORREGIDO: Guardar TODOS los eventos procesados (no solo eventsForDate)
-      // Esto asegura que eventos multi-día se propaguen correctamente al siguiente día
+      // Guardar todos los eventos procesados para propagación multi-día
       previousDayEvents = allRelevantEvents;
     }
     
@@ -1126,8 +1131,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       // Filtrar alojamientos (se renderizan aparte)
       if (event.typeFamily == 'alojamiento') continue;
       
-      // Crear todos los segmentos del evento
-      final eventSegments = EventSegment.createSegmentsForEvent(event);
+      // Crear todos los segmentos del evento considerando la perspectiva del usuario
+      final eventSegments = _createEventSegmentsWithPerspective(event);
       
       // Filtrar solo el segmento de este día
       for (final segment in eventSegments) {
@@ -1154,7 +1159,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final scrollOffset = _dataScrollController.hasClients ? _dataScrollController.offset : 0.0;
     
     final totalFixedHeight = 0.0;
-    final y = totalFixedHeight + (event.totalStartMinutes * cellHeight / 60);
+    final y = totalFixedHeight + (_getPerspectiveStartMinutes(event) * cellHeight / 60);
     
     // Calcular altura del evento
     double height;
@@ -1199,8 +1204,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye un evento draggable para continuación (cuando está solapada)
   Widget _buildDraggableEventForContinuation(Event continuationEvent, double height) {
-    // Las continuaciones NO son draggables por ahora
-    // Solo se puede arrastrar el evento original desde su día inicial
+    // Las continuaciones no son draggables - solo se puede arrastrar el evento original
 
     // Calcular tamaño de fuente basado en la altura del evento
     double fontSize;
@@ -1214,14 +1218,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     return GestureDetector(
       onTap: () {
-        // Al hacer click, abrir el diálogo del evento ORIGINAL
-        // Necesitamos encontrar el evento original (esto es un hack temporal)
-        // En producción deberíamos pasar el evento original al método
+        // Al hacer click, abrir el diálogo del evento original
         _showEventDialog(continuationEvent);
       },
-      // DESHABILITADO: No permitir drag desde continuaciones
-      // Solo se puede arrastrar desde el evento original en el día anterior
-      // onPanStart, onPanUpdate, onPanEnd están intencionalmente NO implementados
+      // Drag deshabilitado para continuaciones - solo desde evento original
       child: Container(
           decoration: BoxDecoration(
             color: ColorUtils.getEventColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
@@ -1298,8 +1298,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Si no tiene participantes, no hay conflicto
     if (eventToCheck.participantTrackIds.isEmpty) return false;
 
-    final eventStartMinutes = eventToCheck.hour * 60 + eventToCheck.startMinute;
-    final eventEndMinutes = eventStartMinutes + eventToCheck.durationMinutes;
+    // Usar métodos timezone-aware para calcular minutos reales
+    final eventDate = DateTime(eventToCheck.date.year, eventToCheck.date.month, eventToCheck.date.day);
+    final eventStartMinutes = _getRealStartMinutes(eventToCheck, eventDate);
+    final eventEndMinutes = _getRealEndMinutes(eventToCheck, eventDate);
 
     // Obtener eventos para la fecha objetivo
     final eventsForDate = ref.read(eventsForDateProvider(
@@ -1320,8 +1322,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       if (existingEvent.isDraft) continue; // Ignorar borradores
       if (existingEvent.date != targetDate) continue;
 
-      final existingStartMinutes = existingEvent.hour * 60 + existingEvent.startMinute;
-      final existingEndMinutes = existingStartMinutes + existingEvent.durationMinutes;
+      // Usar métodos timezone-aware para eventos existentes también
+      final existingEventDate = DateTime(existingEvent.date.year, existingEvent.date.month, existingEvent.date.day);
+      final existingStartMinutes = _getRealStartMinutes(existingEvent, existingEventDate);
+      final existingEndMinutes = _getRealEndMinutes(existingEvent, existingEventDate);
 
       // Verificar si hay solapamiento temporal
       if (eventStartMinutes < existingEndMinutes && eventEndMinutes > existingStartMinutes) {
@@ -1403,8 +1407,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }).toList();
     
     // Para cada minuto del día, verificar cuántos eventos están activos
-    final eventToCheckStart = eventToCheck.hour * 60 + eventToCheck.startMinute;
-    final eventToCheckEnd = eventToCheckStart + eventToCheck.durationMinutes;
+    final eventToCheckDate = DateTime(eventToCheck.date.year, eventToCheck.date.month, eventToCheck.date.day);
+    final eventToCheckStart = _getRealStartMinutes(eventToCheck, eventToCheckDate);
+    final eventToCheckEnd = _getRealEndMinutes(eventToCheck, eventToCheckDate);
     
     // Solo necesitamos verificar los minutos que ocupa el evento a validar
     for (int minute = eventToCheckStart; minute < eventToCheckEnd.clamp(0, 1440); minute++) {
@@ -1591,6 +1596,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                     ),
                   ],
+                  
+                  // Debug logs para vuelos
+                  if (event.description.contains('Vuelo')) ...[
+                    Text(
+                      'DEBUG: Altura=$height, Detalles=${_getFlightDetails(event).isNotEmpty}',
+                      style: const TextStyle(fontSize: 8, color: Colors.red),
+                    ),
+                  ],
+                  
+                  // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
+                  if (height > 10 && _getFlightDetails(event).isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    
+                    Flexible(
+                      child: Text(
+                        _getFlightDetails(event),
+                        style: TextStyle(
+                          color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                          fontSize: fontSize - 3,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.left,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1733,10 +1765,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// Formatea la hora de fin para eventos multi-día en el segundo día
+  /// Ahora usa la perspectiva del usuario seleccionado
   String _formatNextDayEndTime(Event event) {
-    // Calcular cuántos minutos del evento están en el segundo día
-    final nextDayStartMinutes = 0; // Empieza a las 00:00 del segundo día
-    final nextDayEndMinutes = event.totalEndMinutes - 1440; // Minutos que sobran después de 24:00
+    // Obtener la perspectiva del evento para el usuario seleccionado
+    final perspective = _getEventPerspective(event);
+    
+    // Si es un evento de desplazamiento con perspectiva de participante, usar la perspectiva
+    if (event.typeFamily == 'Desplazamiento' && 
+        perspective.perspectiveType == EventPerspectiveType.participant) {
+      
+      // Usar la hora de llegada de la perspectiva
+      final endHour = perspective.displayEndTime.hour;
+      final endMinute = perspective.displayEndTime.minute;
+      
+      return '${endHour.toString().padLeft(2, '0')}:${endMinute.toString().padLeft(2, '0')}';
+    }
+    
+    // Para eventos regulares o observadores, usar la lógica original
+    final nextDayEndMinutes = _getPerspectiveEndMinutes(event) - 1440; // Minutos que sobran después de 24:00
     
     // Convertir a hora:minuto
     final endHour = nextDayEndMinutes ~/ 60;
@@ -1747,7 +1793,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   
   /// Obtiene la hora de fin para mostrar en eventos que cruzan medianoche (día actual)
   String _getNextDayEndTime(Event event) {
-    final nextDayEndMinutes = event.totalEndMinutes - 1440;
+    final nextDayEndMinutes = _getPerspectiveEndMinutes(event) - 1440;
     final endHour = nextDayEndMinutes ~/ 60;
     final endMinute = nextDayEndMinutes % 60;
     return '${endHour.toString().padLeft(2, '0')}:${endMinute.toString().padLeft(2, '0')} +1';
@@ -2296,6 +2342,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  
+                  // Debug logs para vuelos - REMOVIDO PARA PRODUCCIÓN
+                  // if (segment.description.contains('Vuelo')) ...[
+                  //   Text(
+                  //     'DEBUG: Altura=$height, Detalles=${_getFlightDetails(segment.originalEvent).isNotEmpty}',
+                  //     style: const TextStyle(fontSize: 8, color: Colors.red),
+                  //   ),
+                  // ],
+                  
+                  // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
+                  if (height > 10 && _getFlightDetails(segment.originalEvent).isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    
+                    Flexible(
+                      child: Text(
+                        _getFlightDetails(segment.originalEvent),
+                        style: TextStyle(
+                          color: ColorUtils.getEventTextColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
+                          fontSize: fontSize - 3,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.left,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -2325,7 +2398,34 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// Formatea el tiempo de un segmento según si es inicio, continuación o fin
+  /// Ahora usa la perspectiva del usuario seleccionado
   String _formatSegmentTime(EventSegment segment) {
+    // Obtener la perspectiva del evento para el usuario seleccionado
+    final perspective = _getEventPerspective(segment.originalEvent);
+    
+    
+    // Si es un evento de desplazamiento con perspectiva de participante, usar la perspectiva
+    if (segment.originalEvent.typeFamily == 'Desplazamiento' && 
+        perspective.perspectiveType == EventPerspectiveType.participant) {
+      
+      // Para eventos multi-día, calcular la hora correcta para cada segmento
+      if (segment.isLast) {
+        // Último día: usar la hora de llegada de la perspectiva
+        final endHour = perspective.displayEndTime.hour;
+        final endMin = perspective.displayEndTime.minute;
+        return '00:00 - ${endHour.toString().padLeft(2, '0')}:${endMin.toString().padLeft(2, '0')}';
+      } else if (segment.isFirst) {
+        // Primer día: usar la hora de salida de la perspectiva
+        final startHour = perspective.displayStartTime.hour;
+        final startMin = perspective.displayStartTime.minute;
+        return '${startHour.toString().padLeft(2, '0')}:${startMin.toString().padLeft(2, '0')} - 23:59';
+      } else {
+        // Día intermedio
+        return '00:00 - 23:59';
+      }
+    }
+    
+    // Para eventos regulares o observadores, usar la lógica original
     final startHour = segment.startMinute ~/ 60;
     final startMin = segment.startMinute % 60;
     final endHour = segment.endMinute ~/ 60;
@@ -2360,6 +2460,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       return const SizedBox.shrink();
     }
     
+    // Si el evento tiene timezones diferentes, verificar si debe mostrarse en este día
+    if (!_shouldShowEventInDay(localEvent, dayIndex)) {
+      return const SizedBox.shrink();
+    }
+    
         // Usar el ancho real disponible pasado desde LayoutBuilder
         final cellWidth = availableWidth / _visibleDays;
         
@@ -2372,18 +2477,32 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Posición Y: ahora que los eventos están dentro del SingleChildScrollView,
     // no necesitamos restar el scrollOffset
     final totalFixedHeight = 0.0; // Ajustado para alineación correcta en 00:00h
-    final y = totalFixedHeight + (localEvent.totalStartMinutes * cellHeight / 60);
+    double y;
+    
+    if (_hasDifferentTimezones(localEvent)) {
+      // Para eventos con timezones diferentes, ajustar la posición según el día
+      y = _calculateEventYForTimezoneDay(localEvent, dayIndex, cellHeight, totalFixedHeight);
+    } else {
+      // Para eventos normales, usar la lógica estándar
+      y = totalFixedHeight + (_getPerspectiveStartMinutes(localEvent) * cellHeight / 60);
+    }
     
     final width = cellWidth * 0.95; // 5% más estrecho que la columna
     
-    // Calcular altura del evento - si cruza medianoche, mostrar solo la parte del día actual
+    // Calcular altura del evento - si cruza medianoche o tiene timezones diferentes, mostrar solo la parte del día actual
     double height;
-    if (_eventCrossesMidnight(localEvent)) {
-      final startTime = localEvent.hour * 60 + localEvent.startMinute;
-      final midnightMinutes = 1440; // 24:00 = 1440 minutos
-      final endTime = startTime + localEvent.durationMinutes;
-      final currentDayDurationMinutes = midnightMinutes - startTime;
-      height = (currentDayDurationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+    if (_eventCrossesMidnight(localEvent) || _hasDifferentTimezones(localEvent)) {
+      if (_hasDifferentTimezones(localEvent)) {
+        // Para eventos con timezones diferentes, calcular la parte que corresponde a este día
+        height = _calculateEventHeightForTimezoneDay(localEvent, dayIndex, cellHeight);
+      } else {
+        // Para eventos que cruzan medianoche, mostrar solo la parte del día actual
+        final startTime = localEvent.hour * 60 + localEvent.startMinute;
+        final midnightMinutes = 1440; // 24:00 = 1440 minutos
+        final endTime = startTime + localEvent.durationMinutes;
+        final currentDayDurationMinutes = midnightMinutes - startTime;
+        height = (currentDayDurationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+      }
     } else {
       height = (localEvent.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
     }
@@ -2481,6 +2600,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         ),
                         textAlign: TextAlign.center,
                         maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                  
+                  // Debug logs para vuelos
+                  if (event.description.contains('Vuelo')) ...[
+                    Text(
+                      'DEBUG: Altura=$eventHeight, Detalles=${_getFlightDetails(event).isNotEmpty}',
+                      style: const TextStyle(fontSize: 8, color: Colors.red),
+                    ),
+                  ],
+                  
+                  // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
+                  if (eventHeight > 10 && _getFlightDetails(event).isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    
+                    Flexible(
+                      child: Text(
+                        _getFlightDetails(event),
+                        style: TextStyle(
+                          color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                          fontSize: fontSize - 3,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.left,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -2684,7 +2830,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       }
       
       // Calcular nueva fila (hora) basada en el dragOffset directamente
-      final currentMinuteOffset = event.totalStartMinutes;
+      final currentMinuteOffset = _getPerspectiveStartMinutes(event);
       final minuteDelta = (dragOffset.dy / cellHeight * 60).round();
       final newMinuteOffset = currentMinuteOffset + minuteDelta;
       
@@ -3158,6 +3304,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Actualiza la instancia de CalendarAppBar cuando cambian las variables
   void _updateCalendarAppBar() {
+    // Obtener participaciones del plan
+    final participantsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
+    final participations = participantsAsync.when(
+      data: (data) => data,
+      loading: () => <PlanParticipation>[],
+      error: (_, __) => <PlanParticipation>[],
+    );
+    
     _calendarAppBar = CalendarAppBar(
       plan: widget.plan,
       currentDayGroup: _currentDayGroup,
@@ -3165,6 +3319,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       viewMode: _viewMode,
       calendarFilters: _calendarFilters,
       calendarTrackReorder: _calendarTrackReorder,
+      participations: participations,
+      selectedUserId: _selectedPerspectiveUserId ?? _currentUserId,
+      currentTimezone: _currentPerspectiveTimezone,
     );
   }
 
@@ -3221,7 +3378,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Future<bool> _canManageRoles() async {
     try {
       final permissionService = PermissionService();
-      final currentUserId = 'cristian_claraso'; // TODO: Obtener del contexto de auth
+      final currentUserId = 'cristian_claraso';
       
       return await permissionService.hasPermission(
         planId: widget.plan.id!,
@@ -3229,20 +3386,40 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         permission: Permission.planManageAdmins,
       );
     } catch (e) {
-      debugPrint('Error verificando permisos de gestión de roles: $e');
       return false;
     }
   }
 
+  /// Maneja el cambio de perspectiva de usuario
+  void _onUserPerspectiveChanged(String userId) {
+    setState(() {
+      _selectedPerspectiveUserId = userId;
+      
+      // Obtener la timezone del usuario seleccionado
+      final participantsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
+      participantsAsync.when(
+        data: (participations) {
+          final participation = participations.firstWhere(
+            (p) => p.userId == userId,
+            orElse: () => participations.first,
+          );
+          _currentPerspectiveTimezone = participation.personalTimezone;
+        },
+        loading: () {},
+        error: (_, __) {},
+      );
+    });
+  }
+
   /// Muestra el diálogo de gestión de roles
   void _showManageRolesDialog() {
-    final currentUserId = 'cristian_claraso'; // TODO: Obtener del contexto de auth
+    final currentUserId = _currentUserId;
     
     showDialog(
       context: context,
       builder: (context) => ManageRolesDialog(
         planId: widget.plan.id!,
-        currentUserId: currentUserId,
+        currentUserId: currentUserId ?? '',
         onRolesChanged: () {
           // Refrescar la UI si es necesario
           setState(() {});
@@ -3334,22 +3511,490 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return '${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}';
   }
 
+  /// Calcula la hora de llegada en la timezone de destino
+  DateTime _calculateArrivalTimeInArrivalTimezone(Event event) {
+    if (event.timezone == null || event.timezone!.isEmpty || 
+        event.arrivalTimezone == null || event.arrivalTimezone!.isEmpty) {
+      // Si no hay timezones, usar cálculo normal
+      return DateTime(
+        event.date.year,
+        event.date.month,
+        event.date.day,
+        event.hour,
+        event.startMinute,
+      ).add(Duration(minutes: event.durationMinutes));
+    }
+    
+    // 1. Crear DateTime de salida en la timezone de origen
+    final departureDateTime = DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    // 2. Convertir salida a UTC
+    final departureUtc = TimezoneService.localToUtc(departureDateTime, event.timezone!);
+    
+    // 3. Calcular llegada en UTC (añadir duración)
+    final arrivalUtc = departureUtc.add(Duration(minutes: event.durationMinutes));
+    
+    // 4. Convertir llegada a timezone de destino
+    final arrivalInDestinationTimezone = TimezoneService.utcToLocal(arrivalUtc, event.arrivalTimezone!);
+    
+    return arrivalInDestinationTimezone;
+  }
+
+  /// Obtiene el nombre de la ciudad de una timezone
+  String _getCityName(String timezone) {
+    final displayNames = {
+      'Europe/Madrid': 'Madrid',
+      'Europe/London': 'Londres',
+      'Europe/Paris': 'París',
+      'Europe/Berlin': 'Berlín',
+      'Europe/Rome': 'Roma',
+      'America/New_York': 'Nueva York',
+      'America/Los_Angeles': 'Los Ángeles',
+      'America/Chicago': 'Chicago',
+      'America/Toronto': 'Toronto',
+      'America/Argentina/Buenos_Aires': 'Buenos Aires',
+      'Asia/Tokyo': 'Tokio',
+      'Asia/Shanghai': 'Shanghái',
+      'Asia/Kolkata': 'Nueva Delhi',
+      'Asia/Dubai': 'Dubái',
+      'Australia/Sydney': 'Sídney',
+      'Pacific/Auckland': 'Auckland',
+    };
+    
+    return displayNames[timezone] ?? timezone.split('/').last;
+  }
+
+  /// Determina si un evento debe mostrarse en un día específico
+  bool _shouldShowEventInDay(Event event, int dayIndex) {
+    // Si el evento no tiene timezones diferentes, usar lógica normal
+    if (event.timezone == null || event.timezone!.isEmpty || 
+        event.arrivalTimezone == null || event.arrivalTimezone!.isEmpty ||
+        event.timezone == event.arrivalTimezone) {
+      return true;
+    }
+    
+    // Para eventos con timezones diferentes, verificar si debe mostrarse en este día
+    final startDayIndex = _currentDayGroup * _visibleDays + 1;
+    final currentDay = startDayIndex + dayIndex;
+    final eventDay = event.date.difference(widget.plan.startDate).inDays + 1;
+    
+    // Calcular el día de llegada (usar fecha sin timezone para evitar problemas de cálculo)
+    final arrivalTime = _calculateArrivalTimeInArrivalTimezone(event);
+    final arrivalDate = DateTime(arrivalTime.year, arrivalTime.month, arrivalTime.day);
+    final startDate = DateTime(widget.plan.startDate.year, widget.plan.startDate.month, widget.plan.startDate.day);
+    final arrivalDay = arrivalDate.difference(startDate).inDays + 1;
+    
+    
+    // Mostrar en el día de salida
+    if (currentDay == eventDay) {
+      return true;
+    }
+    
+    // Mostrar en el día de llegada
+    if (currentDay == arrivalDay) {
+      return true;
+    }
+    
+    // Mostrar en todos los días intermedios (para vuelos largos)
+    if (currentDay > eventDay && currentDay < arrivalDay) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /// Verifica si un evento tiene timezones diferentes
+  bool _hasDifferentTimezones(Event event) {
+    return event.timezone != null && event.timezone!.isNotEmpty && 
+           event.arrivalTimezone != null && event.arrivalTimezone!.isNotEmpty &&
+           event.timezone != event.arrivalTimezone;
+  }
+
+  /// Calcula la fecha y hora real de salida considerando timezones
+  DateTime _getRealDepartureDateTime(Event event) {
+    if (!_hasDifferentTimezones(event)) {
+      // Sin timezones diferentes, usar fecha/hora original
+      return DateTime(
+        event.date.year,
+        event.date.month,
+        event.date.day,
+        event.hour,
+        event.startMinute,
+      );
+    }
+    
+    // Con timezones diferentes, la fecha de salida es la original
+    return DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+  }
+
+  /// Calcula la fecha y hora real de llegada considerando timezones
+  DateTime _getRealArrivalDateTime(Event event) {
+    if (!_hasDifferentTimezones(event)) {
+      // Sin timezones diferentes, calcular normalmente
+      return DateTime(
+        event.date.year,
+        event.date.month,
+        event.date.day,
+        event.hour,
+        event.startMinute,
+      ).add(Duration(minutes: event.durationMinutes));
+    }
+    
+    // Con timezones diferentes, calcular llegada real
+    final departureDateTime = DateTime(
+      event.date.year,
+      event.date.month,
+      event.date.day,
+      event.hour,
+      event.startMinute,
+    );
+    
+    // Convertir salida a UTC
+    final departureUtc = TimezoneService.localToUtc(departureDateTime, event.timezone!);
+    
+    // Calcular llegada en UTC
+    final arrivalUtc = departureUtc.add(Duration(minutes: event.durationMinutes));
+    
+    // Convertir llegada a timezone de destino
+    return TimezoneService.utcToLocal(arrivalUtc, event.arrivalTimezone!);
+  }
+
+  /// Calcula los minutos totales de inicio considerando timezones y perspectiva del usuario
+  int _getRealStartMinutes(Event event, DateTime targetDate) {
+    if (!_hasDifferentTimezones(event)) {
+      // Sin timezones diferentes, usar cálculo normal
+      return event.hour * 60 + event.startMinute;
+    }
+    
+    // Con timezones diferentes, usar PerspectiveService para obtener la perspectiva correcta
+    final userParticipation = _getCurrentUserParticipation();
+    if (userParticipation != null) {
+      final perspective = PerspectiveService.getEventPerspective(
+        event: event,
+        userParticipation: userParticipation,
+        userCurrentTimezone: _getCurrentUserTimezone(),
+      );
+      
+      // Determinar qué parte del evento corresponde a esta fecha
+      // Usar las fechas originales del evento, no las de la perspectiva
+      final departureDate = DateTime(event.date.year, event.date.month, event.date.day);
+      final arrivalDate = DateTime(
+        _getRealArrivalDateTime(event).year,
+        _getRealArrivalDateTime(event).month,
+        _getRealArrivalDateTime(event).day,
+      );
+      
+      if (targetDate.isAtSameMomentAs(departureDate)) {
+        // Día de salida - usar hora de la perspectiva
+        return perspective.displayStartTime.hour * 60 + perspective.displayStartTime.minute;
+      } else if (targetDate.isAtSameMomentAs(arrivalDate)) {
+        // Día de llegada - empezar a las 00:00
+        return 0;
+      } else {
+        // Día intermedio - empezar a las 00:00
+        return 0;
+      }
+    }
+    
+    // Fallback: usar lógica original
+    final departureDate = DateTime(event.date.year, event.date.month, event.date.day);
+    final arrivalDate = DateTime(
+      _getRealArrivalDateTime(event).year,
+      _getRealArrivalDateTime(event).month,
+      _getRealArrivalDateTime(event).day,
+    );
+    
+    if (targetDate.isAtSameMomentAs(departureDate)) {
+      return event.hour * 60 + event.startMinute;
+    } else if (targetDate.isAtSameMomentAs(arrivalDate)) {
+      return 0;
+    } else {
+      return 0;
+    }
+  }
+
+  /// Calcula los minutos totales de fin considerando timezones y perspectiva del usuario
+  int _getRealEndMinutes(Event event, DateTime targetDate) {
+    if (!_hasDifferentTimezones(event)) {
+      // Sin timezones diferentes, usar cálculo normal
+      return event.hour * 60 + event.startMinute + event.durationMinutes;
+    }
+    
+    // Con timezones diferentes, usar PerspectiveService para obtener la perspectiva correcta
+    final userParticipation = _getCurrentUserParticipation();
+    if (userParticipation != null) {
+      final perspective = PerspectiveService.getEventPerspective(
+        event: event,
+        userParticipation: userParticipation,
+        userCurrentTimezone: _getCurrentUserTimezone(),
+      );
+      
+      // Determinar qué parte del evento corresponde a esta fecha
+      // Usar las fechas originales del evento, no las de la perspectiva
+      final departureDate = DateTime(event.date.year, event.date.month, event.date.day);
+      final arrivalDate = DateTime(
+        _getRealArrivalDateTime(event).year,
+        _getRealArrivalDateTime(event).month,
+        _getRealArrivalDateTime(event).day,
+      );
+      
+      if (targetDate.isAtSameMomentAs(departureDate)) {
+        // Día de salida - terminar a las 23:59
+        return 1440; // 24:00 = 1440 minutos
+      } else if (targetDate.isAtSameMomentAs(arrivalDate)) {
+        // Día de llegada - terminar a la hora de llegada de la perspectiva
+        final endMinutes = perspective.displayEndTime.hour * 60 + perspective.displayEndTime.minute;
+        
+        return endMinutes;
+      } else {
+        // Día intermedio - terminar a las 23:59
+        return 1440; // 24:00 = 1440 minutos
+      }
+    }
+    
+    // Fallback: usar lógica original
+    final departureDate = DateTime(event.date.year, event.date.month, event.date.day);
+    final arrivalDate = DateTime(
+      _getRealArrivalDateTime(event).year,
+      _getRealArrivalDateTime(event).month,
+      _getRealArrivalDateTime(event).day,
+    );
+    
+    if (targetDate.isAtSameMomentAs(departureDate)) {
+      return 1440; // 24:00 = 1440 minutos
+    } else if (targetDate.isAtSameMomentAs(arrivalDate)) {
+      final arrivalTime = _getRealArrivalDateTime(event);
+      return arrivalTime.hour * 60 + arrivalTime.minute;
+    } else {
+      return 1440; // 24:00 = 1440 minutos
+    }
+  }
+
+  /// Calcula la altura del evento para un día específico con timezones diferentes
+  double _calculateEventHeightForTimezoneDay(Event event, int dayIndex, double cellHeight) {
+    final startDayIndex = _currentDayGroup * _visibleDays + 1;
+    final currentDay = startDayIndex + dayIndex;
+    final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+    
+    // Usar los nuevos métodos helper que consideran timezones
+    final startMinutes = _getRealStartMinutes(event, eventDate);
+    final endMinutes = _getRealEndMinutes(event, eventDate);
+    final durationMinutes = endMinutes - startMinutes;
+    
+    return (durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
+  }
+
+  /// Calcula la posición Y del evento para un día específico con timezones diferentes
+  double _calculateEventYForTimezoneDay(Event event, int dayIndex, double cellHeight, double totalFixedHeight) {
+    final startDayIndex = _currentDayGroup * _visibleDays + 1;
+    final currentDay = startDayIndex + dayIndex;
+    final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+    
+    // Usar los nuevos métodos helper que consideran timezones
+    final startMinutes = _getRealStartMinutes(event, eventDate);
+    
+    return totalFixedHeight + (startMinutes * cellHeight / 60);
+  }
+
+  /// Crea segmentos de evento considerando la perspectiva del usuario actual
+  List<EventSegment> _createEventSegmentsWithPerspective(Event event) {
+    // Si el evento no tiene timezones diferentes, usar el método original
+    if (!_hasDifferentTimezones(event)) {
+      return EventSegment.createSegmentsForEvent(event);
+    }
+    
+    // Para eventos con timezones diferentes, usar PerspectiveService
+    final userParticipation = _getCurrentUserParticipation();
+    if (userParticipation == null) {
+      return EventSegment.createSegmentsForEvent(event);
+    }
+    
+    final perspective = PerspectiveService.getEventPerspective(
+      event: event,
+      userParticipation: userParticipation,
+      userCurrentTimezone: _getCurrentUserTimezone(),
+    );
+    
+    // Crear segmentos basados en la perspectiva del usuario
+    return _createSegmentsFromPerspective(event, perspective);
+  }
+
+  /// Crea segmentos basados en la perspectiva del usuario
+  List<EventSegment> _createSegmentsFromPerspective(Event event, EventPerspective perspective) {
+    final segments = <EventSegment>[];
+    
+    // Fecha de salida (día original del evento)
+    final departureDate = DateTime(event.date.year, event.date.month, event.date.day);
+    
+    // Fecha de llegada (basada en la perspectiva)
+    final arrivalDate = DateTime(
+      perspective.displayEndTime.year,
+      perspective.displayEndTime.month,
+      perspective.displayEndTime.day,
+    );
+    
+    // Calcular días de diferencia
+    final daysDifference = arrivalDate.difference(departureDate).inDays;
+    
+    if (daysDifference == 0) {
+      // Evento de un solo día
+      segments.add(EventSegment(
+        originalEvent: event,
+        segmentDate: departureDate,
+        startMinute: perspective.displayStartTime.hour * 60 + perspective.displayStartTime.minute,
+        endMinute: perspective.displayEndTime.hour * 60 + perspective.displayEndTime.minute,
+        isFirst: true,
+        isLast: true,
+      ));
+    } else {
+      // Evento multi-día
+      for (int i = 0; i <= daysDifference; i++) {
+        final currentDate = departureDate.add(Duration(days: i));
+        final isFirst = i == 0;
+        final isLast = i == daysDifference;
+        
+        int startMinute;
+        int endMinute;
+        
+        if (isFirst) {
+          // Primer día: desde la hora de salida hasta medianoche
+          startMinute = perspective.displayStartTime.hour * 60 + perspective.displayStartTime.minute;
+          endMinute = 1440; // 24:00
+        } else if (isLast) {
+          // Último día: desde medianoche hasta la hora de llegada
+          startMinute = 0; // 00:00
+          endMinute = perspective.displayEndTime.hour * 60 + perspective.displayEndTime.minute;
+        } else {
+          // Días intermedios: todo el día
+          startMinute = 0; // 00:00
+          endMinute = 1440; // 24:00
+        }
+        
+        segments.add(EventSegment(
+          originalEvent: event,
+          segmentDate: currentDate,
+          startMinute: startMinute,
+          endMinute: endMinute,
+          isFirst: isFirst,
+          isLast: isLast,
+        ));
+      }
+    }
+    
+    return segments;
+  }
+
+  /// Obtiene los minutos de inicio considerando la perspectiva del usuario
+  int _getPerspectiveStartMinutes(Event event) {
+    if (_hasDifferentTimezones(event)) {
+      // Para eventos con timezones diferentes, usar PerspectiveService
+      final userParticipation = _getCurrentUserParticipation();
+      if (userParticipation != null) {
+        final perspective = PerspectiveService.getEventPerspective(
+          event: event,
+          userParticipation: userParticipation,
+          userCurrentTimezone: _getCurrentUserTimezone(),
+        );
+        return perspective.displayStartTime.hour * 60 + perspective.displayStartTime.minute;
+      }
+    }
+    
+    // Fallback: usar método original
+    return event.totalStartMinutes;
+  }
+
+  /// Obtiene los minutos de fin considerando la perspectiva del usuario
+  int _getPerspectiveEndMinutes(Event event) {
+    if (_hasDifferentTimezones(event)) {
+      // Para eventos con timezones diferentes, usar PerspectiveService
+      final userParticipation = _getCurrentUserParticipation();
+      if (userParticipation != null) {
+        final perspective = PerspectiveService.getEventPerspective(
+          event: event,
+          userParticipation: userParticipation,
+          userCurrentTimezone: _getCurrentUserTimezone(),
+        );
+        return perspective.displayEndTime.hour * 60 + perspective.displayEndTime.minute;
+      }
+    }
+    
+    // Fallback: usar método original
+    return event.totalEndMinutes;
+  }
+
+  /// Obtiene la participación del usuario actual
+  PlanParticipation? _getCurrentUserParticipation() {
+    final selectedUserId = _selectedPerspectiveUserId ?? _currentUserId;
+    final participantsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
+    final participations = participantsAsync.when(
+      data: (data) => data,
+      loading: () => <PlanParticipation>[],
+      error: (error, stackTrace) => <PlanParticipation>[],
+    );
+    try {
+      return participations.firstWhere(
+        (p) => p.userId == selectedUserId,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Obtiene la timezone del usuario actual
+  String _getCurrentUserTimezone() {
+    final selectedUserId = _selectedPerspectiveUserId ?? _currentUserId;
+    final participantsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
+    final participations = participantsAsync.when(
+      data: (data) => data,
+      loading: () => <PlanParticipation>[],
+      error: (error, stackTrace) => <PlanParticipation>[],
+    );
+    try {
+      final participation = participations.firstWhere(
+        (p) => p.userId == selectedUserId,
+      );
+      return participation.personalTimezone ?? 'Europe/Madrid';
+    } catch (e) {
+      return 'Europe/Madrid';
+    }
+  }
+
   /// Obtiene el rango de tiempo del evento considerando timezones
   String _getEventTimeRange(Event event) {
-    // Obtener timezone del organizador (por defecto Madrid)
-    final organizerTimezone = TimezoneService.getSystemTimezone();
-    
-    // Si el evento tiene timezone específica, calcular llegada en timezone del organizador
-    if (event.timezone != null && event.timezone!.isNotEmpty && event.timezone != organizerTimezone) {
-      final arrivalTime = _calculateArrivalTimeInOrganizerTimezone(event, organizerTimezone);
+    // Si el evento tiene timezones diferentes (salida y llegada), mostrar información detallada
+    if (event.timezone != null && event.timezone!.isNotEmpty && 
+        event.arrivalTimezone != null && event.arrivalTimezone!.isNotEmpty &&
+        event.timezone != event.arrivalTimezone) {
+      
+      // Calcular llegada en timezone de destino
+      final arrivalTime = _calculateArrivalTimeInArrivalTimezone(event);
+      
+      // Formatear hora de salida (timezone de origen)
       final startTime = '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')}';
+      
+      // Formatear hora de llegada (timezone de destino)
       final endTime = '${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}';
+      
+      // Obtener nombres de ciudades
+      final departureCity = _getCityName(event.timezone!);
+      final arrivalCity = _getCityName(event.arrivalTimezone!);
       
       // Si cruza medianoche, mostrar con +1
       if (arrivalTime.day > event.date.day) {
-        return '$startTime - $endTime +1';
+        return '$departureCity $startTime - $arrivalCity $endTime+1';
       } else {
-        return '$startTime - $endTime';
+        return '$departureCity $startTime - $arrivalCity $endTime';
       }
     }
     
@@ -3359,5 +4004,108 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     } else {
       return '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')} - ${event.endHour.toString().padLeft(2, '0')}:${event.endMinute.toString().padLeft(2, '0')}';
     }
+  }
+
+  /// Obtiene la perspectiva del evento para el usuario seleccionado
+  EventPerspective _getEventPerspective(Event event) {
+    // Obtener participaciones del plan
+    final participantsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
+    final participations = participantsAsync.when(
+      data: (data) => data,
+      loading: () => <PlanParticipation>[],
+      error: (_, __) => <PlanParticipation>[],
+    );
+
+    // Obtener la participación del usuario seleccionado
+    final selectedUserId = _selectedPerspectiveUserId ?? _currentUserId;
+    final userParticipation = participations.firstWhere(
+      (p) => p.userId == selectedUserId,
+      orElse: () => participations.isNotEmpty ? participations.first : PlanParticipation(
+        planId: widget.plan.id!,
+        userId: selectedUserId ?? 'unknown',
+        role: 'participant',
+        joinedAt: DateTime.now(),
+      ),
+    );
+
+    return PerspectiveService.getEventPerspective(
+      event: event,
+      userParticipation: userParticipation,
+      userCurrentTimezone: _currentPerspectiveTimezone,
+    );
+  }
+
+  /// Obtiene información detallada de vuelo para mostrar en el evento
+  String _getFlightDetails(Event event) {
+    if (event.timezone == null || event.timezone!.isEmpty || 
+        event.arrivalTimezone == null || event.arrivalTimezone!.isEmpty) {
+      return '';
+    }
+    
+    // Solo mostrar detalles si es realmente un vuelo (diferentes timezones)
+    if (event.timezone == event.arrivalTimezone) {
+      return '';
+    }
+    
+    // Obtener la perspectiva del usuario seleccionado
+    final perspective = _getEventPerspective(event);
+    
+    // Formatear hora de salida
+    final startTime = '${perspective.displayStartTime.hour.toString().padLeft(2, '0')}:${perspective.displayStartTime.minute.toString().padLeft(2, '0')}';
+    
+    // Formatear hora de llegada
+    final endTime = '${perspective.displayEndTime.hour.toString().padLeft(2, '0')}:${perspective.displayEndTime.minute.toString().padLeft(2, '0')}';
+
+    // Obtener nombres de ciudades
+    final departureCity = _getCityName(event.timezone!);
+    final arrivalCity = _getCityName(event.arrivalTimezone!);
+    final displayCity = _getCityName(perspective.displayTimezone);
+
+    // Construir información detallada
+    String details = 'Salida: $startTime $departureCity';
+    
+    // Calcular diferencia de días
+    final daysDifference = perspective.displayEndTime.day - perspective.displayStartTime.day;
+    final daysText = daysDifference > 0 ? '+$daysDifference' : '';
+    
+    // Mostrar llegada según perspectiva
+    if (perspective.perspectiveType == EventPerspectiveType.participant) {
+      // Participante: muestra llegada en destino
+      details += '\nLlegada: $endTime $arrivalCity$daysText';
+    } else if (perspective.perspectiveType == EventPerspectiveType.observer) {
+      // Observador: muestra llegada en su timezone
+      details += '\nLlegada: $endTime $displayCity$daysText';
+    }
+    
+    return details;
+  }
+
+  /// Obtiene eventos multi-día que deberían aparecer en un día específico
+  List<Event> _getMultiDayEventsForDay(int currentDay, int dayOffset) {
+    final multiDayEvents = <Event>[];
+    
+    // Buscar eventos de días anteriores que tengan timezones diferentes
+    for (int prevDay = 1; prevDay < currentDay; prevDay++) {
+      final prevEventDate = widget.plan.startDate.add(Duration(days: prevDay - 1));
+      final prevEvents = ref.watch(eventsForDateProvider(
+        EventsForDateParams(
+          calendarParams: CalendarNotifierParams(
+            planId: widget.plan.id ?? '',
+            userId: widget.plan.userId,
+            initialDate: widget.plan.startDate,
+            initialColumnCount: widget.plan.columnCount,
+          ),
+          date: prevEventDate,
+        ),
+      ));
+      
+      for (final event in prevEvents) {
+        if (_hasDifferentTimezones(event) && _shouldShowEventInDay(event, dayOffset)) {
+          multiDayEvents.add(event);
+        }
+      }
+    }
+    
+    return multiDayEvents;
   }
 }

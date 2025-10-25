@@ -26,6 +26,18 @@ final planParticipantsProvider = Provider.family<AsyncValue<List<PlanParticipati
   return ref.watch(planParticipationNotifierProvider(planId));
 });
 
+// Provider para participantes reales (excluye observadores)
+final planRealParticipantsProvider = Provider.family<AsyncValue<List<PlanParticipation>>, String>((ref, planId) {
+  final allParticipants = ref.watch(planParticipantsProvider(planId));
+  return allParticipants.when(
+    data: (participants) => AsyncValue.data(
+      participants.where((p) => p.isActive && !p.isObserver).toList()
+    ),
+    loading: () => const AsyncValue.loading(),
+    error: (error, stack) => AsyncValue.error(error, stack),
+  );
+});
+
 // Verificaciones
 final isUserParticipantProvider = FutureProvider.family<bool, ({String planId, String userId})>((ref, params) async {
   final participationService = ref.read(planParticipationServiceProvider);

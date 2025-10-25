@@ -8,7 +8,6 @@ class PlanParticipationService {
 
   // Obtener todas las participaciones de un plan
   Stream<List<PlanParticipation>> getPlanParticipations(String planId) {
-    LoggerService.info('🔍 PlanParticipationService: Consultando participantes para planId: $planId');
     
     try {
       return _firestore
@@ -17,15 +16,11 @@ class PlanParticipationService {
           .where('isActive', isEqualTo: true)
           .snapshots()
           .map((snapshot) {
-        LoggerService.info('📊 PlanParticipationService: Encontrados ${snapshot.docs.length} participantes');
         final participations = snapshot.docs.map((doc) => PlanParticipation.fromFirestore(doc)).toList();
         
         // Ordenar manualmente en lugar de usar orderBy
         participations.sort((a, b) => a.joinedAt.compareTo(b.joinedAt));
         
-        for (final p in participations) {
-          LoggerService.info('👤 Participante: ${p.userId} (rol: ${p.role})');
-        }
         return participations;
       }).handleError((error) {
         LoggerService.error('❌ PlanParticipationService: Error en consulta', error: error);

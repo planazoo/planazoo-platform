@@ -58,6 +58,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   bool _isAdmin = false;
   bool _isCreator = false;
   PlanPermissions? _userPermissions;
+  bool _isInitializing = true;
   
   // Campos de información personal
   late TextEditingController _asientoController;
@@ -160,7 +161,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   /// Inicializa los permisos del usuario en el plan
   Future<void> _initializePermissions() async {
     final currentUser = ref.read(currentUserProvider);
-    if (currentUser?.id == null || widget.planId == null) return;
+    if (currentUser?.id == null || widget.planId == null) {
+      _isInitializing = false;
+      if (mounted) setState(() {});
+      return;
+    }
 
     final permissionService = PermissionService();
     _userPermissions = await permissionService.getUserPermissions(
@@ -193,16 +198,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     // - Es el creador del evento
     _canEditGeneral = _isAdmin || isCreating || isOwner;
 
+    _isInitializing = false;
+
     if (mounted) {
       setState(() {});
       
-      // Debug: Mostrar permisos del usuario
-      debugPrint('🔐 Permisos del usuario:');
-      debugPrint('  - Rol: ${_userPermissions?.role.displayName}');
-      debugPrint('  - Es Admin: $_isAdmin');
-      debugPrint('  - Es Creador: $_isCreator');
-      debugPrint('  - Puede editar general: $_canEditGeneral');
-      debugPrint('  - Permisos activos: ${_userPermissions?.permissions.length}');
     }
   }
 
@@ -222,6 +222,21 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // Mostrar indicador de carga mientras se inicializan los permisos
+    if (_isInitializing) {
+      return AlertDialog(
+        title: Text(widget.event == null ? 'Crear Evento' : 'Editar Evento'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Inicializando permisos...'),
+          ],
+        ),
+      );
+    }
+
     return AlertDialog(
       title: Row(
         children: [
@@ -1127,8 +1142,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
     
     
-    // Obtener participantes reales del plan
-    final participantsAsync = ref.watch(planParticipantsProvider(widget.planId!));
+    // Obtener participantes reales del plan (excluye observadores)
+    final participantsAsync = ref.watch(planRealParticipantsProvider(widget.planId!));
     
     return participantsAsync.when(
       data: (participations) {

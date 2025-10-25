@@ -4,10 +4,12 @@ import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mod
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.dart';
+import 'package:unp_calendario/widgets/screens/calendar/user_perspective_selector.dart';
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 
 /// Clase que maneja la construcción del AppBar del calendario
 class CalendarAppBar {
@@ -17,6 +19,9 @@ class CalendarAppBar {
   final CalendarViewMode viewMode;
   final CalendarFilters calendarFilters;
   final CalendarTrackReorder calendarTrackReorder;
+  final List<PlanParticipation> participations;
+  final String? selectedUserId;
+  final String? currentTimezone;
   
   CalendarAppBar({
     required this.plan,
@@ -25,6 +30,9 @@ class CalendarAppBar {
     required this.viewMode,
     required this.calendarFilters,
     required this.calendarTrackReorder,
+    required this.participations,
+    this.selectedUserId,
+    this.currentTimezone,
   });
 
   /// Construye el AppBar completo
@@ -38,6 +46,7 @@ class CalendarAppBar {
     required VoidCallback onFullscreen,
     required Future<bool> Function() canManageRoles,
     required VoidCallback onManageRoles,
+    required Function(String) onUserSelected,
   }) {
     final startDay = currentDayGroup * visibleDays + 1;
     final endDay = startDay + visibleDays - 1;
@@ -55,6 +64,7 @@ class CalendarAppBar {
         onCustomFilter: onCustomFilter,
         onReorderTracks: onReorderTracks,
         onFullscreen: onFullscreen,
+        onUserSelected: onUserSelected,
       ),
       backgroundColor: AppColorScheme.color1,
       foregroundColor: Colors.white,
@@ -97,8 +107,18 @@ class CalendarAppBar {
     required VoidCallback onCustomFilter,
     required VoidCallback onReorderTracks,
     required VoidCallback onFullscreen,
+    required Function(String) onUserSelected,
   }) {
     return [
+      // Selector de perspectiva de usuario
+      if (participations.isNotEmpty)
+        UserPerspectiveSelector(
+          participations: participations,
+          selectedUserId: selectedUserId,
+          onUserSelected: onUserSelected,
+          currentTimezone: currentTimezone,
+        ),
+      
       // Control de días visibles
       _buildVisibleDaysMenu(onVisibleDaysChanged),
       

@@ -12,6 +12,7 @@ class EventService {
   // Obtener todos los eventos de un plan (solo para participantes)
   Stream<List<Event>> getEventsByPlanId(String planId, String userId) {
     return _participationService.isUserParticipant(planId, userId).asStream().asyncExpand((isParticipant) async* {
+
       if (isParticipant) {
         yield* _firestore
             .collection(_collectionName)
@@ -19,10 +20,13 @@ class EventService {
             .orderBy('date')
             .orderBy('hour')
             .snapshots()
-            .map((snapshot) => snapshot.docs
-                .map((doc) => Event.fromFirestore(doc))
-                .toList());
+            .map((snapshot) {
+              final events = snapshot.docs.map((doc) => Event.fromFirestore(doc)).toList();
+
+              return events;
+            });
       } else {
+
         yield <Event>[];
       }
     });
@@ -101,22 +105,28 @@ class EventService {
   // Crear un nuevo evento (solo para participantes del plan)
   Future<String?> createEvent(Event event) async {
     try {
+
+
+      
       // Verificar que el usuario participa en el plan
       final isParticipant = await _participationService.isUserParticipant(event.planId, event.userId);
+
+      
       if (!isParticipant) {
+
         return null;
       }
 
-      // Convertir evento a UTC si tiene timezone
+      // Guardar evento tal como está (sin conversión a UTC por ahora)
       Event eventToSave = event;
-      if (event.timezone != null && event.timezone!.isNotEmpty) {
-        eventToSave = _convertEventToUtc(event);
-      }
+
+
 
       final docRef = await _firestore.collection(_collectionName).add(eventToSave.toFirestore());
+
       return docRef.id;
     } catch (e) {
-      // Error creating event: $e
+
       return null;
     }
   }
@@ -134,11 +144,8 @@ class EventService {
         }
       }
 
-      // Convertir evento a UTC si tiene timezone
+      // Guardar evento tal como está (sin conversión a UTC por ahora)
       Event eventToSave = event;
-      if (event.timezone != null && event.timezone!.isNotEmpty) {
-        eventToSave = _convertEventToUtc(event);
-      }
 
       await _firestore.collection(_collectionName).doc(event.id).update(eventToSave.toFirestore());
       return true;
@@ -154,11 +161,7 @@ class EventService {
       final event = await getEventById(eventId);
       if (event == null) return false;
       
-      // TODO: Implementar eliminación de copias cuando se habilite la sincronización
-      // if (event.isBaseEvent) {
-      //   // Es evento base - eliminar también todas las copias
-      //   await EventSyncService().deleteEventCopies(eventId);
-      // }
+      // Eliminación directa del evento
       
       await _firestore.collection(_collectionName).doc(eventId).delete();
       return true;
@@ -184,14 +187,7 @@ class EventService {
       if (id != null) {
         final createdEvent = newEvent.copyWith(id: id);
         
-        // TEMPORALMENTE DESHABILITADO: Crear copias automáticamente
-        // TODO: Rehabilitar cuando se resuelva el problema de bucle infinito
-        // if (!skipSync && event.commonPart?.participantIds.isNotEmpty == true) {
-        //   await _syncService.createEventCopies(
-        //     baseEvent: createdEvent,
-        //     participantIds: event.commonPart!.participantIds,
-        //   );
-        // }
+        // Creación de evento sin sincronización automática
         
         return createdEvent;
       }
@@ -205,19 +201,7 @@ class EventService {
         updatedAt: DateTime.now(),
       );
       
-      // TEMPORALMENTE DESHABILITADO: Verificar si es cambio en parte común o personal
-      // TODO: Rehabilitar cuando se resuelva el problema de bucle infinito
-      // if (!skipSync && event.isBaseEvent && _syncService.isCommonPartChange(oldEvent, updatedEvent)) {
-      //   // Cambio en parte común - propagar a todas las copias
-      //   if (event.commonPart != null) {
-      //     final success = await _syncService.propagateCommonPartChanges(
-      //       eventId: event.id!,
-      //       newCommonPart: event.commonPart!,
-      //       changedBy: event.userId,
-      //     );
-      //     if (!success) return null;
-      //   }
-      // }
+      // Actualización directa sin sincronización automática
       
       // Actualizar el evento
       final success = await updateEvent(updatedEvent, skipSync: skipSync);

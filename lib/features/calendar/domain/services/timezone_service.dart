@@ -25,8 +25,20 @@ class TimezoneService {
     initialize();
     
     final location = tz.getLocation(timezone);
-    final tzDateTime = tz.TZDateTime.from(localDateTime, location);
-    return tzDateTime.toUtc();
+    // Crear un TZDateTime en la timezone específica
+    final tzDateTime = tz.TZDateTime(
+      location,
+      localDateTime.year,
+      localDateTime.month,
+      localDateTime.day,
+      localDateTime.hour,
+      localDateTime.minute,
+      localDateTime.second,
+      localDateTime.millisecond,
+    );
+    final utcDateTime = tzDateTime.toUtc();
+    
+    return utcDateTime;
   }
 
   /// Convierte una fecha/hora UTC a timezone local
@@ -39,8 +51,20 @@ class TimezoneService {
     initialize();
     
     final location = tz.getLocation(timezone);
-    final tzDateTime = tz.TZDateTime.from(utcDateTime, location);
-    return tzDateTime.toLocal();
+    // Crear un TZDateTime en UTC
+    final utcTzDateTime = tz.TZDateTime.utc(
+      utcDateTime.year,
+      utcDateTime.month,
+      utcDateTime.day,
+      utcDateTime.hour,
+      utcDateTime.minute,
+      utcDateTime.second,
+      utcDateTime.millisecond,
+    );
+    
+    // Convertir el TZDateTime de UTC a la zona horaria local
+    final localTzDateTime = tz.TZDateTime.from(utcTzDateTime, location);
+    return localTzDateTime;
   }
 
   /// Obtiene el offset UTC actual para una timezone

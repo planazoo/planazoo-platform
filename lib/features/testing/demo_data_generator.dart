@@ -28,11 +28,8 @@ class DemoDataGenerator {
   static Future<String?> generateFrankensteinPlan(String userId) async {
     try {
       if (!kDebugMode) {
-        debugPrint('⚠️ generateFrankensteinPlan solo disponible en modo debug');
         return null;
       }
-
-      debugPrint('🧟 Generando plan Frankenstein...');
 
       // Limpiar lista de eventos para validación de conflictos
       _createdEvents.clear();
@@ -43,56 +40,49 @@ class DemoDataGenerator {
       // 2. Crear plan base
       final plan = await _createDemoPlan(userId);
       if (plan?.id == null) {
-        debugPrint('❌ Error al crear plan base');
         return null;
       }
-
-      debugPrint('✅ Plan base creado: ${plan!.id}');
+      
+      final planNonNull = plan!;
 
       // 3. Crear usuarios de la familia (excluyendo cristian_claraso)
-      debugPrint('👨‍👩‍👧‍👦 Creando usuarios de la familia (excluyendo cristian_claraso)...');
       final allFamilyUserIds = await FamilyUsersGenerator.generateFamilyUsers();
       // Filtrar para excluir cristian_claraso y tomar solo 4 usuarios
       final familyUserIds = allFamilyUserIds.where((id) => id != 'cristian_claraso').take(4).toList();
       
       // 4. Crear participación del creador como organizador
       await _participationService.createParticipation(
-        planId: plan.id!,
+        planId: planNonNull.id!,
         userId: userId,
         role: 'organizer',
       );
-      debugPrint('✅ Organizador añadido: $userId');
       
       // 5. Crear participaciones para los miembros de la familia
       for (final familyUserId in familyUserIds) {
         await _participationService.createParticipation(
-          planId: plan.id!,
+          planId: planNonNull.id!,
           userId: familyUserId,
           role: 'participant',
           invitedBy: userId,
         );
-        debugPrint('✅ Participante añadido: $familyUserId');
       }
 
       // 6. Asignar roles de permisos granulares
-      debugPrint('🔐 Asignando roles de permisos granulares...');
-      await _assignPermissionRoles(plan.id!, userId, familyUserIds);
+      await _assignPermissionRoles(planNonNull.id!, userId, familyUserIds);
 
       // 7. Generar eventos por categoría
-      await _generateBasicEvents(plan, userId, familyUserIds);
-      await _generateOverlappingEvents(plan, userId, familyUserIds);
-      await _generateMultiDayEvents(plan, userId, familyUserIds);
-      await _generateEventTypes(plan, userId, familyUserIds);
-      await _generateEdgeCases(plan, userId, familyUserIds);
-      await generateTimezoneEvents(plan, userId, familyUserIds);
+      await _generateBasicEvents(planNonNull, userId, familyUserIds);
+      await _generateOverlappingEvents(planNonNull, userId, familyUserIds);
+      await _generateMultiDayEvents(planNonNull, userId, familyUserIds);
+      await _generateEventTypes(planNonNull, userId, familyUserIds);
+      await _generateEdgeCases(planNonNull, userId, familyUserIds);
+      await generateTimezoneEvents(planNonNull, userId, familyUserIds);
 
       // 8. Generar alojamientos
-      await _generateAccommodations(plan, userId, familyUserIds);
+      await _generateAccommodations(planNonNull, userId, familyUserIds);
 
-      debugPrint('🎉 Plan Frankenstein generado exitosamente con ${familyUserIds.length + 1} participantes (1 organizador + ${familyUserIds.length} participantes)!');
-      return plan.id;
+      return planNonNull.id;
     } catch (e) {
-      debugPrint('❌ Error generando plan Frankenstein: $e');
       return null;
     }
   }
@@ -106,7 +96,6 @@ class DemoDataGenerator {
 
       for (final plan in frankensteinPlans) {
         if (plan.id != null) {
-          debugPrint('🗑️ Eliminando plan Frankenstein existente: ${plan.id}');
           
           // Eliminar eventos
           await _eventService.deleteEventsByPlanId(plan.id!);
@@ -124,7 +113,6 @@ class DemoDataGenerator {
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Error eliminando plan Frankenstein: $e');
     }
   }
 
@@ -163,7 +151,6 @@ class DemoDataGenerator {
   // ==================== DÍA 1: EVENTOS CON DIFERENTES PARTICIPANTES ====================
 
   static Future<void> _generateBasicEvents(Plan plan, String userId, List<String> familyUserIds) async {
-    debugPrint('📅 Generando eventos con diferentes participantes (Día 1)...');
     final day1 = plan.startDate;
 
     // Evento solo del organizador (30 min)
