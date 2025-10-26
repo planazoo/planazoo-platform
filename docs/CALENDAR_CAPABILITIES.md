@@ -144,10 +144,15 @@ Estado: **Funciona** (incluye multi-día y clipping; se han mitigado errores de 
 > - Si intentas crear/mover un evento que causaría 4+ solapamientos → ⚠️ Mensaje de error naranja
 > - El evento NO se guarda/mueve, permanece en su posición original
 > - Solución: Ajustar hora, reducir duración, o eliminar otro evento
-> 
+>
 > **Indicador visual:**
 > - Cuando hay exactamente 3 eventos solapados, el último muestra un icono ⚠️ naranja
 > - Esto indica que el horario está al límite de capacidad
+>
+> **Regla de Eventos Borradores:**
+> - Los eventos en borrador (`isDraft=true`) pueden solaparse entre sí dentro del mismo track
+> - Los eventos que NO están en borrador NO pueden solaparse en un mismo track
+> - Esta regla permite crear borradores sin restricciones, pero una vez guardados no pueden solaparse con otros eventos confirmados
 
 Estado: **Funciona**.
 
