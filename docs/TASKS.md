@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T117**
+**Siguiente código de tarea: T121**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -18,7 +18,7 @@
 - **Testing y Mantenimiento:** T96-T99: Refactoring, testing y documentación (4 pendientes)
 - **UX:** T100: Visualización de Timezones (1 pendiente)
 
-**Total: 85 tareas documentadas (57 completadas, 28 pendientes)**
+**Total: 89 tareas documentadas (57 completadas, 32 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -1558,7 +1558,39 @@ CalendarScreen (orchestrator)
 
 ---
 
-## 📋 NUEVAS FUNCIONALIDADES (T101-T116)
+## 📋 NUEVAS FUNCIONALIDADES (T101-T118, T105 revisado)
+
+**Nota:** Las tareas T105 ha sido actualizada según la decisión de usar sistema de avisos unidireccionales en lugar de chat.
+
+### T105 - Sistema de Avisos y Notificaciones del Plan
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Sistema de avisos unidireccionales y notificaciones para el plan, no un chat bidireccional.
+
+**Funcionalidades:**
+1. Modelo `PlanAnnouncement` con usuario, mensaje, timestamp
+2. Publicar avisos que todos los participantes pueden ver
+3. Notificaciones push a todos los participantes cuando hay un nuevo aviso
+4. Lista de avisos en orden cronológico
+5. Avisos visibles para todos los participantes
+
+**Concepto:**
+- No es un chat (no conversación)
+- Sistema de avisos unidireccionales (como WhatsApp a todo el grupo)
+- Cada participante puede publicar avisos
+- Todos reciben notificación cuando hay un aviso nuevo
+- Ver lista de avisos del plan
+
+**Criterios de aceptación:**
+- Modelo PlanAnnouncement con validación
+- UI para publicar avisos
+- Notificaciones push a todos los participantes
+- Lista de avisos visible para todos
+- Persistencia en Firestore
+- Testing básico
+
+---
 
 ### T101 - Sistema de Presupuesto del Plan
 **Estado:** Pendiente  
@@ -1611,3 +1643,140 @@ CalendarScreen (orchestrator)
 - Testing básico
 
 ---
+
+### T117 - Sistema de Registro de Participantes por Evento
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Permitir que los participantes se apunten a eventos individuales dentro de un plan, no solo al plan completo.
+
+**Concepto:**
+- Los usuarios se apuntan al PLAN (participan en el plan)
+- Además, los usuarios pueden APUNTARSE A EVENTOS ESPECÍFICOS dentro del plan
+- Ejemplo: Plan "Partidas de Padel 2024" → Evento "Partido domingo 15" → Participantes se apuntan a ese evento específico
+
+**Casos de uso:**
+- Partidas de padel: plan anual, eventos semanales donde la gente se apunta
+- Actividades regulares: plan maestro con eventos específicos que requieren confirmación
+- Eventos opcionales dentro de un plan
+
+**Funcionalidades:**
+1. Sistema de registro de participantes por evento
+2. Botón "Apuntarse al evento" en cada evento
+3. Lista de participantes confirmados por evento
+4. Indicadores visuales de eventos con espacios disponibles
+5. Gestión de límites de participantes por evento
+
+**Criterios de aceptación:**
+- Registro de participantes por evento individual
+- Visualización de participantes confirmados
+- Gestión de límites de participantes
+- Integración con sistema de notificaciones
+- Testing con diferentes escenarios
+
+---
+
+### T119 - Sistema de Eventos Recurrentes
+**Estado:** Pendiente  
+**Complejidad:** 🔴 Alta  
+**Prioridad:** 🟡 Media  
+**Descripción:** Crear eventos recurrentes automáticamente (ej: todos los domingos durante un año para un plan de padel).
+
+**Concepto:**
+- Relacionado con T117 - Los usuarios se apuntan al plan, no al evento
+- Un plan puede tener muchos eventos recurrentes que se crean automáticamente
+- Cada evento recurrente permite que la gente se apunte individualmente (T117)
+
+**Casos de uso:**
+- Partidas de padel semanales: crear plan anual y automáticamente generar evento para cada domingo
+- Eventos regulares dentro de un plan maestro
+- Actividades programadas repetitivas
+
+**Funcionalidades:**
+1. Plantilla de eventos recurrentes (semanal, quincenal, mensual)
+2. Crear múltiples eventos automáticamente según plantilla
+3. Gestión de cancelaciones de ocurrencias específicas
+4. Editar ocurrencias individuales sin afectar la serie completa
+5. Vista de calendario con eventos recurrentes
+
+**Preguntas a resolver:**
+1. ¿Formato de plan? (plan anual con eventos recurrentes vs. plan mensual)
+2. ¿Gestión de cancelaciones? (cancelar ocurrencias específicas de la serie)
+3. ¿Modificaciones? (editar ocurrencias específicas sin romper la serie)
+4. ¿Integración con T117? (participantes se apuntan a cada ocurrencia)
+
+**Nota:** Integrado con T117 - Los usuarios se apuntan al plan, no a cada evento individual de la serie.
+
+---
+
+### T118 - Sistema de Copiar y Pegar Planes Completos
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟢 Baja  
+**Descripción:** Permite duplicar un plan completo incluyendo todos sus eventos, participantes y configuraciones.
+
+**Casos de uso:**
+- Reutilizar planes base (ej: estructura de viaje que se repite)
+- Plantillas de planes populares
+- Modificar fechas/participantes de un plan existente
+
+**Funcionalidades:**
+1. Botón "Duplicar plan" en página de detalles
+2. Copiar todo el contenido: eventos, alojamientos, participantes, configuraciones
+3. Opción de modificar nombre, fechas y participantes durante la duplicación
+4. Generar nuevo plan con nuevo ID
+5. Mantener estructura y eventos del plan original
+
+**Criterios de aceptación:**
+- Duplicación completa de planes
+- Opción de modificar datos durante la duplicación
+- Nuevo plan con nuevo ID
+- Testing con planes complejos
+- Persistencia correcta
+
+---
+
+### T120 - Sistema de Invitaciones y Confirmación de Eventos
+**Estado:** Pendiente  
+**Complejidad:** 🔴 Alta  
+**Prioridad:** 🔴 Alta  
+**Descripción:** Sistema completo de invitaciones a planes y confirmación de asistencia a eventos específicos.
+
+**Flujo de trabajo:**
+1. **Organizador crea plan** y envía invitaciones a participantes
+2. **Participantes reciben invitación** y deben responder (aceptar/rechazar)
+3. **Al aceptar, se apuntan al plan**
+4. **Organizador crea eventos** dentro del plan
+5. **Algunos eventos requieren confirmación explícita** del participante para asistir
+
+**Funcionalidades por fase:**
+
+#### **Fase 1: Invitaciones al Plan**
+1. UI para invitar participantes por email/usuario
+2. Notificaciones push de invitaciones
+3. Botones aceptar/rechazar para el invitado
+4. Actualización del estado en tiempo real
+5. Lista de participantes invitados vs confirmados
+
+#### **Fase 2: Confirmación de Eventos**
+1. Organizador marca eventos como "requiere confirmación"
+2. Participantes reciben notificación para confirmar asistencia
+3. Botones confirmar/no asistir en cada evento
+4. Indicadores visuales de quién ha confirmado
+5. Gestión de límites (ej: máximo 10 personas)
+
+**Integración:**
+- Con T117 (Registro de Participantes por Evento)
+- Con T105 (Sistema de Avisos y Notificaciones)
+- Con T104 (Sistema de Invitaciones a Planes - revisar si es redundante)
+
+**Criterios de aceptación:**
+- Flujo completo de invitaciones al plan
+- Sistema de confirmación de eventos
+- Notificaciones push en cada paso
+- UI clara para organizador y participantes
+- Persistencia en Firestore
+- Testing completo del flujo
+
+---
+
