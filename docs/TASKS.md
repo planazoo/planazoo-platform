@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T100**
+**Siguiente código de tarea: T117**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -11,14 +11,14 @@
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
 - **GRUPO 5:** T40-T45, T81, T82: Timezones (8 pendientes)
 - **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 8 pendientes)
-- **Tareas Antiguas:** T18-T38: Varias pendientes (15 tareas)
 - **Seguridad:** T51-T53: Validación (3 pendientes)
 - **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
 - **Testing y Mantenimiento:** T96-T99: Refactoring, testing y documentación (4 pendientes)
+- **UX:** T100: Visualización de Timezones (1 pendiente)
 
-**Total: 68 tareas documentadas (57 completadas, 11 pendientes)**
+**Total: 85 tareas documentadas (57 completadas, 28 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -212,27 +212,7 @@ Día N+4: Planificación del siguiente grupo
 - **Parte Personal:** Editada por cada participante (asientos, menús, información específica)
 - **Admins del plan:** Pueden editar parte común + cualquier parte personal
 
-### ✅ Sistema de Notificaciones (Decidido)
-**Decisión:** Notificaciones Push Completas
-- Notificaciones para cambios en eventos existentes
-- Notificaciones para nuevos eventos
-- Notificaciones para eventos eliminados
-- Notificaciones para cambios de participantes
-- Configuración personalizable por usuario
-
-### ✅ Sincronización en Tiempo Real (Decidido)
-**Decisión:** Firestore Listeners + Riverpod State Management
-- Firestore real-time listeners para detectar cambios del servidor
-- Riverpod state management para actualizaciones automáticas de UI
-- Indicadores visuales de estado de conexión y sincronización
-
-### ✅ Offline First (Decidido)
-**Decisión:** Offline First Completo
-- Almacenamiento local de todos los eventos (SQLite/Hive)
-- CRUD completo sin conexión a internet
-- Sincronización automática cuando hay conexión
-- Resolución automática de conflictos (último cambio gana)
-- Cola de sincronización para cambios pendientes
+**Ver decisiones completas en:** `docs/ARCHITECTURE_DECISIONS.md`
 
 ---
 
@@ -1197,69 +1177,6 @@ Al desplegar:
 - Proponer sistema robusto de generación de IDs
 - Implementar la solución elegida
 - Documentar el sistema de IDs
-
----
-
-## T23 - Mejorar modal para crear plan
-**Estado:** Pendiente  
-**Descripción:** Mejorar el modal para crear plan. El título ha de ser "nuevo plan". El campo ID ha de obtener el valor del sistema definido. La lista de participantes hay que mejorarla.  
-**Criterios de aceptación:** 
-- Cambiar título del modal a "nuevo plan"
-- Integrar sistema de IDs automático
-- Mejorar interfaz de selección de participantes
-- Optimizar experiencia de usuario del modal
-- Documentar mejoras implementadas
-
----
-
-## T24 - Discutir mobile first para iOS y Android
-**Estado:** Pendiente  
-**Descripción:** Discutir cómo pasar la app a mobile first en iOS y Android. Hay que modificar la app para que trabaje en modo mobile first en las versiones para iOS y Android.  
-**Criterios de aceptación:** 
-- Analizar requerimientos para mobile first
-- Discutir estrategia de adaptación
-- Planificar modificaciones necesarias
-- Implementar cambios para mobile first
-- Documentar proceso de migración
-
-
-## 📝 Notas
-- Las tareas están ordenadas por prioridad (posición en el documento)
-- Los códigos de tarea no se reutilizan al eliminar tareas
-- Cada tarea completada debe marcarse como "Completada" y actualizarse la fecha
-- Las tareas completadas se han movido a `docs/COMPLETED_TASKS.md`
-
----
-
-## 🔧 Mejoras de Eventos - Alta Prioridad
-
-### T27: Mejorar área clickeable en eventos pequeños
-**Estado:** ⏳ Pendiente  
-**Descripción:** Optimizar la selección de eventos pequeños para mejorar la experiencia de usuario.  
-**Criterios de aceptación:**
-- Área clickeable optimizada para eventos de altura mínima
-- Feedback visual claro al hacer hover
-- Prevención de clicks accidentales
-- Consistencia con eventos de tamaño normal
-
-### T28: Mejorar algoritmo de solapamientos
-**Estado:** ⏳ Pendiente  
-**Descripción:** Optimizar la detección y visualización de eventos que se solapan.  
-**Criterios de aceptación:**
-- Detección precisa de conflictos con minutos exactos
-- Visualización clara de eventos solapados
-- Manejo correcto de múltiples eventos en la misma hora
-- Colores y posicionamiento optimizados
-
-### T29: Mostrar duración exacta en eventos
-**Estado:** ⏳ Pendiente  
-**Descripción:** Añadir información de duración exacta en la visualización de eventos.  
-**Criterios de aceptación:**
-- Mostrar hora de inicio y fin (ej: "13:15 - 15:30")
-- Duración en formato legible (ej: "2h 15min")
-- Texto legible en eventos pequeños
-- Consistencia visual con el diseño
-
 ---
 
 ## 🎨 MEJORAS VISUALES - Serie de Tareas (T91-T92)
@@ -1590,5 +1507,107 @@ CalendarScreen (orchestrator)
 - `docs/ARCHITECTURE.md`
 - `docs/CONTRIBUTING.md`
 - `docs/SERVICE_EXAMPLES.md`
+
+---
+
+### T100 - Visualización de Timezones en el Calendario
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Depende de:** T40-T45 (Timezones implementadas)  
+**Descripción:** Decidir y implementar la mejor forma de visualizar las timezones en el calendario para que los usuarios entiendan en qué timezone está cada participante.
+
+**Opciones de visualización consideradas:**
+
+#### **Opción 1: Indicador en el AppBar**
+- Mostrar la timezone actual del usuario seleccionado
+- Icono de reloj + texto (ej: "London (UTC+0)")
+- Ubicación: AppBar, junto al selector de usuario
+
+#### **Opción 2: Color de fondo en tracks**
+- Cambiar el color de fondo de cada track según la timezone del participante
+- Pros: Visualización clara de diferencias de timezone
+- Contras: Cambios frecuentes en viajes, posible confusión si colores se superponen
+
+#### **Opción 3: Barra lateral de color en tracks**
+- Indicador sutil de color en el lado del track
+- Tooltip al hover con información de timezone
+- Cambios graduales suaves para evitar distracción
+
+#### **Opción 4: Tooltip en eventos**
+- Mostrar horas en origen y destino al pasar el mouse
+- Badge "✈" en eventos de desplazamiento
+- Información contextual sin ocupar espacio
+
+**Criterios de decisión:**
+- Claridad para usuarios
+- Prevención de confusión horaria
+- Contexto para eventos internacionales
+- No sobrecargar la interfaz
+
+**Tareas a realizar:**
+- Evaluar cada opción con prototipo o mockup
+- Decidir opción o combinación de opciones
+- Implementar solución elegida
+- Documentar decisión
+
+**Archivos a crear/modificar:**
+- Mockups o prototipos de cada opción
+- Documentación de decisión final
+- Implementación en UI del calendario
+
+---
+
+## 📋 NUEVAS FUNCIONALIDADES (T101-T116)
+
+### T101 - Sistema de Presupuesto del Plan
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟢 Baja  
+**Descripción:** Implementar un sistema de presupuesto que permita registrar costes en eventos y alojamientos y visualizar análisis agrupados.
+
+**Funcionalidades:**
+1. Campo de coste en el modelo Event y Accommodation
+2. Suma automática de presupuesto total del plan
+3. Página de análisis de presupuesto con:
+   - Presupuesto total
+   - Desglose por tipo de evento
+   - Desglose por participante
+   - Desglose por tipo (eventos vs alojamientos)
+   - Gráfico de distribución
+
+**Criterios de aceptación:**
+- Modelos Event y Accommodation incluyen campo `cost` (opcional)
+- Servicio de cálculo de presupuesto
+- UI para introducir coste en eventos y alojamientos
+- Página de análisis con gráficos
+- Persistencia en Firestore
+- Testing básico
+
+---
+
+### T102 - Sistema de Control de Pagos y Bote Común
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟢 Baja  
+**Descripción:** Implementar un sistema de control de pagos donde cada participante registra lo que ha pagado en cada evento, con cálculo automático de balances y saldos.
+
+**Funcionalidades:**
+1. Modelo `PersonalPayment` con campos: `amount`, `description`, `date`
+2. Cada participante puede registrar pagos en la parte personal de eventos
+3. Página de resumen de pagos con:
+   - Total pagado por participante
+   - Total gastado en el plan
+   - Coste por persona (total gastado / número participantes)
+   - Balance de cada participante (lo que debe pagar o cobrar)
+   - Indicador visual de estado (pendiente/parcial/saldado)
+
+**Criterios de aceptación:**
+- Modelo PersonalPayment con validación
+- UI para registrar pagos en eventos
+- Cálculo automático de balances
+- Página de resumen con gráficos
+- Persistencia en Firestore
+- Testing básico
 
 ---
