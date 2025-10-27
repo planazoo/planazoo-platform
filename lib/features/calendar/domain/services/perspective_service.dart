@@ -133,16 +133,21 @@ class PerspectiveService {
       event.startMinute,
     );
 
-    // Convertir salida a UTC
-    final departureUtc = TimezoneService.localToUtc(departureDateTime, event.timezone!);
+    // Convertir salida a UTC (verificar que timezone no sea null)
+    if (event.timezone != null && event.timezone!.isNotEmpty) {
+      final departureUtc = TimezoneService.localToUtc(departureDateTime, event.timezone!);
     
     // Calcular llegada en UTC (añadir duración)
     final arrivalUtc = departureUtc.add(Duration(minutes: event.durationMinutes));
     
     // Convertir llegada a timezone de destino
-    final arrivalInDestinationTimezone = TimezoneService.utcToLocal(arrivalUtc, arrivalTimezone);
-    
-    return arrivalInDestinationTimezone;
+      final arrivalInDestinationTimezone = TimezoneService.utcToLocal(arrivalUtc, arrivalTimezone);
+      
+      return arrivalInDestinationTimezone;
+    } else {
+      // Si no tiene timezone, asumir que llega en la misma fecha/hora (sin conversión)
+      return departureDateTime.add(Duration(minutes: event.durationMinutes));
+    }
   }
 
   /// Calcula la hora de llegada desde la perspectiva del observador
