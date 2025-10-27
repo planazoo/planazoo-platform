@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T125**
+**Siguiente código de tarea: T126**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -18,7 +18,7 @@
 - **Testing y Mantenimiento:** T96-T99: Refactoring, testing y documentación (4 pendientes)
 - **UX:** T100: Visualización de Timezones (1 pendiente)
 
-**Total: 93 tareas documentadas (57 completadas, 36 pendientes)**
+**Total: 99 tareas documentadas (57 completadas, 42 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -1971,6 +1971,198 @@ class ContactGroup {
 - Revisar modelo User actual para asegurar identificación única (email vs username)
 - Considerar privacidad: ¿grupos visibles solo para el propietario?
 - Integrar con sistema de notificaciones (T105)
+
+---
+
+### T107 - Actualización Dinámica de Duración del Plan
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Sistema para actualizar automáticamente la duración del plan cuando se añaden eventos que se extienden fuera del rango original.
+
+**Funcionalidades:**
+1. Detectar cuando un evento nuevo sale fuera del rango del plan
+2. Ofertar expandir el plan automáticamente
+3. Actualizar fecha inicio/fin del plan dinámicamente
+4. Recalcular `columnCount` del calendario
+5. Notificar a todos los participantes del cambio
+6. Mantener histórico de cambios de duración
+
+**Criterios de aceptación:**
+- Detectar eventos fuera de rango
+- Modal de confirmación para expandir plan
+- Actualización automática de fechas
+- Recalcular calendario automáticamente
+- Notificar a participantes
+- Testing con eventos multi-día
+
+**Archivos a modificar:**
+- `lib/features/calendar/domain/services/plan_service.dart`
+- `lib/widgets/screens/wd_calendar_screen.dart`
+
+**Relacionado con:** T109 (Estados del plan)
+
+---
+
+### T109 - Estados del Plan
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media-Alta  
+**Prioridad:** 🟡 Media  
+**Descripción:** Implementar sistema completo de estados del plan (Borrador, Planificando, Confirmado, En Curso, Finalizado, Cancelado) con transiciones controladas y permisos por estado.
+
+**Estados disponibles:**
+1. **Borrador:** Plan en creación, solo visible para creador
+2. **Planificando:** Añadiendo contenido, visible para participantes
+3. **Confirmado:** Plan listo, esperando inicio (bloqueos parciales)
+4. **En Curso:** Plan activo, ejecutándose (solo cambios urgentes)
+5. **Finalizado:** Plan completado (solo lectura)
+6. **Cancelado:** Plan cancelado (reembolsos aplican)
+
+**Funcionalidades por estado:**
+- Transiciones controladas entre estados
+- Validaciones antes de cambiar estado
+- Permisos diferentes según estado
+- Badges visuales en UI
+- Notificaciones al cambiar estado
+- Estados bloquean/desbloquean funcionalidades
+
+**Criterios de aceptación:**
+- Campo `status` en modelo Plan
+- Validaciones de transiciones
+- Permisos por estado implementados
+- UI con badges de estado
+- Notificaciones de cambio de estado
+- Reembolsos al cancelar
+
+**Archivos a crear:**
+- `lib/features/calendar/domain/models/plan_status.dart`
+- `lib/features/calendar/domain/services/plan_status_service.dart`
+
+**Relacionado con:** T107, T105, T113
+
+---
+
+### T110 - Sistema de Alarmas en el Plan
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Sistema de notificaciones automáticas antes de eventos (push, email, SMS) con configuración por evento y por usuario.
+
+**Funcionalidades:**
+1. Configurar alarmas al crear/editar evento
+2. Recordatorios configurables (24h, 2h, 30min antes)
+3. Notificaciones push automáticas
+4. Notificaciones email (opcional)
+5. Notificaciones SMS (opcional, solo críticas)
+6. Preferencias de usuario para notificaciones
+7. Silenciar notificaciones temporalmente
+
+**Criterios de aceptación:**
+- Configurar alarmas por evento
+- Múltiples alarmas por evento
+- Notificaciones push funcionando
+- Preferencias de usuario
+- Silenciar notificaciones
+- Testing con varios eventos y alarmas
+
+**Archivos a crear:**
+- `lib/features/alarms/domain/models/alarm_config.dart`
+- `lib/features/alarms/domain/services/alarm_service.dart`
+- `lib/features/alarms/presentation/providers/alarm_providers.dart`
+
+**Relacionado con:** T105 (Notificaciones), T104 (Invitaciones)
+
+---
+
+### T112 - Indicador de Días Restantes del Plan
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟡 Media  
+**Descripción:** Contador que muestra cuántos días faltan para el inicio del plan (mientras está en estado "Confirmado").
+
+**Funcionalidades:**
+1. Contador "Quedan X días" en UI del plan
+2. Actualización diaria automática
+3. Días pasados después de inicio (opcional)
+4. Badge visual "Inicia pronto" cuando <7 días
+5. Notificación cuando quedan 1 día
+
+**Criterios de aceptación:**
+- Cálculo correcto de días restantes
+- Actualización automática
+- Badge visual en UI
+- Notificación en 1 día
+- UI clara y visible
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_plan_screen.dart`
+- `lib/widgets/screens/wd_calendar_screen.dart`
+
+**Relacionado con:** T109 (Estados del plan), T105 (Notificaciones)
+
+---
+
+### T113 - Estadísticas del Plan
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Dashboard de estadísticas del plan: resumen de eventos, participantes, presupuesto, distribución temporal, etc.
+
+**Funcionalidades:**
+1. Resumen de eventos por tipo
+2. Distribución temporal de actividades
+3. Resumen de participantes
+4. Comparativa presupuesto estimado vs real
+5. Análisis de presupuesto por tipo
+6. Exportar estadísticas (PDF, Excel)
+
+**Criterios de aceptación:**
+- Vista de estadísticas completa
+- Gráficos de distribución
+- Comparación presupuesto
+- Exportar a PDF/Excel
+- UI responsive
+
+**Archivos a crear:**
+- `lib/features/stats/domain/services/plan_stats_service.dart`
+- `lib/features/stats/presentation/pages/plan_stats_page.dart`
+
+**Relacionado con:** T101 (Presupuesto), T102 (Pagos), T109 (Estados)
+
+---
+
+### T114 - Mapa del Plan con Rutas
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media-Alta  
+**Prioridad:** 🟢 Baja  
+**Descripción:** Visualización de eventos con ubicación en mapa, con rutas entre eventos y optimización de rutas sugerida.
+
+**Funcionalidades:**
+1. Mostrar eventos en mapa
+2. Pines en ubicaciones de eventos
+3. Líneas entre eventos consecutivos
+4. Popup con info de evento al clic
+5. Vista satélite y mapa
+6. Optimización de ruta (futuro)
+7. Detectar eventos muy distantes
+
+**Consideraciones:**
+- Integración con Google Maps API
+- Coste vs beneficio
+- Alternativa: Mapbox, OpenStreetMap
+
+**Criterios de aceptación:**
+- Mapa visible con eventos
+- Pines en ubicaciones correctas
+- Rutas entre eventos
+- Popup con información
+- Alternativa gratuita si Google Maps es caro
+
+**Archivos a crear:**
+- `lib/features/map/presentation/pages/plan_map_page.dart`
+- `lib/features/map/presentation/widgets/event_pin.dart`
+
+**Relacionado con:** T121 (Formularios con ubicación)
 
 ---
 
