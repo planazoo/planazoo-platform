@@ -34,13 +34,9 @@ Especificaciones técnicas detalladas:
 ### 🏗️ [Arquitectura](./arquitectura/)
 Decisiones arquitectónicas y documentación técnica:
 - [Decisiones Arquitectónicas](./arquitectura/ARCHITECTURE_DECISIONS.md)
-- [UX - README](./arquitectura/UX_README.md)
-- [Diagrama de Arquitectura UX](./arquitectura/UX_ARCHITECTURE_DIAGRAM.md)
-- [Documentación Técnica UX](./arquitectura/UX_TECHNICAL_DOCUMENTATION.md)
 
 ### 🎨 [UX](./ux/)
 Documentación detallada de experiencia de usuario:
-- [Especificación JSON UX](./ux/ux_specification.json)
 - [Gestión de Imágenes de Plan](./ux/plan_image_management.md)
 - [Documentación de Widgets](./ux/pages/) - Componentes individuales
 
