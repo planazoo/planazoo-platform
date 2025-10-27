@@ -20,143 +20,127 @@ Establecer un sistema de diseño consistente que:
 
 ## 🎨 SISTEMA DE COLORES
 
-### Colores Principales
+### Colores Actuales de la App (AppColorScheme)
+
+**⚠️ IMPORTANTE: Estos son los colores que ya existen en `lib/app/theme/color_scheme.dart`**
 
 ```dart
-// Usar AppColorScheme para todos los colores
-class AppColors {
-  // Colores primarios
-  static const Color primary = Color(0xFF2196F3);      // Azul (acción principal)
-  static const Color primaryDark = Color(0xFF1976D2);
-  static const Color primaryLight = Color(0xFF64B5F6);
+// Sistema de colores personalizado existente
+class AppColorScheme {
+  // Colores principales según la propuesta original del usuario
+  static const Color color0 = Color(0xFFFFFFFF);     // Fondo principal (blanco)
+  static const Color color1 = Color(0xFFBCE1E7);     // Fondos secundarios (verde azulado claro)
+  static const Color color2 = Color(0xFF79A2A8);      // Elementos interactivos (verde azulado)
+  static const Color color3 = Color(0xFFA24000);     // Botones de acción (naranja oscuro)
+  static const Color color4 = Color(0xFF4F606A);     // Texto y bordes (gris azulado oscuro)
   
-  // Colores secundarios
-  static const Color secondary = Color(0xFF4CAF50);     // Verde (éxito)
-  static const Color secondaryDark = Color(0xFF388E3C);
-  static const Color secondaryLight = Color(0xFF81C784);
+  // Colores adicionales para tipografías
+  static const Color titleColor = Color(0xFF00796B);      // Títulos (verde oscuro)
+  static const Color bodyColor = Color(0xFF424242);       // Cuerpo de texto (gris oscuro)
+  static const Color interactiveColor = Color(0xFF1976D2); // Texto interactivo (azul)
   
-  // Colores de acento
-  static const Color accent = Color(0xFFFF9800);        // Naranja (alerta/importante)
-  static const Color accentDark = Color(0xFFF57C00);
-  static const Color accentLight = Color(0xFFFFB74D);
+  // Colores para estados
+  static const Color hoverColor = Color(0xFF5D8A90);       // Hover (verde azulado medio)
+  static const Color activeColor = Color(0xFF8B5A00);      // Activo (naranja oscuro)
+  static const Color disabledColor = Color(0xFFB0BEC5);    // Deshabilitado (gris)
   
-  // Colores de estado
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color error = Color(0xFFF44336);
-  static const Color info = Color(0xFF2196F3);
-  
-  // Colores neutros
-  static const Color background = Color(0xFFFAFAFA);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color divider = Color(0xFFE0E0E0);
-  
-  // Colores de texto
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF757575);
-  static const Color textDisabled = Color(0xFFBDBDBD);
-  
-  // Colores específicos del calendario
-  static const Color trackBorder = Color(0xFFE0E0E0);
-  static const Color eventDefault = Color(0xFF2196F3);
-  static const Color eventHover = Color(0xFF1976D2);
-  static const Color accommodationDefault = Color(0xFF4CAF50);
+  // Colores para la UX Demo Page
+  static const Color gridLineColor = Color(0xFFE0E0E0);
+  static const Color widgetBackgroundColor = Color(0xFFF5F5F5);
+  static const Color widgetBorderColor = Color(0xFFBDBDBD);
 }
 ```
 
 ### Reglas de Uso
 
-- **Primario (Azul)**: Botones principales, enlaces, acciones importantes
-- **Secundario (Verde)**: Éxito, confirmaciones, estados positivos
-- **Acento (Naranja)**: Alertas, advertencias, eventos importantes
-- **Texto**: Usar niveles de opacidad (primary, secondary, disabled)
-- **Fondo**: Surface blanco para contenido, background gris claro para contenedores
+- **color0 (Blanco)**: Fondo principal, tarjetas, superficies limpias
+- **color1 (Verde Azulado Claro)**: Fondos secundarios, barras de navegación
+- **color2 (Verde Azulado)**: Elementos interactivos, botones principales, AppBar
+- **color3 (Naranja Oscuro)**: Botones de acción, CTAs importantes, alertas
+- **color4 (Gris Azulado Oscuro)**: Texto principal, bordes, elementos estructurales
+- **titleColor (Verde Oscuro)**: Títulos de secciones, headers
+- **bodyColor (Gris Oscuro)**: Texto de cuerpo, descripciones
+- **interactiveColor (Azul)**: Enlaces, texto interactivo
 
 ---
 
 ## 📐 TIPOGRAFÍA
 
-### Familias de Fuentes
+### Tipografías Actuales de la App (AppTypography)
+
+**⚠️ IMPORTANTE: Estos son los estilos que ya existen en `lib/app/theme/typography.dart`**
 
 ```dart
 class AppTypography {
-  // Títulos
-  static const TextStyle h1 = TextStyle(
-    fontSize: 32,
+  // Familias de fuentes
+  static const String titleFont = 'Roboto';
+  static const String bodyFont = 'Roboto';
+  static const String interactiveFont = 'Open Sans';
+  
+  // Estilos de títulos
+  static const TextStyle titleStyle = TextStyle(
+    fontFamily: titleFont,
     fontWeight: FontWeight.bold,
-    letterSpacing: -0.5,
-    height: 1.2,
+    fontSize: 24.0,
+    color: AppColorScheme.titleColor,
   );
   
-  static const TextStyle h2 = TextStyle(
-    fontSize: 24,
+  static const TextStyle largeTitle = TextStyle(
+    fontFamily: titleFont,
     fontWeight: FontWeight.bold,
-    letterSpacing: -0.25,
-    height: 1.3,
+    fontSize: 32.0,
+    color: AppColorScheme.titleColor,
   );
   
-  static const TextStyle h3 = TextStyle(
-    fontSize: 20,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 0,
-    height: 1.4,
+  static const TextStyle mediumTitle = TextStyle(
+    fontFamily: titleFont,
+    fontWeight: FontWeight.bold,
+    fontSize: 20.0,
+    color: AppColorScheme.titleColor,
   );
   
-  // Texto de cuerpo
-  static const TextStyle bodyLarge = TextStyle(
-    fontSize: 16,
+  // Estilos de cuerpo
+  static const TextStyle bodyStyle = TextStyle(
+    fontFamily: bodyFont,
     fontWeight: FontWeight.normal,
-    letterSpacing: 0.15,
-    height: 1.5,
+    fontSize: 16.0,
+    color: AppColorScheme.bodyColor,
   );
   
-  static const TextStyle bodyMedium = TextStyle(
-    fontSize: 14,
+  static const TextStyle smallBody = TextStyle(
+    fontFamily: bodyFont,
     fontWeight: FontWeight.normal,
-    letterSpacing: 0.25,
-    height: 1.43,
+    fontSize: 14.0,
+    color: AppColorScheme.bodyColor,
   );
   
-  static const TextStyle bodySmall = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.normal,
-    letterSpacing: 0.4,
-    height: 1.33,
+  // Estilos de texto interactivo
+  static const TextStyle interactiveStyle = TextStyle(
+    fontFamily: interactiveFont,
+    fontWeight: FontWeight.w500,
+    fontSize: 14.0,
+    color: AppColorScheme.interactiveColor,
   );
   
-  // Especiales
-  static const TextStyle button = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 1.25,
-    height: 1.5,
-  );
-  
+  // Caption (texto pequeño)
   static const TextStyle caption = TextStyle(
-    fontSize: 12,
+    fontFamily: bodyFont,
     fontWeight: FontWeight.normal,
-    letterSpacing: 0.4,
-    height: 1.33,
-  );
-  
-  static const TextStyle overline = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 1.5,
-    height: 1.5,
+    fontSize: 12.0,
+    color: AppColorScheme.color4,
   );
 }
 ```
 
 ### Reglas de Uso
 
-- **H1**: Títulos de página (Dashboard, Plan)
-- **H2**: Secciones principales
-- **H3**: Subtítulos de secciones
-- **Body**: Texto general, descripciones
-- **Button**: Botones y CTAs
-- **Caption**: Texto secundario, fechas pequeñas
-- **Overline**: Etiquetas, badges
+- **largeTitle (32px, bold)**: Títulos principales de página (Dashboard, Plan)
+- **titleStyle (24px, bold)**: Secciones principales
+- **mediumTitle (20px, bold)**: Subtítulos de secciones
+- **bodyStyle (16px)**: Texto general, descripciones
+- **smallBody (14px)**: Texto secundario
+- **interactiveStyle (14px, medium)**: Enlaces, CTAs
+- **caption (12px)**: Texto secundario, fechas pequeñas
 
 ---
 
@@ -477,18 +461,21 @@ class AppTheme {
 
 **Estado:** ⚠️ Parcialmente implementado
 
-**Lo que ya existe:**
-- ✅ `AppColorScheme` definido
-- ✅ Algunos componentes básicos
+**Lo que ya existe en el código:**
+- ✅ `AppColorScheme` en `lib/app/theme/color_scheme.dart` (color0-color4, estados)
+- ✅ `AppTypography` en `lib/app/theme/typography.dart` (titleStyle, bodyStyle, etc.)
+- ✅ `AppTheme` en `lib/app/theme/app_theme.dart` (tema light configurado)
+- ✅ Componentes de calendario específicos
+- ✅ Algunos componentes básicos reutilizables
 - ✅ Navegación estructurada
 
-**Lo que falta:**
-- ❌ Sistema completo de tipografía
-- ❌ Sistema completo de espaciado
-- ❌ Componentes UI reutilizables
-- ❌ Catálogo de iconos documentado
-- ❌ Responsive design completo
-- ❌ Documentación visual de componentes
+**Lo que falta (para completar el sistema):**
+- ❌ Sistema de espaciado estandarizado (`AppSpacing`)
+- ❌ Componentes UI reutilizables completos (botones, cards, inputs documentados)
+- ❌ Catálogo de iconos documentado y estandarizado
+- ❌ Documentación visual de componentes existentes
+- ❌ Responsive design completo con breakpoints definidos
+- ❌ Checklist de implementación para nuevos componentes
 
 ---
 
