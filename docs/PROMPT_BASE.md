@@ -4,6 +4,8 @@
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
 - `docs/CONTEXT.md` - Normas específicas del proyecto (Plan Frankenstein, Firestore, tests manuales)
+- `docs/GESTION_TIMEZONES.md` - Sistema de gestión de timezones
+- `docs/FLUJO_CREACION_PLAN.md` - Índice de flujos de procesos
 
 ## 📋 Metodología de Trabajo
 

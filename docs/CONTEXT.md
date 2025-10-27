@@ -3,7 +3,8 @@
 Este documento fija criterios estables para trabajar juntos sin olvidar pasos clave, manteniendo consistencia entre código, documentación y comunicación.
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
-- `PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
+- `docs/PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
+- `docs/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
 - `docs/FLUJO_CREACION_PLAN.md` - Índice y visión general del sistema de planes
 - `docs/flujos/` - Flujos específicos de procesos (estados, participantes, eventos, etc.)
 
