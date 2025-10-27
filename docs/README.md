@@ -1,0 +1,113 @@
+# 📚 Documentación - Planazoo Platform
+
+Bienvenido a la documentación completa de Planazoo, la plataforma de planificación de viajes y eventos.
+
+## 📋 Índice de Documentación
+
+### 🎯 [Guías](./guias/)
+Guías transversales que aplican a todo el proyecto:
+- [Guía de UI](./guias/GUIA_UI.md) - Sistema de diseño, colores, tipografía, componentes
+- [Guía de Seguridad](./guias/GUIA_SEGURIDAD.md) - Seguridad, autenticación y protección de datos
+- [Guía de Aspectos Legales](./guias/GUIA_ASPECTOS_LEGALES.md) - Términos, privacidad, cookies, GDPR
+- [Gestión de Timezones](./guias/GESTION_TIMEZONES.md) - Sistema completo de manejo de zonas horarias
+- [Prompt Base](./guias/PROMPT_BASE.md) - Metodología de trabajo del equipo
+
+### 🔄 [Flujos de Proceso](./flujos/)
+Flujos específicos del ciclo de vida de la aplicación:
+- [CRUD Planes](./flujos/FLUJO_CRUD_PLANES.md) - Crear, leer, actualizar y eliminar planes
+- [CRUD Usuarios](./flujos/FLUJO_CRUD_USUARIOS.md) - Registro, login y gestión de usuarios
+- [CRUD Eventos](./flujos/FLUJO_CRUD_EVENTOS.md) - Gestión completa de eventos
+- [Estados del Plan](./flujos/FLUJO_ESTADOS_PLAN.md) - Transiciones entre estados
+- [Gestión de Participantes](./flujos/FLUJO_GESTION_PARTICIPANTES.md) - Invitaciones y gestión
+- [Presupuesto y Pagos](./flujos/FLUJO_PRESUPUESTO_PAGOS.md) - Sistema financiero
+- [Invitaciones y Notificaciones](./flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md) - Comunicación
+- [Validación](./flujos/FLUJO_VALIDACION.md) - Verificación y validación
+- [Configuración App](./flujos/FLUJO_CONFIGURACION_APP.md) - Configuración de usuario y app
+
+### 📐 [Especificaciones](./especificaciones/)
+Especificaciones técnicas detalladas:
+- [Capacidades del Calendario](./especificaciones/CALENDAR_CAPABILITIES.md)
+- [Campos de Eventos](./especificaciones/EVENT_FORM_FIELDS.md)
+- [Plan Frankenstein](./especificaciones/FRANKENSTEIN_PLAN_SPEC.md)
+- [Especificación de Campos de Eventos](./especificaciones/EVENT_FIELDS_SPECIFICATION.md)
+
+### 🏗️ [Arquitectura](./arquitectura/)
+Decisiones arquitectónicas y documentación técnica:
+- [Decisiones Arquitectónicas](./arquitectura/ARCHITECTURE_DECISIONS.md)
+- [UX - README](./arquitectura/UX_README.md)
+- [Diagrama de Arquitectura UX](./arquitectura/UX_ARCHITECTURE_DIAGRAM.md)
+- [Documentación Técnica UX](./arquitectura/UX_TECHNICAL_DOCUMENTATION.md)
+
+### 🎨 [UX](./ux/)
+Documentación detallada de experiencia de usuario:
+- [Especificación JSON UX](./ux/ux_specification.json)
+- [Gestión de Imágenes de Plan](./ux/plan_image_management.md)
+- [Documentación de Widgets](./ux/pages/) - Componentes individuales
+
+### ✅ [Tareas](./tareas/)
+Gestión de tareas del proyecto:
+- [Tareas Activas](./tareas/TASKS.md)
+- [Tareas Completadas](./tareas/COMPLETED_TASKS.md)
+
+### ⚙️ [Configuración](./configuracion/)
+Configuración y contexto del proyecto:
+- [Contexto del Proyecto](./configuracion/CONTEXT.md) - Normas y reglas de colaboración
+- [Flujo de Creación de Plan](./configuracion/FLUJO_CREACION_PLAN.md) - Índice del sistema de planes
+
+---
+
+## 🚀 Inicio Rápido
+
+### Para Desarrolladores
+1. Lee [Contexto del Proyecto](./configuracion/CONTEXT.md) para entender las normas
+2. Consulta [Prompt Base](./guias/PROMPT_BASE.md) para la metodología de trabajo
+3. Revisa [Guía de UI](./guias/GUIA_UI.md) para componentes y estilos
+4. Explora los [Flujos de Proceso](./flujos/) para entender funcionalidades
+
+### Para Diseñadores
+1. Consulta [Guía de UI](./guias/GUIA_UI.md) para el sistema de diseño
+2. Revisa [Documentación UX](./ux/) para entender la interfaz
+3. Explora [Especificaciones](./especificaciones/) para detalles técnicos
+
+### Para Product Managers
+1. Lee el [Flujo de Creación de Plan](./configuracion/FLUJO_CREACION_PLAN.md)
+2. Revisa [Estado de Tareas](./tareas/TASKS.md)
+3. Consulta los flujos en [Flujos de Proceso](./flujos/)
+
+---
+
+## 📊 Estado del Proyecto
+
+**Última actualización:** Enero 2025
+
+### Completado ✅
+- Sistema de tracks
+- Gestión básica de eventos
+- Timezone dinámica
+- Sistema de solapamientos básico
+
+### En Progreso ⚠️
+- Estados del plan
+- Sistema de validación
+- Formularios enriquecidos
+
+### Pendiente ❌
+- Invitaciones y notificaciones
+- Presupuesto y pagos
+- Validación avanzada
+- Sistema de alarmas
+
+---
+
+## 🤝 Contribuir
+
+Cuando trabajes en una nueva funcionalidad:
+1. Consulta los flujos relevantes en `docs/flujos/`
+2. Sigue la [Guía de UI](./guias/GUIA_UI.md)
+3. Actualiza la documentación correspondiente
+4. Refiere al [Prompt Base](./guias/PROMPT_BASE.md)
+
+---
+
+*Documentación viva del proyecto Planazoo*
+
