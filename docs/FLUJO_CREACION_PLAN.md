@@ -24,7 +24,7 @@ Este documento ha sido dividido en **9 flujos específicos** más **guías de re
 | **[FLUJO_PRESUPUESTO_PAGOS.md](./flujos/FLUJO_PRESUPUESTO_PAGOS.md)** | Presupuesto y sistema de pagos | T101, T102 |
 | **[FLUJO_INVITACIONES_NOTIFICACIONES.md](./flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md)** | Invitaciones y notificaciones | T104, T105, T110, T120 |
 | **[FLUJO_VALIDACION.md](./flujos/FLUJO_VALIDACION.md)** | Validación y verificación | T113, T114, T107 |
-| **[FLUJO_GESTION_USUARIOS.md](./flujos/FLUJO_GESTION_USUARIOS.md)** | Registro, login y gestión de usuarios | T47, T49, T50, T124 |
+| **[FLUJO_CRUD_USUARIOS.md](./flujos/FLUJO_CRUD_USUARIOS.md)** | Registro, login y gestión de usuarios | T47, T49, T50, T124 |
 | **[FLUJO_CONFIGURACION_APP.md](./flujos/FLUJO_CONFIGURACION_APP.md)** | Configuración de usuario, app y planes | T50, T105, T124 |
 
 **📚 Guías de Referencia:**

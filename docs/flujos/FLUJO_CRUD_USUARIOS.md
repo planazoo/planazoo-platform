@@ -1,6 +1,6 @@
-# 👤 Flujo de Gestión de Usuarios
+# 👤 Flujo de Vida Completa de Usuarios (CRUD)
 
-> Define cómo crear, modificar y gestionar usuarios en la plataforma
+> Define todo el ciclo de vida de un usuario: crear, leer, actualizar y eliminar
 
 **Relacionado con:** T47, T49, T50, T124  
 **Versión:** 1.0  
@@ -10,7 +10,54 @@
 
 ## 🎯 Objetivo
 
-Documentar todos los escenarios de gestión de usuarios: registro, login, perfil, configuración, permisos y eliminación de cuenta.
+Documentar todos los escenarios del ciclo de vida completo de un usuario: desde su registro hasta su eliminación, incluyendo lectura, visualización, actualizaciones de perfil, configuración y permisos.
+
+---
+
+## 🔄 Diagrama del Ciclo de Vida de Usuarios
+
+```mermaid
+graph TB
+    Start([Inicio]) --> Register[Registrar Usuario]
+    
+    Register --> Email[Email]
+    Register --> Google[Google]
+    Register --> Invited[Invitado]
+    
+    Email --> Verify[Verificar Email]
+    Google --> Verify
+    Invited --> Verify
+    
+    Verify --> Login[Login]
+    
+    Login --> Read[Leer/Visualizar Perfil]
+    
+    Read --> Update{Actualizar?}
+    
+    Update -->|Sí| UpdateProfile[Actualizar Perfil]
+    Update -->|Sí| UpdateSettings[Configuración]
+    Update -->|Sí| UpdatePassword[Cambiar Password]
+    Update -->|Sí| UpdateSecurity[Seguridad]
+    
+    Update --> Delete{Eliminar?}
+    
+    Delete -->|Sí| DeleteConfirm[Confirmar Eliminación]
+    DeleteConfirm --> Archive[Archivar Cuenta]
+    
+    Update --> Keep{Continuar?}
+    Keep -->|Sí| Update
+    Keep -->|No| Complete[Usuario Activo]
+    
+    Archive --> Complete
+    Complete --> End([Fin])
+    
+    style Register fill:#4CAF50
+    style Read fill:#2196F3
+    style Update fill:#FF9800
+    style Delete fill:#F44336
+    style Archive fill:#9E9E9E
+    style Complete fill:#607D8B
+```
 
 ---
 

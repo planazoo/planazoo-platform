@@ -55,7 +55,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
   - `FLUJO_PRESUPUESTO_PAGOS.md` - Sistema financiero
   - `FLUJO_INVITACIONES_NOTIFICACIONES.md` - Comunicación
   - `FLUJO_VALIDACION.md` - Validación y verificación
-  - `FLUJO_GESTION_USUARIOS.md` - Registro, login y gestión de usuarios
+  - `FLUJO_CRUD_USUARIOS.md` - Registro, login y gestión de usuarios
   - `FLUJO_CONFIGURACION_APP.md` - Configuración de usuario, app y planes
 - **Guías de Referencia:**
   - `GUIA_SEGURIDAD.md` - Seguridad, autenticación y protección de datos
