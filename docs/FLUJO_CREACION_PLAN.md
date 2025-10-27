@@ -19,7 +19,7 @@ Este documento ha sido dividido en **8 flujos específicos** más **guías de re
 |-----------|-------------|---------------------|
 | **[FLUJO_ESTADOS_PLAN.md](./flujos/FLUJO_ESTADOS_PLAN.md)** | Estados del plan y transiciones | T109, T107 |
 | **[FLUJO_GESTION_PARTICIPANTES.md](./flujos/FLUJO_GESTION_PARTICIPANTES.md)** | Invitaciones, confirmaciones, grupos | T104, T117, T120, T123 |
-| **[FLUJO_MODIFICAR_EVENTOS.md](./flujos/FLUJO_MODIFICAR_EVENTOS.md)** | Crear, editar, eliminar eventos | T121, T105, T110, T101, T102 |
+| **[FLUJO_CRUD_EVENTOS.md](./flujos/FLUJO_CRUD_EVENTOS.md)** | Ciclo de vida completo de eventos | T121, T105, T110, T101, T102 |
 | **[FLUJO_PRESUPUESTO_PAGOS.md](./flujos/FLUJO_PRESUPUESTO_PAGOS.md)** | Presupuesto y sistema de pagos | T101, T102 |
 | **[FLUJO_INVITACIONES_NOTIFICACIONES.md](./flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md)** | Invitaciones y notificaciones | T104, T105, T110, T120 |
 | **[FLUJO_VALIDACION.md](./flujos/FLUJO_VALIDACION.md)** | Validación y verificación | T113, T114, T107 |
