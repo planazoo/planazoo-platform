@@ -1,62 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'color_scheme.dart';
 
 class AppTypography {
-  // Tipografías según la propuesta del usuario
-  static const String titleFont = 'Roboto';
-  static const String bodyFont = 'Roboto';
-  static const String interactiveFont = 'Open Sans';
+  // Tipografía: Noto Sans (igual que Google Calendar)
+  // Usando Google Fonts para cargar Noto Sans
   
   // Estilos de títulos
-  static const TextStyle titleStyle = TextStyle(
-    fontFamily: titleFont,
-    fontWeight: FontWeight.bold,
+  static TextStyle get titleStyle => GoogleFonts.notoSans(
     fontSize: 24.0,
+    fontWeight: FontWeight.bold,
     color: AppColorScheme.titleColor,
   );
   
   // Estilos de cuerpo
-  static const TextStyle bodyStyle = TextStyle(
-    fontFamily: bodyFont,
-    fontWeight: FontWeight.normal,
+  static TextStyle get bodyStyle => GoogleFonts.notoSans(
     fontSize: 16.0,
+    fontWeight: FontWeight.normal,
     color: AppColorScheme.bodyColor,
   );
   
   // Estilos de texto interactivo
-  static const TextStyle interactiveStyle = TextStyle(
-    fontFamily: interactiveFont,
-    fontWeight: FontWeight.w500,
+  static TextStyle get interactiveStyle => GoogleFonts.notoSans(
     fontSize: 14.0,
+    fontWeight: FontWeight.w500,
     color: AppColorScheme.interactiveColor,
   );
   
   // Variaciones de tamaños
-  static const TextStyle largeTitle = TextStyle(
-    fontFamily: titleFont,
-    fontWeight: FontWeight.bold,
+  static TextStyle get largeTitle => GoogleFonts.notoSans(
     fontSize: 32.0,
-    color: AppColorScheme.titleColor,
-  );
-  
-  static const TextStyle mediumTitle = TextStyle(
-    fontFamily: titleFont,
     fontWeight: FontWeight.bold,
-    fontSize: 20.0,
     color: AppColorScheme.titleColor,
   );
   
-  static const TextStyle smallBody = TextStyle(
-    fontFamily: bodyFont,
-    fontWeight: FontWeight.normal,
+  static TextStyle get mediumTitle => GoogleFonts.notoSans(
+    fontSize: 20.0,
+    fontWeight: FontWeight.bold,
+    color: AppColorScheme.titleColor,
+  );
+  
+  static TextStyle get smallBody => GoogleFonts.notoSans(
     fontSize: 14.0,
+    fontWeight: FontWeight.normal,
     color: AppColorScheme.bodyColor,
   );
   
-  static const TextStyle caption = TextStyle(
-    fontFamily: bodyFont,
-    fontWeight: FontWeight.normal,
+  static TextStyle get caption => GoogleFonts.notoSans(
     fontSize: 12.0,
+    fontWeight: FontWeight.normal,
     color: AppColorScheme.color4,
   );
 }

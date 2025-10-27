@@ -54,6 +54,9 @@ dependencies:
   image_picker: ^1.0.4
   cached_network_image: ^3.3.0
   shared_preferences: ^2.2.3
+  
+  # Fonts
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
