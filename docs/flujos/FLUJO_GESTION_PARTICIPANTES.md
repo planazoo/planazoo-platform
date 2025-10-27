@@ -3,6 +3,7 @@
 > Define cómo añadir, eliminar y gestionar participantes en un plan
 
 **Relacionado con:** T104, T117, T120, T123  
+**Ver CRUD completo:** `FLUJO_CRUD_PLANES.md`  
 **Versión:** 1.0  
 **Fecha:** Enero 2025
 

@@ -276,9 +276,10 @@ graph TD
 **Última revisión:** Enero 2025
 
 **Documentos creados:**
-- ✅ 6 flujos específicos en `docs/flujos/`
+- ✅ 9 flujos específicos en `docs/flujos/`
 - ✅ Índice actualizado
 - ✅ Referencias cruzadas entre documentos
+- ✅ Diagramas Mermaid en todos los flujos CRUD
 
 **Próxima acción:**
 Revisar cada flujo individualmente para refinamiento y detección de gaps.
