@@ -15,6 +15,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - Respuestas concisas y accionables; detalles técnicos cuando aporten valor.
 - Evitar bloquear por confirmaciones innecesarias; preguntar solo si hay ambigüedad real.
 - No mostrar código en propuestas: aplicar directamente y describir el cambio a alto nivel.
+- **⚠️ REVISAR ANTES DE PROPUESTA/IMPLEMENTACIÓN**: Siempre buscar si ya existe funcionalidad similar antes de proponer o implementar (código, TASKS.md, Firestore, documentación).
 
 ### 2) Flujo de Trabajo de Tareas
 - Las tareas activas se gestionan en `docs/TASKS.md`.

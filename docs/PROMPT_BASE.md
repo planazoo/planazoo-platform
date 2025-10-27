@@ -15,6 +15,12 @@
 - **Proponer GIT antes de cambios masivos**: Sugerir commit antes de modificaciones extensas
 - **Testing incremental**: Crear entornos de prueba controlados para validar cambios
 - **Documentación viva**: Mantener documentación actualizada con cada cambio importante (en castellano)
+- **⚠️ REVISAR ANTES DE PROPUESTA/IMPLEMENTACIÓN**: Siempre, antes de proponer o implementar cualquier funcionalidad:
+  1. Buscar si ya existe funcionalidad similar en el código
+  2. Revisar TASKS.md para ver si hay tareas relacionadas o pendientes
+  3. Verificar si existe en la base de datos (Firestore) o modelos
+  4. Consultar documentación (flujos, CONTEXT.md, guías) para asegurarse de no duplicar
+  5. Proponer reutilizar/adaptar/extender antes de crear de cero
 - **Idioma del código**: Todo el código, variables, métodos, comentarios técnicos en inglés
 - **Comunicación**: Documentación y comunicación entre nosotros en castellano
 - **Multi-idioma**: Usar archivos `.arb` en `lib/l10n/` para strings traducibles. No hardcodear textos en UI.
