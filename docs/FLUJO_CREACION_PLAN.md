@@ -28,6 +28,7 @@ Este documento ha sido dividido en **8 flujos específicos** más **guías de re
 
 **📚 Guías de Referencia:**
 | **[GUIA_SEGURIDAD.md](./GUIA_SEGURIDAD.md)** | Seguridad, autenticación y protección de datos | T51, T52, T53, T65-T67, T125-T129 |
+| **[GUIA_ASPECTOS_LEGALES.md](./GUIA_ASPECTOS_LEGALES.md)** | Términos, privacidad, cookies y cumplimiento legal | T50, T129, GDPR, COPPA |
 
 ---
 

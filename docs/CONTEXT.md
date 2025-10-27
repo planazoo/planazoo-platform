@@ -58,6 +58,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
   - `FLUJO_CONFIGURACION_APP.md` - Configuración de usuario, app y planes
 - **Guías de Referencia:**
   - `GUIA_SEGURIDAD.md` - Seguridad, autenticación y protección de datos
+  - `GUIA_ASPECTOS_LEGALES.md` - Términos, privacidad, cookies y cumplimiento legal
 - Al implementar una funcionalidad completa: revisar si debe actualizarse el flujo correspondiente en `docs/flujos/`.
 
 ### 7) Plan Frankenstein (revisión tras cambios)
