@@ -764,6 +764,8 @@ class DemoDataGenerator {
     String? timezone,
     String? arrivalTimezone,
   }) async {
+    // Usar Europe/Madrid como timezone por defecto si no se especifica
+    final finalTimezone = timezone ?? 'Europe/Madrid';
     final participants = participantTrackIds ?? [];
     
     // Validar conflictos solo para eventos confirmados
@@ -837,7 +839,7 @@ class DemoDataGenerator {
       updatedAt: DateTime.now(),
       commonPart: commonPart,
       personalParts: personalParts,
-      timezone: timezone,
+      timezone: finalTimezone,
       arrivalTimezone: arrivalTimezone,
     );
 
