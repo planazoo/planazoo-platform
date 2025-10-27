@@ -50,6 +50,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
   - `FLUJO_PRESUPUESTO_PAGOS.md` - Sistema financiero
   - `FLUJO_INVITACIONES_NOTIFICACIONES.md` - Comunicación
   - `FLUJO_VALIDACION.md` - Validación y verificación
+  - `FLUJO_GESTION_USUARIOS.md` - Registro, login y gestión de usuarios
 - Al implementar una funcionalidad completa: revisar si debe actualizarse el flujo correspondiente en `docs/flujos/`.
 
 ### 7) Plan Frankenstein (revisión tras cambios)
