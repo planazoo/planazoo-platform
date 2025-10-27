@@ -74,139 +74,59 @@ Actualizar presupuesto (T101)
 Estado: "Pendiente" o "Confirmado"
 ```
 
-#### 1.2 - Creación desde Importación JSON
+#### 1.2 - Creación con Conexión a Proveedor
 
-**Cuándo:** Usuario importa eventos desde archivo JSON  
-**Quién:** Organizador
-
-**Flujo:**
-```
-Organizador → Plan → "Importar eventos"
-  ↓
-Seleccionar archivo JSON
-  ↓
-Validar formato JSON y versión:
-{
-  "formatVersion": "1.0",
-  "events": [
-    {
-      "title": "Vuelo Madrid → Sydney",
-      "type": "Desplazamiento",
-      "subtype": "Avión",
-      "date": "2025-10-22",
-      "startTime": "20:00",
-      "duration": 840,
-      "timezone": "Europe/Madrid",
-      "arrivalTimezone": "Australia/Sydney",
-      "location": {...},
-      "participants": ["user1"],
-      "cost": 300.00
-    }
-  ]
-}
-  ↓
-Preview de eventos a importar:
-"Se importarán [N] eventos
-
-1. Vuelo Madrid → Sydney (22/10)
-2. Taxi al hotel (23/10)
-..."
-  ↓
-Validar cada evento:
-- Fecha en rango del plan
-- Participantes existen en el plan
-- Sin solapamientos con eventos existentes
-- Ubicación válida
-  ↓
-Mostrar errores si los hay:
-"⚠️ Errores detectados:
-- Evento 3: Usuario 'x' no está en el plan
-- Evento 5: Fecha fuera del rango
-
-¿Importar eventos válidos?"
-  ↓
-Usuario selecciona [Importar todos] / [Solo válidos]
-  ↓
-Crear cada evento válido
-  ↓
-Mostrar resumen:
-"✅ [N] eventos importados
-⚠️ [M] eventos omitidos (errores)"
-```
-
-#### 1.3 - Creación con Sincronización de Proveedor
-
-**Cuándo:** Usuario conecta evento con proveedor externo  
-**Quién:** Usuario con el evento
+**Cuándo:** Al crear evento, decidir si conectarlo con proveedor externo  
+**Quién:** Usuario creando el evento
 
 **Flujo:**
 ```
-Usuario → Evento → "Conectar con proveedor"
+Usuario → "Añadir evento"
   ↓
-Buscar proveedor en catálogo:
-- Iberia (vuelos)
-- Renfe (trenes)
-- Hilton (hoteles)
-- Restaurante X (restauración)
+Formulario de creación normal
+  ↓
+Campo adicional: "Conectar con proveedor" [checkbox]
+  ↓
+Si marca checkbox:
+  ↓
+Buscar proveedor:
+- "Iberia" (vuelos)
+- "Renfe" (trenes)
+- "Hotel Hilton" (alojamientos)
+- "Restaurante El Jardín" (restauración)
   ↓
 Seleccionar proveedor
   ↓
-Modal de autorización:
-"Conectar evento con [Proveedor]?
-
-El proveedor podrá actualizar automáticamente:
+Autorizar conexión:
+"El proveedor podrá actualizar automáticamente:
 - Hora de salida/llegada
 - Puerta/terminal
 - Cancelaciones
 - Otros cambios
 
-¿Autorizar conexión?"
+¿Autorizar?"
   ↓
-Autorizar → Generar token de API
+Guardar evento + configuración API
   ↓
-Guardar configuración de API en evento
+Evento creado con sincronización activa
   ↓
-Proveedor ahora puede actualizar evento
-  ↓
-Badge en evento: "✅ Actualizado por [Proveedor]"
+Badge visible: "✅ Actualizado por Iberia"
 ```
 
-**Sincronización automática:**
+**Sincronización automática después de la creación:**
 ```
 Sistema verifica actualizaciones periódicamente
   ↓
 Proveedor tiene cambios
   ↓
-API del proveedor: GET /api/v1/event-updates/{eventId}
-{
-  "eventId": "abc123",
-  "updatedAt": "2025-01-15T10:30:00Z",
-  "changes": {
-    "departureTime": "20:30",  // Era 20:00
-    "gate": "A5"  // Era A3
-  },
-  "metadata": {
-    "provider": "Iberia",
-    "reservationNumber": "IBE123"
-  }
-}
+Mostrar al usuario: "Cambios pendientes"
   ↓
-Mostrar al usuario:
-"El evento 'Vuelo a Sydney' ha sido actualizado por Iberia
-
-Cambios:
-- Hora de salida: 20:00 → 20:30
-- Puerta: A3 → A5
-
-[Aceptar cambios] [Ver detalles] [Ignorar]"
+Usuario acepta/rechaza cambios
   ↓
-Si acepta: Actualizar evento
-  ↓
-Notificar a participantes (T105)
-Actualizar alarmas (T110)
+Actualizar evento si acepta
 ```
 
-#### 1.4 - Creación de Evento Urgente (Durante Ejecución)
+#### 1.3 - Creación de Evento Urgente (Durante Ejecución)
 
 **Cuándo:** Durante ejecución del plan, decisión de último momento  
 **Quién:** Solo organizador
@@ -348,19 +268,79 @@ Recalcular distribución (T102)
 Notificar si cambio >€50 o >20%
 ```
 
-#### 3.5 - Actualización Automática desde Proveedor
+#### 3.5 - Conectar/Desconectar Proveedor en Evento Existente
 
+**Conectar proveedor a evento ya creado:**
 ```
-Proveedor actualiza evento vía API
+Usuario → Evento → "Gestión"
   ↓
-Usuario ve notificación: "Cambios pendientes"
+"Conectar con proveedor"
   ↓
-Usuario acepta/rechaza cambios
+Buscar proveedor en catálogo
+  ↓
+Autorizar conexión
+  ↓
+Generar API key
+  ↓
+Badge visible: "✅ Actualizado por [Proveedor]"
+```
+
+**Desconectar proveedor:**
+```
+Usuario → Evento conectado → "Desconectar proveedor"
+  ↓
+Confirmación: "¿Desconectar de [Proveedor]?"
+  ↓
+Desconectar
+  ↓
+Evento vuelve a ser manual
+Badge desaparece
+```
+
+#### 3.6 - Actualización Automática desde Proveedor
+
+**Flujo de sincronización:**
+```
+Sistema verifica actualizaciones periódicamente
+  ↓
+Proveedor tiene cambios
+  ↓
+API del proveedor: GET /api/v1/event-updates/{eventId}
+{
+  "eventId": "abc123",
+  "updatedAt": "2025-01-15T10:30:00Z",
+  "changes": {
+    "departureTime": "20:30",  // Era 20:00
+    "gate": "A5"  // Era A3
+  },
+  "metadata": {
+    "provider": "Iberia",
+    "reservationNumber": "IBE123"
+  }
+}
+  ↓
+Mostrar al usuario notificación:
+"🔄 El evento 'Vuelo a Sydney' tiene cambios desde Iberia
+
+Cambios:
+- Hora de salida: 20:00 → 20:30
+- Puerta: A3 → A5
+
+[Aceptar cambios] [Ver detalles] [Ignorar]"
   ↓
 Si acepta: Actualizar evento
-Notificar a participantes
-Actualizar alarmas
+  ↓
+Notificar a participantes (T105)
+Actualizar alarmas (T110)
+Recalcular solapamientos
 ```
+
+**Consideraciones de seguridad:**
+- API Key segura por evento
+- Rate limiting en API
+- Validar origen de actualizaciones
+- Logging de todas las actualizaciones automáticas
+- Usuario siempre tiene control (aceptar/rechazar)
 
 ---
 
@@ -437,9 +417,141 @@ Mostrar opciones alternativas:
 
 ---
 
-### 5. HISTORIAL Y AUDITORÍA
+### 5. IMPORTACIÓN BATCH DE EVENTOS
 
-#### 5.1 - Ver Historial de Cambios
+#### 5.1 - Importar Múltiples Eventos desde JSON
+
+**Cuándo:** Importar muchos eventos a la vez desde archivo JSON  
+**Quién:** Organizador del plan  
+**Propósito:** Ahorrar tiempo creando eventos uno por uno
+
+**Formato JSON de importación:**
+```json
+{
+  "formatVersion": "1.0",
+  "planId": "optional_if_linking_to_existing",
+  "events": [
+    {
+      "title": "Vuelo Madrid → Sydney",
+      "type": "Desplazamiento",
+      "subtype": "Avión",
+      "date": "2025-10-22",
+      "startTime": "20:00",
+      "duration": 840,
+      "timezone": "Europe/Madrid",
+      "arrivalTimezone": "Australia/Sydney",
+      "location": {
+        "name": "Aeropuerto Adolfo Suárez Madrid-Barajas",
+        "address": "28042 Madrid, Spain",
+        "coordinates": { "lat": 40.4839, "lng": -3.5679 }
+      },
+      "arrivalLocation": {
+        "name": "Aeropuerto Sydney",
+        "address": "Sydney NSW 2020, Australia",
+        "coordinates": { "lat": -33.9399, "lng": 151.1753 }
+      },
+      "participants": ["user1", "user2"],
+      "cost": 300.00,
+      "costPerPerson": true
+    },
+    {
+      "title": "Taxi al hotel",
+      "type": "Desplazamiento",
+      "subtype": "Taxi",
+      "date": "2025-10-23",
+      "startTime": "01:30",
+      "duration": 90
+      // ... más campos
+    }
+  ]
+}
+```
+
+**Flujo de importación:**
+```
+Organizador → Plan → "Importar eventos"
+  ↓
+Seleccionar archivo JSON
+  ↓
+Validar formato JSON y versión
+  ↓
+Extraer eventos del JSON
+  ↓
+Preview: "Se importarán [N] eventos al plan '[Nombre]'
+
+1. Vuelo Madrid → Sydney (22/10, 20:00h)
+2. Taxi al hotel (23/10, 01:30h)
+3. Check-in hotel (23/10, 14:00h)
+...
+[N] eventos totales"
+  ↓
+Validar cada evento:
+- Fecha en rango del plan
+- Participantes existen en el plan
+- Sin solapamientos con eventos existentes
+- Ubicación válida
+- Datos completos
+  ↓
+Mostrar errores si los hay:
+"⚠️ Errores detectados en [M] eventos:
+
+- Evento 3: Usuario 'x' no está en el plan
+- Evento 5: Fecha fuera del rango (25/10, plan termina 24/10)
+- Evento 7: Faltan campos requeridos
+
+¿Importar solo eventos válidos?"
+  ↓
+Usuario selecciona opción:
+- [Importar todos]
+- [Solo eventos válidos]
+- [Cancelar]
+  ↓
+Si importa: Crear cada evento válido (como si se crearan manualmente)
+  ↓
+Mostrar resumen:
+"✅ Importados: [N] eventos
+⚠️ Omitidos: [M] eventos (errores)
+
+Eventos creados:
+- Vuelo Madrid → Sydney
+- Taxi al hotel
+- Check-in hotel
+..."
+```
+
+**Consideraciones:**
+- Los eventos importados se crean como eventos normales
+- Después de importar: se pueden conectar con proveedores (sección 3.5)
+- Los eventos importados pueden editarse/eliminarse normalmente
+- Posibilidad de exportar formato JSON de vuelta (para compartir templates)
+
+#### 5.2 - Exportar Múltiples Eventos a JSON
+
+**Cuándo:** Compartir plan con otros usuarios o hacer backup  
+**Quién:** Organizador
+
+**Flujo:**
+```
+Organizador → Plan → "Exportar eventos"
+  ↓
+Seleccionar eventos a exportar:
+- [ ] Todos los eventos
+- [ ] Solo eventos de tipo: [selector]
+- [ ] Eventos entre fechas: [selector]
+- [ ] Seleccionar manualmente
+  ↓
+Generar archivo JSON
+  ↓
+Descargar o compartir archivo JSON
+  ↓
+Otro usuario puede importarlo en su plan
+```
+
+---
+
+### 6. HISTORIAL Y AUDITORÍA
+
+#### 6.1 - Ver Historial de Cambios
 
 **Sistema de auditoría:**
 ```
