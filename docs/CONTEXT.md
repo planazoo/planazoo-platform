@@ -43,6 +43,9 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - Actualizar `docs/CALENDAR_CAPABILITIES.md` cuando cambie el comportamiento del calendario.
 - Añadir notas breves en `ARCHITECTURE_DECISIONS.md` para decisiones relevantes (p. ej., persistencia).
 - Mantener `CONTEXT.md` como referencia viva de normas.
+- **Multi-idioma:** Todas las strings de la UI deben ser traducibles. Usar archivos `.arb` en `lib/l10n/`. No hardcodear textos.
+- **Multi-plataforma:** App soporta Web + iOS + Android. Verificar compatibilidad de plugins/APIs en las 3 plataformas antes de usar. Priorizar soluciones cross-platform.
+- **Offline-First:** La app debe funcionar sin conexión. Datos en SQLite (Hive/Drift local), sincronizar con Firestore cuando haya conexión. Verificar que nueva funcionalidad trabaje offline.
 - **Flujos de Proceso:** Consular flujos en `docs/flujos/` antes de tomar decisiones o implementar funcionalidades:
   - `FLUJO_ESTADOS_PLAN.md` - Estados y transiciones
   - `FLUJO_GESTION_PARTICIPANTES.md` - Invitaciones y gestión de participantes

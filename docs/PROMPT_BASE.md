@@ -17,6 +17,9 @@
 - **Documentación viva**: Mantener documentación actualizada con cada cambio importante (en castellano)
 - **Idioma del código**: Todo el código, variables, métodos, comentarios técnicos en inglés
 - **Comunicación**: Documentación y comunicación entre nosotros en castellano
+- **Multi-idioma**: Usar archivos `.arb` en `lib/l10n/` para strings traducibles. No hardcodear textos en UI.
+- **Multi-plataforma**: Verificar compatibilidad Web/iOS/Android antes de usar plugins o APIs. Priorizar soluciones cross-platform.
+- **Offline-First**: Nueva funcionalidad debe trabajar sin conexión. Validar con local-first antes de implementar.
 - **Actualización de tareas**: Pedir confirmación antes de actualizar tareas. Usar sistema `TASKS.md` para tracking de progreso y completar tareas. Seguir reglas del documento TASKS.md (numeración, prioridades, estados). Actualizar al completar, crear nuevas tareas o cambiar estado.
 - **Actualización GIT**: Pedir confirmación antes de hacer commits. Hacer commit de cambios al finalizar fases importantes. Repositorio: C:\Users\cclaraso\unp_calendario
 - **Ruta Flutter**: Flutter instalado en: C:\Users\cclaraso\Downloads\flutter
