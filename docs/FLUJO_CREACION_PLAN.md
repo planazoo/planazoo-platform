@@ -3,8 +3,23 @@
 > Documento de definición del proceso completo para crear un plan
 
 **Estado:** Definición  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Versión:** 1.1  
+**Fecha:** Enero 2025  
+**Última actualización:** Análisis completo de impacto en participantes y casos de cambio integrados
+
+---
+
+## 📑 ÍNDICE
+
+1. [🎯 Objetivo y Método](#-objetivo)
+2. [📊 VISIÓN GENERAL](#-visión-general)
+3. [📋 ETAPAS DEL FLUJO (0-7)](#-etapas-del-flujo)
+4. [🎭 IMPACTO DE CAMBIOS EN PARTICIPANTES](#-impacto-de-cambios-en-participantes)
+5. [🔐 MATRIZ DE PERMISOS Y ACCIONES](#-matriz-de-permisos-por-acción)
+6. [🎯 PRIORIZACIÓN DE TAREAS](#-priorización-sugerida)
+7. [🔔 SISTEMA DE NOTIFICACIONES](#-notificaciones-para-cambios)
+8. [🤔 DECISIONES PENDIENTES](#-decisiones-necesarias)
+9. [✅ ESTADO ACTUAL](#-tareas-creadas-hoy)
 
 ---
 
@@ -12,9 +27,121 @@
 
 Definir el flujo completo e ideal para crear un plan desde cero hasta que esté listo para la ejecución, identificando qué existe actualmente, qué falta y qué necesita mejorarse.
 
+**Este documento sirve como:**
+- 📚 Guía de desarrollo
+- ✅ Checklist de funcionalidades
+- 🔍 Identificador de gaps
+- 📊 Matriz de decisiones
+- 🎯 Priorizador de tareas
+
 ---
 
-## 📊 Etapas del Flujo
+## 📊 VISIÓN GENERAL
+
+**Progreso actual:** ~40% completado
+- ✅ Etapas básicas (crear plan, participantes, eventos)
+- ⚠️ Etapas avanzadas (presupuesto, notificaciones, validación)
+- ❌ Etapas futuras (mapa, estadísticas, fotos compartidas)
+
+**Próximos hitos:**
+1. T121 - Formularios enriquecidos (CRÍTICO)
+2. T109 - Estados del plan
+3. T104/T105 - Invitaciones y notificaciones
+
+### 🎨 DIAGRAMA DE FLUJO PRINCIPAL
+
+```mermaid
+graph TD
+    Start([Crear Plan]) --> E0{ETAPA 0: Cómo crear?}
+    E0 -->|Desde cero| E0A[Plan Nuevo]
+    E0 -->|Copiar| E0B[Plan Existente - T118]
+    E0 -->|Plantilla| E0C[Plantilla - T122]
+    
+    E0A --> E1[ETAPA 1: Configuración]
+    E0B --> E1
+    E0C --> E1
+    
+    E1 --> E1A{Nombre + Fechas}
+    E1A --> E1B{Añadir Participantes}
+    E1B -->|T104| E1C[Enviar Invitaciones]
+    E1C --> E2[ETAPA 2: Planificación]
+    
+    E2 --> E2A[Añadir Eventos]
+    E2A --> E2B[Añadir Alojamientos]
+    E2B --> E3{ETAPA 3: Organización}
+    
+    E3 --> E3A[Presupuesto - T101]
+    E3 --> E3B[Pagos - T102]
+    E3 --> E3C[Listas - T111]
+    E3 --> E3D[Alarmas - T110]
+    
+    E3A --> E4{ETAPA 4: Validación}
+    E3B --> E4
+    E3C --> E4
+    E3D --> E4
+    
+    E4 --> E4A[Verificar Coherencia]
+    E4 --> E4B[Estadísticas - T113]
+    E4 --> E4C[Mapa - T114]
+    
+    E4A --> E5{ETAPA 5: Compartir}
+    E4B --> E5
+    E4C --> E5
+    
+    E5 --> E5A[Invitaciones - T104]
+    E5 --> E5B[Notificaciones - T105]
+    E5 --> E5C[Fotos - T115]
+    
+    E5A --> E6{ETAPA 6: Ejecución}
+    E5B --> E6
+    E5C --> E6
+    
+    E6 --> E6A{Estado: En Curso}
+    E6A --> E6B[Seguimiento Tiempo Real]
+    E6B --> E6C[Tracking Eventos]
+    
+    E6C --> E7{ETAPA 7: Post-Ejecución}
+    E7 --> E7A[Estado: Finalizado]
+    E7A --> E7B[Cierre + Evaluación]
+    E7B --> E7C[Exportar PDF]
+    E7C --> End([Plan Archivado])
+    
+    style E0 fill:#e1f5ff
+    style E1 fill:#fff4e1
+    style E2 fill:#ffe1f5
+    style E3 fill:#e1ffe1
+    style E4 fill:#ffe1e1
+    style E5 fill:#f5e1ff
+    style E6 fill:#ffffe1
+    style E7 fill:#e1ffff
+```
+
+**Nota:** Este diagrama muestra el flujo IDEAL. Algunas etapas aún no están implementadas (ver detalles en cada ETAPA).
+
+### 📊 RESUMEN EJECUTIVO
+
+**Estado por Etapa:**
+
+| Etapa | Estado | Completo | Pendiente | Crítico |
+|-------|--------|----------|-----------|---------|
+| **ETAPA 0** - Pre-creación | ⚠️ Parcial | Copiar plan (T118) | Plantillas | ⚠️ |
+| **ETAPA 1** - Configuración | ✅ Básico | Info básica, Participantes | Estados (T109), Etiquetas | - |
+| **ETAPA 2** - Planificación | ⚠️ Básico | Eventos/Alojamientos básicos | **Formularios (T121)** | 🔴 |
+| **ETAPA 3** - Organización | ❌ No | - | Presupuesto (T101), Pagos (T102) | 🔴 |
+| **ETAPA 4** - Validación | ❌ No | - | Validación, Mapa (T114), Stats (T113) | ⚠️ |
+| **ETAPA 5** - Colaboración | ❌ No | - | Invitaciones (T104), Notificaciones (T105) | 🔴 |
+| **ETAPA 6** - Ejecución | ⚠️ Parcial | Editar eventos | Estado "En curso", Tracking | ⚠️ |
+| **ETAPA 7** - Post-ejecución | ❌ No | - | Cierre, Evaluación, Fotos (T115) | - |
+
+**Prioridad de trabajo:**
+1. 🔴 **CRÍTICO:** T121 (Formularios), T101 (Presupuesto), T109 (Estados)
+2. 🟡 **ALTA:** T104 (Invitaciones), T105 (Notificaciones), T102 (Pagos)
+3. 🟢 **MEDIA:** T111 (Listas), T110 (Alarmas), T114 (Mapa)
+4. ⚪ **BAJA:** T113 (Stats), T115 (Fotos), T122 (Plantillas)
+
+---
+
+## 📋 ETAPAS DEL FLUJO
 
 ### ETAPA 0: Pre-creación - Decisión y Concepción
 **Estado actual:** ⚠️ Parcialmente implementado
@@ -504,6 +631,215 @@ Definir el flujo completo e ideal para crear un plan desde cero hasta que esté 
 8. ✅ Presupuesto cambiado significativamente
 9. ✅ Alarma de recordatorio (T110)
 10. ✅ Nuevo aviso del organizador
+
+---
+
+## 🎭 IMPACTO DE CAMBIOS EN PARTICIPANTES
+
+> Análisis completo de qué pasa cuando modificamos datos del plan y cómo afecta a participantes
+
+### 🔴 OBJETIVO
+Cada cambio en un plan puede tener **repercusión directa** en los participantes. Hay que prever, notificar y gestionar cada escenario.
+
+---
+
+### TIPOS DE CAMBIOS Y SU IMPACTO
+
+#### 1. CAMBIAR FECHAS/HORA DE UN EVENTO
+
+**Escenarios:**
+- ✅ **Cambio leve (<1h):** Notificar, actualizar alarmas (T110), participantes siguen confirmados
+- ⚠️ **Cambio significativo (1-4h):** Notificar urgente, pedir reconfirmación opcional, actualizar alarmas
+- 🔴 **Cambio drástico (>4h o cambio de día):** Notificar urgente, PEDIR RECONFIRMACIÓN OBLIGATORIA, posibles conflictos con otros eventos
+- ❌ **Cambio a día pasado:** Cancelar evento, marcar como "no realizado", recalcular presupuesto (T101)
+
+**Acciones:**
+1. Detectar conflicto con otros eventos del participante
+2. Actualizar alarmas (T110)
+3. Notificar a participantes afectados
+4. Opcional: Solicitar reconfirmación según magnitud del cambio
+5. Actualizar calendario en tiempo real
+
+#### 2. CAMBIAR UBICACIÓN DE UN EVENTO
+
+**Escenarios:**
+- ✅ **Cambio leve (mismo sitio, distinta sala):** Notificar, actualizar mapa (T114)
+- ⚠️ **Cambio significativo (nuevo sitio cercano):** Notificar, actualizar mapa, verificar accesibilidad, tiempo de traslado
+- 🔴 **Cambio drástico (nuevo sitio lejano):** Notificar urgente, RECALCULAR ruta (T114), verificar tiempo de traslado, alertar si <2h de diferencia
+- ❌ **Cambio a otro país/ciudad:** PEDIR RECONFIRMACIÓN, recalcular presupuesto (T101), posible cancelación
+
+**Acciones:**
+1. Actualizar ubicación en mapa (T114)
+2. Calcular tiempo de traslado desde evento anterior
+3. Detectar si rompe cadena de eventos siguientes
+4. Notificar a participantes
+5. Si cambio drástico: Solicitar reconfirmación
+
+#### 3. AÑADIR/ELIMINAR PARTICIPANTES DE UN EVENTO
+
+**Escenarios:**
+- ✅ **Añadir participante:** Asignar a track, notificar al añadido, notificar a otros si es evento privado
+- ✅ **Eliminar participante:** Desasignar de track, notificar al eliminado, recalculcar coste si aplica (T101)
+- 🔴 **Eliminar participante de evento con coste pagado:** Calcular reembolso (T102), notificar, actualizar presupuesto
+
+**Impacto en participantes:**
+- **Se desapunta:** Ya no tiene acceso al evento, notificar, recalcular presupuesto si pagó
+- **Otros se pueden apuntar:** Si hay límite de plazas (ej: restaurante 10 personas), ahora hay 1 plaza libre
+
+**Acciones:**
+1. Actualizar tracks de participantes
+2. Recalcular presupuesto si hay coste por persona (T101)
+3. Notificar a todos los afectados
+4. Si evento con límite: Notificar que hay plaza disponible
+5. Actualizar calendario en tiempo real
+
+#### 4. MODIFICAR PRESUPUESTO DEL PLAN
+
+**Escenarios:**
+- ✅ **Aumento pequeño (<10%):** Notificar, recalcular presupuesto por participante (T101)
+- ⚠️ **Aumento significativo (10-50%):** Notificar urgente, RECALCULAR presupuesto, posible desapuntarse de participantes
+- 🔴 **Aumento drástico (>50%):** Notificar crítico, PEDIR RECONFIRMACIÓN, calcular nuevo "quién debe pagar" (T102)
+- ❌ **Reducción significativa:** Notificar, ajustar eventos posibles, calcular reembolsos (T102)
+
+**Impacto:**
+- **Posibles desapuntarse:** Participantes con presupuesto limitado
+- **Cambios en distribución de pagos:** T102 necesita recalcular
+- **Cancelaciones:** Si presupuesto supera capacidad de algunos participantes
+
+**Acciones:**
+1. Recalcular presupuesto total del plan (T101)
+2. Recalcular presupuesto por participante
+3. Recalcular "quién debe pagar/cobrar" (T102)
+4. Notificar cambios significativos
+5. Opcional: Solicitar confirmación de asistencia si cambio >20%
+
+#### 5. ELIMINAR/CANCELAR EVENTO
+
+**Escenarios:**
+- ✅ **Eliminar evento futuro lejano (>7 días):** Eliminar, notificar, recalcular presupuesto (T101), posible reembolso (T102)
+- ⚠️ **Eliminar evento cercano (1-7 días):** Eliminar, notificar urgente, calcular reembolsos completos (T102), actualizar plan
+- 🔴 **Eliminar evento muy cercano (<24h):** Eliminar, notificar crítico, reembolsar inmediatamente (T102), posible reemplazo urgente
+- ❌ **Eliminar evento en curso:** No permitir, solo cancelar, notificar, marcar como "no realizado"
+
+**Impacto:**
+- **Participantes ya no se apuntan a nada:** Quedan sin ese evento
+- **Otros eventos afectados:** Si el evento era "puente" (ej: taxis aeropuerto), eventos siguientes pueden quedar descolgados
+- **Dinero pendiente:** Calcular reembolsos (T102)
+- **Bloqueo temporal:** Si evento cancelado causa que no haya transporte entre puntos
+
+**Acciones:**
+1. Eliminar de calendario
+2. Recalcular presupuesto (T101)
+3. Calcular reembolsos si pagado (T102)
+4. Detectar eventos dependientes (siguientes en la cadena)
+5. Notificar urgente a participantes
+6. Actualizar estadísticas del plan (T113)
+
+#### 6. CAMBIAR ESTADO DE PLAN
+
+**Escenarios:**
+
+**Planificando → Confirmado:**
+- 🔒 Bloquear cambios importantes (fechas principales, número participantes principal)
+- ⚠️ Permitir ajustes menores (cambio de hora, ubicación dentro del mismo día)
+- ✅ Todos pueden ver plan
+- ✅ Participantes pueden ajustar su parte personal
+
+**Confirmado → En Curso:**
+- 🔒 Bloquear cambios en estructura (fechas inicio/fin, añadir/eliminar participantes)
+- ⚠️ Permitir cambios urgentes (cambiar hora evento <24h, cancelar evento)
+- ✅ Cambiar UI a "modo ejecución"
+- ✅ Mostrar "día actual" en calendario
+- ✅ Activar seguimiento tiempo real
+
+**En Curso → Finalizado:**
+- ❌ BLOQUEAR TODOS LOS CAMBIOS
+- ✅ Archivar plan
+- ✅ Bloquear edición de eventos
+- ✅ Permitir solo añadir fotos y notas
+- ✅ Calcular pagos finales (T102)
+- ✅ Generar resumen final (T113)
+
+**Planificando → Cancelado:**
+- ❌ Cancelar todo
+- ✅ Notificar a todos los participantes
+- ✅ Calcular reembolsos (T102)
+- ✅ Archivar histórico
+
+**Impacto:**
+- Cada cambio de estado NOTIFICA a todos los participantes
+- Cambios de permisos inmediatos
+- Bloqueos progresivos según estado
+
+---
+
+### 🎯 MATRIZ DE IMPACTO POR TIPO DE CAMBIO
+
+| Tipo de Cambio | Impacto en Participantes | Urgencia | Reconocimiento Requerido | Reembolso |
+|----------------|-------------------------|----------|--------------------------|-----------|
+| **Hora evento (<1h)** | Menor | Normal | No | No |
+| **Hora evento (1-4h)** | Medio | Alta | Opcional | No |
+| **Hora evento (>4h)** | Alto | Crítica | ✅ Sí | No |
+| **Cambio día evento** | Muy alto | Crítica | ✅ Sí | Si pagado |
+| **Ubicación misma ciudad** | Menor | Normal | No | No |
+| **Ubicación cercana** | Medio | Alta | Opcional | No |
+| **Ubicación lejana** | Alto | Crítica | ✅ Sí | No |
+| **Añadir participante** | Menor | Normal | No | No |
+| **Eliminar participante** | Medio | Alta | No | Si pagó |
+| **Aumento presupuesto <10%** | Menor | Normal | No | No |
+| **Aumento presupuesto 10-50%** | Medio | Alta | ✅ Sí | No |
+| **Aumento presupuesto >50%** | Alto | Crítica | ✅ Sí | No |
+| **Eliminar evento (>7 días)** | Menor | Normal | No | Si pagado |
+| **Eliminar evento (1-7 días)** | Alto | Crítica | No | ✅ Sí |
+| **Eliminar evento (<24h)** | Muy alto | Urgente | No | ✅ Sí |
+| **Cancelar plan** | Crítico | Urgente | No | ✅ Sí |
+
+---
+
+### 🚨 ACCIONES CRÍTICAS
+
+**Cuando NUNCA permitir sin confirmación:**
+1. ❌ Eliminar evento <24h antes
+2. ❌ Cambiar hora >4h de diferencia
+3. ❌ Cambiar a otra ciudad/país
+4. ❌ Aumentar presupuesto >50%
+5. ❌ Eliminar plan durante ejecución
+6. ❌ Eliminar participante si tiene eventos pagados sin reembolsar
+7. ❌ Cambiar estado a "Finalizado" si hay eventos futuros
+
+**Cuando SIEMPRE calcular reembolsos:**
+1. 💰 Eliminar evento pagado
+2. 💰 Cancelar plan con eventos pagados
+3. 💰 Eliminar participante con eventos pagados
+4. 💰 Reducir presupuesto significativamente
+
+**Cuando SIEMPRE notificar urgente:**
+1. 🔔 Eliminar evento <7 días
+2. 🔔 Cambiar hora >1h
+3. 🔔 Cambiar ubicación significativamente
+4. 🔔 Aumentar presupuesto >10%
+5. 🔔 Añadir/eliminar participante
+6. 🔔 Cancelar plan
+7. 🔔 Cambiar estado de plan
+
+---
+
+### 📊 SISTEMA DE RECONFIRMACIÓN
+
+**Necesita reconfirmación cuando:**
+- Cambio de hora >4h
+- Cambio de día del evento
+- Cambio a ubicación lejana (>5km)
+- Aumento de presupuesto >20%
+- Cambio de país/ciudad
+
+**Flujo de reconfirmación:**
+1. Detectar cambio que requiere reconfirmación
+2. Bloquear evento hasta reconfirmación
+3. Notificar a participantes
+4. Mostrar UI de "confirmar asistencia" (T120)
+5. Esperar confirmación de >80% participantes
+6. Desbloquear evento automáticamente
 
 ---
 
