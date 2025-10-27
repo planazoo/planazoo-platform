@@ -48,6 +48,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - **Offline-First:** Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
 - **Seguridad:** Consultar `docs/GUIA_SEGURIDAD.md` antes de implementar funcionalidades. Verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
 - **Flujos de Proceso:** Consular flujos en `docs/flujos/` antes de tomar decisiones o implementar funcionalidades:
+  - `FLUJO_CRUD_PLANES.md` - 🆕 Ciclo de vida completo CRUD de planes
   - `FLUJO_ESTADOS_PLAN.md` - Estados y transiciones
   - `FLUJO_GESTION_PARTICIPANTES.md` - Invitaciones y gestión de participantes
   - `FLUJO_CRUD_EVENTOS.md` - Ciclo de vida completo de eventos

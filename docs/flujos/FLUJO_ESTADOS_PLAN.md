@@ -1,8 +1,9 @@
-# 📊 Flujo de Estados del Plan
+# 🔄 Flujo de Transiciones de Estado del Plan
 
 > Define cómo un plan transiciona entre estados y qué implica cada cambio de estado
 
 **Relacionado con:** T109 - Estados del Plan  
+**Completa CRUD de planes:** `FLUJO_CRUD_PLANES.md`  
 **Versión:** 1.0  
 **Fecha:** Enero 2025
 
@@ -10,7 +11,9 @@
 
 ## 🎯 Objetivo
 
-Documentar todos los estados posibles de un plan, las transiciones entre estados, y qué cambios de permisos/bloqueos conlleva cada transición.
+Documentar **solo las transiciones entre estados** de un plan, qué permisos/bloqueos conlleva cada cambio de estado, y qué validaciones son necesarias para cada transición.
+
+**Para el ciclo completo CRUD (crear, leer, actualizar, eliminar):** Ver `FLUJO_CRUD_PLANES.md`
 
 ---
 
