@@ -39,13 +39,20 @@ Formulario de registro:
 - Password (requerido, mínimo 8 caracteres)
 - Nombre completo (requerido)
 - Username (opcional, único si se proporciona)
-- Aceptar términos y condiciones
+- Aceptar términos y condiciones [checkbox obligatorio]
 - Verificar "No soy un robot" (CAPTCHA)
   ↓
 Validaciones:
 - Email no registrado previamente
 - Password cumple requisitos
 - Username disponible (si se proporciona)
+- Términos aceptados
+- CAPTCHA verificado
+  ↓
+Registrar aceptación de términos:
+- Guardar timestamp de aceptación
+- Guardar versión de términos aceptada
+- Generar hash de identificación
   ↓
 Crear cuenta en Firebase Auth
   ↓
@@ -78,12 +85,26 @@ class UserModel {
   final String? displayName;
   final String? username;
   final String? photoURL;
+  final String? bio; // Biografía de perfil
   final DateTime createdAt;
   final DateTime lastLogin;
   final DateTime? lastActiveAt;
   final bool isActive;
+  final bool emailVerified; // Estado de verificación de email
+  final String status; // "active", "suspended", "deleted", "inactive"
   final String role; // "user", "admin"
   final Map<String, dynamic>? preferences;
+  final Map<String, dynamic>? termsAcceptance; // Aceptación de términos
+}
+```
+
+**Modelo de Aceptación de Términos:**
+```dart
+class TermsAcceptance {
+  final DateTime acceptedAt;
+  final String version; // Versión de términos aceptada
+  final String hash; // Hash para identificación
+  final bool current; // Si es la versión actual
 }
 ```
 
@@ -189,7 +210,36 @@ Actualizar lastLogin
 Redirigir a Dashboard
 ```
 
-#### 2.3 - Recuperación de Contraseña
+#### 2.3 - Verificación de Email
+
+**Flujo:**
+```
+Usuario se registra con email
+  ↓
+Email de verificación enviado
+  ↓
+¿Email verificado?
+  ↓
+NO verificó: Mostrar aviso en perfil
+"Verifica tu email para acceder a todas las funcionalidades"
+  ↓
+Usuario solicita reenvío
+  ↓
+Enviar nuevo email de verificación
+  ↓
+Usuario hace clic en link
+  ↓
+Email verificado ✅
+  ↓
+Acceso completo a funcionalidades
+```
+
+**Consideraciones:**
+- Cuentas sin verificar tienen limitaciones (no pueden invitar a otros, crear planes públicos, etc.)
+- Enviar recordatorios automáticos si no verifica en 3 días
+- Permitir reenvío de email de verificación
+
+#### 2.4 - Recuperación de Contraseña
 
 **Flujo:**
 ```
@@ -214,6 +264,38 @@ Actualizar contraseña
 Redirigir a login
 ```
 
+#### 2.5 - Cerrar Sesión
+
+**Flujo:**
+```
+Usuario → Perfil → "Cerrar sesión"
+  ↓
+¿Cerrar en todos los dispositivos? [Checkbox opcional]
+  ↓
+Confirmar cerrar sesión
+  ↓
+Sistema:
+- Cerrar sesión en Firebase Auth
+- Redirigir a login
+- Limpiar datos locales (cache, preferencias temporales)
+```
+
+**Gestión de Sesiones Múltiples:**
+```
+Usuario → Configuración → "Sesiones activas"
+  ↓
+Listar dispositivos activos:
+- Dispositivo actual: "Ahora"
+- Móvil Android - Último acceso: hace 2 horas
+- Chrome Desktop - Último acceso: hace 1 día
+  ↓
+Opciones por sesión:
+- Ver detalles
+- Cerrar sesión en este dispositivo
+  ↓
+Cerrar todas las demás sesiones
+```
+
 ---
 
 ### 3. GESTIÓN DE PERFIL
@@ -225,32 +307,52 @@ Redirigir a login
 Usuario → Perfil → "Editar"
   ↓
 Formulario editable:
-- Foto de perfil
+- Foto de perfil (subir/cambiar/eliminar)
 - Nombre completo
 - Username
 - Email (no editable, solo visible)
-- Biografía (opcional)
+- Biografía (máximo 500 caracteres)
   ↓
 Guardar cambios
   ↓
 Validaciones:
 - Nombre no vacío
 - Username único (si cambió)
-- Foto dentro de límite de tamaño
+- Foto dentro de límite de tamaño (máx 2MB)
+- Biografía máximo 500 caracteres
   ↓
 Actualizar en Firestore
   ↓
 Actualizar en Firebase Auth (displayName, photoURL)
   ↓
+Actualizar foto en Firebase Storage (si cambió foto)
+  ↓
 Mostrar confirmación
 ```
 
 **Campos editables:**
-- `displayName` - Nombre completo
-- `username` - Identificador único
-- `photoURL` - URL de foto de perfil
-- `bio` - Biografía/descripción
+- `displayName` - Nombre completo (requerido)
+- `username` - Identificador único (requerido)
+- `photoURL` - URL de foto de perfil (opcional, máx 2MB)
+- `bio` - Biografía/descripción (opcional, máx 500 caracteres)
 - `preferences` - Configuración personal
+
+**Gestión de Foto de Perfil:**
+```
+Usuario → Perfil → Foto de perfil
+  ↓
+Opciones:
+- "Subir foto" → Seleccionar desde galería o cámara
+- "Editar foto" → Recortar/reemplazar
+- "Eliminar foto" → Eliminar foto actual
+- "Usar foto de Google" → Si tiene Google Sign-In
+  ↓
+Si sube nueva foto:
+- Subir a Firebase Storage
+- Generar thumbnail optimizado
+- Actualizar photoURL en Firestore
+- Limpiar foto antigua de storage
+```
 
 #### 3.2 - Cambiar Contraseña
 
@@ -419,7 +521,68 @@ Redirigir a landing page
 - Marcar como "deleted" en lugar de eliminar
 - Permitir recuperación dentro de 30 días
 
-#### 5.2 - Eliminar Usuario (Admin)
+#### 5.2 - Suspender Cuenta (Admin)
+
+**Flujo:**
+```
+Admin → Dashboard → Usuarios → Seleccionar usuario
+  ↓
+Ver perfil y estadísticas del usuario
+  ↓
+"Suspender usuario" / "Eliminar usuario"
+  ↓
+Modal de decisión:
+"¿Qué acción quieres realizar?
+
+[Suspender] - Usuario temporalmente desactivado
+- No puede hacer login
+- Sus planes se mantienen
+- Puede reactivarse
+- Razón obligatoria
+
+[Eliminar] - Eliminación permanente
+- No se puede deshacer
+- Datos eliminados en 30 días
+- Generar reporte
+- Notificar al usuario"
+  ↓
+Suspender:
+- Marcar como "suspended"
+- Desactivar login
+- Notificar usuario por email
+- Permitir apelación
+
+Eliminar:
+- Marcar como "eliminado por admin"
+- Desactivar cuenta
+- Generar reporte de eliminación
+- Notificar usuario por email
+```
+
+#### 5.3 - Auto-suspensión por Inactividad
+
+**Flujo:**
+```
+Sistema detecta cuenta inactiva >6 meses
+  ↓
+Enviar email de recordatorio:
+"Hace más de 6 meses que no has accedido a Planazoo.
+
+Por seguridad, tu cuenta será desactivada en 30 días
+si no inicias sesión.
+
+[Acceder ahora] / [Activar auto-suspensión]"
+  ↓
+Si usuario accede: Mantener cuenta activa
+  ↓
+Si usuario NO accede en 30 días:
+- Marcar cuenta como "inactiva"
+- Ocultar planes del usuario
+- Mantener datos por 1 año
+- Permitir reactivación con verificación de email
+```
+
+#### 5.4 - Eliminar Usuario (Admin - version extendida)
 
 **Flujo:**
 ```
@@ -533,14 +696,21 @@ graph TD
 **Lo que falta (CRÍTICO):**
 - ❌ Registro con Google
 - ❌ Recuperación de contraseña
+- ❌ Verificación de email y limitaciones sin verificar
 - ❌ Cambio de contraseña en perfil
 - ❌ Cambio de email
 - ❌ Configuración de notificaciones
 - ❌ Configuración de privacidad
+- ❌ Cerrar sesión (logout)
+- ❌ Gestión de sesiones múltiples
 - ❌ Eliminación de cuenta
+- ❌ Suspensión de cuenta (admin y auto)
 - ❌ Gestión de roles (admin)
 - ❌ Sistema de preferencias completo
-- ❌ Foto de perfil
+- ❌ Foto de perfil (subir, editar, eliminar)
+- ❌ Biografía de perfil
+- ❌ Aceptación de términos y condiciones
+- ❌ Reenvío de email de verificación
 
 ---
 
