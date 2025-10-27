@@ -4,6 +4,7 @@
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
 - `docs/CONTEXT.md` - Normas específicas del proyecto (Plan Frankenstein, Firestore, tests manuales)
+- `docs/GUIA_UI.md` - Sistema de diseño, componentes y patrones de UI
 - `docs/GESTION_TIMEZONES.md` - Sistema de gestión de timezones
 - `docs/FLUJO_CREACION_PLAN.md` - Índice de flujos de procesos
 
@@ -26,6 +27,7 @@
 - **Multi-idioma**: Usar archivos `.arb` en `lib/l10n/` para strings traducibles. No hardcodear textos en UI.
 - **Multi-plataforma**: Verificar compatibilidad Web/iOS/Android antes de usar plugins o APIs. Priorizar soluciones cross-platform.
 - **Offline-First**: Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
+- **⚠️ CONSISTENCIA DE UI**: Siempre consultar `docs/GUIA_UI.md` antes de crear componentes visuales. Usar `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons`. NO crear componentes sin seguir el sistema de diseño. Documentar componentes nuevos en la guía.
 - **Actualización de tareas**: Pedir confirmación antes de actualizar tareas. Usar sistema `TASKS.md` para tracking de progreso y completar tareas. Seguir reglas del documento TASKS.md (numeración, prioridades, estados). Actualizar al completar, crear nuevas tareas o cambiar estado.
 - **Actualización GIT**: Pedir confirmación antes de hacer commits. Hacer commit de cambios al finalizar fases importantes. Repositorio: C:\Users\cclaraso\unp_calendario
 - **Ruta Flutter**: Flutter instalado en: C:\Users\cclaraso\Downloads\flutter
