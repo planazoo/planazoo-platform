@@ -42,9 +42,11 @@
 ## 📋 Flujo de Trabajo
 
 - **Análisis primero**: Entender el problema antes de implementar
+- **Referencia a flujos**: Consultar flujos en `docs/flujos/` y `docs/FLUJO_CREACION_PLAN.md` antes de implementar
 - **Implementación incremental**: Cambios pequeños y validables
 - **Verificación**: Confirmar que los cambios funcionan como esperado
 - **Documentación**: Actualizar docs cuando sea necesario
+- **Actualizar flujos**: Al implementar funcionalidades nuevas: revisar y actualizar flujos en `docs/flujos/` si procede
 
 ## 📋 Uso del Prompt Base
 
@@ -54,6 +56,6 @@
 
 ---
 
-**Última actualización**: Diciembre 2024  
-**Versión**: 1.0  
+**Última actualización**: Enero 2025  
+**Versión**: 1.1  
 **Autor**: UNP Calendario Team

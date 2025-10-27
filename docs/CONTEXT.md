@@ -2,8 +2,10 @@
 
 Este documento fija criterios estables para trabajar juntos sin olvidar pasos clave, manteniendo consistencia entre código, documentación y comunicación.
 
-**📋 DOCUMENTO COMPLEMENTARIO:**
+**📋 DOCUMENTOS COMPLEMENTARIOS:**
 - `PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
+- `docs/FLUJO_CREACION_PLAN.md` - Índice y visión general del sistema de planes
+- `docs/flujos/` - Flujos específicos de procesos (estados, participantes, eventos, etc.)
 
 ---
 
@@ -40,6 +42,14 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - Actualizar `docs/CALENDAR_CAPABILITIES.md` cuando cambie el comportamiento del calendario.
 - Añadir notas breves en `ARCHITECTURE_DECISIONS.md` para decisiones relevantes (p. ej., persistencia).
 - Mantener `CONTEXT.md` como referencia viva de normas.
+- **Flujos de Proceso:** Consular flujos en `docs/flujos/` antes de tomar decisiones o implementar funcionalidades:
+  - `FLUJO_ESTADOS_PLAN.md` - Estados y transiciones
+  - `FLUJO_GESTION_PARTICIPANTES.md` - Invitaciones y gestión de participantes
+  - `FLUJO_MODIFICAR_EVENTOS.md` - CRUD de eventos
+  - `FLUJO_PRESUPUESTO_PAGOS.md` - Sistema financiero
+  - `FLUJO_INVITACIONES_NOTIFICACIONES.md` - Comunicación
+  - `FLUJO_VALIDACION.md` - Validación y verificación
+- Al implementar una funcionalidad completa: revisar si debe actualizarse el flujo correspondiente en `docs/flujos/`.
 
 ### 7) Plan Frankenstein (revisión tras cambios)
 - Tras aprobar cambios funcionales, evaluar si deben incorporarse al Plan Frankenstein.
