@@ -46,6 +46,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - **Multi-idioma:** Todas las strings de la UI deben ser traducibles. Usar archivos `.arb` en `lib/l10n/`. No hardcodear textos.
 - **Multi-plataforma:** App soporta Web + iOS + Android. Verificar compatibilidad de plugins/APIs en las 3 plataformas antes de usar. Priorizar soluciones cross-platform.
 - **Offline-First:** Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
+- **Seguridad:** Consultar `docs/flujos/FLUJO_SEGURIDAD.md` antes de implementar funcionalidades. Verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
 - **Flujos de Proceso:** Consular flujos en `docs/flujos/` antes de tomar decisiones o implementar funcionalidades:
   - `FLUJO_ESTADOS_PLAN.md` - Estados y transiciones
   - `FLUJO_GESTION_PARTICIPANTES.md` - Invitaciones y gestión de participantes

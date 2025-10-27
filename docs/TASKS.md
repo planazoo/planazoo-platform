@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T126**
+**Siguiente código de tarea: T130**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -18,7 +18,7 @@
 - **Testing y Mantenimiento:** T96-T99: Refactoring, testing y documentación (4 pendientes)
 - **UX:** T100: Visualización de Timezones (1 pendiente)
 
-**Total: 99 tareas documentadas (57 completadas, 42 pendientes)**
+**Total: 103 tareas documentadas (57 completadas, 46 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -2299,6 +2299,154 @@ class PlatformStats {
 - Actualización diaria vs tiempo real
 - Protección de datos: no exponer información sensible de usuarios
 - Integrar con sistema de alertas para administradores
+
+---
+
+### T125 - Completar Firestore Security Rules
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🔴 Alta  
+**Descripción:** Completar y refinar las reglas de seguridad de Firestore para proteger todos los datos sensibles.
+
+**Funcionalidades:**
+1. Reglas para planes (crear, leer, actualizar, eliminar)
+2. Reglas para eventos dentro de planes
+3. Reglas para participantes y participaciones
+4. Reglas para datos de pagos y presupuesto (T101, T102)
+5. Reglas para preferencias de usuario
+6. Reglas para avisos y notificaciones (T105)
+7. Reglas para grupos de contactos (T123)
+
+**Criterios de aceptación:**
+- Todas las operaciones protegidas por reglas
+- Solo usuarios autenticados pueden hacer operaciones
+- Permisos verificados en servidor (Firestore)
+- Testing de reglas con casos límite
+- Documentar reglas críticas
+
+**Archivos a modificar:**
+- `firestore.rules`
+- Testing de reglas de seguridad
+
+**Relacionado con:** T51, T52, T53, docs/flujos/FLUJO_SEGURIDAD.md
+
+---
+
+### T126 - Rate Limiting y Protección contra Ataques
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Implementar rate limiting para prevenir ataques DoS y uso malicioso de la plataforma.
+
+**Funcionalidades:**
+1. Rate limiting en login (máx 5 intentos en 15 min)
+2. Rate limiting en creación de planes (máx 50 por usuario)
+3. Rate limiting en creación de eventos (máx 200 por plan)
+4. CAPTCHA después de 3 intentos fallidos de login
+5. Detección de patrones sospechosos
+6. Bloqueo temporal de cuentas
+
+**Criterios de aceptación:**
+- Rate limiting funcionando en login
+- Rate limiting funcionando en creación de contenido
+- CAPTCHA apareciendo después de intentos fallidos
+- Alertas automáticas para admins en casos sospechosos
+- Testing de límites
+
+**Archivos a crear:**
+- `lib/features/security/services/rate_limiter.dart`
+- `lib/features/security/services/security_monitor.dart`
+
+**Relacionado con:** T51, docs/flujos/FLUJO_SEGURIDAD.md
+
+---
+
+### T127 - Sanitización y Validación de User Input
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🔴 Alta  
+**Descripción:** Sanitizar y validar todo el input del usuario para prevenir XSS, SQL injection y otros ataques.
+
+**Funcionalidades:**
+1. Sanitizar HTML en avisos del plan (T105)
+2. Sanitizar biografías de perfil
+3. Validar y sanitizar nombres de planes y eventos
+4. Validar URLs si se permiten en avisos
+5. Escapar HTML en todos los display
+6. Validar formato de emails
+
+**Criterios de aceptación:**
+- HTML sanitizado antes de guardar
+- HTML escapado al mostrar
+- Validación de inputs en todos los formularios
+- Testing de inputs maliciosos
+- No permitir JavaScript en user input
+
+**Archivos a crear:**
+- `lib/features/security/utils/sanitizer.dart`
+- `lib/features/security/utils/validator.dart`
+
+**Relacionado con:** T51, T105, docs/flujos/FLUJO_SEGURIDAD.md
+
+---
+
+### T128 - Logging Seguro y Auditoría
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja-Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Implementar logging seguro sin datos sensibles y sistema de auditoría para acciones críticas.
+
+**Funcionalidades:**
+1. Logger que evita datos sensibles (emails, passwords, tokens completos)
+2. Logging de acciones críticas (crear plan, eliminar plan, cambiar permisos)
+3. Auditoría de cambios en datos financieros (T101, T102)
+4. Auditoría de cambios de roles (T49)
+5. Historial de cambios en planes (eliminación de eventos, etc.)
+6. Timestamp y usuario de cada acción crítica
+
+**Criterios de aceptación:**
+- Logger que NO expone datos sensibles
+- Logging de acciones críticas funcional
+- Auditoría visible para admins
+- Testing de logging sin datos sensibles
+
+**Archivos a crear:**
+- `lib/features/security/services/audit_log_service.dart`
+- Actualizar `lib/shared/services/logger_service.dart`
+
+**Relacionado con:** T109, T124, docs/flujos/FLUJO_SEGURIDAD.md
+
+---
+
+### T129 - Export de Datos Personales (GDPR)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟢 Baja  
+**Descripción:** Permitir a usuarios exportar todos sus datos personales (GDPR compliance).
+
+**Funcionalidades:**
+1. Botón "Exportar mis datos" en configuración
+2. Generar archivo JSON/ZIP con todos los datos del usuario:
+   - Perfil completo
+   - Todos sus planes (como organizador)
+   - Todas sus participaciones
+   - Todos sus eventos creados
+   - Preferencias de configuración
+   - Historial de acciones (si implementado)
+3. Descargar archivo o enviar por email
+4. Formato legible y estructurado
+
+**Criterios de aceptación:**
+- Export completo de datos personales
+- Formato JSON estructurado
+- Descarga funcionando
+- Testing con usuario completo
+
+**Archivos a crear:**
+- `lib/features/security/services/data_export_service.dart`
+- UI para solicitar export
+
+**Relacionado con:** T50, docs/flujos/FLUJO_SEGURIDAD.md, GDPR compliance
 
 ---
 
