@@ -480,7 +480,122 @@ No se puede eliminar.
 
 ---
 
-### 4. HISTORIAL DE CAMBIOS
+### 4. IMPORTACIÓN Y CONEXIÓN CON PROVEEDORES
+
+#### 4.1 - Importar desde JSON Propietario
+
+**Formato JSON de importación:**
+```json
+{
+  "formatVersion": "1.0",
+  "planId": "optional_if_linking_to_existing",
+  "events": [
+    {
+      "title": "Vuelo Madrid → Sydney",
+      "type": "Desplazamiento",
+      "subtype": "Avión",
+      "date": "2025-10-22",
+      "startTime": "20:00",
+      "duration": 840,
+      "timezone": "Europe/Madrid",
+      "arrivalTimezone": "Australia/Sydney",
+      "location": {
+        "name": "Aeropuerto Adolfo Suárez Madrid-Barajas",
+        "address": "28042 Madrid, Spain",
+        "coordinates": { "lat": 40.4839, "lng": -3.5679 }
+      },
+      "arrivalLocation": {
+        "name": "Aeropuerto Sydney",
+        "address": "Sydney NSW 2020, Australia",
+        "coordinates": { "lat": -33.9399, "lng": 151.1753 }
+      },
+      "participants": ["user1", "user2"],
+      "cost": 300.00,
+      "costPerPerson": true
+    }
+  ]
+}
+```
+
+**Flujo de importación:**
+```
+Usuario → Plan → "Importar eventos"
+  ↓
+Seleccionar archivo JSON
+  ↓
+Validar formato y versión
+  ↓
+Preview: "Se importarán [N] eventos"
+  ↓
+Validar cada evento:
+- Fecha en rango del plan
+- Participantes existen
+- Sin solapamientos
+  ↓
+Mostrar errores: "⚠️ [M] eventos con errores"
+  ↓
+Importar eventos válidos
+  ↓
+Mostrar resumen: "✅ [N] importados"
+```
+
+#### 4.2 - Conectar con Proveedor vía API
+
+**Concepto:** Proveedores externos (aerolíneas, hoteles, restaurantes) actualizan eventos automáticamente.
+
+**Flujo de conexión:**
+```
+Usuario → Evento → "Conectar con proveedor"
+  ↓
+Buscar proveedor: "Iberia", "Hilton", etc.
+  ↓
+Autorizar conexión
+  ↓
+Guardar API configuration
+  ↓
+Evento actualizado automáticamente
+  ↓
+Badge: "Actualizado por Iberia"
+```
+
+**API del proveedor:**
+```dart
+// GET /api/v1/event-updates/{eventId}
+{
+  "eventId": "abc123",
+  "updatedAt": "2025-01-15T10:30:00Z",
+  "changes": {
+    "departureTime": "20:30",
+    "gate": "A5"
+  },
+  "metadata": {
+    "provider": "Iberia",
+    "reservationNumber": "IBE123"
+  }
+}
+```
+
+**Consideraciones de seguridad:**
+- API Key segura por proveedor
+- Rate limiting
+- Validar origen de actualizaciones
+- Logging de actualizaciones automáticas
+
+#### 4.3 - Export de Eventos (para generar JSONs)
+
+```
+Usuario → "Exportar eventos"
+  ↓
+Seleccionar eventos
+  ↓
+Generar JSON
+  ↓
+Descargar o compartir
+```
+
+---
+
+### 5. HISTORIAL DE CAMBIOS
 
 **Sistema de auditoría (futuro):**
 
@@ -507,6 +622,8 @@ Mostrar timeline:
 ---
 
 ## 🔔 NOTIFICACIONES PARA CAMBIOS DE EVENTOS
+
+> Nota: Esta sección se mantiene como parte del flujo principal de modificaciones.
 
 ### Matriz de Notificaciones
 
