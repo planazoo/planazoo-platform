@@ -14,6 +14,49 @@ Documentar todos los escenarios del ciclo de vida completo de un evento: desde s
 
 ---
 
+## 🔄 Diagrama del Ciclo de Vida de Eventos
+
+```mermaid
+graph TB
+    Start([Inicio]) --> CreateEvent[Crear Evento]
+    
+    CreateEvent --> Manual[Manual]
+    CreateEvent --> JSON[JSON Batch]
+    CreateEvent --> Provider[Conexión Proveedor]
+    
+    Manual --> Read[Leer/Visualizar]
+    JSON --> Read
+    Provider --> Read
+    
+    Read --> Update{Actualizar?}
+    
+    Update -->|Sí| UpdateDetails[Actualizar Detalles]
+    Update -->|Sí| UpdateLocation[Actualizar Ubicación]
+    Update -->|Sí| UpdateParticipants[Actualizar Participantes]
+    Update -->|Sí| ConnectProvider[Conectar/Desconectar Proveedor]
+    
+    Update --> Delete{Eliminar?}
+    
+    Delete -->|Sí| DeleteConfirm[Confirmar Eliminación]
+    DeleteConfirm --> Archive[Archivar Evento]
+    
+    Update --> Keep{Continuar Edición?}
+    Keep -->|Sí| Update
+    Keep -->|No| Complete[Evento Finalizado]
+    
+    Archive --> Complete
+    Complete --> End([Fin])
+    
+    style CreateEvent fill:#4CAF50
+    style Read fill:#2196F3
+    style Update fill:#FF9800
+    style Delete fill:#F44336
+    style Archive fill:#9E9E9E
+    style Complete fill:#607D8B
+```
+
+---
+
 ## 📊 ESTADOS DE EVENTOS
 
 | Estado | Descripción | Editable | Eliminable | Visible Para |

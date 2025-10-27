@@ -14,6 +14,55 @@ Documentar todos los escenarios del ciclo de vida completo de un plan: desde su 
 
 ---
 
+## 🔄 Diagrama del Ciclo de Vida de Planes
+
+```mermaid
+graph TB
+    Start([Inicio]) --> CreatePlan[Crear Plan]
+    
+    CreatePlan --> Manual[Manual]
+    CreatePlan --> Copy[Copiar Existente]
+    CreatePlan --> Template[Desde Plantilla]
+    
+    Manual --> Read[Leer/Visualizar]
+    Copy --> Read
+    Template --> Read
+    
+    Read --> Update{Actualizar?}
+    
+    Update -->|Sí| UpdateInfo[Actualizar Info Básica]
+    Update -->|Sí| UpdateDates[Actualizar Fechas]
+    Update -->|Sí| ChangeState[Cambiar Estado]
+    
+    Update --> Special{Operaciones<br/>Especiales?}
+    
+    Special -->|Copiar| CopyPlan[Copiar Plan]
+    Special -->|Plantilla| SaveTemplate[Guardar como Plantilla]
+    
+    Update --> Cancel{Cancelar?}
+    Cancel --> Delete{Eliminar?}
+    
+    Cancel -->|Sí| CancelPlan[Cancelar con Reembolsos]
+    Delete -->|Sí| DeleteConfirm[Confirmar Eliminación]
+    DeleteConfirm --> Archive[Archivar Plan]
+    
+    CancelPlan --> Archive
+    Archive --> End([Fin])
+    
+    CopyPlan --> Read
+    SaveTemplate --> Complete[Plan Finalizado]
+    
+    style CreatePlan fill:#4CAF50
+    style Read fill:#2196F3
+    style Update fill:#FF9800
+    style Cancel fill:#FF9800
+    style Delete fill:#F44336
+    style Archive fill:#9E9E9E
+    style Complete fill:#607D8B
+```
+
+---
+
 ## 📊 ESTADOS DISPONIBLES
 
 | Estado | Descripción | Editable | Eliminable | Visible Para |
