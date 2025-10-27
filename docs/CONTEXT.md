@@ -54,6 +54,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
   - `FLUJO_INVITACIONES_NOTIFICACIONES.md` - Comunicación
   - `FLUJO_VALIDACION.md` - Validación y verificación
   - `FLUJO_GESTION_USUARIOS.md` - Registro, login y gestión de usuarios
+  - `FLUJO_CONFIGURACION_APP.md` - Configuración de usuario, app y planes
 - Al implementar una funcionalidad completa: revisar si debe actualizarse el flujo correspondiente en `docs/flujos/`.
 
 ### 7) Plan Frankenstein (revisión tras cambios)
