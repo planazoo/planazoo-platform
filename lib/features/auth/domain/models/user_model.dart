@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 class UserModel {
   final String id;
   final String email;
+  final String? username; // @username para búsqueda fácil (ej: @juancarlos)
   final String? displayName;
   final String? photoURL;
   final DateTime createdAt;
@@ -13,6 +14,7 @@ class UserModel {
   const UserModel({
     required this.id,
     required this.email,
+    this.username, // Opcional, usado para búsqueda y identificación amigable
     this.displayName,
     this.photoURL,
     required this.createdAt,
@@ -26,6 +28,7 @@ class UserModel {
     return UserModel(
       id: doc.id,
       email: data['email'] ?? '',
+      username: data['username'],
       displayName: data['displayName'],
       photoURL: data['photoURL'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
@@ -41,6 +44,7 @@ class UserModel {
     return UserModel(
       id: firebaseUser.uid,
       email: firebaseUser.email ?? '',
+      username: null, // Username se asigna después de registro
       displayName: firebaseUser.displayName,
       photoURL: firebaseUser.photoURL,
       createdAt: DateTime.now(),
@@ -53,6 +57,7 @@ class UserModel {
   Map<String, dynamic> toFirestore() {
     return {
       'email': email,
+      'username': username,
       'displayName': displayName,
       'photoURL': photoURL,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -65,6 +70,7 @@ class UserModel {
   UserModel copyWith({
     String? id,
     String? email,
+    String? username,
     String? displayName,
     String? photoURL,
     DateTime? createdAt,
@@ -74,6 +80,7 @@ class UserModel {
     return UserModel(
       id: id ?? this.id,
       email: email ?? this.email,
+      username: username ?? this.username,
       displayName: displayName ?? this.displayName,
       photoURL: photoURL ?? this.photoURL,
       createdAt: createdAt ?? this.createdAt,
@@ -93,6 +100,14 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, displayName: $displayName)';
+    return 'UserModel(id: $id, email: $email, username: $username, displayName: $displayName)';
+  }
+  
+  // Getter para mostrar nombre amigable
+  String get displayIdentifier {
+    if (username != null && username!.isNotEmpty) {
+      return '@$username';
+    }
+    return displayName ?? email;
   }
 }

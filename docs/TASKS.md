@@ -2,14 +2,14 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T121**
+**Siguiente código de tarea: T125**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
 - **GRUPO 2:** T71, T73: Filtros y Control (2 completadas)
 - **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (4 completadas, 0 pendientes)
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
-- **GRUPO 5:** T40-T45, T81, T82: Timezones (8 pendientes)
+- **GRUPO 5:** T40-T45: Timezones (6 completadas, 0 pendientes) - T81, T82: No existen
 - **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 8 pendientes)
 - **Seguridad:** T51-T53: Validación (3 pendientes)
 - **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
@@ -18,7 +18,7 @@
 - **Testing y Mantenimiento:** T96-T99: Refactoring, testing y documentación (4 pendientes)
 - **UX:** T100: Visualización de Timezones (1 pendiente)
 
-**Total: 89 tareas documentadas (57 completadas, 32 pendientes)**
+**Total: 93 tareas documentadas (57 completadas, 36 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -1777,6 +1777,336 @@ CalendarScreen (orchestrator)
 - UI clara para organizador y participantes
 - Persistencia en Firestore
 - Testing completo del flujo
+
+---
+
+### T121 - Revisión y Enriquecimiento de Formularios de Eventos y Alojamientos
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Alta  
+**Prioridad:** 🟡 Media  
+**Descripción:** Analizar y enriquecer los formularios de EventDialog y AccommodationDialog para que puedan gestionar la mayoría de la información relevante de diferentes tipos de eventos y alojamientos.
+
+**Motivación:**
+- Los formularios actuales son básicos
+- Necesitan gestionar información detallada de reservas, confirmaciones, etc.
+- Existen muchos ejemplos en la web que podemos utilizar como referencia
+- El usuario tiene ejemplos propios que compartirá
+
+**Objetivos:**
+1. Analizar ejemplos existentes (web y ejemplos del usuario)
+2. Identificar campos comunes a todos los eventos (título, fecha, participantes, timezone, ubicación)
+3. Identificar campos específicos por tipo de evento:
+   - **Vuelos**: Aeropuerto salida/llegada, código de vuelo, terminal, número de asiento, aerolínea, clase
+   - **Hoteles**: Check-in/check-out, habitación, número de reserva
+   - **Restaurantes**: Mesa, confirmación, código de reserva
+   - **Actividades**: Punto de encuentro, guía, material necesario
+   - **Transporte**: Estación salida/llegada, número de tren/autobús, vagón
+   - **Eventos sociales**: Localización exacta, punto de encuentro
+4. Diseñar estructura de campos genéricos y específicos
+5. Implementar formulario adaptable según tipo de evento
+6. Aplicar mismo concepto a alojamientos
+
+**Criterios de aceptación:**
+- Documento de análisis con ejemplos recopilados
+- Lista de campos comunes identificados
+- Lista de campos específicos por tipo de evento
+- Diseño de estructura de datos flexible
+- Formulario adaptable según tipo de evento
+- Integración con modelo actual de Event
+- Testing con diferentes tipos de eventos
+- Documentación actualizada
+
+**Archivos a modificar:**
+- `lib/widgets/wd_event_dialog.dart`
+- `lib/widgets/wd_accommodation_dialog.dart`
+- `lib/features/calendar/domain/models/event.dart`
+- `lib/features/calendar/domain/models/accommodation.dart`
+
+**Notas:**
+- Revisar T51 (Validación de Formularios) para integrar validaciones
+- Considerar campos opcionales vs obligatorios según tipo
+- Mantener retrocompatibilidad con eventos existentes
+- Propuesta de campos personalizados para casos no cubiertos
+
+---
+
+### T122 - Guardar Plan como Plantilla
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟢 Baja (Para versiones futuras)  
+**Descripción:** Sistema para guardar planes completos como plantillas que puedan ser reutilizadas por el mismo usuario o compartidas con otros usuarios en una plataforma de plantillas.
+
+**Motivación:**
+- Permite reutilizar planes exitosos para eventos similares
+- Crea una biblioteca de "mejores prácticas" de planificación
+- Genera valor comunitario si las plantillas son compartidas
+
+**Funcionalidades:**
+1. **Guardar como plantilla local:** Guardar un plan completo como plantilla personal
+2. **Editar plantilla:** Modificar plantillas guardadas
+3. **Usar plantilla:** Crear nuevo plan basado en plantilla
+4. **Compartir plantilla:** Opcional - compartir con comunidad (futuro)
+5. **Búsqueda de plantillas:** Por categoría, duración, número de participantes
+
+**Categorías de plantillas:**
+- Vacaciones familiares
+- Viajes de negocios
+- Bodas
+- Eventos corporativos
+- Escapadas de fin de semana
+- Aventuras/reto
+- Cultural/Éducativo
+- Ocio/Entretenimiento
+
+**Campos de plantilla:**
+- **Categoría** (dropdown)
+- **Nombre plantilla** (texto)
+- **Descripción** (texto)
+- **Duración típica** (número días)
+- **Número participantes típico** (número)
+- **Destino típico** (texto)
+- **Precio estimado rango** (currency)
+- **Nivel complejidad** (dropdown): "Simple", "Moderado", "Complejo"
+- **Tags/Etiquetas** (multi-select)
+- **Imagen representativa**
+- **Plantilla incluye** (checklist): "Vuelos", "Hoteles", "Restaurantes", "Actividades", etc.
+
+**Flujo:**
+1. Usuario marca plan como "Plantilla"
+2. Sistema pregunta: "¿Qué quieres guardar?"
+   - Todo (eventos, alojamientos, participantes)
+   - Solo estructura de eventos
+   - Solo configuración (fechas flexibles)
+3. Permitir editar plantilla antes de guardar
+4. Opción: "Hacer pública" (futuro)
+
+**Criterios de aceptación:**
+- Guardar plan completo como plantilla
+- Editar plantilla guardada
+- Crear nuevo plan desde plantilla
+- Búsqueda y filtrado de plantillas
+- Sistema de categorías
+- Persistencia en Firestore
+- Testing con varios tipos de plantillas
+
+**Archivos a crear:**
+- `lib/features/templates/domain/models/plan_template.dart`
+- `lib/features/templates/domain/services/template_service.dart`
+- `lib/features/templates/presentation/providers/template_providers.dart`
+- `lib/features/templates/presentation/widgets/template_card.dart`
+- `lib/features/templates/presentation/widgets/template_list.dart`
+- `lib/features/templates/presentation/pages/template_page.dart`
+
+**Archivos a modificar:**
+- `lib/pages/pg_dashboard_page.dart` - Añadir opción "Guardar como plantilla"
+- `_CreatePlanModal` - Añadir opción "Usar plantilla"
+- `lib/features/calendar/domain/models/plan.dart` - Añadir `isTemplate`, `templateId`, etc.
+
+**Notas:**
+- Sistema actual prioriza funcionalidad básica
+- Plantillas es mejora para versiones futuras
+- Antes de implementar: definir política de plantillas públicas vs privadas
+- Considerar marketplace de plantillas como monetización futura
+
+---
+
+### T123 - Sistema de Grupos de Participantes
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Sistema para crear grupos reutilizables de participantes (Familia, Amigos, Compañeros) que puedan ser invitados colectivamente a planes.
+
+**Motivación:**
+- Facilita invitar a múltiples personas comunes de una vez
+- Ahorra tiempo en creación repetida de planes
+- Mejora la experiencia de usuario en gestión de participantes
+
+**Funcionalidades:**
+1. **Crear grupos de contactos:** Familia, Amigos, Compañeros trabajo, etc.
+2. **Gestionar miembros del grupo:** Añadir/eliminar participantes
+3. **Invitar grupo completo:** Invitar todo un grupo de una vez a un plan
+4. **Reutilizar grupos:** Grupos guardados disponibles para todos los planes
+5. **Importar desde contactos:** Sugerir contactos frecuentes
+6. **Auto-sugerir:** Sugerir grupos según historial de planes anteriores
+
+**Modelo de datos:**
+```dart
+class ContactGroup {
+  String id;
+  String userId; // Propietario del grupo
+  String name; // "Familia Ramos", "Amigos Universidad"
+  String? description;
+  String? icon; // emoji o icono
+  String? color; // Color identificador
+  List<String> memberUserIds; // IDs de usuarios en el grupo
+  List<String> memberEmails; // Emails para no usuarios
+  DateTime createdAt;
+  DateTime updatedAt;
+}
+```
+
+**Criterios de aceptación:**
+- Crear, editar y eliminar grupos
+- Añadir/eliminar miembros de grupos
+- Invitar grupo completo a un plan
+- Ver grupos guardados del usuario
+- Autocompletar/invitar contactos frecuentes
+- Persistencia en Firestore
+- Testing con varios grupos y planes
+
+**Archivos a crear:**
+- `lib/features/groups/domain/models/contact_group.dart`
+- `lib/features/groups/domain/services/contact_group_service.dart`
+- `lib/features/groups/presentation/providers/contact_group_providers.dart`
+- `lib/features/groups/presentation/widgets/group_card.dart`
+- `lib/features/groups/presentation/widgets/group_list.dart`
+- `lib/features/groups/presentation/pages/group_management_page.dart`
+
+**Archivos a modificar:**
+- `_CreatePlanModal` en `lib/pages/pg_dashboard_page.dart` - Añadir opción "Invitar grupo"
+- Sistema de invitaciones (T104) - Soporte para invitar grupos
+- UI de participantes - Mostrar grupos disponibles
+
+**Notas:**
+- Revisar modelo User actual para asegurar identificación única (email vs username)
+- Considerar privacidad: ¿grupos visibles solo para el propietario?
+- Integrar con sistema de notificaciones (T105)
+
+---
+
+### T124 - Dashboard Administrativo de Plataforma
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟢 Baja (Para cuando tengamos usuarios reales)  
+**Descripción:** Crear un dashboard administrativo completo para supervisar y gestionar la plataforma, con estadísticas de usuarios, planes y eventos.
+
+**Motivación:**
+- Supervisar salud de la plataforma
+- Detectar patrones de uso
+- Identificar problemas técnicos
+- Tomar decisiones basadas en datos
+- Gestionar contenido problemático si es necesario
+
+**Funcionalidades:**
+
+#### 1. Estadísticas Generales
+- **Usuarios totales** (activos vs inactivos)
+- **Planes totales** (activos vs completados)
+- **Eventos totales** (por tipo)
+- **Alojamientos totales**
+- **Registros en últimos 7 días, 30 días, 365 días**
+- **Tasa de crecimiento**
+
+#### 2. Estadísticas de Usuarios
+- Usuarios registrados por mes
+- Usuarios activos (últimos 7 días)
+- Usuarios por país (si tenemos geolocalización)
+- Usuarios que más planes crean (top 10)
+- Usuarios que más participan (top 10)
+- Usuarios sin planes todavía
+
+#### 3. Estadísticas de Planes
+- Planes por categoría/etiqueta
+- Planes por número de participantes (rango: 1-5, 6-10, 11-20, 20+)
+- Planes más activos (eventos creados)
+- Días promedio de duración de planes
+- Planes públicos vs privados (si implementamos visibilidad)
+- Planes creados vs completados
+
+#### 4. Estadísticas de Eventos
+- Eventos por tipo (Desplazamiento, Restauración, Actividad, Alojamiento)
+- Eventos más populares por subtipo (Avión, Hotel, Museo, etc.)
+- Eventos recurrentes (si T119 implementado)
+- Eventos borradores vs confirmados
+- Eventos por día de la semana
+- Eventos por hora del día
+
+#### 5. Estadísticas de Participación
+- Participantes promedio por plan
+- Planes con más participantes
+- Usuarios observadores vs participantes activos
+- Confirmaciones de asistencia (si T120 implementado)
+- Tasa de participación
+
+#### 6. Estadísticas Técnicas
+- Tamaño medio de planes (número de eventos)
+- Eventos por plan (distribución)
+- Uso de timezones (planes multi-timezone)
+- Eventos con documentos adjuntos
+- Participantes con tracks múltiples
+
+#### 7. Alertas y Monitoreo
+- Usuarios con planes > 30 días sin actividad
+- Planes sin eventos (posibles borradores)
+- Usuarios con múltiples cuentas (email duplicate check)
+- Planes con muchos eventos (posible spam)
+- Eventos sin participantes asignados
+
+#### 8. Gestión de Contenido (Opcional)
+- Filtrar planes por palabra clave
+- Ver planes sospechosos
+- Modificar/quitar permisos a usuarios
+- Resetear planes si necesario
+- Exportar datos para análisis
+
+**Criterios de aceptación:**
+- Dashboard completo con todas las estadísticas
+- Visualización clara con gráficos (usar chart library)
+- Filtros de fecha (rango temporal)
+- Exportar estadísticas a CSV/Excel
+- Acceso restringido solo a administradores
+- Actualización en tiempo real (opcional)
+- Responsive (mobile y desktop)
+
+**Archivos a crear:**
+- `lib/features/admin/domain/services/admin_stats_service.dart`
+- `lib/features/admin/presentation/providers/admin_stats_providers.dart`
+- `lib/features/admin/presentation/pages/admin_dashboard_page.dart`
+- `lib/features/admin/presentation/widgets/stats_card.dart`
+- `lib/features/admin/presentation/widgets/stats_chart.dart`
+- `lib/features/admin/presentation/widgets/user_list.dart`
+- `lib/features/admin/presentation/widgets/plan_list_admin.dart`
+- `lib/features/admin/presentation/widgets/alerts_panel.dart`
+
+**Archivos a modificar:**
+- Sistema de autenticación - Añadir rol "admin"
+- `lib/pages/pg_dashboard_page.dart` - Añadir botón "Admin" para admins
+- Modelos User, Plan, Event - Añadir flags admin si necesario
+
+**Modelo de estadísticas:**
+```dart
+class PlatformStats {
+  // Usuarios
+  final int totalUsers;
+  final int activeUsers;
+  final int newUsersLast30Days;
+  
+  // Planes
+  final int totalPlans;
+  final int activePlans;
+  final int completedPlans;
+  final Map<String, int> plansByCategory;
+  
+  // Eventos
+  final int totalEvents;
+  final Map<String, int> eventsByType;
+  final Map<String, int> eventsBySubtype;
+  
+  // Participación
+  final double averageParticipantsPerPlan;
+  final int topActivePlanId;
+  final int topActiveUserId;
+  
+  DateTime lastUpdated;
+}
+```
+
+**Notas:**
+- Usar librería de gráficos como `fl_chart` o `syncfusion_flutter_charts`
+- Considerar caché para estadísticas computacionalmente pesadas
+- Actualización diaria vs tiempo real
+- Protección de datos: no exponer información sensible de usuarios
+- Integrar con sistema de alertas para administradores
 
 ---
 
