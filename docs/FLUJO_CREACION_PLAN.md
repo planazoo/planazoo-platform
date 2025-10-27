@@ -11,7 +11,7 @@
 
 ## 📑 ÍNDICE DEL SISTEMA
 
-Este documento ha sido dividido en **9 flujos específicos** para facilitar la consulta y el desarrollo:
+Este documento ha sido dividido en **8 flujos específicos** más **guías de referencia** para facilitar la consulta y el desarrollo:
 
 ### 📚 Documentos de Flujos
 
@@ -25,7 +25,9 @@ Este documento ha sido dividido en **9 flujos específicos** para facilitar la c
 | **[FLUJO_VALIDACION.md](./flujos/FLUJO_VALIDACION.md)** | Validación y verificación | T113, T114, T107 |
 | **[FLUJO_GESTION_USUARIOS.md](./flujos/FLUJO_GESTION_USUARIOS.md)** | Registro, login y gestión de usuarios | T47, T49, T50, T124 |
 | **[FLUJO_CONFIGURACION_APP.md](./flujos/FLUJO_CONFIGURACION_APP.md)** | Configuración de usuario, app y planes | T50, T105, T124 |
-| **[FLUJO_SEGURIDAD.md](./flujos/FLUJO_SEGURIDAD.md)** | Seguridad, autenticación y protección de datos | T51, T52, T53, T65-T67 |
+
+**📚 Guías de Referencia:**
+| **[GUIA_SEGURIDAD.md](./GUIA_SEGURIDAD.md)** | Seguridad, autenticación y protección de datos | T51, T52, T53, T65-T67, T125-T129 |
 
 ---
 

@@ -1,8 +1,8 @@
-# 🔒 Flujo de Seguridad
+# 🔒 Guía de Seguridad
 
-> Define las medidas de seguridad para proteger datos sensibles y la plataforma
+> Guía de referencia de medidas de seguridad para proteger datos sensibles y la plataforma
 
-**Relacionado con:** T51, T52, T53, T65, T66, T67  
+**Relacionado con:** T51, T52, T53, T65, T66, T67, T125-T129  
 **Versión:** 1.0  
 **Fecha:** Enero 2025
 
@@ -10,7 +10,7 @@
 
 ## 🎯 Objetivo
 
-Documentar todas las medidas de seguridad necesarias para proteger datos sensibles de usuarios, planes, eventos y comunicaciones.
+Esta guía de referencia documenta todas las medidas de seguridad necesarias para proteger datos sensibles de usuarios, planes, eventos y comunicaciones. Debe ser consultada **antes de implementar cualquier funcionalidad nueva**.
 
 ---
 
