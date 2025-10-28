@@ -49,6 +49,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - **Offline-First:** Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
 - **UI/UX:** Consultar `docs/GUIA_UI.md` antes de crear componentes visuales. Usar siempre `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons` para mantener consistencia. Documentar componentes nuevos en la guía.
 - **Seguridad:** Consultar `docs/GUIA_SEGURIDAD.md` antes de implementar funcionalidades. Verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
+- **Patrón Común/Personal:** Consultar `docs/GUIA_PATRON_COMUN_PERSONAL.md` para implementar eventos y alojamientos con información compartida e individual por participante. Usar EventCommonPart/EventPersonalPart y AccommodationCommonPart/AccommodationPersonalPart.
 - **Flujos de Proceso:** Consular flujos en `docs/flujos/` antes de tomar decisiones o implementar funcionalidades:
   - `FLUJO_CRUD_PLANES.md` - 🆕 Ciclo de vida completo CRUD de planes
   - `FLUJO_ESTADOS_PLAN.md` - Estados y transiciones

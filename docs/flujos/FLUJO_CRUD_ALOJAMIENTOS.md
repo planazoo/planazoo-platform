@@ -72,7 +72,11 @@ graph TB
 | **Check-out Realizado** | Ya se hizo check-out | ❌ No | ❌ No | Todos | ❌ No |
 | **Cancelado** | Alojamiento cancelado | ❌ No | ❌ No | Todos | ❌ No |
 
-**Nota:** La parte personal (habitaciones, preferencias) es editable hasta el check-in, excepto notas que pueden añadirse durante la estancia.
+**Nota:** La estructura **Parte Común/Parte Personal** permite que cada participante tenga información específica:
+- **AccommodationCommonPart**: Nombre hotel, check-in/check-out, dirección, servicios, capacidad
+- **AccommodationPersonalPart** (por participante): Número de habitación, tipo de cama, preferencias personales, notas
+
+La parte personal (habitaciones, preferencias) es editable hasta el check-in, excepto notas que pueden añadirse durante la estancia.
 
 ---
 
@@ -123,7 +127,13 @@ Validaciones (T51):
 - No solapamiento con otros alojamientos del mismo grupo
   ↓
 Guardar alojamiento en Firestore:
-- Crear Accommodation document con todos los campos
+- Crear Accommodation document con todos los campos base
+- Crear AccommodationCommonPart con información compartida:
+  - hotelName, checkIn, checkOut, description
+  - address, contactInfo, amenities, maxCapacity
+  - participantIds, isForAllParticipants
+- Si hay parte personal: Crear AccommodationPersonalPart para cada participante:
+  - roomNumber, bedType, preferences, notes, fields
 - Asignar accommodationId único
 - Establecer planId del plan actual
 - Establecer userId del creador
@@ -288,7 +298,22 @@ Detalles por habitación (si existe parte personal):
 - Pedro - Hab 205: Matrimonio, Piso 3, Vista al mar
 ```
 
-#### 2.2 - Información Contextual
+#### 2.2 - Información Contextual y Visualización de Partes
+
+**Estructura de visualización:**
+```
+┌────────────────────────────────────┐
+│ Hotel Hilton Paris                 │ ← Parte Común
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
+│ 📅 Check-in/Check-out              │ ← Parte Común
+│ 📍 Dirección, Contacto, Servicios │ ← Parte Común
+│ 👥 Huéspedes:                      │
+│    • Juan - Hab 203 ← Parte Personal
+│    • María - Hab 204 ← Parte Personal
+│    • Pedro - Hab 205 ← Parte Personal
+│ 💰 Coste total                     │ ← Parte Común
+└────────────────────────────────────┘
+```
 
 **Campos mostrados (parte común):**
 - Nombre del alojamiento

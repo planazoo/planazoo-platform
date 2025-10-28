@@ -9,6 +9,7 @@ Guías transversales que aplican a todo el proyecto:
 - [Guía de UI](./guias/GUIA_UI.md) - Sistema de diseño, colores, tipografía, componentes
 - [Guía de Seguridad](./guias/GUIA_SEGURIDAD.md) - Seguridad, autenticación y protección de datos
 - [Guía de Aspectos Legales](./guias/GUIA_ASPECTOS_LEGALES.md) - Términos, privacidad, cookies, GDPR
+- [Guía del Patrón Común/Personal](./guias/GUIA_PATRON_COMUN_PERSONAL.md) - Patrón arquitectónico parte común/personal
 - [Gestión de Timezones](./guias/GESTION_TIMEZONES.md) - Sistema completo de manejo de zonas horarias
 - [Prompt Base](./guias/PROMPT_BASE.md) - Metodología de trabajo del equipo
 

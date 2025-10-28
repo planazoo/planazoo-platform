@@ -3,6 +3,7 @@
 > Define todo el ciclo de vida de un evento: crear, leer, actualizar y eliminar
 
 **Relacionado con:** T121, T105, T110, T101, T102, T120  
+**Nota:** Los eventos comparten estructura **Parte Común/Parte Personal** similar a los alojamientos (ver FLUJO_CRUD_ALOJAMIENTOS)  
 **Versión:** 1.0  
 **Fecha:** Enero 2025
 
@@ -11,6 +12,8 @@
 ## 🎯 Objetivo
 
 Documentar todos los escenarios del ciclo de vida completo de un evento: desde su creación hasta su eliminación, incluyendo lectura, visualización, actualizaciones, importación y sincronización con proveedores.
+
+**Estructura Parte Común/Parte Personal:** Los eventos soportan información compartida (EventCommonPart) e individual por participante (EventPersonalPart), similar a los alojamientos.
 
 ---
 
@@ -67,6 +70,10 @@ graph TB
 | **En Curso** | Evento ejecutándose | ⚠️ Solo urgente | ❌ No | Todos |
 | **Completado** | Evento terminado | ❌ No | ❌ No | Todos |
 | **Cancelado** | Evento cancelado | ❌ No | ❌ No | Todos |
+
+**Nota:** La estructura **Parte Común/Parte Personal** permite que cada participante tenga información específica:
+- **EventCommonPart**: Descripción, fecha, hora, ubicación compartida
+- **EventPersonalPart** (por participante): Asiento, menú especial, notas, campos personalizados
 
 ---
 
