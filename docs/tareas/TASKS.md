@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T130**
+**Siguiente código de tarea: T134**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -10,15 +10,18 @@
 - **GRUPO 3:** T46, T74, T75, T76: Parte Común + Personal (4 completadas, 0 pendientes)
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
 - **GRUPO 5:** T40-T45: Timezones (6 completadas, 0 pendientes) - T81, T82: No existen
-- **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 8 pendientes)
+- **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 11 pendientes)
 - **Seguridad:** T51-T53: Validación (3 pendientes)
 - **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
 - **Testing y Mantenimiento:** T96-T99: Refactoring, testing y documentación (4 pendientes)
 - **UX:** T100: Visualización de Timezones (1 pendiente)
+- **Integración:** T131: Sincronización con Calendarios Externos (1 pendiente)
+- **Agencias:** T132: Definición Sistema Agencias de Viajes (1 pendiente)
+- **Exportación:** T133: Exportación Profesional de Planes PDF/Email (1 pendiente)
 
-**Total: 103 tareas documentadas (57 completadas, 46 pendientes)**
+**Total: 107 tareas documentadas (57 completadas, 50 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -2447,6 +2450,403 @@ class PlatformStats {
 - UI para solicitar export
 
 **Relacionado con:** T50, docs/flujos/FLUJO_SEGURIDAD.md, GDPR compliance
+
+---
+
+### T130 - Habitaciones Individuales en Modal de Alojamientos
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Implementar la funcionalidad para gestionar habitaciones individuales por participante en el modal de alojamientos, siguiendo el patrón Parte Común/Parte Personal.
+
+**Funcionalidades:**
+1. Checkbox "Configurar habitaciones individuales"
+2. Formulario por participante que incluye:
+   - Número de habitación (ej: "203", "Suite 501")
+   - Tipo de cama (individual, matrimonio, litera)
+   - Preferencias personales (piso alto, vista al mar, sin ruido, etc.)
+   - Notas personales del alojamiento
+3. Cargar habitaciones existentes al editar alojamiento
+4. Validar que cada participante tenga habitación asignada (si se habilita la opción)
+5. Persistencia en `AccommodationPersonalPart`
+
+**Criterios de aceptación:**
+- Checkbox para habilitar habitaciones individuales
+- Formulario visible cuando hay múltiples participantes seleccionados
+- Campos por participante funcionando
+- Guardar en estructura `personalParts` de Accommodation
+- Cargar datos existentes al editar
+- Validar que todas las habitaciones estén asignadas
+- Testing con varios participantes
+
+**Archivos a modificar:**
+- `lib/widgets/wd_accommodation_dialog.dart`
+- `lib/features/calendar/domain/models/accommodation.dart` (ya soporta estructura)
+
+**Relacionado con:** T121 (Formularios enriquecidos), docs/flujos/FLUJO_CRUD_ALOJAMIENTOS.md, docs/guias/GUIA_PATRON_COMUN_PERSONAL.md
+
+---
+
+### T131 - Sincronización con Calendarios Externos
+**Estado:** Pendiente  
+**Complejidad:** 🔴 Alta  
+**Prioridad:** 🟡 Media  
+**Descripción:** Implementar funcionalidad para sincronizar eventos del plan con calendarios externos (Google Calendar, Outlook, iCloud, etc.) mediante exportación/importación de archivos .ics (iCalendar).
+
+**Funcionalidades:**
+1. **Exportación de eventos:**
+   - Botón "Exportar calendario" en vista del plan
+   - Generar archivo .ics con eventos del plan
+   - Incluir información: título, descripción, fechas, ubicación, participantes
+   - Guardar como archivo descargable o compartir
+
+2. **Importación de eventos:**
+   - Botón "Importar desde calendario" 
+   - Seleccionar archivo .ics local
+   - Parsear eventos del archivo
+   - Mapear a estructura de Event del plan
+   - Preview antes de importar
+
+3. **Sincronización bidireccional (futura):**
+   - Conectar con APIs de Google Calendar, Outlook
+   - Sincronización automática periódica
+   - Resolución de conflictos (última modificación gana)
+   - Filtros configurable por usuario (qué eventos sincronizar)
+
+**Criterios de aceptación:**
+- Exportar eventos del plan a archivo .ics funcional
+- Archivo .ics se puede abrir en Google Calendar, Outlook, Apple Calendar
+- Importar eventos desde archivo .ics básico funciona
+- Preview de eventos antes de importar
+- Manejo de errores en archivos .ics inválidos
+- Información completa de eventos en exportación
+
+**Archivos a modificar/crear:**
+- `lib/features/calendar/domain/services/ical_export_service.dart` (nuevo)
+- `lib/features/calendar/domain/services/ical_import_service.dart` (nuevo)
+- `lib/features/calendar/presentation/widgets/export_calendar_button.dart` (nuevo)
+- `lib/features/calendar/presentation/widgets/import_calendar_dialog.dart` (nuevo)
+- Añadir paquete `icalendar` a `pubspec.yaml`
+
+**Notas técnicas:**
+- Usar paquete `icalendar: ^3.0.0` para parser/generator .ics
+- Formato estándar RFC 5545 (iCalendar)
+- Exportar solo eventos de la perspectiva del usuario actual
+- Filtrar eventos personales vs comunes según configuración
+- Integrar con selector de archivos: `file_picker` package
+
+**Relacionado con:** docs/arquitectura/ARCHITECTURE_DECISIONS.md (Integración con Calendarios Externos), docs/flujos/FLUJO_CRUD_EVENTOS.md (Importación de eventos)
+
+---
+
+### T132 - Definición: Sistema de Agencias de Viajes
+**Estado:** Pendiente  
+**Complejidad:** 🔴 Alta  
+**Prioridad:** 🟡 Media-Baja  
+**Descripción:** Definir y diseñar el sistema completo para que agencias de viajes puedan crear, gestionar y vender planes organizados a sus clientes (ejemplo: Viajes El Corte Inglés).
+
+**Objetivo:** Habilitar agencias de viajes para:
+- Crear planes base (plantillas reutilizables o planes específicos)
+- Gestionar múltiples planes simultáneamente
+- Asignar clientes a planes
+- Personalizar planes por cliente
+- Ofrecer planes en un catálogo/marketplace
+
+**Aspectos a Definir:**
+
+#### 1. Modelo de Negocio
+- [ ] **Pago:** ¿Suscripción agencia? ¿Pay-per-plan? ¿Gratis inicial?
+- [ ] **Monetización:** ¿Quién paga? ¿Agencia, cliente o ambos?
+- [ ] **Límites:** ¿Número de planes/participantes por agencia?
+- [ ] **Facturación:** ¿Integración con sistemas de facturación?
+
+#### 2. Roles y Permisos
+- [ ] **Nuevo rol:** `Agency` (Agencia de Viajes) - usuario propietario de la agencia
+- [ ] **Nuevo rol:** `AgencyStaff` (Empleado de Agencia) - empleados que gestionan planes
+- [ ] **Rol cliente:** ¿Customer vs Participant? ¿Diferente configuración?
+- [ ] **Permisos agencia:** ¿Pueden editar eventos después de confirmar clientes?
+- [ ] **Permisos personalización:** ¿Qué puede personalizar el cliente?
+
+#### 3. Gestión de Planes
+- [ ] **Tipo de planes:**
+  - ¿Plantillas reutilizables (ej: "Roma 5 días")?
+  - ¿Planes únicos por cada viaje?
+  - ¿Combinación de ambos?
+- [ ] **Visibilidad:** ¿Públicos en marketplace? ¿Solo por código? ¿Privados por invitación?
+- [ ] **Capacidad:** ¿Límite de participantes por plan?
+- [ ] **Duración:** ¿Planes de días fijos o flexibles?
+
+#### 4. Marketplace/Catálogo
+- [ ] **Catálogo:** ¿Lista de planes disponibles para clientes?
+- [ ] **Filtros:** Destino, precio, fechas, duración, tipo
+- [ ] **Búsqueda:** Por palabras clave, tags, categorías
+- [ ] **Perfil agencia:** Logo, descripción, reseñas, calificaciones
+- [ ] **Proceso unión:** ¿Cómo se unen clientes a un plan?
+
+#### 5. Personalización por Cliente
+- [ ] **Habitaciones:** ¿Asignación individual automática?
+- [ ] **Menús:** ¿Preferencias alimentarias por cliente?
+- [ ] **Documentos:** ¿Pasaportes, visas, documentos de viaje?
+- [ ] **Pagos:** ¿Integración con sistema de pagos?
+- [ ] **Checklist:** ¿Lista de tareas previas al viaje?
+
+#### 6. Funcionalidades Técnicas
+- [ ] **Multi-plan management:** Dashboard para agencias con todos sus planes
+- [ ] **Clonación:** ¿Copiar plantilla y personalizar?
+- [ ] **Asignación masiva:** ¿Invitar múltiples clientes a la vez?
+- [ ] **Notificaciones:** ¿Al cliente cuando se le asigna habitación, se modifica evento, etc.?
+- [ ] **Reportes:** ¿Estadísticas de planes, clientes, popularidad?
+
+#### 7. Modelo de Datos
+- [ ] **PlanAgency:** Tabla de relación agencia-plan
+- [ ] **AgencyTemplate:** Plantillas de planes reutilizables
+- [ ] **AgencyMetadata:** Información de la agencia (logo, descripción, contacto)
+- [ ] **CustomerAssignment:** Relación cliente-plan (con datos personalizados)
+
+**Preguntas Clave a Resolver:**
+
+1. **¿Las agencias necesitan una cuenta "Agencia" o pueden ser usuarios normales con planes especiales?**
+2. **¿Un plan puede ser "base" de agencia y luego copiarse para clientes individuales?**
+3. **¿Los clientes ven todos los participantes del viaje o solo los de su grupo?**
+4. **¿Los clientes pueden modificar eventos después de unirse al plan?**
+5. **¿Cómo se maneja la facturación? ¿Integración con sistemas externos?**
+6. **¿Necesitamos marketplace público o solo listado privado por agencia?**
+7. **¿Qué información de clientes ve la agencia? (RGPD/GDPR)**
+8. **¿Los clientes pueden "compartir" el plan con familiares sin ser parte oficial?**
+
+**Documentación a Crear:**
+- `docs/flujos/FLUJO_GESTION_AGENCIAS.md` - Proceso completo de agencias
+- `docs/flujos/FLUJO_CRUD_TEMPLATES_PLANES.md` - Gestión de plantillas
+- `docs/guias/GUIA_MODELO_NEGOCIO_AGENCIAS.md` - Modelo de negocio
+- Actualizar `lib/shared/models/user_role.dart` con nuevos roles
+- Actualizar `lib/features/calendar/domain/models/plan.dart` con campos de agencia
+
+**Criterios de Aceptación (Definición):**
+- Documento completo con todas las decisiones tomadas
+- Diagramas de flujo para cada proceso
+- Modelo de datos definido
+- Casos de uso detallados
+- Prototipo de UI/Wireframes
+- Plan de implementación por fases
+
+**Fases Sugeridas (para implementación futura):**
+
+**Fase 1 - Fundamentos:**
+- Roles Agency y AgencyStaff
+- Tipos de planes (templates vs individuales)
+- Asignación básica cliente-plan
+
+**Fase 2 - Gestión:**
+- Dashboard de agencia
+- Catálogo/Listado de planes
+- Proceso de unión cliente-plan
+
+**Fase 3 - Personalización:**
+- Habitaciones individuales por cliente
+- Preferencias personalizadas
+- Documentos de viaje
+
+**Fase 4 - Marketplace (si aplica):**
+- Catálogo público
+- Búsqueda y filtros
+- Perfil de agencia
+
+**Relacionado con:** 
+- T130 (Habitaciones individuales)
+- T131 (Sincronización calendarios externos)
+- docs/flujos/FLUJO_CRUD_PLANES.md (gestión de planes)
+- docs/flujos/FLUJO_CRUD_USUARIOS.md (gestión de usuarios)
+
+---
+
+### T133 - Exportación Profesional de Planes (PDF/Email)
+**Estado:** Pendiente  
+**Complejidad:** 🟡 Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Implementar funcionalidad para exportar un plan completo a PDF o enviarlo por email con formato profesional, estético e informativo, incluyendo fotos, itinerario, información de sitios y datos de participantes.
+
+**Objetivo:** Permitir a usuarios exportar/enviar planes de forma profesional a:
+- Participantes del plan
+- Clientes (cuando esté implementado sistema de agencias)
+- Observadores
+- Contactos externos
+
+**Aspectos a Definir/Implementar:**
+
+#### 1. Formato de Exportación
+- [ ] **PDF:** Generar PDF descargable con diseño profesional
+- [ ] **Email HTML:** Enviar por email con HTML responsive
+- [ ] **Ambas:** ¿Permitir elegir formato?
+- [ ] **Multi-idioma:** PDF/Email en idioma del destinatario
+
+#### 2. Contenido Incluido
+- [ ] **Portada:**
+  - Foto del plan (si existe)
+  - Nombre del plan
+  - Fechas (inicio-fin)
+  - Organizador
+  - Logo de la app
+- [ ] **Itinerario:**
+  - Lista cronológica de eventos
+  - Fechas y horas (en timezone del plan)
+  - Descripciones
+  - Ubicaciones (mapas opcionales)
+- [ ] **Alojamientos:**
+  - Hoteles/Apartamentos reservados
+  - Fechas check-in/check-out
+  - Información de reserva
+  - Fotos (si disponibles)
+- [ ] **Participantes:**
+  - Lista de participantes confirmados
+  - Rol de cada uno (Admin, Participante, Observador)
+  - Info de contacto (configurable por privacidad)
+- [ ] **Información Adicional:**
+  - Presupuesto (total y por categoría)
+  - Timezone del plan
+  - Estado del plan (Confirmado, En curso, etc.)
+  - Notas generales
+- [ ] **Mapa/Itinerario Visual:**
+  - Timeline visual de días
+  - Indicadores de ubicaciones importantes
+  - Conexiones entre eventos
+
+#### 3. Información Externa de Sitios
+- [ ] **Integración APIs:**
+  - Google Places API (fotos, descripciones, ratings)
+  - Wikipedia/Wikimedia (descripciones culturales/históricas)
+  - OpenWeatherMap (clima estimado)
+- [ ] **Contenido añadido:**
+  - Fotos de ubicaciones visitadas
+  - Descripciones breves de lugares
+  - Información útil (horarios museos, precio entradas, etc.)
+  - Datos culturales, históricos, curiosidades
+- [ ] **Configuración:**
+  - ¿Qué información mostrar?
+  - Lenguaje del contenido
+  - Profundidad de detalles
+
+#### 4. Diseño y Personalización
+- [ ] **Plantillas:**
+  - Plantilla "Clásica" (elegante, formal)
+  - Plantilla "Moderno" (colorida, casual)
+  - Plantilla "Minimalista" (limpia, profesional)
+- [ ] **Elementos de marca:**
+  - Logo del usuario/organizador (opcional)
+  - Colores personalizados del plan
+  - Fuentes elegantes
+- [ ] **QR Code:**
+  - Generar QR para acceder al plan en la app
+  - Link compartible (con/sin login)
+- [ ] **Watermark (opcional):**
+  - Marca de agua de la app
+  - "Generado con UNP Calendario"
+
+#### 5. Privacidad y Configuración
+- [ ] **Qué incluir:**
+  - Checkboxes para seleccionar secciones
+  - ¿Incluir contactos de participantes?
+  - ¿Incluir información personal de eventos?
+  - ¿Incluir presupuesto detallado?
+- [ ] **Destinatarios:**
+  - Email individual
+  - Múltiples emails
+  - Solo generar PDF sin enviar
+- [ ] **Seguridad:**
+  - ¿Expiracion temporal del PDF compartido?
+  - ¿Proteger PDF con contraseña?
+  - ¿Tracking de descargas?
+
+#### 6. Funcionalidades Técnicas
+- [ ] **Generación PDF:**
+  - Usar paquete `pdf: ^3.10.0` o similar
+  - Layout responsivo en PDF
+  - Soporte para imágenes
+  - Hipervínculos en PDF
+- [ ] **Envío Email:**
+  - Integrar con backend de email (SMTP/API)
+  - Asunto personalizable
+  - Email template HTML
+  - Tracking de envío/lectura
+- [ ] **Caché:**
+  - Caché de información externa (Places, Wikipedia)
+  - Re-generar solo si plan ha cambiado
+  - Expiración de caché (ej: 24h)
+
+**Casos de Uso:**
+
+**Caso 1 - Organizador → Participantes:**
+```
+Organizador crea plan "Vacaciones Roma 2025"
+→ Exporta a PDF
+→ Comparte PDF con participantes antes del viaje
+→ Incluye: itinerario, alojamientos, información de sitios
+```
+
+**Caso 2 - Agencia de Viajes → Cliente:**
+```
+Agencia crea plan "Tour Bali Premium"
+→ Exporta a PDF profesional
+→ Envía por email al cliente con propuesta
+→ Incluye: itinerario completo, fotos, precio total
+```
+
+**Caso 3 - Invitación Formal:**
+```
+Organizador quiere invitar a alguien a unirse al plan
+→ Genera PDF con información del plan
+→ Envía por email como "invitación"
+→ El destinatario puede unirse desde el PDF
+```
+
+**Criterios de Aceptación:**
+- Botón "Exportar Plan" en página de detalles del plan
+- Opciones: PDF o Email
+- Configuración de qué incluir
+- Preview antes de enviar
+- PDF generado visualmente atractivo y profesional
+- Email HTML responsive para todos los clientes de email
+- Información completa y sin errores
+- Funciona offline (sin APIs externas si no hay conexión)
+
+**Archivos a Crear/Modificar:**
+- `lib/features/calendar/domain/services/plan_export_service.dart` (nuevo)
+- `lib/features/calendar/presentation/widgets/export_plan_button.dart` (nuevo)
+- `lib/features/calendar/presentation/widgets/export_plan_dialog.dart` (nuevo)
+- `lib/features/calendar/presentation/widgets/export_preview_dialog.dart` (nuevo)
+- Añadir paquetes: `pdf: ^3.10.0`, `image_picker` (ya existe), `google_maps_flutter` (opcional)
+
+**Secciones del PDF/Email Sugeridas:**
+
+1. **Portada** (1 página)
+   - Foto plan + nombre + fechas
+   
+2. **Itinerario Día a Día** (N páginas)
+   - Día 1: Eventos del día con fotos y descripciones
+   - Día 2: ...
+   
+3. **Información de Alojamientos** (1-2 páginas)
+   - Lista de hoteles con fotos y detalles
+   
+4. **Participantes** (1 página)
+   - Lista de participantes confirmados
+   
+5. **Información Adicional** (1 página)
+   - Presupuesto, timezones, notas
+
+**Preguntas Clave:**
+1. ¿Qué tipos de información externa debemos incluir? ¿Solo básico (fotos, descripciones) o también datos en tiempo real (clima)?
+2. ¿El PDF debe incluir mapa visual del itinerario o solo texto?
+3. ¿Permitir personalizar colores/fuentes o usar plantillas fijas?
+4. ¿Necesitamos integración con APIs externas (Places, Wikipedia) o usar solo datos del plan?
+5. ¿El email es solo para invitación o también para share del PDF generado?
+6. ¿Límite de tamaño del PDF? ¿Comprimir imágenes?
+7. ¿Tracking de quién descargó/abrió el PDF?
+
+**Relacionado con:**
+- T131 (Sincronización calendarios externos)
+- T132 (Sistema de agencias)
+- docs/flujos/FLUJO_CRUD_PLANES.md (vista del plan)
+- docs/guias/GUIA_UI.md (diseño visual)
 
 ---
 
