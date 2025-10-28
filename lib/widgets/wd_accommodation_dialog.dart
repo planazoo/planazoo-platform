@@ -78,10 +78,30 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     _selectedCheckIn = widget.initialCheckIn ?? widget.accommodation?.checkIn ?? widget.planStartDate;
     _selectedCheckOut = widget.accommodation?.checkOut ?? _selectedCheckIn.add(const Duration(days: 1));
     _selectedColor = widget.accommodation?.color ?? 'blue';
-    _selectedType = widget.accommodation?.typeSubtype ?? 'Hotel';
+    
+    // Normalizar tipo de alojamiento (capitalizar primera letra)
+    final typeFromDB = widget.accommodation?.typeSubtype ?? '';
+    _selectedType = _normalizeType(typeFromDB);
     
     // Inicializar participantes seleccionados
     _selectedParticipantTrackIds = widget.accommodation?.participantTrackIds ?? [];
+  }
+  
+  /// Normaliza el tipo de alojamiento a formato capitalizado
+  String _normalizeType(String type) {
+    if (type.isEmpty) return 'Hotel';
+    
+    // Si el tipo está en la lista de tipos disponibles, devolverlo tal cual
+    if (_accommodationTypes.contains(type)) {
+      return type;
+    }
+    
+    // Capitalizar la primera letra
+    if (type.isNotEmpty) {
+      return type[0].toUpperCase() + type.substring(1).toLowerCase();
+    }
+    
+    return 'Hotel';
   }
 
   @override
@@ -131,6 +151,13 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 setState(() {
                   _selectedType = value ?? 'Hotel';
                 });
+              },
+              validator: (value) {
+                // Validar que el valor esté en la lista
+                if (value == null || !_accommodationTypes.contains(value)) {
+                  return 'Tipo de alojamiento inválido';
+                }
+                return null;
               },
             ),
             const SizedBox(height: 16),
@@ -423,6 +450,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       return;
     }
 
+    // Normalizar el tipo seleccionado antes de guardar
+    final normalizedType = _normalizeType(_selectedType);
+
     final accommodation = Accommodation(
       id: widget.accommodation?.id,
       planId: widget.planId,
@@ -434,7 +464,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
           : _descriptionController.text.trim(),
       color: _selectedColor,
       typeFamily: 'alojamiento',
-      typeSubtype: _selectedType,
+      typeSubtype: normalizedType,
       participantTrackIds: _selectedParticipantTrackIds,
       createdAt: widget.accommodation?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
