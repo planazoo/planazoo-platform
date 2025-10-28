@@ -29,9 +29,10 @@ Flujos específicos del ciclo de vida de la aplicación:
 ### 📐 [Especificaciones](./especificaciones/)
 Especificaciones técnicas detalladas:
 - [Capacidades del Calendario](./especificaciones/CALENDAR_CAPABILITIES.md)
-- [Campos de Eventos](./especificaciones/EVENT_FORM_FIELDS.md)
+- [Campos de Planes](./especificaciones/PLAN_FORM_FIELDS.md) - Formularios de creación/edición
+- [Campos de Eventos](./especificaciones/EVENT_FORM_FIELDS.md) - Incluye implementación técnica
+- [Campos de Alojamientos](./especificaciones/ACCOMMODATION_FORM_FIELDS.md)
 - [Plan Frankenstein](./especificaciones/FRANKENSTEIN_PLAN_SPEC.md)
-- [Especificación de Campos de Eventos](./especificaciones/EVENT_FIELDS_SPECIFICATION.md)
 
 ### 🏗️ [Arquitectura](./arquitectura/)
 Decisiones arquitectónicas y documentación técnica:
@@ -50,7 +51,7 @@ Gestión de tareas del proyecto:
 ### ⚙️ [Configuración](./configuracion/)
 Configuración y contexto del proyecto:
 - [Contexto del Proyecto](./configuracion/CONTEXT.md) - Normas y reglas de colaboración
-- [Flujo de Creación de Plan](./configuracion/FLUJO_CREACION_PLAN.md) - Índice del sistema de planes
+- [Índice del Sistema de Planes](./configuracion/INDICE_SISTEMA_PLANES.md) - Visión general del sistema
 
 ---
 
@@ -59,16 +60,16 @@ Configuración y contexto del proyecto:
 ### Para Desarrolladores
 1. Lee [Contexto del Proyecto](./configuracion/CONTEXT.md) para entender las normas
 2. Consulta [Prompt Base](./guias/PROMPT_BASE.md) para la metodología de trabajo
-3. Revisa [Guía de UI](./guias/GUIA_UI.md) para componentes y estilos
+3. Revisa [Guía de UI](./guias/GUIA_UI.md) para componentes, estilos y grid 17×13
 4. Explora los [Flujos de Proceso](./flujos/) para entender funcionalidades
 
 ### Para Diseñadores
-1. Consulta [Guía de UI](./guias/GUIA_UI.md) para el sistema de diseño
+1. Consulta [Guía de UI](./guias/GUIA_UI.md) para el sistema de diseño y grid 17×13
 2. Revisa [Documentación UX](./ux/) para entender la interfaz
 3. Explora [Especificaciones](./especificaciones/) para detalles técnicos
 
 ### Para Product Managers
-1. Lee el [Flujo de Creación de Plan](./configuracion/FLUJO_CREACION_PLAN.md)
+1. Lee el [Índice del Sistema de Planes](./configuracion/INDICE_SISTEMA_PLANES.md)
 2. Revisa [Estado de Tareas](./tareas/TASKS.md)
 3. Consulta los flujos en [Flujos de Proceso](./flujos/)
 
