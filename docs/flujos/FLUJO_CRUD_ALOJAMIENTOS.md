@@ -64,13 +64,15 @@ graph TB
 
 ## 📊 ESTADOS DE ALOJAMIENTOS
 
-| Estado | Descripción | Editable | Eliminable | Visible Para |
-|--------|-------------|----------|------------|--------------|
-| **Borrador** | Alojamiento en creación | ✅ Todo | ✅ Sí | Solo creador |
-| **Reservado** | Alojamiento confirmado | ⚠️ Limitado | ⚠️ Con confirmación | Asignados + organizador |
-| **Check-in Realizado** | Ya se hizo check-in | ⚠️ Solo actualizaciones | ❌ No | Todos |
-| **Check-out Realizado** | Ya se hizo check-out | ❌ No | ❌ No | Todos |
-| **Cancelado** | Alojamiento cancelado | ❌ No | ❌ No | Todos |
+| Estado | Descripción | Editable | Eliminable | Visible Para | Parte Personal Editable |
+|--------|-------------|----------|------------|--------------|-------------------------|
+| **Borrador** | Alojamiento en creación | ✅ Todo | ✅ Sí | Solo creador | ✅ Sí |
+| **Reservado** | Alojamiento confirmado | ⚠️ Limitado | ⚠️ Con confirmación | Asignados + organizador | ✅ Sí |
+| **Check-in Realizado** | Ya se hizo check-in | ⚠️ Solo actualizaciones | ❌ No | Todos | ⚠️ Solo notas |
+| **Check-out Realizado** | Ya se hizo check-out | ❌ No | ❌ No | Todos | ❌ No |
+| **Cancelado** | Alojamiento cancelado | ❌ No | ❌ No | Todos | ❌ No |
+
+**Nota:** La parte personal (habitaciones, preferencias) es editable hasta el check-in, excepto notas que pueden añadirse durante la estancia.
 
 ---
 
@@ -97,9 +99,20 @@ Completar campos:
 - Subtipo (Suite/Dormitorio/Estudio/etc.)
 - Participantes asignados (quién se aloja)
 - Descripción (opcional, máximo 1000 caracteres)
+- Dirección y contacto (opcional)
+- Servicios/amenities (opcional)
+- Capacidad máxima (opcional)
 - Color (opcional, para visualización)
 - Presupuesto (T101)
 - Coste total o por persona (T101)
+  ↓
+Si hay múltiples participantes:
+- ¿Seleccionar habitaciones individuales? [Checkbox]
+- Si sí: Configurar parte personal por participante:
+  - Número de habitación por participante (ej: "203", "Suite 501")
+  - Tipo de cama por participante
+  - Preferencias personales (piso alto, sin ruido, vista al mar, etc.)
+  - Notas personales
   ↓
 Validaciones (T51):
 - Nombre no vacío
@@ -154,6 +167,38 @@ Estado: "Reservado" o "Borrador" según configuración automática
 - `participantTrackIds` - Participantes asignados
 - `createdAt` - Timestamp de creación
 - `updatedAt` - Timestamp de última actualización
+- `commonPart` - **[NUEVO]** Parte común del alojamiento (similar a eventos)
+- `personalParts` - **[NUEVO]** Parte personal por participante (habitación, preferencias, etc.)
+
+**Estructura parte común (AccommodationCommonPart):**
+- `hotelName` - Nombre del hotel
+- `checkIn`, `checkOut` - Fechas de check-in/check-out
+- `description` - Descripción general
+- `address`, `contactInfo` - Ubicación y contacto
+- `amenities` - Servicios del hotel (wifi, piscina, etc.)
+- `maxCapacity` - Capacidad máxima
+- `participantIds` - Participantes incluidos
+- `isForAllParticipants` - Si aplica a todos
+
+**Estructura parte personal (AccommodationPersonalPart) - por participante:**
+- `participantId` - ID del participante
+- `roomNumber` - **Número de habitación individual** (ej: "203", "Suite 501")
+- `bedType` - Tipo de cama (individual, matrimonio, litera, etc.)
+- `preferences` - Preferencias (piso alto, sin ruido, vista al mar, etc.)
+- `notes` - Notas personales del alojamiento
+- `fields` - Campos adicionales específicos
+
+**Ejemplo de uso:**
+```dart
+AccommodationPersonalPart(
+  participantId: "user123",
+  roomNumber: "203",
+  bedType: "matrimonio",
+  preferences: {"floor": "alto", "view": "mar", "quiet": true},
+  notes: "Vista al mar solicitada",
+  fields: {"earlyCheckIn": true, "lateCheckOut": false}
+)
+```
 
 #### 1.2 - Creación con Conexión a Proveedor
 
@@ -221,29 +266,46 @@ Mostrar modal/detalle completo:
 │ ⏱️ Duración: 6 noches             │
 │                                    │
 │ 👥 Huéspedes:                      │
-│    • Juan (organizador)           │
-│    • María                         │
-│    • Pedro                         │
+│    • Juan (organizador) - Hab 203 │
+│    • María - Hab 204              │
+│    • Pedro - Hab 205              │
+│                                    │
+│ 🏨 Ubicación: 123 Calle Principal │
+│ 📞 Contacto: +34 123 456 789      │
+│ ☕ Servicios: Wifi, Piscina        │
 │                                    │
 │ 💰 Coste: €1,200 (€200/noche)     │
 │ 🔄 Actualizado por: Booking.com  │
 │                                    │
 │ [Editar] [Check-in] [Check-out]   │
 │ [Eliminar] [Ver mapa]             │
+│ [Ver detalles por habitación]     │
 └────────────────────────────────────┘
+
+Detalles por habitación (si existe parte personal):
+- Juan - Hab 203: Matrimonio, Piso 2, Vista al mar
+- María - Hab 204: Individual, Piso 2, Vista jardín
+- Pedro - Hab 205: Matrimonio, Piso 3, Vista al mar
 ```
 
 #### 2.2 - Información Contextual
 
-**Campos mostrados:**
+**Campos mostrados (parte común):**
 - Nombre del alojamiento
 - Fechas de check-in y check-out
 - Duración en días/noches
-- Participantes asignados
-- Ubicación/ma
+- Dirección y contacto
+- Servicios/amenities
+- Capacidad máxima
 - Coste y presupuesto (T101)
 - Estado (Borrador, Reservado, Check-in, Check-out)
 - Historial de cambios automáticos desde proveedor
+
+**Campos mostrados (parte personal):**
+- Número de habitación por participante
+- Tipo de cama por participante
+- Preferencias personales
+- Notas personales del alojamiento
 - Próximo evento relacionado
 
 ---
@@ -297,7 +359,31 @@ Reconfirmación: OBLIGATORIA
 - Calcular reembolso si pagó (T102)
 - Recalcular presupuesto total
 
-#### 3.3 - Gestionar Check-in/Check-out
+#### 3.3 - Actualizar Parte Personal (Habitaciones)
+
+**Flujo:**
+```
+Usuario → Alojamiento → "Editar habitaciones"
+  ↓
+Formulario por participante:
+- Seleccionar participante
+- Número de habitación (ej: "203")
+- Tipo de cama (individual, matrimonio, litera)
+- Preferencias personales:
+  - Piso preferido
+  - Vista (mar, jardín, ciudad)
+  - Servicios adicionales
+  - Restricciones (sin ruido, piso alto, etc.)
+- Notas personales sobre el alojamiento
+  ↓
+Guardar cambios en personalParts
+  ↓
+Actualizar timestamp updatedAt
+  ↓
+Notificar a participante si cambio de habitación
+```
+
+#### 3.4 - Gestionar Check-in/Check-out
 
 **Check-in:**
 ```
@@ -344,7 +430,7 @@ Notificar a todos los participantes (T105)
 Generar resumen de costes finales (T101)
 ```
 
-#### 3.4 - Actualizar Presupuesto
+#### 3.5 - Actualizar Presupuesto
 
 **Flujo:**
 ```
@@ -357,7 +443,7 @@ Recalcular distribución por persona (T102)
 Notificar si cambio >€100 o >20%
 ```
 
-#### 3.5 - Conectar/Desconectar Proveedor en Alojamiento Existente
+#### 3.6 - Conectar/Desconectar Proveedor en Alojamiento Existente
 
 **Conectar proveedor:**
 - Buscar proveedor en catálogo

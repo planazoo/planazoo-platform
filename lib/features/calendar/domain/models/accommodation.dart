@@ -14,6 +14,9 @@ class Accommodation {
   final List<String> participantTrackIds; // IDs de tracks de participantes asignados
   final DateTime createdAt;
   final DateTime updatedAt;
+  // NUEVO: estructura parte común + parte personal (similar a eventos)
+  final AccommodationCommonPart? commonPart;
+  final Map<String, AccommodationPersonalPart>? personalParts; // key: participantId
 
   const Accommodation({
     this.id,
@@ -28,6 +31,8 @@ class Accommodation {
     this.participantTrackIds = const [],
     required this.createdAt,
     required this.updatedAt,
+    this.commonPart,
+    this.personalParts,
   });
 
   /// Crear desde un documento de Firestore
@@ -47,12 +52,18 @@ class Accommodation {
       participantTrackIds: List<String>.from(data['participantTrackIds'] ?? []),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      commonPart: data['commonPart'] != null 
+          ? AccommodationCommonPart.fromMap(data['commonPart'] as Map<String, dynamic>)
+          : null,
+      personalParts: data['personalParts'] != null
+          ? (data['personalParts'] as Map<String, dynamic>).map((k, v) => MapEntry(k, AccommodationPersonalPart.fromMap(v as Map<String, dynamic>)))
+          : null,
     );
   }
 
   /// Convertir a formato de Firestore
   Map<String, dynamic> toFirestore() {
-    return {
+    final map = <String, dynamic>{
       'planId': planId,
       'checkIn': Timestamp.fromDate(checkIn),
       'checkOut': Timestamp.fromDate(checkOut),
@@ -65,6 +76,14 @@ class Accommodation {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
+    // Escribir estructura nueva si está presente
+    if (commonPart != null) {
+      map['commonPart'] = commonPart!.toMap();
+    }
+    if (personalParts != null && personalParts!.isNotEmpty) {
+      map['personalParts'] = personalParts!.map((k, v) => MapEntry(k, v.toMap()));
+    }
+    return map;
   }
 
   /// Crear una copia con cambios
@@ -81,6 +100,8 @@ class Accommodation {
     List<String>? participantTrackIds,
     DateTime? createdAt,
     DateTime? updatedAt,
+    AccommodationCommonPart? commonPart,
+    Map<String, AccommodationPersonalPart>? personalParts,
   }) {
     return Accommodation(
       id: id ?? this.id,
@@ -95,6 +116,8 @@ class Accommodation {
       participantTrackIds: participantTrackIds ?? this.participantTrackIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      commonPart: commonPart ?? this.commonPart,
+      personalParts: personalParts ?? this.personalParts,
     );
   }
 
@@ -165,5 +188,126 @@ class Accommodation {
   @override
   int get hashCode {
     return Object.hash(id, planId, checkIn, checkOut, hotelName);
+  }
+}
+
+// NUEVOS MODELOS: Parte común y parte personal para alojamientos
+class AccommodationCommonPart {
+  final String hotelName;
+  final DateTime checkIn;
+  final DateTime checkOut;
+  final String? description;
+  final String? notes;
+  final String? typeFamily;
+  final String? typeSubtype;
+  final String? customColor;
+  final String? address;
+  final String? contactInfo;
+  final Map<String, dynamic>? amenities;
+  final int? maxCapacity;
+  final List<String> participantIds; // participantes incluidos en la parte común
+  final bool isForAllParticipants;
+  final Map<String, dynamic>? extraData;
+
+  const AccommodationCommonPart({
+    required this.hotelName,
+    required this.checkIn,
+    required this.checkOut,
+    this.description,
+    this.notes,
+    this.typeFamily,
+    this.typeSubtype,
+    this.customColor,
+    this.address,
+    this.contactInfo,
+    this.amenities,
+    this.maxCapacity,
+    this.participantIds = const [],
+    this.isForAllParticipants = true,
+    this.extraData,
+  });
+
+  factory AccommodationCommonPart.fromMap(Map<String, dynamic> map) {
+    return AccommodationCommonPart(
+      hotelName: map['hotelName'] ?? '',
+      checkIn: (map['checkIn'] is Timestamp) 
+          ? (map['checkIn'] as Timestamp).toDate() 
+          : DateTime.parse(map['checkIn'] as String),
+      checkOut: (map['checkOut'] is Timestamp) 
+          ? (map['checkOut'] as Timestamp).toDate() 
+          : DateTime.parse(map['checkOut'] as String),
+      description: map['description'],
+      notes: map['notes'],
+      typeFamily: map['typeFamily'],
+      typeSubtype: map['typeSubtype'],
+      customColor: map['customColor'],
+      address: map['address'],
+      contactInfo: map['contactInfo'],
+      amenities: map['amenities'] as Map<String, dynamic>?,
+      maxCapacity: map['maxCapacity'],
+      participantIds: (map['participantIds'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
+      isForAllParticipants: map['isForAllParticipants'] ?? true,
+      extraData: map['extraData'] as Map<String, dynamic>?,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'hotelName': hotelName,
+      'checkIn': Timestamp.fromDate(checkIn),
+      'checkOut': Timestamp.fromDate(checkOut),
+      if (description != null) 'description': description,
+      if (notes != null) 'notes': notes,
+      if (typeFamily != null) 'typeFamily': typeFamily,
+      if (typeSubtype != null) 'typeSubtype': typeSubtype,
+      if (customColor != null) 'customColor': customColor,
+      if (address != null) 'address': address,
+      if (contactInfo != null) 'contactInfo': contactInfo,
+      if (amenities != null) 'amenities': amenities,
+      if (maxCapacity != null) 'maxCapacity': maxCapacity,
+      'participantIds': participantIds,
+      'isForAllParticipants': isForAllParticipants,
+      if (extraData != null) 'extraData': extraData,
+    };
+  }
+}
+
+class AccommodationPersonalPart {
+  final String participantId;
+  final String? roomNumber; // Número de habitación individual
+  final String? bedType; // Tipo de cama (individual, matrimonio, etc.)
+  final Map<String, dynamic>? preferences; // Preferencias personales (piso alto, sin ruido, etc.)
+  final Map<String, dynamic>? notes; // Notas personales del alojamiento
+  final Map<String, dynamic>? fields; // Campos específicos adicionales
+
+  const AccommodationPersonalPart({
+    required this.participantId,
+    this.roomNumber,
+    this.bedType,
+    this.preferences,
+    this.notes,
+    this.fields,
+  });
+
+  factory AccommodationPersonalPart.fromMap(Map<String, dynamic> map) {
+    return AccommodationPersonalPart(
+      participantId: map['participantId'] ?? '',
+      roomNumber: map['roomNumber'],
+      bedType: map['bedType'],
+      preferences: map['preferences'] as Map<String, dynamic>?,
+      notes: map['notes'] as Map<String, dynamic>?,
+      fields: map['fields'] as Map<String, dynamic>?,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'participantId': participantId,
+      if (roomNumber != null) 'roomNumber': roomNumber,
+      if (bedType != null) 'bedType': bedType,
+      if (preferences != null) 'preferences': preferences,
+      if (notes != null) 'notes': notes,
+      if (fields != null) 'fields': fields,
+    };
   }
 }
