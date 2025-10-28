@@ -187,27 +187,43 @@ Crear User en Firestore:
 - role: "user"
 ```
 
-#### 1.3 - Registro Invitado
+#### 1.3 - Registro mediante Invitación (mismo registro estándar)
 
-**Flujo:**
+> La invitación no crea un tipo de usuario distinto. Solo prellena datos y vincula al plan tras el registro estándar.
+
+**Flujo (unificado con registro por email):**
 ```
-Usuario recibe invitación a plan
+Usuario recibe invitación a plan (token firmado con caducidad)
   ↓
 Hace clic en link de invitación
   ↓
-Modal: "Registrarse en Planazoo"
+Pantalla de registro estándar
   ↓
-Formulario simplificado:
-- Email (pre-rellenado de invitación)
+Formulario (igual que email):
+- Email (pre-rellenado y bloqueado si viene en la invitación)
 - Password
 - Nombre completo
 - Username (opcional)
+- Aceptar términos y condiciones (obligatorio)
   ↓
-Crear cuenta
+Validaciones estándar (incluye rate limiting si hay fallos sucesivos)
   ↓
-Aceptar invitación automáticamente
+Crear cuenta en Firebase Auth + User en Firestore
   ↓
-Añadir a participantes del plan
+Enviar email de verificación
+  ↓
+Tras verificar email: aceptar invitación y añadir a `PlanParticipation`
+  ↓
+Redirigir al plan invitado
+```
+
+**Casos límite:**
+```
+Token expirado/ya usado → Mostrar aviso y opción "Solicitar nueva invitación"
+Email distinto al de la invitación → Bloquear o requerir aprobación del organizador
+Usuario ya logueado y con cuenta existente → Aceptar invitación directamente y vincular
+CAPTCHA → Solo aplica al registro por email, no a Google
+Multi-idioma → Textos de emails/notificaciones vienen de .arb
 ```
 
 ---
@@ -229,7 +245,20 @@ Validaciones:
 - Password correcto
 - Cuenta activa (no suspendida)
   ↓
+Intentos fallidos (seguridad):
+- Después de 3 fallos: Mostrar CAPTCHA
+- Después de 5 fallos: Bloquear cuenta temporalmente (15 minutos)
+- Después de 5 fallos: Enviar email de alerta al usuario
+  ↓
 Login exitoso
+  ↓
+Detectar dispositivo:
+- ¿Es dispositivo conocido?
+  ↓
+Si es dispositivo NUEVO:
+- Enviar email de notificación:
+  "Inicio de sesión desde nuevo dispositivo [ip, browser, fecha]"
+- Mostrar advertencia en UI (opcional)
   ↓
 Actualizar lastLogin en Firestore
   ↓
@@ -237,6 +266,11 @@ Redirigir a Dashboard
   ↓
 Mostrar últimos planes del usuario
 ```
+
+**Manejo de errores:**
+- Mensaje genérico: "Email o contraseña incorrectos" (no detallar cuál)
+- No exponer si el email existe o no por razones de seguridad
+- Logging sin datos sensibles (userId hasheado, timestamp, IP máscara parcial)
 
 #### 2.2 - Login con Google
 
@@ -282,9 +316,11 @@ Acceso completo a funcionalidades
 ```
 
 **Consideraciones:**
+- Link de verificación válido por **7 días** (con token firmado)
 - Cuentas sin verificar tienen limitaciones (no pueden invitar a otros, crear planes públicos, etc.)
 - Enviar recordatorios automáticos si no verifica en 3 días
 - Permitir reenvío de email de verificación
+- Invalidar todos los tokens de verificación previos al generar uno nuevo
 
 #### 2.4 - Recuperación de Contraseña
 
@@ -296,17 +332,38 @@ Formulario: Ingresar email
   ↓
 Verificar email existe
   ↓
+Rate limiting:
+- Máximo 3 emails de recuperación por hora
+- Si se excede: bloquear por 1 hora
+- Notificar al usuario de intentos excesivos
+  ↓
 Enviar email de recuperación:
 "Recuperar contraseña de Planazoo
 
 Haz clic aquí para restablecer tu contraseña.
-Link válido por 1 hora."
+Link válido por 1 hora.
+
+⚠️ Si no solicitaste esto, ignora este email."
+  ↓
+Invalidar todos los tokens de recuperación previos
   ↓
 Usuario hace clic en link
   ↓
+Validar token no expirado (1 hora)
+  ↓
+Si expirado: Mensaje "Link expirado. Solicita uno nuevo."
+  ↓
 Formulario: Nueva contraseña (confirmación)
   ↓
+Validaciones:
+- Mínimo 8 caracteres
+- Requisitos de seguridad
+  ↓
 Actualizar contraseña
+  ↓
+Invalidar el token usado (no reutilizable)
+  ↓
+Enviar email de confirmación de cambio
   ↓
 Redirigir a login
 ```
@@ -357,7 +414,7 @@ Formulario editable:
 - Foto de perfil (subir/cambiar/eliminar)
 - Nombre completo
 - Username
-- Email (no editable, solo visible)
+- Email (editable, requiere verificación de nuevo email)
 - Biografía (máximo 500 caracteres)
   ↓
 Guardar cambios
@@ -365,12 +422,18 @@ Guardar cambios
 Validaciones:
 - Nombre no vacío
 - Username único (si cambió)
+- Email válido y único (si cambió)
 - Foto dentro de límite de tamaño (máx 2MB)
 - Biografía máximo 500 caracteres
   ↓
+Si cambió email:
+- Enviar email de verificación al nuevo email
+- Bloquear edición hasta verificación
+- Mostrar "Esperando verificación de nuevo email"
+  ↓
 Actualizar en Firestore
   ↓
-Actualizar en Firebase Auth (displayName, photoURL)
+Actualizar en Firebase Auth (displayName, photoURL, email si cambió)
   ↓
 Actualizar foto en Firebase Storage (si cambió foto)
   ↓
@@ -407,21 +470,29 @@ Si sube nueva foto:
 ```
 Usuario → Perfil → "Cambiar contraseña"
   ↓
+Reautenticación (opcional si requisitos de seguridad):
+- Solicitar contraseña actual O verificación por email
+  ↓
 Formulario:
-- Contraseña actual
+- Contraseña actual (si no se reautenticó)
 - Nueva contraseña
 - Confirmar nueva contraseña
   ↓
 Validaciones:
-- Contraseña actual correcta
+- Contraseña actual correcta (si no se reautenticó)
 - Nueva contraseña mínimo 8 caracteres
+- Nueva contraseña diferente a la actual
 - Nuevas contraseñas coinciden
   ↓
 Actualizar en Firebase Auth
   ↓
-Cerrar sesión en todos los dispositivos (opcional)
+Invalidar todos los tokens de sesión excepto el actual
+  ↓
+Mostrar opción: "Cerrar sesión en todos los dispositivos" [Checkbox]
   ↓
 Confirmar cambio exitoso
+  ↓
+Enviar email de confirmación de cambio de contraseña
 ```
 
 #### 3.3 - Cambiar Email
@@ -436,22 +507,44 @@ de nuevo email.
 
 ¿Continuar?"
   ↓
+Reautenticación obligatoria:
+- Solicitar contraseña actual O verificación por email al email actual
+  ↓
 Formulario:
 - Email actual: [mostrar, no editable]
 - Nuevo email
   ↓
+Validaciones:
+- Nuevo email válido y único
+- Nuevo email diferente al actual
+  ↓
 Enviar email de verificación al nuevo email
+  ↓
+Invalidar todos los tokens de cambio de email previos
   ↓
 Email enviado:
 "Verifica tu nuevo email en Planazoo
 
-Haz clic aquí para verificar tu nuevo email."
+Haz clic aquí para verificar tu nuevo email.
+Link válido por 1 hora."
   ↓
 Usuario hace clic en link
   ↓
+Validar token no expirado (1 hora)
+  ↓
+Si expirado: Mensaje "Link expirado. Solicita uno nuevo."
+  ↓
 Actualizar email en Firebase Auth y Firestore
   ↓
+Invalidar el token usado (no reutilizable)
+  ↓
+Invalidar todos los tokens de sesión del email anterior
+  ↓
 Email anterior ya no válido para login
+  ↓
+Enviar email de confirmación al nuevo email:
+"Tu email ha sido cambiado exitosamente.
+Email anterior ya no válido para login."
 ```
 
 ---
@@ -464,12 +557,21 @@ Email anterior ya no válido para login
 ```
 Usuario → Configuración → "Notificaciones"
   ↓
-Panel de preferencias:
+Panel de preferencias globales:
 - Notificaciones push: Activadas/Desactivadas
 - Notificaciones email: Activadas/Desactivadas
 - Horarios silencio: 22:00 - 08:00
-- Notificaciones de planes: Sí/No
-- Notificaciones de eventos: Sí/No
+  ↓
+Configuración por tipo (opcional):
+- Notificaciones de planes: Sí/No (default: Sí)
+- Notificaciones de eventos: Sí/No (default: Sí)
+- Cambios importantes: Sí/No (default: Sí)
+- Recordatorios: Sí/No (default: Sí)
+- Comentarios/avisos: Sí/No (default: Sí)
+  ↓
+Configuración por plan (gestionar por separado):
+- Mostrar planes activos
+- Activar/desactivar notificaciones por plan individual
   ↓
 Guardar preferencias
   ↓
@@ -478,11 +580,18 @@ preferences: {
   notifications: {
     push: true,
     email: true,
-    quietHours: {...},
-    plans: true,
-    events: true
+    quietHours: { start: "22:00", end: "08:00" },
+    types: {
+      plans: true,
+      events: true,
+      important: true,
+      reminders: true,
+      comments: true
+    }
   }
 }
+  ↓
+Persistencia adicional en localStorage para configuración inmediata
 ```
 
 #### 4.2 - Idioma y Zona Horaria
@@ -493,15 +602,27 @@ Usuario → Configuración → "Localización"
   ↓
 Seleccionar idioma: Español / English
   ↓
+Formato de fecha (derivado de idioma):
+- dd/mm/yyyy (Español)
+- mm/dd/yyyy (English)
+- yyyy-mm-dd (ISO)
+  ↓
+Formato de hora:
+- 12h (AM/PM)
+- 24h (default)
+  ↓
 Seleccionar zona horaria:
+- Auto-detectada por ubicación (default)
 - Europe/Madrid (automático por ubicación)
-- Otras opciones...
+- Otras opciones... (selector manual)
   ↓
 Guardar
   ↓
 Actualizar preferencias en Firestore
   ↓
-App se actualiza inmediatamente con nuevo idioma
+App se actualiza inmediatamente sin reinicio
+  ↓
+Persistencia en localStorage para cambio inmediato de idioma
 ```
 
 #### 4.3 - Configuración de Privacidad
@@ -552,21 +673,40 @@ Escribe tu contraseña para confirmar: [input]
 Confirmar contraseña
   ↓
 Sistema:
-- Marcar planes como "Sin organizador" (o asignar a Coorganizador)
-- Eliminar de participantes de planes
-- Eliminar User de Firestore (o marcar como eliminado)
-- Eliminar cuenta de Firebase Auth
+- Estado inicial: "deleted" con timestamp deletedAt
+- Período de gracia: 30 días antes de eliminación permanente
+- Proceso de despedida:
+  a) Si tiene planes como organizador:
+     - Buscar Coorganizador para asignar
+     - Si no hay: marcar planes como "Sin organizador"
+     - Notificar a participantes: "El organizador [Usuario] ha eliminado su cuenta"
+  b) Eliminar de PlanParticipation en todos los planes
+  c) Mantener datos personales (User en Firestore) marcados como "deleted"
+  d) Cerrar sesión en todos los dispositivos
+  e) Bloquear acceso a Firebase Auth (mantener cuenta por 30 días)
   ↓
-Notificar a otros participantes (opcional):
+Enviar email de despedida:
+"Hemos recibido tu solicitud de eliminación de cuenta.
+Tus datos se eliminarán permanentemente en 30 días.
+Si cambias de opinión, recupera tu cuenta antes del [fecha]."
+  ↓
+Notificar a otros participantes:
 "[Usuario] ha eliminado su cuenta y ya no participa en [Plan]"
   ↓
-Redirigir a landing page
+Redirigir a landing page con mensaje de despedida
+  ↓
+Después de 30 días (proceso automático):
+- Eliminar User de Firestore permanentemente
+- Eliminar cuenta de Firebase Auth
+- Limpiar datos de planes (si no hay coorganizador)
 ```
 
 **Consideraciones:**
-- No eliminar realmente datos por posible recuperación (30 días)
-- Marcar como "deleted" en lugar de eliminar
+- No eliminar datos durante el período de gracia (30 días)
+- Marcar como `status: "deleted"` en lugar de eliminar inmediatamente
 - Permitir recuperación dentro de 30 días
+- Proceso de recuperación: re-login y confirmar que quiere restaurar cuenta
+- Si pasa los 30 días: eliminación automática e irreversible
 
 #### 5.2 - Suspender Cuenta (Admin)
 
@@ -594,16 +734,26 @@ Modal de decisión:
 - Notificar al usuario"
   ↓
 Suspender:
-- Marcar como "suspended"
+- Marcar como `status: "suspended"`
 - Desactivar login
-- Notificar usuario por email
-- Permitir apelación
+- Definir tiempo de suspensión (30/60/90 días)
+- Notificar usuario por email con:
+  - Razón de suspensión
+  - Duración
+  - Proceso de apelación
+- Permitir apelación con panel de revisión
 
 Eliminar:
-- Marcar como "eliminado por admin"
-- Desactivar cuenta
-- Generar reporte de eliminación
-- Notificar usuario por email
+- Marcar como `status: "eliminado por admin"`
+- Proceso de despedida (igual que usuario auto-eliminado):
+  - Buscar Coorganizadores para sus planes
+  - Eliminar de participaciones
+  - Mantener datos 30 días antes de eliminación permanente
+- Generar reporte de eliminación con:
+  - Razón de eliminación
+  - Timestamp
+  - Datos eliminados
+- Notificar usuario por email con plazo de 30 días antes de eliminación permanente
 ```
 
 #### 5.3 - Auto-suspensión por Inactividad

@@ -17,6 +17,7 @@ Flujos específicos del ciclo de vida de la aplicación:
 - [CRUD Planes](./flujos/FLUJO_CRUD_PLANES.md) - Crear, leer, actualizar y eliminar planes
 - [CRUD Usuarios](./flujos/FLUJO_CRUD_USUARIOS.md) - Registro, login y gestión de usuarios
 - [CRUD Eventos](./flujos/FLUJO_CRUD_EVENTOS.md) - Gestión completa de eventos
+- [CRUD Alojamientos](./flujos/FLUJO_CRUD_ALOJAMIENTOS.md) - Gestión completa de alojamientos
 - [Estados del Plan](./flujos/FLUJO_ESTADOS_PLAN.md) - Transiciones entre estados
 - [Gestión de Participantes](./flujos/FLUJO_GESTION_PARTICIPANTES.md) - Invitaciones y gestión
 - [Presupuesto y Pagos](./flujos/FLUJO_PRESUPUESTO_PAGOS.md) - Sistema financiero

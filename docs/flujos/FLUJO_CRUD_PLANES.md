@@ -92,13 +92,34 @@ graph TB
 Usuario → Dashboard → "Crear plan"
   ↓
 Formulario inicial:
-- Nombre del plan (requerido)
-- Fechas: inicio y fin (requerido)
-- Descripción (opcional)
-- Imagen del plan (opcional)
+- Nombre del plan (requerido, validar longitud)
+- Fechas: inicio y fin (requerido, validar rango)
+- Descripción (opcional, máximo 1000 caracteres)
+- Imagen del plan (opcional, máx 5MB)
 - Visibilidad: Público/Privado (default: Privado)
+- Timezone: Auto-detectada del organizador (default)
   ↓
 Guardar (primer guardado)
+  ↓
+Crear Plan en Firestore:
+- id: Auto-generado
+- name: Nombre del plan
+- organizerId: userId del creador
+- startDate, endDate: Fechas
+- description: Descripción
+- imageUrl: URL de imagen
+- visibility: "private" o "public"
+- timezone: Timezone del organizador
+- state: "borrador"
+- createdAt: Timestamp
+- updatedAt: Timestamp
+  ↓
+Crear PlanParticipation para el organizador:
+- planId: ID del plan
+- userId: organizerId
+- role: "organizer"
+- joinedAt: Timestamp
+- isActive: true
   ↓
 Estado: "Borrador"
   ↓
@@ -110,11 +131,17 @@ Usuario completa configuración:
   ↓
 Guardar cambios
   ↓
-Estado: "Planificando"
+Validaciones automáticas:
+- ¿Tiene al menos 1 evento?
+- ¿Tiene al menos 1 participante además del organizador?
+- ¿Fechas son coherentes?
   ↓
-Organizador marca como "listo"
+Si cumple validaciones: Estado: "Planificando"
+Si no cumple: Mantener "Borrador" con aviso
   ↓
-Estado: "Confirmado"
+Organizador marca como "listo" (opcional)
+  ↓
+Si marca "listo": Estado: "Confirmado"
 ```
 
 #### 1.2 - Creación por Copia (T118)
@@ -142,12 +169,30 @@ Ajustar fechas automáticamente según nueva fecha inicio
   ↓
 Generar nombre: "[Nombre Original] - Copia"
   ↓
-Crear nuevo plan
+Crear nuevo plan:
+- Generar nuevo ID de plan
+- Copiar campos base (nombre, descripción, etc.)
+- Asignar nuevo organizerId (el usuario que copia)
+- Ajustar fechas según nuevas fechas definidas
+- Estado: "Planificando" (default, independiente del original)
   ↓
-Estado: "Planificando" o "Confirmado" (según configuración)
+Copiar eventos si se seleccionó:
+- Para cada evento: crear nuevo evento en nuevo plan
+- Ajustar fechas relativas de eventos
+- Copiar detalles, participantes, presupuesto
+  ↓
+Si se copió con participantes:
+- Crear invitaciones pendientes para participantes originales
+- No añadir directamente sin confirmación
   ↓
 Notificar a participantes originales (opcional):
-"El plan '[Nombre]' ha sido copiado. ¿Te gustaría unirte?"
+"El plan '[Nombre]' ha sido copiado por [Usuario].
+Estás invitado a participar en el nuevo plan. ¿Te gustaría unirte?"
+  ↓
+Permisos requeridos:
+- Copiar plan: Solo si tienes acceso al plan original
+- Si el plan es privado: Solo participantes o el organizador pueden copiar
+- Si el plan es público: Cualquiera puede copiar
 ```
 
 #### 1.3 - Creación desde Plantilla (T122)
@@ -199,6 +244,14 @@ Estado: "Planificando"
 **Flujo:**
 ```
 Usuario hace click en plan
+  ↓
+Validar permisos:
+- ¿Usuario tiene acceso al plan? (PlanParticipation.isActive == true)
+- ¿Plan es público o el usuario es participante?
+  ↓
+Verificar estado del plan:
+- Si plan está "Cancelado" o "Finalizado": mostrar vista de solo lectura
+- Si plan está "Borrador" y usuario no es organizador: bloquear acceso
   ↓
 Mostrar pantalla principal del plan:
 ┌────────────────────────────────────┐
@@ -255,9 +308,31 @@ Formulario editable:
 - Imagen
 - Visibilidad (Público/Privado)
   ↓
-Guardar cambios
+Si cambió visibilidad (Privado → Público):
+- Modal de confirmación crítica:
+  "⚠️ HACER PLAN PÚBLICO
+  Estás a punto de hacer este plan público.
+  
+  Esto significa:
+  - El plan será visible para todos los usuarios
+  - Cualquiera puede ver los eventos
+  - La información será accesible públicamente
+  
+  ¿Continuar?"
   ↓
-Notificar a participantes si cambio significativo
+Validaciones:
+- Nombre no vacío y longitud válida
+- Descripción máxima 1000 caracteres
+- Imagen máx 5MB
+  ↓
+Guardar cambios en Firestore
+  ↓
+Actualizar timestamp updatedAt
+  ↓
+Si cambió visibilidad: Notificar críticamente a todos los participantes (T105)
+Si cambio significativo: Notificar a participantes (T105)
+  ↓
+Mostrar confirmación de cambios guardados
 ```
 
 #### 3.2 - Actualizar Fechas del Plan (T107)
@@ -338,11 +413,23 @@ Motivo (opcional): [input]
 
 [Cancelar] / [Sí, cancelar]
   ↓
+Verificar pagos y presupuesto:
+- ¿Hay pagos pendientes? (T102)
+- ¿Hay presupuesto comprometido?
+  ↓
 Sistema:
 - Cambiar estado a "Cancelado"
-- Calcular reembolsos (T102)
 - Cancelar todos los eventos futuros
-- Notificar críticamente a todos (T105)
+- Calcular reembolsos (T102):
+  - Para cada evento pagado
+  - Para cada participante que pagó
+  - Generar lista de reembolsos pendientes
+  - Enviar emails de reembolso automático
+- Notificar críticamente a todos (T105):
+  - Email urgente de cancelación
+  - Informar sobre reembolsos
+  - Razón de cancelación si se proporcionó
+- Archivar plan
   ↓
 Plan archivado, no se puede reactivar
 ```
@@ -408,13 +495,26 @@ Escribe '[NOMBRE DEL PLAN]' para confirmar:
 [Cancelar] / [Eliminar permanentemente]
   ↓
 Sistema:
-- Eliminar plan de Firestore
-- Eliminar todos los eventos relacionados
-- Eliminar todas las participaciones
-- Calcular y enviar reembolsos finales
-- Notificar a todos los participantes
+- Verificar permisos: ¿Usuario es el organizador original?
+- Verificar estado: ¿Plan NO está "En Curso" ni "Finalizado" reciente?
   ↓
-Plan eliminado permanentemente
+Calcular y enviar reembolsos finales (si hay pagos pendientes)
+  ↓
+Eliminar recursos asociados:
+- Imagen del plan de Firebase Storage
+- Fotos de eventos de Firebase Storage
+- Documentos adjuntos de eventos
+  ↓
+Eliminar de Firestore:
+- Plan document
+- Todos los eventos relacionados (colección events)
+- Todas las participaciones (colección plan_participations)
+  ↓
+Notificar críticamente a todos los participantes
+- Email de eliminación
+- Informar sobre reembolsos si aplica
+  ↓
+Plan eliminado permanentemente e irreversiblemente
 ```
 
 **Requisitos:**

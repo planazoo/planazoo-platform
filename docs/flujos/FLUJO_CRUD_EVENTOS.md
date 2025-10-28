@@ -90,8 +90,8 @@ Completar campos:
 - Fecha (dentro del rango del plan)
 - Hora inicio
 - Duración
-- Tipo (Desplazamiento/Restauración/Actividad/Alojamiento)
-- Subtipo (Avión/Tren/Hotel/Restaurante/etc.)
+- Tipo (Desplazamiento/Restauración/Actividad) [Nota: Alojamientos son entidad separada, ver FLUJO_CRUD_ALOJAMIENTOS]
+- Subtipo (Avión/Tren/Restaurante/Museo/etc.)
 - Participantes asignados
 - Ubicación (opcional)
 - Presupuesto si aplica (T101)
@@ -105,16 +105,36 @@ Validaciones (T51):
 - Timezone válido
 - Ubicación coherente con tipo
   ↓
-Guardar evento
+Guardar evento en Firestore:
+- Crear Event document con todos los campos
+- Asignar eventId único
+- Establecer planId del plan actual
+- Establecer userId del creador
+- Estado: "Pendiente" o "Borrador" según configuración
+  ↓
+Validar permisos de creación:
+- ¿Usuario tiene permisos para crear eventos en este plan?
+- ¿Plan no está "Finalizado" ni "Cancelado"?
+- ¿Plan está en estado editable?
+  ↓
+Asignar a tracks de participantes (participantTrackIds)
+  ↓
+Detectar solapamientos automáticamente:
+- ¿Hay conflictos de horario con eventos existentes?
+- ¿Participantes ya tienen eventos en ese rango?
+- Mostrar advertencia si hay solapamientos (opcional)
   ↓
 Crear evento en calendario
-Asignar a tracks de participantes
-Detectar solapamientos
   ↓
-Notificar a participantes asignados (T105)
-Actualizar presupuesto (T101)
+Notificar a participantes asignados (T105):
+- Email estándar de notificación
+- Incluir detalles del evento
   ↓
-Estado: "Pendiente" o "Confirmado"
+Actualizar presupuesto del plan (T101):
+- Recalcular presupuesto total
+- Actualizar coste por persona si aplica
+  ↓
+Estado: "Pendiente" o "Confirmado" según configuración automática
 ```
 
 #### 1.2 - Creación con Conexión a Proveedor
@@ -208,6 +228,15 @@ Aparece en calendario en tiempo real
 **Flujo:**
 ```
 Usuario hace click en evento
+  ↓
+Validar permisos de lectura:
+- ¿Usuario tiene acceso al plan?
+- ¿Usuario puede ver este evento? (PlanParticipation activa)
+- ¿Evento está visible según estado del plan?
+  ↓
+Verificar estado del evento:
+- Si evento está "Cancelado": mostrar vista con estado cancelado
+- Si evento está "Completado": mostrar vista de solo lectura
   ↓
 Mostrar modal/detalle completo:
 ┌────────────────────────────────────┐
@@ -398,11 +427,23 @@ Seleccionar evento
   ↓
 Confirmación
   ↓
-Eliminar de calendario
-Eliminar de tracks
-Recalcular presupuesto
+Verificar permisos:
+- ¿Usuario tiene permisos para eliminar eventos?
+- ¿Evento está en estado eliminable?
   ↓
-Notificar participantes
+Eliminar de Firestore:
+- Eliminar Event document
+- Eliminar documentos adjuntos de Firebase Storage (si hay)
+  ↓
+Actualizar tracks de participantes:
+- Eliminar de participantTrackIds
+- Recalcular tracks afectados
+  ↓
+Recalcular presupuesto del plan (T101):
+- Actualizar presupuesto total
+- Recalcular distribución (T102) si hay pagos
+  ↓
+Notificar a participantes asignados (T105)
 ```
 
 #### 4.2 - Eliminar cercano a ejecución (1-7 días)
@@ -420,8 +461,18 @@ Quedan [X] días.
 
 Razón (opcional)
   ↓
-Eliminar + Notificar urgente
-Calcular reembolsos
+Verificar permisos y estado
+  ↓
+Eliminar de Firestore
+  ↓
+Calcular reembolsos si hay pagos pendientes (T102)
+  ↓
+Recalcular presupuesto (T101)
+  ↓
+Notificar urgentemente a participantes (T105):
+- Email urgente de eliminación
+- Push notification
+- Informar sobre reembolsos si aplica
 ```
 
 #### 4.3 - Cancelar evento inminente (<24h)
@@ -442,9 +493,24 @@ Motivo de cancelación: [obligatorio]
 
 ¿Cancelar?"
   ↓
-Marcar como "Cancelado" (no eliminar)
-Notificar críticamente
-Calcular reembolsos inmediatos
+Cambiar estado a "Cancelado" (no eliminar):
+- Actualizar Event.state en Firestore
+- Mantener evento visible en calendario con badge "Cancelado"
+  ↓
+Calcular reembolsos inmediatos (T102):
+- Para cada participante que pagó
+- Generar reembolso automático
+- Notificar por email crítico
+  ↓
+Notificar críticamente a participantes (T105):
+- Email crítico de cancelación
+- Push urgente
+- SMS (si configurado)
+- Incluir motivo de cancelación
+  ↓
+Actualizar presupuesto (T101):
+- Recalcular presupuesto total
+- Actualizar distribución
 ```
 
 #### 4.4 - Evento pasado (no se puede eliminar)

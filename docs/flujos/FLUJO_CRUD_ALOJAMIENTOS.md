@@ -1,0 +1,565 @@
+# 🏨 Flujo de Vida Completa de Alojamientos (CRUD)
+
+> Define todo el ciclo de vida de un alojamiento: crear, leer, actualizar y eliminar
+
+**Relacionado con:** T101, T102, T105, T110, T120  
+**Versión:** 1.0  
+**Fecha:** Enero 2025
+
+---
+
+## 🎯 Objetivo
+
+Documentar todos los escenarios del ciclo de vida completo de un alojamiento: desde su creación hasta su eliminación, incluyendo lectura, visualización, actualizaciones, validaciones y gestión de check-in/check-out.
+
+**Nota:** Los alojamientos son una entidad separada de los eventos, con su propio modelo `Accommodation` y características específicas (rango de fechas, check-in/check-out, duración en días).
+
+---
+
+## 🔄 Diagrama del Ciclo de Vida de Alojamientos
+
+```mermaid
+graph TB
+    Start([Inicio]) --> CreateAccommodation[Crear Alojamiento]
+    
+    CreateAccommodation --> Manual[Manual]
+    CreateAccommodation --> Provider[Conexión Proveedor]
+    
+    Manual --> Read[Leer/Visualizar]
+    Provider --> Read
+    
+    Read --> Update{Actualizar?}
+    
+    Update -->|Sí| UpdateDetails[Actualizar Detalles]
+    Update -->|Sí| UpdateDates[Actualizar Fechas]
+    Update -->|Sí| UpdateParticipants[Actualizar Participantes]
+    
+    Update --> CheckInOut{Gestión Check-in/out?}
+    
+    CheckInOut -->|Check-in| RecordCheckIn[Registrar Check-in]
+    CheckInOut -->|Check-out| RecordCheckOut[Registrar Check-out]
+    
+    Update --> Delete{Eliminar?}
+    
+    Delete -->|Sí| DeleteConfirm[Confirmar Eliminación]
+    DeleteConfirm --> Archive[Archivar Alojamiento]
+    
+    Update --> Keep{Continuar Edición?}
+    Keep -->|Sí| Update
+    Keep -->|No| Complete[Alojamiento Finalizado]
+    
+    Archive --> Complete
+    Complete --> End([Fin])
+    
+    style CreateAccommodation fill:#4CAF50
+    style Read fill:#2196F3
+    style Update fill:#FF9800
+    style CheckInOut fill:#9C27B0
+    style Delete fill:#F44336
+    style Archive fill:#9E9E9E
+    style Complete fill:#607D8B
+```
+
+---
+
+## 📊 ESTADOS DE ALOJAMIENTOS
+
+| Estado | Descripción | Editable | Eliminable | Visible Para |
+|--------|-------------|----------|------------|--------------|
+| **Borrador** | Alojamiento en creación | ✅ Todo | ✅ Sí | Solo creador |
+| **Reservado** | Alojamiento confirmado | ⚠️ Limitado | ⚠️ Con confirmación | Asignados + organizador |
+| **Check-in Realizado** | Ya se hizo check-in | ⚠️ Solo actualizaciones | ❌ No | Todos |
+| **Check-out Realizado** | Ya se hizo check-out | ❌ No | ❌ No | Todos |
+| **Cancelado** | Alojamiento cancelado | ❌ No | ❌ No | Todos |
+
+---
+
+## 📋 CICLO DE VIDA DE ALOJAMIENTOS
+
+### 1. CREAR ALOJAMIENTO
+
+#### 1.1 - Creación Manual (Durante Planificación)
+
+**Cuándo:** Durante planificación normal del plan  
+**Quién:** Organizador o participante con permisos
+
+**Flujo completo:**
+```
+Usuario → "Añadir alojamiento"
+  ↓
+Abrir formulario de alojamiento
+  ↓
+Completar campos:
+- Nombre del hotel/alojamiento (requerido)
+- Check-in: Fecha y hora (requerido)
+- Check-out: Fecha y hora (requerido)
+- Tipo (Hotel/Airbnb/Hostal/Apartamento/etc.)
+- Subtipo (Suite/Dormitorio/Estudio/etc.)
+- Participantes asignados (quién se aloja)
+- Descripción (opcional, máximo 1000 caracteres)
+- Color (opcional, para visualización)
+- Presupuesto (T101)
+- Coste total o por persona (T101)
+  ↓
+Validaciones (T51):
+- Nombre no vacío
+- Check-in y check-out dentro del rango del plan
+- Check-out posterior a check-in
+- Duración mínima 1 día
+- Participantes existen en el plan
+- No solapamiento con otros alojamientos del mismo grupo
+  ↓
+Guardar alojamiento en Firestore:
+- Crear Accommodation document con todos los campos
+- Asignar accommodationId único
+- Establecer planId del plan actual
+- Establecer userId del creador
+- Estado: "Reservado" o "Borrador" según configuración
+  ↓
+Validar permisos de creación:
+- ¿Usuario tiene permisos para crear alojamientos en este plan?
+- ¿Plan no está "Finalizado" ni "Cancelado"?
+- ¿Plan está en estado editable?
+  ↓
+Asignar a tracks de participantes (participantTrackIds)
+  ↓
+Detectar solapamientos con eventos:
+- ¿Hay eventos que se solapan con el alojamiento?
+- ¿Hay eventos de check-in/check-out necesarios?
+- Mostrar advertencia si hay conflictos (opcional)
+  ↓
+Crear alojamiento en calendario
+  ↓
+Notificar a participantes asignados (T105):
+- Email estándar de notificación
+- Incluir detalles del alojamiento (check-in/check-out)
+  ↓
+Actualizar presupuesto del plan (T101):
+- Recalcular presupuesto total
+- Actualizar coste por persona si aplica
+  ↓
+Estado: "Reservado" o "Borrador" según configuración automática
+```
+
+**Campos del modelo Accommodation:**
+- `id` - ID único del alojamiento
+- `planId` - ID del plan al que pertenece
+- `checkIn` - Fecha/hora de check-in
+- `checkOut` - Fecha/hora de check-out
+- `hotelName` - Nombre del alojamiento
+- `description` - Descripción adicional
+- `color` - Color para visualización
+- `typeFamily` - Tipo (hotel, airbnb, etc.)
+- `typeSubtype` - Subtipo (suite, dormitorio, etc.)
+- `participantTrackIds` - Participantes asignados
+- `createdAt` - Timestamp de creación
+- `updatedAt` - Timestamp de última actualización
+
+#### 1.2 - Creación con Conexión a Proveedor
+
+**Cuándo:** Al crear alojamiento, decidir si conectarlo con proveedor externo (Booking.com, Airbnb, etc.)  
+**Quién:** Usuario creando el alojamiento
+
+**Flujo:**
+```
+Usuario → "Añadir alojamiento"
+  ↓
+Formulario de creación normal
+  ↓
+Campo adicional: "Conectar con proveedor" [checkbox]
+  ↓
+Si marca checkbox:
+  ↓
+Buscar proveedor:
+- "Booking.com" (hoteles)
+- "Airbnb" (apartamentos)
+- "Hotels.com" (hoteles)
+  ↓
+Seleccionar proveedor
+  ↓
+Autorizar conexión:
+"El proveedor podrá actualizar automáticamente:
+- Horario de check-in/check-out
+- Cancelaciones
+- Cambios de precio
+- Otros cambios
+
+¿Autorizar?"
+  ↓
+Guardar alojamiento + configuración API
+  ↓
+Alojamiento creado con sincronización activa
+  ↓
+Badge visible: "✅ Actualizado por Booking.com"
+```
+
+---
+
+### 2. LEER/VISUALIZAR ALOJAMIENTO
+
+#### 2.1 - Vista Detallada del Alojamiento
+
+**Flujo:**
+```
+Usuario hace click en alojamiento
+  ↓
+Validar permisos de lectura:
+- ¿Usuario tiene acceso al plan?
+- ¿Usuario puede ver este alojamiento? (PlanParticipation activa)
+  ↓
+Verificar estado del alojamiento:
+- Si alojamiento está "Cancelado": mostrar vista con estado cancelado
+- Si check-out realizado: mostrar vista de solo lectura
+  ↓
+Mostrar modal/detalle completo:
+┌────────────────────────────────────┐
+│ Hotel Hilton Paris                 │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
+│                                    │
+│ 📅 Check-in:  15/11/2025 14:00h   │
+│ 📅 Check-out: 21/11/2025 11:00h   │
+│ ⏱️ Duración: 6 noches             │
+│                                    │
+│ 👥 Huéspedes:                      │
+│    • Juan (organizador)           │
+│    • María                         │
+│    • Pedro                         │
+│                                    │
+│ 💰 Coste: €1,200 (€200/noche)     │
+│ 🔄 Actualizado por: Booking.com  │
+│                                    │
+│ [Editar] [Check-in] [Check-out]   │
+│ [Eliminar] [Ver mapa]             │
+└────────────────────────────────────┘
+```
+
+#### 2.2 - Información Contextual
+
+**Campos mostrados:**
+- Nombre del alojamiento
+- Fechas de check-in y check-out
+- Duración en días/noches
+- Participantes asignados
+- Ubicación/ma
+- Coste y presupuesto (T101)
+- Estado (Borrador, Reservado, Check-in, Check-out)
+- Historial de cambios automáticos desde proveedor
+- Próximo evento relacionado
+
+---
+
+### 3. ACTUALIZAR ALOJAMIENTO
+
+#### 3.1 - Actualizar Fechas de Check-in/Check-out
+
+**Escenarios según cambios:**
+
+##### Cambio Leve (<1 día)
+```
+Editar check-in: 14:00 → 15:00
+Editar check-out: 11:00 → 12:00
+
+Acción: Editar y guardar
+Notificación: Email estándar
+Reconfirmación: No requerida
+```
+
+##### Cambio Significativo (1-2 días)
+```
+Editar check-in: 15/11 → 16/11
+
+Acción: Modal de confirmación
+Notificación: Email + Push urgente
+Reconfirmación: Opcional
+```
+
+##### Cambio Drástico (>2 días)
+```
+Editar: Check-in 15/11 → 20/11
+Check-out 21/11 → 26/11
+
+Acción: Modal de confirmación crítica
+Notificación: Email + Push críticos
+Reconfirmación: OBLIGATORIA
+```
+
+#### 3.2 - Actualizar Participantes
+
+**Añadir participante:**
+- Actualizar participantTrackIds
+- Notificar participante añadido
+- Notificar a otros si límite de capacidad
+- Recalcular presupuesto por persona
+
+**Eliminar participante:**
+- Actualizar participantTrackIds
+- Notificar participante eliminado
+- Calcular reembolso si pagó (T102)
+- Recalcular presupuesto total
+
+#### 3.3 - Gestionar Check-in/Check-out
+
+**Check-in:**
+```
+Alojamiento en estado "Reservado"
+  ↓
+Usuario → Alojamiento → "Realizar check-in"
+  ↓
+Modal de confirmación:
+"¿Confirmar check-in en [Hotel]?
+Fecha: [Fecha actual]
+Hora: [Hora actual]"
+  ↓
+Confirmar
+  ↓
+Actualizar estado a "Check-in Realizado"
+Actualizar checkInActual: Timestamp
+  ↓
+Crear evento automático de "Check-in completado"
+Notificar a todos los participantes (T105)
+Actualizar alarmas (T110)
+```
+
+**Check-out:**
+```
+Alojamiento en estado "Check-in Realizado"
+  ↓
+Usuario → Alojamiento → "Realizar check-out"
+  ↓
+Modal de confirmación:
+"¿Confirmar check-out en [Hotel]?
+Fecha: [Fecha actual]
+Hora: [Hora actual]
+
+Asegúrate de haber recogido todas tus pertenencias."
+  ↓
+Confirmar
+  ↓
+Actualizar estado a "Check-out Realizado"
+Actualizar checkOutActual: Timestamp
+  ↓
+Crear evento automático de "Check-out completado"
+Calcular estadísticas de estancia
+Notificar a todos los participantes (T105)
+Generar resumen de costes finales (T101)
+```
+
+#### 3.4 - Actualizar Presupuesto
+
+**Flujo:**
+```
+Editar coste del alojamiento
+  ↓
+Actualizar presupuesto total (T101)
+  ↓
+Recalcular distribución por persona (T102)
+  ↓
+Notificar si cambio >€100 o >20%
+```
+
+#### 3.5 - Conectar/Desconectar Proveedor en Alojamiento Existente
+
+**Conectar proveedor:**
+- Buscar proveedor en catálogo
+- Autorizar conexión
+- Generar API key específica
+- Badge visible: "✅ Actualizado por [Proveedor]"
+
+**Desconectar proveedor:**
+- Confirmar desconexión
+- Evento vuelve a ser manual
+- Badge desaparece
+
+---
+
+### 4. ELIMINAR ALOJAMIENTO
+
+#### 4.1 - Eliminar durante Planificación (>7 días antes)
+
+**Flujo simple:**
+```
+Seleccionar alojamiento
+"Eliminar alojamiento"
+  ↓
+Confirmación
+  ↓
+Verificar permisos:
+- ¿Usuario tiene permisos para eliminar alojamientos?
+- ¿Alojamiento está en estado eliminable?
+  ↓
+Eliminar de Firestore
+  ↓
+Actualizar tracks de participantes:
+- Eliminar de participantTrackIds
+- Recalcular tracks afectados
+  ↓
+Recalcular presupuesto del plan (T101):
+- Actualizar presupuesto total
+- Recalcular distribución (T102) si hay pagos
+  ↓
+Notificar a participantes asignados (T105)
+```
+
+#### 4.2 - Eliminar cercano a check-in (1-7 días)
+
+**Flujo con advertencia:**
+```
+Seleccionar alojamiento cercano
+  ↓
+Modal de advertencia:
+"⚠️ ELIMINAR ALOJAMIENTO CERCANO
+
+Check-in en [X] días.
+
+Esto cancelará la reserva.
+¿Estás seguro?"
+
+Razón (opcional)
+  ↓
+Verificar permisos y estado
+  ↓
+Eliminar de Firestore
+  ↓
+Calcular reembolsos si hay pagos pendientes (T102)
+  ↓
+Recalcular presupuesto (T101)
+  ↓
+Notificar urgentemente a participantes (T105):
+- Email urgente de cancelación
+- Push notification
+- Informar sobre reembolsos si aplica
+```
+
+#### 4.3 - Cancelar alojamiento inminente (<24h al check-in)
+
+**NO se puede eliminar, solo cancelar:**
+```
+Seleccionar alojamiento <24h al check-in
+"Eliminar" → BLOQUEADO
+  ↓
+Mostrar opción: "Cancelar reserva"
+  ↓
+Modal crítico:
+"🚨 CANCELAR RESERVA DE ALOJAMIENTO
+
+El check-in es mañana.
+
+Motivo de cancelación: [obligatorio]
+
+Esto puede conllevar penalizaciones según política del hotel.
+
+¿Cancelar?"
+  ↓
+Cambiar estado a "Cancelado" (no eliminar):
+- Actualizar Accommodation.state en Firestore
+- Mantener alojamiento visible en calendario con badge "Cancelado"
+  ↓
+Calcular reembolsos inmediatos (T102):
+- Para cada participante que pagó
+- Verificar política de cancelación del hotel
+- Generar reembolso según política
+- Notificar por email crítico
+  ↓
+Notificar críticamente a participantes (T105):
+- Email crítico de cancelación
+- Push urgente
+- SMS (si configurado)
+- Incluir motivo de cancelación
+  ↓
+Actualizar presupuesto (T101):
+- Recalcular presupuesto total
+- Actualizar distribución
+```
+
+#### 4.4 - Alojamiento pasado (no se puede eliminar)
+
+```
+Intento eliminar alojamiento con check-out realizado
+  ↓
+Mostrar opciones alternativas:
+- Añadir nota sobre la estancia
+- Añadir fotos del alojamiento
+- Evaluar el alojamiento (opcional)
+- Marcar como "no utilizado" si nunca se hizo check-in
+```
+
+---
+
+## 📊 ESTADOS ESPECÍFICOS DE CHECK-IN/CHECK-OUT
+
+| Acción | Cuándo | Quién | Validación Requerida |
+|--------|--------|-------|----------------------|
+| **Check-in** | En o antes del día de check-in | Cualquier participante | Ninguna |
+| **Check-out** | Después del check-in | Cualquier participante | Ninguna |
+| **Check-in tardío** | Después de fecha programada | Con confirmación | Motivo opcional |
+| **Check-out anticipado** | Antes de fecha programada | Con confirmación | Motivo opcional |
+
+---
+
+## 🔄 VALIDACIONES ESPECÍFICAS DE ALOJAMIENTOS
+
+### Validación de Fechas
+- Check-in debe ser >= fecha inicio del plan
+- Check-out debe ser <= fecha fin del plan
+- Check-out debe ser > check-in
+- Duración mínima: 1 día
+- Duración máxima: Sin límite (dentro del plan)
+
+### Validación de Capacidad
+- Verificar número máximo de huéspedes del alojamiento
+- Validar que participantes asignados no exceden capacidad
+- Mostrar advertencia si se excede capacidad
+
+### Validación de Solapamientos
+- No permitir solapamiento de alojamientos para los mismos participantes
+- Permitir múltiples alojamientos si participantes diferentes
+
+---
+
+## 📋 TAREAS RELACIONADAS
+
+**Pendientes:**
+- T121: Formularios enriquecidos para alojamientos
+- T105: Sistema de notificaciones de alojamientos
+- T110: Sistema de alarmas para check-in/check-out
+- T120: Sistema de reconfirmación para cambios
+- T51: Validación de formularios de alojamiento
+- T101: Integración con presupuesto
+- T102: Integración con pagos y reembolsos
+- Historial de cambios de alojamientos
+- API de sincronización con proveedores (Booking, Airbnb)
+
+**Completas ✅:**
+- Crear alojamientos básicos
+- Editar nombre, fechas de check-in/check-out
+- Asignar participantes
+- Gestionar timezones para fechas
+
+---
+
+## ✅ IMPLEMENTACIÓN ACTUAL
+
+**Estado:** ⚠️ Básico implementado
+
+**Lo que ya funciona:**
+- ✅ Crear alojamientos básicos
+- ✅ Editar nombre, fechas check-in/check-out
+- ✅ Asignar participantes
+- ✅ Visualizar alojamientos en calendario
+
+**Lo que falta (CRÍTICO):**
+- ❌ Estados de alojamiento (Borrador, Reservado, Check-in, Check-out)
+- ❌ Sistema de check-in/check-out real
+- ❌ Validación de capacidad y solapamientos
+- ❌ Reconfirmación para cambios drásticos (T120)
+- ❌ Notificaciones automáticas de check-in/check-out (T105)
+- ❌ Sistema de alarmas para fechas (T110)
+- ❌ Historial de cambios
+- ❌ Integración presupuesto/pagos (T101/T102)
+- ❌ API de sincronización con proveedores
+
+---
+
+*Documento de flujo CRUD completo de alojamientos*  
+*Última actualización: Enero 2025*
+

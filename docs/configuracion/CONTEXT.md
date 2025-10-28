@@ -54,6 +54,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
   - `FLUJO_ESTADOS_PLAN.md` - Estados y transiciones
   - `FLUJO_GESTION_PARTICIPANTES.md` - Invitaciones y gestión de participantes
   - `FLUJO_CRUD_EVENTOS.md` - Ciclo de vida completo de eventos
+  - `FLUJO_CRUD_ALOJAMIENTOS.md` - 🆕 Ciclo de vida completo de alojamientos
   - `FLUJO_PRESUPUESTO_PAGOS.md` - Sistema financiero
   - `FLUJO_INVITACIONES_NOTIFICACIONES.md` - Comunicación
   - `FLUJO_VALIDACION.md` - Validación y verificación
