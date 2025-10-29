@@ -3,9 +3,9 @@
 Este documento fija criterios estables para trabajar juntos sin olvidar pasos clave, manteniendo consistencia entre código, documentación y comunicación.
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
-- `docs/PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
-- `docs/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
-- `docs/FLUJO_CREACION_PLAN.md` - Índice y visión general del sistema de planes
+- `docs/guias/PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
+- `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
+- `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice y visión general del sistema de planes
 - `docs/flujos/` - Flujos específicos de procesos (estados, participantes, eventos, etc.)
 
 ---
@@ -18,11 +18,11 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - **⚠️ REVISAR ANTES DE PROPUESTA/IMPLEMENTACIÓN**: Siempre buscar si ya existe funcionalidad similar antes de proponer o implementar (código, TASKS.md, Firestore, documentación).
 
 ### 2) Flujo de Trabajo de Tareas
-- Las tareas activas se gestionan en `docs/TASKS.md`.
+- Las tareas activas se gestionan en `docs/tareas/TASKS.md`.
 - **Confirmación del usuario antes de marcar tareas como completadas.**
 - Al completar una tarea:
-  - Actualizar estado en `docs/TASKS.md`.
-  - Mover la tarea a `docs/COMPLETED_TASKS.md` con fecha, criterios y archivos modificados.
+  - Actualizar estado en `docs/tareas/TASKS.md`.
+  - Mover la tarea a `docs/tareas/COMPLETED_TASKS.md` con fecha, criterios y archivos modificados.
   - Ajustar contadores/resúmenes si aplica.
 
 ### 3) Control de Código y Commits
@@ -41,15 +41,15 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - Al cerrar una tarea: eliminar `print()`, debugs y código temporal que ya no sea necesario.
 
 ### 6) Documentación
-- Actualizar `docs/CALENDAR_CAPABILITIES.md` cuando cambie el comportamiento del calendario.
-- Añadir notas breves en `ARCHITECTURE_DECISIONS.md` para decisiones relevantes (p. ej., persistencia).
+- Actualizar `docs/especificaciones/CALENDAR_CAPABILITIES.md` cuando cambie el comportamiento del calendario.
+- Añadir notas breves en `docs/arquitectura/ARCHITECTURE_DECISIONS.md` para decisiones relevantes (p. ej., persistencia).
 - Mantener `CONTEXT.md` como referencia viva de normas.
 - **Multi-idioma:** Todas las strings de la UI deben ser traducibles. Usar archivos `.arb` en `lib/l10n/`. No hardcodear textos.
 - **Multi-plataforma:** App soporta Web + iOS + Android. Verificar compatibilidad de plugins/APIs en las 3 plataformas antes de usar. Priorizar soluciones cross-platform.
 - **Offline-First:** Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
-- **UI/UX:** Consultar `docs/GUIA_UI.md` antes de crear componentes visuales. Usar siempre `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons` para mantener consistencia. Documentar componentes nuevos en la guía.
-- **Seguridad:** Consultar `docs/GUIA_SEGURIDAD.md` antes de implementar funcionalidades. Verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
-- **Patrón Común/Personal:** Consultar `docs/GUIA_PATRON_COMUN_PERSONAL.md` para implementar eventos y alojamientos con información compartida e individual por participante. Usar EventCommonPart/EventPersonalPart y AccommodationCommonPart/AccommodationPersonalPart.
+- **UI/UX:** Consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar siempre `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons` para mantener consistencia. Documentar componentes nuevos en la guía.
+- **Seguridad:** Consultar `docs/guias/GUIA_SEGURIDAD.md` antes de implementar funcionalidades y verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
+- **Patrón Común/Personal:** Consultar `docs/guias/GUIA_PATRON_COMUN_PERSONAL.md` para implementar eventos y alojamientos con información compartida e individual por participante. Usar EventCommonPart/EventPersonalPart y AccommodationCommonPart/AccommodationPersonalPart.
 - **Flujos de Proceso:** Consular flujos en `docs/flujos/` antes de tomar decisiones o implementar funcionalidades:
   - `FLUJO_CRUD_PLANES.md` - 🆕 Ciclo de vida completo CRUD de planes
   - `FLUJO_ESTADOS_PLAN.md` - Estados y transiciones
@@ -69,9 +69,9 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 ### 7) Plan Frankenstein (revisión tras cambios)
 - Tras aprobar cambios funcionales, evaluar si deben incorporarse al Plan Frankenstein.
 - Si aplica, actualizar:
-  - `docs/FRANKENSTEIN_PLAN_SPEC.md` (escenarios y checklist)
+  - `docs/especificaciones/FRANKENSTEIN_PLAN_SPEC.md` (escenarios y checklist)
   - `lib/features/testing/demo_data_generator.dart` (datos de demo/casos)
-  - Notas breves en `CALENDAR_CAPABILITIES.md` si afecta a capacidades visibles
+  - Notas breves en `docs/especificaciones/CALENDAR_CAPABILITIES.md` si afecta a capacidades visibles
 
 ### 8) Tests Manuales Rápidos (checklist mínimo)
 - Crear/editar/eliminar evento y ver refresco inmediato.

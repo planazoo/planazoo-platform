@@ -4,9 +4,9 @@
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
 - `docs/CONTEXT.md` - Normas específicas del proyecto (Plan Frankenstein, Firestore, tests manuales)
-- `docs/GUIA_UI.md` - Sistema de diseño, componentes y patrones de UI
-- `docs/GESTION_TIMEZONES.md` - Sistema de gestión de timezones
-- `docs/FLUJO_CREACION_PLAN.md` - Índice de flujos de procesos
+- `docs/guias/GUIA_UI.md` - Sistema de diseño, componentes y patrones de UI
+- `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones
+- `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice del sistema de planes
 
 ## 📋 Metodología de Trabajo
 
@@ -27,7 +27,7 @@
 - **Multi-idioma**: Usar archivos `.arb` en `lib/l10n/` para strings traducibles. No hardcodear textos en UI.
 - **Multi-plataforma**: Verificar compatibilidad Web/iOS/Android antes de usar plugins o APIs. Priorizar soluciones cross-platform.
 - **Offline-First**: Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
-- **⚠️ CONSISTENCIA DE UI**: Siempre consultar `docs/GUIA_UI.md` antes de crear componentes visuales. Usar `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons`. NO crear componentes sin seguir el sistema de diseño. Documentar componentes nuevos en la guía.
+- **⚠️ CONSISTENCIA DE UI**: Siempre consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons`. NO crear componentes sin seguir el sistema de diseño. Documentar componentes nuevos en la guía.
 - **Actualización de tareas**: Pedir confirmación antes de actualizar tareas. Usar sistema `TASKS.md` para tracking de progreso y completar tareas. Seguir reglas del documento TASKS.md (numeración, prioridades, estados). Actualizar al completar, crear nuevas tareas o cambiar estado.
 - **⚠️ Actualización GIT**: NUNCA hacer `git add/commit/push` sin confirmación explícita del usuario. Pedir confirmación SIEMPRE antes de hacer commits. Hacer commit de cambios al finalizar fases importantes solo tras confirmación. Repositorio: C:\Users\cclaraso\unp_calendario
 - **Ruta Flutter**: Flutter instalado en: C:\Users\cclaraso\Downloads\flutter
@@ -55,7 +55,7 @@
 ## 📋 Flujo de Trabajo
 
 - **Análisis primero**: Entender el problema antes de implementar
-- **Referencia a flujos**: Consultar flujos en `docs/flujos/` y `docs/FLUJO_CREACION_PLAN.md` antes de implementar
+- **Referencia a flujos**: Consultar flujos en `docs/flujos/` y `docs/configuracion/INDICE_SISTEMA_PLANES.md` antes de implementar
 - **Implementación incremental**: Cambios pequeños y validables
 - **Verificación**: Confirmar que los cambios funcionan como esperado
 - **Documentación**: Actualizar docs cuando sea necesario

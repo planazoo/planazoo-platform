@@ -1,0 +1,301 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // FUNCIONES AUXILIARES
+    // ============================================
+    
+    // Verificar que el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Verificar si el usuario es el creador del plan
+    function isPlanOwner(planId) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/plans/$(planId)).data.userId == request.auth.uid;
+    }
+    
+    // Verificar si el usuario es participante del plan
+    // NOTA IMPORTANTE: Como las participaciones usan IDs generados por Firestore (no compuestos),
+    // no podemos hacer queries en reglas para verificar participación. Por lo tanto:
+    // 1. El owner siempre es participante (verificado directamente)
+    // 2. Para otros usuarios, las reglas verifican owner del recurso o datos básicos
+    // 3. La verificación completa de participación se hace en el código cliente usando queries
+    // 4. Las reglas son más permisivas para lectura pero restrictivas para escritura
+    function isPlanParticipant(planId) {
+      return isAuthenticated() && isPlanOwner(planId);
+    }
+    
+    // Obtener el rol del usuario en el plan
+    // NOTA: Como no podemos hacer queries en reglas, asumimos owner = admin
+    function getUserRole(planId) {
+      if (isPlanOwner(planId)) {
+        return 'admin';
+      }
+      // Para otros usuarios, asumir 'participant' por defecto
+      // La verificación real se hace en el código cliente
+      return 'participant';
+    }
+    
+    // Verificar si el usuario es organizador o admin del plan
+    function isPlanAdmin(planId) {
+      return isPlanOwner(planId) || 
+             (isPlanParticipant(planId) && getUserRole(planId) == 'admin');
+    }
+    
+    // Verificar si el usuario puede editar contenido del plan
+    function canEditPlanContent(planId) {
+      return isPlanAdmin(planId) || 
+             (isPlanParticipant(planId) && getUserRole(planId) == 'participant');
+    }
+    
+    // Verificar si el usuario puede leer contenido del plan (incluye observers)
+    function canReadPlanContent(planId) {
+      return isPlanParticipant(planId);
+    }
+    
+    // Validar estructura básica de plan
+    function isValidPlanData() {
+      return request.resource.data.keys().hasAll(['name', 'unpId', 'userId', 'baseDate', 'columnCount', 'createdAt', 'updatedAt']) &&
+             request.resource.data.name is string &&
+             request.resource.data.name.size() >= 3 &&
+             request.resource.data.name.size() <= 100 &&
+             request.resource.data.unpId is string &&
+             request.resource.data.userId is string &&
+             request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Validar estructura básica de evento
+    function isValidEventData(planId) {
+      return request.resource.data.keys().hasAll(['planId', 'userId', 'date', 'hour', 'description', 'createdAt', 'updatedAt']) &&
+             request.resource.data.planId == planId &&
+             request.resource.data.userId is string &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.description is string &&
+             request.resource.data.description.size() >= 3 &&
+             request.resource.data.description.size() <= 1000;
+    }
+    
+    // Validar estructura básica de alojamiento
+    function isValidAccommodationData(planId) {
+      return request.resource.data.keys().hasAll(['planId', 'checkIn', 'checkOut', 'hotelName', 'createdAt', 'updatedAt']) &&
+             request.resource.data.planId == planId &&
+             request.resource.data.hotelName is string &&
+             request.resource.data.hotelName.size() >= 2 &&
+             request.resource.data.hotelName.size() <= 100;
+    }
+    
+    // ============================================
+    // REGLAS PARA USUARIOS
+    // ============================================
+    
+    match /users/{userId} {
+      // Cualquier usuario autenticado puede leer perfiles públicos
+      allow read: if isAuthenticated();
+      
+      // Solo el propio usuario puede crear/actualizar su perfil
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       request.resource.data.keys().hasAll(['email', 'createdAt']);
+      
+      // Solo el propio usuario puede actualizar su perfil
+      allow update: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       (!('email' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                        request.resource.data.email == resource.data.email); // No permitir cambiar email
+      
+      // Solo el propio usuario puede eliminar su perfil (con validación adicional en el cliente)
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ============================================
+    // REGLAS PARA PLANES
+    // ============================================
+    
+    match /plans/{planId} {
+      // Crear: Solo usuarios autenticados pueden crear planes
+      allow create: if isAuthenticated() && 
+                       isValidPlanData();
+      
+      // Leer: Usuarios autenticados pueden leer (validación completa en cliente)
+      // NOTA: La verificación de participación real se hace en el código cliente
+      allow read: if isAuthenticated();
+      
+      // Actualizar: Solo owner del plan puede actualizar
+      allow update: if isPlanOwner(planId) &&
+                       request.resource.data.userId == resource.data.userId && // No permitir cambiar owner
+                       request.resource.data.createdAt == resource.data.createdAt; // No permitir cambiar fecha creación
+      
+      // Eliminar: Solo el creador original puede eliminar el plan
+      allow delete: if isPlanOwner(planId);
+      
+      // ============================================
+      // REGLAS PARA EVENTOS (subcolección de planes)
+      // ============================================
+      
+      match /events/{eventId} {
+        // Crear: Solo owner/admin o usuarios que son creadores pueden crear eventos
+        // NOTA: La verificación completa de participación se hace en cliente
+        allow create: if isAuthenticated() && 
+                         (isPlanOwner(planId) || isValidEventData(planId));
+        
+        // Leer: Usuarios autenticados pueden leer eventos (validación completa en cliente)
+        // NOTA: Solo se muestran eventos de planes donde el usuario participa (código cliente)
+        allow read: if isAuthenticated();
+        
+        // Actualizar: 
+        // - Owner/admin: puede editar cualquier evento
+        // - Creador del evento: puede editar su parte personal
+        // NOTA: La verificación completa de roles se hace en el código cliente
+        allow update: if isAuthenticated() && (
+          isPlanOwner(planId) || // Owner puede editar todo
+          resource.data.userId == request.auth.uid // Creador puede editar
+        ) && isValidEventData(planId);
+        
+        // Eliminar: Solo owner del plan o creador del evento puede eliminar
+        allow delete: if isAuthenticated() && 
+                         (isPlanOwner(planId) || resource.data.userId == request.auth.uid);
+      }
+      
+      // ============================================
+      // REGLAS PARA ALOJAMIENTOS (subcolección de planes)
+      // ============================================
+      
+      match /accommodations/{accommodationId} {
+        // Crear: Solo owner/admin puede crear alojamientos
+        allow create: if isAuthenticated() && 
+                         (isPlanOwner(planId) && isValidAccommodationData(planId));
+        
+        // Leer: Usuarios autenticados pueden leer alojamientos (validación completa en cliente)
+        allow read: if isAuthenticated();
+        
+        // Actualizar: Solo owner/admin puede editar alojamientos
+        allow update: if isAuthenticated() && 
+                         isPlanOwner(planId) &&
+                         isValidAccommodationData(planId);
+        
+        // Eliminar: Solo owner/admin puede eliminar alojamientos
+        allow delete: if isAuthenticated() && isPlanOwner(planId);
+      }
+      
+      // ============================================
+      // REGLAS PARA PAGOS (subcolección de planes) - T101, T102
+      // ============================================
+      
+      match /payments/{paymentId} {
+        // Crear: Solo usuarios autenticados pueden crear sus propios pagos
+        allow create: if isAuthenticated() && 
+                         request.resource.data.userId == request.auth.uid;
+        
+        // Leer: Usuarios autenticados pueden leer pagos (validación completa en cliente)
+        allow read: if isAuthenticated();
+        
+        // Actualizar: Solo el propietario del pago puede actualizar
+        allow update: if isAuthenticated() && 
+                         resource.data.userId == request.auth.uid &&
+                         request.resource.data.userId == request.auth.uid;
+        
+        // Eliminar: Solo el propietario del pago puede eliminar
+        allow delete: if isAuthenticated() && 
+                         resource.data.userId == request.auth.uid;
+      }
+      
+      // ============================================
+      // REGLAS PARA AVISOS/NOTIFICACIONES (subcolección de planes) - T105
+      // ============================================
+      
+      match /announcements/{announcementId} {
+        // Crear: Solo usuarios autenticados pueden crear avisos
+        allow create: if isAuthenticated() &&
+                         request.resource.data.userId == request.auth.uid;
+        
+        // Leer: Usuarios autenticados pueden leer avisos (validación completa en cliente)
+        allow read: if isAuthenticated();
+        
+        // Actualizar: Solo el creador del aviso o owner del plan puede actualizar
+        allow update: if isAuthenticated() && 
+                         (isPlanOwner(planId) || resource.data.userId == request.auth.uid);
+        
+        // Eliminar: Solo el creador del aviso o owner del plan puede eliminar
+        allow delete: if isAuthenticated() && 
+                         (isPlanOwner(planId) || resource.data.userId == request.auth.uid);
+      }
+    }
+    
+    // ============================================
+    // REGLAS PARA PARTICIPACIONES
+    // ============================================
+    
+    match /planParticipations/{participationId} {
+      // Crear: Cualquier usuario autenticado puede crear su propia participación
+      // o el owner del plan puede crear participaciones
+      allow create: if isAuthenticated() && (
+        request.resource.data.userId == request.auth.uid || // Usuario acepta su propia invitación
+        isPlanOwner(request.resource.data.planId) // Owner añade participante
+      );
+      
+      // Leer: Usuarios autenticados pueden leer participaciones
+      // - Pueden leer su propia participación
+      // - Pueden leer participaciones si son owner del plan
+      allow read: if isAuthenticated() && 
+                     (request.auth.uid == resource.data.userId ||
+                      isPlanOwner(resource.data.planId));
+      
+      // Actualizar: Solo owner del plan puede cambiar roles
+      // O el propio usuario puede actualizar su timezone/actividad (pero no su rol)
+      allow update: if isAuthenticated() && (
+        isPlanOwner(resource.data.planId) || // Owner puede cambiar roles
+        (request.auth.uid == resource.data.userId && // Usuario puede actualizar su info
+         !('role' in request.resource.data.diff(resource.data).affectedKeys())) // Pero no puede cambiar su rol
+      );
+      
+      // Eliminar: Solo owner del plan puede eliminar participaciones
+      allow delete: if isAuthenticated() && 
+                       isPlanOwner(resource.data.planId);
+    }
+    
+    // ============================================
+    // REGLAS PARA GRUPOS DE CONTACTOS - T123
+    // ============================================
+    
+    match /contactGroups/{groupId} {
+      // Crear: Solo usuarios autenticados pueden crear grupos
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Leer: Solo el propietario puede leer sus grupos
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Actualizar: Solo el propietario puede actualizar
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+      
+      // Eliminar: Solo el propietario puede eliminar
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // ============================================
+    // REGLAS PARA PREFERENCIAS DE USUARIO
+    // ============================================
+    
+    match /userPreferences/{userId} {
+      // Solo el propio usuario puede leer/escribir sus preferencias
+      allow read, write: if isAuthenticated() && 
+                           request.auth.uid == userId;
+    }
+    
+    // ============================================
+    // DENEGAR TODO LO DEMÁS POR DEFECTO
+    // ============================================
+    
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

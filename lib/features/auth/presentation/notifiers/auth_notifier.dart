@@ -4,10 +4,12 @@ import 'package:unp_calendario/features/auth/domain/models/auth_state.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/domain/services/auth_service.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
+import 'package:unp_calendario/features/security/services/rate_limiter_service.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
   final UserService _userService;
+  final RateLimiterService _rateLimiter = RateLimiterService();
   bool _isRegistering = false; // Flag para evitar conflictos durante registro
 
   AuthNotifier({
@@ -75,10 +77,44 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // Iniciar sesión con email y contraseña
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     try {
+      // Verificar rate limiting antes de intentar login
+      final rateLimitCheck = await _rateLimiter.checkLoginAttempt(email);
+      
+      if (!rateLimitCheck.allowed) {
+        state = AuthState(
+          status: AuthStatus.error,
+          errorMessage: rateLimitCheck.getErrorMessage(),
+        );
+        return;
+      }
+
       state = state.copyWith(status: AuthStatus.loading);
-      await _authService.signInWithEmailAndPassword(email, password);
-      // El estado se actualizará automáticamente a través del stream
-      // La verificación de email se hace en _init()
+      
+      try {
+        await _authService.signInWithEmailAndPassword(email, password);
+        // Login exitoso - limpiar contador
+        await _rateLimiter.recordLoginAttempt(email, true);
+        // El estado se actualizará automáticamente a través del stream
+        // La verificación de email se hace en _init()
+      } catch (e) {
+        // Login fallido - registrar intento
+        await _rateLimiter.recordLoginAttempt(email, false);
+        
+        // Re-verificar rate limiting para mostrar mensaje actualizado
+        final updatedCheck = await _rateLimiter.checkLoginAttempt(email);
+        String errorMessage = e.toString();
+        
+        if (updatedCheck.requiresCaptcha) {
+          errorMessage = 'Por seguridad, completa el CAPTCHA para continuar. ${errorMessage}';
+        } else if (!updatedCheck.allowed) {
+          errorMessage = updatedCheck.getErrorMessage();
+        }
+        
+        state = AuthState(
+          status: AuthStatus.error,
+          errorMessage: errorMessage,
+        );
+      }
     } catch (e) {
       state = AuthState(
         status: AuthStatus.error,
@@ -155,10 +191,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // Enviar email de restablecimiento de contraseña
   Future<void> sendPasswordResetEmail(String email) async {
     try {
+      // Verificar rate limiting antes de enviar
+      final rateLimitCheck = await _rateLimiter.checkPasswordReset(email);
+      
+      if (!rateLimitCheck.allowed) {
+        state = AuthState(
+          status: AuthStatus.error,
+          errorMessage: rateLimitCheck.getErrorMessage(),
+        );
+        return;
+      }
+
       state = const AuthState(status: AuthStatus.loading);
-      await _authService.sendPasswordResetEmail(email);
-      // No cambiar el estado aquí, solo limpiar el loading
-      // El SnackBar de éxito se maneja en la UI
+      
+      try {
+        await _authService.sendPasswordResetEmail(email);
+        // Registrar envío exitoso
+        await _rateLimiter.recordPasswordReset(email);
+        // No cambiar el estado aquí, solo limpiar el loading
+        // El SnackBar de éxito se maneja en la UI
+      } catch (e) {
+        state = AuthState(
+          status: AuthStatus.error,
+          errorMessage: e.toString(),
+        );
+      }
     } catch (e) {
       state = AuthState(
         status: AuthStatus.error,

@@ -10,6 +10,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/testing/family_users_generator.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
+import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/shared/models/user_role.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/models/plan_permissions.dart';
@@ -41,6 +42,7 @@ class EventDialog extends ConsumerStatefulWidget {
 }
 
 class _EventDialogState extends ConsumerState<EventDialog> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _descriptionController;
   late TextEditingController _typeFamilyController;
   late TextEditingController _typeSubtypeController;
@@ -86,7 +88,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     'Desplazamiento',
     'Restauración',
     'Actividad',
-    'Alojamiento',
     'Otro',
   ];
 
@@ -95,7 +96,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     'Desplazamiento': ['Taxi', 'Avión', 'Tren', 'Autobús', 'Coche', 'Caminar'],
     'Restauración': ['Desayuno', 'Comida', 'Cena', 'Snack', 'Bebida'],
     'Actividad': ['Museo', 'Monumento', 'Parque', 'Teatro', 'Concierto', 'Deporte'],
-    'Alojamiento': ['Hotel', 'Apartamento', 'Hostal', 'Casa'],
     'Otro': ['Compra', 'Reunión', 'Trabajo', 'Personal'],
   };
 
@@ -300,7 +300,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ),
         ],
       ),
-      content: SizedBox(
+      content: Form(
+        key: _formKey,
+        child: SizedBox(
         width: 520,
         child: DefaultTabController(
           length: _isAdmin ? 3 : 2,
@@ -364,6 +366,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               tooltipText: 'Información compartida entre todos los participantes',
               prefixIcon: Icons.title,
               maxLines: 2,
+              validator: (value) {
+                if (!_canEditGeneral) return null;
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return 'La descripción es obligatoria';
+                if (v.length < 3) return 'Mínimo 3 caracteres';
+                if (v.length > 1000) return 'Máximo 1000 caracteres';
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             
@@ -388,6 +398,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   _typeFamilyController.text = value ?? '';
                   _typeSubtypeController.text = ''; // Reset subtipo
                 });
+              },
+              validator: (value) {
+                if (!_canEditGeneral) return null;
+                // Tipo es opcional, pero si hay subtipo, debe haber tipo válido
+                if ((_typeSubtypeController.text.isNotEmpty) && (value == null || !_typeFamilies.contains(value))) {
+                  return 'Selecciona primero un tipo válido';
+                }
+                return null;
               },
             ),
               const SizedBox(height: 16),
@@ -414,6 +432,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   setState(() {
                     _typeSubtypeController.text = value ?? '';
                   });
+                },
+                validator: (value) {
+                  if (!_canEditGeneral) return null;
+                  // Subtipo es opcional, pero si hay valor debe pertenecer a la lista
+                  if (value != null && !(_typeSubtypes[_typeFamilyController.text] ?? []).contains(value)) {
+                    return 'Subtipo inválido para el tipo seleccionado';
+                  }
+                  return null;
                 },
               ),
               const SizedBox(height: 16),
@@ -645,6 +671,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             fieldType: 'personal',
                             tooltipText: 'Tu asiento específico para este evento',
                             prefixIcon: Icons.chair,
+                            validator: (value) {
+                              final v = value?.trim() ?? '';
+                              if (v.isEmpty) return null;
+                              if (v.length > 50) return 'Máximo 50 caracteres';
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
                           
@@ -657,6 +689,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             fieldType: 'personal',
                             tooltipText: 'Tus preferencias alimentarias para este evento',
                             prefixIcon: Icons.restaurant,
+                            validator: (value) {
+                              final v = value?.trim() ?? '';
+                              if (v.isEmpty) return null;
+                              if (v.length > 100) return 'Máximo 100 caracteres';
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
                           
@@ -670,6 +708,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             tooltipText: 'Tus preferencias específicas para este evento',
                             prefixIcon: Icons.favorite,
                             maxLines: 2,
+                            validator: (value) {
+                              final v = value?.trim() ?? '';
+                              if (v.isEmpty) return null;
+                              if (v.length > 200) return 'Máximo 200 caracteres';
+                              return null;
+                            },
                           ),
               const SizedBox(height: 16),
 
@@ -682,6 +726,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             fieldType: 'personal',
                             tooltipText: 'Tu número de reserva específico',
                             prefixIcon: Icons.confirmation_number,
+                            validator: (value) {
+                              final v = value?.trim() ?? '';
+                              if (v.isEmpty) return null;
+                              if (v.length > 50) return 'Máximo 50 caracteres';
+                              return null;
+                            },
                           ),
               const SizedBox(height: 16),
                           
@@ -694,6 +744,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             fieldType: 'personal',
                             tooltipText: 'Tu puerta o gate específico',
                             prefixIcon: Icons.door_front_door,
+                            validator: (value) {
+                              final v = value?.trim() ?? '';
+                              if (v.isEmpty) return null;
+                              if (v.length > 50) return 'Máximo 50 caracteres';
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
                           
@@ -720,6 +776,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             tooltipText: 'Notas privadas que solo tú puedes ver',
                             prefixIcon: Icons.note,
                             maxLines: 3,
+                            validator: (value) {
+                              final v = value?.trim() ?? '';
+                              if (v.isEmpty) return null;
+                              if (v.length > 1000) return 'Máximo 1000 caracteres';
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 24),
                           
@@ -758,6 +820,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ],
           ),
+        ),
         ),
       ),
       actions: [
@@ -1215,6 +1278,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   void _saveEvent() {
+    // Validación de formulario (campos con validator)
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
     // Validar permisos antes de proceder
     if (!_canEditGeneral) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1268,7 +1335,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
     // Construir EventCommonPart
     final commonPart = EventCommonPart(
-      description: _descriptionController.text.trim(),
+      description: Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000),
       date: _selectedDate,
       startHour: _selectedHour,
       startMinute: _selectedStartMinute,
@@ -1284,13 +1351,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final personalPart = EventPersonalPart(
       participantId: userId,
       fields: {
-        'asiento': _asientoController.text.trim().isEmpty ? null : _asientoController.text.trim(),
-        'menu': _menuController.text.trim().isEmpty ? null : _menuController.text.trim(),
-        'preferencias': _preferenciasController.text.trim().isEmpty ? null : _preferenciasController.text.trim(),
-        'numeroReserva': _numeroReservaController.text.trim().isEmpty ? null : _numeroReservaController.text.trim(),
-        'gate': _gateController.text.trim().isEmpty ? null : _gateController.text.trim(),
+        'asiento': Sanitizer.sanitizePlainText(_asientoController.text, maxLength: 50).isEmpty ? null : Sanitizer.sanitizePlainText(_asientoController.text, maxLength: 50),
+        'menu': Sanitizer.sanitizePlainText(_menuController.text, maxLength: 100).isEmpty ? null : Sanitizer.sanitizePlainText(_menuController.text, maxLength: 100),
+        'preferencias': Sanitizer.sanitizePlainText(_preferenciasController.text, maxLength: 200).isEmpty ? null : Sanitizer.sanitizePlainText(_preferenciasController.text, maxLength: 200),
+        'numeroReserva': Sanitizer.sanitizePlainText(_numeroReservaController.text, maxLength: 50).isEmpty ? null : Sanitizer.sanitizePlainText(_numeroReservaController.text, maxLength: 50),
+        'gate': Sanitizer.sanitizePlainText(_gateController.text, maxLength: 50).isEmpty ? null : Sanitizer.sanitizePlainText(_gateController.text, maxLength: 50),
         'tarjetaObtenida': _tarjetaObtenida,
-        'notasPersonales': _notasPersonalesController.text.trim().isEmpty ? null : _notasPersonalesController.text.trim(),
+        'notasPersonales': Sanitizer.sanitizePlainText(_notasPersonalesController.text, maxLength: 1000).isEmpty ? null : Sanitizer.sanitizePlainText(_notasPersonalesController.text, maxLength: 1000),
       },
     );
 
@@ -1307,7 +1374,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       duration: _selectedDuration,
       startMinute: _selectedStartMinute,
       durationMinutes: _selectedDurationMinutes,
-      description: _descriptionController.text.trim(),
+      description: Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000),
       color: _selectedColor,
       typeFamily: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       typeSubtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../features/security/services/rate_limiter_service.dart';
 import '../models/event.dart';
 import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
@@ -105,28 +106,31 @@ class EventService {
   // Crear un nuevo evento (solo para participantes del plan)
   Future<String?> createEvent(Event event) async {
     try {
-
-
+      // Verificar rate limiting para creación de eventos
+      final rateLimiter = RateLimiterService();
+      final eventLimitCheck = await rateLimiter.checkEventCreation(event.planId);
+      
+      if (!eventLimitCheck.allowed) {
+        throw Exception(eventLimitCheck.getErrorMessage());
+      }
       
       // Verificar que el usuario participa en el plan
       final isParticipant = await _participationService.isUserParticipant(event.planId, event.userId);
 
-      
       if (!isParticipant) {
-
         return null;
       }
 
       // Guardar evento tal como está (sin conversión a UTC por ahora)
       Event eventToSave = event;
 
-
-
       final docRef = await _firestore.collection(_collectionName).add(eventToSave.toFirestore());
+
+      // Registrar creación exitosa de evento
+      await rateLimiter.recordEventCreation(event.planId);
 
       return docRef.id;
     } catch (e) {
-
       return null;
     }
   }

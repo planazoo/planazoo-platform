@@ -184,6 +184,14 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
       return;
     }
 
+    final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.[A-Za-z]{2,}$');
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email inválido')),
+      );
+      return;
+    }
+
     // TODO: Buscar usuario por email y obtener su ID
     // Por ahora, usaremos el email como ID temporal
     final notifier = ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier);
@@ -201,11 +209,16 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
       
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invitación enviada')),
+          const SnackBar(content: Text('Invitación enviada'), backgroundColor: Colors.green),
         );
       } else {
+        // El error ya está manejado por el notifier, pero mostramos un mensaje genérico si no hay detalle
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al enviar invitación')),
+          const SnackBar(
+            content: Text('Error al enviar invitación. Verifica que no hayas alcanzado el límite de invitaciones diarias (50/día).'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 4),
+          ),
         );
       }
     }

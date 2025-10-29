@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T135**
+**Siguiente código de tarea: T137**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -21,8 +21,9 @@
 - **Agencias:** T132: Definición Sistema Agencias de Viajes (1 pendiente)
 - **Exportación:** T133: Exportación Profesional de Planes PDF/Email (1 pendiente)
 - **Importación:** T134: Importar desde Email (1 pendiente)
+- **Privacidad:** T135-T136: Gestión de Cookies y App Tracking Transparency (2 pendientes)
 
-**Total: 108 tareas documentadas (57 completadas, 51 pendientes)**
+**Total: 110 tareas documentadas (57 completadas, 53 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -216,7 +217,7 @@ Día N+4: Planificación del siguiente grupo
 - **Parte Personal:** Editada por cada participante (asientos, menús, información específica)
 - **Admins del plan:** Pueden editar parte común + cualquier parte personal
 
-**Ver decisiones completas en:** `docs/ARCHITECTURE_DECISIONS.md`
+**Ver decisiones completas en:** `docs/arquitectura/ARCHITECTURE_DECISIONS.md`
 
 ---
 
@@ -911,7 +912,7 @@ catch (e) {
 
 **Archivos a modificar:**
 - `lib/features/testing/demo_data_generator.dart`
-- `docs/FRANKENSTEIN_PLAN_SPEC.md`
+- `docs/especificaciones/FRANKENSTEIN_PLAN_SPEC.md`
 
 ---
 
@@ -1508,7 +1509,7 @@ CalendarScreen (orchestrator)
 
 **Archivos a crear:**
 - `docs/API_DOCUMENTATION.md`
-- `docs/ARCHITECTURE.md`
+- `docs/arquitectura/ARCHITECTURE_DECISIONS.md`
 - `docs/CONTRIBUTING.md`
 - `docs/SERVICE_EXAMPLES.md`
 
@@ -2337,31 +2338,41 @@ class PlatformStats {
 ---
 
 ### T126 - Rate Limiting y Protección contra Ataques
-**Estado:** Pendiente  
+**Estado:** ✅ Completada  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
 **Descripción:** Implementar rate limiting para prevenir ataques DoS y uso malicioso de la plataforma.
 
-**Funcionalidades:**
-1. Rate limiting en login (máx 5 intentos en 15 min)
-2. Rate limiting en creación de planes (máx 50 por usuario)
-3. Rate limiting en creación de eventos (máx 200 por plan)
-4. CAPTCHA después de 3 intentos fallidos de login
-5. Detección de patrones sospechosos
-6. Bloqueo temporal de cuentas
+**Funcionalidades implementadas:**
+1. ✅ Login: máx 5 intentos en 15 min (CAPTCHA tras 3 fallos)
+2. ✅ Recuperación de contraseña: máx 3 emails/hora/cuenta
+3. ✅ Invitaciones: máx 50/día/usuario
+4. ✅ Creación de planes: máx 50/día/usuario
+5. ✅ Creación de eventos: máx 200/día/plan
+6. ⚠️ Detección de patrones sospechosos (futuro con Cloud Functions)
+7. ⚠️ Bloqueo temporal de cuentas (futuro)
 
 **Criterios de aceptación:**
-- Rate limiting funcionando en login
-- Rate limiting funcionando en creación de contenido
-- CAPTCHA apareciendo después de intentos fallidos
-- Alertas automáticas para admins en casos sospechosos
-- Testing de límites
+- ✅ Rate limiting en login con CAPTCHA tras 3 fallos
+- ✅ Límites aplicados en invites, creación de planes y eventos
+- ✅ Mensajes claros sin filtrar información sensible
+- ✅ Persistencia de contadores en SharedPreferences
+- ✅ Limpieza automática de contadores fuera de ventana de tiempo
+- ⚠️ Alertas automáticas para admins en casos sospechosos (futuro)
+- ⚠️ Testing de límites (pendiente testing manual/integrado)
 
-**Archivos a crear:**
-- `lib/features/security/services/rate_limiter.dart`
-- `lib/features/security/services/security_monitor.dart`
+**Archivos creados:**
+- ✅ `lib/features/security/services/rate_limiter_service.dart`
 
-**Relacionado con:** T51, docs/flujos/FLUJO_SEGURIDAD.md
+**Archivos modificados:**
+- ✅ `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Login y password reset
+- ✅ `lib/features/calendar/presentation/notifiers/plan_participation_notifier.dart` - Invitaciones
+- ✅ `lib/features/calendar/domain/services/plan_service.dart` - Creación de planes
+- ✅ `lib/features/calendar/domain/services/event_service.dart` - Creación de eventos
+- ✅ `lib/pages/pg_dashboard_page.dart` - Manejo de errores en UI
+- ✅ `lib/pages/pg_plan_participants_page.dart` - Manejo de errores en UI
+
+**Relacionado con:** T51, docs/flujos/FLUJO_SEGURIDAD.md, docs/guias/GUIA_SEGURIDAD.md
 
 ---
 
@@ -2372,15 +2383,15 @@ class PlatformStats {
 **Descripción:** Sanitizar y validar todo el input del usuario para prevenir XSS, SQL injection y otros ataques.
 
 **Funcionalidades:**
-1. Sanitizar HTML en avisos del plan (T105)
-2. Sanitizar biografías de perfil
-3. Validar y sanitizar nombres de planes y eventos
-4. Validar URLs si se permiten en avisos
-5. Escapar HTML en todos los display
-6. Validar formato de emails
+1. Sanitizar HTML (whitelist) en avisos/biografías/notas
+2. Tags permitidos: `b,strong,i,em,u,br,p,ul,ol,li,a`
+3. Atributos permitidos en `a`: `href`, `title` (http/https) con `rel="noopener noreferrer"`
+4. Eliminar `script`, `style`, `iframe`, `on*`, `img` (por ahora)
+5. Validar y escapar HTML al mostrar
+6. Validar emails, URLs seguras
 
 **Criterios de aceptación:**
-- HTML sanitizado antes de guardar
+- HTML sanitizado antes de guardar (sin scripts)
 - HTML escapado al mostrar
 - Validación de inputs en todos los formularios
 - Testing de inputs maliciosos
@@ -2715,6 +2726,117 @@ Crear Evento/Alojamiento en el plan
 - Internacionalización: plantillas EN/ES comunes de proveedores
 
 **Relacionado con:** T121 (Form fields), T131 (.ics externo), `FLUJO_CRUD_EVENTOS`, `FLUJO_CRUD_ALOJAMIENTOS`, `GUIA_PATRON_COMUN_PERSONAL`
+
+---
+
+### T135 - Gestión de Cookies en Web (GDPR Compliance)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Implementar sistema completo de gestión de cookies para cumplimiento GDPR y normativas de cookies en la versión web de la aplicación.
+
+**Funcionalidades:**
+1. **Modal de consentimiento de cookies:**
+   - Aparece en primera visita a la web
+   - Información clara sobre tipos de cookies usadas
+   - Botones: "Rechazar", "Aceptar", "Personalizar"
+   - Link a política de cookies completa
+   
+2. **Panel de gestión de cookies:**
+   - Ver todas las cookies activas
+   - Categorías: Necesarias, Analytics, Marketing (si se usan)
+   - Activar/desactivar por categoría
+   - Guardar preferencias del usuario
+   
+3. **Persistencia de preferencias:**
+   - Guardar consentimiento en localStorage (web)
+   - Respetar preferencias en futuras visitas
+   - Permitir cambiar preferencias en cualquier momento
+   
+4. **Respeto de preferencias:**
+   - No cargar cookies de analytics si se rechazan
+   - Deshabilitar tracking si usuario rechaza
+   - Mantener solo cookies estrictamente necesarias
+
+**Criterios de aceptación:**
+- Modal aparece en primera visita
+- Usuario puede aceptar/rechazar cookies
+- Preferencias se guardan y respetan
+- Panel de gestión accesible desde configuración
+- Solo cookies necesarias si usuario rechaza
+- Documentación de cookies usadas
+
+**Archivos a crear:**
+- `lib/features/consent/services/cookie_consent_service.dart`
+- `lib/features/consent/widgets/wd_cookie_consent_modal.dart`
+- `lib/features/consent/widgets/wd_cookie_settings_panel.dart`
+- `docs/legal/cookie_policy.md` (contenido completo)
+
+**Cookies a gestionar:**
+- **Necesarias (siempre activas):**
+  - Sesión de usuario (Firebase Auth)
+  - Preferencias de idioma
+  - Estado de consentimiento
+  
+- **Analytics (opcionales):**
+  - Firebase Analytics
+  - Google Analytics (si se usa)
+  
+- **Marketing (opcionales - futuro):**
+  - Tracking de conversiones (si se implementa)
+  - Cookies de terceros (si se usan)
+
+**Relacionado con:** T50 (Configuración), `GUIA_ASPECTOS_LEGALES.md` (sección 4), GDPR compliance
+
+---
+
+### T136 - App Tracking Transparency en iOS (Privacy Compliance)
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟡 Media  
+**Descripción:** Implementar App Tracking Transparency (ATT) en iOS para cumplir con requisitos de privacidad de Apple iOS 14.5+ y respetar la preferencia "Ask App Not to Track".
+
+**Funcionalidades:**
+1. **Solicitud de permisos de tracking:**
+   - Mostrar diálogo nativo de iOS al iniciar app (si es necesario)
+   - Mensaje explicativo en `Info.plist`
+   - Solicitud solo si la app necesita tracking (IDFA o tracking de terceros)
+   
+2. **Respeto de preferencia "No rastrear":**
+   - Detectar si usuario tiene "No rastrear" activado en iOS
+   - No solicitar permisos si está activado
+   - Deshabilitar cualquier tracking de terceros si se rechaza
+   
+3. **Gestión de tracking opcional:**
+   - Si no se necesita tracking, no solicitar permisos
+   - Solo solicitar si realmente se usa tracking para analytics/ads
+   - Respetar siempre la decisión del usuario
+
+**Criterios de aceptación:**
+- `NSUserTrackingUsageDescription` añadido en `Info.plist`
+- Diálogo nativo de ATT funcional (si se necesita tracking)
+- Respeto de "Ask App Not to Track" del sistema
+- No tracking si usuario rechaza
+- Testing en iOS real con diferentes estados
+
+**Archivos a modificar:**
+- `ios/Runner/Info.plist` - Añadir `NSUserTrackingUsageDescription`
+- `lib/features/consent/services/tracking_consent_service.dart` (nuevo) - Lógica de tracking
+- Verificar si se necesita paquete específico para ATT
+
+**Configuración Info.plist:**
+```xml
+<key>NSUserTrackingUsageDescription</key>
+<string>Esta app usa información para mejorar tu experiencia y personalizar el contenido. Tu privacidad es importante para nosotros.</string>
+```
+
+**Nota importante:**
+- Solo solicitar tracking si realmente es necesario (analytics, ads personalizados)
+- Si Firebase Analytics funciona sin IDFA, puede no ser necesario
+- Respetar siempre la preferencia del usuario
+- No penalizar funcionalidad si se rechaza tracking
+
+**Relacionado con:** T135 (Gestión de cookies), `GUIA_ASPECTOS_LEGALES.md`, Apple Privacy Guidelines
 
 ---
 

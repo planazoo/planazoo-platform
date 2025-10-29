@@ -638,10 +638,10 @@ Usuario en avión sin conexión a internet
 ## 📚 Referencias
 
 ### Documentos Relacionados
-- `docs/TASKS.md` - Lista completa de tareas de implementación
-- `docs/COMPLETED_TASKS.md` - Historial de tareas completadas
-- `docs/CALENDAR_CAPABILITIES.md` - Capacidades funcionales del calendario
-- `docs/FRANKENSTEIN_PLAN_SPEC.md` - Especificación del plan de testing
+- `docs/tareas/TASKS.md` - Lista completa de tareas de implementación
+- `docs/tareas/COMPLETED_TASKS.md` - Historial de tareas completadas
+- `docs/especificaciones/CALENDAR_CAPABILITIES.md` - Capacidades funcionales del calendario
+- `docs/especificaciones/FRANKENSTEIN_PLAN_SPEC.md` - Especificación del plan de testing
 
 ### Decisiones Técnicas
 - **Riverpod:** State management elegido para la aplicación

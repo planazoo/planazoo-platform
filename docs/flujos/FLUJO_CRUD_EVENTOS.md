@@ -162,8 +162,8 @@ Si marca checkbox:
 Buscar proveedor:
 - "Iberia" (vuelos)
 - "Renfe" (trenes)
-- "Hotel Hilton" (alojamientos)
 - "Restaurante El Jardín" (restauración)
+- "Museo del Prado" (actividades)
   ↓
 Seleccionar proveedor
   ↓

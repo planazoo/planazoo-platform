@@ -635,7 +635,7 @@ Los usuarios ahora tienen indicadores visuales claros y profesionales que les pe
 
 **Archivos modificados:**
 - `lib/widgets/wd_event_dialog.dart` - Rediseño completo con tabs y permisos
-- `docs/TASKS.md` - Actualización de estado
+- `docs/tareas/TASKS.md` - Actualización de estado
 
 **Notas:**
 - Sistema de roles básico implementado (placeholder para integración futura)
@@ -667,7 +667,7 @@ Los usuarios ahora tienen indicadores visuales claros y profesionales que les pe
 **Archivos modificados:**
 - `lib/features/calendar/domain/models/event.dart` - Modelo completo con common/personal
 - `lib/widgets/wd_event_dialog.dart` - UI con tabs y campos personales
-- `docs/TASKS.md` - Actualización de estado
+- `docs/tareas/TASKS.md` - Actualización de estado
 
 **Notas:**
 - Compatibilidad hacia atrás garantizada: eventos antiguos se migran automáticamente
@@ -725,9 +725,9 @@ Los usuarios ahora tienen indicadores visuales claros y profesionales que les pe
 
 **Archivos modificados:**
 - `lib/widgets/screens/wd_calendar_screen.dart`
-- `docs/CALENDAR_CAPABILITIES.md`
+- `docs/especificaciones/CALENDAR_CAPABILITIES.md`
 - `lib/features/testing/demo_data_generator.dart`
-- `docs/FRANKENSTEIN_PLAN_SPEC.md`
+- `docs/especificaciones/FRANKENSTEIN_PLAN_SPEC.md`
 
 **Resultado:** Calendarios legibles y usables, con validación robusta en todos los puntos de entrada.
 

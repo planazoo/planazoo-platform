@@ -1,6 +1,6 @@
-# 🔄 Flujo de Creación de Plan Completo
+# 📑 Índice del Sistema de Planes
 
-> Índice y visión general del sistema completo de creación y gestión de planes
+> Índice general y visión completa del sistema de creación y gestión de planes
 
 **Estado:** Índice  
 **Versión:** 2.0  

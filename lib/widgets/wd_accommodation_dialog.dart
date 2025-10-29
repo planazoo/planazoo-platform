@@ -4,6 +4,7 @@ import 'package:unp_calendario/features/calendar/domain/models/accommodation.dar
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
+import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 
 class AccommodationDialog extends ConsumerStatefulWidget {
   final Accommodation? accommodation;
@@ -30,6 +31,7 @@ class AccommodationDialog extends ConsumerStatefulWidget {
 }
 
 class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _hotelNameController;
   late TextEditingController _descriptionController;
   late DateTime _selectedCheckIn;
@@ -115,13 +117,15 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.accommodation == null ? 'Nuevo Alojamiento' : 'Editar Alojamiento'),
-      content: SingleChildScrollView(
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Nombre del hotel/alojamiento
-            TextField(
+            TextFormField(
               controller: _hotelNameController,
               decoration: const InputDecoration(
                 labelText: 'Nombre del alojamiento',
@@ -130,6 +134,13 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 prefixIcon: Icon(Icons.hotel),
               ),
               maxLines: 1,
+              validator: (value) {
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return 'El nombre del alojamiento es obligatorio';
+                if (v.length < 2) return 'Mínimo 2 caracteres';
+                if (v.length > 100) return 'Máximo 100 caracteres';
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             
@@ -163,7 +174,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             const SizedBox(height: 16),
             
             // Descripción
-            TextField(
+            TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(
                 labelText: 'Descripción (opcional)',
@@ -172,6 +183,12 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 prefixIcon: Icon(Icons.notes),
               ),
               maxLines: 3,
+              validator: (value) {
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return null;
+                if (v.length > 1000) return 'Máximo 1000 caracteres';
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             
@@ -253,6 +270,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             // Selección de participantes
             _buildParticipantSelection(),
           ],
+        ),
         ),
       ),
       actions: [
@@ -428,6 +446,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   }
 
   void _saveAccommodation() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
     // Validar nombre del hotel
     if (_hotelNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -458,10 +479,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       planId: widget.planId,
       checkIn: _selectedCheckIn,
       checkOut: _selectedCheckOut,
-      hotelName: _hotelNameController.text.trim(),
-      description: _descriptionController.text.trim().isEmpty 
-          ? null 
-          : _descriptionController.text.trim(),
+      hotelName: Sanitizer.sanitizePlainText(_hotelNameController.text, maxLength: 100),
+      description: Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000).isEmpty
+          ? null
+          : Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000),
       color: _selectedColor,
       typeFamily: 'alojamiento',
       typeSubtype: normalizedType,

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../features/security/services/rate_limiter_service.dart';
 import '../models/plan.dart';
 import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
@@ -82,6 +83,14 @@ class PlanService {
   // Crear un nuevo plan
   Future<String?> createPlan(Plan plan) async {
     try {
+      // Verificar rate limiting para creación de planes
+      final rateLimiter = RateLimiterService();
+      final planLimitCheck = await rateLimiter.checkPlanCreation(plan.userId);
+      
+      if (!planLimitCheck.allowed) {
+        throw Exception(planLimitCheck.getErrorMessage());
+      }
+      
       final docRef = await _firestore.collection(_collectionName).add(plan.toFirestore());
       final planId = docRef.id;
       
@@ -91,6 +100,9 @@ class PlanService {
         userId: plan.userId,
         role: 'organizer',
       );
+      
+      // Registrar creación exitosa de plan
+      await rateLimiter.recordPlanCreation(plan.userId);
       
       LoggerService.database('Plan created successfully with ID: $planId', operation: 'CREATE');
       return planId;

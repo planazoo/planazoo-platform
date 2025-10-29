@@ -52,8 +52,11 @@ Para cada evento nuevo/editado:
 **Detalles técnicos:**
 - Considerar timezones de eventos
 - Considerar timezone del participante
-- Validar que eventos en borrador pueden solaparse
-- Validar que eventos NO en borrador NO pueden solaparse
+- Regla por estado del plan/evento:
+  - Borrador/Planificando: permitir con confirmación explícita
+  - Confirmado: bloquear salvo excepción marcada
+  - En Curso: bloquear, solo cambios urgentes por organizador
+  - Finalizado/Cancelado: no aplican cambios
 
 **UI de la alerta:**
 ```
@@ -73,9 +76,9 @@ Opciones:
 #### 1.2 - Permitir Solapamiento (casos excepcionales)
 
 **Casos válidos:**
-- Evento borrador todavía en planificación
-- Actividades que se pueden hacer simultáneamente (ej: senderismo paralelo)
-- Eventos con "asistencia opcional"
+- Evento en estado borrador/planificando con confirmación
+- Actividades compatibles (definidas como "compatibles")
+- Eventos con "asistencia opcional" (no obligatoria)
 
 **Flujo:**
 ```
@@ -88,7 +91,7 @@ Opciones:
 - "Actividades compatibles, continuar"
 - "Cancelar y cambiar horario"
   ↓
-Si continúa: Marcar como "solapamiento permitido"
+Si continúa: Marcar como "solapamiento permitido" y registrar razón
 ```
 
 ---
@@ -538,6 +541,11 @@ Asegúrate de tener tiempo suficiente para el traslado."
 - ❌ Mapa del plan (T114)
 - ❌ Auto-expansión de rango (T107)
 - ❌ Sugerencias de optimización
+
+**Añadido (T51):**
+- ✅ Validaciones de longitud y obligatoriedad en formularios de evento
+- ✅ Validaciones de longitud en campos personales del evento
+- ✅ Validación de email de invitación en participación
 
 ---
 

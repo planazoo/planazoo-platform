@@ -115,6 +115,7 @@ class PermissionTextField extends StatelessWidget {
   final IconData? prefixIcon;
   final int? maxLines;
   final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
 
   const PermissionTextField({
     super.key,
@@ -127,6 +128,7 @@ class PermissionTextField extends StatelessWidget {
     this.prefixIcon,
     this.maxLines,
     this.keyboardType,
+    this.validator,
   });
 
   @override
@@ -137,12 +139,50 @@ class PermissionTextField extends StatelessWidget {
       fieldName: labelText,
       tooltipText: tooltipText,
       icon: prefixIcon,
-      child: TextField(
-        controller: controller,
-        readOnly: !canEdit,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
+      child: (validator != null)
+          ? TextFormField(
+              controller: controller,
+              readOnly: !canEdit,
+              maxLines: maxLines,
+              keyboardType: keyboardType,
+              validator: validator,
+              decoration: InputDecoration(
+                labelText: labelText,
+                hintText: hintText,
+                prefixIcon: prefixIcon != null 
+                    ? Icon(
+                        prefixIcon,
+                        color: canEdit ? Colors.green.shade600 : Colors.grey.shade500,
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: canEdit ? Colors.green.shade500 : Colors.grey.shade400,
+                  ),
+                ),
+                filled: true,
+                fillColor: canEdit ? Colors.green.shade50 : Colors.grey.shade50,
+                suffixIcon: canEdit 
+                    ? Icon(Icons.edit, size: 16, color: Colors.green.shade600)
+                    : Icon(Icons.lock, size: 16, color: Colors.grey.shade500),
+              ),
+            )
+          : TextField(
+              controller: controller,
+              readOnly: !canEdit,
+              maxLines: maxLines,
+              keyboardType: keyboardType,
+              decoration: InputDecoration(
           labelText: labelText,
           hintText: hintText,
           prefixIcon: prefixIcon != null 
@@ -171,8 +211,8 @@ class PermissionTextField extends StatelessWidget {
           suffixIcon: canEdit 
               ? Icon(Icons.edit, size: 16, color: Colors.green.shade600)
               : Icon(Icons.lock, size: 16, color: Colors.grey.shade500),
-        ),
-      ),
+              ),
+            ),
     );
   }
 }
@@ -187,6 +227,7 @@ class PermissionDropdownField<T> extends StatelessWidget {
   final String fieldType;
   final String? tooltipText;
   final IconData? prefixIcon;
+  final FormFieldValidator<T>? validator;
 
   const PermissionDropdownField({
     super.key,
@@ -198,6 +239,7 @@ class PermissionDropdownField<T> extends StatelessWidget {
     required this.fieldType,
     this.tooltipText,
     this.prefixIcon,
+    this.validator,
   });
 
   @override
@@ -210,6 +252,7 @@ class PermissionDropdownField<T> extends StatelessWidget {
       icon: prefixIcon,
       child: DropdownButtonFormField<T>(
         value: value,
+        validator: validator,
         decoration: InputDecoration(
           labelText: labelText,
           prefixIcon: prefixIcon != null 

@@ -73,6 +73,60 @@ match /users/{userId} {
 
 ---
 
+### 2. SANITIZACIÓN DE CONTENIDO (T127)
+
+**Objetivo:** Evitar XSS y contenido malicioso en entradas de usuario (avisos del plan, biografías, notas, descripciones enriquecidas).
+
+**Política de sanitización:**
+- Estrategia whitelist (permitir solo tags seguros).
+- Tags permitidos: `b`, `strong`, `i`, `em`, `u`, `br`, `p`, `ul`, `ol`, `li`, `a`.
+- Atributos permitidos:
+  - Para `a`: `href`, `title` con restricciones (`http`, `https`), añadir `rel="noopener noreferrer"`.
+- Eliminar: `script`, `style`, `iframe`, `on*` (event handlers), `img` (por ahora), `video`, `audio`.
+
+**Implementación sugerida:**
+- Crear `Sanitizer.sanitize(String html)` en `lib/features/security/utils/sanitizer.dart`.
+- Normalizar enlaces y escapar entidades donde aplique.
+- Aplicar antes de persistir y validar al renderizar.
+
+**Criterios de aceptación:**
+- Ningún tag/script ejecutable llega a la renderización.
+- Links seguros con `rel` aplicado automáticamente.
+- Tests de inputs maliciosos pasan (payloads comunes de XSS).
+
+---
+
+### 3. RATE LIMITING Y ABUSO (T126 - ✅ COMPLETADO)
+
+**Objetivo:** Proteger endpoints y operaciones sensibles contra abuso.
+
+**Límites implementados:**
+- ✅ Login: máximo 5 intentos por email en 15 minutos; CAPTCHA tras 3 fallos.
+- ✅ Recuperación de contraseña: máximo 3 emails por hora por cuenta.
+- ✅ Invitaciones: máximo 50 invitaciones por día por usuario.
+- ✅ Creación de planes: máximo 50 por día por usuario.
+- ✅ Creación de eventos: máximo 200 por plan por día.
+
+**Implementación:**
+- ✅ **Servicio:** `RateLimiterService` con persistencia en SharedPreferences
+- ✅ **Integraciones:**
+  - `auth_notifier.dart` - Login y recuperación de contraseña
+  - `plan_participation_notifier.dart` - Invitaciones
+  - `plan_service.dart` - Creación de planes
+  - `event_service.dart` - Creación de eventos
+- ✅ Cliente: contador local para UX inmediata; bloquea UI cuando se alcanza límite
+- ⚠️ Servidor: validar en backend/Cloud Functions cuando estén disponibles (futuro)
+- ⚠️ Log y alertas para patrones sospechosos (futuro)
+
+**Criterios de aceptación cumplidos:**
+- ✅ Los límites se aplican consistentemente en UI
+- ✅ Mensajes de error claros y no revelan información sensible
+- ✅ Limpieza automática de contadores fuera de la ventana de tiempo
+- ✅ Limpieza de contadores en operaciones exitosas (login)
+- ⚠️ Registro de eventos de abuso para análisis (futuro con Cloud Functions)
+
+---
+
 ### 2. PROTECCIÓN DE DATOS SENSIBLES
 
 #### 2.1 - Datos Personales

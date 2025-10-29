@@ -119,11 +119,11 @@ lib/
 ## 📚 Documentación
 
 ### **Documentos Principales**
-- 📖 **[Decisiones Arquitectónicas](docs/ARCHITECTURE_DECISIONS.md)** - Todas las decisiones fundamentales del proyecto
-- 📋 **[Tareas Pendientes](docs/TASKS.md)** - Lista de tareas y próximos pasos (Siguiente: T68)
-- ✅ **[Tareas Completadas](docs/COMPLETED_TASKS.md)** - Historial de implementaciones
-- 📅 **[Capacidades del Calendario](docs/CALENDAR_CAPABILITIES.md)** - Funcionalidades y reglas de negocio
-- 🧟 **[Plan Frankenstein](docs/FRANKENSTEIN_PLAN_SPEC.md)** - Plan de testing completo
+- 📖 **[Decisiones Arquitectónicas](docs/arquitectura/ARCHITECTURE_DECISIONS.md)** - Todas las decisiones fundamentales del proyecto
+- 📋 **[Tareas Pendientes](docs/tareas/TASKS.md)** - Lista de tareas y próximos pasos (Siguiente: T137)
+- ✅ **[Tareas Completadas](docs/tareas/COMPLETED_TASKS.md)** - Historial de implementaciones
+- 📅 **[Capacidades del Calendario](docs/especificaciones/CALENDAR_CAPABILITIES.md)** - Funcionalidades y reglas de negocio
+- 🧟 **[Plan Frankenstein](docs/especificaciones/FRANKENSTEIN_PLAN_SPEC.md)** - Plan de testing completo
 
 ### **Conceptos Clave**
 - **Offline First**: La app funciona sin conexión, sincroniza cuando es posible
@@ -144,7 +144,7 @@ lib/
 7. **Offline First Completo** → CRUD sin conexión + sincronización automática
 8. **Permisos Granulares** → Roles + permisos específicos por acción
 
-Ver detalles completos en **[ARCHITECTURE_DECISIONS.md](docs/ARCHITECTURE_DECISIONS.md)**
+Ver detalles completos en **[ARCHITECTURE_DECISIONS.md](docs/arquitectura/ARCHITECTURE_DECISIONS.md)**
 
 ## 🚀 Próximos Pasos
 

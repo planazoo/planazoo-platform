@@ -2012,9 +2012,15 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Error al crear el plan';
+        if (e.toString().contains('intentos') || e.toString().contains('límite')) {
+          errorMessage = e.toString().replaceFirst('Exception: ', '');
+        } else {
+          errorMessage = 'Error: $e';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );

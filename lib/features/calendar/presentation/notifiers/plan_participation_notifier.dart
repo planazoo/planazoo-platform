@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/plan_participation.dart';
 import '../../domain/services/plan_participation_service.dart';
 import '../../domain/services/plan_service.dart';
+import '../../../../features/security/services/rate_limiter_service.dart';
 
 class PlanParticipationNotifier extends StateNotifier<AsyncValue<List<PlanParticipation>>> {
   final String _planId;
@@ -61,6 +62,20 @@ class PlanParticipationNotifier extends StateNotifier<AsyncValue<List<PlanPartic
   // Invitar usuario a un plan
   Future<bool> inviteUserToPlan(String planId, String userId, {String? invitedBy}) async {
     try {
+      // Verificar rate limiting para invitaciones
+      if (invitedBy != null) {
+        final rateLimiter = RateLimiterService();
+        final rateLimitCheck = await rateLimiter.checkInvitation(invitedBy);
+        
+        if (!rateLimitCheck.allowed) {
+          state = AsyncValue.error(
+            Exception(rateLimitCheck.getErrorMessage()), 
+            StackTrace.current
+          );
+          return false;
+        }
+      }
+      
       state = const AsyncValue.loading();
       
       final success = await _planService.inviteUserToPlan(
@@ -69,7 +84,11 @@ class PlanParticipationNotifier extends StateNotifier<AsyncValue<List<PlanPartic
         invitedBy: invitedBy,
       );
       
-      if (success) {
+      if (success && invitedBy != null) {
+        // Registrar invitación exitosa
+        final rateLimiter = RateLimiterService();
+        await rateLimiter.recordInvitation(invitedBy);
+        
         // Recargar la lista de participantes
         loadPlanParticipants(planId);
       }

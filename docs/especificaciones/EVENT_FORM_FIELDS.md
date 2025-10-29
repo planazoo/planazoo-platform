@@ -1,15 +1,17 @@
-# 📋 Campos de Formularios de Eventos y Alojamientos
+# 📋 Campos de Formularios de Eventos
 
 > Documento para T121: Revisión y enriquecimiento de formularios
 
 **Estado:** Borrador  
 **Última actualización:** Enero 2025
 
+> **Nota:** Los alojamientos se gestionan por separado. Ver `ACCOMMODATION_FORM_FIELDS.md` para detalles.
+
 ---
 
 ## 🎯 Objetivo
 
-Definir todos los campos necesarios para formularios de eventos y alojamientos, basándonos en:
+Definir todos los campos necesarios para formularios de eventos, basándonos en:
 - Campos actuales del código
 - Mejores prácticas de la industria
 - Ejemplos de aplicaciones de reservas comerciales
@@ -23,15 +25,14 @@ Definir todos los campos necesarios para formularios de eventos y alojamientos, 
 2. [Desplazamiento](#desplazamiento)
 3. [Restauración](#restauración)
 4. [Actividades](#actividades)
-5. [Alojamientos](#alojamientos)
-6. [Eventos Especiales](#eventos-especiales)
-7. [Otros](#otros)
+5. [Eventos Especiales](#eventos-especiales)
+6. [Otros](#otros)
 
 ---
 
 ## 🔧 Campos Comunes
 
-Estos campos son aplicables a TODOS los eventos y alojamientos:
+Estos campos son aplicables a TODOS los eventos:
 
 ### Información General
 - **Título/Descripción** (texto)
@@ -59,6 +60,23 @@ Estos campos son aplicables a TODOS los eventos y alojamientos:
 - **Otros campos personalizados** (Map<String, dynamic>, según tipo)
 
 ---
+
+## ✅ Validaciones y Límites (aplicadas en formularios)
+
+### Comunes
+- Descripción: obligatorio, 3–1000 caracteres
+- Duración: máximo 24h (para estancias usar Alojamiento)
+- Tipo/Subtipo: consistentes con listas por familia
+
+### Personales (por participante)
+- Asiento: máx 50 caracteres
+- Menú/Comida: máx 100 caracteres
+- Preferencias: máx 200 caracteres
+- Número de reserva: máx 50 caracteres
+- Puerta/Gate: máx 50 caracteres
+- Notas personales: máx 1000 caracteres
+
+Estas reglas están implementadas en `wd_event_dialog.dart` mediante `Form` + `validator`.
 
 ## 🚗 DESPLAZAMIENTO
 
@@ -549,208 +567,6 @@ Estos campos son aplicables a TODOS los eventos y alojamientos:
 
 ---
 
-## 🏨 ALOJAMIENTOS
-
-### General (todos los alojamientos)
-
-#### Parte Común
-- **Nombre alojamiento** (texto + autocomplete)
-- **Tipo** (dropdown): "Hotel", "Apartamento", "Hostal", "Casa", "Glamping", "Casa rural"
-- **Dirección completa** (texto + ubicación)
-- **Check-in** (date + time)
-- **Check-out** (date + time)
-- **Timezone** (IANA)
-- **Día límite cancelación** (date): Último día para cancelar gratis
-- **Web** (url)
-- **Teléfono contacto** (texto)
-- **Email contacto** (email)
-- **Número reserva** (texto): Booking.com, Airbnb, etc.
-- **Código reserva** (texto): Código de la plataforma
-- **Precio total** (currency)
-- **Precio por noche** (currency)
-- **Cancelación gratuita** (checkbox): hasta el día límite
-- **Depósito** (currency)
-- **Depósito devuelto** (checkbox)
-- **Servicios incluidos** (multi-select): "WiFi", "AC", "Piscina", "Desayuno", "Pension completa", "Gym"
-- **Servicios adicionales** (texto)
-- **Check-in auto** (checkbox): Llavero codebox, app
-- **Hora límite check-in** (time): "hasta 23:00"
-- **Hora límite check-out** (time): "antes de 11:00"
-- **Notas generales** (texto)
-
-#### Parte Personal
-- **Habitación número** (texto): "205", "A5"
-- **Tipo habitación** (texto): "Doble vista mar", "Apartamento con terraza"
-- **Número personas** (número)
-- **Camas** (texto): "1 cama matrimonial", "2 camas individuales"
-- **Persona registro** (texto): Nombre quién hace check-in
-- **Documentos confirmados** (checkbox): Documentos listos
-- **Check-in completado** (checkbox)
-- **Check-out completado** (checkbox)
-- **Llaves devueltas** (checkbox)
-- **Preferencias** (texto): "Vista", "Piso alto", "Silencio"
-- **Alergias** (texto)
-- **Niños** (número): "2"
-- **Bebés** (número): "1"
-- **Necesita cuna** (checkbox)
-- **Necesita silla bebé** (checkbox)
-- **Mascotas** (checkbox): "1 perro"
-- **Maletas** (número): Total equipaje
-- **Comentarios** (texto)
-- **Valoración** (rating): 1-5 estrellas (después de estancia)
-
----
-
-### 🏨 Hotel / Resort
-
-#### Campos específicos adicionales
-- **Categoría** (dropdown): "1 estrella", "2 estrellas", "3 estrellas", "4 estrellas", "5 estrellas", "Lujo"
-- **Cadena hotel** (texto)
-- **Programa fidelización** (texto): "Bonvoy", "Hilton Honors"
-- **Número fidelización** (texto)
-- **Habitaciones reservadas** (número)
-- **Suite** (checkbox)
-- **Traslado hotel** (checkbox)
-- **Traslado aeropuerto** (texto): Precio, horarios
-- **Parking incluido** (checkbox)
-- **Precio parking** (currency): Si no incluido
-- **Tardeo** (checkbox)
-- **Tardeo gratis** (checkbox)
-- **Check-in tarde** (texto): "16:00 en lugar de 14:00"
-
-#### Parte Personal
-- **Tipo habitación reservada** (dropdown): "Individual", "Doble", "Triple", "Suite"
-- **Cama tipo** (dropdown): "King", "Queen", "2 individuales", "Sofa bed"
-- **Vista** (dropdown): "Mar", "Jardín", "Ciudad", "Interior"
-- **Piso preferido** (texto): "Alto", "Bajo"
-- **Desayuno incluido** (checkbox)
-- **Desayuno comprado** (checkbox)
-- **Tipo pensión** (dropdown): "Solo alojamiento", "Desayuno", "Media pensión", "Pensión completa", "Todo incluido"
-- **Limpieza diaria** (checkbox)
-- **Toallas a piscina** (checkbox)
-- **SPA** (checkbox): Acceso incluido o comprado
-- **Gym** (checkbox)
-- **Minibar** (checkbox): Bebidas incluidas
-- **WiFi gratis** (checkbox)
-- **WiFi premium** (checkbox)
-- **Business center** (checkbox)
-- **Room service** (checkbox)
-
----
-
-### 🏠 Apartamento / Airbnb
-
-#### Campos específicos adicionales
-- **Plataforma** (dropdown): "Airbnb", "Booking.com", "VRBO", "Directo"
-- **Anfitrión** (texto): Nombre del anfitrión
-- **Contacto anfitrión** (texto): Teléfono/WhatsApp
-- **Código acceso** (texto): Para puerta/cajita llaves
-- **Instrucciones acceso** (texto): Dónde está la cajita, código puerta
-- **Código WiFi** (texto)
-- **Habitaciones** (número)
-- **Baños** (número)
-- **Cocina** (checkbox)
-- **Cocina equipada** (checkbox): Utensilios básicos
-- **Lavadora** (checkbox)
-- **Secadora** (checkbox)
-- **Comedor** (checkbox)
-- **Balcón** (checkbox)
-- **Terraza** (checkbox)
-- **Jardín** (checkbox)
-- **Piscina compartida** (checkbox)
-- **Piscina privada** (checkbox)
-- **Parking incluido** (checkbox)
-- **Garaje** (checkbox)
-- **Internet alta velocidad** (checkbox)
-- **TV** (checkbox)
-- **AC** (checkbox)
-- **Calefacción** (checkbox)
-- **Chimenea** (checkbox)
-- **Zona trabajo** (checkbox)
-- **Mascotas permitidas** (checkbox)
-- **Fumadores permitido** (checkbox)
-- **Reglas casa** (texto)
-- **Depósito seguridad** (currency)
-- **Limpieza** (currency): Tasa de limpieza
-- **Servicio** (currency): Tasa servicio plataforma
-- **Tiempo respuesta anfitrión** (texto): "Respuesta en 1 hora"
-
----
-
-### 🏨 Hostal / Albergue
-
-#### Campos específicos adicionales
-- **Tipo habitación** (dropdown): "Dormitorio compartido", "Habitación privada", "Habitación doble"
-- **Dormitorio género** (dropdown): "Mixto", "Solo mujeres", "Solo hombres"
-- **Camas en litera** (checkbox)
-- **Cama preferida** (dropdown): "Inferior", "Superior"
-- **Lockers** (checkbox): Hay taquillas
-- **Lockers gratis** (checkbox)
-- **Cocina compartida** (checkbox)
-- **Sala común** (checkbox)
-- **Sala estar** (checkbox)
-- **Terraza** (checkbox)
-- **Lavandería** (checkbox): Servicio lavandería
-- **Lavadora** (checkbox): Máquina usuarios
-- **Estacionamiento** (checkbox)
-- **Caja fuerte** (checkbox)
-- **Check-in 24h** (checkbox)
-
----
-
-### 🏠 Casa Rural / Chalet
-
-#### Campos específicos adicionales
-- **Tipo propiedad** (dropdown): "Casa rural", "Chalet", "Villa", "Masía"
-- **Habitaciones** (número)
-- **Baños** (número)
-- **Cocina** (checkbox)
-- **Comedor** (checkbox)
-- **Salón** (checkbox)
-- **Chimenea** (checkbox)
-- **Jardín** (checkbox)
-- **Terraza** (checkbox)
-- **Piscina** (checkbox): Privada
-- **Barbacoa** (checkbox)
-- **Parking** (checkbox)
-- **WiFi** (checkbox)
-- **Limpieza incluida** (checkbox)
-- **Limpieza final** (currency)
-- **Número invitados máximo** (número)
-- **Perros permitidos** (checkbox)
-- **Gatos permitidos** (checkbox)
-- **Precio perro** (currency)
-- **Precio gato** (currency)
-- **Leña gratuita** (checkbox)
-- **Leña incluida** (checkbox)
-- **Contacto propietario** (texto)
-- **Teléfono emergencias** (texto)
-
----
-
-### 🏕️ Camping / Glamping
-
-#### Campos específicos adicionales
-- **Tipo** (dropdown): "Camping", "Glamping", "Caravana", "Autocaravana"
-- **Parcela** (texto): "A-15"
-- **Tipo parcela** (dropdown): "Tienda", "Caravana", "Autocaravana", "Cabaña", "Yurta"
-- **Electricidad** (checkbox)
-- **Agua** (checkbox)
-- **Ducha compartida** (checkbox)
-- **WC compartido** (checkbox)
-- **WC privado** (checkbox)
-- **Basura** (checkbox): Contenedor cerca
-- **Piscina camping** (checkbox)
-- **Restaurante camping** (checkbox)
-- **Tienda camping** (checkbox)
-- **Limpieza incluida** (checkbox)
-- **Basura incluida** (checkbox)
-- **Traes tienda** (checkbox)
-- **Alquilas tienda** (checkbox)
-- **Precio alquiler tienda** (currency)
-
----
-
 ## 🎉 EVENTOS ESPECIALES
 
 ### General (todos los eventos especiales)
@@ -936,6 +752,119 @@ Estos campos son aplicables a TODOS los eventos y alojamientos:
 
 ---
 
+---
+
+## 🎨 IMPLEMENTACIÓN TÉCNICA
+
+### Estructura de Datos para Campos Dinámicos
+
+Todos los eventos tienen **campos comunes** (siempre visibles):
+- **Notas personales** (texto libre)
+- **Tarjeta obtenida** (checkbox)
+
+Los **campos específicos** aparecen según el tipo de evento en la **Parte Personal**.
+
+#### Definición de EventFieldSpec
+
+```dart
+class EventFieldSpec {
+  final String fieldKey;        // 'asiento', 'menu', etc.
+  final String displayName;     // 'Asiento', 'Menú', etc.
+  final String hintText;        // 'Ej: 12A, Ventana'
+  final IconData icon;          // Icons.chair, Icons.restaurant, etc.
+  final FieldType type;         // text, number, boolean, select
+  final bool required;          // true/false
+  final List<String>? options;   // Para campos select
+}
+
+enum FieldType { text, number, boolean, select }
+```
+
+#### Configuración por Tipo de Evento
+
+```dart
+Map<String, List<EventFieldSpec>> eventFieldsByType = {
+  'Desplazamiento': {
+    'Avión': [
+      EventFieldSpec('asiento', 'Asiento', 'Ej: 12A', Icons.chair, FieldType.text, true),
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: ABC123456', Icons.confirmation_number, FieldType.text, true),
+      EventFieldSpec('gate', 'Gate', 'Ej: Gate A12', Icons.door_front_door, FieldType.text, true),
+      EventFieldSpec('menu', 'Menú', 'Ej: Vegetariano', Icons.restaurant, FieldType.text, false),
+      EventFieldSpec('alergias', 'Alergias', 'Especialmente frutos secos', Icons.warning, FieldType.text, false),
+      EventFieldSpec('asistencia', 'Asistencia especial', 'Requiere ayuda', Icons.accessible, FieldType.boolean, false),
+    ],
+    'Tren': [
+      EventFieldSpec('asiento', 'Vagón y Asiento', 'Ej: Coche 8, Asiento 12', Icons.chair, FieldType.text, true),
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: TRN789012', Icons.confirmation_number, FieldType.text, true),
+      EventFieldSpec('menu', 'Menú tren', 'Menú completo, Bocadillo, Sin comida', Icons.restaurant, FieldType.select, false),
+    ],
+    'Autobús': [
+      EventFieldSpec('asiento', 'Asiento', 'Ej: Asiento 15', Icons.chair, FieldType.text, true),
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: BUS456789', Icons.confirmation_number, FieldType.text, true),
+    ],
+    'Taxi': [
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: TAX123456', Icons.confirmation_number, FieldType.text, true),
+      EventFieldSpec('preferencias', 'Preferencias', 'Coche grande, Conductor inglés', Icons.tune, FieldType.text, false),
+    ],
+  },
+  'Restauración': {
+    'Desayuno': [
+      EventFieldSpec('menu', 'Menú', 'Continental, Americano, Sin gluten', Icons.restaurant, FieldType.select, false),
+      EventFieldSpec('preferencias', 'Preferencias mesa', 'Cerca ventana, Sin ruido', Icons.table_restaurant, FieldType.text, false),
+    ],
+    'Comida': [
+      EventFieldSpec('menu', 'Menú', 'Menú del día, Vegetariano, Especialidad', Icons.restaurant, FieldType.select, false),
+      EventFieldSpec('preferencias', 'Preferencias mesa', 'Mesa familiar, Zona silenciosa', Icons.table_restaurant, FieldType.text, false),
+    ],
+    'Cena': [
+      EventFieldSpec('menu', 'Menú', 'Degustación, Mariscos, Vegetariano', Icons.restaurant, FieldType.select, true),
+      EventFieldSpec('preferencias', 'Preferencias mesa', 'Mesa romántica, Vista panorámica', Icons.table_restaurant, FieldType.text, false),
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: RES789012', Icons.confirmation_number, FieldType.text, false),
+    ],
+  },
+  'Actividad': {
+    'Museo': [
+      EventFieldSpec('preferencias', 'Preferencias visita', 'Audioguía, Visita guiada, Acceso rápido', Icons.museum, FieldType.text, false),
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: MUS123456', Icons.confirmation_number, FieldType.text, false),
+    ],
+    'Teatro': [
+      EventFieldSpec('asiento', 'Asiento', 'Ej: Fila 5, Asiento 12', Icons.chair, FieldType.text, true),
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: TEA789012', Icons.confirmation_number, FieldType.text, true),
+      EventFieldSpec('preferencias', 'Preferencias', 'Cerca escenario, Acceso fácil', Icons.tune, FieldType.text, false),
+    ],
+    'Concierto': [
+      EventFieldSpec('asiento', 'Asiento/Zona', 'Ej: Fila 8, Zona VIP', Icons.chair, FieldType.text, true),
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: CON123456', Icons.confirmation_number, FieldType.text, true),
+      EventFieldSpec('preferencias', 'Preferencias', 'Cerca escenario, Zona de pie', Icons.tune, FieldType.text, false),
+    ],
+  },
+  'Otro': {
+    'Compra': [
+      EventFieldSpec('preferencias', 'Preferencias', 'Presupuesto máximo, Marcas preferidas', Icons.shopping_cart, FieldType.text, false),
+    ],
+    'Reunión': [
+      EventFieldSpec('preferencias', 'Preferencias', 'Sala silenciosa, Proyector, Catering', Icons.groups, FieldType.text, false),
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: REU456789', Icons.confirmation_number, FieldType.text, false),
+    ],
+    'Trabajo': [
+      EventFieldSpec('preferencias', 'Preferencias', 'WiFi rápido, Mesa amplia, Silencio', Icons.business, FieldType.text, false),
+    ],
+  },
+};
+```
+
+#### Próximos Pasos de Implementación
+
+1. **Crear estructura EventFieldSpec** en `lib/features/calendar/domain/models/event_field_spec.dart`
+2. **Definir configuración** en `lib/features/calendar/domain/services/event_field_service.dart`
+3. **Actualizar UI** - Renderizar campos dinámicos en `EventDialog` según tipo
+4. **Persistencia** - Guardar campos personalizados en EventPersonalPart.fields
+5. **Migración** - Actualizar eventos existentes con nueva estructura
+6. **Testing** - Probar con Plan Frankenstein
+
+---
+
 *Documento creado para T121 - Revisión y enriquecimiento de formularios*  
-*Última actualización: Enero 2025*
+*Última actualización: Enero 2025*  
+*Integra contenido de T76 - Campos dinámicos según tipo de evento*
 
