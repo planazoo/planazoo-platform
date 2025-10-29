@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T134**
+**Siguiente código de tarea: T135**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -20,8 +20,9 @@
 - **Integración:** T131: Sincronización con Calendarios Externos (1 pendiente)
 - **Agencias:** T132: Definición Sistema Agencias de Viajes (1 pendiente)
 - **Exportación:** T133: Exportación Profesional de Planes PDF/Email (1 pendiente)
+- **Importación:** T134: Importar desde Email (1 pendiente)
 
-**Total: 107 tareas documentadas (57 completadas, 50 pendientes)**
+**Total: 108 tareas documentadas (57 completadas, 51 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -2656,6 +2657,64 @@ class PlatformStats {
 - T131 (Sincronización calendarios externos)
 - docs/flujos/FLUJO_CRUD_PLANES.md (gestión de planes)
 - docs/flujos/FLUJO_CRUD_USUARIOS.md (gestión de usuarios)
+
+---
+
+### T134 - Importar desde Email: crear eventos/alojamientos desde correos de confirmación
+**Estado:** Pendiente  
+**Complejidad:** 🟡 Media-Alta  
+**Prioridad:** 🟡 Media  
+**Descripción:** Permitir utilizar la información de correos electrónicos de confirmación de proveedores (p. ej., aerolíneas, trenes, hoteles, restaurantes) para pre-crear eventos o alojamientos dentro de un plan.
+
+**Alcance MVP:**
+1. Detección de proveedor a partir del contenido del email (texto/HTML copiado o .eml básico)
+2. Parsers por plantilla para 3 proveedores iniciales:
+   - Iberia (vuelos): fecha/hora salida y llegada, origen/destino, gate, localizadores, asiento si existe
+   - Renfe (trenes): fecha/hora, origen/destino, coche/asiento, localizador
+   - Booking.com (alojamientos): nombre hotel, dirección, check-in/check-out, número de reserva
+3. Mapeo a modelos:
+   - Evento (Desplazamiento → Avión/Tren) con Parte Común rellenada y campos personales básicos
+   - Alojamiento con `AccommodationCommonPart` (nombre, fechas, dirección) y notas
+4. UI de previsualización/edición antes de crear registros
+
+**Flujo de Usuario:**
+```
+Plan → "Importar desde Email" → Pegar contenido del correo o adjuntar .eml
+  ↓
+Detectar proveedor y plantilla
+  ↓
+Extraer campos → Mostrar Previsualización (evento/alojamiento sugerido)
+  ↓
+Editar/CORREGIR campos si es necesario
+  ↓
+Crear Evento/Alojamiento en el plan
+```
+
+**Criterios de Aceptación:**
+- Detección automática de al menos 3 proveedores (Iberia, Renfe, Booking) en casos reales de prueba
+- Extracción correcta de fechas, horas, lugares/direcciones y localizadores
+- Mapeo correcto a `Event` (tipo/subtipo) o `Accommodation` (parte común)
+- Previsualización con posibilidad de edición antes de guardar
+- Manejo de errores y feedback claro cuando el email no se reconoce
+- Logs sin datos sensibles; no almacenar el cuerpo completo del email
+
+**Entradas Soportadas (MVP):**
+- Pegar texto/HTML del email en un campo
+- Subir archivo `.eml` simple (si es viable con web); en caso contrario, solo pegar contenido
+
+**Archivos a crear:**
+- `lib/features/import/services/email_parse_service.dart`
+- `lib/features/import/providers/email_import_provider.dart`
+- `lib/widgets/import/wd_email_import_dialog.dart`
+- `docs/flujos/FLUJO_IMPORTACION_DESDE_EMAIL.md`
+
+**Notas Técnicas:**
+- Parsers deterministas por patrones (regex/plantillas) en MVP; evaluar NLP más adelante
+- Normalizar timezones a IANA; convertir a UTC en almacenamiento si aplica
+- Sanitizar HTML; evitar ejecutar contenido incrustado
+- Internacionalización: plantillas EN/ES comunes de proveedores
+
+**Relacionado con:** T121 (Form fields), T131 (.ics externo), `FLUJO_CRUD_EVENTOS`, `FLUJO_CRUD_ALOJAMIENTOS`, `GUIA_PATRON_COMUN_PERSONAL`
 
 ---
 
