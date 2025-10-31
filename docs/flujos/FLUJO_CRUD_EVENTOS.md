@@ -2,10 +2,10 @@
 
 > Define todo el ciclo de vida de un evento: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T121, T105, T110, T101, T102, T120  
+**Relacionado con:** T121, T105, T110, T101, T102, T120, T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
 **Nota:** Los eventos comparten estructura **Parte Común/Parte Personal** similar a los alojamientos (ver FLUJO_CRUD_ALOJAMIENTOS)  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Versión:** 1.1  
+**Fecha:** Enero 2025 (Actualizado)
 
 ---
 
@@ -90,6 +90,18 @@ graph TB
 ```
 Usuario → "Añadir evento"
   ↓
+Opciones de creación:
+- "Crear manualmente" (formulario)
+- "Importar desde email" (T134)
+- "💡 Sugerencias inteligentes" (T146 - Oráculo de Delfos) [Opcional - si está disponible]
+  ↓
+Si selecciona "Crear manualmente":
+  ↓
+Mostrar sugerencias contextuales del Oráculo de Delfos (T146) si disponible:
+- Sugerencias de restaurantes cercanos (si es hora de comida)
+- Actividades similares que otros usuarios han añadido
+- Complementos naturales (ej: si añades "Museo", sugiere "Café cercano")
+  ↓
 Abrir formulario (T121)
   ↓
 Completar campos:
@@ -144,7 +156,79 @@ Actualizar presupuesto del plan (T101):
 Estado: "Pendiente" o "Confirmado" según configuración automática
 ```
 
-#### 1.2 - Creación con Conexión a Proveedor
+#### 1.2 - Creación desde Email de Confirmación (T134)
+
+**Cuándo:** Usuario quiere importar información de un email de confirmación (vuelo, tren, reserva)  
+**Quién:** Organizador o participante con permisos
+
+**Flujo:**
+```
+Usuario → "Añadir evento" → "Importar desde email"
+  ↓
+Mostrar opciones de entrada:
+- "Pegar contenido del email"
+- "Subir archivo .eml" (si es posible)
+  ↓
+Usuario pega/sube contenido del email
+  ↓
+Sistema detecta proveedor:
+- Analiza contenido (texto/HTML)
+- Identifica proveedor: Iberia, Renfe, Booking.com, etc.
+- Selecciona parser correspondiente
+  ↓
+Parser extrae información:
+- Fechas y horarios
+- Ubicaciones (origen/destino)
+- Números de reserva/localizadores
+- Detalles específicos (gate, asiento, coche, etc.)
+  ↓
+Mapear a modelo Event:
+- Determinar tipo: "Desplazamiento"
+- Determinar subtipo: "Avión" (Iberia) o "Tren" (Renfe)
+- Rellenar Parte Común con información extraída
+- Campos personales básicos (asiento, número reserva, gate)
+  ↓
+Mostrar previsualización:
+┌─────────────────────────────────────┐
+│ 📧 Evento sugerido desde email     │
+│                                     │
+│ ✈️ Vuelo Madrid → Barcelona        │
+│ 📅 15/03/2025, 10:30h - 12:00h    │
+│ 🎫 Localizador: ABC123            │
+│ 🪑 Asiento: 12A                    │
+│ 🚪 Gate: A5                        │
+│                                     │
+│ [Editar campos] [Crear evento]     │
+│ [Cancelar]                         │
+└─────────────────────────────────────┘
+  ↓
+Usuario puede editar/corregir campos antes de crear
+  ↓
+Si confirma: Crear evento normalmente (como creación manual)
+  ↓
+Evento creado en el plan
+  ↓
+Si error o email no reconocido:
+  ↓
+Mostrar mensaje: "No se pudo reconocer el email. 
+Puedes crear el evento manualmente o intentar con otro formato."
+  ↓
+Opción: Crear manualmente con datos sugeridos si hubo extracción parcial
+```
+
+**Proveedores soportados (MVP):**
+- Iberia (vuelos): fecha/hora, origen/destino, gate, localizadores, asiento
+- Renfe (trenes): fecha/hora, origen/destino, coche/asiento, localizador
+- Booking.com (alojamientos → ver FLUJO_CRUD_ALOJAMIENTOS.md)
+
+**Notas:**
+- Parsing determinístico por patrones (regex/plantillas) en MVP
+- Internacionalización: plantillas EN/ES
+- Sanitización de HTML antes de procesar
+- No almacenar el cuerpo completo del email por privacidad
+- Ver T134 para detalles técnicos completos
+
+#### 1.3 - Creación con Conexión a Proveedor
 
 **Cuándo:** Al crear evento, decidir si conectarlo con proveedor externo  
 **Quién:** Usuario creando el evento
@@ -529,13 +613,85 @@ Mostrar opciones alternativas:
 - Marcar como "no realizado"
 - Añadir nota post-evento
 - Añadir foto
+- Valorar el evento (T147) - Sistema de valoraciones
+```
+
+#### 4.5 - Valorar Evento Completado
+
+**Cuándo:** Después de que un evento se completa o finaliza  
+**Quién:** Participantes que asistieron o estaban invitados
+
+**Flujo:**
+```
+Evento en estado "Completado" o fecha/hora del evento pasada
+  ↓
+Sistema detecta: Evento completado
+  ↓
+Mostrar prompt de valoración (no intrusivo):
+"⭐ ¿Cómo valorarías este evento?
+
+[5 estrellas interactivas]
+
+[Comentario opcional...]
+
+[Valorar ahora] [Recordar más tarde] [No valorar]"
+  ↓
+Si usuario valora:
+- Guardar valoración (T147)
+- Actualizar valoraciones agregadas del evento
+- Opcional: Mostrar gracias
+  ↓
+Valoración disponible para:
+- Oráculo de Delfos (T146) - recomendaciones futuras
+- Estadísticas del plan
+- Visualización en vista del evento (promedio)
 ```
 
 ---
 
-### 5. IMPORTACIÓN BATCH DE EVENTOS
+### 5. EXPORTACIÓN E IMPORTACIÓN DE CALENDARIOS EXTERNOS (T131)
 
-#### 5.1 - Importar Múltiples Eventos desde JSON
+#### 5.1 - Exportar Evento a Calendario Externo
+
+**Cuándo:** Exportar un evento individual a calendario externo  
+**Quién:** Cualquier participante del evento
+
+**Flujo:**
+```
+Usuario → Evento → "Exportar a calendario" (T131)
+  ↓
+Generar archivo .ics del evento:
+- Crear archivo iCalendar (RFC 5545) con un solo evento
+- Incluir: título, fecha/hora, descripción, ubicación, timezone
+- Información personal si usuario es el creador
+  ↓
+Opciones:
+- "Descargar archivo .ics"
+- "Compartir archivo"
+- "Abrir con app de calendario"
+  ↓
+Usuario puede añadir el evento a su calendario externo
+```
+
+#### 5.2 - Importar Eventos desde Archivo .ics
+
+**Cuándo:** Importar eventos desde un archivo .ics externo al plan  
+**Quién:** Organizador o participante con permisos
+
+**Flujo:**
+```
+Usuario → Plan → "Importar desde calendario" (T131)
+  ↓
+Ver FLUJO_CRUD_PLANES.md sección 5.4 para flujo completo
+```
+
+**Nota:** La importación desde .ics se gestiona a nivel de plan, no de evento individual. Ver FLUJO_CRUD_PLANES.md sección 5.4.
+
+---
+
+### 6. IMPORTACIÓN BATCH DE EVENTOS
+
+#### 6.1 - Importar Múltiples Eventos desde JSON
 
 **Cuándo:** Importar muchos eventos a la vez desde archivo JSON  
 **Quién:** Organizador del plan  
@@ -641,7 +797,7 @@ Eventos creados:
 - Los eventos importados pueden editarse/eliminarse normalmente
 - Posibilidad de exportar formato JSON de vuelta (para compartir templates)
 
-#### 5.2 - Exportar Múltiples Eventos a JSON
+#### 6.2 - Exportar Múltiples Eventos a JSON
 
 **Cuándo:** Compartir plan con otros usuarios o hacer backup  
 **Quién:** Organizador
@@ -665,9 +821,9 @@ Otro usuario puede importarlo en su plan
 
 ---
 
-### 6. HISTORIAL Y AUDITORÍA
+### 7. HISTORIAL Y AUDITORÍA
 
-#### 6.1 - Ver Historial de Cambios
+#### 7.1 - Ver Historial de Cambios
 
 **Sistema de auditoría:**
 ```

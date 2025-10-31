@@ -2,10 +2,10 @@
 
 > Define cómo un plan transiciona entre estados y qué implica cada cambio de estado
 
-**Relacionado con:** T109 - Estados del Plan  
+**Relacionado con:** T109 - Estados del Plan, T144 - Gestión del ciclo de vida al finalizar plan, T133 - Exportación PDF, T145 - Álbum digital, T147 - Valoraciones  
 **Completa CRUD de planes:** `FLUJO_CRUD_PLANES.md`  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Versión:** 1.1  
+**Fecha:** Enero 2025 (Actualizado)
 
 ---
 
@@ -198,7 +198,7 @@ Modal: "¿Confirmar plan?"
 - ✅ Añadir fotos a eventos específicos
 - ✅ Añadir comentarios/notas finales
 - ✅ Ver plan completo (solo lectura)
-- ✅ Exportar plan como PDF (T109)
+- ✅ Exportar plan como PDF (T133)
 
 **Bloqueos:**
 - ❌ TODO está bloqueado excepto añadir fotos/comentarios
@@ -231,11 +231,20 @@ Modal: "¿Confirmar plan?"
    - Opción para ver galería de fotos
 
 **Opciones post-ejecución:**
+- ✅ **Gestión del ciclo de vida (T144):**
+  - Archivar plan (reducción de costes, backup local)
+  - Exportar plan (PDF profesional T133, PDF álbum T145, JSON/ZIP)
+  - Mantener en servidor (gratis local o premium con cuota)
+  - Eliminar permanentemente
 - ✅ Convertir plan finalizado en plantilla (T122)
 - ✅ Descargar todas las fotos
-- ✅ Exportar estadísticas
+- ✅ Exportar estadísticas (T113)
 - ✅ Ver mapa completo del recorrido (T114)
+- ✅ Generar álbum digital (T145)
+- ✅ Valorar el plan (T147) - Sistema de valoraciones
 - ✅ Evaluación del plan (opcional)
+
+**Ver detalles completos en:** FLUJO_CRUD_PLANES.md sección 4.2
 
 ---
 

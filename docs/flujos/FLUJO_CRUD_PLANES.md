@@ -2,9 +2,9 @@
 
 > Define todo el ciclo de vida de un plan: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T109, T107, T118, T122  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Relacionado con:** T109, T107, T118, T122, T131 - Calendarios externos, T133 - Exportación PDF, T144 - Gestión del ciclo de vida, T145 - Álbum digital, T147 - Valoraciones  
+**Versión:** 1.1  
+**Fecha:** Enero 2025 (Actualizado)
 
 ---
 
@@ -90,6 +90,11 @@ graph TB
 **Flujo completo:**
 ```
 Usuario → Dashboard → "Crear plan"
+  ↓
+Mostrar sugerencias del Oráculo de Delfos (T146) si disponible:
+- Sugerencias de "primer evento" según tipo de plan
+- Ideas de actividades iniciales basadas en historial del usuario
+- Recomendaciones opcionales (no bloquean creación)
   ↓
 Formulario inicial:
 - Nombre del plan (requerido, validar longitud)
@@ -440,10 +445,10 @@ Plan archivado, no se puede reactivar
 - Notificación urgente a participantes
 - Plan no se puede reactivar
 
-#### 4.2 - Archivar Plan Finalizado
+#### 4.2 - Gestión del Ciclo de Vida al Finalizar Plan (T144)
 
-**Cuándo:** Plan completado y archivado  
-**Quién:** Automático al finalizar
+**Cuándo:** Plan completado y finalizado  
+**Quién:** Automático al finalizar o manualmente por organizador
 
 **Flujo:**
 ```
@@ -453,13 +458,72 @@ Sistema detecta: "Plan finalizado"
   ↓
 Estado automático: "Finalizado"
   ↓
-Mostrar opciones:
-- "Archivar este plan"
+Mostrar diálogo con opciones (T144):
+┌─────────────────────────────────────┐
+│ ¿Qué hacer con este plan?          │
+│                                     │
+│ [📦 Archivar (Recomendado)]        │ ← Por defecto
+│   Reduce costes, mantiene datos    │
+│   localmente, metadata en servidor │
+│                                     │
+│ [💾 Exportar plan]                 │
+│   PDF profesional (T133)           │
+│   JSON/ZIP para respaldo           │
+│                                     │
+│ [💎 Mantener en servidor]          │
+│   Opción A: Gratis (solo local)    │
+│   Opción B: Premium (con cuota)    │
+│                                     │
+│ [🗑️ Eliminar permanentemente]      │
+│   Advertencia: No se puede deshacer│
+│                                     │
+│ [❌ Cancelar - Decidir más tarde]   │
+└─────────────────────────────────────┘
+  ↓
+Si selecciona "Archivar" (default):
+  ↓
+Proceso de archivado:
+- Backup completo en local (SQLite/Hive)
+- Reducir datos en Firestore:
+  - Eliminar subcolecciones (eventos, alojamientos detallados)
+  - Mantener solo: nombre, fechas, imagen, estadísticas básicas
+  - Marcar como `archived: true` y `archivedAt: timestamp`
+- Sincronización deshabilitada
+- Plan visible en listado con badge "Archivado"
+- Usuario puede desarchivar si lo desea
+  ↓
+Si selecciona "Exportar":
+  ↓
+Opciones de exportación:
+- Exportar a PDF profesional (T133)
+- Exportar a PDF álbum digital (T145)
+- Exportar a calendario externo .ics (T131)
+- Exportar a JSON/ZIP (respaldo técnico)
+- Incluir: eventos, alojamientos, participantes, fotos, presupuesto
+  ↓
+Si selecciona "Mantener en servidor":
+  ↓
+Elegir opción:
+- Opción A (Gratis): Mantener solo local (igual que archivar)
+- Opción B (Premium): Mantener completo en servidor con cuota mensual/anual
+  - Beneficios: acceso multi-dispositivo, compartición, respaldo en la nube
+  ↓
+Si selecciona "Eliminar":
+  ↓
+Confirmación crítica con advertencia extrema (ver sección 4.3)
+  ↓
+Después de cualquier acción:
+  ↓
+Opciones adicionales disponibles:
 - "Convertir en plantilla" (T122)
 - "Ver estadísticas finales" (T113)
+- "Valorar este plan" (T147) - Sistema de valoraciones
+- "Generar álbum digital" (T145) - Si no se exportó ya
   ↓
-Si archiva: Plan movido a "Planes archivados"
+Si valoración disponible: Prompt para valorar el plan (T147)
 ```
+
+**Nota:** Ver T144 para detalles completos de estrategias de archivado, reducción de costes, y monetización.
 
 #### 4.3 - Eliminar Plan (Crítico)
 
@@ -558,6 +622,165 @@ Sistema: Copiar estructura del plan a template
 - Listas sugeridas
 - Tips y recomendaciones
 ```
+
+#### 5.3 - Exportar Plan a Calendario Externo (T131)
+
+**Cuándo:** Exportar todos los eventos del plan a un calendario externo (Google Calendar, Outlook, iCloud, etc.)  
+**Quién:** Cualquier participante del plan
+
+**Flujo:**
+```
+Usuario → Plan → "Exportar calendario" (T131)
+  ↓
+Configuración de exportación:
+┌─────────────────────────────────────┐
+│ 📅 Exportar a calendario externo   │
+│                                     │
+│ Seleccionar eventos:                │
+│ [ ] Todos los eventos               │
+│ [ ] Solo mis eventos                │
+│ [ ] Eventos del [X] al [Y]         │
+│                                     │
+│ Incluir:                            │
+│ [✓] Descripciones                   │
+│ [✓] Ubicaciones                     │
+│ [✓] Participantes                   │
+│ [ ] Información personal            │
+│                                     │
+│ Formato:                            │
+│ ○ Archivo .ics (iCalendar)         │
+│                                     │
+│ [Exportar] [Cancelar]              │
+└─────────────────────────────────────┘
+  ↓
+Generar archivo .ics:
+- Crear archivo iCalendar (RFC 5545)
+- Para cada evento seleccionado:
+  - Título del evento
+  - Fecha y hora (start/end)
+  - Descripción (incluir detalles si se seleccionó)
+  - Ubicación (si existe)
+  - Participantes (si se seleccionó)
+  - Timezone del evento
+  - Información personal (solo si usuario es el creador y seleccionó)
+  ↓
+Archivo .ics generado
+  ↓
+Opciones:
+- "Descargar archivo" → Descargar .ics localmente
+- "Compartir" → Compartir archivo (email, apps, etc.)
+- "Abrir con..." → Abrir directamente en app de calendario
+  ↓
+Usuario puede:
+- Importar el archivo en Google Calendar, Outlook, Apple Calendar
+- Compartir con otros participantes del plan
+- Usar como respaldo del plan
+```
+
+**Información incluida en .ics:**
+- Eventos seleccionados con fechas y horarios completos
+- Descripciones (si se selecciona)
+- Ubicaciones (origen/destino para desplazamientos)
+- Timezone de cada evento
+- Participantes (si se selecciona)
+- Información personal (solo del usuario exportador)
+
+**Notas:**
+- Exportar solo eventos visibles para el usuario (según permisos)
+- Filtrar eventos personales según configuración
+- Formato estándar RFC 5545 (iCalendar) compatible con todos los calendarios
+- Ver T131 para detalles técnicos completos
+
+#### 5.4 - Importar Eventos desde Calendario Externo (T131)
+
+**Cuándo:** Importar eventos desde un archivo .ics (exportado desde Google Calendar, Outlook, etc.)  
+**Quién:** Organizador o participante con permisos
+
+**Flujo:**
+```
+Usuario → Plan → "Importar desde calendario" (T131)
+  ↓
+Seleccionar archivo .ics:
+- "Seleccionar archivo .ics" (file picker)
+- O "Pegar contenido .ics" (texto)
+  ↓
+Sistema parsea archivo .ics:
+- Validar formato iCalendar (RFC 5545)
+- Extraer eventos del archivo
+- Parsear información: título, fecha, hora, descripción, ubicación
+  ↓
+Mostrar preview de eventos a importar:
+┌─────────────────────────────────────┐
+│ 📅 Eventos a importar               │
+│                                     │
+│ Se encontraron [N] eventos:        │
+│                                     │
+│ 1. ✈️ Vuelo Madrid → Barcelona     │
+│    📅 15/03/2025, 10:30h - 12:00h │
+│                                     │
+│ 2. 🍽️ Cena en restaurante          │
+│    📅 15/03/2025, 20:00h           │
+│                                     │
+│ ...                                 │
+│                                     │
+│ [✓] Importar todos                 │
+│ [ ] Seleccionar eventos            │
+│                                     │
+│ Mapeo automático:                   │
+│ - Fechas fuera del plan → Omitir   │
+│ - Eventos duplicados → Omitir      │
+│                                     │
+│ [Importar] [Cancelar]              │
+└─────────────────────────────────────┘
+  ↓
+Usuario selecciona eventos a importar
+  ↓
+Validar cada evento:
+- ¿Fecha está dentro del rango del plan?
+- ¿Ya existe un evento similar? (duplicado)
+- ¿Participantes existen en el plan?
+  ↓
+Mostrar advertencias si las hay:
+"⚠️ Advertencias:
+- [N] eventos fuera del rango del plan (se omitirán)
+- [M] eventos potencialmente duplicados
+- ¿Continuar?"
+  ↓
+Si confirma: Crear eventos en el plan
+  ↓
+Para cada evento importado:
+- Crear Event document (como creación manual)
+- Mapear campos:
+  - Título → título del evento
+  - Fecha/hora → fecha/hora del evento
+  - Descripción → descripción (si existe)
+  - Ubicación → ubicación (si existe)
+  - Tipo/Subtipo: Intentar inferir del título/descripción o usar "Actividad" por defecto
+- Asignar al usuario que importa (participantTrackIds)
+- Estado: "Pendiente" (requiere revisión)
+  ↓
+Mostrar resumen:
+"✅ Importados: [N] eventos
+⚠️ Omitidos: [M] eventos (fuera de rango o duplicados)
+
+Eventos creados:
+- Vuelo Madrid → Barcelona
+- Cena en restaurante
+..."
+  ↓
+Eventos aparecen en el calendario del plan
+```
+
+**Validaciones:**
+- Solo importar eventos dentro del rango de fechas del plan
+- Detectar y omitir duplicados (misma fecha/hora y título similar)
+- Inferir tipo/subtipo del evento cuando sea posible (keywords en título/descripción)
+- Mapear timezone correctamente
+
+**Notas:**
+- Los eventos importados requieren revisión/edición para completar información
+- Usuario puede editar eventos después de importar
+- Ver T131 para detalles técnicos completos
 
 ---
 

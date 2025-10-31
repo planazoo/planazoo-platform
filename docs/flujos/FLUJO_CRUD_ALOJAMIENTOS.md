@@ -2,9 +2,9 @@
 
 > Define todo el ciclo de vida de un alojamiento: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T101, T102, T105, T110, T120  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Relacionado con:** T101, T102, T105, T110, T120, T134 - Importación desde Email, T147 - Valoraciones  
+**Versión:** 1.1  
+**Fecha:** Enero 2025 (Actualizado)
 
 ---
 
@@ -92,6 +92,18 @@ La parte personal (habitaciones, preferencias) es editable hasta el check-in, ex
 **Flujo completo:**
 ```
 Usuario → "Añadir alojamiento"
+  ↓
+Opciones de creación:
+- "Crear manualmente" (formulario)
+- "Importar desde email" (T134)
+- "💡 Sugerencias inteligentes" (T146 - Oráculo de Delfos) [Opcional - si está disponible]
+  ↓
+Si selecciona "Crear manualmente":
+  ↓
+Mostrar sugerencias contextuales del Oráculo de Delfos (T146) si disponible:
+- Alojamientos recomendados en la zona
+- Hoteles mejor valorados por usuarios similares
+- Sugerencias basadas en presupuesto y fechas del plan
   ↓
 Abrir formulario de alojamiento
   ↓
@@ -210,7 +222,82 @@ AccommodationPersonalPart(
 )
 ```
 
-#### 1.2 - Creación con Conexión a Proveedor
+#### 1.2 - Creación desde Email de Confirmación (T134)
+
+**Cuándo:** Usuario quiere importar información de un email de confirmación de alojamiento  
+**Quién:** Organizador o participante con permisos
+
+**Flujo:**
+```
+Usuario → "Añadir alojamiento" → "Importar desde email"
+  ↓
+Mostrar opciones de entrada:
+- "Pegar contenido del email"
+- "Subir archivo .eml" (si es posible)
+  ↓
+Usuario pega/sube contenido del email
+  ↓
+Sistema detecta proveedor:
+- Analiza contenido (texto/HTML)
+- Identifica proveedor: Booking.com, Airbnb, Hotels.com, etc.
+- Selecciona parser correspondiente
+  ↓
+Parser extrae información:
+- Nombre del hotel/alojamiento
+- Fechas de check-in y check-out
+- Dirección y contacto
+- Número de reserva
+- Detalles del alojamiento
+  ↓
+Mapear a modelo Accommodation:
+- Rellenar AccommodationCommonPart:
+  - hotelName: Nombre extraído
+  - checkIn, checkOut: Fechas extraídas
+  - address: Dirección extraída
+  - description: Detalles adicionales
+- Crear AccommodationPersonalPart si hay información personal (nº habitación, preferencias)
+  ↓
+Mostrar previsualización:
+┌─────────────────────────────────────┐
+│ 📧 Alojamiento sugerido desde email│
+│                                     │
+│ 🏨 Hotel Hilton Paris              │
+│ 📅 Check-in:  15/11/2025 14:00h   │
+│ 📅 Check-out: 21/11/2025 11:00h   │
+│ 📍 123 Calle Principal, Paris     │
+│ 🎫 Nº Reserva: BKG123456          │
+│                                     │
+│ [Editar campos] [Crear alojamiento]│
+│ [Cancelar]                         │
+└─────────────────────────────────────┘
+  ↓
+Usuario puede editar/corregir campos antes de crear
+  ↓
+Si confirma: Crear alojamiento normalmente (como creación manual)
+  ↓
+Alojamiento creado en el plan
+  ↓
+Si error o email no reconocido:
+  ↓
+Mostrar mensaje: "No se pudo reconocer el email. 
+Puedes crear el alojamiento manualmente o intentar con otro formato."
+  ↓
+Opción: Crear manualmente con datos sugeridos si hubo extracción parcial
+```
+
+**Proveedores soportados (MVP):**
+- Booking.com: nombre hotel, check-in/check-out, dirección, número de reserva
+- Airbnb: nombre, fechas, dirección, detalles
+- Hotels.com: similar a Booking.com
+
+**Notas:**
+- Parsing determinístico por patrones (regex/plantillas) en MVP
+- Internacionalización: plantillas EN/ES
+- Sanitización de HTML antes de procesar
+- No almacenar el cuerpo completo del email por privacidad
+- Ver T134 para detalles técnicos completos
+
+#### 1.3 - Creación con Conexión a Proveedor
 
 **Cuándo:** Al crear alojamiento, decidir si conectarlo con proveedor externo (Booking.com, Airbnb, etc.)  
 **Quién:** Usuario creando el alojamiento
@@ -590,8 +677,45 @@ Intento eliminar alojamiento con check-out realizado
 Mostrar opciones alternativas:
 - Añadir nota sobre la estancia
 - Añadir fotos del alojamiento
-- Evaluar el alojamiento (opcional)
+- Valorar el alojamiento (T147) - Sistema de valoraciones
 - Marcar como "no utilizado" si nunca se hizo check-in
+```
+
+#### 4.5 - Valorar Alojamiento después de Check-out
+
+**Cuándo:** Después de realizar check-out  
+**Quién:** Participantes que se alojaron
+
+**Flujo:**
+```
+Alojamiento en estado "Check-out Realizado"
+  ↓
+Sistema detecta: Check-out completado
+  ↓
+Mostrar prompt de valoración (no intrusivo):
+"⭐ ¿Cómo valorarías este alojamiento?
+
+[5 estrellas interactivas]
+
+Aspectos (opcional):
+- Comodidad: [estrellas]
+- Ubicación: [estrellas]
+- Servicios: [estrellas]
+- Relación calidad-precio: [estrellas]
+
+[Comentario opcional...]
+
+[Valorar ahora] [Recordar más tarde] [No valorar]"
+  ↓
+Si usuario valora:
+- Guardar valoración (T147)
+- Actualizar valoraciones agregadas del alojamiento
+- Opcional: Mostrar gracias
+  ↓
+Valoración disponible para:
+- Oráculo de Delfos (T146) - recomendaciones futuras
+- Estadísticas del plan
+- Visualización en vista del alojamiento (promedio)
 ```
 
 ---
