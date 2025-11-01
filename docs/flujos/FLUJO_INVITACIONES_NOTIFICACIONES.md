@@ -459,7 +459,7 @@ graph TD
 **Estado:** ⚠️ Parcialmente implementado (Avisos base completados, notificaciones pendientes)
 
 **Lo que está implementado:**
-- ✅ Sistema de avisos/notificaciones unidireccionales (T105)
+- ✅ Sistema de avisos unidireccionales - Base (T105)
   - ✅ Modelo `PlanAnnouncement` con tipos (info, urgent, important)
   - ✅ Publicación de avisos con validación y sanitización
   - ✅ Timeline cronológica de avisos

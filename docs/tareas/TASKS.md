@@ -1574,11 +1574,11 @@ CalendarScreen (orchestrator)
 
 **Nota:** T105 completado - Sistema base de avisos implementado. Pendiente notificaciones push con FCM.
 
-### T105 - Sistema de Avisos y Notificaciones del Plan
+### T105 - Sistema de Avisos del Plan (Base)
 **Estado:** ✅ Completado  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
-**Descripción:** Sistema de avisos unidireccionales y notificaciones para el plan, no un chat bidireccional.
+**Descripción:** Sistema de avisos unidireccionales para el plan (base funcional), no un chat bidireccional.
 
 **Funcionalidades:**
 1. ✅ Modelo `PlanAnnouncement` con usuario, mensaje, timestamp, tipo

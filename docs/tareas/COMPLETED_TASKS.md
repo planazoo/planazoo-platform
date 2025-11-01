@@ -1921,10 +1921,10 @@ Sistema completo de gestión de estados funcional. Los planes pueden transiciona
 
 ---
 
-## T105 - Sistema de Avisos y Notificaciones del Plan
+## T105 - Sistema de Avisos del Plan (Base)
 **Estado:** ✅ Completado  
 **Fecha de finalización:** Enero 2025  
-**Descripción:** Sistema de avisos unidireccionales para planes, permitiendo que participantes publiquen mensajes visibles para todos.
+**Descripción:** Sistema base de avisos unidireccionales para planes, permitiendo que participantes publiquen mensajes visibles para todos.
 
 **Criterios de aceptación:**
 - ✅ Modelo PlanAnnouncement con validación y tipos (info, urgent, important)
