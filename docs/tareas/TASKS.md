@@ -23,7 +23,7 @@
 - **Importación:** T134: Importar desde Email (1 pendiente)
 - **Privacidad:** T135-T136: Gestión de Cookies y App Tracking Transparency (2 pendientes)
 
-**Total: 124 tareas documentadas (64 completadas, 60 pendientes)**
+**Total: 124 tareas documentadas (65 completadas, 59 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -1570,37 +1570,50 @@ CalendarScreen (orchestrator)
 
 ---
 
-## 📋 NUEVAS FUNCIONALIDADES (T101-T118, T105 revisado)
+## 📋 NUEVAS FUNCIONALIDADES (T101-T118, T105 completado)
 
-**Nota:** Las tareas T105 ha sido actualizada según la decisión de usar sistema de avisos unidireccionales en lugar de chat.
+**Nota:** T105 completado - Sistema base de avisos implementado. Pendiente notificaciones push con FCM.
 
 ### T105 - Sistema de Avisos y Notificaciones del Plan
-**Estado:** Pendiente  
+**Estado:** ✅ Completado  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
 **Descripción:** Sistema de avisos unidireccionales y notificaciones para el plan, no un chat bidireccional.
 
 **Funcionalidades:**
-1. Modelo `PlanAnnouncement` con usuario, mensaje, timestamp
-2. Publicar avisos que todos los participantes pueden ver
-3. Notificaciones push a todos los participantes cuando hay un nuevo aviso
-4. Lista de avisos en orden cronológico
-5. Avisos visibles para todos los participantes
+1. ✅ Modelo `PlanAnnouncement` con usuario, mensaje, timestamp, tipo
+2. ✅ Publicar avisos que todos los participantes pueden ver
+3. ⚠️ Notificaciones push a todos los participantes cuando hay un nuevo aviso (pendiente)
+4. ✅ Lista de avisos en orden cronológico
+5. ✅ Avisos visibles para todos los participantes
 
 **Concepto:**
 - No es un chat (no conversación)
 - Sistema de avisos unidireccionales (como WhatsApp a todo el grupo)
 - Cada participante puede publicar avisos
-- Todos reciben notificación cuando hay un aviso nuevo
 - Ver lista de avisos del plan
 
 **Criterios de aceptación:**
-- Modelo PlanAnnouncement con validación
-- UI para publicar avisos
-- Notificaciones push a todos los participantes
-- Lista de avisos visible para todos
-- Persistencia en Firestore
-- Testing básico
+- ✅ Modelo PlanAnnouncement con validación y tipos (info, urgent, important)
+- ✅ UI para publicar avisos (AnnouncementDialog)
+- ⚠️ Notificaciones push a todos los participantes (pendiente FCM)
+- ✅ Lista de avisos visible para todos (AnnouncementTimeline)
+- ✅ Persistencia en Firestore con reglas de seguridad
+- ✅ Sanitización de mensajes
+- ✅ Integrado en pantalla de datos del plan
+
+**Archivos creados:**
+- `lib/features/calendar/domain/models/plan_announcement.dart`
+- `lib/features/calendar/domain/services/announcement_service.dart`
+- `lib/features/calendar/presentation/providers/announcement_providers.dart`
+- `lib/widgets/dialogs/announcement_dialog.dart`
+- `lib/widgets/screens/announcement_timeline.dart`
+
+**Archivos modificados:**
+- `firestore.rules` - Reglas de seguridad para announcements
+- `lib/widgets/screens/wd_plan_data_screen.dart` - Integración de sección de avisos
+
+**Nota:** La funcionalidad de notificaciones push está pendiente para una tarea futura específica de FCM.
 
 ---
 

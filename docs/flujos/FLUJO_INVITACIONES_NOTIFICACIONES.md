@@ -456,13 +456,21 @@ graph TD
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ❌ No implementado
+**Estado:** ⚠️ Parcialmente implementado (Avisos base completados, notificaciones pendientes)
 
-**Lo que hay que implementar:**
+**Lo que está implementado:**
+- ✅ Sistema de avisos/notificaciones unidireccionales (T105)
+  - ✅ Modelo `PlanAnnouncement` con tipos (info, urgent, important)
+  - ✅ Publicación de avisos con validación y sanitización
+  - ✅ Timeline cronológica de avisos
+  - ✅ Eliminación de avisos (autor u organizador)
+  - ✅ Integración en pantalla de datos del plan
+  - ✅ Firestore rules y providers Riverpod
+
+**Lo que falta:**
 - ❌ Sistema de invitaciones por email/usuario
 - ❌ Generación de links de invitación con token
-- ❌ Notificaciones push (Firebase Cloud Messaging)
-- ❌ Sistema de avisos/notificaciones unidireccionales
+- ❌ Notificaciones push (Firebase Cloud Messaging) - Pendiente FCM
 - ❌ Historial de notificaciones
 - ❌ Sistema de confirmación de asistencia a eventos
 - ❌ Sistema de alarmas antes de eventos

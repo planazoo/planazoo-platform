@@ -13,6 +13,8 @@ import 'package:unp_calendario/features/calendar/presentation/widgets/state_tran
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
+import 'package:unp_calendario/widgets/dialogs/announcement_dialog.dart';
+import 'package:unp_calendario/widgets/screens/announcement_timeline.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -124,6 +126,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     
                     // Gestión de estado del plan
                     _buildStateManagementSection(),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Avisos del plan
+                    _buildAnnouncementsSection(),
                     
                     const SizedBox(height: 24),
                     
@@ -766,6 +773,66 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAnnouncementsSection() {
+    if (currentPlan.id == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      height: 400, // Altura fija para la sección de avisos
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header con título y botón
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Avisos',
+                  style: AppTypography.mediumTitle.copyWith(
+                    color: AppColorScheme.color4,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AnnouncementDialog(planId: currentPlan.id!),
+                    );
+                  },
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Publicar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColorScheme.color3,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Timeline de avisos
+          Expanded(
+            child: AnnouncementTimeline(
+              planId: currentPlan.id!,
+            ),
+          ),
+        ],
       ),
     );
   }

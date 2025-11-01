@@ -92,6 +92,18 @@ service cloud.firestore {
              request.resource.data.hotelName.size() <= 100;
     }
     
+    // Validar estructura básica de aviso
+    function isValidAnnouncementData(planId) {
+      return request.resource.data.keys().hasAll(['planId', 'userId', 'message', 'createdAt']) &&
+             request.resource.data.planId == planId &&
+             request.resource.data.userId is string &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.message is string &&
+             request.resource.data.message.size() >= 1 &&
+             request.resource.data.message.size() <= 1000 &&
+             (!('type' in request.resource.data) || request.resource.data.type in ['info', 'urgent', 'important']);
+    }
+    
     // ============================================
     // REGLAS PARA USUARIOS
     // ============================================
@@ -212,9 +224,9 @@ service cloud.firestore {
       // ============================================
       
       match /announcements/{announcementId} {
-        // Crear: Solo usuarios autenticados pueden crear avisos
+        // Crear: Solo usuarios autenticados pueden crear avisos con validación
         allow create: if isAuthenticated() &&
-                         request.resource.data.userId == request.auth.uid;
+                         isValidAnnouncementData(planId);
         
         // Leer: Usuarios autenticados pueden leer avisos (validación completa en cliente)
         allow read: if isAuthenticated();

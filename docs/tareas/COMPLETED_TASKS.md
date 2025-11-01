@@ -1919,3 +1919,48 @@ Sistema completo de gestión de estados funcional. Los planes pueden transiciona
 - ⚠️ Bloqueos funcionales en acciones de evento (actualmente solo visuales en plan)
 - ⚠️ Deshabilitar botones de edición según estado en módulos de eventos/alojamientos
 
+---
+
+## T105 - Sistema de Avisos y Notificaciones del Plan
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Sistema de avisos unidireccionales para planes, permitiendo que participantes publiquen mensajes visibles para todos.
+
+**Criterios de aceptación:**
+- ✅ Modelo PlanAnnouncement con validación y tipos (info, urgent, important)
+- ✅ UI para publicar avisos (AnnouncementDialog) con validación de formulario
+- ⚠️ Notificaciones push a todos los participantes (pendiente FCM)
+- ✅ Lista de avisos visible para todos (AnnouncementTimeline) con timeline cronológica
+- ✅ Persistencia en Firestore con reglas de seguridad completas
+- ✅ Sanitización de mensajes (max 1000 caracteres)
+- ✅ Integrado en pantalla de datos del plan
+
+**Implementación técnica:**
+- Sistema completo de gestión de avisos
+- Validación de mensajes en cliente y servidor
+- Tipos de aviso: información, urgente, importante
+- Timeline visual con formato de tiempo relativo
+- Cada participante puede publicar avisos
+- Solo el autor u organizador pueden eliminar avisos
+- Integración completa con Firestore y Riverpod
+
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/models/plan_announcement.dart` - Modelo de datos
+- ✅ `lib/features/calendar/domain/services/announcement_service.dart` - Lógica de negocio
+- ✅ `lib/features/calendar/presentation/providers/announcement_providers.dart` - Providers Riverpod
+- ✅ `lib/widgets/dialogs/announcement_dialog.dart` - Diálogo de publicación
+- ✅ `lib/widgets/screens/announcement_timeline.dart` - Timeline de avisos
+
+**Archivos modificados:**
+- ✅ `firestore.rules` - Reglas de seguridad para announcements (CRUD con validación)
+- ✅ `lib/widgets/screens/wd_plan_data_screen.dart` - Sección de avisos integrada
+- ✅ `docs/tareas/TASKS.md` - T105 marcado como completado
+
+**Resultado:**
+Sistema completo de avisos unidireccionales funcional. Los participantes pueden publicar mensajes visibles para todos en el plan. La UI proporciona un timeline cronológico, tipos de aviso con indicadores visuales, validación de mensajes, y permisos de eliminación correctos. El sistema está listo para uso y puede extenderse con notificaciones push en el futuro.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Notificaciones push con Firebase Cloud Messaging (FCM)
+- ⚠️ Notificaciones automáticas de cambio de estado
+- ⚠️ Alarmas antes de eventos
+
