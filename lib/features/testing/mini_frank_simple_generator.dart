@@ -81,23 +81,26 @@ class MiniFrankSimpleGenerator {
       'mini_frank_observer', // Observador
     ];
     
-    // Crear participaciones
+    // Crear participaciones (autoAccept: true en tests)
     await _planParticipationService.createParticipation(
       planId: planId, 
       userId: userId, 
-      role: 'organizer'
+      role: 'organizer',
+      autoAccept: true,
     );
     
     await _planParticipationService.createParticipation(
       planId: planId, 
       userId: 'mini_frank_participant', 
-      role: 'participant'
+      role: 'participant',
+      autoAccept: true,
     );
     
     await _planParticipationService.createParticipation(
       planId: planId, 
       userId: 'mini_frank_observer', 
-      role: 'observer'
+      role: 'observer',
+      autoAccept: true,
     );
     
     // Actualizar con timezones personales

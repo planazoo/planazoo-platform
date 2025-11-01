@@ -102,25 +102,28 @@ class MiniFrankGenerator {
     // Crear participaciones en el plan para cada usuario
     final participationService = PlanParticipationService();
     
-    // Organizador (ya existe, pero lo añadimos por claridad)
+    // Organizador (autoAccept: true en tests)
     await participationService.createParticipation(
       planId: planId, 
       userId: userId, 
-      role: 'organizer'
+      role: 'organizer',
+      autoAccept: true,
     );
     
     // Participante
     await participationService.createParticipation(
       planId: planId, 
       userId: 'mini_frank_participant', 
-      role: 'participant'
+      role: 'participant',
+      autoAccept: true,
     );
     
     // Observador
     await participationService.createParticipation(
       planId: planId, 
       userId: 'mini_frank_observer', 
-      role: 'observer'
+      role: 'observer',
+      autoAccept: true,
     );
     
     // Actualizar con timezones personales

@@ -50,20 +50,22 @@ class DemoDataGenerator {
       // Filtrar para excluir cristian_claraso y tomar solo 4 usuarios
       final familyUserIds = allFamilyUserIds.where((id) => id != 'cristian_claraso').take(4).toList();
       
-      // 4. Crear participación del creador como organizador
+      // 4. Crear participación del creador como organizador (autoAccept: true porque es el creador)
       await _participationService.createParticipation(
         planId: planNonNull.id!,
         userId: userId,
         role: 'organizer',
+        autoAccept: true,
       );
       
-      // 5. Crear participaciones para los miembros de la familia
+      // 5. Crear participaciones para los miembros de la familia (autoAccept: true en tests)
       for (final familyUserId in familyUserIds) {
         await _participationService.createParticipation(
           planId: planNonNull.id!,
           userId: familyUserId,
           role: 'participant',
           invitedBy: userId,
+          autoAccept: true,
         );
       }
 

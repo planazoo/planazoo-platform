@@ -10,6 +10,7 @@ class PlanParticipation {
   final bool isActive;
   final String? invitedBy; // ID del usuario que invitó
   final DateTime? lastActiveAt;
+  final String? status; // 'pending', 'accepted', 'rejected', 'expired' (para invitaciones)
 
   const PlanParticipation({
     this.id,
@@ -21,6 +22,7 @@ class PlanParticipation {
     this.isActive = true,
     this.invitedBy,
     this.lastActiveAt,
+    this.status, // null para participaciones antiguas (aceptadas por defecto)
   });
 
   // Crear desde Firestore
@@ -38,6 +40,7 @@ class PlanParticipation {
       lastActiveAt: data['lastActiveAt'] != null 
           ? (data['lastActiveAt'] as Timestamp).toDate() 
           : null,
+      status: data['status'], // null por defecto para compatibilidad hacia atrás
     );
   }
 
@@ -52,6 +55,7 @@ class PlanParticipation {
       'isActive': isActive,
       if (invitedBy != null) 'invitedBy': invitedBy,
       if (lastActiveAt != null) 'lastActiveAt': Timestamp.fromDate(lastActiveAt!),
+      if (status != null) 'status': status,
     };
   }
 
@@ -66,6 +70,7 @@ class PlanParticipation {
     bool? isActive,
     String? invitedBy,
     DateTime? lastActiveAt,
+    String? status,
   }) {
     return PlanParticipation(
       id: id ?? this.id,
@@ -77,6 +82,7 @@ class PlanParticipation {
       isActive: isActive ?? this.isActive,
       invitedBy: invitedBy ?? this.invitedBy,
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
+      status: status ?? this.status,
     );
   }
 
@@ -84,6 +90,13 @@ class PlanParticipation {
   bool get isOrganizer => role == 'organizer';
   bool get isParticipant => role == 'participant';
   bool get isObserver => role == 'observer';
+  
+  // Getters para estados de invitación
+  bool get isPending => status == 'pending';
+  bool get isAccepted => status == 'accepted' || status == null; // null = aceptado por defecto (compatibilidad)
+  bool get isRejected => status == 'rejected';
+  bool get isExpired => status == 'expired';
+  bool get needsResponse => status == 'pending' || status == null; // null = antiguos, necesitan aceptar por retrocompatibilidad
   
   // Comparación y hash
   @override
@@ -98,7 +111,8 @@ class PlanParticipation {
         other.joinedAt == joinedAt &&
         other.isActive == isActive &&
         other.invitedBy == invitedBy &&
-        other.lastActiveAt == lastActiveAt;
+        other.lastActiveAt == lastActiveAt &&
+        other.status == status;
   }
 
   @override
@@ -111,11 +125,12 @@ class PlanParticipation {
         joinedAt.hashCode ^
         isActive.hashCode ^
         (invitedBy?.hashCode ?? 0) ^
-        (lastActiveAt?.hashCode ?? 0);
+        (lastActiveAt?.hashCode ?? 0) ^
+        (status?.hashCode ?? 0);
   }
 
   @override
   String toString() {
-    return 'PlanParticipation(id: $id, planId: $planId, userId: $userId, role: $role, personalTimezone: $personalTimezone, isActive: $isActive)';
+    return 'PlanParticipation(id: $id, planId: $planId, userId: $userId, role: $role, personalTimezone: $personalTimezone, isActive: $isActive, status: $status)';
   }
 }

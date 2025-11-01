@@ -104,6 +104,7 @@ class PlanParticipationService {
     required String userId,
     required String role,
     String? invitedBy,
+    bool autoAccept = false, // false = invitar (pending), true = aceptar directamente
   }) async {
     try {
       // Verificar si ya existe una participación activa
@@ -121,13 +122,17 @@ class PlanParticipationService {
         isActive: true,
         invitedBy: invitedBy,
         lastActiveAt: DateTime.now(),
+        status: autoAccept ? 'accepted' : 'pending', // Si autoAccept = true, aceptar; sino, pendiente
       );
 
       final docRef = await _firestore
           .collection(_collectionName)
           .add(participation.toFirestore());
       
-      LoggerService.database('Participation created: ${docRef.id}', operation: 'CREATE');
+      LoggerService.database(
+        'Participation created: ${docRef.id} (${autoAccept ? "accepted" : "pending"})', 
+        operation: 'CREATE'
+      );
       return docRef.id;
     } catch (e) {
       LoggerService.error('Error creating participation: $planId, $userId', 
@@ -341,6 +346,7 @@ class PlanParticipationService {
               planId: planId,
               userId: userId,
               role: role,
+              autoAccept: true, // Auto-aceptar en migración de datos
             );
             
             if (participationId != null) {
@@ -376,6 +382,74 @@ class PlanParticipationService {
         'participationsCreated': 0,
         'errors': [e.toString()],
       };
+    }
+  }
+
+  // Aceptar invitación a un plan
+  Future<bool> acceptInvitation(String planId, String userId) async {
+    try {
+      final participation = await getParticipation(planId, userId);
+      if (participation == null || participation.id == null) {
+        LoggerService.warning('Invitation not found: $planId, $userId');
+        return false;
+      }
+
+      // Verificar que la invitación esté pendiente
+      if (participation.status != null && participation.status != 'pending') {
+        LoggerService.warning('Invitation is not pending (status: ${participation.status})');
+        return false;
+      }
+
+      final updatedParticipation = participation.copyWith(
+        status: 'accepted',
+        lastActiveAt: DateTime.now(),
+      );
+
+      await _firestore
+          .collection(_collectionName)
+          .doc(participation.id!)
+          .update(updatedParticipation.toFirestore());
+      
+      LoggerService.database('Invitation accepted: $planId, $userId', operation: 'UPDATE');
+      return true;
+    } catch (e) {
+      LoggerService.error('Error accepting invitation: $planId, $userId', 
+          context: 'PLAN_PARTICIPATION_SERVICE', error: e);
+      return false;
+    }
+  }
+
+  // Rechazar invitación a un plan
+  Future<bool> rejectInvitation(String planId, String userId) async {
+    try {
+      final participation = await getParticipation(planId, userId);
+      if (participation == null || participation.id == null) {
+        LoggerService.warning('Invitation not found: $planId, $userId');
+        return false;
+      }
+
+      // Verificar que la invitación esté pendiente
+      if (participation.status != null && participation.status != 'pending') {
+        LoggerService.warning('Invitation is not pending (status: ${participation.status})');
+        return false;
+      }
+
+      final updatedParticipation = participation.copyWith(
+        status: 'rejected',
+        lastActiveAt: DateTime.now(),
+      );
+
+      await _firestore
+          .collection(_collectionName)
+          .doc(participation.id!)
+          .update(updatedParticipation.toFirestore());
+      
+      LoggerService.database('Invitation rejected: $planId, $userId', operation: 'UPDATE');
+      return true;
+    } catch (e) {
+      LoggerService.error('Error rejecting invitation: $planId, $userId', 
+          context: 'PLAN_PARTICIPATION_SERVICE', error: e);
+      return false;
     }
   }
 }

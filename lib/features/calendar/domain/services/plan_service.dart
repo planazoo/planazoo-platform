@@ -144,11 +144,12 @@ class PlanService {
       final docRef = await _firestore.collection(_collectionName).add(plan.toFirestore());
       final planId = docRef.id;
       
-      // Crear participación del creador como organizador
+      // Crear participación del creador como organizador (autoAccept: true porque es el creador)
       await _participationService.createParticipation(
         planId: planId,
         userId: plan.userId,
         role: 'organizer',
+        autoAccept: true,
       );
       
       // Registrar creación exitosa de plan
