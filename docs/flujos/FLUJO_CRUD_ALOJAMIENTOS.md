@@ -2,9 +2,9 @@
 
 > Define todo el ciclo de vida de un alojamiento: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T101, T102, T105, T110, T120, T134 - Importación desde Email, T147 - Valoraciones  
-**Versión:** 1.1  
-**Fecha:** Enero 2025 (Actualizado)
+**Relacionado con:** T51 - Validación de formularios (✅), T101, T102, T105, T110, T120, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
+**Versión:** 1.2  
+**Fecha:** Enero 2025 (Actualizado - Validaciones implementadas)
 
 ---
 
@@ -774,18 +774,27 @@ Valoración disponible para:
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ⚠️ Básico implementado
+**Estado:** ✅ Core implementado, mejoras pendientes
 
 **Lo que ya funciona:**
-- ✅ Crear alojamientos básicos
-- ✅ Editar nombre, fechas check-in/check-out
+- ✅ Crear alojamientos con validaciones (T51)
+- ✅ Editar nombre, fechas check-in/check-out con sanitización
+- ✅ Validación de fechas (check-out posterior a check-in)
 - ✅ Asignar participantes
 - ✅ Visualizar alojamientos en calendario
+- ✅ Validaciones de formularios:
+  - ✅ Nombre del alojamiento: obligatorio, 2-100 caracteres
+  - ✅ Descripción: opcional, máximo 1000 caracteres
+  - ✅ Tipo de alojamiento: validación de lista predefinida
+- ✅ Sanitización de inputs (T127)
+- ✅ Confirmación de eliminación con detalles
+- ✅ `mounted` checks aplicados en selección de fechas
 
 **Lo que falta (CRÍTICO):**
 - ❌ Estados de alojamiento (Borrador, Reservado, Check-in, Check-out)
-- ❌ Sistema de check-in/check-out real
-- ❌ Validación de capacidad y solapamientos
+- ❌ Sistema de check-in/check-out real con registro
+- ❌ Validación de capacidad y solapamientos de alojamientos
+- ❌ Gestión de habitaciones individuales (T130)
 - ❌ Reconfirmación para cambios drásticos (T120)
 - ❌ Notificaciones automáticas de check-in/check-out (T105)
 - ❌ Sistema de alarmas para fechas (T110)
