@@ -1873,3 +1873,49 @@ Todos los métodos async críticos ahora verifican `mounted` antes de usar `cont
 **Resultado:**
 Código de producción más limpio con logging estructurado. Todos los errores críticos están ahora logueados apropiadamente con contexto, facilitando el debugging y mejorando el mantenimiento del código. Los logs se pueden controlar fácilmente a través de `LoggerService` y solo se ejecutan cuando es apropiado (debug mode para debug, siempre para errores).
 
+---
+
+## T109 - Estados del Plan
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementar sistema completo de estados del plan (Borrador, Planificando, Confirmado, En Curso, Finalizado, Cancelado) con transiciones controladas y permisos por estado.
+
+**Criterios de aceptación:**
+- ✅ Campo `state` en modelo Plan con todos los estados
+- ✅ Validaciones de transiciones entre estados
+- ✅ Badges visuales en UI (dashboard, tarjetas, pantalla de datos)
+- ✅ Transiciones automáticas basadas en fechas
+- ✅ Controles manuales para cambiar estados (solo organizador)
+- ✅ Diálogos de confirmación para transiciones críticas
+- ✅ Indicadores visuales de bloqueos según estado
+- ✅ Servicio de permisos según estado
+
+**Implementación técnica:**
+- Sistema completo de gestión de transiciones de estado
+- Validación de transiciones válidas según FLUJO_ESTADOS_PLAN.md
+- Integración automática en dashboard para transiciones basadas en fechas
+- Widgets de UI para visualización y control de estados
+- Servicio de permisos para bloquear acciones según estado
+
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/services/plan_state_service.dart` - Lógica de transiciones
+- ✅ `lib/features/calendar/presentation/widgets/plan_state_badge.dart` - Widget badge de estado
+- ✅ `lib/features/calendar/presentation/widgets/state_transition_dialog.dart` - Diálogos de confirmación
+- ✅ `lib/features/calendar/domain/services/plan_state_permissions.dart` - Permisos según estado
+
+**Archivos modificados:**
+- ✅ `pg_dashboard_page.dart` - Badges en lista, transiciones automáticas, modal de creación ampliado
+- ✅ `wd_plan_card_widget.dart` - Badge en tarjetas de plan
+- ✅ `wd_plan_data_screen.dart` - Gestión manual de estados e indicadores de bloqueo
+- ✅ `docs/flujos/FLUJO_CRUD_PLANES.md` - Actualizado estado de implementación
+- ✅ `docs/flujos/FLUJO_ESTADOS_PLAN.md` - Actualizado a completo
+- ✅ `docs/tareas/TASKS.md` - T109 marcado como completado
+
+**Resultado:**
+Sistema completo de gestión de estados funcional. Los planes pueden transicionar entre estados con validaciones, las transiciones automáticas funcionan según las fechas, y la UI proporciona feedback visual claro del estado actual y las acciones permitidas. Los usuarios ven badges de estado en toda la aplicación y pueden gestionar estados manualmente si son organizadores. El sistema de permisos ayuda a guiar a los usuarios sobre qué acciones están permitidas según el estado del plan.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Notificaciones automáticas de cambio de estado (T105)
+- ⚠️ Bloqueos funcionales en acciones de evento (actualmente solo visuales en plan)
+- ⚠️ Deshabilitar botones de edición según estado en módulos de eventos/alojamientos
+

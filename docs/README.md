@@ -84,9 +84,9 @@ Configuración y contexto del proyecto:
 - Gestión básica de eventos
 - Timezone dinámica
 - Sistema de solapamientos básico
+- Estados del plan
 
 ### En Progreso ⚠️
-- Estados del plan
 - Sistema de validación
 - Formularios enriquecidos
 

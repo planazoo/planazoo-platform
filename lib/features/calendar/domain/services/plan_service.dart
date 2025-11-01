@@ -80,6 +80,56 @@ class PlanService {
     }
   }
 
+  /// Generar un UNP ID único automáticamente
+  /// Formato: {username}-{contador} (ej: juancarlos-1, juancarlos-2)
+  /// Si no tiene username, usa: user-{userId_short}-{contador}
+  Future<String> generateUniqueUnpId(String userId, {String? username}) async {
+    try {
+      // Construir el prefijo base
+      String basePrefix;
+      if (username != null && username.isNotEmpty) {
+        // Usar username si está disponible
+        basePrefix = username.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      } else {
+        // Usar ID de usuario acortado si no hay username
+        basePrefix = 'user-${userId.substring(0, 8)}';
+      }
+      
+      // Buscar todos los planes del usuario para determinar el siguiente número
+      final userPlans = await _firestore
+          .collection(_collectionName)
+          .where('userId', isEqualTo: userId)
+          .get();
+      
+      // Encontrar el siguiente número disponible
+      int nextNumber = 1;
+      final existingUnpIds = userPlans.docs
+          .map((doc) => doc.data()['unpId'] as String? ?? '')
+          .where((id) => id.startsWith('$basePrefix-'))
+          .map((id) {
+            try {
+              final parts = id.split('-');
+              return int.tryParse(parts.last) ?? 0;
+            } catch (e) {
+              return 0;
+            }
+          })
+          .toList();
+      
+      if (existingUnpIds.isNotEmpty) {
+        nextNumber = existingUnpIds.reduce((a, b) => a > b ? a : b) + 1;
+      }
+      
+      final generatedId = '$basePrefix-$nextNumber';
+      LoggerService.debug('Generated unique UNP ID: $generatedId', context: 'PLAN_SERVICE');
+      return generatedId;
+    } catch (e) {
+      LoggerService.error('Error generating unique UNP ID', context: 'PLAN_SERVICE', error: e);
+      // Fallback a timestamp si falla
+      return 'plan-${DateTime.now().millisecondsSinceEpoch}';
+    }
+  }
+
   // Crear un nuevo plan
   Future<String?> createPlan(Plan plan) async {
     try {

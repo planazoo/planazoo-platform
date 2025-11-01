@@ -23,7 +23,7 @@
 - **Importación:** T134: Importar desde Email (1 pendiente)
 - **Privacidad:** T135-T136: Gestión de Cookies y App Tracking Transparency (2 pendientes)
 
-**Total: 124 tareas documentadas (63 completadas, 61 pendientes)**
+**Total: 124 tareas documentadas (64 completadas, 60 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -2017,7 +2017,7 @@ class ContactGroup {
 ---
 
 ### T109 - Estados del Plan
-**Estado:** Pendiente  
+**Estado:** ✅ Completado  
 **Complejidad:** ⚠️ Media-Alta  
 **Prioridad:** 🟡 Media  
 **Descripción:** Implementar sistema completo de estados del plan (Borrador, Planificando, Confirmado, En Curso, Finalizado, Cancelado) con transiciones controladas y permisos por estado.
@@ -2031,26 +2031,43 @@ class ContactGroup {
 6. **Cancelado:** Plan cancelado (reembolsos aplican)
 
 **Funcionalidades por estado:**
-- Transiciones controladas entre estados
-- Validaciones antes de cambiar estado
-- Permisos diferentes según estado
-- Badges visuales en UI
-- Notificaciones al cambiar estado
-- Estados bloquean/desbloquean funcionalidades
+- ✅ Transiciones controladas entre estados
+- ✅ Validaciones antes de cambiar estado
+- ✅ Permisos diferentes según estado con indicadores visuales
+- ✅ Badges visuales en UI
+- ⚠️ Notificaciones al cambiar estado (T105 pendiente)
+- ✅ Estados bloquean/desbloquean funcionalidades (indicadores visuales implementados)
 
 **Criterios de aceptación:**
-- Campo `status` en modelo Plan
-- Validaciones de transiciones
-- Permisos por estado implementados
-- UI con badges de estado
-- Notificaciones de cambio de estado
-- Reembolsos al cancelar
+- ✅ Campo `state` en modelo Plan
+- ✅ Validaciones de transiciones
+- ✅ Permisos por estado implementados con servicio y UI
+- ✅ UI con badges de estado
+- ⚠️ Notificaciones de cambio de estado (T105)
+- ⚠️ Reembolsos al cancelar (T102)
 
-**Archivos a crear:**
-- `lib/features/calendar/domain/models/plan_status.dart`
-- `lib/features/calendar/domain/services/plan_status_service.dart`
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/services/plan_state_service.dart` - Servicio de gestión de transiciones
+- ✅ `lib/features/calendar/presentation/widgets/plan_state_badge.dart` - Widget badge de estado
+- ✅ `lib/features/calendar/presentation/widgets/state_transition_dialog.dart` - Diálogo de confirmación
+- ✅ `lib/features/calendar/domain/services/plan_state_permissions.dart` - Servicio de permisos
 
-**Relacionado con:** T107, T105, T113
+**Implementado:**
+- ✅ Servicio completo de transiciones con validaciones
+- ✅ Transición automática Borrador → Planificando al guardar plan
+- ✅ Transiciones automáticas basadas en fechas (Confirmado → En Curso, En Curso → Finalizado)
+- ✅ Badges en dashboard, tarjetas de plan, y pantalla de datos
+- ✅ Controles manuales para cambiar estados (solo organizador)
+- ✅ Diálogos de confirmación para transiciones críticas
+- ✅ Indicadores visuales de bloqueos según estado
+- ✅ Servicio de permisos con mensajes explicativos
+
+**Mejoras futuras (no críticas):**
+- ⚠️ Notificaciones automáticas de cambio de estado (T105)
+- ⚠️ Bloqueos funcionales en acciones de evento (actualmente solo visuales en plan)
+- ⚠️ Reembolsos al cancelar (T102)
+
+**Relacionado con:** T107, T105, T113, T102
 
 ---
 

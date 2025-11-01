@@ -1,8 +1,8 @@
 # 👤 FLUJO_CRUD_USUARIOS
 
-Estado: En curso  
-Versión: 1.0  
-Fecha: Enero 2025
+Estado: ✅ Alineado  
+Versión: 1.1  
+Fecha: Enero 2025 (Actualizado)
 
 ---
 

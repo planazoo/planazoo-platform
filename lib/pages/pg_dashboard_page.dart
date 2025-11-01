@@ -29,6 +29,8 @@ import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
 import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
+import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -66,8 +68,20 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       
       // Cargar planazoos desde Firestore usando Stream
       final planService = ref.read(planServiceProvider);
-      planService.getPlans().listen((plans) {
+      planService.getPlans().listen((plans) async {
         if (mounted) {
+          // Verificar y ejecutar transiciones automáticas para cada plan
+          final stateService = PlanStateService();
+          for (final plan in plans) {
+            if (plan.id != null) {
+              // Ejecutar en background, no bloquear UI
+              stateService.checkAndExecuteAutomaticTransitions(planId: plan.id!).catchError((e) {
+                LoggerService.error('Error checking automatic transitions for plan ${plan.id}',
+                    context: 'DASHBOARD', error: e);
+              });
+            }
+          }
+          
           setState(() {
             planazoos = plans;
             filteredPlanazoos = List.from(plans);
@@ -162,6 +176,33 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       // Buscar el plan completo en la lista
       try {
         selectedPlan = planazoos.firstWhere((p) => p.id == planId);
+        
+        // Verificar y ejecutar transiciones automáticas al seleccionar plan
+        if (selectedPlan?.id != null) {
+          final stateService = PlanStateService();
+          stateService.checkAndExecuteAutomaticTransitions(planId: selectedPlan!.id!).then((changed) {
+            // Si cambió el estado, recargar el plan actualizado
+            if (changed && mounted) {
+              final planService = ref.read(planServiceProvider);
+              planService.getPlanById(selectedPlan!.id!).then((updatedPlan) {
+                if (updatedPlan != null && mounted) {
+                  setState(() {
+                    selectedPlan = updatedPlan;
+                    // Actualizar también en la lista
+                    final index = planazoos.indexWhere((p) => p.id == planId);
+                    if (index != -1) {
+                      planazoos[index] = updatedPlan;
+                      filteredPlanazoos = List.from(planazoos);
+                    }
+                  });
+                }
+              });
+            }
+          }).catchError((e) {
+            LoggerService.error('Error checking automatic transitions for selected plan',
+                context: 'DASHBOARD', error: e);
+          });
+        }
       } catch (e) {
         selectedPlan = null;
       }
@@ -808,41 +849,47 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   /// Construye el contenido de información del plan seleccionado
   Widget _buildPlanInfoContent() {
     return Padding(
-      padding: const EdgeInsets.all(4.0), // Reducido de 8.0 a 4.0
+      padding: const EdgeInsets.all(3.0), // Reducido aún más
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // Añadido para evitar overflow
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Nombre del plan (primera línea) - Más grande
+          // Nombre del plan (primera línea)
           Text(
             selectedPlan!.name,
             style: TextStyle(
-              fontSize: 14, // Aumentado de 12 a 14
+              fontSize: 13, // Reducido ligeramente
               fontWeight: FontWeight.bold,
-              color: AppColorScheme.color1, // Texto color1
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          // Fechas de inicio y fin (segunda línea, fuente más pequeña)
-          Text(
-            '${_formatDate(selectedPlan!.startDate)} - ${_formatDate(selectedPlan!.endDate)}',
-            style: TextStyle(
-              fontSize: 9,
-              color: AppColorScheme.color1, // Texto color1
+              color: AppColorScheme.color1,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 1),
+          // Fechas de inicio y fin (segunda línea)
+          Text(
+            '${_formatDate(selectedPlan!.startDate)} - ${_formatDate(selectedPlan!.endDate)}',
+            style: TextStyle(
+              fontSize: 8,
+              color: AppColorScheme.color1,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 1),
+          // Badge de estado del plan (más compacto)
+          PlanStateBadgeCompact(
+            plan: selectedPlan!,
+            fontSize: 6, // Reducido de 7 a 6
+          ),
+          const SizedBox(height: 0.5),
           // Email del administrador del plan
           Text(
             'Admin: ${_getAdminEmail()}',
             style: TextStyle(
-              fontSize: 7,
-              color: AppColorScheme.color1.withOpacity(0.8), // Texto color1 con opacidad
+              fontSize: 6, // Reducido de 7 a 6
+              color: AppColorScheme.color1.withOpacity(0.8),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1832,6 +1879,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _unpIdController = TextEditingController();
+  final _descriptionController = TextEditingController();
   // Servicios accedidos via providers cuando se necesiten
   bool _isCreating = false;
   
@@ -1839,6 +1887,9 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 6));
   int _columnCount = 7;
+  
+  // Variables para configuración
+  String _visibility = 'private'; // 'private' o 'public'
   
   // Variables para participantes
   List<UserModel> _allUsers = [];
@@ -1855,12 +1906,34 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
     super.initState();
     _updateColumnCount();
     _loadUsers();
+    _generateAutoUnpId();
+  }
+
+  Future<void> _generateAutoUnpId() async {
+    try {
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser != null) {
+        final planService = ref.read(planServiceProvider);
+        final generatedId = await planService.generateUniqueUnpId(
+          currentUser.id,
+          username: currentUser.username,
+        );
+        if (mounted) {
+          setState(() {
+            _unpIdController.text = generatedId;
+          });
+        }
+      }
+    } catch (e) {
+      LoggerService.error('Error generating auto UNP ID', context: 'CREATE_PLAN_MODAL', error: e);
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _unpIdController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -1913,62 +1986,15 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
       final currentUser = ref.read(currentUserProvider);
       final userId = currentUser?.id ?? '';
       
-      // Subir imagen si hay una seleccionada
-      String? uploadedImageUrl;
-      if (_selectedImage != null) {
-        setState(() {
-          _isUploadingImage = true;
-        });
-        
-        // Crear un plan temporal para obtener el ID
-        // Sanitizar input antes de crear plan temporal
-        final sanitizedName = Sanitizer.sanitizePlainText(_nameController.text, maxLength: 100);
-        final sanitizedUnpId = Sanitizer.sanitizePlainText(_unpIdController.text, maxLength: 20);
-        
-        final systemTimezone = TimezoneService.getSystemTimezone();
-        
-        final tempPlan = Plan(
-          name: sanitizedName,
-          unpId: sanitizedUnpId,
-          userId: userId,
-          baseDate: _startDate,
-          startDate: _startDate,
-          endDate: _endDate,
-          columnCount: _columnCount,
-          state: 'borrador', // Default según flujo 1.1
-          visibility: 'private', // Default según flujo 1.1
-          timezone: systemTimezone, // Auto-detectada según flujo 1.1
-          createdAt: now,
-          updatedAt: now,
-          savedAt: now,
-        );
-        
-        // Guardar plan temporal para obtener ID
-        final planService = ref.read(planServiceProvider);
-        final tempSuccess = await planService.savePlanByUnpId(tempPlan);
-        if (!tempSuccess) {
-          throw Exception('Error al crear plan temporal');
-        }
-        
-        if (!mounted) return;
-        
-        // Subir imagen con el ID del plan
-        uploadedImageUrl = await ImageService.uploadPlanImage(_selectedImage!, tempPlan.id!);
-        
-        if (!mounted) return;
-        
-        setState(() {
-          _isUploadingImage = false;
-        });
-      }
-      
       // Sanitizar input antes de crear plan
       final sanitizedName = Sanitizer.sanitizePlainText(_nameController.text, maxLength: 100);
       final sanitizedUnpId = Sanitizer.sanitizePlainText(_unpIdController.text, maxLength: 20);
+      final sanitizedDescription = Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000);
       
       // Obtener timezone del sistema (default)
       final systemTimezone = TimezoneService.getSystemTimezone();
       
+      // Crear el plan
       final plan = Plan(
         name: sanitizedName,
         unpId: sanitizedUnpId,
@@ -1977,69 +2003,81 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
         startDate: _startDate,
         endDate: _endDate,
         columnCount: _columnCount,
-        imageUrl: uploadedImageUrl,
+        description: sanitizedDescription.isEmpty ? null : sanitizedDescription,
         state: 'borrador', // Default según flujo 1.1
-        visibility: 'private', // Default según flujo 1.1
+        visibility: _visibility, // Usar valor seleccionado
         timezone: systemTimezone, // Auto-detectada según flujo 1.1
         createdAt: now,
         updatedAt: now,
         savedAt: now,
       );
 
-      // Guardar el plan (con o sin imagen)
+      // Crear el plan usando createPlan (genera ID automático y participaciones)
       final planService = ref.read(planServiceProvider);
-      final success = await planService.savePlanByUnpId(plan);
-      if (!success) {
-        throw Exception('Error al guardar el plan');
+      final planId = await planService.createPlan(plan);
+      
+      if (planId == null) {
+        throw Exception('Error al crear el plan');
       }
 
-      // Si había imagen, actualizar el plan con la URL de la imagen
-      if (_selectedImage != null && uploadedImageUrl != null) {
-        final updatedPlan = plan.copyWith(id: plan.id, imageUrl: uploadedImageUrl);
-        final planService2 = ref.read(planServiceProvider);
-        await planService2.updatePlan(updatedPlan);
+      if (!mounted) return;
+
+      // Subir imagen si hay una seleccionada
+      String? uploadedImageUrl;
+      if (_selectedImage != null) {
+        setState(() {
+          _isUploadingImage = true;
+        });
+        
+        uploadedImageUrl = await ImageService.uploadPlanImage(_selectedImage!, planId);
+        
+        if (!mounted) return;
+        
+        setState(() {
+          _isUploadingImage = false;
+        });
+
+        // Actualizar el plan con la URL de la imagen
+        final updatedPlan = plan.copyWith(id: planId, imageUrl: uploadedImageUrl);
+        await planService.updatePlan(updatedPlan);
       }
 
-      if (success) {
-        // Crear participaciones para el creador y los participantes seleccionados
+      // Añadir participantes seleccionados adicionales (el creador ya está incluido por createPlan)
+      if (_selectedParticipants.isNotEmpty) {
         final planParticipationService = PlanParticipationService();
-        
-        // El creador siempre participa como organizador
-        await planParticipationService.createParticipation(
-          planId: plan.id!,
-          userId: userId,
-          role: 'organizer',
-        );
-        
-        // Añadir participantes seleccionados
         for (final participant in _selectedParticipants) {
-          await planParticipationService.createParticipation(
-            planId: plan.id!,
-            userId: participant.id,
-            role: 'participant',
-            invitedBy: userId,
-          );
+          // Evitar duplicar el creador si está en la lista de seleccionados
+          if (participant.id != userId) {
+            await planParticipationService.createParticipation(
+              planId: planId,
+              userId: participant.id,
+              role: 'participant',
+              invitedBy: userId,
+            );
+          }
         }
+      }
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Plan "${plan.name}" creado exitosamente'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Cerrar el modal antes de actualizar la lista
-          Navigator.of(context).pop();
-          widget.onPlanCreated(plan);
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Error al crear el plan'),
-              backgroundColor: Colors.red,
-            ),
-          );
+      // Transición automática: Borrador → Planificando
+      final planStateService = PlanStateService();
+      await planStateService.transitionToPlanningIfDraft(planId: planId);
+
+      if (!mounted) return;
+
+      // Obtener el plan actualizado para mostrar en la lista
+      final createdPlan = await planService.getPlanById(planId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Plan "${plan.name}" creado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Cerrar el modal antes de actualizar la lista
+        Navigator.of(context).pop();
+        if (createdPlan != null) {
+          widget.onPlanCreated(createdPlan);
         }
       }
     } catch (e) {
@@ -2061,6 +2099,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
       if (mounted) {
         setState(() {
           _isCreating = false;
+          _isUploadingImage = false;
         });
       }
     }
@@ -2265,248 +2304,231 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final gridWidth = constraints.maxWidth;
-        final gridHeight = constraints.maxHeight;
-        final columnWidth = gridWidth / 17;
-        final rowHeight = gridHeight / 13;
-        
-        // Modal cubre R1-R17 (17 filas) y C2-C4 (3 columnas)
-        final modalWidth = columnWidth * 3; // C2-C4 = 3 columnas
-        final modalHeight = rowHeight * 17; // R1-R17 = 17 filas
-        final modalX = columnWidth; // Empieza en C2 (índice 1)
-        final modalY = 0.0; // Empieza en R1 (índice 0)
-        
-        return Stack(
-          children: [
-            // Fondo semitransparente
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              color: Colors.black.withOpacity(0.5),
-            ),
-            // Modal
-            Positioned(
-              left: modalX,
-              top: modalY,
-              child: Material(
-                elevation: 8,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: modalWidth,
-                  height: modalHeight,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+    return AlertDialog(
+      title: const Text('Crear Plan'),
+      content: SizedBox(
+        width: 600,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Campo nombre
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre del Plan',
+                    hintText: 'Ej: Vacaciones Londres 2025',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.edit),
                   ),
-                  child: Column(
-                  children: [
-                    // Header
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColorScheme.color2,
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(8),
-                          topRight: Radius.circular(8),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Crear Plan',
-                            style: AppTypography.mediumTitle.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close, color: Colors.white),
-                          ),
-                        ],
-                      ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Por favor ingresa un nombre';
+                    }
+                    if (value.trim().length < 3) {
+                      return 'El nombre debe tener al menos 3 caracteres';
+                    }
+                    if (value.trim().length > 100) {
+                      return 'El nombre no puede exceder 100 caracteres';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Campo UNP ID (auto-generado, solo lectura)
+                TextFormField(
+                  controller: _unpIdController,
+                  decoration: InputDecoration(
+                    labelText: 'UNP ID',
+                    hintText: 'Generando...',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.tag),
+                    suffixIcon: const Icon(Icons.autorenew, size: 18, color: Colors.grey),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                  ),
+                  readOnly: true,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0, left: 8.0),
+                  child: Text(
+                    'Generado automáticamente',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
                     ),
-                    // Contenido
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Form(
-                          key: _formKey,
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                // Campo nombre
-                                TextFormField(
-                                  controller: _nameController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Nombre del Plan',
-                                    hintText: 'Ej: Plan Zoo 2024',
-                                    border: OutlineInputBorder(),
-                                    prefixIcon: Icon(Icons.edit),
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return 'Por favor ingresa un nombre';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                // Campo UNP ID
-                                TextFormField(
-                                  controller: _unpIdController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'UNP ID',
-                                    hintText: 'Ej: UNP001',
-                                    border: OutlineInputBorder(),
-                                    prefixIcon: Icon(Icons.tag),
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return 'Por favor ingresa un UNP ID';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                // Selector de imagen
-                                _buildImageSelector(),
-                                const SizedBox(height: 16),
-                                // Selector fecha inicio
-                                InkWell(
-                                  onTap: _selectStartDate,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.calendar_today, color: Colors.green),
-                                        const SizedBox(width: 12),
-                                        Text('Inicio: ${DateFormatter.formatDate(_startDate)}'),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                // Selector fecha fin
-                                InkWell(
-                                  onTap: _selectEndDate,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.event, color: Colors.blue),
-                                        const SizedBox(width: 12),
-                                        Text('Fin: ${DateFormatter.formatDate(_endDate)}'),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                // Duración
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.shade50,
-                                    border: Border.all(color: Colors.blue.shade200),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Duración:'),
-                                      Text(
-                                        '$_columnCount día${_columnCount > 1 ? 's' : ''}',
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                // Selector de participantes
-                                Text(
-                                  'Participantes:',
-                                  style: AppTypography.bodyStyle.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                if (_isLoadingUsers)
-                                  const Center(child: CircularProgressIndicator())
-                                else
-                                  Container(
-                                    height: 120,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: ListView.builder(
-                                      itemCount: _allUsers.length,
-                                      itemBuilder: (context, index) {
-                                        final user = _allUsers[index];
-                                        final isSelected = _selectedParticipants.contains(user);
-                                        return CheckboxListTile(
-                                          title: Text(user.displayName ?? user.email),
-                                          subtitle: Text(user.email),
-                                          value: isSelected,
-                                          onChanged: (value) => _toggleParticipant(user),
-                                          dense: true,
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                const SizedBox(height: 16),
-                                // Botón crear
-                                ElevatedButton(
-                                  onPressed: _isCreating ? null : _createPlan,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColorScheme.color3,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                  ),
-                                  child: _isCreating
-                                      ? const Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                              ),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Text('Creando...'),
-                                          ],
-                                        )
-                                      : const Text('Crear Plan'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Campo Descripción
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción (Opcional)',
+                    hintText: 'Describe brevemente el plan',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.description),
+                  ),
+                  maxLines: 3,
+                  maxLength: 1000,
+                ),
+                const SizedBox(height: 16),
+                // Selector Visibilidad
+                DropdownButtonFormField<String>(
+                  value: _visibility,
+                  decoration: const InputDecoration(
+                    labelText: 'Visibilidad',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.visibility),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'private',
+                      child: Text('Privado - Solo participantes'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'public',
+                      child: Text('Público - Visible para todos'),
                     ),
                   ],
+                  onChanged: (value) {
+                    setState(() {
+                      _visibility = value!;
+                    });
+                  },
                 ),
+                const SizedBox(height: 16),
+                // Selector de imagen
+                _buildImageSelector(),
+                const SizedBox(height: 16),
+                // Selector fecha inicio
+                InkWell(
+                  onTap: _selectStartDate,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, color: Colors.green),
+                        const SizedBox(width: 12),
+                        Text('Inicio: ${DateFormatter.formatDate(_startDate)}'),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                // Selector fecha fin
+                InkWell(
+                  onTap: _selectEndDate,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.event, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        Text('Fin: ${DateFormatter.formatDate(_endDate)}'),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Duración
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    border: Border.all(color: Colors.blue.shade200),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Duración:'),
+                      Text(
+                        '$_columnCount día${_columnCount > 1 ? 's' : ''}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Selector de participantes
+                Text(
+                  'Participantes:',
+                  style: AppTypography.bodyStyle.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (_isLoadingUsers)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: ListView.builder(
+                      itemCount: _allUsers.length,
+                      itemBuilder: (context, index) {
+                        final user = _allUsers[index];
+                        final isSelected = _selectedParticipants.contains(user);
+                        return CheckboxListTile(
+                          title: Text(user.displayName ?? user.email),
+                          subtitle: Text(user.email),
+                          value: isSelected,
+                          onChanged: (value) => _toggleParticipant(user),
+                          dense: true,
+                        );
+                      },
+                    ),
+                  ),
+              ],
             ),
-          ],
-        );
-      },
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: _isCreating ? null : _createPlan,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColorScheme.color3,
+          ),
+          child: _isCreating
+              ? const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text('Creando...'),
+                  ],
+                )
+              : const Text('Crear Plan'),
+        ),
+      ],
     );
   }
 }

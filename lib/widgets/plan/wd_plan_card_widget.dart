@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 
 class PlanCardWidget extends StatelessWidget {
@@ -73,6 +74,12 @@ class PlanCardWidget extends StatelessWidget {
                         color: AppColorScheme.color2, // texto2
                         fontSize: 10,
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Badge de estado
+                    PlanStateBadgeCompact(
+                      plan: plan,
+                      fontSize: 8,
                     ),
                     const SizedBox(height: 2),
                     // Participantes (fuente pequeña)

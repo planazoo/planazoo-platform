@@ -2,9 +2,9 @@
 
 > Define todo el ciclo de vida de un plan: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T109, T107, T118, T122, T131 - Calendarios externos, T133 - Exportación PDF, T144 - Gestión del ciclo de vida, T145 - Álbum digital, T147 - Valoraciones  
-**Versión:** 1.1  
-**Fecha:** Enero 2025 (Actualizado)
+**Relacionado con:** T109 ✅, T107, T118, T122, T131 - Calendarios externos, T133 - Exportación PDF, T144 - Gestión del ciclo de vida, T145 - Álbum digital, T147 - Valoraciones  
+**Versión:** 1.3  
+**Fecha:** Enero 2025 (Actualizado - T109 completado, campos adicionales implementados)
 
 ---
 
@@ -805,26 +805,36 @@ Eventos aparecen en el calendario del plan
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ✅ Base implementada, transiciones pendientes
+**Estado:** ✅ Base funcional implementada, mejoras y características avanzadas pendientes
 
 **Lo que ya funciona:**
 - ✅ Crear planes básicos con `state: 'borrador'` por defecto
-- ✅ Configurar nombre, fechas, participantes
-- ✅ Campos `state`, `visibility`, `timezone` añadidos al modelo Plan
+- ✅ Configurar nombre, fechas, participantes, descripción, visibilidad
+- ✅ Campos `state`, `visibility`, `timezone`, `description` añadidos al modelo Plan
 - ✅ Valores por defecto: state='borrador', visibility='private', timezone=auto-detectada
 - ✅ Sanitización de inputs (T127)
 - ✅ Rate limiting de creación (T126)
+- ✅ Validaciones de formulario (nombre 3-100 chars, descripción 0-1000 chars)
 - ✅ Añadir eventos y alojamientos
 - ✅ Firestore rules actualizadas para validar nuevos campos
+- ✅ **Sistema completo de transiciones de estados (T109)**:
+  - ✅ Servicio de gestión de estados con validaciones
+  - ✅ Badges visuales en UI (dashboard, tarjetas, pantalla de datos)
+  - ✅ Transiciones automáticas basadas en fechas (Confirmado → En Curso → Finalizado)
+  - ✅ Transiciones manuales con diálogos de confirmación
+  - ✅ Controles de cambio de estado (solo organizador)
+  - ✅ Indicadores visuales de bloqueos según estado
+  - ✅ Permisos de acciones según estado
 
-**Lo que falta (CRÍTICO):**
-- ❌ Sistema completo de transiciones de estados (T109) - transiciones automáticas y manuales
+**Lo que falta:**
 - ❌ Copiar planes (T118)
 - ❌ Guardar como plantilla (T122)
 - ❌ Actualización dinámica de duración (T107)
 - ❌ Cancelación y eliminación con reembolsos (T102)
 - ❌ Invitaciones a participantes (T104)
 - ❌ Sistema de presupuesto integrado (T101)
+- ❌ Notificaciones automáticas de cambio de estado (T105)
+- ❌ Bloqueos funcionales en UI según estado (actualmente solo visuales)
 
 ---
 

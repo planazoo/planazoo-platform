@@ -2,10 +2,10 @@
 
 > Define cómo un plan transiciona entre estados y qué implica cada cambio de estado
 
-**Relacionado con:** T109 - Estados del Plan, T144 - Gestión del ciclo de vida al finalizar plan, T133 - Exportación PDF, T145 - Álbum digital, T147 - Valoraciones  
+**Relacionado con:** T109 ✅ - Estados del Plan, T144 - Gestión del ciclo de vida al finalizar plan, T133 - Exportación PDF, T145 - Álbum digital, T147 - Valoraciones  
 **Completa CRUD de planes:** `FLUJO_CRUD_PLANES.md`  
-**Versión:** 1.2  
-**Fecha:** Enero 2025 (Actualizado - Base implementada)
+**Versión:** 1.3  
+**Fecha:** Enero 2025 (Actualizado - T109 completado)
 
 ---
 
@@ -426,9 +426,9 @@ stateDiagram-v2
 
 ## ✅ IMPLEMENTACIÓN
 
-**Estado actual:** ✅ Base implementada, transiciones pendientes (T109)
+**Estado actual:** ✅ T109 COMPLETADO - Sistema funcional completo
 
-**Lo que ya funciona:**
+**Lo que está implementado:**
 - ✅ Campo `state` en modelo Plan con valores: borrador, planificando, confirmado, en_curso, finalizado, cancelado
 - ✅ Campo `visibility` en modelo Plan (private, public)
 - ✅ Campo `timezone` en modelo Plan (IANA timezone)
@@ -437,30 +437,35 @@ stateDiagram-v2
 - ✅ Firestore rules valida valores válidos de `state` y `visibility`
 - ✅ Persistencia de estados en Firestore
 - ✅ Modelo soporta todos los estados definidos en el flujo
+- ✅ **Transiciones automáticas entre estados:**
+  - ✅ Borrador → Planificando (al guardar primera vez)
+  - ✅ Confirmado → En Curso (automático al llegar fecha inicio o manual)
+  - ✅ En Curso → Finalizado (automático al llegar fecha fin o manual)
+- ✅ **Servicio de gestión de transiciones** (`lib/features/calendar/domain/services/plan_state_service.dart`)
+- ✅ **Validaciones de transiciones** (permisos, validaciones previas)
+- ✅ **UI para cambiar estados:**
+  - ✅ Badges visuales de estado (`lib/features/calendar/presentation/widgets/plan_state_badge.dart`)
+  - ✅ Diálogos de confirmación para transiciones (`lib/features/calendar/presentation/widgets/state_transition_dialog.dart`)
+  - ✅ Controles de cambio de estado en UI (`PlanDataScreen`)
+  - ✅ Indicadores visuales de bloqueos (`lib/features/calendar/domain/services/plan_state_permissions.dart`)
+- ✅ **Lógica de permisos/bloqueos según estado**
+- ✅ **Auto-transición basada en fechas** integrada en dashboard
 
-**Lo que falta (PENDIENTE - T109):**
-- ❌ Transiciones automáticas entre estados:
-  - ❌ Borrador → Planificando (al guardar primera vez)
-  - ❌ Planificando → Confirmado (manual por organizador)
-  - ❌ Confirmado → En Curso (automático al llegar fecha inicio o manual)
-  - ❌ En Curso → Finalizado (automático al llegar fecha fin o manual)
-- ❌ Servicio de gestión de transiciones (`plan_state_service.dart`)
-- ❌ Validaciones de transiciones (permisos, validaciones previas)
-- ❌ UI para cambiar estados:
-  - ❌ Badges visuales de estado
-  - ❌ Diálogos de confirmación para transiciones
-  - ❌ Bloqueos de acciones según estado actual
-  - ❌ Controles de cambio de estado en UI
-- ❌ Notificaciones de cambio de estado (T105)
-- ❌ Lógica de permisos/bloqueos según estado
-- ❌ Auto-transición basada en fechas (fecha inicio → En Curso, fecha fin → Finalizado)
+**Pendiente (mejoras futuras):**
+- ⚠️ Notificaciones automáticas de cambio de estado (T105)
+- ⚠️ Bloqueos funcionales en acciones de evento (actualmente solo visuales en plan)
+- ⚠️ Deshabilitar botones de edición según estado en módulos de eventos/alojamientos
 
-**Archivos a crear/modificar (futuro):**
-- `lib/features/calendar/domain/services/plan_state_service.dart` - Lógica de transiciones
-- `lib/features/calendar/presentation/widgets/plan_state_badge.dart` - Badge visual
-- `lib/features/calendar/presentation/widgets/state_transition_dialog.dart` - Diálogos de confirmación
-- Modificar `wd_calendar_screen.dart` - Mostrar estado y bloquear acciones según estado
-- Modificar `pg_dashboard_page.dart` - Mostrar badges de estado en lista de planes
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/services/plan_state_service.dart` - Lógica de transiciones
+- ✅ `lib/features/calendar/presentation/widgets/plan_state_badge.dart` - Badge visual
+- ✅ `lib/features/calendar/presentation/widgets/state_transition_dialog.dart` - Diálogos de confirmación
+- ✅ `lib/features/calendar/domain/services/plan_state_permissions.dart` - Permisos según estado
+
+**Archivos modificados:**
+- ✅ `pg_dashboard_page.dart` - Badges en lista y transiciones automáticas
+- ✅ `wd_plan_card_widget.dart` - Badge en tarjetas
+- ✅ `wd_plan_data_screen.dart` - Gestión manual de estados e indicadores de bloqueo
 
 ---
 

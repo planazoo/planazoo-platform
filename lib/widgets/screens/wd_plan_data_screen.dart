@@ -6,6 +6,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
+import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
+import 'package:unp_calendario/features/calendar/presentation/widgets/state_transition_dialog.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 
@@ -102,12 +107,23 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                    // Información de permisos según estado (si hay restricciones)
+                    if (PlanStatePermissions.isReadOnly(currentPlan)) ...[
+                      _buildReadOnlyWarning(),
+                      const SizedBox(height: 24),
+                    ],
+                    
                     // Imagen del plan
                     _buildPlanImageSection(),
                     const SizedBox(height: 24),
                     
                     // Información del plan en formato compacto
                     _buildInfoSection(),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Gestión de estado del plan
+                    _buildStateManagementSection(),
                     
                     const SizedBox(height: 24),
                     
@@ -143,19 +159,50 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildCompactInfoItem('Nombre:', currentPlan.name ?? 'N/A'),
-          _buildCompactInfoItem('UNP ID:', currentPlan.unpId ?? 'N/A'),
-          _buildCompactInfoItem('ID:', currentPlan.id ?? 'N/A'),
-          _buildCompactInfoItem('Fecha de Inicio:', _formatDate(currentPlan.startDate)),
-          _buildCompactInfoItem('Fecha de Fin:', _formatDate(currentPlan.endDate)),
-          _buildCompactInfoItem('Duración:', '${currentPlan.columnCount} días'),
-          _buildCompactInfoItem('Creado:', _formatDate(currentPlan.createdAt)),
+          _buildCompactInfoItem('Nombre:', currentPlan.name ?? 'N/A', 
+              editable: PlanStatePermissions.canEditBasicInfo(currentPlan)),
+          _buildCompactInfoItem('UNP ID:', currentPlan.unpId ?? 'N/A', editable: false),
+          _buildCompactInfoItem('ID:', currentPlan.id ?? 'N/A', editable: false),
+          _buildCompactInfoItem('Fecha de Inicio:', _formatDate(currentPlan.startDate),
+              editable: PlanStatePermissions.canModifyDates(currentPlan),
+              blockedReason: PlanStatePermissions.getBlockedReason('modify_dates', currentPlan)),
+          _buildCompactInfoItem('Fecha de Fin:', _formatDate(currentPlan.endDate),
+              editable: PlanStatePermissions.canModifyDates(currentPlan),
+              blockedReason: PlanStatePermissions.getBlockedReason('modify_dates', currentPlan)),
+          _buildCompactInfoItem('Duración:', '${currentPlan.columnCount} días', editable: false),
+          _buildCompactInfoItem('Creado:', _formatDate(currentPlan.createdAt), editable: false),
+          const SizedBox(height: 12),
+          // Badge de estado
+          Row(
+            children: [
+              SizedBox(
+                width: 100,
+                child: Text(
+                  'Estado:',
+                  style: AppTypography.bodyStyle.copyWith(
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              PlanStateBadge(
+                plan: currentPlan,
+                fontSize: 12,
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCompactInfoItem(String label, String value) {
+  Widget _buildCompactInfoItem(String label, String value, {
+    bool editable = false,
+    String? blockedReason,
+  }) {
+    final isBlocked = !editable && blockedReason != null;
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
@@ -163,21 +210,84 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         children: [
           SizedBox(
             width: 100,
-            child: Text(
-              label,
-              style: AppTypography.bodyStyle.copyWith(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
+            child: Row(
+              children: [
+                if (isBlocked)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4.0),
+                    child: Icon(
+                      Icons.lock,
+                      size: 14,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: AppTypography.bodyStyle.copyWith(
+                      color: isBlocked ? Colors.grey.shade500 : Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: AppTypography.bodyStyle.copyWith(
+                    color: isBlocked ? Colors.grey.shade400 : AppColorScheme.color4,
+                    fontWeight: FontWeight.w400,
+                    fontSize: 14,
+                  ),
+                ),
+                if (isBlocked && blockedReason != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    blockedReason!,
+                    style: AppTypography.bodyStyle.copyWith(
+                      color: Colors.orange.shade700,
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyWarning() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: Colors.orange.shade700,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Text(
-              value,
+              PlanStatePermissions.getBlockedReason('view', currentPlan) ?? 
+                  'Este plan tiene restricciones de edición según su estado.',
               style: AppTypography.bodyStyle.copyWith(
-                color: AppColorScheme.color4,
-                fontWeight: FontWeight.w400,
+                color: Colors.orange.shade900,
                 fontSize: 14,
               ),
             ),
@@ -185,6 +295,174 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildStateManagementSection() {
+    final currentUser = ref.read(currentUserProvider);
+    final isOwner = currentUser?.id == currentPlan.userId;
+    final currentState = currentPlan.state ?? 'borrador';
+    final stateService = PlanStateService();
+
+    // Solo mostrar controles si es el organizador y el plan no está finalizado o cancelado
+    if (!isOwner || currentState == 'finalizado' || currentState == 'cancelado') {
+      return const SizedBox.shrink();
+    }
+
+    // Determinar qué transiciones son válidas
+    List<Map<String, dynamic>> availableTransitions = [];
+
+    switch (currentState) {
+      case 'borrador':
+        availableTransitions.add({
+          'state': 'planificando',
+          'label': 'Iniciar Planificación',
+          'icon': Icons.event_note,
+        });
+        break;
+      case 'planificando':
+        availableTransitions.add({
+          'state': 'confirmado',
+          'label': 'Confirmar Plan',
+          'icon': Icons.check_circle_outline,
+        });
+        availableTransitions.add({
+          'state': 'cancelado',
+          'label': 'Cancelar Plan',
+          'icon': Icons.cancel_outlined,
+        });
+        break;
+      case 'confirmado':
+        availableTransitions.add({
+          'state': 'en_curso',
+          'label': 'Marcar como En Curso',
+          'icon': Icons.play_circle_outline,
+        });
+        availableTransitions.add({
+          'state': 'planificando',
+          'label': 'Volver a Planificación',
+          'icon': Icons.undo,
+        });
+        availableTransitions.add({
+          'state': 'cancelado',
+          'label': 'Cancelar Plan',
+          'icon': Icons.cancel_outlined,
+        });
+        break;
+      case 'en_curso':
+        availableTransitions.add({
+          'state': 'finalizado',
+          'label': 'Finalizar Plan',
+          'icon': Icons.check_circle,
+        });
+        break;
+    }
+
+    if (availableTransitions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Gestión de Estado',
+            style: AppTypography.mediumTitle.copyWith(
+              color: AppColorScheme.color4,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...availableTransitions.map((transition) => Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _changePlanState(transition['state'] as String),
+                    icon: Icon(transition['icon'] as IconData, size: 18),
+                    label: Text(transition['label'] as String),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _changePlanState(String newState) async {
+    final confirmed = await showStateTransitionDialog(
+      context: context,
+      plan: currentPlan,
+      newState: newState,
+    );
+
+    if (!confirmed || currentPlan.id == null) return;
+
+    try {
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Usuario no autenticado'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final stateService = PlanStateService();
+      final success = await stateService.changePlanState(
+        planId: currentPlan.id!,
+        newState: newState,
+        userId: currentUser.id,
+      );
+
+      if (success && mounted) {
+        // Actualizar el plan localmente
+        final planService = ref.read(planServiceProvider);
+        final updatedPlan = await planService.getPlanById(currentPlan.id!);
+        if (updatedPlan != null && mounted) {
+          setState(() {
+            currentPlan = updatedPlan;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Estado del plan actualizado a: ${PlanStateService.getStateDisplayInfo(newState)['label']}'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al cambiar el estado del plan'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildDeleteButton() {
