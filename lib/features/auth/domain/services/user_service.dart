@@ -279,4 +279,35 @@ class UserService {
       throw 'Error al obtener estadísticas: $e';
     }
   }
+
+  // Verificar disponibilidad de username (case-insensitive)
+  Future<bool> isUsernameAvailable(String candidate, {String? excludeUserId}) async {
+    final u = candidate.trim().toLowerCase();
+    final snapshot = await _firestore
+        .collection(_collection)
+        .where('usernameLower', isEqualTo: u)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) return true;
+    // Si existe, permitir solo si pertenece al mismo usuario (edición propia)
+    if (excludeUserId != null && snapshot.docs.first.id == excludeUserId) return true;
+    return false;
+  }
+
+  // Actualizar username del usuario (normalizado y con índice en lowercase)
+  Future<bool> updateUsername(String userId, String username) async {
+    final normalized = username.trim().toLowerCase();
+    // Comprobar disponibilidad excluyendo al propio usuario
+    final available = await isUsernameAvailable(normalized, excludeUserId: userId);
+    if (!available) return false;
+
+    await _firestore
+        .collection(_collection)
+        .doc(userId)
+        .update({
+          'username': normalized,
+          'usernameLower': normalized,
+        });
+    return true;
+  }
 }

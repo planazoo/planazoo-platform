@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../features/security/services/rate_limiter_service.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../models/event.dart';
 import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
@@ -98,7 +99,7 @@ class EventService {
       }
       return null;
     } catch (e) {
-      // Error getting event by id: $e
+      LoggerService.error('Error getting event by id', context: 'EVENT_SERVICE', error: e);
       return null;
     }
   }
@@ -154,7 +155,7 @@ class EventService {
       await _firestore.collection(_collectionName).doc(event.id).update(eventToSave.toFirestore());
       return true;
     } catch (e) {
-      // Error updating event: $e
+      LoggerService.error('Error updating event', context: 'EVENT_SERVICE', error: e);
       return false;
     }
   }
@@ -170,7 +171,7 @@ class EventService {
       await _firestore.collection(_collectionName).doc(eventId).delete();
       return true;
     } catch (e) {
-      // Error deleting event: $e
+      LoggerService.error('Error deleting event', context: 'EVENT_SERVICE', error: e);
       return false;
     }
   }
@@ -222,7 +223,7 @@ class EventService {
       });
       return true;
     } catch (e) {
-      // Error toggling draft status: $e
+      LoggerService.error('Error toggling draft status', context: 'EVENT_SERVICE', error: e);
       return false;
     }
   }
@@ -326,7 +327,7 @@ class EventService {
       await batch.commit();
       return true;
     } catch (e) {
-      // Error deleting events by planId: $e
+      LoggerService.error('Error deleting events by planId', context: 'EVENT_SERVICE', error: e);
       return false;
     }
   }

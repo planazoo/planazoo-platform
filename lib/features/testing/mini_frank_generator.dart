@@ -31,6 +31,9 @@ class MiniFrankGenerator {
       startDate: baseDate,
       endDate: baseDate.add(const Duration(days: 3)), // 25 de octubre
       columnCount: 4,
+      state: 'planificando', // Para testing
+      visibility: 'private',
+      timezone: 'Europe/Madrid',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       savedAt: DateTime.now(),

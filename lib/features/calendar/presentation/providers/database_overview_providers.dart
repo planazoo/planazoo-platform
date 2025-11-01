@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/plan.dart';
 import '../../domain/models/event.dart';
 import '../../domain/models/accommodation.dart';
@@ -41,6 +42,7 @@ final allEventsProvider = FutureProvider<List<Event>>((ref) async {
         final events = await eventService.getEventsByPlanId(plan.id!, '').first;
         allEvents.addAll(events);
       } catch (e) {
+        LoggerService.error('Error getting events for plan ${plan.id}', context: 'DATABASE_OVERVIEW', error: e);
         // Continuar con el siguiente plan si hay error
         continue;
       }
@@ -64,6 +66,7 @@ final allAccommodationsProvider = FutureProvider<List<Accommodation>>((ref) asyn
         final accommodations = await accommodationService.getAccommodations(plan.id!).first;
         allAccommodations.addAll(accommodations);
       } catch (e) {
+        LoggerService.error('Error getting accommodations for plan ${plan.id}', context: 'DATABASE_OVERVIEW', error: e);
         // Continuar con el siguiente plan si hay error
         continue;
       }

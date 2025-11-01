@@ -120,18 +120,10 @@ class ProfilePage extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    currentUser.displayName ?? 'Usuario',
+                                    currentUser.displayIdentifier,
                                     style: AppTypography.mediumTitle.copyWith(
                                       color: AppColorScheme.color4,
                                       fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    currentUser.email,
-                                    style: AppTypography.bodyStyle.copyWith(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 14,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -152,6 +144,62 @@ class ProfilePage extends ConsumerWidget {
                         // Opciones de texto simple
                         Column(
                           children: [
+                            // Campo para editar username con validación básica
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColorScheme.color2.withValues(alpha: 0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.alternate_email, size: 18, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: TextFormField(
+                                      initialValue: currentUser.username ?? '',
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        hintText: 'Nombre de usuario (a-z, 0-9, _) ',
+                                      ),
+                                      style: AppTypography.bodyStyle,
+                                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                                      validator: (v) {
+                                        final value = (v ?? '').trim().toLowerCase();
+                                        if (value.isEmpty) return null; // opcional
+                                        final re = RegExp(r'^[a-z0-9_]{3,30}$');
+                                        if (!re.hasMatch(value)) {
+                                          return '3-30 caráct., minúsculas y _';
+                                        }
+                                        return null;
+                                      },
+                                      onFieldSubmitted: (v) async {
+                                        final value = v.trim();
+                                        if (value.isEmpty) return; // opcional
+                                        await authNotifier.updateUsername(value);
+                                        if (context.mounted) {
+                                          final error = ref.read(authNotifierProvider).errorMessage;
+                                          if (error != null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text(error), backgroundColor: Colors.red),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Nombre de usuario actualizado')), 
+                                            );
+                                          }
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
                             _buildTextOption(
                               'Editar Perfil',
                               () {

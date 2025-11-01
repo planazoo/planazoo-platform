@@ -73,26 +73,36 @@ match /users/{userId} {
 
 ---
 
-### 2. SANITIZACIÓN DE CONTENIDO (T127)
+### 2. SANITIZACIÓN DE CONTENIDO (T127 - ✅ COMPLETADO)
 
 **Objetivo:** Evitar XSS y contenido malicioso en entradas de usuario (avisos del plan, biografías, notas, descripciones enriquecidas).
 
-**Política de sanitización:**
-- Estrategia whitelist (permitir solo tags seguros).
-- Tags permitidos: `b`, `strong`, `i`, `em`, `u`, `br`, `p`, `ul`, `ol`, `li`, `a`.
-- Atributos permitidos:
-  - Para `a`: `href`, `title` con restricciones (`http`, `https`), añadir `rel="noopener noreferrer"`.
-- Eliminar: `script`, `style`, `iframe`, `on*` (event handlers), `img` (por ahora), `video`, `audio`.
+**Política de sanitización implementada:**
+- ✅ Estrategia whitelist (permitir solo tags seguros).
+- ✅ Tags permitidos: `b`, `strong`, `i`, `em`, `u`, `br`, `p`, `ul`, `ol`, `li`, `a`.
+- ✅ Atributos permitidos:
+  - Para `a`: `href`, `title` con restricciones (`http`, `https`), añadir `rel="noopener noreferrer"` automáticamente.
+- ✅ Eliminar: `script`, `style`, `iframe`, `on*` (event handlers), `img` (por ahora), `video`, `audio`.
 
-**Implementación sugerida:**
-- Crear `Sanitizer.sanitize(String html)` en `lib/features/security/utils/sanitizer.dart`.
-- Normalizar enlaces y escapar entidades donde aplique.
-- Aplicar antes de persistir y validar al renderizar.
+**Implementación:**
+- ✅ `Sanitizer.sanitizePlainText()` - Sanitiza texto plano (elimina caracteres peligrosos, normaliza espacios, límites de longitud)
+- ✅ `Sanitizer.sanitizeHtml()` - Sanitiza HTML con whitelist (disponible para uso futuro en avisos/biografías)
+- ✅ `Validator.isValidEmail()` - Valida formato de email
+- ✅ `Validator.isSafeUrl()` - Valida URLs seguras (http/https)
+- ✅ `SafeText` widget - Widget para mostrar texto seguro explícitamente
+- ✅ Aplicado en: eventos (descripción, campos personales), alojamientos (nombre, descripción), planes (nombre, unpId)
 
-**Criterios de aceptación:**
-- Ningún tag/script ejecutable llega a la renderización.
-- Links seguros con `rel` aplicado automáticamente.
-- Tests de inputs maliciosos pasan (payloads comunes de XSS).
+**Protección al mostrar:**
+- ✅ Flutter `Text` widget escapa HTML automáticamente (protección nativa)
+- ✅ Todo el contenido de usuario se muestra de forma segura
+- ✅ `SafeText` disponible para uso explícito cuando se necesite
+
+**Criterios de aceptación cumplidos:**
+- ✅ Ningún tag/script ejecutable llega a la renderización
+- ✅ Sanitización aplicada antes de persistir datos
+- ✅ Links seguros con `rel="noopener noreferrer"` aplicado automáticamente
+- ✅ Validación de emails y URLs en formularios
+- ⚠️ Tests de inputs maliciosos (pendiente testing manual/integrado)
 
 ---
 

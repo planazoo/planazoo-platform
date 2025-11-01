@@ -55,9 +55,11 @@ class UserModel {
 
   // Convertir a Map para Firestore
   Map<String, dynamic> toFirestore() {
+    final usernameLower = username?.toLowerCase();
     return {
       'email': email,
       'username': username,
+      'usernameLower': usernameLower,
       'displayName': displayName,
       'photoURL': photoURL,
       'createdAt': Timestamp.fromDate(createdAt),

@@ -1053,6 +1053,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       lastDate: DateTime(2030),
     );
     
+    if (!mounted) return;
+    
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
@@ -1065,6 +1067,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       context: context,
       initialTime: TimeOfDay(hour: _selectedHour, minute: _selectedStartMinute),
     );
+    
+    if (!mounted) return;
     
     if (picked != null) {
       setState(() {
@@ -1122,6 +1126,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ),
       ),
     );
+    
+    if (!mounted) return;
     
     if (durationMinutes != null) {
       setState(() {

@@ -307,6 +307,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       lastDate: widget.planEndDate ?? widget.planStartDate.add(const Duration(days: 365)),
     );
     
+    if (!mounted) return;
+    
     if (picked != null && picked != _selectedCheckIn) {
       setState(() {
         _selectedCheckIn = picked;
@@ -325,6 +327,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       firstDate: _selectedCheckIn.add(const Duration(days: 1)),
       lastDate: widget.planEndDate ?? widget.planStartDate.add(const Duration(days: 365)),
     );
+    
+    if (!mounted) return;
     
     if (picked != null && picked != _selectedCheckOut) {
       setState(() {

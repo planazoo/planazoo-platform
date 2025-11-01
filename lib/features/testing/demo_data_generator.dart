@@ -135,6 +135,9 @@ class DemoDataGenerator {
       description: 'Plan de testing completo con todos los tipos de eventos, '
           'solapamientos, casos edge y complejidades implementadas. '
           '¡Un verdadero monstruo de Frankenstein! 🧟',
+      state: 'planificando', // Para testing, directamente en planificando
+      visibility: 'private',
+      timezone: 'Europe/Madrid',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       savedAt: DateTime.now(),

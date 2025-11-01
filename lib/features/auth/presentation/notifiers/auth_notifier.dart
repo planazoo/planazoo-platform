@@ -5,6 +5,8 @@ import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/domain/services/auth_service.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/features/security/services/rate_limiter_service.dart';
+import 'package:unp_calendario/features/security/utils/sanitizer.dart';
+import 'package:unp_calendario/features/security/utils/validator.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
@@ -131,16 +133,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
       
       await _authService.registerWithEmailAndPassword(email, password);
       
+      // Sanitizar displayName si se proporciona
+      final sanitizedDisplayName = displayName != null && displayName.isNotEmpty
+          ? Sanitizer.sanitizePlainText(displayName, maxLength: 100)
+          : null;
+      
       // Actualizar displayName si se proporciona
-      if (displayName != null && displayName.isNotEmpty) {
-        await _authService.updateDisplayName(displayName);
+      if (sanitizedDisplayName != null && sanitizedDisplayName.isNotEmpty) {
+        await _authService.updateDisplayName(sanitizedDisplayName);
       }
       
       // Crear usuario en Firestore después del registro exitoso
       final currentUser = _authService.currentUser;
       if (currentUser != null) {
         final userModel = UserModel.fromFirebaseAuth(currentUser);
-        await _userService.createUser(userModel);
+        // Asegurar que el displayName sanitizado se guarde en Firestore
+        final userModelWithSanitizedName = sanitizedDisplayName != null
+            ? userModel.copyWith(displayName: sanitizedDisplayName)
+            : userModel;
+        await _userService.createUser(userModelWithSanitizedName);
         
         // Enviar email de verificación
         await _authService.sendEmailVerification();
@@ -151,7 +162,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Emitir estado de éxito de registro
         state = AuthState(
           status: AuthStatus.registrationSuccess,
-          user: userModel,
+          user: userModelWithSanitizedName,
         );
       }
       
@@ -270,18 +281,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (state.user == null) return;
 
     try {
+      // Sanitizar y validar entradas
+      final sanitizedDisplayName = displayName != null
+          ? Sanitizer.sanitizePlainText(displayName, maxLength: 100)
+          : null;
+      final validPhotoUrl = photoURL != null && photoURL.isNotEmpty
+          ? (Validator.isSafeUrl(photoURL) ? photoURL : null)
+          : null;
+
       // Actualizar en Firebase Auth
-      if (displayName != null) {
-        await _authService.updateDisplayName(displayName);
+      if (sanitizedDisplayName != null) {
+        await _authService.updateDisplayName(sanitizedDisplayName);
       }
-      if (photoURL != null) {
-        await _authService.updatePhotoURL(photoURL);
+      if (validPhotoUrl != null) {
+        await _authService.updatePhotoURL(validPhotoUrl);
       }
 
       // Actualizar en Firestore
       final updatedUser = state.user!.copyWith(
-        displayName: displayName ?? state.user!.displayName,
-        photoURL: photoURL ?? state.user!.photoURL,
+        displayName: sanitizedDisplayName ?? state.user!.displayName,
+        photoURL: validPhotoUrl ?? state.user!.photoURL,
       );
       
       await _userService.updateUser(updatedUser);
@@ -339,5 +358,53 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // Limpiar errores
   void clearError() {
     state = state.copyWith(errorMessage: null);
+  }
+
+  // Actualizar username del usuario
+  Future<void> updateUsername(String username) async {
+    if (state.user == null) return;
+    try {
+      // Normalizar: texto plano -> trim -> minúsculas
+      final trimmed = Sanitizer.sanitizePlainText(username, maxLength: 30).toLowerCase();
+      // Filtrar caracteres inválidos por si acaso
+      final normalized = trimmed.replaceAll(RegExp(r'[^a-z0-9_]'), '');
+
+      if (!Validator.isValidUsername(normalized)) {
+        state = AuthState(
+          status: AuthStatus.error,
+          errorMessage: 'El username debe tener 3-30 caracteres y solo [a-z0-9_] en minúsculas.',
+        );
+        return;
+      }
+
+      // Comprobar disponibilidad
+      final available = await _userService.isUsernameAvailable(normalized, excludeUserId: state.user!.id);
+      if (!available) {
+        state = AuthState(
+          status: AuthStatus.error,
+          errorMessage: 'Este username ya está en uso. Prueba con otro.',
+        );
+        return;
+      }
+
+      // Guardar en Firestore
+      final ok = await _userService.updateUsername(state.user!.id, normalized);
+      if (!ok) {
+        state = AuthState(
+          status: AuthStatus.error,
+          errorMessage: 'No se pudo guardar el username. Intenta de nuevo.',
+        );
+        return;
+      }
+
+      // Refrescar estado local
+      final updatedUser = state.user!.copyWith(username: normalized);
+      state = state.copyWith(user: updatedUser);
+    } catch (e) {
+      state = AuthState(
+        status: AuthStatus.error,
+        errorMessage: 'Error al actualizar username: $e',
+      );
+    }
   }
 }

@@ -14,6 +14,9 @@ class Plan {
   final double? budget;
   final int? participants;
   final String? imageUrl;
+  final String? state; // borrador, planificando, confirmado, en_curso, finalizado, cancelado
+  final String? visibility; // private, public
+  final String? timezone; // IANA timezone (ej: "Europe/Madrid")
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime savedAt;
@@ -32,6 +35,9 @@ class Plan {
     this.budget,
     this.participants,
     this.imageUrl,
+    this.state,
+    this.visibility,
+    this.timezone,
     required this.createdAt,
     required this.updatedAt,
     required this.savedAt,
@@ -61,6 +67,9 @@ class Plan {
       budget: data['budget']?.toDouble(),
       participants: data['participants'],
       imageUrl: data['imageUrl'],
+      state: data['state'] ?? 'borrador', // Default a borrador si no existe
+      visibility: data['visibility'] ?? 'private', // Default a privado
+      timezone: data['timezone'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       savedAt: (data['savedAt'] as Timestamp).toDate(),
@@ -82,6 +91,9 @@ class Plan {
       'budget': budget,
       'participants': participants,
       'imageUrl': imageUrl,
+      'state': state ?? 'borrador', // Default a borrador
+      'visibility': visibility ?? 'private', // Default a privado
+      'timezone': timezone,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'savedAt': Timestamp.fromDate(savedAt),
@@ -103,6 +115,9 @@ class Plan {
     double? budget,
     int? participants,
     String? imageUrl,
+    String? state,
+    String? visibility,
+    String? timezone,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? savedAt,
@@ -121,6 +136,9 @@ class Plan {
       budget: budget ?? this.budget,
       participants: participants ?? this.participants,
       imageUrl: imageUrl ?? this.imageUrl,
+      state: state ?? this.state,
+      visibility: visibility ?? this.visibility,
+      timezone: timezone ?? this.timezone,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       savedAt: savedAt ?? this.savedAt,
@@ -171,6 +189,9 @@ class Plan {
         budget.hashCode ^
         participants.hashCode ^
         imageUrl.hashCode ^
+        state.hashCode ^
+        visibility.hashCode ^
+        timezone.hashCode ^
         createdAt.hashCode ^
         updatedAt.hashCode ^
         savedAt.hashCode;

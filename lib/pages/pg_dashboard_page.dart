@@ -18,6 +18,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
+import 'package:unp_calendario/features/security/utils/sanitizer.dart';
+import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
 import 'package:unp_calendario/widgets/grid/wd_grid_painter.dart';
@@ -330,6 +332,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     try {
       // Generar plan Mini-Frank
         final plan = await MiniFrankSimpleGenerator.generateMiniFrankPlan(currentUser.id);
+      
+      if (!mounted) return;
       
       // Invalidar providers del calendario para forzar actualización
       if (plan.id != null) {
@@ -1864,11 +1868,16 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
     try {
       final userService = ref.read(userServiceProvider);
       final users = await userService.getAllUsers();
+      
+      if (!mounted) return;
+      
       setState(() {
         _allUsers = users;
         _isLoadingUsers = false;
       });
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _isLoadingUsers = false;
       });
@@ -1912,14 +1921,23 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
         });
         
         // Crear un plan temporal para obtener el ID
+        // Sanitizar input antes de crear plan temporal
+        final sanitizedName = Sanitizer.sanitizePlainText(_nameController.text, maxLength: 100);
+        final sanitizedUnpId = Sanitizer.sanitizePlainText(_unpIdController.text, maxLength: 20);
+        
+        final systemTimezone = TimezoneService.getSystemTimezone();
+        
         final tempPlan = Plan(
-          name: _nameController.text.trim(),
-          unpId: _unpIdController.text.trim(),
+          name: sanitizedName,
+          unpId: sanitizedUnpId,
           userId: userId,
           baseDate: _startDate,
           startDate: _startDate,
           endDate: _endDate,
           columnCount: _columnCount,
+          state: 'borrador', // Default según flujo 1.1
+          visibility: 'private', // Default según flujo 1.1
+          timezone: systemTimezone, // Auto-detectada según flujo 1.1
           createdAt: now,
           updatedAt: now,
           savedAt: now,
@@ -1932,23 +1950,37 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
           throw Exception('Error al crear plan temporal');
         }
         
+        if (!mounted) return;
+        
         // Subir imagen con el ID del plan
         uploadedImageUrl = await ImageService.uploadPlanImage(_selectedImage!, tempPlan.id!);
+        
+        if (!mounted) return;
         
         setState(() {
           _isUploadingImage = false;
         });
       }
       
+      // Sanitizar input antes de crear plan
+      final sanitizedName = Sanitizer.sanitizePlainText(_nameController.text, maxLength: 100);
+      final sanitizedUnpId = Sanitizer.sanitizePlainText(_unpIdController.text, maxLength: 20);
+      
+      // Obtener timezone del sistema (default)
+      final systemTimezone = TimezoneService.getSystemTimezone();
+      
       final plan = Plan(
-        name: _nameController.text.trim(),
-        unpId: _unpIdController.text.trim(),
+        name: sanitizedName,
+        unpId: sanitizedUnpId,
         userId: userId,
         baseDate: _startDate,
         startDate: _startDate,
         endDate: _endDate,
         columnCount: _columnCount,
         imageUrl: uploadedImageUrl,
+        state: 'borrador', // Default según flujo 1.1
+        visibility: 'private', // Default según flujo 1.1
+        timezone: systemTimezone, // Auto-detectada según flujo 1.1
         createdAt: now,
         updatedAt: now,
         savedAt: now,
@@ -2041,6 +2073,9 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
+    
+    if (!mounted) return;
+    
     if (picked != null && picked != _startDate) {
       setState(() {
         _startDate = picked;
@@ -2059,6 +2094,9 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
       firstDate: _startDate,
       lastDate: _startDate.add(const Duration(days: 365)),
     );
+    
+    if (!mounted) return;
+    
     if (picked != null && picked != _endDate) {
       setState(() {
         _endDate = picked;
@@ -2080,6 +2118,9 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
   Future<void> _pickImage() async {
     try {
       final XFile? image = await ImageService.pickImageFromGallery();
+      
+      if (!mounted) return;
+      
       if (image != null) {
         setState(() {
           _selectedImage = image;
@@ -2087,6 +2128,9 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
         
         // Validar imagen
         final validationError = await ImageService.validateImage(image);
+        
+        if (!mounted) return;
+        
         if (validationError != null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

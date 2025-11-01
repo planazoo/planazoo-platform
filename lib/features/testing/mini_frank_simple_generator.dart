@@ -33,6 +33,9 @@ class MiniFrankSimpleGenerator {
       unpId: 'mini-frank-london-${DateTime.now().millisecondsSinceEpoch}',
       participants: 3,
       columnCount: 4,
+      state: 'planificando', // Para testing
+      visibility: 'private',
+      timezone: 'Europe/London', // Londres
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       savedAt: DateTime.now(),

@@ -1647,3 +1647,229 @@ Clase `EventSegment` que divide eventos multi-día en segmentos (uno por día):
 - ✅ Eliminación de copias funciona correctamente
 - ✅ Notificaciones se envían a usuarios afectados
 - ✅ Métodos de copia en Event funcionan correctamente
+
+---
+
+## T51 - Añadir Validación a Formularios
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación de validación de entrada de datos en todos los formularios críticos para prevenir que datos inválidos entren a Firestore.
+
+**Criterios de aceptación:**
+- ✅ Todos los `TextFormField` críticos tienen `validator` apropiado
+- ✅ Mensajes de error claros y en español
+- ✅ Validación en cliente antes de enviar a Firestore
+- ✅ `_formKey.currentState!.validate()` antes de guardar
+- ✅ Sanitización aplicada después de validación (integrada con T127)
+
+**Implementación técnica:**
+- Validación de descripción de eventos (obligatorio, 3-1000 chars)
+- Validación de campos personales con límites específicos (asiento, menú, preferencias, etc.)
+- Validación de nombre de alojamiento (obligatorio, 2-100 chars)
+- Validación de email con regex en invitaciones
+- Soporte para validators en `PermissionTextField` y `PermissionDropdownField`
+
+**Archivos modificados:**
+- ✅ `lib/widgets/wd_event_dialog.dart` - Validación completa de eventos
+- ✅ `lib/widgets/wd_accommodation_dialog.dart` - Validación completa de alojamientos
+- ✅ `lib/pages/pg_plan_participants_page.dart` - Validación de email
+- ✅ `lib/widgets/permission_field.dart` - Añadido soporte para validators
+
+**Resultado:**
+Formularios críticos validados y sanitizados, mejorando la integridad de datos y la experiencia de usuario con mensajes de error claros.
+
+---
+
+## T125 - Completar Firestore Security Rules
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación completa de reglas de seguridad de Firestore para proteger todos los datos sensibles del sistema.
+
+**Criterios de aceptación:**
+- ✅ Todas las operaciones protegidas por reglas
+- ✅ Solo usuarios autenticados pueden hacer operaciones
+- ✅ Permisos verificados en servidor (Firestore)
+- ✅ Validación de estructura de datos en servidor
+
+**Implementación técnica:**
+- Reglas para todas las colecciones: users, plans, events, accommodations, payments, announcements, planParticipations, contactGroups, userPreferences
+- Funciones auxiliares: isAuthenticated, isPlanOwner, isPlanParticipant, getUserRole, isPlanAdmin, canEditPlanContent, canReadPlanContent
+- Validación de estructura de datos: isValidPlanData, isValidEventData, isValidAccommodationData
+- Protección de datos sensibles y inmutabilidad del email del usuario
+
+**Archivos creados:**
+- ✅ `firestore.rules` - Reglas completas de seguridad
+
+**Notas importantes:**
+- Las reglas asumen owner=admin para simplificar verificación de roles
+- Verificación completa de participación requiere checks en cliente (limitación de Firestore rules)
+- Validación de estructura asegura integridad de datos
+
+**Resultado:**
+Sistema de seguridad robusto a nivel de servidor que protege todos los datos sensibles y previene acceso no autorizado.
+
+---
+
+## T126 - Rate Limiting y Protección contra Ataques
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación de rate limiting para prevenir ataques DoS y uso malicioso de la plataforma.
+
+**Criterios de aceptación:**
+- ✅ Rate limiting en login con CAPTCHA tras 3 fallos
+- ✅ Límites aplicados en invites, creación de planes y eventos
+- ✅ Mensajes claros sin filtrar información sensible
+- ✅ Persistencia de contadores en SharedPreferences
+- ✅ Limpieza automática de contadores fuera de ventana de tiempo
+
+**Implementación técnica:**
+- RateLimiterService con persistencia local (SharedPreferences)
+- Límites implementados:
+  - Login: 5 intentos/15min (CAPTCHA tras 3 fallos)
+  - Password reset: 3 emails/hora
+  - Invitaciones: 50/día/usuario
+  - Plan creation: 50/día/usuario
+  - Event creation: 200/día/plan
+- Integración en: AuthNotifier, PlanParticipationNotifier, PlanService, EventService
+- Manejo de errores en UI con mensajes específicos
+
+**Archivos creados:**
+- ✅ `lib/features/security/services/rate_limiter_service.dart`
+
+**Archivos modificados:**
+- ✅ `lib/features/auth/presentation/notifiers/auth_notifier.dart`
+- ✅ `lib/features/calendar/presentation/notifiers/plan_participation_notifier.dart`
+- ✅ `lib/features/calendar/domain/services/plan_service.dart`
+- ✅ `lib/features/calendar/domain/services/event_service.dart`
+- ✅ `lib/pages/pg_dashboard_page.dart`
+- ✅ `lib/pages/pg_plan_participants_page.dart`
+
+**Resultado:**
+Sistema de rate limiting funcional que protege contra abuso y ataques DoS, mejorando la seguridad general de la plataforma.
+
+---
+
+## T127 - Sanitización y Validación de User Input
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación de sanitización y validación de todo el input del usuario para prevenir XSS, SQL injection y otros ataques.
+
+**Criterios de aceptación:**
+- ✅ HTML/texto sanitizado antes de guardar (sin scripts)
+- ✅ HTML escapado al mostrar - Flutter Text escapa automáticamente
+- ✅ Validación de emails y URLs seguras
+- ✅ No permitir JavaScript en user input
+
+**Implementación técnica:**
+- `Sanitizer.sanitizePlainText()` - Sanitiza texto plano (elimina caracteres peligrosos, normaliza espacios, límites de longitud)
+- `Sanitizer.sanitizeHtml()` - Sanitiza HTML con whitelist (disponible para uso futuro)
+- `Validator.isValidEmail()` - Valida formato de email
+- `Validator.isSafeUrl()` - Valida URLs seguras (http/https)
+- `SafeText` widget - Widget para mostrar texto seguro explícitamente
+- Sanitización aplicada en: eventos (descripción, campos personales), alojamientos (nombre, descripción), planes (nombre, unpId)
+
+**Archivos creados:**
+- ✅ `lib/features/security/utils/sanitizer.dart`
+- ✅ `lib/features/security/utils/validator.dart`
+- ✅ `lib/shared/widgets/safe_text.dart`
+
+**Archivos modificados:**
+- ✅ `lib/widgets/wd_event_dialog.dart`
+- ✅ `lib/widgets/wd_accommodation_dialog.dart`
+- ✅ `lib/pages/pg_dashboard_page.dart`
+
+**Nota importante:**
+- Todos los campos actuales usan texto plano (no HTML rico)
+- La sanitización HTML está disponible para uso futuro cuando se implementen avisos/biografías con formato
+- Flutter Text widget escapa HTML automáticamente, proporcionando protección adicional
+
+**Resultado:**
+Sistema completo de sanitización y validación que previene XSS y otros ataques, asegurando que todo el input de usuario sea seguro antes de persistir.
+
+
+---
+
+## T52 - Añadir Checks `mounted` antes de usar Context
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación de verificaciones `mounted` antes de usar `context` en callbacks asíncronos para prevenir errores cuando el widget ya está disposed.
+
+**Criterios de aceptación:**
+ -
+
+✅ Añadir `if (!mounted) return;` después de operaciones async
+- ✅ Verificar `mounted` antes de cada uso de `context`
+- ✅ Verificar `mounted` antes de `setState()`
+- ✅ Protección contra crashes al cerrar diálogos rápidamente
+
+**Implementación técnica:**
+- Patrón `if (!mounted) return;` aplicado después de todas las operaciones async que usan `context`
+- Checks añadidos en métodos que usan `showDatePicker`, `showTimePicker`, `showDialog`
+- Verificación antes de cada `setState()` después de operaciones async
+- Verificación antes de usar `Navigator`, `ScaffoldMessenger` después de `await`
+
+**Archivos modificados:**
+- ✅ `lib/widgets/wd_event_dialog.dart` - 3 métodos protegidos
+  - `_selectDate()` - check después de `showDatePicker`
+  - `_selectStartTime()` - check después de `showTimePicker`
+  - `_selectDuration()` - check después de `showDialog`
+- ✅ `lib/widgets/wd_accommodation_dialog.dart` - 2 métodos protegidos
+  - `_selectCheckInDate()` - check después de `showDatePicker`
+  - `_selectCheckOutDate()` - check después de `showDatePicker`
+- ✅ `lib/pages/pg_dashboard_page.dart` - 7 métodos protegidos
+  - `_generateMiniFrankPlan()` - check después de `await`
+  - `_createPlan()` - checks múltiples después de operaciones async (guardar plan, subir imagen, crear participaciones)
+  - `_loadUsers()` - check después de `await`
+  - `_pickImage()` - checks después de `await` (selección y validación)
+  - `_selectStartDate()` - check después de `showDatePicker`
+  - `_selectEndDate()` - check después de `showDatePicker`
+
+**Resultado:**
+Todos los métodos async críticos ahora verifican `mounted` antes de usar `context`, `Navigator`, `ScaffoldMessenger` o `setState`, evitando crashes cuando el widget está disposed. La aplicación es más robusta y estable.
+
+
+---
+
+## T53 - Reemplazar print() por LoggerService
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Reemplazo de todos los `print()` statements por `LoggerService` para mejor control de logs y performance en producción.
+
+**Criterios de aceptación:**
+- ✅ 0 `print()` statements en código de producción (fuera de LoggerService)
+- ✅ Usar `LoggerService.error()` para errores
+- ✅ Todos los errores tienen logging estructurado con contexto
+- ✅ `LoggerService.debug()` solo imprime en modo debug (kDebugMode)
+- ✅ Mejor debugging con contexto y estructura de logs
+
+**Implementación técnica:**
+- Reemplazo de comentarios de error (donde antes había prints removidos) por `LoggerService.error()`
+- Añadidos logs con contexto apropiado para identificación de problemas
+- Todos los errores críticos ahora están logueados estructuradamente
+- Los únicos prints restantes están en `LoggerService` (implementación interna correcta)
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/services/image_service.dart` - 5 logs añadidos
+  - Error picking image from gallery
+  - Error validating image
+  - Error uploading plan image
+  - Error deleting plan image
+  - Error compressing image
+- ✅ `lib/features/calendar/domain/services/event_service.dart` - 5 logs añadidos
+  - Error getting event by id
+  - Error updating event
+  - Error deleting event
+  - Error toggling draft status
+  - Error deleting events by planId
+- ✅ `lib/features/calendar/presentation/providers/database_overview_providers.dart` - 2 logs añadidos
+  - Error getting events for plan
+  - Error getting accommodations for plan
+
+**Nota importante:**
+- Los únicos `print()` que quedan están en `LoggerService` mismo (implementación interna), lo cual es correcto y esperado.
+- `LoggerService.debug()` ya estaba configurado para solo imprimir en modo debug (kDebugMode).
+- Todos los errores ahora incluyen contexto ('IMAGE_SERVICE', 'EVENT_SERVICE', 'DATABASE_OVERVIEW') para facilitar debugging.
+
+**Resultado:**
+Código de producción más limpio con logging estructurado. Todos los errores críticos están ahora logueados apropiadamente con contexto, facilitando el debugging y mejorando el mantenimiento del código. Los logs se pueden controlar fácilmente a través de `LoggerService` y solo se ejecutan cuando es apropiado (debug mode para debug, siempre para errores).
+

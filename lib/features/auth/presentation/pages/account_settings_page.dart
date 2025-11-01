@@ -4,6 +4,7 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/notifiers/user_notifier.dart';
+import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifier.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/edit_profile_page.dart';
 
 class AccountSettingsPage extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
     final userNotifier = ref.read(userNotifierProvider.notifier);
+    final authNotifier = ref.read(authNotifierProvider.notifier);
 
     return Scaffold(
       backgroundColor: AppColorScheme.color0,
@@ -81,7 +83,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
                     icon: Icons.lock,
                     title: 'Cambiar Contraseña',
                     subtitle: 'Actualizar tu contraseña de acceso',
-                    onTap: () => _showChangePasswordDialog(userNotifier),
+                    onTap: () => _showChangePasswordDialog(authNotifier),
                   ),
                   
                   const SizedBox(height: 16),
@@ -98,7 +100,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
                   
                   // Zona de peligro
                   _buildDangerZone(
-                    onDeleteAccount: () => _showDeleteAccountDialog(userNotifier),
+                    onDeleteAccount: () => _showDeleteAccountDialog(authNotifier),
                   ),
                   
                   const SizedBox(height: 32),
@@ -330,7 +332,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
     );
   }
 
-  void _showChangePasswordDialog(UserNotifier userNotifier) {
+  void _showChangePasswordDialog(AuthNotifier authNotifier) {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
@@ -404,7 +406,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
                 });
 
                 try {
-                  await userNotifier.changePassword(
+                  await authNotifier.changePassword(
                     currentPasswordController.text,
                     newPasswordController.text,
                   );
@@ -478,7 +480,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
     );
   }
 
-  void _showDeleteAccountDialog(UserNotifier userNotifier) {
+  void _showDeleteAccountDialog(AuthNotifier authNotifier) {
     final passwordController = TextEditingController();
     bool isLoading = false;
 
@@ -517,7 +519,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
                 });
 
                 try {
-                  await userNotifier.deleteAccount(passwordController.text);
+                  await authNotifier.deleteAccount(passwordController.text);
 
                   if (context.mounted) {
                     Navigator.of(context).pop();

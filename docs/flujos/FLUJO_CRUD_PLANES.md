@@ -805,16 +805,20 @@ Eventos aparecen en el calendario del plan
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ⚠️ Básico implementado
+**Estado:** ✅ Base implementada, transiciones pendientes
 
 **Lo que ya funciona:**
-- ✅ Crear planes básicos
+- ✅ Crear planes básicos con `state: 'borrador'` por defecto
 - ✅ Configurar nombre, fechas, participantes
+- ✅ Campos `state`, `visibility`, `timezone` añadidos al modelo Plan
+- ✅ Valores por defecto: state='borrador', visibility='private', timezone=auto-detectada
+- ✅ Sanitización de inputs (T127)
+- ✅ Rate limiting de creación (T126)
 - ✅ Añadir eventos y alojamientos
-- ✅ Sistema de estados básico
+- ✅ Firestore rules actualizadas para validar nuevos campos
 
 **Lo que falta (CRÍTICO):**
-- ❌ Sistema completo de estados (T109)
+- ❌ Sistema completo de transiciones de estados (T109) - transiciones automáticas y manuales
 - ❌ Copiar planes (T118)
 - ❌ Guardar como plantilla (T122)
 - ❌ Actualización dinámica de duración (T107)

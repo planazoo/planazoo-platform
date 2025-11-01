@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
+import '../../../../shared/services/logger_service.dart';
 
 class ImageService {
   static final FirebaseStorage _storage = FirebaseStorage.instance;
@@ -22,6 +23,7 @@ class ImageService {
       );
       return image;
     } catch (e) {
+      LoggerService.error('Error picking image from gallery', context: 'IMAGE_SERVICE', error: e);
       return null;
     }
   }
@@ -44,6 +46,7 @@ class ImageService {
 
       return null; // Sin errores
     } catch (e) {
+      LoggerService.error('Error validating image', context: 'IMAGE_SERVICE', error: e);
       return 'Error al validar la imagen: $e';
     }
   }
@@ -70,6 +73,7 @@ class ImageService {
       final String downloadUrl = await snapshot.ref.getDownloadURL();
       return downloadUrl;
     } catch (e) {
+      LoggerService.error('Error uploading plan image', context: 'IMAGE_SERVICE', error: e);
       return null;
     }
   }
@@ -82,6 +86,7 @@ class ImageService {
       await ref.delete();
       return true;
     } catch (e) {
+      LoggerService.error('Error deleting plan image', context: 'IMAGE_SERVICE', error: e);
       return false;
     }
   }
@@ -99,6 +104,7 @@ class ImageService {
       
       return bytes;
     } catch (e) {
+      LoggerService.error('Error compressing image', context: 'IMAGE_SERVICE', error: e);
       return null;
     }
   }
