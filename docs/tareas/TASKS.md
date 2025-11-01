@@ -1762,7 +1762,7 @@ CalendarScreen (orchestrator)
 ---
 
 ### T120 - Sistema de Invitaciones y Confirmación de Eventos
-**Estado:** Pendiente  
+**Estado:** Pendiente - Base funcional implementada  
 **Complejidad:** 🔴 Alta  
 **Prioridad:** 🔴 Alta  
 **Descripción:** Sistema completo de invitaciones a planes y confirmación de asistencia a eventos específicos.
@@ -1776,32 +1776,37 @@ CalendarScreen (orchestrator)
 
 **Funcionalidades por fase:**
 
-#### **Fase 1: Invitaciones al Plan**
-1. UI para invitar participantes por email/usuario
-2. Notificaciones push de invitaciones
-3. Botones aceptar/rechazar para el invitado
-4. Actualización del estado en tiempo real
-5. Lista de participantes invitados vs confirmados
+#### **Fase 1: Invitaciones al Plan - ✅ Base completada**
+1. ✅ Campo `status` en PlanParticipation (pending, accepted, rejected, expired)
+2. ✅ Métodos `acceptInvitation` y `rejectInvitation` en PlanParticipationService
+3. ✅ UI diálogo InvitationResponseDialog para aceptar/rechazar invitaciones
+4. ✅ Integración en CalendarScreen para mostrar diálogo automáticamente cuando hay invitación pendiente
+5. ✅ Firestore rules para validar campo status
+6. ✅ Parámetro `autoAccept` en `createParticipation` para compatibilidad hacia atrás
+7. ❌ Notificaciones push de invitaciones (pendiente FCM)
+8. ❌ Generación de links de invitación con token
+9. ❌ Email HTML con botones "Aceptar" / "Rechazar"
+10. ❌ Lista de participantes invitados vs confirmados (UI)
 
-#### **Fase 2: Confirmación de Eventos**
-1. Organizador marca eventos como "requiere confirmación"
-2. Participantes reciben notificación para confirmar asistencia
-3. Botones confirmar/no asistir en cada evento
-4. Indicadores visuales de quién ha confirmado
-5. Gestión de límites (ej: máximo 10 personas)
+#### **Fase 2: Confirmación de Eventos - ❌ Pendiente**
+1. ❌ Organizador marca eventos como "requiere confirmación"
+2. ❌ Participantes reciben notificación para confirmar asistencia
+3. ❌ Botones confirmar/no asistir en cada evento
+4. ❌ Indicadores visuales de quién ha confirmado
+5. ❌ Gestión de límites (ej: máximo 10 personas)
 
 **Integración:**
-- Con T117 (Registro de Participantes por Evento)
-- Con T105 (Sistema de Avisos y Notificaciones)
+- Con T117 (Registro de Participantes por Evento) - Pendiente
+- Con T105 (Sistema de Avisos y Notificaciones) - Base implementada
 - Con T104 (Sistema de Invitaciones a Planes - revisar si es redundante)
 
 **Criterios de aceptación:**
-- Flujo completo de invitaciones al plan
-- Sistema de confirmación de eventos
-- Notificaciones push en cada paso
-- UI clara para organizador y participantes
-- Persistencia en Firestore
-- Testing completo del flujo
+- ⚠️ Flujo completo de invitaciones al plan (Base implementada, faltan notificaciones)
+- ❌ Sistema de confirmación de eventos
+- ❌ Notificaciones push en cada paso
+- ✅ UI clara para organizador y participantes (Base implementada)
+- ✅ Persistencia en Firestore
+- ⚠️ Testing básico del flujo (pendiente testing completo)
 
 ---
 

@@ -456,7 +456,7 @@ graph TD
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ⚠️ Parcialmente implementado (Avisos base completados, notificaciones pendientes)
+**Estado:** ⚠️ Parcialmente implementado (Base de avisos y confirmación de invitaciones completada, notificaciones push pendientes)
 
 **Lo que está implementado:**
 - ✅ Sistema de avisos unidireccionales - Base (T105)
@@ -468,11 +468,18 @@ graph TD
   - ✅ Firestore rules y providers Riverpod
 
 **Lo que falta:**
-- ❌ Sistema de invitaciones por email/usuario
-- ❌ Generación de links de invitación con token
+- ⚠️ Sistema de invitaciones por email/usuario (Base completada - T120 Fase 1):
+  - ✅ Campo status en PlanParticipation (pending, accepted, rejected, expired)
+  - ✅ Métodos acceptInvitation y rejectInvitation en servicio
+  - ✅ UI diálogo para aceptar/rechazar invitaciones (InvitationResponseDialog)
+  - ✅ Integración en CalendarScreen para detectar invitaciones pendientes
+  - ✅ Firestore rules para validar campo status
+  - ❌ Generación de links de invitación con token
+  - ❌ Email HTML con botones "Aceptar" / "Rechazar"
+  - ❌ Búsqueda de usuario por email para obtener ID real
 - ❌ Notificaciones push (Firebase Cloud Messaging) - Pendiente FCM
 - ❌ Historial de notificaciones
-- ❌ Sistema de confirmación de asistencia a eventos
+- ❌ Sistema de confirmación de asistencia a eventos (T120 Fase 2)
 - ❌ Sistema de alarmas antes de eventos
 - ❌ Configuración de preferencias de notificación
 - ❌ Recordatorios automáticos

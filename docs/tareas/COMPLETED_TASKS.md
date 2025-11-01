@@ -1964,3 +1964,78 @@ Sistema completo de avisos unidireccionales funcional. Los participantes pueden 
 - ⚠️ Notificaciones automáticas de cambio de estado
 - ⚠️ Alarmas antes de eventos
 
+---
+
+### T120 (Base) - Sistema de Invitaciones y Confirmación - Base Funcional
+**Fecha de implementación:** Enero 2025  
+**Complejidad:** 🔴 Alta  
+**Prioridad:** 🔴 Alta
+
+**Descripción:**
+Implementación de la base funcional del sistema de invitaciones y confirmación de asistencia a planes. Los usuarios invitados pueden ahora aceptar o rechazar invitaciones a planes con una UI clara y persistencia en Firestore.
+
+**Implementación completada:**
+1. ✅ **Campo `status` en PlanParticipation**
+   - Valores: `pending`, `accepted`, `rejected`, `expired`
+   - Campo opcional con getters útiles (isPending, isAccepted, isRejected, isExpired, needsResponse)
+   - Compatibilidad hacia atrás (null = aceptado por defecto)
+
+2. ✅ **Métodos acceptInvitation y rejectInvitation**
+   - En `PlanParticipationService`
+   - Validación de que la invitación esté pendiente
+   - Actualización del campo `status` en Firestore
+
+3. ✅ **UI InvitationResponseDialog**
+   - Diálogo modal para aceptar/rechazar invitaciones
+   - Muestra nombre del plan
+   - Botones "Sí, asistiré" y "No puedo asistir"
+   - Feedback visual con SnackBars
+   - Carga asíncrona con indicador
+
+4. ✅ **Integración en CalendarScreen**
+   - Detección automática de invitaciones pendientes al abrir plan
+   - Visualización del diálogo si el usuario tiene invitación pendiente
+   - Control para mostrar una sola vez el diálogo
+
+5. ✅ **Parámetro autoAccept en createParticipation**
+   - Permite crear invitaciones (pending) o aceptarlas directamente (accepted)
+   - Compatibilidad hacia atrás con valor por defecto `false` (invitar)
+   - Organizador y tests usan `autoAccept: true`
+
+6. ✅ **Firestore rules actualizadas**
+   - Función `isValidParticipationData` con validación de `status`
+   - Reglas de actualización para permitir cambio de status por el usuario
+   - Validación de que status esté en valores válidos
+
+**Archivos creados:**
+- ✅ `lib/widgets/dialogs/invitation_response_dialog.dart` - Diálogo para aceptar/rechazar
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/models/plan_participation.dart` - Añadido campo status y getters
+- ✅ `lib/features/calendar/domain/services/plan_participation_service.dart` - Métodos accept/reject y autoAccept
+- ✅ `lib/features/calendar/domain/services/plan_service.dart` - autoAccept para creador
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Detección de invitaciones pendientes
+- ✅ `lib/features/testing/demo_data_generator.dart` - autoAccept en tests
+- ✅ `lib/features/testing/mini_frank_simple_generator.dart` - autoAccept en tests
+- ✅ `lib/features/testing/mini_frank_generator.dart` - autoAccept en tests
+- ✅ `firestore.rules` - Validación de status y reglas de actualización
+
+**Criterios de aceptación cumplidos:**
+- ✅ Campo status con valores válidos
+- ✅ Métodos accept/reject funcionales
+- ✅ UI diálogo clara y funcional
+- ✅ Integración en pantalla principal
+- ✅ Persistencia en Firestore
+- ✅ Compatibilidad hacia atrás con datos existentes
+
+**Resultado:**
+Sistema base de confirmación de invitaciones funcional. Los usuarios invitados pueden aceptar o rechazar invitaciones a planes con feedback visual inmediato. El diálogo se muestra automáticamente al abrir un plan con invitación pendiente. El sistema está preparado para extenderse con notificaciones push y enlaces por email.
+
+**Pendiente (mejoras futuras):**
+- ❌ Notificaciones push de invitaciones (FCM)
+- ❌ Generación de links de invitación con token
+- ❌ Email HTML con botones "Aceptar" / "Rechazar"
+- ❌ Sistema de confirmación de asistencia a eventos específicos (T120 Fase 2)
+- ❌ Gestión de límites de participantes por evento
+- ❌ Lista visual de participantes invitados vs confirmados
+

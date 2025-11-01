@@ -595,7 +595,13 @@ graph TD
   - ❌ Expiración de link (7 días)
 - ❌ Invitaciones por username/nickname (T104)
 - ❌ Grupos de participantes (T123)
-- ❌ Sistema de confirmación de asistencia (T120)
+- ✅ Sistema de confirmación de asistencia - Base (T120 Fase 1):
+  - ✅ Campo status en PlanParticipation (pending, accepted, rejected, expired)
+  - ✅ Métodos acceptInvitation y rejectInvitation
+  - ✅ UI diálogo para aceptar/rechazar invitaciones
+  - ❌ Notificaciones push de invitaciones
+  - ❌ Links de invitación por email con token
+- ❌ Sistema de confirmación de asistencia a eventos (T120 Fase 2)
 - ❌ Historial de cambios de participantes
 - ❌ Notificaciones automáticas de invitaciones (T105)
 
