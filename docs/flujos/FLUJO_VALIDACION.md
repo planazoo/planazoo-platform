@@ -2,9 +2,9 @@
 
 > Define cómo validar que el plan es coherente y completo antes y durante la ejecución
 
-**Relacionado con:** T113, T114, T107  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Relacionado con:** T51 - Validación de formularios (✅), T113, T114, T107  
+**Versión:** 1.1  
+**Fecha:** Enero 2025 (Actualizado)
 
 ---
 
@@ -525,27 +525,31 @@ Asegúrate de tener tiempo suficiente para el traslado."
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ⚠️ Parcialmente implementado
+**Estado:** ✅ Core implementado, mejoras pendientes
 
 **Lo que ya funciona:**
-- ✅ Detección básica de solapamientos (parcial)
+- ✅ Detección completa de solapamientos con timezones
+- ✅ Validación de conflictos de participantes (no pueden solaparse)
+- ✅ Validación de límite de 3 eventos solapados en mismo horario
 - ✅ Sistema de tracks
 - ✅ Tiempo real de eventos
+- ✅ Validaciones de formularios (T51):
+  - ✅ Validaciones de longitud y obligatoriedad en formularios de evento
+  - ✅ Validaciones de longitud en campos personales del evento
+  - ✅ Validación de email de invitación en participación
+- ✅ Formulario de eventos con `Form` y validaciones
+- ✅ Rate limiting de creación (T126)
+- ✅ Sanitización de inputs (T127)
+- ✅ Manejo de borradores (pueden solaparse)
 
 **Lo que falta:**
-- ❌ Validación completa de solapamientos (considerar timezones)
-- ❌ Detección de días vacíos
-- ❌ Detección de participantes sin eventos
-- ❌ Validación check-in/check-out
-- ❌ Sistema de estadísticas (T113)
-- ❌ Mapa del plan (T114)
+- ❌ Detección automática de días vacíos al confirmar
+- ❌ Detección automática de participantes sin eventos
+- ❌ Validación check-in/check-out automatizada
+- ❌ Sistema de estadísticas y análisis (T113)
+- ❌ Mapa del plan con visualización (T114)
 - ❌ Auto-expansión de rango (T107)
-- ❌ Sugerencias de optimización
-
-**Añadido (T51):**
-- ✅ Validaciones de longitud y obligatoriedad en formularios de evento
-- ✅ Validaciones de longitud en campos personales del evento
-- ✅ Validación de email de invitación en participación
+- ❌ Sugerencias de optimización automáticas
 
 ---
 

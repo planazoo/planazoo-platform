@@ -2,10 +2,10 @@
 
 > Define todo el ciclo de vida de un evento: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T121, T105, T110, T101, T102, T120, T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
+**Relacionado con:** T51 - Validación de formularios (✅), T121, T105, T110, T101, T102, T120, T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
 **Nota:** Los eventos comparten estructura **Parte Común/Parte Personal** similar a los alojamientos (ver FLUJO_CRUD_ALOJAMIENTOS)  
-**Versión:** 1.1  
-**Fecha:** Enero 2025 (Actualizado)
+**Versión:** 1.2  
+**Fecha:** Enero 2025 (Actualizado - Validaciones implementadas)
 
 ---
 
@@ -893,24 +893,32 @@ Timeline:
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ⚠️ Básico implementado
+**Estado:** ✅ Core implementado, mejoras pendientes
 
 **Lo que ya funciona:**
-- ✅ Crear eventos básicos
-- ✅ Editar título, fecha, hora, duración
-- ✅ Asignar participantes
+- ✅ Crear eventos con validaciones (T51)
+- ✅ Editar título, fecha, hora, duración con sanitización
+- ✅ Asignar participantes con validación
 - ✅ Gestionar timezones
 - ✅ Sistema de tracks
+- ✅ Validación de solapamientos (conflictos de participantes)
+- ✅ Validación de límite de 3 eventos solapados
+- ✅ Confirmación de eliminación con detalles
+- ✅ Sanitización de inputs (T127)
+- ✅ Rate limiting de creación (T126)
+- ✅ Campos personales con validación y sanitización
+- ✅ Manejo de borradores (pueden solaparse)
+- ✅ `mounted` checks aplicados
 
 **Lo que falta (CRÍTICO):**
-- ❌ Formularios específicos por tipo (T121)
-- ❌ Estados de evento (Pendiente, Confirmado, etc.)
-- ❌ Reconfirmación para cambios drásticos (T120)
-- ❌ Notificaciones automáticas (T105)
+- ❌ Formularios específicos enriquecidos por tipo (T121)
+- ❌ Sistema completo de estados (Borrador/Pendiente/Confirmado, etc.) - T120
+- ❌ Reconfirmación para cambios drásticos (>4h o cambio de día) - T120
+- ❌ Notificaciones automáticas por cambios - T105
 - ❌ Sistema de alarmas (T110)
-- ❌ Historial de cambios
+- ❌ Historial de cambios/auditoría
 - ❌ Integración presupuesto/pagos (T101/T102)
-- ❌ Importación JSON
+- ❌ Importación JSON batch
 - ❌ API de sincronización con proveedores
 
 ---
