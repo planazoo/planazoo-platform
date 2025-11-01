@@ -2,10 +2,10 @@
 
 > Define cómo añadir, eliminar y gestionar participantes en un plan
 
-**Relacionado con:** T104, T117, T120, T123  
+**Relacionado con:** T51 - Validación de formularios (✅), T104, T117, T120, T123, T126 - Rate limiting (✅)  
 **Ver CRUD completo:** `FLUJO_CRUD_PLANES.md`  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Versión:** 1.1  
+**Fecha:** Enero 2025 (Actualizado)
 
 ---
 
@@ -572,21 +572,32 @@ graph TD
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ⚠️ Básico implementado, falta lo avanzado
+**Estado:** ✅ Core implementado, mejoras pendientes
 
 **Lo que ya funciona:**
-- ✅ Añadir participantes en creación
+- ✅ Añadir participantes en creación de plan
+- ✅ Invitación por email con validación (email regex)
+- ✅ Rate limiting de invitaciones (T126): 50 invitaciones/día/usuario
+- ✅ Remover participantes de un plan
 - ✅ Roles básicos (organizador, participante, observador)
 - ✅ Timezone inicial y actualización dinámica
 - ✅ Tracks de participantes
+- ✅ Sistema de participación (PlanParticipation) con Firestore
+- ✅ Validación de email antes de invitar
+- ✅ Manejo de errores y límites de rate limiting
 
-**Lo que falta:**
-- ❌ Invitaciones por email (T104)
-- ❌ Invitaciones por username (T104)
+**Lo que falta (PENDIENTE):**
+- ⚠️ Invitaciones por email completas (T104):
+  - ✅ Validación de email y rate limiting implementados
+  - ❌ Búsqueda de usuario por email para obtener ID real
+  - ❌ Generación de link único con token
+  - ❌ Email HTML con botones "Aceptar" / "Rechazar"
+  - ❌ Expiración de link (7 días)
+- ❌ Invitaciones por username/nickname (T104)
 - ❌ Grupos de participantes (T123)
-- ❌ Sistema de confirmación (T120)
+- ❌ Sistema de confirmación de asistencia (T120)
 - ❌ Historial de cambios de participantes
-- ❌ Notificaciones automáticas (T105)
+- ❌ Notificaciones automáticas de invitaciones (T105)
 
 ---
 
