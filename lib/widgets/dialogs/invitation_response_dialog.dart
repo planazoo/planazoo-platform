@@ -131,7 +131,7 @@ class _InvitationResponseDialogState extends ConsumerState<InvitationResponseDia
           onPressed: _isProcessing ? null : () => _respondToInvitation(false),
           child: Text(
             'No puedo asistir',
-            style: AppTypography.buttonStyle.copyWith(color: Colors.red),
+            style: AppTypography.bodyStyle.copyWith(color: Colors.red),
           ),
         ),
         // Botón aceptar

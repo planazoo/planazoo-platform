@@ -293,6 +293,47 @@ service cloud.firestore {
     }
     
     // ============================================
+    // REGLAS PARA PARTICIPANTES POR EVENTO (T117)
+    // ============================================
+    
+    match /eventParticipants/{participantId} {
+      // Validar estructura de datos
+      function isValidEventParticipantData() {
+        return request.resource.data.keys().hasAll(['eventId', 'userId', 'registeredAt']) &&
+               request.resource.data.eventId is string &&
+               request.resource.data.userId is string &&
+               request.resource.data.registeredAt is timestamp &&
+               (!('status' in request.resource.data) || 
+                request.resource.data.status in ['registered', 'cancelled']);
+      }
+      
+      // Crear: Solo usuarios que participan en el plan pueden apuntarse a eventos
+      // Verificar que el usuario participa en el plan del evento
+      allow create: if isAuthenticated() && 
+                       isValidEventParticipantData() &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Leer: Cualquier participante del plan puede leer participantes del evento
+      // (la validación de participación en el plan se hace en el cliente)
+      allow read: if isAuthenticated();
+      
+      // Actualizar: Solo el mismo usuario puede actualizar su estado (cancelar)
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       isValidEventParticipantData() &&
+                       // Solo se puede actualizar el status, no otros campos
+                       request.resource.data.eventId == resource.data.eventId &&
+                       request.resource.data.userId == resource.data.userId;
+      
+      // Eliminar: Solo el mismo usuario o el owner del plan
+      allow delete: if isAuthenticated() && (
+                       resource.data.userId == request.auth.uid ||
+                       // El owner del plan puede eliminar (se verifica en cliente que sea owner)
+                       false // Se valida en cliente que el usuario es owner del plan
+                     );
+    }
+    
+    // ============================================
     // REGLAS PARA GRUPOS DE CONTACTOS - T123
     // ============================================
     

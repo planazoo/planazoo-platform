@@ -1670,7 +1670,7 @@ CalendarScreen (orchestrator)
 ---
 
 ### T117 - Sistema de Registro de Participantes por Evento
-**Estado:** Pendiente  
+**Estado:** ✅ Base completada  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
 **Descripción:** Permitir que los participantes se apunten a eventos individuales dentro de un plan, no solo al plan completo.
@@ -1680,24 +1680,38 @@ CalendarScreen (orchestrator)
 - Además, los usuarios pueden APUNTARSE A EVENTOS ESPECÍFICOS dentro del plan
 - Ejemplo: Plan "Partidas de Padel 2024" → Evento "Partido domingo 15" → Participantes se apuntan a ese evento específico
 
-**Casos de uso:**
-- Partidas de padel: plan anual, eventos semanales donde la gente se apunta
-- Actividades regulares: plan maestro con eventos específicos que requieren confirmación
-- Eventos opcionales dentro de un plan
-
 **Funcionalidades:**
-1. Sistema de registro de participantes por evento
-2. Botón "Apuntarse al evento" en cada evento
-3. Lista de participantes confirmados por evento
-4. Indicadores visuales de eventos con espacios disponibles
-5. Gestión de límites de participantes por evento
+
+#### ✅ Base completada:
+1. ✅ Sistema de registro de participantes por evento
+   - Modelo `EventParticipant` con estado (registered, cancelled)
+   - `EventParticipantService` con métodos CRUD
+   - Providers Riverpod para Stream y contadores
+2. ✅ Botón "Apuntarse al evento" en EventDialog
+   - Widget `EventParticipantRegistrationWidget` integrado
+   - Botón "Apuntarse" / "Cancelar participación"
+   - Validación: solo participantes del plan pueden apuntarse
+3. ✅ Lista de participantes confirmados por evento
+   - Lista con avatares y nombres
+   - Carga asíncrona de nombres de usuario
+4. ✅ Indicadores visuales de eventos con espacios disponibles
+   - Indicador "Evento completo (X/Y participantes)"
+   - Contador visible de participantes
+5. ✅ Gestión de límites de participantes por evento
+   - Campo `maxParticipants` en modelo Event
+   - Campo opcional en EventDialog con validación (1-1000)
+   - Validación automática cuando se alcanza el límite
 
 **Criterios de aceptación:**
-- Registro de participantes por evento individual
-- Visualización de participantes confirmados
-- Gestión de límites de participantes
-- Integración con sistema de notificaciones
-- Testing con diferentes escenarios
+- ✅ Registro de participantes por evento individual
+- ✅ Visualización de participantes confirmados
+- ✅ Gestión de límites de participantes
+- ⚠️ Integración con sistema de notificaciones (pendiente - mejora futura)
+- ⚠️ Testing con diferentes escenarios (pendiente)
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Notificaciones cuando alguien se apunta o cuando el evento se completa
+- ⚠️ Testing exhaustivo con diferentes escenarios
 
 ---
 

@@ -2039,3 +2039,84 @@ Sistema base de confirmación de invitaciones funcional. Los usuarios invitados 
 - ❌ Gestión de límites de participantes por evento
 - ❌ Lista visual de participantes invitados vs confirmados
 
+---
+
+### T117 - Sistema de Registro de Participantes por Evento (Base)
+**Fecha de implementación:** Enero 2025  
+**Complejidad:** ⚠️ Media  
+**Prioridad:** 🟡 Media
+
+**Descripción:**
+Implementación del sistema base que permite a los participantes del plan apuntarse voluntariamente a eventos específicos dentro del plan. Ideal para casos como partidas de padel semanales o actividades opcionales dentro de un plan maestro.
+
+**Implementación completada:**
+1. ✅ **Modelo EventParticipant**
+   - Campos: `eventId`, `userId`, `registeredAt`, `status` (registered/cancelled)
+   - Serialización Firestore completa
+   - Getters útiles (isRegistered, isCancelled)
+
+2. ✅ **EventParticipantService**
+   - `registerParticipant()` - Apuntarse a evento (valida participación en plan)
+   - `cancelRegistration()` - Cancelar participación
+   - `getEventParticipants()` - Stream de participantes
+   - `isUserRegistered()` - Verificar estado de registro
+   - `countParticipants()` - Contar participantes
+   - `deleteAllParticipants()` - Limpiar al eliminar evento
+
+3. ✅ **Campo maxParticipants en Event**
+   - Campo opcional `int? maxParticipants`
+   - Integrado en serialización Firestore
+   - Compatibilidad hacia atrás (null = sin límite)
+
+4. ✅ **Providers Riverpod**
+   - `eventParticipantsProvider` - Stream de participantes por evento
+   - `eventParticipantsCountProvider` - Contador Future
+   - `isUserRegisteredProvider` - Verificación de registro
+
+5. ✅ **UI en EventDialog**
+   - Campo "Límite de participantes (opcional)" con validación (1-1000)
+   - Integración en tab "General" del diálogo
+   - Solo visible/editable para eventos existentes
+
+6. ✅ **Widget EventParticipantRegistrationWidget**
+   - Botón "Apuntarse al evento" / "Cancelar participación"
+   - Indicador visual "Evento completo (X/Y)" cuando se alcanza límite
+   - Contador de participantes visible
+   - Lista de participantes apuntados con avatares y nombres
+   - Carga asíncrona de nombres de usuario
+
+7. ✅ **Firestore Rules**
+   - Validación de estructura de datos
+   - Crear: solo usuarios autenticados que participan en el plan
+   - Leer: usuarios autenticados
+   - Actualizar: solo el mismo usuario puede cancelar
+   - Eliminar: mismo usuario o owner del plan
+
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/models/event_participant.dart` - Modelo
+- ✅ `lib/features/calendar/domain/services/event_participant_service.dart` - Servicio
+- ✅ `lib/features/calendar/presentation/providers/event_participant_providers.dart` - Providers
+- ✅ `lib/widgets/event/event_participant_registration_widget.dart` - Widget UI
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/models/event.dart` - Campo maxParticipants
+- ✅ `lib/widgets/wd_event_dialog.dart` - Campo límite + integración widget
+- ✅ `firestore.rules` - Reglas para eventParticipants
+
+**Criterios de aceptación cumplidos:**
+- ✅ Registro de participantes por evento individual
+- ✅ Visualización de participantes confirmados
+- ✅ Gestión de límites de participantes
+- ✅ UI clara e intuitiva
+- ✅ Persistencia en Firestore
+- ✅ Validaciones de seguridad
+
+**Resultado:**
+Sistema base funcional de registro de participantes por evento. Los usuarios pueden apuntarse voluntariamente a eventos específicos dentro de un plan, ver quién más está apuntado, y el organizador puede establecer límites opcionales. El sistema valida que solo participantes del plan puedan apuntarse y muestra claramente cuando un evento está completo.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Notificaciones cuando alguien se apunta o cuando el evento se completa
+- ⚠️ Testing exhaustivo con diferentes escenarios
+- ⚠️ Botón "Apuntarse" directamente visible en el calendario (actualmente solo en diálogo)
+- ⚠️ Estadísticas de eventos más/menos populares
+

@@ -29,6 +29,8 @@ class Event {
   // NUEVO: sistema de timezones
   final String? timezone; // IANA timezone de salida (ej: "Europe/Madrid", "America/New_York")
   final String? arrivalTimezone; // IANA timezone de llegada (para vuelos, viajes, etc.)
+  // NUEVO: sistema de registro de participantes por evento (T117)
+  final int? maxParticipants; // Límite opcional de participantes para el evento
 
   const Event({
     this.id,
@@ -55,6 +57,7 @@ class Event {
     this.isBaseEvent = true, // por defecto es evento original
     this.timezone, // null por defecto (usará timezone del plan)
     this.arrivalTimezone, // null por defecto (mismo que timezone)
+    this.maxParticipants, // null por defecto (sin límite)
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
@@ -111,6 +114,7 @@ class Event {
       isBaseEvent: data['isBaseEvent'] ?? true, // por defecto true para compatibilidad
       timezone: data['timezone'], // null por defecto para compatibilidad
       arrivalTimezone: data['arrivalTimezone'], // null por defecto para compatibilidad
+      maxParticipants: data['maxParticipants'] != null ? data['maxParticipants'] as int : null, // null por defecto
     );
   }
 
@@ -136,6 +140,7 @@ class Event {
       'isBaseEvent': isBaseEvent,
       if (timezone != null) 'timezone': timezone,
       if (arrivalTimezone != null) 'arrivalTimezone': arrivalTimezone,
+      if (maxParticipants != null) 'maxParticipants': maxParticipants,
     };
     // Escribir estructura nueva si está presente
     if (commonPart != null) {
@@ -175,6 +180,7 @@ class Event {
     bool? isBaseEvent,
     String? timezone,
     String? arrivalTimezone,
+    int? maxParticipants,
   }) {
     return Event(
       id: id ?? this.id,
@@ -201,6 +207,7 @@ class Event {
       isBaseEvent: isBaseEvent ?? this.isBaseEvent,
       timezone: timezone ?? this.timezone,
       arrivalTimezone: arrivalTimezone ?? this.arrivalTimezone,
+      maxParticipants: maxParticipants ?? this.maxParticipants,
     );
   }
 

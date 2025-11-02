@@ -585,6 +585,13 @@ graph TD
 - ✅ Sistema de participación (PlanParticipation) con Firestore
 - ✅ Validación de email antes de invitar
 - ✅ Manejo de errores y límites de rate limiting
+- ✅ Sistema de registro de participantes por evento - Base (T117):
+  - ✅ Modelo EventParticipant y servicio completo
+  - ✅ Campo maxParticipants en Event
+  - ✅ Botón "Apuntarse/Cancelar" en EventDialog
+  - ✅ Lista de participantes apuntados con contador
+  - ✅ Indicadores visuales de evento completo
+  - ⚠️ Notificaciones cuando alguien se apunta (pendiente)
 
 **Lo que falta (PENDIENTE):**
 - ⚠️ Invitaciones por email completas (T104):

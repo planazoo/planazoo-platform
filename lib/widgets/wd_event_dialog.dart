@@ -18,6 +18,7 @@ import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/edit_personal_info_dialog.dart';
 import 'package:unp_calendario/widgets/permission_field.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
+import 'package:unp_calendario/widgets/event/event_participant_registration_widget.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -56,6 +57,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late List<String> _selectedParticipantIds;
   late String _selectedTimezone;
   late String _selectedArrivalTimezone;
+  late TextEditingController _maxParticipantsController;
   bool _canEditGeneral = false;
   bool _isAdmin = false;
   bool _isCreator = false;
@@ -151,6 +153,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _selectedTimezone = widget.event?.timezone ?? 'Europe/Madrid';
     _selectedArrivalTimezone = widget.event?.arrivalTimezone ?? 'Europe/Madrid';
     
+    // Inicializar controlador de límite de participantes
+    _maxParticipantsController = TextEditingController(
+      text: widget.event?.maxParticipants?.toString() ?? '',
+    );
+    
     // Inicializar participantes seleccionados
     _selectedParticipantIds = widget.event?.commonPart?.participantIds ?? [];
     
@@ -217,6 +224,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _numeroReservaController.dispose();
     _gateController.dispose();
     _notasPersonalesController.dispose();
+    _maxParticipantsController.dispose();
     super.dispose();
   }
 
@@ -611,8 +619,67 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   });
                 },
               ),
+            const SizedBox(height: 12),
             
-            // Participantes
+            // Límite de participantes (T117)
+            PermissionTextField(
+              controller: _maxParticipantsController,
+              labelText: 'Límite de participantes (opcional)',
+              hintText: 'Ej: 10 (dejar vacío para sin límite)',
+              canEdit: _canEditGeneral,
+              fieldType: 'common',
+              tooltipText: 'Máximo número de personas que pueden apuntarse a este evento',
+              prefixIcon: Icons.people_outline,
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (!_canEditGeneral) return null;
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return null; // Opcional
+                final intValue = int.tryParse(v);
+                if (intValue == null) return 'Debe ser un número válido';
+                if (intValue < 1) return 'Debe ser mayor que 0';
+                if (intValue > 1000) return 'Máximo 1000 participantes';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            
+            // Sección de registro de participantes (T117)
+            if (widget.event != null && widget.planId != null)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.people_outline, color: Colors.blue.shade700, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Participantes apuntados',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    EventParticipantRegistrationWidget(
+                      event: widget.event!,
+                      planId: widget.planId!,
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 16),
+            
+            // Participantes (tracks asignados)
             _buildParticipantsSection(),
             const SizedBox(height: 16),
             
@@ -1388,6 +1455,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       isDraft: _isDraft,
       timezone: _selectedTimezone,
       arrivalTimezone: _selectedArrivalTimezone,
+      maxParticipants: _maxParticipantsController.text.trim().isEmpty 
+          ? null 
+          : int.tryParse(_maxParticipantsController.text.trim()),
       createdAt: widget.event?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
       commonPart: commonPart,
