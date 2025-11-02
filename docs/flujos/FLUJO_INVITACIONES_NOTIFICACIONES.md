@@ -479,7 +479,16 @@ graph TD
   - ❌ Búsqueda de usuario por email para obtener ID real
 - ❌ Notificaciones push (Firebase Cloud Messaging) - Pendiente FCM
 - ❌ Historial de notificaciones
-- ❌ Sistema de confirmación de asistencia a eventos (T120 Fase 2)
+- ✅ Sistema de confirmación de asistencia a eventos - Base (T120 Fase 2):
+  - ✅ Campo requiresConfirmation en Event
+  - ✅ Campo confirmationStatus en EventParticipant
+  - ✅ Checkbox en EventDialog para organizador
+  - ✅ Creación automática de confirmaciones pendientes
+  - ✅ Botones confirmar/no asistir para participantes
+  - ✅ Indicadores visuales de estado (confirmado, pendiente, declinado)
+  - ✅ Estadísticas y listas por estado
+  - ✅ Integración con límites de participantes
+  - ⚠️ Notificaciones push (pendiente FCM)
 - ❌ Sistema de alarmas antes de eventos
 - ❌ Configuración de preferencias de notificación
 - ❌ Recordatorios automáticos

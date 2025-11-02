@@ -53,3 +53,35 @@ final isUserRegisteredProvider = FutureProvider.family<bool, ({String eventId, S
   }
 });
 
+/// Provider para obtener el estado de confirmación de un usuario en un evento (T120 Fase 2)
+/// Retorna: 'pending', 'confirmed', 'declined', o null si no aplica
+final userConfirmationStatusProvider = FutureProvider.family<String?, ({String eventId, String userId})>((ref, params) async {
+  final eventParticipantService = ref.read(eventParticipantServiceProvider);
+  try {
+    return await eventParticipantService.getUserConfirmationStatus(params.eventId, params.userId);
+  } catch (e) {
+    LoggerService.error(
+      'Error getting user confirmation status: ${params.eventId}, ${params.userId}',
+      context: 'EVENT_PARTICIPANT_PROVIDERS',
+      error: e,
+    );
+    return null;
+  }
+});
+
+/// Provider para obtener todos los participantes con confirmación (incluye pending, confirmed, declined)
+final eventParticipantsWithConfirmationProvider = StreamProvider.family<List<EventParticipant>, String>((ref, eventId) {
+  final eventParticipantService = ref.read(eventParticipantServiceProvider);
+  try {
+    // Obtener todos los participantes (no solo los registered)
+    return eventParticipantService.getAllEventParticipants(eventId);
+  } catch (e) {
+    LoggerService.error(
+      'Error getting event participants with confirmation: $eventId',
+      context: 'EVENT_PARTICIPANT_PROVIDERS',
+      error: e,
+    );
+    return Stream.value([]);
+  }
+});
+

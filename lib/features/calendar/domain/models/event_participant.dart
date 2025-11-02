@@ -7,12 +7,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// 
 /// Ejemplo: Plan "Partidas de Padel 2024" → Evento "Partido domingo 15" 
 /// → Los participantes se apuntan a ese evento específico
+/// 
+/// Soporta dos modos:
+/// - Registro voluntario (T117): el participante se apunta voluntariamente
+/// - Confirmación obligatoria (T120 Fase 2): el evento requiere confirmación explícita
 class EventParticipant {
   final String? id;
   final String eventId;
   final String userId;
   final DateTime registeredAt;
   final String? status; // 'registered', 'cancelled' (para cancelaciones futuras)
+  // NUEVO: estado de confirmación para eventos que requieren confirmación (T120 Fase 2)
+  // null = no aplica (evento no requiere confirmación), 'pending' = pendiente, 'confirmed' = confirmado, 'declined' = declinado
+  final String? confirmationStatus;
 
   const EventParticipant({
     this.id,
@@ -20,6 +27,7 @@ class EventParticipant {
     required this.userId,
     required this.registeredAt,
     this.status, // null = 'registered' por defecto
+    this.confirmationStatus, // null = no aplica, 'pending' = pendiente, 'confirmed' = confirmado, 'declined' = declinado
   });
 
   // Crear desde Firestore
@@ -31,6 +39,7 @@ class EventParticipant {
       userId: data['userId'] ?? '',
       registeredAt: (data['registeredAt'] as Timestamp).toDate(),
       status: data['status'] ?? 'registered', // 'registered' por defecto
+      confirmationStatus: data['confirmationStatus'], // null por defecto (compatibilidad hacia atrás)
     );
   }
 
@@ -41,6 +50,7 @@ class EventParticipant {
       'userId': userId,
       'registeredAt': Timestamp.fromDate(registeredAt),
       if (status != null) 'status': status,
+      if (confirmationStatus != null) 'confirmationStatus': confirmationStatus,
     };
   }
 
@@ -51,6 +61,7 @@ class EventParticipant {
     String? userId,
     DateTime? registeredAt,
     String? status,
+    String? confirmationStatus,
   }) {
     return EventParticipant(
       id: id ?? this.id,
@@ -58,12 +69,19 @@ class EventParticipant {
       userId: userId ?? this.userId,
       registeredAt: registeredAt ?? this.registeredAt,
       status: status ?? this.status,
+      confirmationStatus: confirmationStatus ?? this.confirmationStatus,
     );
   }
 
   // Getters útiles
   bool get isRegistered => status == 'registered' || status == null;
   bool get isCancelled => status == 'cancelled';
+  
+  // Getters para confirmación (T120 Fase 2)
+  bool get needsConfirmation => confirmationStatus == 'pending';
+  bool get isConfirmed => confirmationStatus == 'confirmed';
+  bool get isDeclined => confirmationStatus == 'declined';
+  bool get hasConfirmationStatus => confirmationStatus != null;
 
   // Comparación y hash
   @override
@@ -74,7 +92,8 @@ class EventParticipant {
         other.eventId == eventId &&
         other.userId == userId &&
         other.registeredAt == registeredAt &&
-        other.status == status;
+        other.status == status &&
+        other.confirmationStatus == confirmationStatus;
   }
 
   @override
@@ -83,12 +102,13 @@ class EventParticipant {
         eventId.hashCode ^
         userId.hashCode ^
         registeredAt.hashCode ^
-        (status?.hashCode ?? 0);
+        (status?.hashCode ?? 0) ^
+        (confirmationStatus?.hashCode ?? 0);
   }
 
   @override
   String toString() {
-    return 'EventParticipant(id: $id, eventId: $eventId, userId: $userId, registeredAt: $registeredAt, status: $status)';
+    return 'EventParticipant(id: $id, eventId: $eventId, userId: $userId, registeredAt: $registeredAt, status: $status, confirmationStatus: $confirmationStatus)';
   }
 }
 

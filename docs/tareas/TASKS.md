@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T151**
+**Siguiente código de tarea: T152**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -23,7 +23,7 @@
 - **Importación:** T134: Importar desde Email (1 pendiente)
 - **Privacidad:** T135-T136: Gestión de Cookies y App Tracking Transparency (2 pendientes)
 
-**Total: 124 tareas documentadas (65 completadas, 59 pendientes)**
+**Total: 125 tareas documentadas (65 completadas, 60 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -1802,23 +1802,33 @@ CalendarScreen (orchestrator)
 9. ❌ Email HTML con botones "Aceptar" / "Rechazar"
 10. ❌ Lista de participantes invitados vs confirmados (UI)
 
-#### **Fase 2: Confirmación de Eventos - ❌ Pendiente**
-1. ❌ Organizador marca eventos como "requiere confirmación"
-2. ❌ Participantes reciben notificación para confirmar asistencia
-3. ❌ Botones confirmar/no asistir en cada evento
-4. ❌ Indicadores visuales de quién ha confirmado
-5. ❌ Gestión de límites (ej: máximo 10 personas)
+#### **Fase 2: Confirmación de Eventos - ✅ Base completada**
+1. ✅ Organizador marca eventos como "requiere confirmación"
+   - Campo `requiresConfirmation` en Event
+   - Checkbox en EventDialog para organizador
+   - Creación automática de confirmaciones pendientes al marcar
+2. ✅ Botones confirmar/no asistir en cada evento
+   - UI completa con botones "Confirmar asistencia" / "No asistir"
+   - Estados visuales: confirmado, pendiente, declinado
+3. ✅ Indicadores visuales de quién ha confirmado
+   - Estadísticas: Confirmados, Pendientes, Declinados
+   - Listas separadas por estado con colores distintivos
+   - Indicadores visuales en cada participante
+4. ✅ Gestión de límites integrada con confirmaciones
+   - Límite basado en confirmados (no pendientes)
+   - Indicador "Evento completo" cuando se alcanza el límite
+5. ⚠️ Notificaciones para confirmar asistencia (pendiente - requiere FCM)
 
 **Integración:**
-- Con T117 (Registro de Participantes por Evento) - Pendiente
-- Con T105 (Sistema de Avisos y Notificaciones) - Base implementada
+- Con T117 (Registro de Participantes por Evento) - ✅ Completada (base)
+- Con T105 (Sistema de Avisos y Notificaciones) - ✅ Base implementada
 - Con T104 (Sistema de Invitaciones a Planes - revisar si es redundante)
 
 **Criterios de aceptación:**
 - ⚠️ Flujo completo de invitaciones al plan (Base implementada, faltan notificaciones)
-- ❌ Sistema de confirmación de eventos
-- ❌ Notificaciones push en cada paso
-- ✅ UI clara para organizador y participantes (Base implementada)
+- ✅ Sistema de confirmación de eventos (Base completada)
+- ⚠️ Notificaciones push en cada paso (pendiente - requiere FCM)
+- ✅ UI clara para organizador y participantes (Completada)
 - ✅ Persistencia en Firestore
 - ⚠️ Testing básico del flujo (pendiente testing completo)
 
@@ -4515,6 +4525,61 @@ No todo puede estar en la v1.0. Necesitamos ser selectivos y enfocarnos en lo es
 - ✅ Lectura offline básica (Firestore cache)
 - ⚠️ Sincronización automática (T57, T60) - **POSTPONER a v1.1**
 - ⚠️ Cola de sincronización - **POSTPONER a v1.1**
+
+---
+
+### T151 - Mejoras de Documentación Post-Release v1.0
+**Estado:** Pendiente (Post-Lanzamiento)  
+**Complejidad:** 🟡 Media  
+**Prioridad:** 🟢 Baja - Post-release v1.0  
+**Descripción:** Mejorar y ampliar la documentación del proyecto después del lanzamiento de la primera versión, añadiendo herramientas y guías que faciliten el mantenimiento, debugging y onboarding de nuevos desarrolladores.
+
+**Contexto:**
+Una vez completado el MVP y lanzada la v1.0, es el momento adecuado para documentar lo aprendido durante el desarrollo y añadir herramientas que faciliten el mantenimiento y crecimiento del proyecto.
+
+**Mejoras propuestas:**
+
+#### 1. CHANGELOG.md / Release Notes
+- Historial centralizado de cambios por versión
+- Agrupación por categorías (Features, Fixes, Breaking Changes)
+- Links a commits y tareas relacionadas
+- Formato estándar para releases
+
+#### 2. TROUBLESHOOTING.md o FAQ
+- Problemas comunes y sus soluciones
+- Errores frecuentes durante desarrollo
+- Problemas de sincronización Firestore
+- Debugging de issues conocidos
+- Preguntas frecuentes del equipo
+
+#### 3. GLOSARIO.md
+- Definición de términos técnicos del proyecto
+- Conceptos del dominio: Plan, Evento, Track, Participation, etc.
+- Abreviaciones y acrónimos
+- Convenciones de nomenclatura
+
+#### 4. Checklist de Sincronización Docs-Código
+- Proceso para mantener documentación actualizada
+- Checklist antes de marcar tareas como completadas
+- Verificación de consistencia entre código y docs
+- Herramientas o scripts de verificación (opcional)
+
+**Opcional (si se considera necesario):**
+- Diagramas visuales de arquitectura usando Mermaid
+- Mejoras en la guía de onboarding rápida
+- Documentación de APIs internas
+
+**Criterios de aceptación:**
+- ✅ CHANGELOG.md creado con formato estándar
+- ✅ TROUBLESHOOTING.md con al menos 10 problemas comunes documentados
+- ✅ GLOSARIO.md con términos principales definidos
+- ✅ Checklist de sincronización añadido a CONTEXT.md o documento separado
+- ✅ Documentación accesible desde README.md principal
+
+**Cuándo implementar:**
+- ⏸️ **Post-release v1.0** - Después de tener la primera versión estable en producción
+- Permite documentar lecciones aprendidas durante el desarrollo inicial
+- Facilita el mantenimiento y onboarding post-lanzamiento
 
 ---
 

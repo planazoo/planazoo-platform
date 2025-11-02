@@ -4,6 +4,7 @@ import '../../../../shared/services/logger_service.dart';
 import '../models/event.dart';
 import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
+import 'event_participant_service.dart';
 import 'timezone_service.dart';
 
 class EventService {
@@ -192,7 +193,14 @@ class EventService {
       if (id != null) {
         final createdEvent = newEvent.copyWith(id: id);
         
-        // Creación de evento sin sincronización automática
+        // Si requiere confirmación, crear registros pendientes para todos los participantes (T120 Fase 2)
+        if (createdEvent.requiresConfirmation) {
+          final eventParticipantService = EventParticipantService();
+          await eventParticipantService.createPendingConfirmationsForAllParticipants(
+            eventId: id,
+            planId: createdEvent.planId,
+          );
+        }
         
         return createdEvent;
       }
@@ -206,7 +214,14 @@ class EventService {
         updatedAt: DateTime.now(),
       );
       
-      // Actualización directa sin sincronización automática
+      // Si requiresConfirmation cambió de false a true, crear confirmaciones pendientes (T120 Fase 2)
+      if (!oldEvent.requiresConfirmation && updatedEvent.requiresConfirmation) {
+        final eventParticipantService = EventParticipantService();
+        await eventParticipantService.createPendingConfirmationsForAllParticipants(
+          eventId: event.id!,
+          planId: updatedEvent.planId,
+        );
+      }
       
       // Actualizar el evento
       final success = await updateEvent(updatedEvent, skipSync: skipSync);

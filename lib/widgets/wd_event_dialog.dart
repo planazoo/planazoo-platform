@@ -58,6 +58,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late String _selectedTimezone;
   late String _selectedArrivalTimezone;
   late TextEditingController _maxParticipantsController;
+  late bool _requiresConfirmation;
   bool _canEditGeneral = false;
   bool _isAdmin = false;
   bool _isCreator = false;
@@ -157,6 +158,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _maxParticipantsController = TextEditingController(
       text: widget.event?.maxParticipants?.toString() ?? '',
     );
+    
+    // Inicializar requiere confirmación (T120 Fase 2)
+    _requiresConfirmation = widget.event?.requiresConfirmation ?? false;
     
     // Inicializar participantes seleccionados
     _selectedParticipantIds = widget.event?.commonPart?.participantIds ?? [];
@@ -642,6 +646,22 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 return null;
               },
             ),
+            const SizedBox(height: 16),
+            
+            // Requiere confirmación (T120 Fase 2)
+            if (_canEditGeneral)
+              CheckboxListTile(
+                title: const Text('Requiere confirmación de participantes'),
+                subtitle: const Text('Los participantes deberán confirmar explícitamente su asistencia'),
+                value: _requiresConfirmation,
+                onChanged: (value) {
+                  setState(() {
+                    _requiresConfirmation = value ?? false;
+                  });
+                },
+                secondary: const Icon(Icons.assignment_turned_in_outlined),
+                contentPadding: EdgeInsets.zero,
+              ),
             const SizedBox(height: 16),
             
             // Sección de registro de participantes (T117)
@@ -1458,6 +1478,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       maxParticipants: _maxParticipantsController.text.trim().isEmpty 
           ? null 
           : int.tryParse(_maxParticipantsController.text.trim()),
+      requiresConfirmation: _requiresConfirmation,
       createdAt: widget.event?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
       commonPart: commonPart,

@@ -2120,3 +2120,90 @@ Sistema base funcional de registro de participantes por evento. Los usuarios pue
 - ⚠️ Botón "Apuntarse" directamente visible en el calendario (actualmente solo en diálogo)
 - ⚠️ Estadísticas de eventos más/menos populares
 
+---
+
+### T120 Fase 2 - Sistema de Confirmación de Eventos (Base)
+**Fecha de implementación:** Enero 2025  
+**Complejidad:** 🔴 Alta  
+**Prioridad:** 🔴 Alta
+
+**Descripción:**
+Implementación del sistema base que permite a los organizadores marcar eventos como "requiere confirmación", obligando a los participantes del plan a confirmar explícitamente su asistencia. Complementa T117 (registro voluntario) con confirmación obligatoria.
+
+**Implementación completada:**
+1. ✅ **Campo requiresConfirmation en Event**
+   - Campo `bool requiresConfirmation` en modelo Event
+   - Por defecto `false` para compatibilidad
+   - Integrado en serialización Firestore
+
+2. ✅ **Campo confirmationStatus en EventParticipant**
+   - Estados: `pending`, `confirmed`, `declined`
+   - Getters útiles: `needsConfirmation`, `isConfirmed`, `isDeclined`
+   - Compatibilidad hacia atrás (null = no aplica)
+
+3. ✅ **EventParticipantService - Métodos de confirmación**
+   - `confirmAttendance()` - Confirmar asistencia
+   - `declineAttendance()` - Declinar asistencia
+   - `createPendingConfirmationsForAllParticipants()` - Crear confirmaciones pendientes automáticamente
+   - `getPendingConfirmations()` - Obtener participantes pendientes
+   - `getConfirmedParticipants()` - Obtener participantes confirmados
+   - `getUserConfirmationStatus()` - Obtener estado de confirmación del usuario
+   - `getAllEventParticipants()` - Obtener todos los participantes (incluye confirmaciones)
+
+4. ✅ **Providers Riverpod**
+   - `userConfirmationStatusProvider` - Estado de confirmación del usuario actual
+   - `eventParticipantsWithConfirmationProvider` - Stream de todos los participantes con confirmaciones
+
+5. ✅ **UI en EventDialog**
+   - Checkbox "Requiere confirmación de participantes" para organizador
+   - Solo visible/editable para usuarios con permisos de edición
+
+6. ✅ **Widget EventParticipantRegistrationWidget - Modo confirmación**
+   - Detección automática: modo registro voluntario vs confirmación obligatoria
+   - Botones "Confirmar asistencia" / "No asistir" para usuarios con estado `pending`
+   - Estado visual cuando está confirmado o declinado
+   - Estadísticas: chips con contadores de Confirmados, Pendientes, Declinados
+   - Indicador "Evento completo" basado en confirmados (no pendientes)
+   - Listas separadas por estado con colores distintivos:
+     - Confirmados (verde)
+     - Pendientes (naranja)
+     - Declinados (rojo)
+
+7. ✅ **Integración automática en EventService**
+   - Al crear evento con `requiresConfirmation=true`, crea confirmaciones pendientes automáticamente
+   - Al actualizar evento de `requiresConfirmation=false` a `true`, crea confirmaciones pendientes
+   - Creación de registros para todos los participantes del plan
+
+8. ✅ **Firestore Rules**
+   - Validación de `confirmationStatus` en `isValidEventParticipantData()`
+   - Reglas de actualización: solo el mismo usuario puede actualizar su `confirmationStatus`
+   - Protección de campos críticos (eventId, userId, registeredAt)
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/models/event.dart` - Campo requiresConfirmation
+- ✅ `lib/features/calendar/domain/models/event_participant.dart` - Campo confirmationStatus
+- ✅ `lib/features/calendar/domain/services/event_participant_service.dart` - Métodos de confirmación
+- ✅ `lib/features/calendar/domain/services/event_service.dart` - Integración automática
+- ✅ `lib/features/calendar/presentation/providers/event_participant_providers.dart` - Providers
+- ✅ `lib/widgets/event/event_participant_registration_widget.dart` - UI completa de confirmación
+- ✅ `lib/widgets/wd_event_dialog.dart` - Checkbox requiere confirmación
+- ✅ `firestore.rules` - Reglas para confirmaciones
+
+**Criterios de aceptación cumplidos:**
+- ✅ Organizador puede marcar eventos como "requiere confirmación"
+- ✅ Participantes reciben confirmaciones pendientes automáticamente
+- ✅ Botones confirmar/no asistir funcionales
+- ✅ Indicadores visuales claros de quién ha confirmado
+- ✅ Gestión de límites integrada con confirmaciones
+- ✅ UI intuitiva y clara
+- ✅ Persistencia en Firestore
+- ✅ Validaciones de seguridad
+
+**Resultado:**
+Sistema base funcional de confirmación de eventos. Los organizadores pueden marcar eventos que requieren confirmación explícita. Al hacerlo, se crean automáticamente registros de confirmación pendiente para todos los participantes del plan. Los participantes ven botones para confirmar o declinar, y se muestran estadísticas y listas organizadas por estado. El sistema se integra perfectamente con los límites de participantes, considerando solo los confirmados para el cálculo de "evento completo".
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Notificaciones push cuando se requiere confirmación (requiere FCM)
+- ⚠️ Notificaciones cuando alguien confirma o declina asistencia
+- ⚠️ Testing exhaustivo con diferentes escenarios
+

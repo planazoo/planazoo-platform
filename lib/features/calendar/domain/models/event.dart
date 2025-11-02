@@ -31,6 +31,8 @@ class Event {
   final String? arrivalTimezone; // IANA timezone de llegada (para vuelos, viajes, etc.)
   // NUEVO: sistema de registro de participantes por evento (T117)
   final int? maxParticipants; // Límite opcional de participantes para el evento
+  // NUEVO: sistema de confirmación de eventos (T120 Fase 2)
+  final bool requiresConfirmation; // Si requiere confirmación explícita de participantes
 
   const Event({
     this.id,
@@ -58,6 +60,7 @@ class Event {
     this.timezone, // null por defecto (usará timezone del plan)
     this.arrivalTimezone, // null por defecto (mismo que timezone)
     this.maxParticipants, // null por defecto (sin límite)
+    this.requiresConfirmation = false, // por defecto no requiere confirmación
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
@@ -115,6 +118,7 @@ class Event {
       timezone: data['timezone'], // null por defecto para compatibilidad
       arrivalTimezone: data['arrivalTimezone'], // null por defecto para compatibilidad
       maxParticipants: data['maxParticipants'] != null ? data['maxParticipants'] as int : null, // null por defecto
+      requiresConfirmation: data['requiresConfirmation'] ?? false, // por defecto false para compatibilidad
     );
   }
 
@@ -141,6 +145,7 @@ class Event {
       if (timezone != null) 'timezone': timezone,
       if (arrivalTimezone != null) 'arrivalTimezone': arrivalTimezone,
       if (maxParticipants != null) 'maxParticipants': maxParticipants,
+      'requiresConfirmation': requiresConfirmation, // Siempre incluir para claridad
     };
     // Escribir estructura nueva si está presente
     if (commonPart != null) {
@@ -181,6 +186,7 @@ class Event {
     String? timezone,
     String? arrivalTimezone,
     int? maxParticipants,
+    bool? requiresConfirmation,
   }) {
     return Event(
       id: id ?? this.id,
@@ -208,6 +214,7 @@ class Event {
       timezone: timezone ?? this.timezone,
       arrivalTimezone: arrivalTimezone ?? this.arrivalTimezone,
       maxParticipants: maxParticipants ?? this.maxParticipants,
+      requiresConfirmation: requiresConfirmation ?? this.requiresConfirmation,
     );
   }
 
