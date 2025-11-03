@@ -4,6 +4,7 @@ import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 
 class PlanCardWidget extends StatelessWidget {
   final Plan plan;
@@ -80,6 +81,14 @@ class PlanCardWidget extends StatelessWidget {
                     PlanStateBadgeCompact(
                       plan: plan,
                       fontSize: 8,
+                    ),
+                    const SizedBox(height: 2),
+                    // Indicador de días restantes (solo si está confirmado)
+                    DaysRemainingIndicator(
+                      plan: plan,
+                      fontSize: 8,
+                      compact: true,
+                      showIcon: false,
                     ),
                     const SizedBox(height: 2),
                     // Participantes (fuente pequeña)

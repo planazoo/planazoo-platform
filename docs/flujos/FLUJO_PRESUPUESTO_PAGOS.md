@@ -2,9 +2,9 @@
 
 > Define cómo gestionar presupuestos, costes, pagos y bote común en un plan
 
-**Relacionado con:** T101, T102  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Relacionado con:** T101 ✅, T102 ✅, T153 ✅  
+**Versión:** 1.1  
+**Fecha:** Enero 2025 (Actualizado - T102 y T153 completados)
 
 ---
 
@@ -52,9 +52,15 @@ Guardar
 ```
 
 **Funcionalidad (T101):**
-- Campo `estimatedBudget` en Plan
-- Cálculo automático por participante
-- Actualización dinámica cuando se añaden eventos
+- Campo `cost` en Event y Accommodation (T101)
+- Cálculo automático de presupuesto total (T101)
+- Servicio `BudgetService` para cálculos
+- Visualización en estadísticas del plan (T101)
+
+**Funcionalidad (T153):**
+- Selector de moneda al crear plan (EUR, USD, GBP, JPY)
+- Campo `currency` en Plan (default: EUR)
+- Formateo automático según moneda del plan
 
 #### 1.2 - Actualizar Presupuesto Dinámicamente
 
@@ -89,13 +95,17 @@ Crear evento
   ↓
 Completar campos básicos
   ↓
-"Presupuesto" → Añadir coste
+Añadir coste (T101/T153):
+- Selector de moneda local (ej: USD)
+- Coste: 300
   ↓
-Campos:
-- Coste estimado: €300
-- Tipo: Por persona / Total del evento
+Si moneda local ≠ moneda del plan:
+  - Sistema calcula conversión automáticamente
+  - Muestra: "Convertido a EUR: €277.78"
+  - Disclaimer: "Tipos de cambio orientativos..."
   ↓
 Guardar evento
+  - Coste se guarda en moneda del plan (convertido)
   ↓
 Actualizar presupuesto del plan (T101)
 ```
@@ -160,22 +170,30 @@ Distribución:
 ```
 Participante paga algo
   ↓
-Organizador → "Registrar pago"
+Organizador → "Registrar pago" (T102)
   ↓
 Formulario:
 - Participante: [Seleccionar]
-- Monto: €120
+- Moneda del pago: [EUR/USD/GBP/JPY] (T153, default: moneda del plan)
+- Monto: 120
+  ↓
+Si moneda del pago ≠ moneda del plan:
+  - Sistema calcula conversión automáticamente
+  - Muestra: "Convertido a EUR: €111.11"
+  - Disclaimer: "Tipos de cambio orientativos..."
+  ↓
 - Fecha: [Fecha de pago]
 - Método: Efectivo / Transferencia / Tarjeta
 - Concepto: Billetes de vuelo
 - Descripción: "4 billetes Madrid-Sydney"
   ↓
 Guardar pago
+  - Monto se guarda en moneda del plan (convertido) (T153)
   ↓
 Actualizar:
 - Registro de pagos del participante
-- Bote común (si aplica)
-- "Quién debe pagar" (T102)
+- Balance de pagos (T102)
+- Cálculo de "Quién debe pagar/cobrar" (T102)
 ```
 
 **Estados de pago:**
@@ -500,36 +518,63 @@ graph TD
 ## 📋 TAREAS RELACIONADAS
 
 **Pendientes:**
-- T101: Sistema completo de presupuesto
-- T102: Sistema completo de pagos y bote común
-- T121: Formularios con campos de coste
-- Integración costes en creación de eventos
-- Dashboard visual de presupuesto
-- Exportación de reportes
+- T102-6: Sistema de bote común (opcional en esta fase)
+- T121: Formularios enriquecidos con más campos de coste
+- Comparación estimado vs real
+- Notificaciones de presupuesto
+- Exportación de reportes a PDF/Excel
+- Actualización automática diaria de tipos de cambio (T153)
+- UI administrativa para tipos de cambio (T153)
 
 **Completas ✅:**
-- Ninguna (todo pendiente)
+- T101: Sistema de presupuesto base (enero 2025)
+- T102: Sistema de pagos y cálculo de balances (enero 2025)
+- T153: Sistema multi-moneda con conversión automática (enero 2025)
 
 ---
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ❌ No implementado
+**Estado:** ✅ Base implementada (T101, T102, T153 completados)
 
-**Lo que hay que implementar:**
-- ❌ Campo de presupuesto en Plan
-- ❌ Campo de coste en Event y Accommodation
-- ❌ Cálculo automático de presupuesto total
-- ❌ Desglose por tipo de evento
-- ❌ Sistema de registro de pagos
-- ❌ Sistema de bote común
-- ❌ Cálculo de deudas/créditos
-- ❌ Sistema de reembolsos
-- ❌ Visualización de dashboard
-- ❌ Exportación de reportes
+**Implementado (T101):**
+- ✅ Campo `cost` en Event y Accommodation
+- ✅ Servicio `BudgetService` para cálculo de presupuesto
+- ✅ Integración en estadísticas del plan
+- ✅ UI para introducir coste en eventos y alojamientos
+- ✅ Desglose por tipo de evento
+- ✅ Desglose eventos vs alojamientos
+- ✅ Visualización en dashboard de estadísticas
+
+**Implementado (T102):**
+- ✅ Sistema de registro de pagos individuales (`PersonalPayment`)
+- ✅ Servicio `PaymentService` para CRUD de pagos
+- ✅ Servicio `BalanceService` para cálculo de balances
+- ✅ Cálculo automático de deudas/créditos por participante
+- ✅ Sugerencias de transferencias para equilibrar deudas
+- ✅ UI en `PaymentSummaryPage` para visualizar balances
+- ✅ Integración en dashboard (botón "pagos")
+- ✅ Formateo de montos según moneda del plan
+
+**Implementado (T153):**
+- ✅ Campo `currency` en Plan (EUR, USD, GBP, JPY)
+- ✅ Servicio `CurrencyFormatterService` para formateo
+- ✅ Servicio `ExchangeRateService` con tipos de cambio desde Firestore
+- ✅ Conversión automática en EventDialog, AccommodationDialog, PaymentDialog
+- ✅ Selector de moneda al crear plan
+- ✅ Formateo automático en PlanStatsPage y PaymentSummaryPage
+- ✅ Disclaimer visible en conversiones
+- ✅ Botón temporal para inicializar tipos de cambio
+
+**Pendiente:**
+- ❌ Sistema de bote común (T102-6, opcional)
+- ❌ Tracking estimado vs real (mejora futura)
+- ❌ Exportación de reportes a PDF/Excel
+- ❌ Actualización automática diaria de tipos de cambio (T153 futuro)
+- ❌ UI administrativa para tipos de cambio (T153 futuro)
 
 ---
 
 *Documento de flujo de presupuesto y pagos*  
-*Última actualización: Enero 2025*
+*Última actualización: Enero 2025 (T102 y T153 completados)*
 

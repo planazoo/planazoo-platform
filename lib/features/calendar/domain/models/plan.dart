@@ -17,6 +17,7 @@ class Plan {
   final String? state; // borrador, planificando, confirmado, en_curso, finalizado, cancelado
   final String? visibility; // private, public
   final String? timezone; // IANA timezone (ej: "Europe/Madrid")
+  final String currency; // T153: Código ISO de moneda (EUR, USD, GBP, JPY, etc.) - default: EUR
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime savedAt;
@@ -38,6 +39,7 @@ class Plan {
     this.state,
     this.visibility,
     this.timezone,
+    this.currency = 'EUR', // T153: Default EUR
     required this.createdAt,
     required this.updatedAt,
     required this.savedAt,
@@ -70,6 +72,7 @@ class Plan {
       state: data['state'] ?? 'borrador', // Default a borrador si no existe
       visibility: data['visibility'] ?? 'private', // Default a privado
       timezone: data['timezone'],
+      currency: data['currency'] ?? 'EUR', // T153: Default EUR para migración
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       savedAt: (data['savedAt'] as Timestamp).toDate(),
@@ -94,6 +97,7 @@ class Plan {
       'state': state ?? 'borrador', // Default a borrador
       'visibility': visibility ?? 'private', // Default a privado
       'timezone': timezone,
+      'currency': currency, // T153
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'savedAt': Timestamp.fromDate(savedAt),
@@ -118,6 +122,7 @@ class Plan {
     String? state,
     String? visibility,
     String? timezone,
+    String? currency, // T153
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? savedAt,
@@ -139,6 +144,7 @@ class Plan {
       state: state ?? this.state,
       visibility: visibility ?? this.visibility,
       timezone: timezone ?? this.timezone,
+      currency: currency ?? this.currency, // T153
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       savedAt: savedAt ?? this.savedAt,
@@ -170,6 +176,7 @@ class Plan {
         other.budget == budget &&
         other.participants == participants &&
         other.imageUrl == imageUrl &&
+        other.currency == currency && // T153
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.savedAt == savedAt;
@@ -192,6 +199,7 @@ class Plan {
         state.hashCode ^
         visibility.hashCode ^
         timezone.hashCode ^
+        currency.hashCode ^ // T153
         createdAt.hashCode ^
         updatedAt.hashCode ^
         savedAt.hashCode;

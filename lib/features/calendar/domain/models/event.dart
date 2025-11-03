@@ -33,6 +33,8 @@ class Event {
   final int? maxParticipants; // Límite opcional de participantes para el evento
   // NUEVO: sistema de confirmación de eventos (T120 Fase 2)
   final bool requiresConfirmation; // Si requiere confirmación explícita de participantes
+  // T101: sistema de presupuesto
+  final double? cost; // Coste total del evento (opcional)
 
   const Event({
     this.id,
@@ -61,6 +63,7 @@ class Event {
     this.arrivalTimezone, // null por defecto (mismo que timezone)
     this.maxParticipants, // null por defecto (sin límite)
     this.requiresConfirmation = false, // por defecto no requiere confirmación
+    this.cost, // null por defecto (sin coste definido)
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
@@ -119,6 +122,7 @@ class Event {
       arrivalTimezone: data['arrivalTimezone'], // null por defecto para compatibilidad
       maxParticipants: data['maxParticipants'] != null ? data['maxParticipants'] as int : null, // null por defecto
       requiresConfirmation: data['requiresConfirmation'] ?? false, // por defecto false para compatibilidad
+      cost: data['cost'] != null ? (data['cost'] as num).toDouble() : null, // T101
     );
   }
 
@@ -146,6 +150,7 @@ class Event {
       if (arrivalTimezone != null) 'arrivalTimezone': arrivalTimezone,
       if (maxParticipants != null) 'maxParticipants': maxParticipants,
       'requiresConfirmation': requiresConfirmation, // Siempre incluir para claridad
+      if (cost != null) 'cost': cost, // T101
     };
     // Escribir estructura nueva si está presente
     if (commonPart != null) {
@@ -187,6 +192,7 @@ class Event {
     String? arrivalTimezone,
     int? maxParticipants,
     bool? requiresConfirmation,
+    double? cost,
   }) {
     return Event(
       id: id ?? this.id,
@@ -215,6 +221,7 @@ class Event {
       arrivalTimezone: arrivalTimezone ?? this.arrivalTimezone,
       maxParticipants: maxParticipants ?? this.maxParticipants,
       requiresConfirmation: requiresConfirmation ?? this.requiresConfirmation,
+      cost: cost ?? this.cost,
     );
   }
 

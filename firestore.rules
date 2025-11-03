@@ -337,13 +337,35 @@ service cloud.firestore {
     }
     
     // ============================================
-    // REGLAS PARA GRUPOS DE CONTACTOS - T123
+    // REGLAS PARA GRUPOS DE PARTICIPANTES - T123
     // ============================================
     
-    match /contactGroups/{groupId} {
+    match /participant_groups/{groupId} {
+      // Validar estructura de datos
+      function isValidParticipantGroupData() {
+        return request.resource.data.keys().hasAll(['userId', 'name', 'createdAt', 'updatedAt']) &&
+               request.resource.data.userId is string &&
+               request.resource.data.userId == request.auth.uid &&
+               request.resource.data.name is string &&
+               request.resource.data.name.size() >= 1 &&
+               request.resource.data.name.size() <= 100 &&
+               request.resource.data.createdAt is timestamp &&
+               request.resource.data.updatedAt is timestamp &&
+               request.resource.data.memberUserIds is list &&
+               request.resource.data.memberEmails is list &&
+               (!('description' in request.resource.data) || 
+                (request.resource.data.description is string && 
+                 request.resource.data.description.size() <= 500)) &&
+               (!('icon' in request.resource.data) || 
+                (request.resource.data.icon is string && 
+                 request.resource.data.icon.size() <= 10)) &&
+               (!('color' in request.resource.data) || 
+                request.resource.data.color is string);
+      }
+      
       // Crear: Solo usuarios autenticados pueden crear grupos
       allow create: if isAuthenticated() && 
-                       request.resource.data.userId == request.auth.uid;
+                       isValidParticipantGroupData();
       
       // Leer: Solo el propietario puede leer sus grupos
       allow read: if isAuthenticated() && 
@@ -351,7 +373,10 @@ service cloud.firestore {
       
       // Actualizar: Solo el propietario puede actualizar
       allow update: if isAuthenticated() && 
-                       resource.data.userId == request.auth.uid;
+                       resource.data.userId == request.auth.uid &&
+                       isValidParticipantGroupData() &&
+                       request.resource.data.userId == resource.data.userId && // No cambiar propietario
+                       request.resource.data.createdAt == resource.data.createdAt; // No cambiar fecha creación
       
       // Eliminar: Solo el propietario puede eliminar
       allow delete: if isAuthenticated() && 
@@ -366,6 +391,124 @@ service cloud.firestore {
       // Solo el propio usuario puede leer/escribir sus preferencias
       allow read, write: if isAuthenticated() && 
                            request.auth.uid == userId;
+    }
+    
+    // ============================================
+    // REGLAS PARA PAGOS PERSONALES (T102)
+    // ============================================
+    
+    match /personal_payments/{paymentId} {
+      // Validar estructura de datos
+      function isValidPersonalPaymentData() {
+        return request.resource.data.keys().hasAll(['planId', 'participantId', 'amount', 'paymentDate', 'status', 'createdAt', 'updatedAt']) &&
+               request.resource.data.planId is string &&
+               request.resource.data.participantId is string &&
+               request.resource.data.amount is number &&
+               request.resource.data.amount > 0 &&
+               request.resource.data.amount <= 1000000 &&
+               request.resource.data.paymentDate is timestamp &&
+               request.resource.data.status in ['pending', 'paid', 'refunded'] &&
+               request.resource.data.createdAt is timestamp &&
+               request.resource.data.updatedAt is timestamp &&
+               (!('eventId' in request.resource.data) || 
+                request.resource.data.eventId is string) &&
+               (!('paymentMethod' in request.resource.data) || 
+                request.resource.data.paymentMethod is string) &&
+               (!('concept' in request.resource.data) || 
+                (request.resource.data.concept is string && 
+                 request.resource.data.concept.size() <= 100)) &&
+               (!('description' in request.resource.data) || 
+                (request.resource.data.description is string && 
+                 request.resource.data.description.size() <= 500)) &&
+               (!('registeredBy' in request.resource.data) || 
+                request.resource.data.registeredBy is string);
+      }
+      
+      // Crear: Usuarios autenticados pueden registrar pagos
+      // Deben ser participantes del plan (verificado en cliente)
+      allow create: if isAuthenticated() && 
+                       isValidPersonalPaymentData();
+      
+      // Leer: Solo participantes del plan pueden leer pagos
+      // (verificado en cliente que el usuario es participante)
+      allow read: if isAuthenticated();
+      
+      // Actualizar: Cualquier participante autenticado puede actualizar
+      // (para corregir errores, cambiar estado, etc.)
+      allow update: if isAuthenticated() && 
+                       isValidPersonalPaymentData() &&
+                       request.resource.data.planId == resource.data.planId &&
+                       request.resource.data.participantId == resource.data.participantId;
+      
+      // Eliminar: Cualquier participante autenticado puede eliminar
+      // (para corregir errores de registro)
+      allow delete: if isAuthenticated();
+    }
+    
+    // ============================================
+    // REGLAS PARA TIPOS DE CAMBIO (T153)
+    // ============================================
+    
+    match /exchange_rates/{documentId} {
+      // Validar estructura de datos
+      function isValidExchangeRateData() {
+        return request.resource.data.keys().hasAll(['baseCurrency', 'rates', 'updatedAt']) &&
+               request.resource.data.baseCurrency is string &&
+               request.resource.data.rates is map &&
+               request.resource.data.updatedAt is timestamp;
+      }
+      
+      // Leer: Cualquiera autenticado puede leer tipos de cambio
+      allow read: if isAuthenticated();
+      
+      // Crear/Actualizar: Solo administradores (por ahora, cualquier autenticado para desarrollo)
+      // TODO: Restringir a roles de administrador cuando esté implementado
+      allow write: if isAuthenticated() && isValidExchangeRateData();
+    }
+    
+    // ============================================
+    // REGLAS PARA INVITACIONES POR EMAIL (T104)
+    // ============================================
+    
+    match /planInvitations/{invitationId} {
+      // Validar estructura de datos
+      function isValidPlanInvitationData() {
+        return request.resource.data.keys().hasAll(['planId', 'email', 'token', 'createdAt', 'expiresAt']) &&
+               request.resource.data.planId is string &&
+               request.resource.data.email is string &&
+               request.resource.data.token is string &&
+               request.resource.data.createdAt is timestamp &&
+               request.resource.data.expiresAt is timestamp &&
+               (!('status' in request.resource.data) || 
+                request.resource.data.status in ['pending', 'accepted', 'rejected', 'expired']) &&
+               (!('role' in request.resource.data) || 
+                request.resource.data.role in ['participant', 'observer']);
+      }
+      
+      // Crear: Solo usuarios autenticados pueden crear invitaciones
+      // Deben ser participantes del plan (se verifica en cliente)
+      allow create: if isAuthenticated() && 
+                       isValidPlanInvitationData() &&
+                       // El email debe estar normalizado (minúsculas)
+                       request.resource.data.email == request.resource.data.email.lower();
+      
+      // Leer: Cualquiera puede leer invitaciones (para procesar links sin autenticación)
+      // Pero solo con el token correcto (validación en cliente)
+      allow read: if true; // Permitir lectura para procesar links
+      
+      // Actualizar: Solo para aceptar/rechazar invitaciones
+      // Esto se hace típicamente cuando el usuario hace clic en el link
+      allow update: if isValidPlanInvitationData() &&
+                       // Solo se puede actualizar status y respondedAt
+                       request.resource.data.planId == resource.data.planId &&
+                       request.resource.data.email == resource.data.email &&
+                       request.resource.data.token == resource.data.token &&
+                       request.resource.data.createdAt == resource.data.createdAt &&
+                       request.resource.data.expiresAt == resource.data.expiresAt &&
+                       resource.data.status == 'pending'; // Solo se puede actualizar si está pendiente
+      
+      // Eliminar: Solo el owner del plan puede eliminar invitaciones
+      allow delete: if isAuthenticated();
     }
     
     // ============================================

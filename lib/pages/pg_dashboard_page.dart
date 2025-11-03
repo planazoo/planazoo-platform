@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,11 +27,16 @@ import 'package:unp_calendario/widgets/grid/wd_grid_painter.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
+import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
+import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
 import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
+import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:unp_calendario/shared/models/currency.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -54,68 +60,92 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   String? selectedWidgetId; // 'W14', 'W15', 'W16', etc.
   String selectedFilter = 'todos'; // 'todos', 'estoy_in', 'pendientes', 'cerrados'
 
+  // Flag para evitar procesar transiciones múltiples veces en la misma carga
+  List<String> _processedPlanIds = [];
+  
   @override
   void initState() {
     super.initState();
-    _loadPlanazoos();
   }
 
-  Future<void> _loadPlanazoos() async {
-    try {
-      setState(() {
-        isLoading = true;
-      });
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  // Método helper para procesar cambios en la lista de planes
+  void _processPlansUpdate(List<Plan> plans, {bool forceUpdate = false}) {
+    if (!mounted) return;
+    
+    // Comparar si la lista realmente cambió (comparación por referencia e IDs)
+    final plansChanged = forceUpdate || !_listsEqual(planazoos, plans);
+    
+    if (!plansChanged) return; // No hacer nada si no cambió
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       
-      // Cargar planazoos desde Firestore usando Stream
-      final planService = ref.read(planServiceProvider);
-      planService.getPlans().listen((plans) async {
-        if (mounted) {
-          // Verificar y ejecutar transiciones automáticas para cada plan
-          final stateService = PlanStateService();
-          for (final plan in plans) {
-            if (plan.id != null) {
-              // Ejecutar en background, no bloquear UI
-              stateService.checkAndExecuteAutomaticTransitions(planId: plan.id!).catchError((e) {
-                LoggerService.error('Error checking automatic transitions for plan ${plan.id}',
-                    context: 'DASHBOARD', error: e);
-              });
+      setState(() {
+        planazoos = plans;
+        filteredPlanazoos = List.from(plans);
+        isLoading = false;
+        
+        // Seleccionar automáticamente el primer plan si no hay ninguno seleccionado
+        if (selectedPlan == null && plans.isNotEmpty) {
+          selectedPlanId = plans.first.id;
+          selectedPlan = plans.first;
+        }
+        
+        // Si el plan seleccionado fue actualizado, actualizar la referencia
+        if (selectedPlanId != null) {
+          try {
+            final updatedPlan = plans.firstWhere(
+              (p) => p.id == selectedPlanId,
+              orElse: () => selectedPlan!,
+            );
+            selectedPlan = updatedPlan;
+          } catch (e) {
+            // Si el plan seleccionado ya no existe, limpiar la selección
+            if (plans.isEmpty || !plans.any((p) => p.id == selectedPlanId)) {
+              selectedPlanId = null;
+              selectedPlan = null;
             }
           }
-          
-          setState(() {
-            planazoos = plans;
-            filteredPlanazoos = List.from(plans);
-            isLoading = false;
-            
-            // NUEVO: Seleccionar automáticamente el primer plan si no hay ninguno seleccionado
-            if (selectedPlan == null && plans.isNotEmpty) {
-              selectedPlanId = plans.first.id;
-              selectedPlan = plans.first;
-            }
-          });
-        }
-      }, onError: (error) {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-          });
-          LoggerService.error('Error loading planazoos', context: 'MAIN_PAGE', error: error);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ Error al cargar planazoos: $error'),
-              backgroundColor: Colors.red,
-            ),
-          );
         }
       });
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-        LoggerService.error('Error in _loadPlanazoos', context: 'MAIN_PAGE', error: e);
+      
+      // Procesar transiciones automáticas solo si la lista cambió
+      Future.microtask(() async {
+        final stateService = PlanStateService();
+        for (final plan in plans) {
+          if (plan.id != null && mounted && !_processedPlanIds.contains(plan.id!)) {
+            _processedPlanIds.add(plan.id!);
+            // Ejecutar en background, no bloquear UI
+            stateService.checkAndExecuteAutomaticTransitions(planId: plan.id!).catchError((e) {
+              LoggerService.error('Error checking automatic transitions for plan ${plan.id}',
+                  context: 'DASHBOARD', error: e);
+            });
+          }
+        }
+        // Limpiar IDs procesados después de un tiempo
+        if (_processedPlanIds.length > plans.length * 2) {
+          _processedPlanIds.removeWhere((id) => !plans.any((p) => p.id == id));
+        }
+      });
+    });
+  }
+  
+  // Helper para comparar si dos listas son iguales
+  bool _listsEqual(List<Plan> list1, List<Plan> list2) {
+    if (list1.length != list2.length) return false; // Diferentes
+    if (identical(list1, list2)) return true; // Misma referencia
+    
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i].id != list2[i].id || list1[i].updatedAt != list2[i].updatedAt) {
+        return false; // Diferentes
       }
     }
+    return true; // Iguales
   }
 
   void _showCreatePlanDialog() {
@@ -125,11 +155,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       builder: (BuildContext context) {
         return _CreatePlanModal(
           onPlanCreated: (plan) {
-            // Actualizar la lista de planes (el modal ya se cierra automáticamente)
-            setState(() {
-              planazoos.add(plan);
-              filteredPlanazoos = List.from(planazoos);
-            });
+            // El stream se actualizará automáticamente, no necesitamos actualizar manualmente
           },
         );
       },
@@ -272,6 +298,41 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
     
+    // Usar plansStreamProvider directamente con Riverpod
+    ref.watch(plansStreamProvider);
+    
+    // Escuchar cambios en el stream y actualizar el estado local
+    // ref.listen solo se ejecuta cuando el valor cambia, no en cada build
+    ref.listen<AsyncValue<List<Plan>>>(plansStreamProvider, (previous, next) {
+      // Procesar cuando hay datos disponibles
+      if (next.hasValue && next.value != null) {
+        final plans = next.value!;
+        // Solo procesar si es el primer valor o si realmente cambió
+        if (previous == null || previous.value != plans) {
+          _processPlansUpdate(plans);
+        }
+      }
+      
+      // Manejar errores
+      if (next.hasError) {
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            setState(() {
+              isLoading = false;
+            });
+            LoggerService.error('Error loading planazoos', context: 'MAIN_PAGE', error: next.error);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('❌ Error al cargar planazoos: ${next.error}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          });
+        }
+      }
+    });
+    
     return Scaffold(
       body: _buildGrid(),
       // 🧟 Botones de testing (solo en modo debug)
@@ -307,6 +368,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   label: const Text('🧟 Frankenstein'),
                   backgroundColor: Colors.green.shade700,
                   tooltip: 'Generar plan de testing completo',
+                ),
+                const SizedBox(height: 8),
+                // TEMPORAL T153: Botón para inicializar tipos de cambio
+                FloatingActionButton.extended(
+                  heroTag: "dashboard_init_exchange_rates",
+                  onPressed: _initializeExchangeRates,
+                  icon: const Icon(Icons.currency_exchange),
+                  label: const Text('💱 Init Exchange Rates'),
+                  backgroundColor: Colors.orange,
+                  tooltip: 'Inicializar tipos de cambio en Firestore',
                 ),
               ],
             )
@@ -387,8 +458,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ref.invalidate(calendarNotifierProvider(calendarParams));
       }
       
-      // Refrescar lista de planes
-      _loadPlanazoos();
+      // No es necesario llamar _loadPlanazoos() - el stream se actualiza automáticamente
       
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -428,6 +498,43 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
   }
 
+  /// TEMPORAL T153: Inicializar tipos de cambio en Firestore
+  Future<void> _initializeExchangeRates() async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      
+      // Crear documento con tipos de cambio iniciales
+      await firestore.collection('exchange_rates').doc('current').set({
+        'baseCurrency': 'EUR',
+        'rates': {
+          'USD': 1.08,
+          'GBP': 0.85,
+          'JPY': 160.0,
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Tipos de cambio inicializados exitosamente'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error al inicializar tipos de cambio: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   /// Genera el plan Frankenstein de testing
   Future<void> _generateFrankensteinPlan(UserModel? currentUser) async {
     if (currentUser == null) {
@@ -458,8 +565,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final planId = await DemoDataGenerator.generateFrankensteinPlan(currentUser.id);
     
     if (planId != null) {
-      // Refrescar lista de planes
-      _loadPlanazoos();
+      // No es necesario llamar _loadPlanazoos() - el stream se actualiza automáticamente
       
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -883,6 +989,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             plan: selectedPlan!,
             fontSize: 6, // Reducido de 7 a 6
           ),
+          // Indicador de días restantes (solo si está confirmado)
+          DaysRemainingIndicator(
+            plan: selectedPlan!,
+            fontSize: 6,
+            compact: true,
+            showIcon: false,
+          ),
           const SizedBox(height: 0.5),
           // Email del administrador del plan
           Text(
@@ -1227,7 +1340,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildW17(double columnWidth, double rowHeight) {
-    // W17: C9 (R2) - Widget básico
+    // W17: C9 (R2) - T113: Estadísticas del plan
     final w17X = columnWidth * 8; // Empieza en la columna C9 (índice 8)
     final w17Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w17Width = columnWidth; // Ancho de 1 columna (C9)
@@ -1236,6 +1349,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W17';
     final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
+    final iconColor = AppColorScheme.color2;
+    final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
     
     return Positioned(
       left: w17X,
@@ -1248,13 +1363,41 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           // Sin borde
           // Sin borderRadius (esquinas en ángulo recto)
         ),
-        // Sin contenido
+        child: InkWell(
+          onTap: () {
+            _selectWidget('W17');
+            _changeScreen('stats');
+          },
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icono estadísticas color2
+                Icon(
+                  Icons.bar_chart,
+                  color: iconColor,
+                  size: 20,
+                ),
+                const SizedBox(height: 4),
+                // Texto "stats" debajo del icono
+                Text(
+                  'stats',
+                  style: AppTypography.caption.copyWith(
+                    color: textColor,
+                    fontSize: 6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildW18(double columnWidth, double rowHeight) {
-    // W18: C10 (R2) - Widget básico
+    // W18: C10 (R2) - T102: Resumen de pagos
     final w18X = columnWidth * 9; // Empieza en la columna C10 (índice 9)
     final w18Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w18Width = columnWidth; // Ancho de 1 columna (C10)
@@ -1263,6 +1406,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W18';
     final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
+    final iconColor = AppColorScheme.color2;
+    final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
     
     return Positioned(
       left: w18X,
@@ -1275,7 +1420,35 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           // Sin borde
           // Sin borderRadius (esquinas en ángulo recto)
         ),
-        // Sin contenido
+        child: InkWell(
+          onTap: () {
+            _selectWidget('W18');
+            _changeScreen('payments');
+          },
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icono pagos color2
+                Icon(
+                  Icons.payment,
+                  color: iconColor,
+                  size: 20,
+                ),
+                const SizedBox(height: 4),
+                // Texto "pagos" debajo del icono
+                Text(
+                  'pagos',
+                  style: AppTypography.caption.copyWith(
+                    color: textColor,
+                    fontSize: 6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1672,6 +1845,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     switch (currentScreen) {
       case 'planData':
         return _buildPlanDataScreen();
+      case 'stats':
+        return _buildStatsScreen();
+      case 'payments':
+        return _buildPaymentsScreen();
       case 'profile':
         return _buildProfileScreen();
       case 'email':
@@ -1861,6 +2038,33 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       },
     );
   }
+
+  // T113: Pantalla de estadísticas del plan
+  Widget _buildPaymentsScreen() {
+    if (selectedPlan == null) {
+      return const Center(
+        child: Text(
+          'Selecciona un plan para ver el resumen de pagos',
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    return PaymentSummaryPage(plan: selectedPlan!);
+  }
+
+  Widget _buildStatsScreen() {
+    if (selectedPlan == null) {
+      return const Center(
+        child: Text(
+          'Selecciona un plan para ver las estadísticas',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18),
+        ),
+      );
+    }
+
+    return PlanStatsPage(plan: selectedPlan!);
+  }
 }
 
 // Modal para crear plan con tamaño específico (R1-R17, C2-C3)
@@ -1890,6 +2094,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
   
   // Variables para configuración
   String _visibility = 'private'; // 'private' o 'public'
+  String _selectedCurrency = 'EUR'; // T153: Moneda del plan (default EUR)
   
   // Variables para participantes
   List<UserModel> _allUsers = [];
@@ -2007,6 +2212,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
         state: 'borrador', // Default según flujo 1.1
         visibility: _visibility, // Usar valor seleccionado
         timezone: systemTimezone, // Auto-detectada según flujo 1.1
+        currency: _selectedCurrency, // T153
         createdAt: now,
         updatedAt: now,
         savedAt: now,
@@ -2375,6 +2581,29 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
                   ),
                   maxLines: 3,
                   maxLength: 1000,
+                ),
+                const SizedBox(height: 16),
+                // Selector de Moneda (T153)
+                DropdownButtonFormField<String>(
+                  value: _selectedCurrency,
+                  decoration: const InputDecoration(
+                    labelText: 'Moneda del Plan',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.currency_exchange),
+                  ),
+                  items: Currency.supportedCurrencies.map((currency) {
+                    return DropdownMenuItem<String>(
+                      value: currency.code,
+                      child: Text('${currency.code} - ${currency.symbol} ${currency.name}'),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedCurrency = value;
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
                 // Selector Visibilidad

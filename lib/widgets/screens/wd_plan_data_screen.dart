@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
@@ -15,6 +16,12 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/widgets/dialogs/announcement_dialog.dart';
 import 'package:unp_calendario/widgets/screens/announcement_timeline.dart';
+import 'package:unp_calendario/shared/utils/days_remaining_utils.dart';
+import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
+import 'package:unp_calendario/shared/utils/plan_validation_utils.dart';
+import 'package:unp_calendario/widgets/dialogs/plan_validation_dialog.dart';
+import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -199,6 +206,32 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               ),
             ],
           ),
+          // Indicador de días restantes (solo si está confirmado)
+          if (DaysRemainingUtils.shouldShowDaysRemaining(currentPlan)) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                SizedBox(
+                  width: 100,
+                  child: Text(
+                    'Inicio:',
+                    style: AppTypography.bodyStyle.copyWith(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                DaysRemainingIndicator(
+                  plan: currentPlan,
+                  fontSize: 14,
+                  compact: false,
+                  showIcon: true,
+                  showStartingSoonBadge: true,
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -410,6 +443,48 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   Future<void> _changePlanState(String newState) async {
+    // VALID-1, VALID-2: Ejecutar validaciones adicionales antes de confirmar
+    if (newState == 'confirmado' && currentPlan.id != null) {
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser != null) {
+        // Obtener eventos y participantes
+        final eventService = ref.read(eventServiceProvider);
+        final participantsAsync = ref.read(planParticipantsProvider(currentPlan.id!));
+        
+        final events = await eventService
+            .getEventsByPlanId(currentPlan.id!, currentUser.id)
+            .first
+            .timeout(const Duration(seconds: 10));
+        
+        final participants = participantsAsync.when(
+          data: (data) => data,
+          loading: () => <PlanParticipation>[],
+          error: (_, __) => <PlanParticipation>[],
+        );
+        
+        // Ejecutar validaciones
+        final validation = PlanValidationService.validatePlanForConfirmation(
+          plan: currentPlan,
+          events: events,
+          participations: participants,
+        );
+        
+        // Si hay warnings o errors, mostrarlos
+        if (validation.warnings.isNotEmpty || validation.errors.isNotEmpty) {
+          final validationResult = await showPlanValidationDialog(
+            context: context,
+            validation: validation,
+          );
+          
+          // Si el usuario no quiere continuar, cancelar
+          if (validationResult != true) {
+            return;
+          }
+        }
+      }
+    }
+
+    // Mostrar diálogo de confirmación
     final confirmed = await showStateTransitionDialog(
       context: context,
       plan: currentPlan,

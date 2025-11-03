@@ -57,6 +57,9 @@ dependencies:
   
   # Fonts
   google_fonts: ^6.2.1
+  
+  # Crypto for token generation
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:

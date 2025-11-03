@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/calendar_state.dart';
 import '../../domain/models/event.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import '../../domain/services/event_service.dart';
 import '../../domain/services/plan_service.dart';
 import '../notifiers/calendar_notifier.dart';
@@ -14,6 +15,27 @@ final eventServiceProvider = Provider<EventService>((ref) {
 /// Provider para PlanService
 final planServiceProvider = Provider<PlanService>((ref) {
   return PlanService();
+});
+
+/// StreamProvider para todos los planes (actualización automática)
+final plansStreamProvider = StreamProvider<List<Plan>>((ref) {
+  final planService = ref.watch(planServiceProvider);
+  return planService.getPlans();
+});
+
+/// StreamProvider para un plan específico por ID (T107: actualización automática cuando se expande)
+final planByIdStreamProvider = StreamProvider.family<Plan?, String>((ref, planId) async* {
+  final planService = ref.watch(planServiceProvider);
+  // Escuchar cambios en todos los planes y filtrar por ID
+  await for (final plans in planService.getPlans()) {
+    try {
+      final plan = plans.firstWhere((p) => p.id == planId);
+      yield plan;
+    } catch (e) {
+      // Plan no encontrado
+      yield null;
+    }
+  }
 });
 
 /// Provider para CalendarNotifier

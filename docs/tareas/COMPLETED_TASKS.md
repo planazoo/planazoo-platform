@@ -4,6 +4,532 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T101 - Sistema de Presupuesto del Plan
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Sistema de presupuesto para registrar costes en eventos y alojamientos y visualizar análisis agrupados.
+
+**Criterios de aceptación:**
+- ✅ Modelos Event y Accommodation incluyen campo `cost` (opcional)
+- ✅ Servicio de cálculo de presupuesto (`BudgetService`)
+- ✅ UI para introducir coste en eventos y alojamientos
+- ✅ Integración de presupuesto en estadísticas del plan
+- ✅ Desglose por tipo de evento y alojamientos
+- ✅ Persistencia en Firestore
+- ⚠️ Desglose por participante (implementado pero no visible en UI)
+- ⚠️ Gráficos avanzados (mejora futura)
+
+**Implementación técnica:**
+- ✅ Modelo `BudgetSummary`:
+  - Costes totales: total, eventos, alojamientos
+  - Por tipo: costes por familia de evento
+  - Por subtipo: costes por subtipo
+  - Por participante: estimado de coste por persona
+  - Estadísticas: eventos/alojamientos con coste
+  - Getters: total items, promedio, porcentaje cobertura
+- ✅ Servicio `BudgetService`:
+  - `calculateBudgetSummary()`: Cálculo desde eventos, alojamientos y participaciones
+  - Filtra solo eventos base confirmados con coste
+  - Filtra alojamientos con coste
+  - Agrupa costes por tipo y participante
+  - Maneja división equitativa de costes
+- ✅ Integración en `PlanStatsService`:
+  - Obtiene eventos y alojamientos
+  - Calcula `BudgetSummary` opcionalmente
+  - Incluye en `PlanStats` como campo nullable
+  - Manejo de errores con try-catch
+- ✅ UI en diálogos:
+  - `EventDialog`: Campo coste opcional con validación
+  - `AccommodationDialog`: Campo coste opcional con validación
+  - Validación: números decimales, mínimo 0, máximo 1M€
+  - Formato con euros y decimales
+- ✅ UI de estadísticas:
+  - Nueva sección "Presupuesto" en `PlanStatsPage`
+  - Coste total destacado con icono
+  - Gráficos por tipo de evento con barras y porcentajes
+  - Desglose eventos vs alojamientos
+  - Nota informativa con conteos
+
+**Flujo de uso:**
+1. Usuario crea/edita evento y añade coste opcional
+2. Usuario crea/edita alojamiento y añade coste opcional
+3. Al visualizar estadísticas, aparece sección de presupuesto
+4. Muestra total, desgloses y gráficos
+5. Solo aparece si hay costes definidos
+
+**Mejoras futuras:**
+- Desglose de costes por participante en UI
+- Comparación presupuesto estimado vs real
+- Notificaciones cuando se supera presupuesto
+- Exportación de análisis a PDF/Excel
+- Monedas diferentes al euro
+
+**Relacionado con:** T113 (Estadísticas), T102 (Pagos)
+
+---
+
+## T113 - Estadísticas del Plan
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Dashboard completo de estadísticas del plan con resumen de eventos, participantes, distribución temporal, y análisis visuales.
+
+**Criterios de aceptación:**
+- ✅ Vista de estadísticas completa y responsive
+- ✅ Gráficos de distribución con barras horizontales
+- ✅ Resumen general con métricas clave
+- ✅ Distribución temporal de actividades
+- ✅ Análisis de participantes y actividad
+- ⚠️ Comparación presupuesto (pendiente - requiere T101)
+- ⚠️ Exportar a PDF/Excel (pendiente - mejora futura)
+
+**Implementación técnica:**
+- ✅ Modelo `PlanStats` con métricas:
+  - Eventos: total, confirmados, borradores, duración
+  - Por tipo: family y subtype con conteos
+  - Temporal: eventos por día (distribución)
+  - Participantes: total, activos, actividad
+  - Específicos vs "para todos"
+  - Getters: promedio duración, días con eventos, etc.
+- ✅ Servicio `PlanStatsService`:
+  - `calculateStats()`: Cálculo completo desde eventos y participaciones
+  - `_calculateStatsFromData()`: Procesa y agrupa datos
+  - Filtro solo eventos base (no copias)
+  - Manejo de eventos "para todos" vs específicos
+  - Timeouts y manejo de errores
+- ✅ Providers Riverpod:
+  - `planStatsServiceProvider`: Provider del servicio
+  - `planStatsProvider`: FutureProvider con cálculo
+- ✅ UI `PlanStatsPage`:
+  - Cards con iconos y métricas clave
+  - `_buildSummarySection()`: Resumen general (4 métricas)
+  - `_buildEventsByFamilySection()`: Gráficos por tipo con colores
+  - `_buildTemporalDistributionSection()`: Top 10 días con más eventos
+  - `_buildParticipantsSection()`: Participantes activos
+  - `_buildEventsBySubtypeSection()`: Lista de subtipos
+  - Estado loading/error manejado
+- ✅ Integración navegación:
+  - Botón W17 en dashboard (C9, R2)
+  - Icono `Icons.bar_chart` con texto "stats"
+  - Switch case 'stats' en `_buildScreenContent()`
+
+**Flujo de uso:**
+1. Usuario selecciona un plan
+2. Clic en botón "stats" (W17) en navegación superior
+3. Carga estadísticas (loading)
+4. Muestra dashboard completo con gráficos
+5. Navegación visual intuitiva
+
+**Mejoras futuras:**
+- Integración presupuesto cuando T101 esté completo
+- Exportación PDF/Excel de estadísticas
+- Gráficos circulares para visualización alternativa
+- Comparativas entre planes
+- Estadísticas históricas
+
+**Relacionado con:** T101 (Presupuesto), T102 (Pagos), T109 (Estados)
+
+---
+
+## T107 - Actualización Dinámica de Duración del Plan
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Sistema para actualizar automáticamente la duración del plan cuando se añaden eventos que se extienden fuera del rango original.
+
+**Criterios de aceptación:**
+- ✅ Detectar eventos fuera de rango (antes o después del rango del plan)
+- ✅ Modal de confirmación para expandir plan con información clara
+- ✅ Actualización automática de fechas (startDate, endDate, baseDate)
+- ✅ Recalcular `columnCount` del calendario automáticamente
+- ✅ El calendario se actualiza automáticamente cuando el plan se expande
+- ⚠️ Notificar a participantes (pendiente - requiere T105)
+- ✅ Testing con eventos multi-día (funciona en pruebas básicas)
+
+**Implementación técnica:**
+- ✅ Utilidad `PlanRangeUtils` para detectar eventos fuera del rango:
+  - `detectEventOutsideRange()`: Detecta si un evento se extiende antes o después del plan
+  - `calculateExpandedPlanValues()`: Calcula los nuevos valores del plan después de expandir
+- ✅ `ExpandPlanDialog`: Diálogo informativo que muestra:
+  - Rango actual del plan
+  - Información de expansión (días antes/después)
+  - Nuevo rango propuesto
+  - Advertencia sobre notificaciones a participantes
+- ✅ Método `expandPlan()` en `PlanService`:
+  - Actualiza `baseDate`, `startDate`, `endDate`, `columnCount`
+  - Maneja correctamente los cálculos de fechas (solo días, sin horas)
+  - Actualiza `updatedAt` del plan
+- ✅ Integración en `EventDialog._saveEvent()`:
+  - Detecta si el evento está fuera del rango (solo para eventos no borradores)
+  - Muestra el diálogo de confirmación
+  - Expande el plan si el usuario acepta
+  - Cancela el guardado del evento si el usuario rechaza la expansión
+- ✅ Provider `planByIdStreamProvider`: Stream para escuchar cambios de un plan específico (para futuras mejoras)
+
+**Flujo de funcionamiento:**
+1. Usuario crea/edita un evento que se extiende fuera del rango del plan
+2. Al guardar, el sistema detecta automáticamente que el evento está fuera del rango
+3. Se muestra un diálogo informativo con los detalles de la expansión propuesta
+4. Si el usuario acepta, el plan se expande automáticamente (fechas y `columnCount`)
+5. El calendario se actualiza automáticamente gracias al stream de planes en `pg_dashboard_page`
+6. El evento se guarda normalmente
+
+**Archivos creados:**
+- ✅ `lib/shared/utils/plan_range_utils.dart` - Utilidades para detectar eventos fuera del rango
+- ✅ `lib/widgets/dialogs/expand_plan_dialog.dart` - Diálogo de confirmación de expansión
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/services/plan_service.dart` - Método `expandPlan()`
+- ✅ `lib/widgets/wd_event_dialog.dart` - Integración de detección y diálogo en `_saveEvent()`
+- ✅ `lib/features/calendar/presentation/providers/calendar_providers.dart` - Provider para stream de plan
+
+**Mejoras futuras:**
+- Notificaciones automáticas a participantes cuando el plan se expande (requiere T105)
+- Historial de cambios de duración del plan (auditoría)
+- Opción para contraer el plan si ya no hay eventos en las fechas extremas
+- Validación de eventos al editar (no solo al crear)
+
+**Relacionado con:** T109 (Estados del plan), T105 (Notificaciones)
+
+---
+
+## Validaciones Adicionales del Plan (VALID-1, VALID-2)
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Sistema de validación automática al confirmar un plan: detección de días vacíos y participantes sin eventos asignados.
+
+**Criterios de aceptación:**
+- ✅ Detectar días sin eventos confirmados en el plan
+- ✅ Detectar participantes sin eventos asignados
+- ✅ Mostrar advertencias en diálogo dedicado
+- ✅ Permitir continuar con confirmación si no hay errores críticos
+- ✅ Bloquear confirmación si hay errores críticos
+- ✅ Integración en flujo de cambio de estado
+
+**Implementación técnica:**
+- ✅ `PlanValidationUtils` con utilidades de validación:
+  - `detectEmptyDays()`: Detecta días vacíos del plan
+  - `detectParticipantsWithoutEvents()`: Encuentra participantes sin eventos
+  - `validatePlanForConfirmation()`: Valida plan completo con warnings/errors
+- ✅ `PlanValidationDialog` widget:
+  - Muestra warnings (naranja) y errors (rojo)
+  - Iconos diferenciados por tipo
+  - Botones "Volver" o "Confirmar de todas formas" para warnings
+  - Botón "Cerrar" para errors (bloquea confirmación)
+  - Nota informativa sobre qué hacer
+- ✅ Integración en `PlanDataScreen._changePlanState()`:
+  - Ejecuta validaciones solo al cambiar a "confirmado"
+  - Obtiene eventos y participantes del plan
+  - Muestra diálogo de validación si hay warnings/errors
+  - Permite cancelar confirmación desde diálogo de validación
+
+**Flujo de uso:**
+1. Usuario clicka en "Confirmar" en un plan en estado "planificando"
+2. Sistema detecta días vacíos y/o participantes sin eventos
+3. Muestra `PlanValidationDialog` con las advertencias
+4. Usuario decide "Volver" para corregir o "Confirmar de todas formas"
+5. Si confirma, muestra diálogo de confirmación normal
+6. Si hay errores críticos, bloquea la confirmación
+
+**Mejoras futuras:**
+- Validación check-in/check-out automatizada
+- Detección automática de tiempo insuficiente entre eventos
+- Sugerencias de optimización de rutas
+
+**Relacionado con:** T107, T113, FLUJO_VALIDACION.md
+
+---
+
+## T123 - Sistema de Grupos de Participantes
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Sistema para crear grupos reutilizables de participantes (Familia, Amigos, Compañeros) que puedan ser invitados colectivamente a planes.
+
+**Criterios de aceptación:**
+- ✅ Crear, editar y eliminar grupos
+- ✅ Añadir/eliminar miembros de grupos (por userId o email)
+- ✅ Invitar grupo completo a un plan
+- ✅ Ver grupos guardados del usuario
+- ✅ Persistencia en Firestore
+- ✅ Firestore rules para seguridad
+
+**Implementación técnica:**
+- ✅ Modelo `ParticipantGroup` con campos: `id`, `userId`, `name`, `description`, `icon`, `color`, `memberUserIds`, `memberEmails`, `createdAt`, `updatedAt`
+- ✅ `ParticipantGroupService` con métodos CRUD completos:
+  - `getUserGroups()`: Stream de grupos de un usuario
+  - `getGroup()`: Obtener grupo por ID
+  - `createGroup()`: Crear nuevo grupo con validación
+  - `updateGroup()`: Actualizar grupo existente
+  - `deleteGroup()`: Eliminar grupo
+  - `addUserToGroup()` / `removeUserFromGroup()`: Gestionar usuarios por ID
+  - `addEmailToGroup()` / `removeEmailFromGroup()`: Gestionar emails
+- ✅ Providers Riverpod:
+  - `participantGroupServiceProvider`: Provider del servicio
+  - `userGroupsStreamProvider`: Stream de grupos del usuario
+  - `userGroupsProvider`: Future provider de grupos
+  - `groupByIdProvider`: Provider para obtener grupo por ID
+- ✅ UI completa:
+  - `ParticipantGroupsPage`: Página principal para gestionar grupos
+  - `GroupEditDialog`: Diálogo para crear/editar grupos con gestión de miembros
+  - `InviteGroupDialog`: Diálogo para seleccionar y invitar un grupo completo a un plan
+- ✅ Integración en `PlanParticipantsPage`: Botón "Invitar grupo" que abre el diálogo de selección
+- ✅ Firestore rules: Reglas de seguridad completas para `participant_groups` con validación de estructura
+
+**Archivos creados:**
+- ✅ `lib/features/calendar/domain/models/participant_group.dart` - Modelo de datos
+- ✅ `lib/features/calendar/domain/services/participant_group_service.dart` - Servicio de gestión
+- ✅ `lib/features/calendar/presentation/providers/participant_group_providers.dart` - Providers Riverpod
+- ✅ `lib/pages/pg_participant_groups_page.dart` - Página principal de gestión
+- ✅ `lib/widgets/dialogs/group_edit_dialog.dart` - Diálogo crear/editar grupos
+- ✅ `lib/widgets/dialogs/invite_group_dialog.dart` - Diálogo invitar grupo completo
+
+**Archivos modificados:**
+- ✅ `lib/pages/pg_plan_participants_page.dart` - Añadido botón "Invitar grupo"
+- ✅ `firestore.rules` - Reglas para `participant_groups` con validación completa
+
+**Resultado:**
+Sistema funcional de grupos de participantes. Los usuarios pueden crear grupos personalizados (por ejemplo, "Familia Ramos", "Amigos Universidad") con miembros identificados por userId o email. Los grupos pueden ser invitados colectivamente a planes, facilitando la gestión de invitaciones repetidas. La UI es intuitiva con diálogos modales para crear/editar grupos y seleccionar grupos para invitar.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Importar desde contactos del dispositivo
+- ⚠️ Auto-sugerir grupos según historial de planes anteriores
+- ⚠️ Navegación directa a página de grupos desde perfil/settings
+- ⚠️ Búsqueda y filtrado de grupos
+- ⚠️ Compartir grupos entre usuarios (futuro)
+
+---
+
+## T112 - Indicador de Días Restantes del Plan
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Contador que muestra cuántos días faltan para el inicio del plan (mientras está en estado "Confirmado").
+
+**Criterios de aceptación:**
+- ✅ Cálculo correcto de días restantes
+- ✅ Actualización automática cada minuto (para cambios de día)
+- ✅ Badge visual en UI
+- ✅ Solo visible cuando el plan está en estado "confirmado"
+- ✅ Badge "Inicia pronto" cuando quedan <7 días
+- ✅ Integración en múltiples vistas (tarjetas, pantalla de datos, dashboard)
+
+**Implementación técnica:**
+- ✅ Utilidad `DaysRemainingUtils` con métodos:
+  - `calculateDaysRemaining()`: Calcula días hasta inicio
+  - `calculateDaysPassed()`: Calcula días pasados desde inicio (opcional)
+  - `shouldShowDaysRemaining()`: Verifica si debe mostrarse (solo estado "confirmado")
+  - `shouldShowStartingSoon()`: Verifica si debe mostrar badge "Inicia pronto" (<7 días)
+  - `getDaysRemainingText()`: Formatea el texto según días restantes
+- ✅ Widget `DaysRemainingIndicator` (StatefulWidget):
+  - Versión compacta y versión completa
+  - Timer periódico que actualiza cada minuto para reflejar cambios de día
+  - Badge visual "Inicia pronto" cuando quedan <7 días
+  - Colores diferenciados según días restantes (normal, advertencia, hoy)
+  - Solo visible para planes en estado "confirmado"
+- ✅ Integración en:
+  - `PlanCardWidget`: Versión compacta en tarjetas de plan
+  - `wd_plan_data_screen`: Versión completa en pantalla de información
+  - `pg_dashboard_page` (W6): Versión compacta en dashboard
+
+**Archivos creados:**
+- ✅ `lib/shared/utils/days_remaining_utils.dart` - Utilidades de cálculo
+- ✅ `lib/widgets/plan/days_remaining_indicator.dart` - Widget del indicador
+
+**Archivos modificados:**
+- ✅ `lib/widgets/plan/wd_plan_card_widget.dart` - Integración en tarjetas
+- ✅ `lib/widgets/screens/wd_plan_data_screen.dart` - Integración en pantalla de datos
+- ✅ `lib/pages/pg_dashboard_page.dart` - Integración en dashboard
+
+**Resultado:**
+Sistema funcional de indicador de días restantes. Los usuarios pueden ver rápidamente cuántos días faltan para el inicio de un plan confirmado. El indicador se actualiza automáticamente cada minuto y muestra un badge especial "Inicia pronto" cuando quedan menos de 7 días. La integración es consistente en todas las vistas donde se muestra información del plan.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Notificación push cuando quedan 1 día (requiere T110 - Sistema de Alarmas)
+- ⚠️ Opcionalmente mostrar días pasados después del inicio
+
+---
+
+## T47 - EventDialog: Selector de participantes
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación del selector de participantes en EventDialog con opción "para todos" y selección multi-participante.
+
+**Criterios de aceptación:**
+- ✅ Checkbox principal "Este evento es para todos los participantes del plan"
+- ✅ Por defecto marcado (true) para eventos nuevos
+- ✅ Al marcar: oculta lista de participantes, establece `isForAllParticipants = true`
+- ✅ Al desmarcar: muestra lista de participantes del plan
+- ✅ Lista de participantes con checkboxes individuales
+- ✅ Indicación de rol: "(Organizador)" o "(Participante)"
+- ✅ El creador del evento aparece pre-seleccionado y deshabilitado (siempre incluido)
+- ✅ Validación: Al menos 1 participante debe estar seleccionado si no está marcado "para todos"
+- ✅ Guardar evento: Maneja correctamente `isForAllParticipants` y `participantIds`
+- ✅ Editar evento existente: Carga estado correctamente desde `event.commonPart`
+
+**Implementación técnica:**
+- ✅ Variable de estado `_isForAllParticipants` para controlar checkbox principal
+- ✅ `CheckboxListTile` principal con subtítulo descriptivo
+- ✅ Lista condicional de participantes solo visible cuando checkbox principal está desmarcado
+- ✅ `CheckboxListTile` para cada participante con indicador visual del creador
+- ✅ Validación en `_saveEvent()` antes de guardar
+- ✅ Inicialización correcta desde `EventCommonPart` al editar evento existente
+- ✅ Uso de `planRealParticipantsProvider` para obtener participantes activos (excluye observadores)
+
+**Archivos modificados:**
+- ✅ `lib/widgets/wd_event_dialog.dart` - Implementación completa del selector
+
+**Resultado:**
+Sistema funcional de selección de participantes en eventos. Los organizadores pueden elegir si un evento es para todos los participantes o solo para algunos específicos. El creador del evento siempre está incluido y no puede ser deseleccionado. La interfaz es clara y responsive, con validaciones apropiadas.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Testing exhaustivo con diferentes escenarios de selección
+- ⚠️ Mejoras visuales en la lista de participantes (agrupación, búsqueda)
+
+---
+
+## T50 - Indicadores visuales de participantes en eventos
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación de indicadores visuales en eventos del calendario para mostrar rápidamente si un evento es para todos o para participantes específicos.
+
+**Criterios de aceptación:**
+- ✅ Mostrar icono/badge solo si hay espacio visual suficiente (height > 30px)
+- ✅ Badge muestra:
+  - Si `isForAllParticipants = true` → icono 👥 y texto "Todos"
+  - Si `isForAllParticipants = false` y 1 participante → icono 👤 y texto "Personal"
+  - Si `isForAllParticipants = false` y múltiples participantes → icono 👥 y número "X"
+- ✅ Borde más grueso (2px) para eventos "para todos"
+- ✅ Diseño minimalista y adaptativo según tamaño del evento
+- ✅ Indicadores implementados en todos los métodos de renderizado: `_buildDraggableEvent`, `_buildDraggableEventForNextDay`, `_buildSegmentContainer`
+
+**Implementación técnica:**
+- ✅ Método helper `_getParticipantInfo()` para obtener información de participantes desde `EventCommonPart`
+- ✅ Método helper `_buildParticipantIndicator()` para construir el widget del indicador
+- ✅ Integración en todos los métodos de construcción de eventos
+- ✅ Compatibilidad con eventos antiguos (sin `commonPart`)
+- ✅ Colores y tamaños adaptativos según el evento
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Implementación completa de indicadores
+
+**Resultado:**
+Los eventos ahora muestran indicadores visuales claros sobre para quién está destinado cada evento. Los usuarios pueden identificar rápidamente eventos para todos vs eventos específicos, mejorando la comprensión del calendario. El diseño es minimalista y no sobrecarga visualmente los eventos pequeños.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Tooltip con lista de nombres de participantes al hacer hover (web/desktop) - opcional
+
+---
+
+## T90 - Resaltado de Track Activo/Seleccionado
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación de resaltado visual del track del usuario actual o seleccionado para facilitar la navegación en el calendario.
+
+**Criterios de aceptación:**
+- ✅ Fondo levemente diferente en track activo (opacidad 0.05 para celdas de eventos, 0.2 para header)
+- ✅ Borde más grueso en track seleccionado (1.5px vs 0.5px normal)
+- ✅ Nombre en negrita más prominente (FontWeight.w900 en header del track activo)
+- ✅ Animación suave al cambiar selección (AnimatedContainer con duración de 200ms y curva easeInOut)
+
+**Implementación técnica:**
+- ✅ Identificación del track activo usando `_selectedPerspectiveUserId ?? _currentUserId`
+- ✅ Aplicación del resaltado en:
+  - Headers de participantes (`_buildMiniParticipantHeaders`)
+  - Celdas de eventos (`_buildEventCellWithSubColumns`)
+  - Fila de alojamientos (`_buildAccommodationTracksRow` y `_buildAccommodationTracksWithGrouping`)
+- ✅ Uso de `AnimatedContainer` para transiciones suaves
+- ✅ Método helper `_isActiveTrack()` para determinar si un track es activo
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Implementación completa del resaltado
+
+**Resultado:**
+Los tracks ahora muestran claramente cuál es el track del usuario actual o seleccionado mediante un fondo sutil, borde más grueso, y texto más prominente. Las animaciones suaves mejoran la experiencia visual cuando se cambia de perspectiva o usuario. El resaltado se aplica consistentemente en todas las áreas del calendario (headers, eventos, alojamientos).
+
+**Pendiente (mejoras futuras):**
+- Ninguna mejora pendiente identificada
+
+---
+
+## T89 - Indicadores Visuales de Eventos Multi-Participante
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación de indicadores visuales mejorados para eventos que abarcan múltiples participantes/tracks, facilitando la identificación rápida de eventos multi-participante.
+
+**Criterios de aceptación:**
+- ✅ Gradiente horizontal en eventos multi-track (con opacidad decreciente de izquierda a derecha)
+- ✅ Iconos de participantes mejorados (más prominentes y con icono `Icons.people` para eventos multi-track)
+- ⚠️ Línea conectora entre tracks (cancelada - demasiado compleja con la arquitectura actual de renderizado)
+- ✅ Tooltip con lista de participantes (muestra nombres de todos los participantes al hacer hover sobre el indicador)
+
+**Implementación técnica:**
+- ✅ Detección de eventos multi-participante mediante `_getConsecutiveTrackGroupsForEvent()` y verificación de `group.length > 1`
+- ✅ Gradiente aplicado en `_buildSegmentContainer()` y `_buildDraggableEvent()` usando `LinearGradient` con 3 paradas de color
+- ✅ Borde más grueso (2px vs 1px) para eventos multi-participante
+- ✅ Iconos mejorados en `_buildParticipantIndicator()` con tamaño y peso aumentados para eventos multi-track
+- ✅ Tooltip implementado usando widget `Tooltip` de Flutter con mensaje construido dinámicamente desde nombres de tracks
+- ✅ Aplicación consistente en todos los métodos de renderizado: `_buildDraggableSegment`, `_buildDraggableEvent`, `_buildDraggableEventForNextDay`, `_buildSegmentWidget`
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Implementación completa de indicadores visuales
+
+**Resultado:**
+Los eventos multi-participante ahora se identifican fácilmente mediante un gradiente horizontal sutil, iconos más prominentes, bordes más gruesos, y tooltips informativos. El gradiente ayuda a distinguir visualmente eventos que abarcan múltiples tracks consecutivos, mientras que los tooltips proporcionan información detallada sobre qué participantes están involucrados en cada evento.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Línea conectora visual entre tracks (requeriría rediseño significativo de la arquitectura de renderizado)
+- ⚠️ Animaciones adicionales al hover sobre eventos multi-participante
+
+---
+
+## T91 - Mejorar colores de eventos
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementación de paleta de colores mejorada para eventos con mejor contraste, accesibilidad y legibilidad.
+
+**Criterios de aceptación:**
+- ✅ Revisar y optimizar colores de eventos existentes
+- ✅ Crear paleta de colores consistente y accesible (WCAG AA cumplido)
+- ✅ Mejorar contraste para mejor legibilidad (mínimo 4.5:1)
+- ✅ Aplicar colores diferenciados por tipo de evento
+- ✅ Sistema automático de selección de color de texto basado en luminosidad
+- ✅ Colores personalizados mejorados
+- ✅ Documentación completa de la paleta
+
+**Mejoras implementadas:**
+
+### Paleta de Colores Optimizada
+- **Desplazamiento/Transporte**: `#1976D2` (azul medio oscuro) - contraste 4.8:1
+- **Alojamiento**: `#388E3C` (verde medio oscuro) - contraste 4.7:1
+- **Actividad**: `#F57C00` (naranja oscuro vibrante) - contraste 4.6:1
+- **Restauración**: `#D32F2F` (rojo medio oscuro) - contraste 4.9:1
+- **Otro/Default**: `#7B1FA2` (púrpura medio oscuro) - contraste 4.8:1
+
+### Colores de Borrador Mejorados
+- Versiones más claras y apagadas que mantienen el matiz del color original
+- Mejor distinción visual entre borradores y eventos confirmados
+- Texto gris oscuro (`#424242`) para mejor legibilidad en fondos claros
+
+### Sistema de Contraste Automático
+- Cálculo automático de luminosidad del fondo usando `computeLuminance()`
+- Selección automática de texto blanco (`#FFFFFF`) o casi negro (`#212121`) según luminosidad
+- Cumple con estándares WCAG AA (ratio mínimo 4.5:1)
+
+### Colores Personalizados Mejorados
+- 13 colores disponibles con mejor contraste
+- Amarillo y Ámbar optimizados para mejor legibilidad
+- Nuevos colores: Cyan, Lime, Amber añadidos
+
+**Archivos modificados:**
+- ✅ `lib/shared/utils/color_utils.dart` - Implementación completa de paleta mejorada y sistema de contraste
+- ✅ `docs/design/EVENT_COLOR_PALETTE.md` - Documentación completa de la paleta de colores
+
+**Resultado:**
+Los eventos ahora tienen una paleta de colores más accesible y legible, cumpliendo con estándares WCAG AA. El sistema automático de selección de color de texto asegura que el texto sea siempre legible independientemente del color de fondo elegido. Los borradores son claramente distinguibles de los eventos confirmados manteniendo coherencia visual.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Testing de accesibilidad con usuarios reales con diferentes tipos de visión
+- ⚠️ Posible añadir modo oscuro con paleta de colores adaptada
+
+---
+
 ## T68 - Modelo ParticipantTrack
 **Estado:** ✅ Completado  
 **Fecha de finalización:** 21 de octubre de 2025  
@@ -2206,4 +2732,99 @@ Sistema base funcional de confirmación de eventos. Los organizadores pueden mar
 - ⚠️ Notificaciones push cuando se requiere confirmación (requiere FCM)
 - ⚠️ Notificaciones cuando alguien confirma o declina asistencia
 - ⚠️ Testing exhaustivo con diferentes escenarios
+
+---
+
+## T153 - Sistema Multi-moneda para Planes
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Sistema multi-moneda para planes con formateo automático y calculadora de tipos de cambio integrada en campos de monto.
+
+**Criterios de aceptación cumplidos:**
+- ✅ Plan puede tener moneda configurada (EUR, USD, GBP, JPY como mínimo)
+- ✅ Todos los montos se formatean correctamente según la moneda del plan
+- ✅ UI muestra símbolo y formato correcto de moneda
+- ✅ Calculadora automática funciona con tipos de cambio desde Firestore
+- ✅ Cache de tipos de cambio funciona correctamente
+- ✅ Migración de datos existentes no rompe funcionalidad (default EUR)
+- ✅ Disclaimer visible en todas las conversiones
+
+**Implementación técnica:**
+
+1. ✅ **Modelo Currency**
+   - Modelo con código ISO, símbolo, nombre, decimales, locale
+   - Monedas predefinidas: EUR, USD, GBP, JPY
+   - Métodos para obtener moneda por código con fallback a EUR
+
+2. ✅ **Integración en Plan**
+   - Campo `currency` añadido al modelo Plan (default: 'EUR')
+   - Migración automática: planes sin moneda usan EUR
+   - Actualizado `fromFirestore`, `toFirestore`, `copyWith`
+
+3. ✅ **CurrencyFormatterService**
+   - `formatAmount()` - Formatear con símbolo según moneda
+   - `formatAmountWithoutSymbol()` - Solo número formateado
+   - `getSymbol()` - Obtener símbolo de moneda
+   - Soporte para decimales según moneda (0 para JPY, 2 para EUR/USD/GBP)
+
+4. ✅ **ExchangeRateService**
+   - Lee tipos de cambio desde Firestore (colección `exchange_rates`)
+   - Estructura: baseCurrency (EUR) + rates (USD, GBP, JPY)
+   - `getExchangeRate()` - Calcula tasa entre dos monedas
+   - `convertAmount()` - Convierte monto entre monedas
+   - Cache en memoria (válido hasta cierre de app)
+   - Manejo de casos: misma moneda (1:1), conversión directa, conversión inversa
+
+5. ✅ **UI con Conversión Automática**
+   - **EventDialog**: Selector de moneda + campo coste con conversión automática
+   - **AccommodationDialog**: Selector de moneda + campo coste con conversión automática
+   - **PaymentDialog**: Selector de moneda + campo monto con conversión automática
+   - Conversión mostrada en tiempo real cuando moneda local ≠ moneda del plan
+   - Disclaimer visible: "Los tipos de cambio son orientativos..."
+
+6. ✅ **Actualización de UI de Visualización**
+   - **PlanStatsPage**: Todos los montos formateados según moneda del plan
+   - **PaymentSummaryPage**: Balances, pagos y sugerencias formateados correctamente
+   - Reemplazados todos los `'€'` hardcodeados por `CurrencyFormatterService`
+
+7. ✅ **Selector de Moneda**
+   - Añadido en diálogo de creación de plan
+   - Dropdown con monedas soportadas (EUR, USD, GBP, JPY)
+   - Default: EUR
+
+8. ✅ **Estructura Firestore**
+   - Colección `exchange_rates` con documento `current`
+   - Estructura: baseCurrency + rates (map)
+   - Reglas Firestore: lectura autenticada, escritura autenticada
+
+9. ✅ **Botón Temporal de Inicialización**
+   - Botón en dashboard (modo debug) para inicializar tipos de cambio
+   - Crea documento en Firestore con valores aproximados iniciales
+
+**Archivos creados:**
+- ✅ `lib/shared/models/currency.dart` - Modelo Currency
+- ✅ `lib/shared/services/currency_formatter_service.dart` - Servicio de formateo
+- ✅ `lib/shared/services/exchange_rate_service.dart` - Servicio de tipos de cambio
+- ✅ `scripts/init_exchange_rates.md` - Documentación para inicializar tipos de cambio
+
+**Archivos modificados:**
+- ✅ `lib/features/calendar/domain/models/plan.dart` - Campo currency
+- ✅ `lib/widgets/wd_event_dialog.dart` - Campo coste con conversión
+- ✅ `lib/widgets/wd_accommodation_dialog.dart` - Campo coste con conversión
+- ✅ `lib/widgets/dialogs/payment_dialog.dart` - Campo monto con conversión
+- ✅ `lib/features/stats/presentation/pages/plan_stats_page.dart` - Formateo de moneda
+- ✅ `lib/features/payments/presentation/pages/payment_summary_page.dart` - Formateo de moneda
+- ✅ `lib/pages/pg_dashboard_page.dart` - Selector de moneda + botón temporal
+- ✅ `firestore.rules` - Reglas para exchange_rates
+
+**Resultado:**
+Sistema completo de multi-moneda implementado. Cada plan tiene su moneda base (EUR, USD, GBP, JPY), y todos los montos se formatean automáticamente según la moneda del plan. Los usuarios pueden introducir costes/pagos en una moneda local diferente, y el sistema calcula automáticamente la conversión a la moneda del plan mostrando el resultado y un disclaimer. Los tipos de cambio se almacenan en Firestore y se pueden actualizar manualmente. El sistema maneja correctamente la migración de planes existentes sin moneda asignando EUR por defecto.
+
+**Pendiente (mejoras futuras):**
+- ⚠️ Actualización automática diaria de tipos de cambio (Firebase Function/cron)
+- ⚠️ UI administrativa para actualizar tipos de cambio manualmente
+- ⚠️ Indicador "Última actualización" de tipos de cambio
+- ⚠️ Selector de moneda en edición de plan (PlanDataScreen)
+- ⚠️ Expansión a más monedas (actualmente solo EUR, USD, GBP, JPY)
+- ⚠️ Testing exhaustivo con diferentes monedas y tipos de cambio
 

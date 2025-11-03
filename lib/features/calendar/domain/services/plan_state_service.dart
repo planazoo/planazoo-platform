@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/utils/plan_validation_utils.dart' as val_utils;
 import '../models/plan.dart';
 import 'plan_service.dart';
 import 'event_service.dart';
@@ -182,8 +183,9 @@ class PlanStateService {
         return ValidationResult(allowed: true);
 
       case 'confirmado':
-        // Planificando → Confirmado: validaciones opcionales
-        // (pueden hacerse más estrictas en el futuro)
+        // Planificando → Confirmado: validaciones básicas
+        // Las validaciones de días vacíos y participantes sin eventos
+        // se muestran en el diálogo antes de confirmar, pero no bloquean
         return ValidationResult(allowed: true);
 
       case 'en_curso':

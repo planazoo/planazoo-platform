@@ -19,6 +19,13 @@ import 'package:unp_calendario/widgets/dialogs/edit_personal_info_dialog.dart';
 import 'package:unp_calendario/widgets/permission_field.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/widgets/event/event_participant_registration_widget.dart';
+import 'package:unp_calendario/shared/utils/plan_range_utils.dart';
+import 'package:unp_calendario/widgets/dialogs/expand_plan_dialog.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
+import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
+import 'package:unp_calendario/shared/models/currency.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -55,10 +62,15 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late String _selectedColor;
   late bool _isDraft;
   late List<String> _selectedParticipantIds;
+  late bool _isForAllParticipants; // Checkbox principal "Para todos"
   late String _selectedTimezone;
   late String _selectedArrivalTimezone;
   late TextEditingController _maxParticipantsController;
   late bool _requiresConfirmation;
+  late TextEditingController _costController; // T101/T153
+  String? _costCurrency; // T153: Moneda local del coste (null = moneda del plan)
+  String? _planCurrency; // T153: Moneda del plan
+  bool _costConverting = false; // T153: Flag para evitar loops en conversión
   bool _canEditGeneral = false;
   bool _isAdmin = false;
   bool _isCreator = false;
@@ -162,11 +174,59 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     // Inicializar requiere confirmación (T120 Fase 2)
     _requiresConfirmation = widget.event?.requiresConfirmation ?? false;
     
-    // Inicializar participantes seleccionados
-    _selectedParticipantIds = widget.event?.commonPart?.participantIds ?? [];
+    // Inicializar coste (T101)
+    _costController = TextEditingController(
+      text: widget.event?.cost?.toString() ?? '',
+    );
+    
+    // Inicializar participantes seleccionados y checkbox "Para todos" (T47)
+    final existingCommonPart = widget.event?.commonPart;
+    _isForAllParticipants = existingCommonPart?.isForAllParticipants ?? true;
+    _selectedParticipantIds = List.from(existingCommonPart?.participantIds ?? []);
+    
+    // Si es un evento existente y no está marcado "para todos" pero no hay participantes,
+    // asegurar que al menos el creador esté seleccionado
+    if (widget.event != null && !_isForAllParticipants && _selectedParticipantIds.isEmpty) {
+      final eventCreatorId = widget.event?.userId;
+      if (eventCreatorId != null) {
+        _selectedParticipantIds.add(eventCreatorId);
+      }
+    }
+    
+    // Si es un evento nuevo, por defecto está marcado "para todos" (no necesitamos seleccionar participantes)
+    
+    // Cargar moneda del plan (T153)
+    if (widget.planId != null) {
+      _loadPlanCurrency();
+    }
     
     // Inicializar permisos del usuario
     _initializePermissions();
+  }
+
+  /// Cargar moneda del plan (T153)
+  Future<void> _loadPlanCurrency() async {
+    if (widget.planId == null) return;
+    
+    try {
+      final planService = ref.read(planServiceProvider);
+      final plan = await planService.getPlanById(widget.planId!);
+      if (plan != null && mounted) {
+        setState(() {
+          _planCurrency = plan.currency;
+          // Si no hay moneda de coste establecida, usar la del plan
+          _costCurrency ??= plan.currency;
+        });
+      }
+    } catch (e) {
+      // Si falla, usar EUR por defecto
+      if (mounted) {
+        setState(() {
+          _planCurrency = 'EUR';
+          _costCurrency ??= 'EUR';
+        });
+      }
+    }
   }
 
   /// Inicializa los permisos del usuario en el plan
@@ -229,6 +289,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _gateController.dispose();
     _notasPersonalesController.dispose();
     _maxParticipantsController.dispose();
+    _costController.dispose(); // T101
     super.dispose();
   }
 
@@ -662,6 +723,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 secondary: const Icon(Icons.assignment_turned_in_outlined),
                 contentPadding: EdgeInsets.zero,
               ),
+            const SizedBox(height: 16),
+            
+            // Coste del evento (T101/T153)
+            if (_planCurrency != null) _buildCostFieldWithCurrency(),
             const SizedBox(height: 16),
             
             // Sección de registro de participantes (T117)
@@ -1287,7 +1352,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
   }
 
-  /// Construye la sección de selección de participantes
+  /// Construye la sección de selección de participantes (T47)
   Widget _buildParticipantsSection() {
     // Si no hay planId, no mostrar selector de participantes
     if (widget.planId == null) {
@@ -1297,6 +1362,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       );
     }
     
+    final currentUser = ref.read(currentUserProvider);
+    final currentUserId = currentUser?.id;
     
     // Obtener participantes reales del plan (excluye observadores)
     final participantsAsync = ref.watch(planRealParticipantsProvider(widget.planId!));
@@ -1313,47 +1380,133 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Participantes',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            // Checkbox principal "Este evento es para todos" (T47)
+            CheckboxListTile(
+              title: const Text(
+                'Este evento es para todos los participantes del plan',
+                style: TextStyle(fontWeight: FontWeight.w500),
               ),
+              subtitle: _isForAllParticipants 
+                  ? const Text('Todos los participantes estarán incluidos automáticamente')
+                  : const Text('Selecciona participantes específicos abajo'),
+              value: _isForAllParticipants,
+              onChanged: (value) {
+                setState(() {
+                  _isForAllParticipants = value ?? true;
+                  // Si se marca "para todos", limpiar selección individual
+                  if (_isForAllParticipants) {
+                    _selectedParticipantIds.clear();
+                  } else {
+                    // Si se desmarca, asegurar que al menos el creador esté seleccionado
+                    if (currentUserId != null && !_selectedParticipantIds.contains(currentUserId)) {
+                      _selectedParticipantIds.add(currentUserId);
+                    }
+                  }
+                });
+              },
+              activeColor: Colors.blue,
+              contentPadding: EdgeInsets.zero,
             ),
+            const SizedBox(height: 8),
+            
+            // Lista de participantes (solo visible si checkbox principal está desmarcado)
+            if (!_isForAllParticipants) ...[
+              const Text(
+                'Seleccionar participantes:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: participations.map((participation) {
+              
+              // Lista de checkboxes de participantes
+              ...participations.map((participation) {
                 final isSelected = _selectedParticipantIds.contains(participation.userId);
+                final isCreator = participation.userId == currentUserId && 
+                                  (widget.event == null || widget.event?.userId == currentUserId);
+                final isEventCreator = widget.event?.userId == participation.userId;
+                
+                // El creador del evento debe estar siempre seleccionado y deshabilitado
+                if (isEventCreator && !isSelected) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() {
+                        if (!_selectedParticipantIds.contains(participation.userId)) {
+                          _selectedParticipantIds.add(participation.userId);
+                        }
+                      });
+                    }
+                  });
+                }
+                
                 return FutureBuilder<String>(
                   future: _getUserDisplayName(participation.userId),
                   builder: (context, snapshot) {
                     final displayName = snapshot.data ?? participation.userId;
-                    return FilterChip(
-                      label: Text(displayName),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedParticipantIds.add(participation.userId);
-                          } else {
-                            _selectedParticipantIds.remove(participation.userId);
-                          }
-                        });
-                      },
-                      selectedColor: Colors.blue.shade100,
-                      checkmarkColor: Colors.blue.shade800,
+                    final roleText = participation.isOrganizer 
+                        ? ' (Organizador)' 
+                        : participation.isParticipant 
+                            ? ' (Participante)'
+                            : '';
+                    final participantName = '$displayName$roleText';
+                    
+                    return CheckboxListTile(
+                      title: Text(participantName),
+                      value: isSelected,
+                      onChanged: (isEventCreator) 
+                          ? null // Deshabilitado si es el creador del evento
+                          : (value) {
+                              setState(() {
+                                if (value == true) {
+                                  if (!_selectedParticipantIds.contains(participation.userId)) {
+                                    _selectedParticipantIds.add(participation.userId);
+                                  }
+                                } else {
+                                  // No permitir deseleccionar si es el único seleccionado
+                                  if (_selectedParticipantIds.length > 1) {
+                                    _selectedParticipantIds.remove(participation.userId);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Debe haber al menos un participante seleccionado'),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                }
+                              });
+                            },
+                      activeColor: Colors.blue,
+                      secondary: isEventCreator 
+                          ? const Icon(Icons.person, color: Colors.orange)
+                          : null,
+                      subtitle: isEventCreator 
+                          ? const Text(
+                              'Creador del evento (siempre incluido)',
+                              style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic),
+                            )
+                          : null,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                     );
                   },
                 );
               }).toList(),
-            ),
-            if (_selectedParticipantIds.isEmpty)
-              const Text(
-                'Selecciona al menos un participante',
-                style: TextStyle(color: Colors.red, fontSize: 12),
-              ),
+              
+              // Mensaje de validación
+              if (_selectedParticipantIds.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    '⚠️ Selecciona al menos un participante',
+                    style: TextStyle(
+                      color: Colors.red.shade700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
           ],
         );
       },
@@ -1370,7 +1523,258 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  void _saveEvent() {
+  /// T153: Construir campo de coste con selector de moneda y conversión automática
+  Widget _buildCostFieldWithCurrency() {
+    final exchangeRateService = ExchangeRateService();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Selector de moneda local
+        Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                value: _costCurrency ?? _planCurrency ?? 'EUR',
+                decoration: InputDecoration(
+                  labelText: 'Moneda del coste',
+                  prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR')),
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                ),
+                items: Currency.supportedCurrencies.map((currency) {
+                  return DropdownMenuItem<String>(
+                    value: currency.code,
+                    child: Text('${currency.code} - ${currency.symbol} ${currency.name}'),
+                  );
+                }).toList(),
+                onChanged: _canEditGeneral ? (value) async {
+                  if (value == null) return;
+                  
+                  setState(() {
+                    _costCurrency = value;
+                  });
+                  
+                  // Convertir automáticamente si hay un monto y la moneda cambió
+                  await _convertCostToPlanCurrency(exchangeRateService);
+                } : null,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        
+        // Campo de coste
+        PermissionField(
+          canEdit: _canEditGeneral,
+          fieldType: 'common',
+          fieldName: 'Coste del evento (opcional)',
+          tooltipText: 'Coste total del evento en ${CurrencyFormatterService.getName(_costCurrency ?? _planCurrency ?? 'EUR')}',
+          icon: _getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'),
+          child: TextFormField(
+            controller: _costController,
+            enabled: _canEditGeneral,
+            decoration: InputDecoration(
+              labelText: 'Coste del evento (opcional)',
+              hintText: 'Ej: 150.50',
+              prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR')),
+              border: const OutlineInputBorder(),
+            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: _canEditGeneral ? (value) {
+              // Convertir automáticamente cuando cambia el monto (sin await para no bloquear)
+              _convertCostToPlanCurrency(exchangeRateService);
+            } : null,
+            validator: (value) {
+              if (!_canEditGeneral) return null;
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return null; // Opcional
+              final doubleValue = double.tryParse(v.replaceAll(',', '.'));
+              if (doubleValue == null) return 'Debe ser un número válido';
+              if (doubleValue < 0) return 'No puede ser negativo';
+              if (doubleValue > 1000000) return 'Máximo 1.000.000';
+              return null;
+            },
+          ),
+        ),
+        
+        // Mostrar conversión si la moneda local es diferente a la del plan
+        if (_costCurrency != null && 
+            _planCurrency != null && 
+            _costCurrency != _planCurrency &&
+            _costController.text.trim().isNotEmpty) ...[
+          const SizedBox(height: 8),
+          FutureBuilder<double?>(
+            future: exchangeRateService.convertAmount(
+              double.tryParse(_costController.text.replaceAll(',', '.')) ?? 0.0,
+              _costCurrency!,
+              _planCurrency!,
+            ),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                      SizedBox(width: 8),
+                      Text('Calculando...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+              
+              if (snapshot.hasData && snapshot.data != null) {
+                final convertedAmount = snapshot.data!;
+                return Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Convertido a ${_planCurrency}:',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        CurrencyFormatterService.formatAmount(convertedAmount, _planCurrency!),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '⚠️ Los tipos de cambio son orientativos. El valor real será el aplicado por tu banco o tarjeta de crédito al momento del pago.',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey.shade700,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    'No se pudo calcular la conversión',
+                    style: TextStyle(fontSize: 11, color: Colors.orange.shade700),
+                  ),
+                );
+              }
+              
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// T153: Obtener icono según moneda
+  IconData _getCurrencyIcon(String currencyCode) {
+    switch (currencyCode.toUpperCase()) {
+      case 'EUR':
+        return Icons.euro;
+      case 'USD':
+        return Icons.attach_money;
+      case 'GBP':
+        return Icons.currency_pound;
+      case 'JPY':
+        return Icons.currency_yen;
+      default:
+        return Icons.money;
+    }
+  }
+
+  /// T153: Obtener coste convertido a la moneda del plan
+  Future<double?> _getConvertedCost() async {
+    if (_costController.text.trim().isEmpty) return null;
+    
+    final localAmount = double.tryParse(_costController.text.replaceAll(',', '.'));
+    if (localAmount == null) return null;
+    
+    // Si no hay monedas definidas o son iguales, retornar el monto tal cual
+    if (_costCurrency == null || _planCurrency == null) {
+      return localAmount;
+    }
+    
+    if (_costCurrency == _planCurrency) {
+      return localAmount;
+    }
+    
+    // Convertir a moneda del plan
+    final exchangeRateService = ExchangeRateService();
+    try {
+      final convertedAmount = await exchangeRateService.convertAmount(
+        localAmount,
+        _costCurrency!,
+        _planCurrency!,
+      );
+      return convertedAmount;
+    } catch (e) {
+      // Si falla la conversión, retornar el monto original
+      return localAmount;
+    }
+  }
+
+  /// T153: Convertir coste a moneda del plan automáticamente
+  Future<void> _convertCostToPlanCurrency(ExchangeRateService exchangeRateService) async {
+    if (_costConverting) return; // Evitar loops
+    if (_costCurrency == null || _planCurrency == null) return;
+    if (_costCurrency == _planCurrency) return; // Misma moneda, no convertir
+    if (_costController.text.trim().isEmpty) return;
+    
+    final localAmount = double.tryParse(_costController.text.replaceAll(',', '.'));
+    if (localAmount == null) return;
+    
+    setState(() {
+      _costConverting = true;
+    });
+    
+    try {
+      final convertedAmount = await exchangeRateService.convertAmount(
+        localAmount,
+        _costCurrency!,
+        _planCurrency!,
+      );
+      
+      // El coste se guardará en la moneda del plan
+      // Solo mostramos la conversión, pero no actualizamos el campo
+      // El campo muestra el monto en la moneda local
+    } catch (e) {
+      // Error silencioso, se mostrará en el FutureBuilder
+    } finally {
+      if (mounted) {
+        setState(() {
+          _costConverting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveEvent() async {
     // Validación de formulario (campos con validator)
     if (!_formKey.currentState!.validate()) {
       return;
@@ -1396,7 +1800,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return;
     }
 
-    if (_selectedParticipantIds.isEmpty) {
+    // Validación de participantes (T47)
+    // Si no está marcado "para todos", debe haber al menos un participante seleccionado
+    if (!_isForAllParticipants && _selectedParticipantIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Debes seleccionar al menos un participante'),
@@ -1426,7 +1832,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser?.id ?? '';
 
-    // Construir EventCommonPart
+    // Construir EventCommonPart (T47)
     final commonPart = EventCommonPart(
       description: Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000),
       date: _selectedDate,
@@ -1437,7 +1843,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       family: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       subtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
       isDraft: _isDraft,
-      participantIds: _selectedParticipantIds,
+      // Si está marcado "para todos", participantIds debe estar vacío
+      // Si no, debe contener los IDs seleccionados
+      participantIds: _isForAllParticipants ? [] : _selectedParticipantIds,
+      isForAllParticipants: _isForAllParticipants,
     );
 
     // Construir EventPersonalPart para el usuario actual
@@ -1479,12 +1888,73 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           ? null 
           : int.tryParse(_maxParticipantsController.text.trim()),
       requiresConfirmation: _requiresConfirmation,
+      cost: await _getConvertedCost(), // T153: Coste convertido a moneda del plan
       createdAt: widget.event?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
       commonPart: commonPart,
       personalParts: personalParts,
     );
 
+    // T107: Detectar si el evento se extiende fuera del rango del plan
+    if (widget.planId != null && !_isDraft) {
+      final planService = ref.read(planServiceProvider);
+      final plan = await planService.getPlanById(widget.planId!);
+      
+      if (plan != null) {
+        final expansionInfo = PlanRangeUtils.detectEventOutsideRange(event, plan);
+        
+        if (expansionInfo != null) {
+          // Mostrar diálogo de confirmación
+          final shouldExpand = await showDialog<bool>(
+            context: context,
+            builder: (context) => ExpandPlanDialog(
+              plan: plan,
+              expansionInfo: expansionInfo,
+            ),
+          );
+          
+          if (shouldExpand == true) {
+            // Expandir el plan
+            final newPlanValues = PlanRangeUtils.calculateExpandedPlanValues(plan, expansionInfo);
+            final success = await planService.expandPlan(
+              plan,
+              newStartDate: newPlanValues['startDate'] as DateTime,
+              newEndDate: newPlanValues['endDate'] as DateTime,
+              newColumnCount: newPlanValues['columnCount'] as int,
+            );
+            
+            if (success && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✅ Plan expandido exitosamente'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            } else if (!success && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('⚠️ Error al expandir el plan'),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          } else {
+            // Usuario canceló la expansión, no guardar el evento
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Evento no guardado. El plan no fue expandido.'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+            return; // No guardar el evento si no se expande el plan
+          }
+        }
+      }
+    }
 
     if (widget.onSaved != null) {
       widget.onSaved!(event);

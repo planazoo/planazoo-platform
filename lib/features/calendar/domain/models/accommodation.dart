@@ -17,6 +17,8 @@ class Accommodation {
   // NUEVO: estructura parte común + parte personal (similar a eventos)
   final AccommodationCommonPart? commonPart;
   final Map<String, AccommodationPersonalPart>? personalParts; // key: participantId
+  // T101: sistema de presupuesto
+  final double? cost; // Coste total del alojamiento (opcional)
 
   const Accommodation({
     this.id,
@@ -33,6 +35,7 @@ class Accommodation {
     required this.updatedAt,
     this.commonPart,
     this.personalParts,
+    this.cost, // null por defecto (sin coste definido)
   });
 
   /// Crear desde un documento de Firestore
@@ -58,6 +61,7 @@ class Accommodation {
       personalParts: data['personalParts'] != null
           ? (data['personalParts'] as Map<String, dynamic>).map((k, v) => MapEntry(k, AccommodationPersonalPart.fromMap(v as Map<String, dynamic>)))
           : null,
+      cost: data['cost'] != null ? (data['cost'] as num).toDouble() : null, // T101
     );
   }
 
@@ -75,6 +79,7 @@ class Accommodation {
       'participantTrackIds': participantTrackIds,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      if (cost != null) 'cost': cost, // T101
     };
     // Escribir estructura nueva si está presente
     if (commonPart != null) {
@@ -102,6 +107,7 @@ class Accommodation {
     DateTime? updatedAt,
     AccommodationCommonPart? commonPart,
     Map<String, AccommodationPersonalPart>? personalParts,
+    double? cost,
   }) {
     return Accommodation(
       id: id ?? this.id,
@@ -118,6 +124,7 @@ class Accommodation {
       updatedAt: updatedAt ?? this.updatedAt,
       commonPart: commonPart ?? this.commonPart,
       personalParts: personalParts ?? this.personalParts,
+      cost: cost ?? this.cost,
     );
   }
 

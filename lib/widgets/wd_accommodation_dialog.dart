@@ -5,6 +5,11 @@ import 'package:unp_calendario/features/calendar/domain/models/plan_participatio
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
+import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
+import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
+import 'package:unp_calendario/shared/models/currency.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 
 class AccommodationDialog extends ConsumerStatefulWidget {
   final Accommodation? accommodation;
@@ -34,6 +39,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _hotelNameController;
   late TextEditingController _descriptionController;
+  late TextEditingController _costController; // T101/T153
+  String? _costCurrency; // T153: Moneda local del coste
+  String? _planCurrency; // T153: Moneda del plan
+  bool _costConverting = false; // T153: Flag para evitar loops
   late DateTime _selectedCheckIn;
   late DateTime _selectedCheckOut;
   late String _selectedColor;
@@ -75,6 +84,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     _descriptionController = TextEditingController(
       text: widget.accommodation?.description ?? '',
     );
+    _costController = TextEditingController(
+      text: widget.accommodation?.cost?.toString() ?? '',
+    );
     
     // Inicializar fechas
     _selectedCheckIn = widget.initialCheckIn ?? widget.accommodation?.checkIn ?? widget.planStartDate;
@@ -87,6 +99,30 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     
     // Inicializar participantes seleccionados
     _selectedParticipantTrackIds = widget.accommodation?.participantTrackIds ?? [];
+    
+    // Cargar moneda del plan (T153)
+    _loadPlanCurrency();
+  }
+  
+  /// Cargar moneda del plan (T153)
+  Future<void> _loadPlanCurrency() async {
+    try {
+      final planService = ref.read(planServiceProvider);
+      final plan = await planService.getPlanById(widget.planId);
+      if (plan != null && mounted) {
+        setState(() {
+          _planCurrency = plan.currency;
+          _costCurrency ??= plan.currency;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _planCurrency = 'EUR';
+          _costCurrency ??= 'EUR';
+        });
+      }
+    }
   }
   
   /// Normaliza el tipo de alojamiento a formato capitalizado
@@ -110,6 +146,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   void dispose() {
     _hotelNameController.dispose();
     _descriptionController.dispose();
+    _costController.dispose(); // T101
     super.dispose();
   }
 
@@ -120,14 +157,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+            children: [
             // Nombre del hotel/alojamiento
-            TextFormField(
-              controller: _hotelNameController,
-              decoration: const InputDecoration(
+              TextFormField(
+                controller: _hotelNameController,
+                decoration: const InputDecoration(
                 labelText: 'Nombre del alojamiento',
                 hintText: 'Hotel, apartamento, etc.',
                 border: OutlineInputBorder(),
@@ -149,7 +186,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
               value: _selectedType,
               decoration: const InputDecoration(
                 labelText: 'Tipo de alojamiento',
-                border: OutlineInputBorder(),
+                  border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.category),
               ),
               items: _accommodationTypes.map((type) {
@@ -163,23 +200,23 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                   _selectedType = value ?? 'Hotel';
                 });
               },
-              validator: (value) {
+                validator: (value) {
                 // Validar que el valor esté en la lista
                 if (value == null || !_accommodationTypes.contains(value)) {
                   return 'Tipo de alojamiento inválido';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
-            // Descripción
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Descripción (opcional)',
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              
+              // Descripción
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción (opcional)',
                 hintText: 'Notas adicionales',
-                border: OutlineInputBorder(),
+                  border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.notes),
               ),
               maxLines: 3,
@@ -192,20 +229,24 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             ),
             const SizedBox(height: 16),
             
+            // Coste del alojamiento (T101/T153)
+            if (_planCurrency != null) _buildCostFieldWithCurrency(),
+              const SizedBox(height: 16),
+              
             // Check-in
-            ListTile(
+              ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.login),
-              title: const Text('Check-in'),
+                title: const Text('Check-in'),
               subtitle: Text('${_selectedCheckIn.day}/${_selectedCheckIn.month}/${_selectedCheckIn.year}'),
               onTap: _selectCheckInDate,
             ),
             
             // Check-out
-            ListTile(
+              ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.logout),
-              title: const Text('Check-out'),
+                title: const Text('Check-out'),
               subtitle: Text('${_selectedCheckOut.day}/${_selectedCheckOut.month}/${_selectedCheckOut.year}'),
               onTap: _selectCheckOutDate,
             ),
@@ -213,23 +254,23 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             const SizedBox(height: 8),
             
             // Duración
-            Container(
+              Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
+                decoration: BoxDecoration(
                 color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
                   const Icon(Icons.nights_stay, size: 20),
                   const SizedBox(width: 8),
-                  Text(
+                    Text(
                     '${_selectedCheckOut.difference(_selectedCheckIn).inDays} noche(s)',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
               ),
-            ),
             
             const SizedBox(height: 16),
             
@@ -269,8 +310,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             
             // Selección de participantes
             _buildParticipantSelection(),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -370,7 +411,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                           label: Text(displayName),
                           selected: isSelected,
                           onSelected: (selected) {
-                            setState(() {
+    setState(() {
                               if (selected) {
                                 _selectedParticipantTrackIds.add(participation.userId);
                               } else {
@@ -406,6 +447,215 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         );
       },
     );
+  }
+
+  /// T153: Construir campo de coste con selector de moneda y conversión automática
+  Widget _buildCostFieldWithCurrency() {
+    final exchangeRateService = ExchangeRateService();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Selector de moneda local
+        DropdownButtonFormField<String>(
+          value: _costCurrency ?? _planCurrency ?? 'EUR',
+          decoration: InputDecoration(
+            labelText: 'Moneda del coste',
+            prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR')),
+            border: const OutlineInputBorder(),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+          ),
+          items: Currency.supportedCurrencies.map((currency) {
+            return DropdownMenuItem<String>(
+              value: currency.code,
+              child: Text('${currency.code} - ${currency.symbol} ${currency.name}'),
+            );
+          }).toList(),
+          onChanged: (value) async {
+            if (value == null) return;
+            setState(() => _costCurrency = value);
+            await _convertCostToPlanCurrency(exchangeRateService);
+          },
+        ),
+        const SizedBox(height: 12),
+        
+        // Campo de coste
+        TextFormField(
+          controller: _costController,
+          decoration: InputDecoration(
+            labelText: 'Coste del alojamiento (opcional)',
+            hintText: 'Ej: 450.00',
+            border: const OutlineInputBorder(),
+            prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR')),
+          ),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          onChanged: (value) async {
+            await _convertCostToPlanCurrency(exchangeRateService);
+          },
+          validator: (value) {
+            final v = value?.trim() ?? '';
+            if (v.isEmpty) return null;
+            final doubleValue = double.tryParse(v.replaceAll(',', '.'));
+            if (doubleValue == null) return 'Debe ser un número válido';
+            if (doubleValue < 0) return 'No puede ser negativo';
+            if (doubleValue > 1000000) return 'Máximo 1.000.000';
+            return null;
+          },
+        ),
+        
+        // Mostrar conversión si la moneda local es diferente a la del plan
+        if (_costCurrency != null && 
+            _planCurrency != null && 
+            _costCurrency != _planCurrency &&
+            _costController.text.trim().isNotEmpty) ...[
+          const SizedBox(height: 8),
+          FutureBuilder<double?>(
+            future: exchangeRateService.convertAmount(
+              double.tryParse(_costController.text.replaceAll(',', '.')) ?? 0.0,
+              _costCurrency!,
+              _planCurrency!,
+            ),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                      SizedBox(width: 8),
+                      Text('Calculando...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                );
+              }
+              
+              if (snapshot.hasData && snapshot.data != null) {
+                final convertedAmount = snapshot.data!;
+                return Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Convertido a ${_planCurrency}:',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        CurrencyFormatterService.formatAmount(convertedAmount, _planCurrency!),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '⚠️ Los tipos de cambio son orientativos. El valor real será el aplicado por tu banco o tarjeta de crédito al momento del pago.',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey.shade700,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+            ),
+          );
+        }
+              
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    'No se pudo calcular la conversión',
+                    style: TextStyle(fontSize: 11, color: Colors.orange.shade700),
+          ),
+        );
+      }
+              
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// T153: Obtener icono según moneda
+  IconData _getCurrencyIcon(String currencyCode) {
+    switch (currencyCode.toUpperCase()) {
+      case 'EUR':
+        return Icons.euro;
+      case 'USD':
+        return Icons.attach_money;
+      case 'GBP':
+        return Icons.currency_pound;
+      case 'JPY':
+        return Icons.currency_yen;
+      default:
+        return Icons.money;
+    }
+  }
+
+  /// T153: Obtener coste convertido a la moneda del plan
+  Future<double?> _getConvertedCost() async {
+    if (_costController.text.trim().isEmpty) return null;
+    
+    final localAmount = double.tryParse(_costController.text.replaceAll(',', '.'));
+    if (localAmount == null) return null;
+    
+    if (_costCurrency == null || _planCurrency == null || _costCurrency == _planCurrency) {
+      return localAmount;
+    }
+    
+    final exchangeRateService = ExchangeRateService();
+    try {
+      return await exchangeRateService.convertAmount(
+        localAmount,
+        _costCurrency!,
+        _planCurrency!,
+      );
+    } catch (e) {
+      return localAmount;
+    }
+  }
+
+  /// T153: Convertir coste a moneda del plan automáticamente
+  Future<void> _convertCostToPlanCurrency(ExchangeRateService exchangeRateService) async {
+    if (_costConverting) return;
+    if (_costCurrency == null || _planCurrency == null || _costCurrency == _planCurrency) return;
+    if (_costController.text.trim().isEmpty) return;
+    
+    final localAmount = double.tryParse(_costController.text.replaceAll(',', '.'));
+    if (localAmount == null) return;
+    
+    setState(() => _costConverting = true);
+    
+    try {
+      await exchangeRateService.convertAmount(localAmount, _costCurrency!, _planCurrency!);
+    } catch (e) {
+      // Error silencioso
+    } finally {
+      if (mounted) {
+        setState(() => _costConverting = false);
+      }
+    }
   }
 
   /// Obtiene el nombre de visualización de un usuario
@@ -449,29 +699,29 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     }
   }
 
-  void _saveAccommodation() {
+  Future<void> _saveAccommodation() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
     // Validar nombre del hotel
     if (_hotelNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
           content: Text('El nombre del alojamiento es obligatorio'),
-          backgroundColor: Colors.red,
-        ),
-      );
+                backgroundColor: Colors.red,
+              ),
+            );
       return;
     }
 
     // Validar fechas
     if (_selectedCheckOut.isBefore(_selectedCheckIn) || _selectedCheckOut.isAtSameMomentAs(_selectedCheckIn)) {
-      ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('La fecha de check-out debe ser posterior al check-in'),
-          backgroundColor: Colors.red,
-        ),
-      );
+              backgroundColor: Colors.red,
+            ),
+          );
       return;
     }
 
@@ -491,6 +741,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       typeFamily: 'alojamiento',
       typeSubtype: normalizedType,
       participantTrackIds: _selectedParticipantTrackIds,
+      cost: await _getConvertedCost(), // T153: Coste convertido a moneda del plan
       createdAt: widget.accommodation?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );

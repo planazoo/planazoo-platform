@@ -2,9 +2,9 @@
 
 > Define todo el ciclo de vida de un plan: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T109 ✅, T107, T118, T122, T131 - Calendarios externos, T133 - Exportación PDF, T144 - Gestión del ciclo de vida, T145 - Álbum digital, T147 - Valoraciones  
-**Versión:** 1.3  
-**Fecha:** Enero 2025 (Actualizado - T109 completado, campos adicionales implementados)
+**Relacionado con:** T109 ✅, T107, T118, T122, T131 - Calendarios externos, T133 - Exportación PDF, T144 - Gestión del ciclo de vida, T145 - Álbum digital, T147 - Valoraciones, T153 ✅  
+**Versión:** 1.4  
+**Fecha:** Enero 2025 (Actualizado - T153 implementado)
 
 ---
 
@@ -103,6 +103,7 @@ Formulario inicial:
 - Imagen del plan (opcional, máx 5MB)
 - Visibilidad: Público/Privado (default: Privado)
 - Timezone: Auto-detectada del organizador (default)
+- Moneda del plan: EUR/USD/GBP/JPY (T153, default: EUR)
   ↓
 Guardar (primer guardado)
   ↓
@@ -115,6 +116,7 @@ Crear Plan en Firestore:
 - imageUrl: URL de imagen
 - visibility: "private" o "public"
 - timezone: Timezone del organizador
+- currency: "EUR" (T153, default EUR, seleccionable: EUR/USD/GBP/JPY)
 - state: "borrador"
 - createdAt: Timestamp
 - updatedAt: Timestamp
@@ -130,7 +132,7 @@ Estado: "Borrador"
   ↓
 Usuario completa configuración:
 - Añadir participantes (T104)
-- Añadir eventos y alojamientos
+- Añadir eventos y alojamientos (con costes en moneda del plan o local) (T101/T153)
 - Configurar presupuesto (T101)
 - Configurar alarmas (T110)
   ↓

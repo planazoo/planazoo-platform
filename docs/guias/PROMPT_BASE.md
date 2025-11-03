@@ -7,6 +7,7 @@
 - `docs/guias/GUIA_UI.md` - Sistema de diseño, componentes y patrones de UI
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones
 - `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice del sistema de planes
+- `docs/configuracion/TESTING_CHECKLIST.md` - Checklist exhaustivo de pruebas (actualizar tras cada tarea)
 
 ## 📋 Metodología de Trabajo
 
@@ -29,6 +30,11 @@
 - **Offline-First**: Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
 - **⚠️ CONSISTENCIA DE UI**: Siempre consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons`. NO crear componentes sin seguir el sistema de diseño. Documentar componentes nuevos en la guía.
 - **Actualización de tareas**: Pedir confirmación antes de actualizar tareas. Usar sistema `TASKS.md` para tracking de progreso y completar tareas. Seguir reglas del documento TASKS.md (numeración, prioridades, estados). Actualizar al completar, crear nuevas tareas o cambiar estado.
+- **Actualización de Testing Checklist**: Tras completar una tarea, actualizar `docs/configuracion/TESTING_CHECKLIST.md`:
+  - Marcar funcionalidades nuevas como probadas (✅) o pendientes (🔄)
+  - Añadir nuevos casos de prueba si aplica
+  - Actualizar casos relacionados afectados
+  - Ver instrucciones detalladas en el propio documento
 - **⚠️ Actualización GIT**: NUNCA hacer `git add/commit/push` sin confirmación explícita del usuario. Pedir confirmación SIEMPRE antes de hacer commits. Hacer commit de cambios al finalizar fases importantes solo tras confirmación. Repositorio: C:\Users\cclaraso\unp_calendario
 - **Ruta Flutter**: Flutter instalado en: C:\Users\cclaraso\Downloads\flutter
 

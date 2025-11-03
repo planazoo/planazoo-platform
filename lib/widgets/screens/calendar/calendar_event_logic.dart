@@ -38,8 +38,24 @@ class CalendarEventLogic {
   }
 
   /// Verifica si un evento debe mostrarse en un track específico
+  /// 
+  /// Un evento se muestra en un track si:
+  /// 1. Es para todos los participantes (isForAllParticipants = true), O
+  /// 2. El participante está en la lista de participantIds (destinatarios originales)
+  /// 
+  /// NOTA: Los usuarios que se apuntan voluntariamente también deberían ver el evento,
+  /// pero esa verificación se hace en el widget usando providers de event_participants.
   static bool shouldShowEventInTrack(Event event, ParticipantTrack track) {
-    return event.commonPart?.participantIds.contains(track.participantId) == true;
+    final commonPart = event.commonPart;
+    if (commonPart == null) return false;
+    
+    // Si es para todos, mostrarlo en todos los tracks
+    if (commonPart.isForAllParticipants == true) {
+      return true;
+    }
+    
+    // Verificar si el participante está en la lista de destinatarios
+    return commonPart.participantIds.contains(track.participantId);
   }
 
   /// Obtiene grupos consecutivos de tracks para un evento

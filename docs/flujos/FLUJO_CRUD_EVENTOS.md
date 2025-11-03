@@ -2,10 +2,10 @@
 
 > Define todo el ciclo de vida de un evento: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T51 - Validación de formularios (✅), T105 (✅ Base), T117 - Registro de participantes por evento (✅ Base), T120 - Confirmación de eventos (✅ Base Fases 1 y 2), T121, T110, T101, T102, T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
+**Relacionado con:** T51 - Validación de formularios (✅), T105 (✅ Base), T117 - Registro de participantes por evento (✅ Base), T120 - Confirmación de eventos (✅ Base Fases 1 y 2), T121, T110, T101 ✅, T102 ✅, T153 ✅, T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
 **Nota:** Los eventos comparten estructura **Parte Común/Parte Personal** similar a los alojamientos (ver FLUJO_CRUD_ALOJAMIENTOS)  
-**Versión:** 1.2  
-**Fecha:** Enero 2025 (Actualizado - Validaciones implementadas)
+**Versión:** 1.3  
+**Fecha:** Enero 2025 (Actualizado - T101, T102, T153 implementados)
 
 ---
 
@@ -113,8 +113,10 @@ Completar campos:
 - Subtipo (Avión/Tren/Restaurante/Museo/etc.)
 - Participantes asignados
 - Ubicación (opcional)
-- Presupuesto si aplica (T101)
-- Coste por persona o total (T101)
+- Presupuesto si aplica (T101/T153):
+  - Moneda local del coste (EUR/USD/GBP/JPY) (T153)
+  - Coste por persona o total (T101)
+  - Conversión automática a moneda del plan si diferente (T153)
   ↓
 Validaciones (T51):
 - Título no vacío
@@ -150,8 +152,9 @@ Notificar a participantes asignados (T105):
 - Incluir detalles del evento
   ↓
 Actualizar presupuesto del plan (T101):
-- Recalcular presupuesto total
+- Recalcular presupuesto total (en moneda del plan)
 - Actualizar coste por persona si aplica
+- Coste guardado en moneda del plan (convertido si necesario) (T153)
   ↓
 Estado: "Pendiente" o "Confirmado" según configuración automática
 ```

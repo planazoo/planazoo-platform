@@ -594,12 +594,14 @@ graph TD
   - ⚠️ Notificaciones cuando alguien se apunta (pendiente)
 
 **Lo que falta (PENDIENTE):**
-- ⚠️ Invitaciones por email completas (T104):
+- ✅ Invitaciones por email completas (T104) - COMPLETADO:
   - ✅ Validación de email y rate limiting implementados
-  - ❌ Búsqueda de usuario por email para obtener ID real
-  - ❌ Generación de link único con token
-  - ❌ Email HTML con botones "Aceptar" / "Rechazar"
-  - ❌ Expiración de link (7 días)
+  - ✅ Búsqueda de usuario por email para obtener ID real
+  - ✅ Generación de link único con token
+  - ✅ Email HTML con botones "Aceptar" / "Rechazar" (Firebase Functions + SendGrid)
+  - ✅ Expiración de link (7 días)
+  - ✅ Página InvitationPage para procesar links
+  - ⚠️ Pendiente: Configurar SendGrid API key y desplegar Functions
 - ❌ Invitaciones por username/nickname (T104)
 - ❌ Grupos de participantes (T123)
 - ✅ Sistema de confirmación de asistencia - Base (T120 Fase 1):

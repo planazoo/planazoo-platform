@@ -2,9 +2,9 @@
 
 > Define todo el ciclo de vida de un alojamiento: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T51 - Validación de formularios (✅), T101, T102, T105, T110, T120, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
-**Versión:** 1.2  
-**Fecha:** Enero 2025 (Actualizado - Validaciones implementadas)
+**Relacionado con:** T51 - Validación de formularios (✅), T101 ✅, T102 ✅, T153 ✅, T105, T110, T120, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
+**Versión:** 1.3  
+**Fecha:** Enero 2025 (Actualizado - T101, T102, T153 implementados)
 
 ---
 
@@ -119,8 +119,10 @@ Completar campos:
 - Servicios/amenities (opcional)
 - Capacidad máxima (opcional)
 - Color (opcional, para visualización)
-- Presupuesto (T101)
-- Coste total o por persona (T101)
+- Presupuesto (T101/T153):
+  - Moneda local del coste (EUR/USD/GBP/JPY) (T153)
+  - Coste total o por persona (T101)
+  - Conversión automática a moneda del plan si diferente (T153)
   ↓
 Si hay múltiples participantes:
 - ¿Seleccionar habitaciones individuales? [Checkbox]
@@ -170,8 +172,9 @@ Notificar a participantes asignados (T105):
 - Incluir detalles del alojamiento (check-in/check-out)
   ↓
 Actualizar presupuesto del plan (T101):
-- Recalcular presupuesto total
+- Recalcular presupuesto total (en moneda del plan)
 - Actualizar coste por persona si aplica
+- Coste guardado en moneda del plan (convertido si necesario) (T153)
   ↓
 Estado: "Reservado" o "Borrador" según configuración automática
 ```

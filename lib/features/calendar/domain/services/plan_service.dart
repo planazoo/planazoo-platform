@@ -4,11 +4,13 @@ import '../../../../features/security/services/rate_limiter_service.dart';
 import '../models/plan.dart';
 import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
+import 'invitation_service.dart';
 
 class PlanService {
   static const String _collectionName = 'plans';
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PlanParticipationService _participationService = PlanParticipationService();
+  final InvitationService _invitationService = InvitationService();
 
   // Obtener todos los planes
   Stream<List<Plan>> getPlans() {
@@ -181,6 +183,59 @@ class PlanService {
     }
   }
 
+  /// T107: Expandir un plan para incluir nuevas fechas
+  /// Actualiza baseDate, startDate, endDate y columnCount del plan
+  Future<bool> expandPlan(Plan plan, {
+    required DateTime newStartDate,
+    required DateTime newEndDate,
+    required int newColumnCount,
+  }) async {
+    if (plan.id == null) return false;
+    
+    try {
+      // Calcular nuevo baseDate (siempre será el startDate)
+      final newBaseDate = DateTime(
+        newStartDate.year,
+        newStartDate.month,
+        newStartDate.day,
+      );
+      
+      final newStart = DateTime(
+        newStartDate.year,
+        newStartDate.month,
+        newStartDate.day,
+      );
+      
+      final newEnd = DateTime(
+        newEndDate.year,
+        newEndDate.month,
+        newEndDate.day,
+      );
+
+      final expandedPlan = plan.copyWith(
+        baseDate: newBaseDate,
+        startDate: newStart,
+        endDate: newEnd,
+        columnCount: newColumnCount,
+        updatedAt: DateTime.now(),
+      );
+
+      final success = await updatePlan(expandedPlan);
+      
+      if (success) {
+        LoggerService.database(
+          'Plan expanded: ${plan.id} to ${newColumnCount} days',
+          operation: 'UPDATE',
+        );
+      }
+      
+      return success;
+    } catch (e) {
+      LoggerService.error('Error expanding plan: ${plan.id}', context: 'PLAN_SERVICE', error: e);
+      return false;
+    }
+  }
+
   // Eliminar un plan
   Future<bool> deletePlan(String id) async {
     try {
@@ -294,22 +349,48 @@ class PlanService {
   // ===== MÉTODOS DE PARTICIPACIÓN =====
 
   // Invitar usuario a un plan
-  Future<bool> inviteUserToPlan(String planId, String userId, {String? invitedBy}) async {
+  /// Invitar usuario a un plan
+  /// 
+  /// Si `userIdOrEmail` parece un email (contiene '@'), usa InvitationService.
+  /// Si no, usa el ID directamente para crear participación.
+  Future<bool> inviteUserToPlan(String planId, String userIdOrEmail, {String? invitedBy, String role = 'participant', String? customMessage}) async {
     try {
-      final participationId = await _participationService.createParticipation(
-        planId: planId,
-        userId: userId,
-        role: 'participant',
-        invitedBy: invitedBy,
-      );
+      // Detectar si es un email o un ID de usuario
+      final isEmail = userIdOrEmail.contains('@');
       
-      if (participationId != null) {
-        LoggerService.database('User $userId invited to plan $planId', operation: 'CREATE');
-        return true;
+      if (isEmail) {
+        // Es un email: usar InvitationService (T104)
+        final invitationId = await _invitationService.createInvitation(
+          planId: planId,
+          email: userIdOrEmail,
+          invitedBy: invitedBy,
+          role: role,
+          customMessage: customMessage,
+        );
+        
+        if (invitationId != null) {
+          LoggerService.database('Invitation created for email $userIdOrEmail to plan $planId', operation: 'CREATE');
+          // TODO: Enviar email con link (T104)
+          return true;
+        }
+        return false;
+      } else {
+        // Es un ID de usuario: crear participación directamente
+        final participationId = await _participationService.createParticipation(
+          planId: planId,
+          userId: userIdOrEmail,
+          role: role,
+          invitedBy: invitedBy,
+        );
+        
+        if (participationId != null) {
+          LoggerService.database('User $userIdOrEmail invited to plan $planId', operation: 'CREATE');
+          return true;
+        }
+        return false;
       }
-      return false;
     } catch (e) {
-      LoggerService.error('Error inviting user to plan: $planId, $userId', 
+      LoggerService.error('Error inviting user to plan: $planId, $userIdOrEmail', 
           context: 'PLAN_SERVICE', error: e);
       return false;
     }

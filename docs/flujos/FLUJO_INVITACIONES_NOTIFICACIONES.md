@@ -468,15 +468,20 @@ graph TD
   - ✅ Firestore rules y providers Riverpod
 
 **Lo que falta:**
-- ⚠️ Sistema de invitaciones por email/usuario (Base completada - T120 Fase 1):
+- ✅ Sistema de invitaciones por email/usuario - COMPLETADO (T104):
+  - ✅ Modelo PlanInvitation con token único y expiración (7 días)
+  - ✅ InvitationService para gestionar invitaciones
+  - ✅ Búsqueda de usuario por email (si existe, crea participación directa)
+  - ✅ Generación de links únicos con token
+  - ✅ Página InvitationPage para procesar links (/invitation/{token})
+  - ✅ Email HTML con botones "Aceptar" / "Rechazar" (Firebase Functions + SendGrid)
+  - ✅ Template HTML responsive con información del plan
+  - ✅ Firestore rules para planInvitations
   - ✅ Campo status en PlanParticipation (pending, accepted, rejected, expired)
   - ✅ Métodos acceptInvitation y rejectInvitation en servicio
   - ✅ UI diálogo para aceptar/rechazar invitaciones (InvitationResponseDialog)
   - ✅ Integración en CalendarScreen para detectar invitaciones pendientes
-  - ✅ Firestore rules para validar campo status
-  - ❌ Generación de links de invitación con token
-  - ❌ Email HTML con botones "Aceptar" / "Rechazar"
-  - ❌ Búsqueda de usuario por email para obtener ID real
+  - ⚠️ Pendiente: Invitaciones por username/nickname (T104 - parte opcional)
 - ❌ Notificaciones push (Firebase Cloud Messaging) - Pendiente FCM
 - ❌ Historial de notificaciones
 - ✅ Sistema de confirmación de asistencia a eventos - Base (T120 Fase 2):

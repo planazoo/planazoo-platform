@@ -11,6 +11,11 @@ import 'package:unp_calendario/shared/services/logger_service.dart';
 
 /// Widget para mostrar el botón de apuntarse/cancelar y la lista de participantes
 class EventParticipantRegistrationWidget extends ConsumerWidget {
+  // Helper para obtener una versión más oscura de un color
+  static Color _getDarkerColor(Color color) {
+    // Reducir el brillo en un 30% para simular shade700
+    return Color.lerp(color, Colors.black, 0.3) ?? color;
+  }
   final Event event;
   final String planId;
 
@@ -566,7 +571,7 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
       child: Text(
         max != null ? '$label: $count/$max' : '$label: $count',
         style: TextStyle(
-          color: color.shade700,
+          color: _getDarkerColor(color),
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
@@ -599,7 +604,7 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
               '$title (${participants.length})',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: color.shade700,
+                color: _getDarkerColor(color),
                 fontSize: 14,
               ),
             ),
@@ -633,7 +638,7 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
                           child: Text(
                             displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                             style: TextStyle(
-                              color: color.shade700,
+                              color: _getDarkerColor(color),
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),

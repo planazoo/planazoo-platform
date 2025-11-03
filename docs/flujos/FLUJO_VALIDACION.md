@@ -543,12 +543,12 @@ Asegúrate de tener tiempo suficiente para el traslado."
 - ✅ Manejo de borradores (pueden solaparse)
 
 **Lo que falta:**
-- ❌ Detección automática de días vacíos al confirmar
-- ❌ Detección automática de participantes sin eventos
+- ✅ Detección automática de días vacíos al confirmar
+- ✅ Detección automática de participantes sin eventos
 - ❌ Validación check-in/check-out automatizada
-- ❌ Sistema de estadísticas y análisis (T113)
+- ✅ Sistema de estadísticas y análisis (T113)
 - ❌ Mapa del plan con visualización (T114)
-- ❌ Auto-expansión de rango (T107)
+- ✅ Auto-expansión de rango (T107)
 - ❌ Sugerencias de optimización automáticas
 
 ---

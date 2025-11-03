@@ -4,6 +4,7 @@ import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
+import 'package:unp_calendario/widgets/dialogs/invite_group_dialog.dart';
 
 class PlanParticipantsPage extends ConsumerStatefulWidget {
   final Plan plan;
@@ -59,6 +60,11 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            onPressed: _showInviteGroupDialog,
+            icon: const Icon(Icons.group_add),
+            tooltip: 'Invitar grupo',
+          ),
           IconButton(
             onPressed: _showInviteDialog,
             icon: const Icon(Icons.person_add),
@@ -175,6 +181,19 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
     );
   }
 
+  void _showInviteGroupDialog() {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => InviteGroupDialog(
+        planId: widget.plan.id!,
+        userId: currentUser.id,
+      ),
+    );
+  }
+
   void _inviteUser() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
@@ -192,14 +211,14 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
       return;
     }
 
-    // TODO: Buscar usuario por email y obtener su ID
-    // Por ahora, usaremos el email como ID temporal
+    // Invitar por email usando InvitationService (T104)
+    // El servicio detecta si es email y busca usuario o crea invitación con token
     final notifier = ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier);
     final currentUser = ref.read(currentUserProvider);
     
     final success = await notifier.inviteUserToPlan(
       widget.plan.id!,
-      email, // TODO: Reemplazar con el ID real del usuario
+      email, // Puede ser email o userId - el servicio lo detecta
       invitedBy: currentUser?.id,
     );
 

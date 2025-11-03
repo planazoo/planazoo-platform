@@ -11,6 +11,7 @@ import 'package:unp_calendario/features/calendar/domain/models/plan_participatio
 import 'package:unp_calendario/features/calendar/domain/services/track_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/event_participant_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/accommodation_service.dart';
@@ -665,12 +666,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye mini headers de participantes para el header principal
   Widget _buildMiniParticipantHeaders(List<ParticipantTrack> participants) {
+    final activeUserId = _selectedPerspectiveUserId ?? _currentUserId;
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: participants.asMap().entries.map((entry) {
         final index = entry.key;
         final participant = entry.value;
         final isLastTrack = index == participants.length - 1;
+        final isActiveTrack = activeUserId != null && participant.participantId == activeUserId;
         
         // Generar iniciales del nombre y apellido
         final initial = _getParticipantInitials(participant.participantName, participant.position);
@@ -681,22 +685,35 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               // Abrir modal de gestión de participantes al hacer click en el header
               _showParticipantManagementDialog();
             },
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
               padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
               decoration: BoxDecoration(
-                // Agregar línea vertical derecha para separar tracks (excepto el último)
+                // Fondo diferenciado para track activo
+                color: isActiveTrack 
+                    ? AppColorScheme.color1.withOpacity(0.2)
+                    : Colors.transparent,
+                // Borde más grueso para track activo, normal para otros (excepto último)
                 border: isLastTrack 
                     ? null 
-                    : _createGridBorder(),
+                    : (isActiveTrack
+                        ? Border(
+                            right: BorderSide(
+                              color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity),
+                              width: 1.5, // Borde más grueso para track activo
+                            ),
+                          )
+                        : _createGridBorder()),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     initial,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: isActiveTrack ? FontWeight.w900 : FontWeight.bold, // Más negrita si es activo
                       color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
@@ -765,6 +782,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Construye la fila de tracks de alojamiento
   Widget _buildAccommodationTracksRow(List<Accommodation> accommodations, double availableWidth, DateTime dayDate) {
     final visibleTracks = _getFilteredTracks();
+    final activeUserId = _selectedPerspectiveUserId ?? _currentUserId;
 
     return SizedBox(
                       height: _accommodationRowHeight,
@@ -779,15 +797,31 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Row(
             children: visibleTracks.asMap().entries.map((entry) {
               final trackIndex = entry.key;
+              final track = visibleTracks[trackIndex];
               final isLastTrack = trackIndex == visibleTracks.length - 1;
+              final isActiveTrack = activeUserId != null && track.participantId == activeUserId;
               
               return Expanded(
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
                   height: _accommodationRowHeight,
                   decoration: BoxDecoration(
+                    // Fondo diferenciado para track activo
+                    color: isActiveTrack 
+                        ? AppColorScheme.color1.withOpacity(0.05)
+                        : Colors.transparent,
+                    // Borde más grueso para track activo
                     border: isLastTrack
                         ? null
-                        : _createGridBorder(),
+                        : (isActiveTrack
+                            ? Border(
+                                right: BorderSide(
+                                  color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity),
+                                  width: 1.5, // Borde más grueso para track activo
+                                ),
+                              )
+                            : _createGridBorder()),
                   ),
                   child: GestureDetector(
                     onTap: () {
@@ -868,22 +902,35 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// Obtiene el color de la celda de datos según el tipo de columna
+  /// T90: Aplica fondo diferenciado para tracks activos
   Color _getDataCellColor(dynamic column) {
     final dayData = column as Map<String, dynamic>;
     final isEmpty = dayData['isEmpty'] as bool;
-    return isEmpty ? Colors.grey.shade100 : AppColorScheme.color0;
+    if (isEmpty) return Colors.grey.shade100;
+    
+    // Nota: El resaltado de track activo se aplica en las subcolumnas individuales
+    // Este método solo afecta el fondo general de la celda del día
+    return AppColorScheme.color0;
+  }
+  
+  /// Determina si un track es el track activo (usuario actual o seleccionado)
+  bool _isActiveTrack(ParticipantTrack track) {
+    final activeUserId = _selectedPerspectiveUserId ?? _currentUserId;
+    return activeUserId != null && track.participantId == activeUserId;
   }
 
   /// Construye la celda de evento con subcolumnas de participantes
   Widget _buildEventCellWithSubColumns(int hourIndex, dynamic column, List<ParticipantTrack> participants) {
     final dayData = column as Map<String, dynamic>;
     final actualDayIndex = dayData['index'] as int;
+    final activeUserId = _selectedPerspectiveUserId ?? _currentUserId;
     
     return Row(
       children: participants.asMap().entries.map((entry) {
         final index = entry.key;
         final participant = entry.value;
         final isLastTrack = index == participants.length - 1;
+        final isActiveTrack = activeUserId != null && participant.participantId == activeUserId;
         
         return Expanded(
           child: GestureDetector(
@@ -892,14 +939,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               final date = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
               _showNewEventDialogForParticipant(date, hourIndex, participant);
             },
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
               height: AppConstants.cellHeight,
               width: double.infinity,
               decoration: BoxDecoration(
+                // Fondo diferenciado para track activo
+                color: isActiveTrack 
+                    ? AppColorScheme.color1.withOpacity(0.05)
+                    : Colors.transparent,
                 // Agregar línea vertical derecha para separar tracks (excepto el último)
-                border: isLastTrack 
-                    ? null 
-                    : _createGridBorder(),
+                // Borde más grueso para track activo
+                border: isActiveTrack && !isLastTrack
+                    ? Border(
+                        right: BorderSide(
+                          color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity),
+                          width: 1.5, // Borde más grueso
+                        ),
+                      )
+                    : (isLastTrack ? null : _createGridBorder()),
               ),
             ),
           ),
@@ -972,6 +1031,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     List<Widget> eventWidgets = [];
     List<Event> previousDayEvents = []; // Cache de eventos del día anterior
     
+    // Recolectar todos los eventos únicos para obtener sus participantes
+    final allUniqueEvents = <Event>[];
+    
     // Obtener eventos para cada día en el rango actual
     for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
       final currentDay = startDayIndex + dayOffset;
@@ -1005,6 +1067,76 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         }
       }
       
+      // Agregar a la lista de eventos únicos
+      for (final event in allRelevantEvents) {
+        if (event.id != null && !allUniqueEvents.any((e) => e.id == event.id)) {
+          allUniqueEvents.add(event);
+        }
+      }
+      
+      // Guardar todos los eventos procesados para propagación multi-día
+      previousDayEvents = allRelevantEvents;
+    }
+    
+    // Construir mapa de participantes registrados para todos los eventos
+    // Usamos un mapa que se construye con los datos disponibles de los providers
+    final registeredParticipantsMap = <String, Set<String>>{};
+    
+    // Construir el mapa usando los providers - Riverpod nos da los datos cuando están disponibles
+    for (final event in allUniqueEvents) {
+      if (event.id != null) {
+        final participantsAsync = ref.watch(eventParticipantsProvider(event.id!));
+        // Extraer los datos si están disponibles
+        participantsAsync.maybeWhen(
+          data: (participants) {
+            final registeredUserIds = participants
+                .where((p) => p.status == 'registered')
+                .map((p) => p.userId)
+                .toSet();
+            if (registeredUserIds.isNotEmpty) {
+              registeredParticipantsMap[event.id!] = registeredUserIds;
+            }
+          },
+          orElse: () {},
+        );
+      }
+    }
+    
+    // Resetear previousDayEvents para el segundo loop
+    previousDayEvents = [];
+    
+    // Renderizar eventos
+    for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
+      final currentDay = startDayIndex + dayOffset;
+      final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+      
+      // Obtener eventos para esta fecha
+      final eventsForDate = ref.watch(eventsForDateProvider(
+        EventsForDateParams(
+          calendarParams: CalendarNotifierParams(
+            planId: widget.plan.id ?? '',
+            userId: widget.plan.userId,
+            initialDate: widget.plan.startDate,
+            initialColumnCount: widget.plan.columnCount,
+          ),
+          date: eventDate,
+        ),
+      ));
+      
+      // NUEVO: Combinar eventos de hoy + eventos de ayer que continúan hoy
+      final allRelevantEvents = <Event>[
+        ...eventsForDate,
+        ...previousDayEvents.where((e) => _eventCrossesMidnight(e)),
+      ];
+      
+      // AÑADIDO: Incluir eventos multi-día con timezones diferentes
+      final multiDayEvents = _getMultiDayEventsForDay(currentDay, dayOffset);
+      for (final event in multiDayEvents) {
+        if (!allRelevantEvents.any((e) => e.id == event.id)) {
+          allRelevantEvents.add(event);
+        }
+      }
+      
       // Expandir eventos a segmentos para este día específico
       final segments = _expandEventsToSegments(allRelevantEvents, eventDate);
       
@@ -1016,11 +1148,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         for (final group in overlappingGroups) {
           if (group.segments.length > 1) {
             // Hay solapamiento - renderizar con layout especial
-            eventWidgets.addAll(_buildOverlappingSegmentWidgetsWithSubColumns(group, dayOffset, availableWidth));
+            eventWidgets.addAll(_buildOverlappingSegmentWidgetsWithSubColumns(group, dayOffset, availableWidth, registeredParticipantsMap: registeredParticipantsMap));
           } else {
             // Solo un segmento - renderizado normal
             final segment = group.segments.first;
-            eventWidgets.addAll(_buildSegmentWidgetWithSubColumns(segment, dayOffset, availableWidth));
+            eventWidgets.addAll(_buildSegmentWidgetWithSubColumns(segment, dayOffset, availableWidth, registeredParticipantsMap: registeredParticipantsMap));
           }
         }
       }
@@ -1568,6 +1700,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     } else {
       fontSize = 10; // Tamaño normal
     }
+    
+    // Obtener información de participantes (T50)
+    final participantInfo = _getParticipantInfo(event);
+    final eventColor = ColorUtils.getEventColor(event.typeFamily, event.isDraft, customColor: event.color);
+    final borderColor = ColorUtils.getEventBorderColor(event.typeFamily, event.isDraft, customColor: event.color);
+    
+    // T89: Determinar si es multi-participante
+    final isMultiParticipant = (participantInfo['participantCount'] as int) > 1 || (participantInfo['isForAll'] as bool) == true;
+    final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(event);
+    final isMultiTrack = consecutiveGroups.any((group) => group.length > 1);
 
     return GestureDetector(
       onTap: () => _showEventDialog(event),
@@ -1584,11 +1726,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
         child: Container(
           decoration: BoxDecoration(
-            color: ColorUtils.getEventColor(event.typeFamily, event.isDraft, customColor: event.color),
+            // T89: Gradiente para eventos multi-participante cuando abarcan múltiples tracks
+            gradient: isMultiParticipant && isMultiTrack
+                ? LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      eventColor,
+                      eventColor.withOpacity(0.85),
+                      eventColor.withOpacity(0.75),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  )
+                : null,
+            color: isMultiParticipant && isMultiTrack ? null : eventColor,
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
-              color: ColorUtils.getEventBorderColor(event.typeFamily, event.isDraft, customColor: event.color),
-              width: 1,
+              color: borderColor,
+              width: (participantInfo['isForAll'] == true || isMultiTrack) ? 2 : 1, // Borde más grueso para eventos multi-participante (T89)
             ),
             boxShadow: isThisEventDragging ? [
               BoxShadow(
@@ -1638,6 +1793,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  ],
+                  
+                  // Indicador de participantes (T50/T89) - solo si hay espacio suficiente
+                  if (height > 30 && participantInfo['showIndicator'] == true) ...[
+                    const SizedBox(height: 2),
+                    _buildParticipantIndicator(participantInfo, fontSize - 3, event, isMultiTrack: isMultiTrack),
                   ],
                   
                   // Debug logs para vuelos
@@ -1869,7 +2030,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye un segmento con subcolumnas de participantes
   /// Muestra eventos individualmente en cada track de participante
-  List<Widget> _buildSegmentWidgetWithSubColumns(EventSegment segment, int dayOffset, double availableWidth) {
+  List<Widget> _buildSegmentWidgetWithSubColumns(EventSegment segment, int dayOffset, double availableWidth, {Map<String, Set<String>>? registeredParticipantsMap}) {
     final cellWidth = availableWidth / _visibleDays;
     final subColumnWidth = _getSubColumnWidth(availableWidth);
     final cellHeight = AppConstants.cellHeight;
@@ -1882,7 +2043,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final widgets = <Widget>[];
     
     // Obtener todos los grupos de tracks consecutivos donde se muestra este evento
-    final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(segment.originalEvent);
+    final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(segment.originalEvent, registeredParticipantsMap: registeredParticipantsMap);
+    
+    // T89: Determinar si el evento es multi-track (si alguno de los grupos tiene más de un track)
+    final isMultiTrackForSegment = consecutiveGroups.any((g) => g.length > 1);
     
     if (consecutiveGroups.isNotEmpty) {
       // Renderizar cada grupo consecutivo como un bloque separado
@@ -1904,7 +2068,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               top: y,
               width: totalWidth,
               height: height,
-              child: _buildDraggableSegment(segment, height),
+              child: _buildDraggableSegment(segment, height, isMultiTrack: isMultiTrackForSegment),
             ),
           );
         } else {
@@ -1920,15 +2084,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               top: y,
               width: width,
               height: height,
-              child: _buildDraggableSegment(segment, height),
+              child: _buildDraggableSegment(segment, height, isMultiTrack: isMultiTrackForSegment),
             ),
           );
         }
       }
     } else {
       // Fallback: comportamiento original si no hay grupos
+      // T89: Calcular si es multi-track para este evento
+      final consecutiveGroupsForSegment = _getConsecutiveTrackGroupsForEvent(segment.originalEvent, registeredParticipantsMap: registeredParticipantsMap);
+      final isMultiTrackForSegment = consecutiveGroupsForSegment.any((g) => g.length > 1);
+      
       for (int trackIndex = 0; trackIndex < visibleTracks.length; trackIndex++) {
-        if (_shouldShowEventInTrack(segment.originalEvent, trackIndex)) {
+        if (_shouldShowEventInTrack(segment.originalEvent, trackIndex, registeredParticipantsMap: registeredParticipantsMap)) {
           final positionInfo = _calculateEventPosition(segment.originalEvent, trackIndex, subColumnWidth);
           final x = dayX + (positionInfo['startX'] as double);
           final width = positionInfo['width'] as double;
@@ -1939,7 +2107,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               top: y,
               width: width,
               height: height,
-              child: _buildDraggableSegment(segment, height),
+              child: _buildDraggableSegment(segment, height, isMultiTrack: isMultiTrackForSegment),
             ),
           );
         }
@@ -1951,7 +2119,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye widgets para segmentos solapados con subcolumnas
   /// Muestra eventos individualmente en cada track de participante con capas superpuestas
-  List<Widget> _buildOverlappingSegmentWidgetsWithSubColumns(OverlappingSegmentGroup group, int dayOffset, double availableWidth) {
+  List<Widget> _buildOverlappingSegmentWidgetsWithSubColumns(OverlappingSegmentGroup group, int dayOffset, double availableWidth, {Map<String, Set<String>>? registeredParticipantsMap}) {
     final cellWidth = availableWidth / _visibleDays;
     final subColumnWidth = _getSubColumnWidth(availableWidth);
     final widgets = <Widget>[];
@@ -2010,6 +2178,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   showLimitIndicator: false,
                   isOverlapping: true,
                   layerIndex: i,
+                  isMultiTrack: group.length > 1,
                 ),
               ),
             );
@@ -2039,6 +2208,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   showLimitIndicator: false,
                   isOverlapping: true,
                   layerIndex: i,
+                  isMultiTrack: group.length > 1,
                 ),
               ),
             );
@@ -2046,8 +2216,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         }
       } else {
         // Fallback: comportamiento original si no hay grupos
+        // T89: Calcular si es multi-track para este evento
+        final consecutiveGroupsForEvent = _getConsecutiveTrackGroupsForEvent(event, registeredParticipantsMap: registeredParticipantsMap);
+        final isMultiTrackForEvent = consecutiveGroupsForEvent.any((g) => g.length > 1);
+        
         for (int trackIndex = 0; trackIndex < visibleTracks.length; trackIndex++) {
-          if (_shouldShowEventInTrack(event, trackIndex)) {
+          if (_shouldShowEventInTrack(event, trackIndex, registeredParticipantsMap: registeredParticipantsMap)) {
             final positionInfo = _calculateEventPosition(event, trackIndex, subColumnWidth);
             final x = dayX + (positionInfo['startX'] as double);
             final width = positionInfo['width'] as double;
@@ -2071,6 +2245,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   showLimitIndicator: false,
                   isOverlapping: true,
                   layerIndex: i,
+                  isMultiTrack: isMultiTrackForEvent,
                 ),
               ),
             );
@@ -2119,6 +2294,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Encontrar los tracks donde debe mostrarse este evento
     final relevantTracks = <int>[];
     for (int trackIndex = 0; trackIndex < visibleTracks.length; trackIndex++) {
+      // Nota: _calculateEventSpan se usa en algunos lugares sin el mapa
+      // Por ahora, no pasamos el mapa aquí para mantener compatibilidad
       if (_shouldShowEventInTrack(event, trackIndex)) {
         relevantTracks.add(trackIndex);
       }
@@ -2146,24 +2323,62 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// Verifica si un evento debe mostrarse en un track específico
-  bool _shouldShowEventInTrack(Event event, int trackIndex) {
+  /// 
+  /// Un evento se muestra si:
+  /// 1. Está en la lista de participantIds (destinatarios originales), O
+  /// 2. Es para todos los participantes (isForAllParticipants = true), O
+  /// 3. El usuario del track está registrado voluntariamente en el evento (event_participants)
+  bool _shouldShowEventInTrack(Event event, int trackIndex, {Map<String, Set<String>>? registeredParticipantsMap}) {
     final visibleTracks = _getFilteredTracks();
     
     if (trackIndex >= visibleTracks.length) return false;
     
     final track = visibleTracks[trackIndex];
-    return CalendarEventLogic.shouldShowEventInTrack(event, track);
+    
+    // Primero verificar la lógica estándar (participantIds o isForAllParticipants)
+    if (CalendarEventLogic.shouldShowEventInTrack(event, track)) {
+      return true;
+    }
+    
+    // Si no pasa la verificación estándar, verificar si el usuario está registrado voluntariamente
+    // Esto cubre el caso T117: usuarios que se apuntan voluntariamente a eventos
+    if (event.id != null && track.participantId.isNotEmpty) {
+      // Primero intentar usar el mapa si está disponible (más eficiente)
+      if (registeredParticipantsMap != null) {
+        final registeredUsers = registeredParticipantsMap[event.id!];
+        if (registeredUsers != null && registeredUsers.contains(track.participantId)) {
+          return true;
+        }
+      } else {
+        // Si no hay mapa, verificar directamente con el provider
+        // Usar read para obtener el valor sin esperar (puede fallar si no está cargado)
+        try {
+          final isRegisteredAsync = ref.read(isUserRegisteredProvider((eventId: event.id!, userId: track.participantId)));
+          // isRegisteredAsync es un AsyncValue, necesitamos verificar su estado
+          isRegisteredAsync.whenData((isRegistered) {
+            if (isRegistered) {
+              // Retornar true - pero esto es async, no podemos retornar aquí
+              // Por ahora, solo verificamos si está en el mapa
+            }
+          });
+        } catch (e) {
+          // Si hay error, continuar
+        }
+      }
+    }
+    
+    return false;
   }
 
   /// Obtiene todos los grupos de tracks consecutivos donde se muestra un evento
   /// Cada grupo consecutivo se puede mostrar como un solo bloque
-  List<List<int>> _getConsecutiveTrackGroupsForEvent(Event event) {
+  List<List<int>> _getConsecutiveTrackGroupsForEvent(Event event, {Map<String, Set<String>>? registeredParticipantsMap}) {
     final visibleTracks = _getFilteredTracks();
     final tracksWhereShown = <int>[];
     
     // Encontrar todos los tracks donde se muestra el evento
     for (int trackIndex = 0; trackIndex < visibleTracks.length; trackIndex++) {
-      if (_shouldShowEventInTrack(event, trackIndex)) {
+      if (_shouldShowEventInTrack(event, trackIndex, registeredParticipantsMap: registeredParticipantsMap)) {
         tracksWhereShown.add(trackIndex);
       }
     }
@@ -2265,17 +2480,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Calcular altura del segmento
     final height = (segment.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
     
+    // T89: Determinar si es multi-track basándose en los grupos consecutivos
+    final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(segment.originalEvent);
+    final isMultiTrack = consecutiveGroups.any((group) => group.length > 1);
+    
     return Positioned(
       left: x,
       top: y,
       width: width,
       height: height,
-      child: _buildDraggableSegment(segment, height),
+      child: _buildDraggableSegment(segment, height, isMultiTrack: isMultiTrack),
     );
   }
 
   /// Construye un segmento draggable
-  Widget _buildDraggableSegment(EventSegment segment, double height, {bool showLimitIndicator = false, bool isOverlapping = false, int layerIndex = 0}) {
+  Widget _buildDraggableSegment(EventSegment segment, double height, {bool showLimitIndicator = false, bool isOverlapping = false, int layerIndex = 0, bool isMultiTrack = false}) {
     final originalEvent = segment.originalEvent;
     final isThisEventDragging = _draggingEvent?.id == originalEvent.id;
     
@@ -2302,19 +2521,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             onPanStart: (details) => _startDrag(originalEvent, details),
             onPanUpdate: (details) => _updateDrag(details),
             onPanEnd: (details) => _endDrag(details),
-            child: _buildSegmentContainer(segment, height, fontSize, isThisEventDragging, displayOffset, showLimitIndicator, isOverlapping: isOverlapping, layerIndex: layerIndex),
+            child: _buildSegmentContainer(segment, height, fontSize, isThisEventDragging, displayOffset, showLimitIndicator, isOverlapping: isOverlapping, layerIndex: layerIndex, isMultiTrack: isMultiTrack),
           )
         : GestureDetector(
             onTap: () => _showEventDialog(originalEvent),
             // Sin onPanStart/Update/End - las continuaciones NO son draggables
-            child: _buildSegmentContainer(segment, height, fontSize, false, Offset.zero, showLimitIndicator, isOverlapping: isOverlapping, layerIndex: layerIndex),
+            child: _buildSegmentContainer(segment, height, fontSize, false, Offset.zero, showLimitIndicator, isOverlapping: isOverlapping, layerIndex: layerIndex, isMultiTrack: isMultiTrack),
           );
     
     return child;
   }
 
   /// Construye el container visual del segmento (separado para reutilización)
-  Widget _buildSegmentContainer(EventSegment segment, double height, double fontSize, bool isDragging, Offset displayOffset, bool showLimitIndicator, {bool isOverlapping = false, int layerIndex = 0}) {
+  Widget _buildSegmentContainer(EventSegment segment, double height, double fontSize, bool isDragging, Offset displayOffset, bool showLimitIndicator, {bool isOverlapping = false, int layerIndex = 0, bool isMultiTrack = false}) {
+    // Obtener información de participantes (T50)
+    final participantInfo = _getParticipantInfo(segment.originalEvent);
+    final eventColor = ColorUtils.getEventColor(segment.typeFamily, segment.isDraft, customColor: segment.color);
+    final borderColor = ColorUtils.getEventBorderColor(segment.typeFamily, segment.isDraft, customColor: segment.color);
+    
+    // T89: Aplicar gradiente para eventos multi-track
+    final isMultiParticipant = isMultiTrack || (participantInfo['participantCount'] as int) > 1 || (participantInfo['isForAll'] as bool) == true;
+    
     return Stack(
       children: [
         AnimatedContainer(
@@ -2329,11 +2556,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           height: double.infinity,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: ColorUtils.getEventColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
+            // T89: Gradiente para eventos multi-participante
+            gradient: isMultiParticipant && isMultiTrack
+                ? LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      eventColor,
+                      eventColor.withOpacity(0.85),
+                      eventColor.withOpacity(0.75),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  )
+                : null,
+            color: isMultiParticipant && isMultiTrack ? null : eventColor,
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
-              color: ColorUtils.getEventBorderColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
-              width: isOverlapping ? 2 : 1, // Borde más grueso para eventos superpuestos
+              color: borderColor,
+              width: (participantInfo['isForAll'] == true || isOverlapping || isMultiTrack) ? 2 : 1, // Borde más grueso para eventos multi-participante (T89)
             ),
             boxShadow: isDragging ? [
               BoxShadow(
@@ -2385,6 +2625,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  
+                  // Indicador de participantes (T50/T89) - solo si hay espacio suficiente
+                  if (height > 30 && participantInfo['showIndicator'] == true) ...[
+                    const SizedBox(height: 2),
+                    _buildParticipantIndicator(participantInfo, fontSize - 3, segment.originalEvent, isMultiTrack: isMultiTrack),
+                  ],
                   
                   // Debug logs para vuelos - REMOVIDO PARA PRODUCCIÓN
                   // if (segment.description.contains('Vuelo')) ...[
@@ -2581,6 +2827,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       fontSize = 10; // Tamaño normal
     }
     
+    // Obtener información de participantes (T50)
+    final participantInfo = _getParticipantInfo(event);
+    final eventColor = ColorUtils.getEventColor(event.typeFamily, event.isDraft, customColor: event.color);
+    final borderColor = ColorUtils.getEventBorderColor(event.typeFamily, event.isDraft, customColor: event.color);
+    
+    // T89: Determinar si es multi-participante para aplicar gradiente
+    final isMultiParticipant = (participantInfo['participantCount'] as int) > 1 || (participantInfo['isForAll'] as bool) == true;
+    final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(event);
+    final isMultiTrack = consecutiveGroups.any((group) => group.length > 1);
+    
     return GestureDetector(
       onTap: () => _showEventDialog(event),
       onPanStart: (details) => _startDrag(event, details),
@@ -2592,11 +2848,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         transform: isThisEventDragging ? Matrix4.translationValues(displayOffset.dx, displayOffset.dy, 0) : null,
         child: Container(
           decoration: BoxDecoration(
-            color: ColorUtils.getEventColor(event.typeFamily, event.isDraft, customColor: event.color),
+            // T89: Gradiente para eventos multi-participante cuando abarcan múltiples tracks
+            gradient: isMultiParticipant && isMultiTrack
+                ? LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      eventColor,
+                      eventColor.withOpacity(0.85),
+                      eventColor.withOpacity(0.75),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  )
+                : null,
+            color: isMultiParticipant && isMultiTrack ? null : eventColor,
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
-              color: ColorUtils.getEventBorderColor(event.typeFamily, event.isDraft, customColor: event.color),
-              width: 1,
+              color: borderColor,
+              width: (participantInfo['isForAll'] == true || isMultiTrack) ? 2 : 1, // Borde más grueso para eventos multi-participante (T89)
             ),
             boxShadow: isThisEventDragging ? [
               BoxShadow(
@@ -2646,6 +2915,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  ],
+                  
+                  // Indicador de participantes (T50/T89) - solo si hay espacio suficiente
+                  if (eventHeight > 30 && participantInfo['showIndicator'] == true) ...[
+                    const SizedBox(height: 2),
+                    _buildParticipantIndicator(participantInfo, fontSize - 3, event, isMultiTrack: isMultiTrack),
                   ],
                   
                   // Debug logs para vuelos
@@ -3231,20 +3506,38 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye los tracks de alojamiento con agrupación para tracks consecutivos
   Widget _buildAccommodationTracksWithGrouping(List<Accommodation> accommodations, List<dynamic> visibleTracks, double availableWidth, DateTime dayDate) {
+    final activeUserId = _selectedPerspectiveUserId ?? _currentUserId;
+    
     if (accommodations.isEmpty) {
       // Si no hay alojamientos, mostrar solo "Tap para crear" en todos los tracks
       return Row(
         children: visibleTracks.asMap().entries.map((entry) {
           final trackIndex = entry.key;
+          final track = visibleTracks[trackIndex] as ParticipantTrack;
           final isLastTrack = trackIndex == visibleTracks.length - 1;
+          final isActiveTrack = activeUserId != null && track.participantId == activeUserId;
           
           return Expanded(
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
               height: 40,
               decoration: BoxDecoration(
+                // Fondo diferenciado para track activo
+                color: isActiveTrack 
+                    ? AppColorScheme.color1.withOpacity(0.05)
+                    : Colors.transparent,
+                // Borde más grueso para track activo
                 border: isLastTrack
                     ? null
-                    : _createGridBorder(),
+                    : (isActiveTrack
+                        ? Border(
+                            right: BorderSide(
+                              color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity),
+                              width: 1.5, // Borde más grueso para track activo
+                            ),
+                          )
+                        : _createGridBorder()),
               ),
               child: GestureDetector(
                 onTap: () => _showNewAccommodationDialog(DateTime.now()),
@@ -4150,5 +4443,137 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
     
     return multiDayEvents;
+  }
+
+  /// Obtiene información de participantes para un evento (T50)
+  Map<String, dynamic> _getParticipantInfo(Event event) {
+    final commonPart = event.commonPart;
+    
+    // Si no hay commonPart, asumir que es para todos (compatibilidad con eventos antiguos)
+    if (commonPart == null) {
+      return {
+        'isForAll': true,
+        'participantCount': 0,
+        'showIndicator': false,
+        'participantIds': [],
+      };
+    }
+    
+    final isForAll = commonPart.isForAllParticipants;
+    final participantIds = commonPart.participantIds;
+    final participantCount = participantIds.length;
+    
+    // Mostrar indicador solo si:
+    // - No es para todos, o
+    // - Es para todos pero queremos mostrar el icono "Todos"
+    final showIndicator = true; // Siempre mostrar indicador si hay información
+    
+    return {
+      'isForAll': isForAll,
+      'participantCount': participantCount,
+      'showIndicator': showIndicator,
+      'participantIds': participantIds,
+    };
+  }
+
+  /// Construye el indicador visual de participantes (T50/T89)
+  Widget _buildParticipantIndicator(Map<String, dynamic> participantInfo, double fontSize, Event event, {bool isMultiTrack = false}) {
+    final isForAll = participantInfo['isForAll'] as bool;
+    final participantCount = participantInfo['participantCount'] as int;
+    final participantIds = participantInfo['participantIds'] as List<String>;
+    
+    String indicatorText;
+    IconData? indicatorIcon;
+    
+    // T89: Icono más prominente para eventos multi-track
+    if (isMultiTrack) {
+      indicatorText = isForAll ? 'Todos' : '$participantCount';
+      indicatorIcon = Icons.people;
+    } else if (isForAll) {
+      indicatorText = 'Todos';
+      indicatorIcon = Icons.people;
+    } else if (participantCount == 1) {
+      indicatorText = 'Personal';
+      indicatorIcon = Icons.person;
+    } else {
+      indicatorText = '$participantCount';
+      indicatorIcon = Icons.people_outline;
+    }
+    
+    // Construir tooltip con lista de participantes (T89)
+    final tooltipMessage = _buildParticipantTooltipMessage(isForAll, participantIds);
+    
+    final indicatorWidget = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (indicatorIcon != null)
+          Icon(
+            indicatorIcon,
+            size: fontSize + (isMultiTrack ? 1 : 0), // Icono ligeramente más grande para multi-track
+            color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+          ),
+        const SizedBox(width: 2),
+        Flexible(
+          child: Text(
+            indicatorText,
+            style: TextStyle(
+              color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+              fontSize: fontSize,
+              fontWeight: isMultiTrack ? FontWeight.w600 : FontWeight.w400, // Más negrita para multi-track (T89)
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+    
+    // T89: Añadir tooltip con lista de participantes (web/desktop)
+    if (tooltipMessage.isNotEmpty && (participantCount > 1 || isForAll)) {
+      return Tooltip(
+        message: tooltipMessage,
+        preferBelow: false,
+        waitDuration: const Duration(milliseconds: 500),
+        child: indicatorWidget,
+      );
+    }
+    
+    return indicatorWidget;
+  }
+  
+  /// Construye el mensaje del tooltip con lista de participantes (T89)
+  String _buildParticipantTooltipMessage(bool isForAll, List<String> participantIds) {
+    if (isForAll) {
+      return 'Evento para todos los participantes del plan';
+    }
+    
+    if (participantIds.isEmpty) {
+      return '';
+    }
+    
+    // Obtener nombres de participantes para el tooltip
+    final visibleTracks = _getFilteredTracks();
+    final participantNames = <String>[];
+    
+    for (final participantId in participantIds) {
+      final track = visibleTracks.firstWhere(
+        (t) => t.participantId == participantId,
+        orElse: () => ParticipantTrack(
+          id: participantId,
+          participantId: participantId,
+          participantName: participantId.length > 20 ? participantId.substring(0, 20) : participantId,
+          position: 0,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      participantNames.add(track.participantName.isNotEmpty ? track.participantName : participantId);
+    }
+    
+    if (participantNames.isEmpty) {
+      return '';
+    }
+    
+    return 'Participantes:\n${participantNames.map((name) => '• $name').join('\n')}';
   }
 }

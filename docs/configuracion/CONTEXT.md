@@ -6,6 +6,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - `docs/guias/PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
 - `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice y visión general del sistema de planes
+- `docs/configuracion/TESTING_CHECKLIST.md` - Checklist exhaustivo de pruebas (actualizar tras cada tarea)
 - `docs/flujos/` - Flujos específicos de procesos (estados, participantes, eventos, etc.)
 
 ---
@@ -65,6 +66,11 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
   - `GUIA_SEGURIDAD.md` - Seguridad, autenticación y protección de datos
   - `GUIA_ASPECTOS_LEGALES.md` - Términos, privacidad, cookies y cumplimiento legal
 - Al implementar una funcionalidad completa: revisar si debe actualizarse el flujo correspondiente en `docs/flujos/`.
+- **Testing Checklist:** Actualizar `docs/configuracion/TESTING_CHECKLIST.md` después de completar cada tarea:
+  - Marcar como probadas las funcionalidades nuevas
+  - Añadir nuevos casos de prueba si aplica
+  - Actualizar casos relacionados que puedan afectarse
+  - Ver sección "INSTRUCCIONES DE MANTENIMIENTO" del checklist para detalles
 
 ### 7) Plan Frankenstein (revisión tras cambios)
 - Tras aprobar cambios funcionales, evaluar si deben incorporarse al Plan Frankenstein.
