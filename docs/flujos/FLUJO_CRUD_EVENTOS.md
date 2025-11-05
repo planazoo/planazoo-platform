@@ -2,10 +2,10 @@
 
 > Define todo el ciclo de vida de un evento: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T51 - Validación de formularios (✅), T105 (✅ Base), T117 - Registro de participantes por evento (✅ Base), T120 - Confirmación de eventos (✅ Base Fases 1 y 2), T121, T110, T101 ✅, T102 ✅, T153 ✅, T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
+**Relacionado con:** T51 - Validación de formularios (✅), T105 (✅ Base), T117 - Registro de participantes por evento (✅ Base), T120 - Confirmación de eventos (✅ Base Fases 1 y 2), T121, T110, T101 ✅, T102 ✅, T153 ✅, T100 ✅, T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
 **Nota:** Los eventos comparten estructura **Parte Común/Parte Personal** similar a los alojamientos (ver FLUJO_CRUD_ALOJAMIENTOS)  
-**Versión:** 1.3  
-**Fecha:** Enero 2025 (Actualizado - T101, T102, T153 implementados)
+**Versión:** 1.4  
+**Fecha:** Enero 2025 (Actualizado - T100, T101, T102, T153 implementados)
 
 ---
 
@@ -920,7 +920,7 @@ Timeline:
 - ❌ Notificaciones automáticas por cambios - T105
 - ❌ Sistema de alarmas (T110)
 - ❌ Historial de cambios/auditoría
-- ❌ Integración presupuesto/pagos (T101/T102)
+- ✅ Integración presupuesto/pagos (T101/T102) - **COMPLETADA**
 - ❌ Importación JSON batch
 - ❌ API de sincronización con proveedores
 

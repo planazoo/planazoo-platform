@@ -17,14 +17,14 @@ Este documento ha sido dividido en **10 flujos específicos** más **guías de r
 
 | Documento | Descripción | Tareas Relacionadas |
 |-----------|-------------|---------------------|
-| **[FLUJO_CRUD_PLANES.md](./flujos/FLUJO_CRUD_PLANES.md)** | 🆕 Ciclo de vida completo CRUD de planes | T109, T107, T118, T122 |
+| **[FLUJO_CRUD_PLANES.md](./flujos/FLUJO_CRUD_PLANES.md)** | 🆕 Ciclo de vida completo CRUD de planes | T109 ✅, T107 ✅, T118, T122, T101 ✅, T102 ✅ |
 | **[FLUJO_ESTADOS_PLAN.md](./flujos/FLUJO_ESTADOS_PLAN.md)** | Transiciones entre estados | T109 |
-| **[FLUJO_GESTION_PARTICIPANTES.md](./flujos/FLUJO_GESTION_PARTICIPANTES.md)** | Invitaciones, confirmaciones, grupos | T104, T117, T120, T123 |
-| **[FLUJO_CRUD_EVENTOS.md](./flujos/FLUJO_CRUD_EVENTOS.md)** | Ciclo de vida completo de eventos | T121, T105, T110, T101, T102 |
-| **[FLUJO_CRUD_ALOJAMIENTOS.md](./flujos/FLUJO_CRUD_ALOJAMIENTOS.md)** | 🆕 Ciclo de vida completo de alojamientos | T121, T105, T110, T101, T102 |
-| **[FLUJO_PRESUPUESTO_PAGOS.md](./flujos/FLUJO_PRESUPUESTO_PAGOS.md)** | Presupuesto y sistema de pagos | T101, T102 |
+| **[FLUJO_GESTION_PARTICIPANTES.md](./flujos/FLUJO_GESTION_PARTICIPANTES.md)** | Invitaciones, confirmaciones, grupos | T104, T117, T120, T123 ✅ |
+| **[FLUJO_CRUD_EVENTOS.md](./flujos/FLUJO_CRUD_EVENTOS.md)** | Ciclo de vida completo de eventos | T121, T105 ✅, T110, T101 ✅, T102 ✅, T153 ✅, T100 ✅ |
+| **[FLUJO_CRUD_ALOJAMIENTOS.md](./flujos/FLUJO_CRUD_ALOJAMIENTOS.md)** | 🆕 Ciclo de vida completo de alojamientos | T121, T105 ✅, T110, T101 ✅, T102 ✅, T153 ✅ |
+| **[FLUJO_PRESUPUESTO_PAGOS.md](./flujos/FLUJO_PRESUPUESTO_PAGOS.md)** | Presupuesto y sistema de pagos | T101 ✅, T102 ✅, T153 ✅ |
 | **[FLUJO_INVITACIONES_NOTIFICACIONES.md](./flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md)** | Invitaciones y notificaciones | T104, T105, T110, T120 |
-| **[FLUJO_VALIDACION.md](./flujos/FLUJO_VALIDACION.md)** | Validación y verificación | T113, T114, T107 |
+| **[FLUJO_VALIDACION.md](./flujos/FLUJO_VALIDACION.md)** | Validación y verificación | T113 ✅, T114, T107 ✅ |
 | **[FLUJO_CRUD_USUARIOS.md](./flujos/FLUJO_CRUD_USUARIOS.md)** | Registro, login y gestión de usuarios | T47, T49, T50, T124 |
 | **[FLUJO_CONFIGURACION_APP.md](./flujos/FLUJO_CONFIGURACION_APP.md)** | Configuración de usuario, app y planes | T50, T105, T124 |
 
@@ -178,11 +178,18 @@ graph TD
 - Sistema de validación completo
 
 ### ❌ Pendiente (Críticas)
-- Invitaciones y notificaciones (T104, T105)
-- Presupuesto y pagos (T101, T102)
-- Validación avanzada (T113, T114)
+- Invitaciones y notificaciones (T104, T105 - Base completada, pendiente push)
+- Validación avanzada (T113 ✅ completada, T114 pendiente)
 - Alarmas (T110)
 - Mapa y rutas (T114)
+
+### ✅ Completado Recientemente
+- Presupuesto y pagos (T101 ✅, T102 ✅)
+- Sistema multi-moneda (T153 ✅)
+- Visualización de timezones (T100 ✅)
+- Estadísticas del plan (T113 ✅)
+- Grupos de participantes (T123 ✅)
+- Actualización dinámica de duración (T107 ✅)
 
 ---
 
@@ -194,14 +201,17 @@ graph TD
 3. **T104/T105** - Invitaciones y notificaciones
 
 ### Prioridad Media
-4. **T101/T102** - Sistema de presupuesto y pagos
-5. **T110** - Sistema de alarmas
-6. **T113** - Estadísticas del plan
+4. **T110** - Sistema de alarmas
+5. **T114** - Mapa y rutas
+
+### ✅ Completado (Removido de Prioridad)
+- ~~T101/T102~~ - Sistema de presupuesto y pagos ✅
+- ~~T113~~ - Estadísticas del plan ✅
 
 ### Prioridad Baja
-7. **T114** - Mapa y rutas
-8. **T115** - Sistema de fotos
-9. **T118** - Copiar planes completos
+6. **T115** - Sistema de fotos
+7. **T118** - Copiar planes completos
+8. **T122** - Guardar como plantilla
 
 ---
 
@@ -230,7 +240,7 @@ graph TD
 ### ETAPA 1 - Configuración
 - T109: Estados del plan
 - T104: Invitaciones
-- T123: Grupos de participantes
+- T123 ✅: Grupos de participantes
 
 ### ETAPA 2 - Planificación
 - T121: Formularios enriquecidos
@@ -238,14 +248,14 @@ graph TD
 - T117: Registro de participación por evento
 
 ### ETAPA 3 - Organización
-- T101: Sistema de presupuesto
-- T102: Sistema de pagos y bote común
+- T101 ✅: Sistema de presupuesto
+- T102 ✅: Sistema de pagos y bote común
 - T111: Listas del plan
 
 ### ETAPA 4 - Validación
-- T113: Estadísticas
+- T113 ✅: Estadísticas
 - T114: Mapa del plan
-- T107: Actualización dinámica de duración
+- T107 ✅: Actualización dinámica de duración
 
 ### ETAPA 5 - Compartir
 - T104: Invitaciones

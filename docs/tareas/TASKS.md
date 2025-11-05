@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T154**
+**Siguiente código de tarea: T157**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -15,16 +15,18 @@
 - **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
-- **Testing y Mantenimiento:** T96-T99, T152: Refactoring, testing, documentación y optimización Firestore (5 pendientes)
+- **Testing y Mantenimiento:** T96-T99, T152: Refactoring (en progreso), testing, documentación y optimización Firestore (5 pendientes)
 - **Mejoras Funcionales:** T153: Sistema multi-moneda (1 completada)
-- **UX:** T100: Visualización de Timezones (1 pendiente)
+- **UX:** T100: Visualización de Timezones (1 completada)
 - **Integración:** T131: Sincronización con Calendarios Externos (1 pendiente)
 - **Agencias:** T132: Definición Sistema Agencias de Viajes (1 pendiente)
 - **Exportación:** T133: Exportación Profesional de Planes PDF/Email (1 pendiente)
 - **Importación:** T134: Importar desde Email (1 pendiente)
 - **Privacidad:** T135-T136: Gestión de Cookies y App Tracking Transparency (2 pendientes)
 
-**Total: 127 tareas documentadas (67 completadas, 60 pendientes)**
+**Migración:** T154-T156: Migración a Mac/iOS (3 pendientes)
+
+**Total: 130 tareas documentadas (68 completadas, 62 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -1248,26 +1250,45 @@ Al desplegar:
 ## 🧪 TESTING Y MANTENIMIENTO - Serie de Tareas (T96-T99)
 
 ### T96 - Refactoring de CalendarScreen
-**Estado:** Pendiente  
+**Estado:** 🔄 En progreso (Parcialmente completado)  
 **Complejidad:** ⚠️ Alta  
 **Prioridad:** 🔴 Alta  
 **Depende de:** T80  
-**Descripción:** Dividir `wd_calendar_screen.dart` (3000+ líneas) en componentes más pequeños y mantenibles.
+**Descripción:** Dividir `wd_calendar_screen.dart` (4424 líneas) en componentes más pequeños y mantenibles.
 
 **Problema actual:**
-- Archivo monolítico de 3000+ líneas
+- Archivo monolítico de 4424 líneas (reducido a ~4084 líneas)
 - Difícil mantenimiento y debugging
 - Violación de principios SOLID
 - Testing complejo
 
+**Progreso actual:**
+- ✅ **CalendarGrid** - Completado (~90 líneas extraídas)
+  - Estructura base del grid
+  - Columna de horas fija
+  - Área de datos con scroll sincronizado
+- ✅ **CalendarTracks** - Completado (~250 líneas extraídas)
+  - Headers de días
+  - Mini headers de participantes
+  - Tracks de alojamientos
+  - Agrupación de tracks consecutivos
+- ⏳ **CalendarEvents** - Pendiente (complejo, requiere análisis más profundo)
+- ⏳ **CalendarInteractions** - Pendiente (muy acoplado al estado interno)
+
+**Métricas:**
+- Líneas extraídas: ~340 líneas
+- Reducción: ~7.7%
+- Sin errores de compilación
+- Funcionalidad preservada
+
 **Componentes propuestos:**
 ```
 CalendarScreen (orchestrator)
-├── CalendarHeader (AppBar + navegación)
-├── CalendarGrid (estructura base)
-├── CalendarTracks (columnas de participantes)
-├── CalendarEvents (eventos y overlays)
-├── CalendarInteractions (drag & drop, clicks)
+├── CalendarHeader (AppBar + navegación) - ✅ Ya existe (calendar_app_bar.dart)
+├── CalendarGrid (estructura base) - ✅ COMPLETADO
+├── CalendarTracks (columnas de participantes) - ✅ COMPLETADO
+├── CalendarEvents (eventos y overlays) - ⏳ PENDIENTE
+├── CalendarInteractions (drag & drop, clicks) - ⏳ PENDIENTE
 └── CalendarUtils (helpers y cálculos)
 ```
 
@@ -1278,15 +1299,19 @@ CalendarScreen (orchestrator)
 - Facilitar testing individual
 - Reducir complejidad ciclomática
 
-**Archivos a crear:**
-- `lib/widgets/screens/calendar/components/calendar_header.dart`
-- `lib/widgets/screens/calendar/components/calendar_grid.dart`
-- `lib/widgets/screens/calendar/components/calendar_tracks.dart`
-- `lib/widgets/screens/calendar/components/calendar_events.dart`
-- `lib/widgets/screens/calendar/components/calendar_interactions.dart`
+**Archivos creados:**
+- ✅ `lib/widgets/screens/calendar/components/calendar_grid.dart` (~160 líneas)
+- ✅ `lib/widgets/screens/calendar/components/calendar_tracks.dart` (~490 líneas)
 
-**Archivos a modificar:**
-- `lib/widgets/screens/wd_calendar_screen.dart` (refactorizar)
+**Archivos pendientes:**
+- ⏳ `lib/widgets/screens/calendar/components/calendar_events.dart`
+- ⏳ `lib/widgets/screens/calendar/components/calendar_interactions.dart`
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` (refactorizado parcialmente)
+
+**Documentación:**
+- ✅ `docs/configuracion/T96_REFACTORING_PLAN.md` - Plan detallado del refactoring
 
 ---
 
@@ -1531,50 +1556,50 @@ CalendarScreen (orchestrator)
 ---
 
 ### T100 - Visualización de Timezones en el Calendario
-**Estado:** Pendiente  
+**Estado:** ✅ Completada  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
 **Depende de:** T40-T45 (Timezones implementadas)  
 **Descripción:** Decidir y implementar la mejor forma de visualizar las timezones en el calendario para que los usuarios entiendan en qué timezone está cada participante.
 
-**Opciones de visualización consideradas:**
+**Solución implementada:**
+Se implementó una **combinación de opciones 1, 3 y 4** para maximizar la claridad sin sobrecargar la interfaz:
 
-#### **Opción 1: Indicador en el AppBar**
-- Mostrar la timezone actual del usuario seleccionado
-- Icono de reloj + texto (ej: "London (UTC+0)")
-- Ubicación: AppBar, junto al selector de usuario
+#### ✅ **Opción 1: Indicador mejorado en el AppBar** - IMPLEMENTADO
+- Icono de reloj (⏰) más prominente junto al selector de usuario
+- Texto con formato: "Madrid (GMT+1)"
+- Ubicación: AppBar, en el `UserPerspectiveSelector`
+- Mejora: Icono visible y tamaño de fuente aumentado
 
-#### **Opción 2: Color de fondo en tracks**
-- Cambiar el color de fondo de cada track según la timezone del participante
-- Pros: Visualización clara de diferencias de timezone
-- Contras: Cambios frecuentes en viajes, posible confusión si colores se superponen
+#### ✅ **Opción 3: Barra lateral de color en tracks** - IMPLEMENTADO
+- Barra lateral de 3px de ancho en el lado izquierdo de cada track
+- Colores basados en offset UTC (paleta visual):
+  - América del Oeste: Azul oscuro
+  - América Central/Este: Azul medio
+  - GMT: Verde
+  - Europa: Naranja
+  - Asia/Oceanía: Rosa/Morado
+- Tooltip al hover en headers de tracks con información completa
+- Ubicación: Headers mini, celdas de datos, y fila de alojamientos
 
-#### **Opción 3: Barra lateral de color en tracks**
-- Indicador sutil de color en el lado del track
-- Tooltip al hover con información de timezone
-- Cambios graduales suaves para evitar distracción
+#### ✅ **Opción 4: Tooltip en eventos** - IMPLEMENTADO
+- Tooltip con información de timezone al pasar el mouse sobre eventos
+- Para eventos con timezone única: "Salida: Madrid (GMT+1)"
+- Para eventos con timezones diferentes: "✈️ Vuelo/Desplazamiento\nSalida: Madrid (GMT+1)\nLlegada: Tokio (GMT+9)"
+- Información contextual sin ocupar espacio visual
 
-#### **Opción 4: Tooltip en eventos**
-- Mostrar horas en origen y destino al pasar el mouse
-- Badge "✈" en eventos de desplazamiento
-- Información contextual sin ocupar espacio
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/calendar/user_perspective_selector.dart` - Indicador mejorado en AppBar
+- ✅ `lib/widgets/screens/calendar/components/calendar_tracks.dart` - Barra lateral en tracks
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Barra lateral en celdas de datos y tooltips en eventos
+- ✅ `lib/features/calendar/domain/services/timezone_service.dart` - Métodos `getTimezoneColor()` y `getTimezoneBarColor()`
 
-**Criterios de decisión:**
-- Claridad para usuarios
-- Prevención de confusión horaria
-- Contexto para eventos internacionales
-- No sobrecargar la interfaz
-
-**Tareas a realizar:**
-- Evaluar cada opción con prototipo o mockup
-- Decidir opción o combinación de opciones
-- Implementar solución elegida
-- Documentar decisión
-
-**Archivos a crear/modificar:**
-- Mockups o prototipos de cada opción
-- Documentación de decisión final
-- Implementación en UI del calendario
+**Funcionalidades implementadas:**
+- ✅ Sistema de colores para timezones basado en offset UTC
+- ✅ Barra lateral de color en todos los tracks (headers, celdas, alojamientos)
+- ✅ Tooltips informativos en headers de tracks
+- ✅ Tooltips informativos en eventos con timezone
+- ✅ Indicador mejorado en AppBar con icono de reloj
 
 ---
 
@@ -1684,7 +1709,7 @@ CalendarScreen (orchestrator)
 ---
 
 ### T152 - Revisión y Optimización de Índices de Firestore
-**Estado:** Pendiente  
+**Estado:** ✅ Base completada  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
 **Descripción:** Revisar, validar y optimizar los índices de Firestore para mantener solo los necesarios, eliminar redundancias y asegurar coherencia con el código actual.
@@ -1700,28 +1725,28 @@ CalendarScreen (orchestrator)
 **Pasos a seguir:**
 
 #### 1. Auditoría de Índices
-- [ ] Listar todos los índices actuales en `firestore.indexes.json`
-- [ ] Buscar en el código todas las queries a Firestore que usan `where()` y `orderBy()`
-- [ ] Mapear cada query con su índice correspondiente
-- [ ] Identificar índices sin queries asociadas (redundantes)
-- [ ] Identificar queries sin índices (necesitan índices nuevos)
+- [x] Listar todos los índices actuales en `firestore.indexes.json`
+- [x] Buscar en el código todas las queries a Firestore que usan `where()` y `orderBy()`
+- [x] Mapear cada query con su índice correspondiente
+- [x] Identificar índices sin queries asociadas (redundantes)
+- [x] Identificar queries sin índices (necesitan índices nuevos)
 
 #### 2. Revisión de Colecciones
-- [ ] Revisar todas las colecciones referenciadas en el código
-- [ ] Comparar con las colecciones definidas en Firestore Rules
-- [ ] Identificar colecciones obsoletas o no utilizadas
-- [ ] Verificar que todas las colecciones activas tengan reglas de seguridad
+- [x] Revisar todas las colecciones referenciadas en el código
+- [x] Comparar con las colecciones definidas en Firestore Rules
+- [x] Identificar colecciones obsoletas o no utilizadas
+- [x] Verificar que todas las colecciones activas tengan reglas de seguridad
 
 #### 3. Revisión de Campos
-- [ ] Revisar campos de modelos vs campos en Firestore
-- [ ] Identificar campos obsoletos en modelos que ya no se usan
-- [ ] Verificar que campos requeridos en queries tienen índices
+- [x] Revisar campos de modelos vs campos en Firestore
+- [x] Identificar campos obsoletos en modelos que ya no se usan
+- [x] Verificar que campos requeridos en queries tienen índices
 
 #### 4. Optimización
-- [ ] Eliminar índices redundantes
-- [ ] Añadir índices faltantes si son necesarios
-- [ ] Reorganizar índices por colección para mejor legibilidad
-- [ ] Documentar la razón de cada índice (qué query lo utiliza)
+- [x] Eliminar índices redundantes
+- [x] Añadir índices faltantes si son necesarios
+- [x] Reorganizar índices por colección para mejor legibilidad
+- [x] Documentar la razón de cada índice (qué query lo utiliza)
 
 #### 5. Validación
 - [ ] Ejecutar queries del código para verificar que todos los índices funcionan
@@ -1736,11 +1761,27 @@ CalendarScreen (orchestrator)
 - ✅ Colecciones obsoletas eliminadas o marcadas para migración
 - ✅ Campos obsoletos identificados y documentados
 
-**Archivos a revisar:**
-- `firestore.indexes.json`
-- `firestore.rules`
-- Todos los servicios que hacen queries a Firestore
-- Modelos de datos (para identificar campos obsoletos)
+**Archivos modificados:**
+- ✅ `firestore.indexes.json` - Añadidos 25 índices (de 7 a 25 totales)
+- ✅ `docs/configuracion/FIRESTORE_INDEXES_AUDIT.md` - Documentación completa creada
+
+**Resultados de la auditoría:**
+- ✅ **7 índices existentes** revisados y validados
+- ✅ **18 índices nuevos** añadidos para cubrir todas las queries
+- ✅ **Discrepancia encontrada:** Nombres de colecciones entre Rules y código (`plan_participations` vs `planParticipations`, `event_participants` vs `eventParticipants`)
+- ✅ **Documentación completa** de cada índice con su propósito y queries asociadas
+- ✅ **Proceso de revisión periódica** documentado para futuras revisiones
+
+**Índices añadidos por colección:**
+- `plans`: 2 nuevos índices
+- `events`: 3 nuevos índices
+- `plan_participations`: 5 nuevos índices
+- `planInvitations`: 2 nuevos índices
+- `event_participants`: 3 nuevos índices
+- `participant_groups`: 1 nuevo índice
+- `users`: 2 nuevos índices
+
+**⚠️ Pendiente:** Validación práctica ejecutando las queries (se realizará cuando se desplieguen los índices a Firestore).
 
 ---
 
@@ -5647,6 +5688,586 @@ Organizador quiere invitar a alguien a unirse al plan
 - T132 (Sistema de agencias)
 - docs/flujos/FLUJO_CRUD_PLANES.md (vista del plan)
 - docs/guias/GUIA_UI.md (diseño visual)
+
+---
+
+## 📦 GRUPO MIGRACIÓN: MAC/IOS
+
+### **GRUPO MIGRACIÓN: MIGRACIÓN A MAC/IOS** 🍎
+**Objetivo:** Migrar el proyecto completo a Mac con iOS y configurar entorno de desarrollo  
+**Tareas:** T154 → T155 → T156  
+**Duración estimada:** 1-2 días  
+**Resultado:** Proyecto funcionando en Mac, Firebase CLI instalado, índices actualizados
+
+**Testing del Grupo:**
+- ✅ Proyecto compila en Mac
+- ✅ App funciona en iOS Simulator
+- ✅ Firebase CLI instalado y funcionando
+- ✅ Índices de Firestore actualizados
+- ✅ Todas las funcionalidades probadas
+
+---
+
+### T154 - Migración del Proyecto a Mac/iOS
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Alta  
+**Prioridad:** 🟡 Media (Programada para ~2 meses)  
+**Descripción:** Migrar todo el proyecto Planazoo desde Windows a Mac, configurar entorno de desarrollo completo (Cursor, Flutter, Firebase, GitHub), habilitar compilación para Web/Android/iOS, y verificar que todo funciona correctamente.
+
+**Contexto:**
+- Actualmente el proyecto está en Windows
+- Se migrará a Mac para desarrollo iOS y mejor integración con Flutter
+- Esta migración está programada para realizarse en aproximadamente 2 meses
+- Durante la migración se aprovechará para instalar Firebase CLI y actualizar índices (T155, T156)
+- Se quiere mantener toda la configuración de Cursor y chats de IA si es posible
+- **IMPORTANTE:** Después de completar la migración, el usuario quiere empezar a trabajar en la implementación de Offline First (Tareas T56-T62). El entorno debe estar preparado para este desarrollo.
+
+**Funcionalidades:**
+1. Instalar y configurar Cursor IDE
+2. Conectar proyecto con GitHub
+3. Configurar IA de Cursor y mantener chats
+4. Instalar Flutter SDK y configurar para Web/Android/iOS
+5. Configurar Xcode para iOS
+6. Configurar Android Studio/SDK para Android
+7. Migrar código fuente del proyecto
+8. Instalar dependencias y actualizaciones
+9. Configurar Firebase
+10. Verificar compilación en todas las plataformas
+11. Optimizar configuración de Cursor
+12. **Preparar entorno para desarrollo Offline First (T56-T62)**
+
+**Criterios de aceptación:**
+- ✅ Cursor IDE instalado (última versión) y configurado
+- ✅ Proyecto conectado a GitHub
+- ✅ IA de Cursor configurada y funcionando
+- ✅ Chats de IA migrados/mantenidos (si es posible)
+- ✅ Flutter SDK instalado y configurado
+- ✅ Compilación para Web funcionando
+- ✅ Compilación para Android funcionando
+- ✅ Compilación para iOS funcionando
+- ✅ Xcode instalado y configurado
+- ✅ Android Studio/SDK instalado y configurado
+- ✅ Proyecto compila sin errores en todas las plataformas
+- ✅ App funciona en iOS Simulator
+- ✅ App funciona en Android Emulator
+- ✅ App funciona en navegador web
+- ✅ Todas las funcionalidades principales probadas
+- ✅ Firebase configurado correctamente
+- ✅ Cursor optimizado para el proyecto
+- ✅ **Entorno preparado para desarrollo Offline First (T56-T62)**
+- ✅ **Métodos de simulación offline documentados**
+- ✅ **Dependencias para offline verificadas (SQLite/Hive)**
+- ✅ Documentación actualizada si hubo cambios
+
+---
+
+## 📋 Checklist Completo de Migración
+
+### **FASE 1: Instalación de Cursor IDE y Configuración**
+
+- [ ] Descargar Cursor IDE desde [cursor.sh](https://cursor.sh/) (última versión disponible)
+- [ ] Instalar Cursor en Mac
+- [ ] Abrir Cursor y completar configuración inicial
+- [ ] Instalar extensiones recomendadas para Flutter/Dart:
+  - [ ] Dart (Dart Code)
+  - [ ] Flutter (Flutter extension)
+  - [ ] Firebase (Firebase extension si existe)
+  - [ ] GitLens (para mejor integración con GitHub)
+  - [ ] Error Lens (para ver errores en línea)
+  - [ ] Bracket Pair Colorizer (mejor visualización)
+  - [ ] Material Icon Theme (iconos)
+- [ ] Configurar preferencias de Cursor:
+  - [ ] Configurar tema (light/dark según preferencia)
+  - [ ] Configurar fuente y tamaño
+  - [ ] Configurar atajos de teclado
+  - [ ] Configurar autocompletado
+  - [ ] Configurar formato automático
+  - [ ] Configurar linting
+- [ ] Intentar migrar/restaurar chats de IA:
+  - [ ] Verificar si Cursor guarda chats en archivos locales
+  - [ ] Copiar archivos de configuración de Cursor desde Windows si es posible
+  - [ ] Si no es posible, documentar conversaciones importantes antes de migrar
+- [ ] Configurar cuenta de Cursor (si aplica)
+- [ ] Verificar que la IA de Cursor funciona correctamente
+
+---
+
+### **FASE 2: Configuración de Git y GitHub**
+
+- [ ] Instalar Git (si no está instalado): `git --version`
+- [ ] Configurar Git con tu nombre y email:
+  ```bash
+  git config --global user.name "Tu Nombre"
+  git config --global user.email "tu@email.com"
+  ```
+- [ ] Configurar SSH keys para GitHub (si no tienes):
+  ```bash
+  ssh-keygen -t ed25519 -C "tu@email.com"
+  ```
+- [ ] Agregar SSH key a GitHub (copiar desde `~/.ssh/id_ed25519.pub`)
+- [ ] Verificar conexión: `ssh -T git@github.com`
+- [ ] Clonar repositorio del proyecto:
+  ```bash
+  cd ~/Documents  # o donde prefieras
+  git clone git@github.com:tu-usuario/unp_calendario.git
+  cd unp_calendario
+  ```
+- [ ] Verificar que el repositorio está conectado correctamente
+- [ ] Abrir proyecto en Cursor: `cursor .` (desde el directorio del proyecto)
+- [ ] Verificar que Cursor detecta el repositorio Git
+- [ ] Configurar Git en Cursor (integración de GitLens)
+
+---
+
+### **FASE 3: Instalación de Flutter SDK**
+
+- [ ] Descargar Flutter SDK desde [flutter.dev](https://flutter.dev/docs/get-started/install/macos)
+- [ ] Extraer Flutter a una ubicación permanente (ej: `~/development/flutter`)
+- [ ] Agregar Flutter al PATH:
+  ```bash
+  # Agregar a ~/.zshrc o ~/.bash_profile
+  export PATH="$PATH:$HOME/development/flutter/bin"
+  ```
+- [ ] Recargar terminal: `source ~/.zshrc` (o reiniciar terminal)
+- [ ] Verificar instalación: `flutter --version`
+- [ ] Ejecutar `flutter doctor` y revisar estado
+- [ ] Instalar dependencias faltantes según `flutter doctor`:
+  - [ ] Xcode (se instala en FASE 4)
+  - [ ] Android Studio (se instala en FASE 5)
+  - [ ] CocoaPods (para iOS): `sudo gem install cocoapods`
+  - [ ] Cualquier otra dependencia que indique `flutter doctor`
+
+---
+
+### **FASE 4: Configuración de iOS (Xcode)**
+
+- [ ] Descargar Xcode desde App Store (última versión)
+- [ ] Instalar Xcode (puede tardar bastante tiempo)
+- [ ] Abrir Xcode y aceptar términos de licencia
+- [ ] Instalar componentes adicionales de Xcode:
+  ```bash
+  sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+  sudo xcodebuild -runFirstLaunch
+  ```
+- [ ] Instalar CocoaPods (si no se instaló antes):
+  ```bash
+  sudo gem install cocoapods
+  ```
+- [ ] Verificar que Xcode está configurado: `flutter doctor`
+- [ ] Crear cuenta de desarrollador Apple (si no la tienes):
+  - [ ] Ir a [developer.apple.com](https://developer.apple.com)
+  - [ ] Crear cuenta (gratuita para desarrollo básico)
+- [ ] Configurar certificados y perfiles (si es necesario para dispositivo físico)
+
+---
+
+### **FASE 5: Configuración de Android**
+
+- [ ] Descargar Android Studio desde [developer.android.com](https://developer.android.com/studio)
+- [ ] Instalar Android Studio
+- [ ] Abrir Android Studio y completar setup wizard
+- [ ] Instalar Android SDK:
+  - [ ] SDK Platform (última versión estable)
+  - [ ] Android SDK Build-Tools
+  - [ ] Android SDK Command-line Tools
+  - [ ] Android Emulator
+- [ ] Configurar variables de entorno Android:
+  ```bash
+  # Agregar a ~/.zshrc
+  export ANDROID_HOME=$HOME/Library/Android/sdk
+  export PATH=$PATH:$ANDROID_HOME/emulator
+  export PATH=$PATH:$ANDROID_HOME/platform-tools
+  export PATH=$PATH:$ANDROID_HOME/tools
+  export PATH=$PATH:$ANDROID_HOME/tools/bin
+  ```
+- [ ] Recargar terminal: `source ~/.zshrc`
+- [ ] Crear un AVD (Android Virtual Device) para testing
+- [ ] Verificar que Android está configurado: `flutter doctor`
+- [ ] Aceptar licencias de Android:
+  ```bash
+  flutter doctor --android-licenses
+  ```
+
+---
+
+### **FASE 6: Configuración de Flutter para Web**
+
+- [ ] Habilitar soporte web en Flutter:
+  ```bash
+  flutter config --enable-web
+  ```
+- [ ] Verificar que web está habilitado: `flutter devices`
+- [ ] Instalar Chrome/Chromium (si no está instalado) para testing
+- [ ] Verificar que Flutter puede compilar para web: `flutter doctor`
+
+---
+
+### **FASE 7: Configuración del Proyecto**
+
+- [ ] Navegar al directorio del proyecto: `cd ~/ruta/al/proyecto/unp_calendario`
+- [ ] Verificar que estás en la rama correcta: `git branch`
+- [ ] Actualizar dependencias: `flutter pub get`
+- [ ] Verificar que no hay errores: `flutter analyze`
+- [ ] Revisar `pubspec.yaml` para verificar dependencias
+- [ ] Configurar Firebase:
+  - [ ] Descargar `google-services.json` (Android) desde Firebase Console si no está
+  - [ ] Descargar `GoogleService-Info.plist` (iOS) desde Firebase Console si no está
+  - [ ] Verificar que los archivos están en las ubicaciones correctas:
+    - Android: `android/app/google-services.json`
+    - iOS: `ios/Runner/GoogleService-Info.plist`
+- [ ] Verificar configuración de Firebase en el proyecto
+- [ ] Revisar `firebase.json` y `firestore.rules`
+- [ ] Verificar `.gitignore` para asegurar que no se suben archivos de Mac
+
+---
+
+### **FASE 8: Compilación y Pruebas**
+
+#### **Compilación para iOS:**
+- [ ] Navegar al directorio del proyecto
+- [ ] Ejecutar: `flutter clean`
+- [ ] Ejecutar: `flutter pub get`
+- [ ] Para iOS Simulator:
+  ```bash
+  flutter run -d ios
+  ```
+- [ ] Verificar que la app se abre en iOS Simulator
+- [ ] Probar funcionalidades principales en iOS
+
+#### **Compilación para Android:**
+- [ ] Asegurar que Android Emulator está corriendo o dispositivo conectado
+- [ ] Ejecutar: `flutter run -d android`
+- [ ] Verificar que la app se abre en Android
+- [ ] Probar funcionalidades principales en Android
+
+#### **Compilación para Web:**
+- [ ] Ejecutar: `flutter run -d chrome` (o `-d web-server`)
+- [ ] Verificar que la app se abre en el navegador
+- [ ] Probar funcionalidades principales en Web
+- [ ] Verificar que Firebase funciona correctamente en web
+
+---
+
+### **FASE 9: Verificación de Funcionalidades**
+
+- [ ] Login/Registro funciona en todas las plataformas
+- [ ] Crear/editar planes funciona
+- [ ] Crear/editar eventos funciona
+- [ ] Calendario y visualización funcionan correctamente
+- [ ] Participantes e invitaciones funcionan
+- [ ] Presupuesto y pagos funcionan
+- [ ] Estadísticas funcionan
+- [ ] Sincronización con Firestore funciona
+- [ ] Modo offline funciona (si está implementado)
+- [ ] Notificaciones funcionan (si están implementadas)
+
+---
+
+### **FASE 10: Optimización de Cursor**
+
+- [ ] Configurar settings de Cursor para Flutter:
+  - [ ] Configurar formato automático al guardar
+  - [ ] Configurar linting automático
+  - [ ] Configurar snippets personalizados (si los tienes)
+- [ ] Configurar workspace settings en `.vscode/settings.json`:
+  ```json
+  {
+    "dart.flutterSdkPath": "/ruta/a/flutter",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    "dart.enableSdkFormatter": true,
+    "dart.lineLength": 80
+  }
+  ```
+- [ ] Configurar extensiones recomendadas (crear `.vscode/extensions.json` si no existe)
+- [ ] Probar autocompletado y sugerencias de IA
+- [ ] Verificar que la integración con Git funciona correctamente
+- [ ] Configurar atajos de teclado personalizados si es necesario
+
+---
+
+### **FASE 11: Actualizaciones y Paquetes**
+
+- [ ] Actualizar Flutter a la última versión estable:
+  ```bash
+  flutter upgrade
+  ```
+- [ ] Actualizar dependencias del proyecto:
+  ```bash
+  flutter pub upgrade
+  ```
+- [ ] Verificar que no hay conflictos de dependencias
+- [ ] Actualizar CocoaPods (iOS):
+  ```bash
+  cd ios
+  pod repo update
+  pod install
+  cd ..
+  ```
+- [ ] Actualizar Android SDK (desde Android Studio)
+- [ ] Actualizar Xcode (desde App Store)
+- [ ] Verificar que todo funciona después de actualizaciones
+
+---
+
+### **FASE 12: Documentación y Finalización**
+
+- [ ] Documentar cualquier problema encontrado durante la migración
+- [ ] Actualizar documentación del proyecto si hubo cambios
+- [ ] Crear nota de migración con pasos específicos seguidos
+- [ ] Verificar que `.gitignore` incluye archivos de Mac
+- [ ] Hacer commit inicial de configuración (si hay cambios):
+  ```bash
+  git status
+  git add .
+  git commit -m "chore: configuración inicial en Mac"
+  ```
+- [ ] Completar T155 (Instalación Firebase CLI)
+- [ ] Completar T156 (Actualización de índices)
+- [ ] **Preparar entorno para Offline First:**
+  - [ ] Documentar métodos de simulación offline (iOS/Android/Web)
+  - [ ] Verificar dependencias para offline (SQLite/Hive) en `pubspec.yaml`
+  - [ ] Revisar documentación de T56-T62 (Infraestructura Offline)
+  - [ ] Crear documento de preparación para desarrollo offline (opcional)
+
+---
+
+## ⚠️ Consideraciones Importantes
+
+### **Compatibilidad:**
+- Verificar compatibilidad de versiones de Flutter con macOS
+- Asegurar que las rutas de archivos sean compatibles (no usar rutas absolutas de Windows)
+- Verificar que las dependencias funcionan en macOS
+
+### **Firebase:**
+- Revisar configuración de Firebase (puede necesitar regenerar archivos de configuración)
+- Verificar que los archivos de configuración de Firebase están en las ubicaciones correctas
+- Asegurar que las reglas de Firestore funcionan correctamente
+
+### **Archivos a Revisar:**
+- `pubspec.yaml` - Dependencias
+- `firebase.json` - Configuración Firebase
+- `firestore.rules` - Reglas de seguridad
+- `firestore.indexes.json` - Índices (se actualizarán en T156)
+- `android/app/google-services.json` - Configuración Android
+- `ios/Runner/GoogleService-Info.plist` - Configuración iOS
+- `.gitignore` - Asegurar que no se suben archivos de Mac
+- `.vscode/settings.json` - Configuración de Cursor/VS Code
+
+### **Backup y Seguridad:**
+- Hacer backup de chats de Cursor antes de migrar (si es posible)
+- Documentar conversaciones importantes de IA antes de migrar
+- Hacer backup de configuraciones importantes
+- Verificar que las SSH keys están configuradas correctamente
+
+---
+
+## 📝 Notas Importantes
+
+- Esta tarea debe completarse ANTES de T155 y T156
+- Durante la migración, aprovechar para instalar Firebase CLI (T155)
+- Una vez migrado, actualizar índices de Firestore (T156)
+- **Después de completar la migración, el usuario quiere empezar con el desarrollo de Offline First (T56-T62)**
+- **Asegurar que el entorno está preparado para desarrollo offline:**
+  - Métodos de simulación offline documentados
+  - Dependencias verificadas (SQLite/Hive)
+  - Documentación de T56-T62 revisada
+- Documentar cualquier problema encontrado durante la migración
+- Si hay problemas con la migración de chats de Cursor, documentar las conversaciones importantes antes de migrar
+- Tener en cuenta que la primera compilación puede tardar más tiempo (descarga de dependencias)
+
+**Documento ejecutable:**
+- 📘 **`docs/configuracion/MIGRACION_MAC_PLAYBOOK.md`** - Playbook completo para la IA que gestiona toda la migración paso a paso
+
+**Relacionado con:**
+- T155 (Instalación Firebase CLI)
+- T156 (Actualización índices Firestore)
+- T152 (Revisión y Optimización de Índices de Firestore)
+- docs/configuracion/MIGRACION_MAC_PLAYBOOK.md
+- docs/configuracion/DEPLOY_INDICES_FIREBASE_CONSOLE.md
+- docs/configuracion/INDICES_ANALISIS_COMPARACION.md
+
+---
+
+### T155 - Instalación de Firebase CLI en Mac
+**Estado:** Pendiente  
+**Complejidad:** 🟢 Baja  
+**Prioridad:** 🟡 Media (Programada para ~2 meses, durante migración)  
+**Descripción:** Instalar Firebase CLI en el Mac durante la migración del proyecto (T154) para poder gestionar índices de Firestore desde la terminal.
+
+**Contexto:**
+- Actualmente no se tiene Firebase CLI instalado (se está trabajando manualmente desde Firebase Console)
+- Durante la migración a Mac (T154) se instalará Firebase CLI
+- Una vez instalado, se usará para actualizar índices (T156)
+
+**Funcionalidades:**
+1. Instalar Node.js (si no está instalado)
+2. Instalar Firebase CLI globalmente
+3. Hacer login en Firebase
+4. Verificar instalación
+5. Configurar proyecto Firebase
+
+**Criterios de aceptación:**
+- ✅ Node.js instalado (versión LTS recomendada)
+- ✅ Firebase CLI instalado globalmente
+- ✅ Login exitoso en Firebase
+- ✅ Proyecto Firebase vinculado correctamente
+- ✅ Comando `firebase deploy --only firestore:indexes` funciona
+
+**Checklist de instalación:**
+- [ ] Verificar si Node.js está instalado: `node --version`
+- [ ] Si no está instalado, instalar Node.js desde [nodejs.org](https://nodejs.org/) (versión LTS)
+- [ ] Verificar npm: `npm --version`
+- [ ] Instalar Firebase CLI globalmente: `npm install -g firebase-tools`
+- [ ] Verificar instalación: `firebase --version`
+- [ ] Hacer login: `firebase login`
+- [ ] Verificar login: `firebase projects:list`
+- [ ] Navegar al directorio del proyecto: `cd /ruta/al/proyecto`
+- [ ] Inicializar Firebase (si es necesario): `firebase init`
+- [ ] Seleccionar proyecto Firebase correcto
+- [ ] Verificar configuración: `firebase use`
+- [ ] Probar comando de índices: `firebase deploy --only firestore:indexes --dry-run` (o similar)
+
+**Comandos de instalación:**
+```bash
+# 1. Verificar Node.js (si no está instalado, descargar desde nodejs.org)
+node --version
+
+# 2. Instalar Firebase CLI
+npm install -g firebase-tools
+
+# 3. Login
+firebase login
+
+# 4. Verificar
+firebase --version
+
+# 5. Navegar al proyecto
+cd /ruta/al/proyecto/unp_calendario
+
+# 6. Seleccionar proyecto (si es necesario)
+firebase use --add
+
+# 7. Verificar configuración
+firebase projects:list
+```
+
+**Notas importantes:**
+- Esta tarea se completa DURANTE la migración (T154)
+- Una vez instalado, se usará inmediatamente para T156
+- Si hay problemas de permisos en macOS, puede ser necesario usar `sudo` (aunque no es recomendado)
+- Alternativa sin `sudo`: usar `npx firebase-tools` en lugar de instalación global
+
+**Documentación relacionada:**
+- [Firebase CLI Documentation](https://firebase.google.com/docs/cli)
+- docs/configuracion/DEPLOY_INDICES_INSTRUCCIONES.md
+- docs/configuracion/DEPLOY_INDICES_FIREBASE_CONSOLE.md
+
+**Relacionado con:**
+- T154 (Migración del Proyecto a Mac/iOS)
+- T156 (Actualización de Índices de Firestore)
+- T152 (Revisión y Optimización de Índices de Firestore)
+
+---
+
+### T156 - Actualización de Índices de Firestore Durante Migración
+**Estado:** Pendiente  
+**Complejidad:** 🟢 Baja  
+**Prioridad:** 🟡 Media (Programada para ~2 meses, después de migración)  
+**Descripción:** Actualizar todos los índices de Firestore a los 25 índices requeridos usando Firebase CLI después de la migración a Mac (T154) y la instalación de Firebase CLI (T155).
+
+**Contexto:**
+- Actualmente hay 9 índices en Firebase, de los cuales 3 son obsoletos
+- Se necesitan 25 índices en total (según T152)
+- Durante la migración a Mac, se instalará Firebase CLI (T155)
+- Una vez instalado, se aprovechará para actualizar todos los índices desde la terminal
+
+**Funcionalidades:**
+1. Verificar índices actuales en Firebase
+2. Desplegar los 25 índices requeridos desde `firestore.indexes.json`
+3. Eliminar índices obsoletos
+4. Verificar que todos los índices están "Enabled"
+5. Probar que las queries funcionan correctamente
+
+**Criterios de aceptación:**
+- ✅ Firebase CLI instalado y funcionando (T155 completada)
+- ✅ 25 índices desplegados correctamente
+- ✅ Todos los índices en estado "Enabled"
+- ✅ Índices obsoletos eliminados
+- ✅ Queries de la app funcionan sin errores de "missing index"
+- ✅ Verificación exhaustiva de funcionalidades
+
+**Checklist de actualización:**
+- [ ] Completar T154 (Migración a Mac)
+- [ ] Completar T155 (Instalación Firebase CLI)
+- [ ] Navegar al directorio del proyecto: `cd /ruta/al/proyecto/unp_calendario`
+- [ ] Verificar que `firestore.indexes.json` tiene los 25 índices correctos
+- [ ] Verificar índices actuales en Firebase Console (opcional, para comparar)
+- [ ] Desplegar índices: `firebase deploy --only firestore:indexes`
+- [ ] Esperar a que todos los índices estén "Enabled" (puede tardar 5-30 minutos)
+- [ ] Verificar en Firebase Console que hay 25 índices
+- [ ] Identificar y eliminar índices obsoletos (ver `INDICES_ANALISIS_COMPARACION.md`):
+  - [ ] Eliminar `Hours` - `horaFecha` + `horaNum` (colección obsoleta)
+  - [ ] Eliminar `users` - `email` + `isActive` (no se usa)
+  - [ ] Eliminar `users` - `planId` + `date` + `hour` (índice incorrecto)
+- [ ] Verificar índices con problemas de nomenclatura (opcional):
+  - [ ] Verificar si `users` - `IsActive` funciona (si no, recrear con `isActive`)
+  - [ ] Verificar si `plan_participations` - `planID` funciona (si no, recrear con `planId`)
+- [ ] Probar funcionalidades de la app:
+  - [ ] Calendario carga eventos correctamente
+  - [ ] Dashboard lista planes
+  - [ ] Participantes se cargan correctamente
+  - [ ] Eventos participantes funcionan
+  - [ ] Pagos se cargan correctamente
+  - [ ] Estadísticas funcionan
+  - [ ] Búsquedas y filtros funcionan
+- [ ] Verificar logs de la app para errores de "missing index"
+- [ ] Actualizar documentación si es necesario
+
+**Comandos principales:**
+```bash
+# 1. Verificar configuración de Firebase
+firebase use
+
+# 2. Ver índices actuales (opcional, desde Firebase Console)
+# O listar desde CLI si está disponible
+
+# 3. Desplegar todos los índices
+firebase deploy --only firestore:indexes
+
+# 4. Verificar estado (desde Firebase Console)
+# Esperar a que todos estén "Enabled"
+```
+
+**Índices obsoletos a eliminar:**
+1. `Hours` - `horaFecha` + `horaNum` (colección obsoleta)
+2. `users` - `email` + `isActive` (no se usa en el código)
+3. `users` - `planId` + `date` + `hour` (índice incorrecto - estos campos no existen en `users`)
+
+**Índices con problemas de nomenclatura (verificar antes de eliminar):**
+- `users` - `displayName` + `IsActive` (debería ser `isActive`)
+- `users` - `createdAt` + `IsActive` (debería ser `isActive`)
+- `plan_participations` - `isActive` + `planID` + `joinedAt` (debería ser `planId`)
+
+**Notas importantes:**
+- Esta tarea se completa DESPUÉS de T154 y T155
+- El despliegue de índices puede tardar varios minutos (Firebase los crea en background)
+- No eliminar índices obsoletos hasta que los nuevos estén "Enabled"
+- Si hay errores, revisar `INDICES_ANALISIS_COMPARACION.md` para detalles
+- Los índices con problemas de nomenclatura pueden funcionar (Firebase puede ser flexible), verificar antes de eliminar
+
+**Documentación relacionada:**
+- docs/configuracion/FIRESTORE_INDEXES_AUDIT.md
+- docs/configuracion/INDICES_ANALISIS_COMPARACION.md
+- docs/configuracion/INDICES_OBSOLETOS_VERIFICACION.md
+- docs/configuracion/DEPLOY_INDICES_INSTRUCCIONES.md
+- docs/configuracion/ESTRATEGIA_INDICES_ELIMINAR_TODOS.md
+- firestore.indexes.json
+
+**Relacionado con:**
+- T154 (Migración del Proyecto a Mac/iOS)
+- T155 (Instalación Firebase CLI)
+- T152 (Revisión y Optimización de Índices de Firestore)
 
 ---
 

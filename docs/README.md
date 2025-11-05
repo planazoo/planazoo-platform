@@ -91,10 +91,17 @@ Configuración y contexto del proyecto:
 - Formularios enriquecidos
 
 ### Pendiente ❌
-- Invitaciones y notificaciones
-- Presupuesto y pagos
+- Invitaciones y notificaciones (Base completada, pendiente push)
 - Validación avanzada
 - Sistema de alarmas
+
+### Completado Recientemente ✅
+- Sistema de presupuesto (T101)
+- Sistema de pagos (T102)
+- Sistema multi-moneda (T153)
+- Visualización de timezones (T100)
+- Estadísticas del plan (T113)
+- Grupos de participantes (T123)
 
 ---
 

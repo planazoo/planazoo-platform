@@ -42,6 +42,8 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_navigation.dart
 import 'package:unp_calendario/widgets/screens/calendar/calendar_validations.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_calculations.dart';
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
+import 'package:unp_calendario/widgets/screens/calendar/components/calendar_grid.dart';
+import 'package:unp_calendario/widgets/screens/calendar/components/calendar_tracks.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -406,123 +408,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Construye el cuerpo del calendario
   Widget _buildCalendarBody() {
-    return Stack(
-      children: [
-        // Capa 1: Calendario base (fijo)
-        Row(
-          children: [
-            // Columna FIJO (horas) - fija
-            _buildFixedHoursColumn(),
-            
-            // Columnas de datos - 7 días fijos
-            Expanded(
-              child: _buildDataColumns(),
-            ),
-          ],
-        ),
-        
-      ],
+    return CalendarGrid(
+      hoursScrollController: _hoursScrollController,
+      dataScrollController: _dataScrollController,
+      buildFixedRows: _buildFixedRows,
+      buildDataRows: _buildDataRows,
+      buildEventsLayer: _buildEventsLayer,
     );
   }
 
-  /// Construye la columna fija de horas
-  Widget _buildFixedHoursColumn() {
-    return Container(
-      width: 80.0, // Ancho fijo para mostrar "00:00"
-      child: Column(
-        children: [
-          // Encabezado (primera celda)
-          Container(
-            height: _headerHeight,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColorScheme.gridLineColor),
-              color: AppColorScheme.color1,
-            ),
-            child: const Center(
-              child: SizedBox.shrink(), // Celda vacía
-            ),
-          ),
-          
-          // Fila de alojamientos FIJA
-          Container(
-            height: _accommodationRowHeight,
-            decoration: _createBorderedDecoration(
-              color: AppColorScheme.color1.withOpacity(0.3),
-            ),
-            child: const Center(
-              child: Text(
-                'Alojamiento',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
-              ),
-            ),
-          ),
-          
-        // Filas de horas con scroll vertical
-        Expanded(
-          child: SingleChildScrollView(
-            controller: _hoursScrollController,
-              child: Column(
-                children: List.generate(AppConstants.defaultRowCount, (index) {
-                  return Container(
-                    height: AppConstants.cellHeight,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColorScheme.gridLineColor),
-                      color: AppColorScheme.color0,
-                    ),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '${index.toString().padLeft(2, '0')}:00',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Construye las columnas de datos (7 días)
-  Widget _buildDataColumns() {
-    return Column(
-      children: [
-        // Filas fijas (encabezado y alojamientos)
-        _buildFixedRows(),
-        
-        // Filas con scroll vertical (datos de horas)
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Stack(
-                children: [
-                  // Capa 1: Datos de la tabla
-                  SingleChildScrollView(
-                    controller: _dataScrollController,
-                    child: Stack(
-                      children: [
-                        _buildDataRows(),
-                        // Capa 2: Eventos (Positioned) - Ahora dentro del SingleChildScrollView
-                        ..._buildEventsLayer(constraints.maxWidth),
-                        // Capa 3: Detector invisible para doble clicks en celdas vacías (deshabilitado temporalmente)
-                        // _buildDoubleClickDetector(constraints.maxWidth),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
+  // NOTA: Los métodos _buildFixedHoursColumn() y _buildDataColumns() 
+  // han sido movidos al componente CalendarGrid
 
   /// Crea un borde común para elementos de la grilla
   Border _createGridBorder({bool includeRight = true}) {
@@ -541,7 +437,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  /// Determina si un día es check-in, check-out, o día intermedio para un alojamiento
+  // NOTA: _getAccommodationDayText() ha sido movido a CalendarTracks
+  // Se mantiene aquí solo para uso en _buildAccommodationCell que aún no ha sido extraído
   String _getAccommodationDayText(Accommodation accommodation, DateTime dayDate) {
     final checkInDate = accommodation.checkIn;
     final checkOutDate = accommodation.checkOut;
@@ -564,304 +461,40 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _buildFixedRows() {
     final columns = _getColumnsToShow();
     
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return GestureDetector(
-          onTap: () {
-            // GestureDetector para capturar taps en toda la fila
-          },
-          child: Row(
-            children: columns.map((column) {
-              return Expanded(
-                child: Column(
-                  children: [
-                    // Encabezado de la columna
-                    Container(
-                      height: _headerHeight,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColorScheme.gridLineColor),
-                        color: _getHeaderColor(column),
-                      ),
-                      child: Center(
-                        child: _buildHeaderContent(column),
-                      ),
-                    ),
-                    
-                  // Fila de alojamientos con tracks
-                  GestureDetector(
-                    onTap: () {
-                      // Crear nuevo alojamiento para este día
-                      final dayData = column as Map<String, dynamic>;
-                      final actualDayIndex = dayData['index'] as int;
-                      final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
-                      _showNewAccommodationDialog(dayDate);
-                    },
-                    child: Container(
-                      height: _accommodationRowHeight,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColorScheme.gridLineColor),
-                        color: AppColorScheme.color1.withOpacity(0.3),
-                      ),
-                      child: Center(
-                        child: _buildAccommodationTracks(column, constraints.maxWidth),
-                      ),
-                    ),
-                  ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
+    return CalendarTracks(
+      columns: columns,
+      plan: widget.plan,
+      activeUserId: _selectedPerspectiveUserId ?? _currentUserId,
+      onShowNewAccommodationDialog: _showNewAccommodationDialog,
+      onShowAccommodationDialog: _showAccommodationDialog,
+      onShowParticipantManagementDialog: _showParticipantManagementDialog,
+      shouldShowAccommodationInTrack: _shouldShowAccommodationInTrack,
+      getFilteredTracks: _getFilteredTracks,
+      createGridBorder: _createGridBorder,
+      gridLineOpacity: _gridLineOpacity,
+      getParticipantTimezone: _getParticipantTimezone,
+    );
+  }
+
+  /// Obtiene el timezone de un participante por su ID
+  String? _getParticipantTimezone(String participantId) {
+    final participantsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
+    return participantsAsync.when(
+      data: (participations) {
+        final participation = participations.firstWhere(
+          (p) => p.userId == participantId,
+          orElse: () => participations.first,
         );
+        return participation.personalTimezone;
       },
+      loading: () => null,
+      error: (_, __) => null,
     );
   }
 
-  /// Obtiene el color del header según el tipo de columna
-  Color _getHeaderColor(dynamic column) {
-    final dayData = column as Map<String, dynamic>;
-    final isEmpty = dayData['isEmpty'] as bool;
-    return isEmpty ? Colors.grey.shade200 : AppColorScheme.color1;
-  }
-
-
-  /// Construye el contenido del header
-  Widget _buildHeaderContent(dynamic column) {
-    final dayData = column as Map<String, dynamic>;
-    final actualDayIndex = dayData['index'] as int;
-    final isEmpty = dayData['isEmpty'] as bool;
-    final participants = dayData['participants'] as List<ParticipantTrack>;
-    
-    if (isEmpty) {
-      return const Text(
-        'Vacío',
-        style: TextStyle(fontSize: 10, color: Colors.grey),
-      );
-    }
-    
-    // Calcular la fecha de este día del plan
-    final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
-    final formattedDate = '${dayDate.day}/${dayDate.month}';
-    
-    // Obtener el nombre del día de la semana (traducible)
-    final dayOfWeek = DateFormat.E().format(dayDate); // 'lun', 'mar', etc.
-    
-    // Generar iniciales de participantes
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Día $actualDayIndex - $dayOfWeek $formattedDate',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 9,
-          ),
-        ),
-        const SizedBox(height: 2),
-        // Mini headers de participantes
-        _buildMiniParticipantHeaders(participants),
-      ],
-    );
-  }
-
-  /// Construye mini headers de participantes para el header principal
-  Widget _buildMiniParticipantHeaders(List<ParticipantTrack> participants) {
-    final activeUserId = _selectedPerspectiveUserId ?? _currentUserId;
-    
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: participants.asMap().entries.map((entry) {
-        final index = entry.key;
-        final participant = entry.value;
-        final isLastTrack = index == participants.length - 1;
-        final isActiveTrack = activeUserId != null && participant.participantId == activeUserId;
-        
-        // Generar iniciales del nombre y apellido
-        final initial = _getParticipantInitials(participant.participantName, participant.position);
-            
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              // Abrir modal de gestión de participantes al hacer click en el header
-              _showParticipantManagementDialog();
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-              decoration: BoxDecoration(
-                // Fondo diferenciado para track activo
-                color: isActiveTrack 
-                    ? AppColorScheme.color1.withOpacity(0.2)
-                    : Colors.transparent,
-                // Borde más grueso para track activo, normal para otros (excepto último)
-                border: isLastTrack 
-                    ? null 
-                    : (isActiveTrack
-                        ? Border(
-                            right: BorderSide(
-                              color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity),
-                              width: 1.5, // Borde más grueso para track activo
-                            ),
-                          )
-                        : _createGridBorder()),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    initial,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: isActiveTrack ? FontWeight.w900 : FontWeight.bold, // Más negrita si es activo
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  /// Genera las iniciales del nombre y apellido de un participante
-  String _getParticipantInitials(String participantName, int position) {
-    if (participantName.isEmpty) {
-      return 'P${position + 1}';
-    }
-    
-    // Dividir el nombre por espacios
-    final nameParts = participantName.trim().split(' ');
-    
-    if (nameParts.length == 1) {
-      // Solo un nombre, tomar la primera letra
-      return nameParts[0].substring(0, 1).toUpperCase();
-    } else if (nameParts.length >= 2) {
-      // Nombre y apellido, tomar la primera letra de cada uno
-      final firstName = nameParts[0].substring(0, 1).toUpperCase();
-      final lastName = nameParts[1].substring(0, 1).toUpperCase();
-      return '$firstName$lastName';
-    }
-    
-    return 'P${position + 1}';
-  }
-
-  /// Construye los tracks de alojamiento para cada día
-  Widget _buildAccommodationTracks(dynamic column, double availableWidth) {
-    final dayData = column as Map<String, dynamic>;
-    final actualDayIndex = dayData['index'] as int;
-    final isEmpty = dayData['isEmpty'] as bool;
-    
-    if (isEmpty) {
-      return const Text(
-        'Sin alojamiento',
-        style: TextStyle(fontSize: 8, color: Colors.grey),
-      );
-    }
-    
-    // Obtener alojamientos del plan para este día
-    final accommodations = ref.watch(accommodationsProvider(
-      AccommodationNotifierParams(planId: widget.plan.id ?? ''),
-    ));
-    
-    final dayDate = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
-    final accommodationsForDay = accommodations.where((acc) => acc.isDateInRange(dayDate)).toList();
-    
-    
-    if (accommodationsForDay.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    
-    // Mostrar alojamientos como tracks
-    return _buildAccommodationTracksRow(accommodationsForDay, availableWidth, dayDate);
-  }
-
-  /// Construye la fila de tracks de alojamiento
-  Widget _buildAccommodationTracksRow(List<Accommodation> accommodations, double availableWidth, DateTime dayDate) {
-    final visibleTracks = _getFilteredTracks();
-    final activeUserId = _selectedPerspectiveUserId ?? _currentUserId;
-
-    return SizedBox(
-                      height: _accommodationRowHeight,
-      child: GestureDetector(
-        onTap: () {
-          // Outer GestureDetector for debugging
-        },
-        child: ClipRect(
-          child: Stack(
-            children: [
-          // Fondo con tracks individuales
-          Row(
-            children: visibleTracks.asMap().entries.map((entry) {
-              final trackIndex = entry.key;
-              final track = visibleTracks[trackIndex];
-              final isLastTrack = trackIndex == visibleTracks.length - 1;
-              final isActiveTrack = activeUserId != null && track.participantId == activeUserId;
-              
-              return Expanded(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  height: _accommodationRowHeight,
-                  decoration: BoxDecoration(
-                    // Fondo diferenciado para track activo
-                    color: isActiveTrack 
-                        ? AppColorScheme.color1.withOpacity(0.05)
-                        : Colors.transparent,
-                    // Borde más grueso para track activo
-                    border: isLastTrack
-                        ? null
-                        : (isActiveTrack
-                            ? Border(
-                                right: BorderSide(
-                                  color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity),
-                                  width: 1.5, // Borde más grueso para track activo
-                                ),
-                              )
-                            : _createGridBorder()),
-                  ),
-                  child: GestureDetector(
-                    onTap: () {
-                      // Encontrar alojamientos que deben mostrarse en este track
-                      final accommodationsForTrack = accommodations.where((accommodation) =>
-                        _shouldShowAccommodationInTrack(accommodation, trackIndex)
-                      ).toList();
-
-                      if (accommodationsForTrack.isNotEmpty) {
-                        _showAccommodationDialog(accommodationsForTrack.first);
-                      } else {
-                        final dayDate = accommodations.isNotEmpty
-                            ? accommodations.first.checkIn
-                            : DateTime.now();
-                        _showNewAccommodationDialog(dayDate);
-                      }
-                    },
-                    onDoubleTap: () {
-                      final dayDate = accommodations.isNotEmpty
-                          ? accommodations.first.checkIn
-                          : DateTime.now();
-                      _showNewAccommodationDialog(dayDate);
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-            // Alojamientos individuales usando Row en lugar de Positioned
-            _buildAccommodationTracksWithGrouping(accommodations, visibleTracks, availableWidth, dayDate),
-        ],
-          ),
-        ),
-      ),
-    );
-  }
+  // NOTA: Los métodos _buildHeaderContent, _buildMiniParticipantHeaders, 
+  // _getParticipantInitials, _buildAccommodationTracks y _buildAccommodationTracksRow
+  // han sido movidos al componente CalendarTracks
 
 
 
@@ -932,6 +565,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         final isLastTrack = index == participants.length - 1;
         final isActiveTrack = activeUserId != null && participant.participantId == activeUserId;
         
+        // Obtener timezone del participante para la barra lateral (T100)
+        final participantTimezone = _getParticipantTimezone(participant.participantId);
+        final timezoneColor = participantTimezone != null 
+            ? TimezoneService.getTimezoneBarColor(participantTimezone)
+            : null;
+        
         return Expanded(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -939,27 +578,48 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               final date = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
               _showNewEventDialogForParticipant(date, hourIndex, participant);
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              height: AppConstants.cellHeight,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                // Fondo diferenciado para track activo
-                color: isActiveTrack 
-                    ? AppColorScheme.color1.withOpacity(0.05)
-                    : Colors.transparent,
-                // Agregar línea vertical derecha para separar tracks (excepto el último)
-                // Borde más grueso para track activo
-                border: isActiveTrack && !isLastTrack
-                    ? Border(
-                        right: BorderSide(
-                          color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity),
-                          width: 1.5, // Borde más grueso
+            child: Stack(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  height: AppConstants.cellHeight,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    // Fondo diferenciado para track activo
+                    color: isActiveTrack 
+                        ? AppColorScheme.color1.withOpacity(0.05)
+                        : Colors.transparent,
+                    // Agregar línea vertical derecha para separar tracks (excepto el último)
+                    // Borde más grueso para track activo
+                    border: isActiveTrack && !isLastTrack
+                        ? Border(
+                            right: BorderSide(
+                              color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity),
+                              width: 1.5, // Borde más grueso
+                            ),
+                          )
+                        : (isLastTrack ? null : _createGridBorder()),
+                  ),
+                ),
+                // Barra lateral de color para timezone (T100)
+                if (timezoneColor != null)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 3,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: timezoneColor,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(2),
+                          bottomLeft: Radius.circular(2),
                         ),
-                      )
-                    : (isLastTrack ? null : _createGridBorder()),
-              ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         );
@@ -2837,125 +2497,167 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(event);
     final isMultiTrack = consecutiveGroups.any((group) => group.length > 1);
     
-    return GestureDetector(
-      onTap: () => _showEventDialog(event),
-      onPanStart: (details) => _startDrag(event, details),
-      onPanUpdate: (details) => _updateDrag(details),
-      onPanEnd: (details) => _endDrag(details),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 50),
-        curve: Curves.easeOut,
-        transform: isThisEventDragging ? Matrix4.translationValues(displayOffset.dx, displayOffset.dy, 0) : null,
-        child: Container(
-          decoration: BoxDecoration(
-            // T89: Gradiente para eventos multi-participante cuando abarcan múltiples tracks
-            gradient: isMultiParticipant && isMultiTrack
-                ? LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      eventColor,
-                      eventColor.withOpacity(0.85),
-                      eventColor.withOpacity(0.75),
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  )
-                : null,
-            color: isMultiParticipant && isMultiTrack ? null : eventColor,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: borderColor,
-              width: (participantInfo['isForAll'] == true || isMultiTrack) ? 2 : 1, // Borde más grueso para eventos multi-participante (T89)
-            ),
-            boxShadow: isThisEventDragging ? [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
+    // T100: Construir tooltip con información de timezone
+    final timezoneTooltip = _buildTimezoneTooltip(event);
+    
+    // Construir el widget interno primero
+    final eventWidget = GestureDetector(
+        onTap: () => _showEventDialog(event),
+        onPanStart: (details) => _startDrag(event, details),
+        onPanUpdate: (details) => _updateDrag(details),
+        onPanEnd: (details) => _endDrag(details),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 50),
+          curve: Curves.easeOut,
+          transform: isThisEventDragging ? Matrix4.translationValues(displayOffset.dx, displayOffset.dy, 0) : null,
+          child: Container(
+            decoration: BoxDecoration(
+              // T89: Gradiente para eventos multi-participante cuando abarcan múltiples tracks
+              gradient: isMultiParticipant && isMultiTrack
+                  ? LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        eventColor,
+                        eventColor.withOpacity(0.85),
+                        eventColor.withOpacity(0.75),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
+                    )
+                  : null,
+              color: isMultiParticipant && isMultiTrack ? null : eventColor,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: borderColor,
+                width: (participantInfo['isForAll'] == true || isMultiTrack) ? 2 : 1, // Borde más grueso para eventos multi-participante (T89)
               ),
-            ] : null,
-          ),
-          child: ClipRect(
-            child: Padding(
-              padding: EdgeInsets.all(eventHeight < 30 ? 1 : 2), // Padding más pequeño
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Título del evento
-                  Flexible(
-                    child: Text(
-                      event.description,
-                      style: TextStyle(
-                        color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: eventHeight < 30 ? 1 : 2, // Líneas adaptativas
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  
-                  // Mostrar horas solo si hay espacio suficiente
-                  if (eventHeight > 25) ...[
-                    const SizedBox(height: 2),
-                    
-                    // Horas en una sola línea
+              boxShadow: isThisEventDragging ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ] : null,
+            ),
+            child: ClipRect(
+              child: Padding(
+                padding: EdgeInsets.all(eventHeight < 30 ? 1 : 2), // Padding más pequeño
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Título del evento
                     Flexible(
                       child: Text(
-                        _getEventTimeRange(event),
+                        event.description,
                         style: TextStyle(
                           color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
-                          fontSize: fontSize - 2,
-                          fontWeight: FontWeight.w500,
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
                         ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
+                        maxLines: eventHeight < 30 ? 1 : 2, // Líneas adaptativas
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ],
-                  
-                  // Indicador de participantes (T50/T89) - solo si hay espacio suficiente
-                  if (eventHeight > 30 && participantInfo['showIndicator'] == true) ...[
-                    const SizedBox(height: 2),
-                    _buildParticipantIndicator(participantInfo, fontSize - 3, event, isMultiTrack: isMultiTrack),
-                  ],
-                  
-                  // Debug logs para vuelos
-                  if (event.description.contains('Vuelo')) ...[
-                    Text(
-                      'DEBUG: Altura=$eventHeight, Detalles=${_getFlightDetails(event).isNotEmpty}',
-                      style: const TextStyle(fontSize: 8, color: Colors.red),
-                    ),
-                  ],
-                  
-                  // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
-                  if (eventHeight > 10 && _getFlightDetails(event).isNotEmpty) ...[
-                    const SizedBox(height: 2),
                     
-                    Flexible(
-                      child: Text(
-                        _getFlightDetails(event),
-                        style: TextStyle(
-                          color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
-                          fontSize: fontSize - 3,
-                          fontWeight: FontWeight.w400,
+                    // Mostrar horas solo si hay espacio suficiente
+                    if (eventHeight > 25) ...[
+                      const SizedBox(height: 2),
+                      
+                      // Horas en una sola línea
+                      Flexible(
+                        child: Text(
+                          _getEventTimeRange(event),
+                          style: TextStyle(
+                            color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                            fontSize: fontSize - 2,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        textAlign: TextAlign.left,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
+                    ],
+                    
+                    // Indicador de participantes (T50/T89) - solo si hay espacio suficiente
+                    if (eventHeight > 30 && participantInfo['showIndicator'] == true) ...[
+                      const SizedBox(height: 2),
+                      _buildParticipantIndicator(participantInfo, fontSize - 3, event, isMultiTrack: isMultiTrack),
+                    ],
+                    
+                    // Debug logs para vuelos
+                    if (event.description.contains('Vuelo')) ...[
+                      Text(
+                        'DEBUG: Altura=$eventHeight, Detalles=${_getFlightDetails(event).isNotEmpty}',
+                        style: const TextStyle(fontSize: 8, color: Colors.red),
+                      ),
+                    ],
+                    
+                    // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
+                    if (eventHeight > 10 && _getFlightDetails(event).isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      
+                      Flexible(
+                        child: Text(
+                          _getFlightDetails(event),
+                          style: TextStyle(
+                            color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                            fontSize: fontSize - 3,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          textAlign: TextAlign.left,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
+      );
+    
+    // Envolver en Tooltip para mostrar información de timezone (T100)
+    return Tooltip(
+      message: timezoneTooltip,
+      preferBelow: false,
+      child: eventWidget,
     );
+  }
+
+  /// Construye el tooltip con información de timezone para un evento (T100)
+  String _buildTimezoneTooltip(Event event) {
+    final tooltipParts = <String>[];
+    
+    // Si el evento tiene timezone configurada
+    if (event.timezone != null && event.timezone!.isNotEmpty) {
+      final timezoneDisplay = TimezoneService.getTimezoneDisplayName(event.timezone!);
+      tooltipParts.add('Salida: $timezoneDisplay');
+      
+      // Si tiene timezone de llegada diferente, añadirla
+      if (event.arrivalTimezone != null && 
+          event.arrivalTimezone!.isNotEmpty && 
+          event.arrivalTimezone != event.timezone) {
+        final arrivalDisplay = TimezoneService.getTimezoneDisplayName(event.arrivalTimezone!);
+        tooltipParts.add('Llegada: $arrivalDisplay');
+        
+        // Añadir icono de avión si es un desplazamiento
+        if (event.typeFamily == 'Desplazamiento') {
+          tooltipParts.insert(0, '✈️ Vuelo/Desplazamiento');
+        }
+      }
+    }
+    
+    // Si no hay información de timezone, retornar descripción básica
+    if (tooltipParts.isEmpty) {
+      return event.description;
+    }
+    
+    return tooltipParts.join('\n');
   }
 
   /// Inicia el drag de un evento

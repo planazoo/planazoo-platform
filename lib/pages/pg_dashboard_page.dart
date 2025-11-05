@@ -370,14 +370,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   tooltip: 'Generar plan de testing completo',
                 ),
                 const SizedBox(height: 8),
-                // TEMPORAL T153: Botón para inicializar tipos de cambio
+                // TEMPORAL T152/T153: Botón para inicializar todo lo necesario
                 FloatingActionButton.extended(
-                  heroTag: "dashboard_init_exchange_rates",
-                  onPressed: _initializeExchangeRates,
-                  icon: const Icon(Icons.currency_exchange),
-                  label: const Text('💱 Init Exchange Rates'),
-                  backgroundColor: Colors.orange,
-                  tooltip: 'Inicializar tipos de cambio en Firestore',
+                  heroTag: "dashboard_init_firestore",
+                  onPressed: _initializeFirestore,
+                  icon: const Icon(Icons.cloud_upload),
+                  label: const Text('⚙️ Init Firestore'),
+                  backgroundColor: Colors.green,
+                  tooltip: 'Inicializar tipos de cambio y mostrar info de índices',
                 ),
               ],
             )
@@ -498,12 +498,29 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
   }
 
-  /// TEMPORAL T153: Inicializar tipos de cambio en Firestore
-  Future<void> _initializeExchangeRates() async {
+  /// TEMPORAL T152/T153: Inicializar todo lo necesario en Firestore
+  Future<void> _initializeFirestore() async {
+    if (!mounted) return;
+    
+    // Mostrar diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 20),
+            Text('Inicializando Firestore...'),
+          ],
+        ),
+      ),
+    );
+
     try {
       final firestore = FirebaseFirestore.instance;
       
-      // Crear documento con tipos de cambio iniciales
+      // 1. Inicializar tipos de cambio
       await firestore.collection('exchange_rates').doc('current').set({
         'baseCurrency': 'EUR',
         'rates': {
@@ -513,21 +530,99 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         },
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      if (!mounted) return;
       
+      // Cerrar diálogo de carga
+      Navigator.of(context).pop();
+      
+      // Mostrar diálogo con información completa
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Tipos de cambio inicializados exitosamente'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('✅ Firestore Inicializado'),
+            content: const SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '✅ Tipos de cambio inicializados correctamente.',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    '📊 Índices de Firestore:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '⚠️ IMPORTANTE: Los índices NO se despliegan automáticamente desde la app.',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Debes desplegarlos manualmente usando:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'firebase deploy --only firestore:indexes',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      backgroundColor: Colors.black12,
+                      fontSize: 12,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'O desde Firebase Console:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '1. Ve a Firebase Console\n'
+                    '2. Firestore Database → Indexes\n'
+                    '3. Verifica que hay 25 índices definidos\n'
+                    '4. Los índices se crearán automáticamente',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    '📝 Ver documentación completa:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'docs/configuracion/FIRESTORE_INDEXES_AUDIT.md',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Entendido'),
+              ),
+            ],
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        Navigator.of(context).pop(); // Cerrar diálogo de carga
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error al inicializar tipos de cambio: $e'),
+            content: Text('❌ Error al inicializar Firestore: $e'),
             backgroundColor: Colors.red,
           ),
         );

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 
@@ -286,5 +287,56 @@ class TimezoneService {
     };
     
     return standardOffsets[timezone] ?? 0;
+  }
+
+  /// Obtiene un color para representar visualmente una timezone
+  /// 
+  /// Usa una paleta de colores basada en el offset UTC para facilitar
+  /// la identificación visual de timezones similares
+  /// 
+  /// [timezone] - IANA timezone
+  /// 
+  /// Retorna: Color para usar en indicadores visuales (barra lateral, etc.)
+  static Color getTimezoneColor(String timezone) {
+    final offset = getUtcOffset(timezone);
+    
+    // Mapeo de offsets a colores (gradiente visual)
+    // Negativos (América): tonos azules
+    // Cero (GMT): verde
+    // Positivos bajos (Europa): tonos naranjas
+    // Positivos altos (Asia/Oceanía): tonos rojos/morados
+    
+    if (offset < -6) {
+      // América del Oeste (GMT-8, -7)
+      return const Color(0xFF1976D2); // Azul oscuro
+    } else if (offset < -4) {
+      // América Central/Este (GMT-6, -5)
+      return const Color(0xFF42A5F5); // Azul medio
+    } else if (offset < 0) {
+      // América del Sur (GMT-3, -4)
+      return const Color(0xFF64B5F6); // Azul claro
+    } else if (offset == 0) {
+      // GMT (Londres)
+      return const Color(0xFF66BB6A); // Verde
+    } else if (offset <= 2) {
+      // Europa (GMT+1, +2)
+      return const Color(0xFFFFA726); // Naranja
+    } else if (offset <= 5) {
+      // Medio Oriente/India (GMT+3, +4, +5)
+      return const Color(0xFFFF7043); // Naranja rojizo
+    } else if (offset <= 9) {
+      // Asia Oriental (GMT+8, +9)
+      return const Color(0xFFE91E63); // Rosa
+    } else {
+      // Oceanía (GMT+10, +12, +13)
+      return const Color(0xFF9C27B0); // Morado
+    }
+  }
+
+  /// Obtiene un color más claro para la barra lateral (para no distraer)
+  static Color getTimezoneBarColor(String timezone) {
+    final baseColor = getTimezoneColor(timezone);
+    // Retornar versión más clara con opacidad
+    return baseColor.withOpacity(0.6);
   }
 }

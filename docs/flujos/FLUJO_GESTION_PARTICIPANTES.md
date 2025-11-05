@@ -603,7 +603,7 @@ graph TD
   - ✅ Página InvitationPage para procesar links
   - ⚠️ Pendiente: Configurar SendGrid API key y desplegar Functions
 - ❌ Invitaciones por username/nickname (T104)
-- ❌ Grupos de participantes (T123)
+- ✅ Grupos de participantes (T123) - **COMPLETADA**
 - ✅ Sistema de confirmación de asistencia - Base (T120 Fase 1):
   - ✅ Campo status en PlanParticipation (pending, accepted, rejected, expired)
   - ✅ Métodos acceptInvitation y rejectInvitation

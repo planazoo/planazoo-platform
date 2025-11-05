@@ -802,7 +802,7 @@ Valoración disponible para:
 - ❌ Notificaciones automáticas de check-in/check-out (T105)
 - ❌ Sistema de alarmas para fechas (T110)
 - ❌ Historial de cambios
-- ❌ Integración presupuesto/pagos (T101/T102)
+- ✅ Integración presupuesto/pagos (T101/T102) - **COMPLETADA**
 - ❌ API de sincronización con proveedores
 
 ---

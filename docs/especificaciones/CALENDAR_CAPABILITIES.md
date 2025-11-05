@@ -239,6 +239,30 @@ Estado: **Funciona**.
 
 ---
 
+## 🌍 Visualización de Timezones (T100)
+
+### Indicadores Visuales Implementados
+- **Indicador en AppBar**: Icono de reloj (⏰) junto al selector de usuario con formato "Madrid (GMT+1)"
+- **Barra lateral de color en tracks**: Barra de 3px en el lado izquierdo de cada track con colores basados en offset UTC
+  - América del Oeste: Azul oscuro
+  - América Central/Este: Azul medio
+  - GMT: Verde
+  - Europa: Naranja
+  - Asia/Oceanía: Rosa/Morado
+- **Tooltips informativos**: 
+  - En headers de tracks: muestra timezone completa al hacer hover
+  - En eventos: muestra información de timezone de salida y llegada (para vuelos/desplazamientos)
+
+### Ubicación de Indicadores
+- Headers mini de participantes
+- Celdas de datos (sub-columnas)
+- Fila de alojamientos
+- AppBar (selector de perspectiva)
+
+Estado: **Funciona** (T100 completada).
+
+---
+
 ## 👥 Tracks: Filtros y Reordenación
 
 ### Filtros de Vista (Plan Completo / Mi Agenda / Personalizada)

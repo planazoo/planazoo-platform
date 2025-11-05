@@ -58,12 +58,19 @@ class UserPerspectiveSelector extends StatelessWidget {
             ),
           ),
           if (currentTimezone != null) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
+            const Icon(
+              Icons.access_time,
+              color: Colors.white70,
+              size: 14,
+            ),
+            const SizedBox(width: 2),
             Text(
               _getTimezoneDisplay(currentTimezone!),
               style: const TextStyle(
                 color: Colors.white70,
-                fontSize: 10,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

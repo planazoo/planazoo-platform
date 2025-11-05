@@ -2828,3 +2828,108 @@ Sistema completo de multi-moneda implementado. Cada plan tiene su moneda base (E
 - ⚠️ Expansión a más monedas (actualmente solo EUR, USD, GBP, JPY)
 - ⚠️ Testing exhaustivo con diferentes monedas y tipos de cambio
 
+---
+
+## T100 - Visualización de Timezones en el Calendario
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Implementar visualización de timezones en el calendario para que los usuarios entiendan en qué timezone está cada participante.
+
+**Criterios de aceptación:**
+- ✅ Indicador de timezone en AppBar para el usuario seleccionado
+- ✅ Barra lateral de color en tracks para identificar timezones visualmente
+- ✅ Tooltips informativos en eventos con información de timezone
+- ✅ Sistema de colores basado en offset UTC para diferenciación visual
+- ✅ Información clara sin sobrecargar la interfaz
+
+**Implementación técnica:**
+- ✅ **Opción 1: Indicador mejorado en AppBar** - IMPLEMENTADO
+  - Icono de reloj (⏰) más prominente junto al selector de usuario
+  - Texto con formato: "Madrid (GMT+1)"
+  - Ubicación: AppBar, en el `UserPerspectiveSelector`
+  - Mejora: Icono visible y tamaño de fuente aumentado
+- ✅ **Opción 3: Barra lateral de color en tracks** - IMPLEMENTADO
+  - Barra lateral de 3px de ancho en el lado izquierdo de cada track
+  - Colores basados en offset UTC (paleta visual):
+    - América del Oeste: Azul oscuro
+    - América Central/Este: Azul medio
+    - GMT: Verde
+    - Europa: Naranja
+    - Asia/Oceanía: Rosa/Morado
+  - Tooltip al hover en headers de tracks con información completa
+  - Ubicación: Headers mini, celdas de datos, y fila de alojamientos
+- ✅ **Opción 4: Tooltip en eventos** - IMPLEMENTADO
+  - Tooltip con información de timezone al pasar el mouse sobre eventos
+  - Para eventos con timezone única: "Salida: Madrid (GMT+1)"
+  - Para eventos con timezones diferentes: "✈️ Vuelo/Desplazamiento\nSalida: Madrid (GMT+1)\nLlegada: Tokio (GMT+9)"
+  - Información contextual sin ocupar espacio visual
+
+**Archivos modificados:**
+- ✅ `lib/widgets/screens/calendar/user_perspective_selector.dart` - Indicador mejorado en AppBar
+- ✅ `lib/widgets/screens/calendar/components/calendar_tracks.dart` - Barra lateral en tracks
+- ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Barra lateral en celdas de datos y tooltips en eventos
+- ✅ `lib/features/calendar/domain/services/timezone_service.dart` - Métodos `getTimezoneColor()` y `getTimezoneBarColor()`
+
+**Funcionalidades implementadas:**
+- ✅ Sistema de colores para timezones basado en offset UTC
+- ✅ Barra lateral de color en todos los tracks (headers, celdas, alojamientos)
+- ✅ Tooltips informativos en headers de tracks
+- ✅ Tooltips informativos en eventos con timezone
+- ✅ Indicador mejorado en AppBar con icono de reloj
+
+**Notas:**
+- Se implementó una combinación de opciones 1, 3 y 4 para maximizar la claridad sin sobrecargar la interfaz
+- Los colores se asignan automáticamente según el offset UTC de la timezone
+- Los tooltips proporcionan información detallada sin ocupar espacio visual permanente
+
+---
+
+## T152 - Revisión y Optimización de Índices de Firestore
+**Estado:** ✅ Base completada  
+**Fecha de finalización:** Enero 2025  
+**Descripción:** Revisar, validar y optimizar los índices de Firestore para mantener solo los necesarios, eliminar redundancias y asegurar coherencia con el código actual.
+
+**Criterios de aceptación:**
+- ✅ Todos los índices tienen al menos una query que los utiliza
+- ✅ Todas las queries del código tienen su índice correspondiente
+- ✅ No hay índices redundantes o duplicados
+- ✅ Documentación de cada índice con su propósito
+- ✅ Colecciones obsoletas identificadas y documentadas
+- ✅ Proceso de revisión periódica documentado
+
+**Implementación técnica:**
+- ✅ **Auditoría completa:**
+  - Revisados 7 índices existentes
+  - Identificadas todas las queries con `where()` y `orderBy()` en el código
+  - Mapeadas queries con índices correspondientes
+  - Identificados 18 índices faltantes
+- ✅ **Índices añadidos (25 totales):**
+  - `plans`: 2 índices (createdAt, userId + createdAt)
+  - `events`: 3 índices (planId + date + hour, planId + isDraft + date + hour, planId + typeFamily + checkIn)
+  - `plan_participations`: 5 índices (múltiples combinaciones de planId, userId, role, isActive, joinedAt)
+  - `planInvitations`: 2 índices nuevos (planId + email + status, status + expiresAt)
+  - `event_participants`: 3 índices nuevos (eventId + registeredAt, eventId + userId + status, eventId + userId)
+  - `participant_groups`: 1 índice (userId + updatedAt)
+  - `users`: 2 índices (isActive + createdAt, displayName + isActive)
+- ✅ **Documentación:**
+  - Creado `docs/configuracion/FIRESTORE_INDEXES_AUDIT.md` con documentación completa
+  - Cada índice documentado con su propósito y queries asociadas
+  - Proceso de revisión periódica documentado con checklist
+- ✅ **Discrepancias encontradas:**
+  - Nombres de colecciones entre Rules y código: `plan_participations` vs `planParticipations`, `event_participants` vs `eventParticipants`
+  - Documentado para futura corrección
+
+**Archivos modificados:**
+- ✅ `firestore.indexes.json` - Actualizado de 7 a 25 índices
+- ✅ `docs/configuracion/FIRESTORE_INDEXES_AUDIT.md` - Creado (documentación completa)
+
+**Mejoras futuras:**
+- ⚠️ Corregir discrepancia de nombres de colecciones en Firestore Rules
+- ⚠️ Validación práctica ejecutando queries después de desplegar índices
+- ⚠️ Revisión periódica cada 3-6 meses según proceso documentado
+
+**Notas:**
+- Los índices se crearán automáticamente en Firestore cuando se despliegue el archivo con Firebase CLI
+- El proceso de revisión periódica está documentado para futuras revisiones
+
+---
