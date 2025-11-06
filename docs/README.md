@@ -102,6 +102,7 @@ Configuración y contexto del proyecto:
 - Visualización de timezones (T100)
 - Estadísticas del plan (T113)
 - Grupos de participantes (T123)
+- Estados del plan con bloqueos funcionales (T109)
 
 ---
 

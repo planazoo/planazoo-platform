@@ -8,12 +8,27 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_dashboard_page.dart';
 import 'package:unp_calendario/pages/pg_invitation_page.dart';
 
-class App extends ConsumerWidget {
+class App extends ConsumerStatefulWidget {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentLanguage = ref.watch(currentLanguageProvider);
+  ConsumerState<App> createState() => _AppState();
+}
+
+class _AppState extends ConsumerState<App> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar idioma guardado al iniciar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final languageNotifier = ref.read(languageNotifierProvider);
+      languageNotifier.loadSavedLanguage();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentLanguage = ref.watch(currentLanguageSyncProvider);
     
     return MaterialApp(
       title: 'UNP Calendario',

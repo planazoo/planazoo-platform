@@ -38,9 +38,11 @@
 - ✅ Instalar Flutter SDK (Web/Android/iOS)
 - ✅ Instalar Xcode para iOS
 - ✅ Instalar Android Studio para Android
+- ✅ **Configurar Java (JDK) para compilación Android** (pendiente en Windows, se hará en Mac)
 - ✅ Configurar Firebase
 - ✅ Compilar y probar en todas las plataformas
 - ✅ Optimizar Cursor para el proyecto
+- ✅ **Configurar acceso remoto al Mac desde Windows**
 - ✅ Instalar Firebase CLI (T155)
 - ✅ Actualizar índices de Firestore (T156)
 - ✅ **Preparar entorno para desarrollo Offline First** (T56-T62)
@@ -597,6 +599,75 @@ echo $ANDROID_HOME
 
 ---
 
+### **Paso 6.3.5: Configurar Java (JDK)**
+
+**Nota:** Android Studio incluye su propio JDK (JBR - JetBrains Runtime), pero Flutter necesita que JAVA_HOME esté configurado.
+
+**Opción A: Usar JDK de Android Studio (Recomendado)**
+
+**Comando:**
+```bash
+# Buscar JDK de Android Studio
+find /Applications/Android\ Studio.app -name "java" -type f 2>/dev/null | head -1
+
+# Normalmente está en:
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+
+# Agregar a ~/.zshrc
+cat >> ~/.zshrc << 'EOF'
+
+# Java (JDK de Android Studio)
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH=$PATH:$JAVA_HOME/bin
+EOF
+
+# Recargar
+source ~/.zshrc
+```
+
+**Opción B: Instalar JDK con Homebrew**
+
+**Comando:**
+```bash
+# Instalar OpenJDK 17
+brew install openjdk@17
+
+# Configurar JAVA_HOME
+export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
+
+# Agregar a ~/.zshrc
+cat >> ~/.zshrc << EOF
+
+# Java (Homebrew)
+export JAVA_HOME=\$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
+export PATH=\$PATH:\$JAVA_HOME/bin
+EOF
+
+# Recargar
+source ~/.zshrc
+```
+
+**Verificar:**
+```bash
+# Verificar Java
+java -version
+
+# Verificar JAVA_HOME
+echo $JAVA_HOME
+
+# Verificar que Flutter detecta Java
+flutter doctor
+```
+
+**Verificar:**
+- ✅ Java está instalado y funciona
+- ✅ JAVA_HOME está configurado
+- ✅ Flutter Doctor muestra Java como configurado
+
+**Nota importante:** En Mac, la instalación de Java es mucho más sencilla que en Windows. Android Studio incluye su propio JDK, por lo que normalmente no necesitas instalar Java por separado, solo configurar JAVA_HOME.
+
+---
+
 ### **Paso 6.4: Aceptar Licencias de Android**
 
 **Comando:**
@@ -897,9 +968,209 @@ flutter devices
 
 ---
 
-## 📦 FASE 10: OPTIMIZACIÓN DE CURSOR
+## 📦 FASE 10: CONFIGURACIÓN DE ACCESO REMOTO AL MAC
 
-### **Paso 10.1: Configurar Workspace Settings**
+**Objetivo:** Permitir acceso remoto al Mac desde Windows para desarrollo a distancia.
+
+**Opciones de acceso remoto:**
+1. **Microsoft Remote Desktop (Recomendado para desarrollo)** - Gratis, oficial de Microsoft, optimizado para Windows
+2. **Chrome Remote Desktop** - Sencillo, multiplataforma, gratuito
+3. **VNC Server (nativo macOS)** - Integrado, pero requiere configuración adicional
+4. **TeamViewer** - Comercial pero robusto (gratis para uso personal)
+5. **AnyDesk** - Gratis para uso personal, ligero
+
+**Recomendación:** Microsoft Remote Desktop para mejor experiencia de desarrollo desde Windows.
+
+---
+
+### **Opción A: Microsoft Remote Desktop (Recomendado)**
+
+#### **Paso 10.1: Configurar en el Mac**
+
+**En el Mac:**
+1. Activar Compartir Pantalla:
+   - Ir a Preferencias del Sistema → Compartir
+   - Activar "Compartir Pantalla"
+   - Configurar opciones de acceso (usuario y contraseña)
+   - Anotar la dirección IP del Mac (ver en Preferencias del Sistema → Red)
+
+**Verificar:**
+```bash
+# Verificar IP del Mac
+ifconfig | grep "inet " | grep -v 127.0.0.1
+```
+
+**Comando para verificar configuración:**
+```bash
+# Verificar que Compartir Pantalla está activado
+systemsetup -getremotelogin
+```
+
+**Resultado esperado:** "Remote Login: On"
+
+---
+
+2. Configurar para que el Mac no se duerma (si es necesario):
+   - Ir a Preferencias del Sistema → Ahorro de Energía
+   - Configurar para que no se duerma cuando está conectado a la corriente
+
+**Comando para verificar:**
+```bash
+# Verificar configuración de energía
+pmset -g
+```
+
+**Verificar:**
+- ✅ Compartir Pantalla está activado
+- ✅ IP del Mac anotada
+- ✅ Mac configurado para no dormirse (si es necesario)
+- ✅ Mac conectado a Internet
+
+---
+
+#### **Paso 10.2: Configurar en Windows**
+
+**En Windows:**
+- Microsoft Remote Desktop ya viene preinstalado en Windows 10/11 Pro
+- Si no está, instalar desde Microsoft Store
+
+**Configurar conexión:**
+1. Abrir Microsoft Remote Desktop
+2. Añadir nueva conexión:
+   - Nombre: "Mac Desarrollo"
+   - PC: [IP del Mac anotada anteriormente]
+   - Usuario: [usuario del Mac]
+   - Guardar credenciales
+
+**Verificar:**
+- ✅ Microsoft Remote Desktop instalado
+- ✅ Conexión configurada
+- ✅ Credenciales guardadas
+
+---
+
+### **Opción B: Chrome Remote Desktop**
+
+#### **Paso 10.3: Configurar en el Mac**
+
+**En el Mac:**
+1. Instalar Chrome Remote Desktop:
+   ```bash
+   # Abrir Chrome y navegar a:
+   open https://remotedesktop.google.com
+   ```
+
+2. Iniciar sesión con cuenta de Google
+
+3. Configurar acceso remoto:
+   - Ir a "Remoto de asistencia" o "Mi equipo"
+   - Hacer clic en "Activar acceso remoto"
+   - Seguir las instrucciones para configurar PIN
+   - Anotar el PIN de acceso
+
+**Verificar:**
+- ✅ Chrome Remote Desktop instalado
+- ✅ Acceso remoto activado
+- ✅ PIN configurado y anotado
+
+---
+
+#### **Paso 10.4: Configurar en Windows**
+
+**En Windows:**
+1. Instalar Chrome Remote Desktop desde [remotedesktop.google.com](https://remotedesktop.google.com)
+2. Iniciar sesión con la misma cuenta de Google
+3. En "Mi equipo", debería aparecer el Mac
+4. Hacer clic en el Mac y usar el PIN para conectar
+
+**Verificar:**
+- ✅ Chrome Remote Desktop instalado en Windows
+- ✅ Sesión iniciada con la misma cuenta de Google
+- ✅ Mac visible en "Mi equipo"
+
+---
+
+### **Opción C: VNC Server (Nativo macOS)**
+
+#### **Paso 10.5: Configurar VNC en el Mac**
+
+**En el Mac:**
+1. Activar Compartir Pantalla:
+   - Ir a Preferencias del Sistema → Compartir
+   - Activar "Compartir Pantalla"
+   - Configurar usuarios permitidos
+   - Anotar la dirección IP del Mac
+
+**Comando para verificar:**
+```bash
+# Verificar IP del Mac
+ifconfig | grep "inet " | grep -v 127.0.0.1
+
+# Verificar que VNC está activo
+systemsetup -getremotelogin
+```
+
+**Verificar:**
+- ✅ Compartir Pantalla activado
+- ✅ IP del Mac anotada
+- ✅ Usuarios configurados
+
+---
+
+#### **Paso 10.6: Instalar Cliente VNC en Windows**
+
+**En Windows:**
+- Instalar cliente VNC (ej: TightVNC, RealVNC Viewer)
+- Conectar usando la IP del Mac y credenciales
+
+**Verificar:**
+- ✅ Cliente VNC instalado en Windows
+- ✅ Conexión configurada
+
+---
+
+### **Paso 10.7: Verificación de Acceso Remoto**
+
+**Verificar que funciona:**
+- [ ] Conexión remota funciona correctamente
+- [ ] Cursor IDE funciona a través de conexión remota
+- [ ] Terminal funciona correctamente
+- [ ] Flutter commands funcionan
+- [ ] Compilación funciona (puede ser más lento que local)
+- [ ] Performance es aceptable para desarrollo
+
+**Comandos de prueba desde conexión remota:**
+```bash
+# Probar que Flutter funciona
+flutter --version
+
+# Probar que Git funciona
+git --version
+
+# Probar que Firebase CLI funciona
+firebase --version
+
+# Probar compilación simple
+flutter doctor
+```
+
+**Notas importantes:**
+- El Mac debe estar conectado a Internet y encendido para acceso remoto
+- Considerar usar un router con IP fija o servicio de DNS dinámico si la IP cambia
+- Para mejor performance, usar conexión Ethernet si es posible
+- La compilación puede ser más lenta a través de conexión remota
+- Considerar dejar el Mac conectado a la corriente para evitar que se duerma
+
+**Verificar:**
+- ✅ Conexión remota funciona
+- ✅ Desarrollo funciona correctamente a través de conexión remota
+- ✅ Performance es aceptable
+
+---
+
+## 📦 FASE 11: OPTIMIZACIÓN DE CURSOR
+
+### **Paso 11.1: Configurar Workspace Settings**
 
 **Archivo:** `.vscode/settings.json` (o crear si no existe)
 
@@ -937,7 +1208,7 @@ which flutter
 
 ---
 
-### **Paso 10.2: Configurar Extensiones Recomendadas**
+### **Paso 11.2: Configurar Extensiones Recomendadas**
 
 **Archivo:** `.vscode/extensions.json` (crear si no existe)
 
@@ -962,7 +1233,7 @@ EOF
 
 ---
 
-### **Paso 10.3: Probar Autocompletado y IA**
+### **Paso 11.3: Probar Autocompletado y IA**
 
 **Acción:**
 1. ✅ Abrir un archivo Dart en Cursor
@@ -977,9 +1248,9 @@ EOF
 
 ---
 
-## 📦 FASE 11: ACTUALIZACIONES Y PAQUETES
+## 📦 FASE 12: ACTUALIZACIONES Y PAQUETES
 
-### **Paso 11.1: Actualizar Flutter**
+### **Paso 12.1: Actualizar Flutter**
 
 **Comando:**
 ```bash
@@ -991,7 +1262,7 @@ flutter upgrade
 
 ---
 
-### **Paso 11.2: Actualizar Dependencias del Proyecto**
+### **Paso 12.2: Actualizar Dependencias del Proyecto**
 
 **Comando:**
 ```bash
@@ -1004,7 +1275,7 @@ flutter pub upgrade
 
 ---
 
-### **Paso 11.3: Actualizar CocoaPods**
+### **Paso 12.3: Actualizar CocoaPods**
 
 **Comando:**
 ```bash
@@ -1020,7 +1291,7 @@ cd ..
 
 ---
 
-### **Paso 11.4: Verificar que Todo Funciona Después de Actualizaciones**
+### **Paso 12.4: Verificar que Todo Funciona Después de Actualizaciones**
 
 **Comando:**
 ```bash
@@ -1034,9 +1305,9 @@ flutter analyze
 
 ---
 
-## 📦 FASE 12: INSTALACIÓN DE FIREBASE CLI (T155)
+## 📦 FASE 13: INSTALACIÓN DE FIREBASE CLI (T155)
 
-### **Paso 12.1: Instalar Node.js**
+### **Paso 13.1: Instalar Node.js**
 
 **Comando:**
 ```bash
@@ -1054,7 +1325,7 @@ node --version
 
 ---
 
-### **Paso 12.2: Instalar Firebase CLI**
+### **Paso 13.2: Instalar Firebase CLI**
 
 **Comando:**
 ```bash
@@ -1070,7 +1341,7 @@ firebase --version
 
 ---
 
-### **Paso 12.3: Login en Firebase**
+### **Paso 13.3: Login en Firebase**
 
 **Comando:**
 ```bash
@@ -1093,7 +1364,7 @@ firebase projects:list
 
 ---
 
-### **Paso 12.4: Configurar Proyecto Firebase**
+### **Paso 13.4: Configurar Proyecto Firebase**
 
 **Comando:**
 ```bash
@@ -1115,9 +1386,9 @@ firebase use
 
 ---
 
-## 📦 FASE 13: ACTUALIZACIÓN DE ÍNDICES DE FIRESTORE (T156)
+## 📦 FASE 14: ACTUALIZACIÓN DE ÍNDICES DE FIRESTORE (T156)
 
-### **Paso 13.1: Verificar firestore.indexes.json**
+### **Paso 14.1: Verificar firestore.indexes.json**
 
 **Comando:**
 ```bash
@@ -1130,7 +1401,7 @@ cat firestore.indexes.json | head -50
 
 ---
 
-### **Paso 13.2: Desplegar Índices**
+### **Paso 14.2: Desplegar Índices**
 
 **Comando:**
 ```bash
@@ -1145,7 +1416,7 @@ firebase deploy --only firestore:indexes
 
 ---
 
-### **Paso 13.3: Verificar Índices en Firebase Console**
+### **Paso 14.3: Verificar Índices en Firebase Console**
 
 **Acción manual (guiar al usuario):**
 1. ✅ Ir a Firebase Console → Firestore Database → Indexes
@@ -1158,7 +1429,7 @@ firebase deploy --only firestore:indexes
 
 ---
 
-### **Paso 13.4: Eliminar Índices Obsoletos**
+### **Paso 14.4: Eliminar Índices Obsoletos**
 
 **Índices a eliminar:**
 1. `Hours` - `horaFecha` + `horaNum`
@@ -1178,9 +1449,9 @@ firebase deploy --only firestore:indexes
 
 ---
 
-## 📦 FASE 14: DOCUMENTACIÓN Y FINALIZACIÓN
+## 📦 FASE 15: DOCUMENTACIÓN Y FINALIZACIÓN
 
-### **Paso 14.1: Documentar Problemas Encontrados**
+### **Paso 15.1: Documentar Problemas Encontrados**
 
 **Acción:**
 1. ✅ Crear documento con problemas encontrados
@@ -1189,7 +1460,7 @@ firebase deploy --only firestore:indexes
 
 ---
 
-### **Paso 14.2: Actualizar .gitignore**
+### **Paso 15.2: Actualizar .gitignore**
 
 **Verificar:**
 ```bash
@@ -1204,7 +1475,7 @@ cat .gitignore
 
 ---
 
-### **Paso 14.3: Hacer Commit Inicial (si hay cambios)**
+### **Paso 15.3: Hacer Commit Inicial (si hay cambios)**
 
 **Comando:**
 ```bash
@@ -1218,7 +1489,7 @@ git commit -m "chore: configuración inicial en Mac"
 
 ---
 
-### **Paso 14.4: Verificación Final**
+### **Paso 15.4: Verificación Final**
 
 **Checklist final:**
 - [ ] Cursor IDE instalado y configurado
@@ -1233,11 +1504,12 @@ git commit -m "chore: configuración inicial en Mac"
 - [ ] Índices de Firestore actualizados
 - [ ] Todas las funcionalidades probadas
 - [ ] Cursor optimizado
+- [ ] **Acceso remoto al Mac configurado y funcionando**
 - [ ] **Entorno preparado para desarrollo Offline First (T56-T62)**
 
 ---
 
-### **Paso 14.5: Preparación para Desarrollo Offline First**
+### **Paso 15.5: Preparación para Desarrollo Offline First**
 
 **Nota:** El usuario quiere empezar a trabajar en Offline First después de la migración. Este paso prepara el entorno y documentación.
 

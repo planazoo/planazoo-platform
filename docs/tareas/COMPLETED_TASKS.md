@@ -2401,7 +2401,7 @@ Código de producción más limpio con logging estructurado. Todos los errores c
 
 ---
 
-## T109 - Estados del Plan
+## T109 - Estados del Plan (Completada - Bloqueos Funcionales Implementados)
 **Estado:** ✅ Completado  
 **Fecha de finalización:** Enero 2025  
 **Descripción:** Implementar sistema completo de estados del plan (Borrador, Planificando, Confirmado, En Curso, Finalizado, Cancelado) con transiciones controladas y permisos por estado.
@@ -2415,6 +2415,7 @@ Código de producción más limpio con logging estructurado. Todos los errores c
 - ✅ Diálogos de confirmación para transiciones críticas
 - ✅ Indicadores visuales de bloqueos según estado
 - ✅ Servicio de permisos según estado
+- ✅ **Bloqueos funcionales implementados en toda la UI**
 
 **Implementación técnica:**
 - Sistema completo de gestión de transiciones de estado
@@ -2422,6 +2423,12 @@ Código de producción más limpio con logging estructurado. Todos los errores c
 - Integración automática en dashboard para transiciones basadas en fechas
 - Widgets de UI para visualización y control de estados
 - Servicio de permisos para bloquear acciones según estado
+- **Bloqueos funcionales implementados:**
+  - Bloqueos en CalendarScreen (doble click, drag & drop bloqueados según estado)
+  - Bloqueos en EventDialog (botones crear/editar/eliminar deshabilitados según estado)
+  - Bloqueos en AccommodationDialog (botones crear/editar/eliminar deshabilitados según estado)
+  - Bloqueos en gestión de participantes (añadir/remover según estado)
+  - Mensajes informativos de bloqueo mostrados al usuario con explicaciones claras
 
 **Archivos creados:**
 - ✅ `lib/features/calendar/domain/services/plan_state_service.dart` - Lógica de transiciones
@@ -2433,17 +2440,21 @@ Código de producción más limpio con logging estructurado. Todos los errores c
 - ✅ `pg_dashboard_page.dart` - Badges en lista, transiciones automáticas, modal de creación ampliado
 - ✅ `wd_plan_card_widget.dart` - Badge en tarjetas de plan
 - ✅ `wd_plan_data_screen.dart` - Gestión manual de estados e indicadores de bloqueo
+- ✅ `wd_calendar_screen.dart` - Bloqueos funcionales en doble click, drag & drop, crear alojamientos
+- ✅ `wd_event_dialog.dart` - Bloqueos funcionales en botones crear/editar/eliminar
+- ✅ `wd_accommodation_dialog.dart` - Bloqueos funcionales en botones crear/editar/eliminar
+- ✅ `pg_plan_participants_page.dart` - Bloqueos funcionales en gestión de participantes
+- ✅ `wd_participants_list_widget.dart` - Bloqueos funcionales en remover participantes
 - ✅ `docs/flujos/FLUJO_CRUD_PLANES.md` - Actualizado estado de implementación
-- ✅ `docs/flujos/FLUJO_ESTADOS_PLAN.md` - Actualizado a completo
+- ✅ `docs/flujos/FLUJO_ESTADOS_PLAN.md` - Actualizado a completo con bloqueos funcionales
+- ✅ `docs/configuracion/TESTING_CHECKLIST.md` - Añadidos casos de prueba para bloqueos
 - ✅ `docs/tareas/TASKS.md` - T109 marcado como completado
 
 **Resultado:**
-Sistema completo de gestión de estados funcional. Los planes pueden transicionar entre estados con validaciones, las transiciones automáticas funcionan según las fechas, y la UI proporciona feedback visual claro del estado actual y las acciones permitidas. Los usuarios ven badges de estado en toda la aplicación y pueden gestionar estados manualmente si son organizadores. El sistema de permisos ayuda a guiar a los usuarios sobre qué acciones están permitidas según el estado del plan.
+Sistema completo de gestión de estados funcional con bloqueos funcionales implementados. Los planes pueden transicionar entre estados con validaciones, las transiciones automáticas funcionan según las fechas, y la UI proporciona feedback visual claro del estado actual y las acciones permitidas. Los usuarios ven badges de estado en toda la aplicación y pueden gestionar estados manualmente si son organizadores. **Los bloqueos funcionales impiden acciones no permitidas según el estado del plan, con botones deshabilitados y mensajes informativos claros**. El sistema de permisos ayuda a guiar a los usuarios sobre qué acciones están permitidas según el estado del plan.
 
 **Pendiente (mejoras futuras):**
 - ⚠️ Notificaciones automáticas de cambio de estado (T105)
-- ⚠️ Bloqueos funcionales en acciones de evento (actualmente solo visuales en plan)
-- ⚠️ Deshabilitar botones de edición según estado en módulos de eventos/alojamientos
 
 ---
 

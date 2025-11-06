@@ -230,5 +230,368 @@
   "profileTooltip": "View profile",
   "@profileTooltip": {
     "description": "Tooltip for profile icon in W1"
+  },
+  
+  "confirmDeleteTitle": "Confirm deletion",
+  "@confirmDeleteTitle": {
+    "description": "Confirm deletion dialog title"
+  },
+  "confirmDeleteMessage": "Are you sure you want to delete this planazoo? This action cannot be undone.",
+  "@confirmDeleteMessage": {
+    "description": "Confirm deletion dialog message"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button"
+  },
+  "deleteSuccess": "Planazoo deleted successfully",
+  "@deleteSuccess": {
+    "description": "Delete success message"
+  },
+  "deleteError": "Error deleting planazoo",
+  "@deleteError": {
+    "description": "Delete error message"
+  },
+  "loadError": "Error loading planazoos",
+  "@loadError": {
+    "description": "Load error message"
+  },
+  "generateGuests": "Generating guest users...",
+  "@generateGuests": {
+    "description": "Generating guests message"
+  },
+  "guestsGenerated": "guest users generated successfully!",
+  "@guestsGenerated": {
+    "description": "Guests generated message"
+  },
+  "userNotAuthenticated": "Error: User not authenticated",
+  "@userNotAuthenticated": {
+    "description": "User not authenticated error"
+  },
+  "generateMiniFrank": "Generating Mini-Frank plan...",
+  "@generateMiniFrank": {
+    "description": "Generating Mini-Frank message"
+  },
+  "miniFrankGenerated": "Mini-Frank plan generated successfully!",
+  "@miniFrankGenerated": {
+    "description": "Mini-Frank generated message"
+  },
+  "generateMiniFrankError": "Error generating Mini-Frank plan",
+  "@generateMiniFrankError": {
+    "description": "Error generating Mini-Frank"
+  },
+  "view": "View",
+  "@view": {
+    "description": "View button"
+  },
+  "accountSettings": "Account Settings",
+  "@accountSettings": {
+    "description": "Account settings title"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Language title"
+  },
+  "changeLanguage": "Change the application language",
+  "@changeLanguage": {
+    "description": "Language selector description"
+  },
+  
+  "save": "Save",
+  "@save": {
+    "description": "Save button"
+  },
+  "create": "Create",
+  "@create": {
+    "description": "Create button"
+  },
+  "createPlan": "Create Plan",
+  "@createPlan": {
+    "description": "Create plan button"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit button"
+  },
+  "editInfo": "Edit information",
+  "@editInfo": {
+    "description": "Edit information button"
+  },
+  "remove": "Remove",
+  "@remove": {
+    "description": "Remove button"
+  },
+  "add": "Add",
+  "@add": {
+    "description": "Add button"
+  },
+  "search": "Search",
+  "@search": {
+    "description": "Search button or label"
+  },
+  "filter": "Filter",
+  "@filter": {
+    "description": "Filter button"
+  },
+  "sort": "Sort",
+  "@sort": {
+    "description": "Sort button"
+  },
+  "accept": "Accept",
+  "@accept": {
+    "description": "Accept button"
+  },
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button"
+  },
+  "deleteAccount": "Delete Account",
+  "@deleteAccount": {
+    "description": "Delete account button"
+  },
+  "deleteAccountTitle": "Delete Account",
+  "@deleteAccountTitle": {
+    "description": "Delete account dialog title"
+  },
+  "deleteAccountMessage": "This action is irreversible. All your data, plans and events will be deleted.",
+  "@deleteAccountMessage": {
+    "description": "Delete account dialog message"
+  },
+  "confirmPassword": "Confirm your password",
+  "@confirmPassword": {
+    "description": "Confirm password field label for delete account"
+  },
+  "participantsRegistered": "Registered participants",
+  "@participantsRegistered": {
+    "description": "Registered participants section title"
+  },
+  "accommodationNameRequired": "Accommodation name is required",
+  "@accommodationNameRequired": {
+    "description": "Accommodation name required error"
+  },
+  "minCharacters": "Minimum {count} characters",
+  "@minCharacters": {
+    "description": "Minimum characters error",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "maxCharacters": "Maximum {count} characters",
+  "@maxCharacters": {
+    "description": "Maximum characters error",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accommodationType": "Accommodation type",
+  "@accommodationType": {
+    "description": "Accommodation type label"
+  },
+  "invalidAccommodationType": "Invalid accommodation type",
+  "@invalidAccommodationType": {
+    "description": "Invalid accommodation type error"
+  },
+  "description": "Description",
+  "@description": {
+    "description": "Description label"
+  },
+  "descriptionOptional": "Description (optional)",
+  "@descriptionOptional": {
+    "description": "Optional description label"
+  },
+  "additionalNotes": "Additional notes",
+  "@additionalNotes": {
+    "description": "Additional notes hint"
+  },
+  
+  "accommodationName": "Accommodation name",
+  "@accommodationName": {
+    "description": "Accommodation name label"
+  },
+  "accommodationNameHint": "Hotel, apartment, etc.",
+  "@accommodationNameHint": {
+    "description": "Accommodation name hint"
+  },
+  "costCurrency": "Cost currency",
+  "@costCurrency": {
+    "description": "Cost currency label"
+  },
+  "cost": "Cost",
+  "@cost": {
+    "description": "Cost label"
+  },
+  "costOptional": "Accommodation cost (optional)",
+  "@costOptional": {
+    "description": "Optional cost label"
+  },
+  "costHint": "Ex: 450.00",
+  "@costHint": {
+    "description": "Cost hint"
+  },
+  "eventDescription": "Description",
+  "@eventDescription": {
+    "description": "Event description label"
+  },
+  "eventDescriptionHint": "Event name",
+  "@eventDescriptionHint": {
+    "description": "Event description hint"
+  },
+  "eventType": "Event type",
+  "@eventType": {
+    "description": "Event type label"
+  },
+  "eventSubtype": "Subtype",
+  "@eventSubtype": {
+    "description": "Event subtype label"
+  },
+  "selectValidTypeFirst": "Select a valid type first",
+  "@selectValidTypeFirst": {
+    "description": "Error to select valid type first"
+  },
+  "invalidSubtype": "Invalid subtype for selected type",
+  "@invalidSubtype": {
+    "description": "Invalid subtype error"
+  },
+  "isDraft": "Is draft",
+  "@isDraft": {
+    "description": "Is draft label"
+  },
+  "isDraftSubtitle": "Drafts are shown with lower opacity",
+  "@isDraftSubtitle": {
+    "description": "Is draft subtitle"
+  },
+  "date": "Date",
+  "@date": {
+    "description": "Date label"
+  },
+  "time": "Time",
+  "@time": {
+    "description": "Time label"
+  },
+  "duration": "Duration",
+  "@duration": {
+    "description": "Duration label"
+  },
+  "timezone": "Timezone",
+  "@timezone": {
+    "description": "Timezone label"
+  },
+  "arrivalTimezone": "Arrival timezone",
+  "@arrivalTimezone": {
+    "description": "Arrival timezone label"
+  },
+  "maxParticipants": "Max participants (optional)",
+  "@maxParticipants": {
+    "description": "Max participants label"
+  },
+  "maxParticipantsHint": "Ex: 10 (leave empty for no limit)",
+  "@maxParticipantsHint": {
+    "description": "Max participants hint"
+  },
+  "seat": "Seat",
+  "@seat": {
+    "description": "Seat label"
+  },
+  "seatHint": "Ex: 12A, Window",
+  "@seatHint": {
+    "description": "Seat hint"
+  },
+  "menu": "Menu/Food",
+  "@menu": {
+    "description": "Menu/food label"
+  },
+  "menuHint": "Ex: Vegetarian, Gluten-free",
+  "@menuHint": {
+    "description": "Menu/food hint"
+  },
+  "preferences": "Preferences",
+  "@preferences": {
+    "description": "Preferences label"
+  },
+  "preferencesHint": "Ex: Near exit, Quiet",
+  "@preferencesHint": {
+    "description": "Preferences hint"
+  },
+  "reservationNumber": "Reservation number",
+  "@reservationNumber": {
+    "description": "Reservation number label"
+  },
+  "reservationNumberHint": "Ex: ABC123, 456789",
+  "@reservationNumberHint": {
+    "description": "Reservation number hint"
+  },
+  "gate": "Gate",
+  "@gate": {
+    "description": "Gate label"
+  },
+  "gateHint": "Ex: Gate A12, Door 3",
+  "@gateHint": {
+    "description": "Gate hint"
+  },
+  "personalNotes": "Personal notes",
+  "@personalNotes": {
+    "description": "Personal notes label"
+  },
+  "createEvent": "Create Event",
+  "@createEvent": {
+    "description": "Create event title"
+  },
+  "editEvent": "Edit Event",
+  "@editEvent": {
+    "description": "Edit event title"
+  },
+  "creator": "Creator",
+  "@creator": {
+    "description": "Creator badge"
+  },
+  "initializingPermissions": "Initializing permissions...",
+  "@initializingPermissions": {
+    "description": "Initializing permissions message"
+  },
+  "eventNotSaved": "Event not saved. Plan was not expanded.",
+  "@eventNotSaved": {
+    "description": "Event not saved error"
+  },
+  "planCreatedSuccess": "Plan \"{name}\" created successfully",
+  "@planCreatedSuccess": {
+    "description": "Plan created successfully message",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "planDeletedSuccess": "Plan \"{name}\" deleted successfully",
+  "@planDeletedSuccess": {
+    "description": "Plan deleted successfully message",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "usernameUpdated": "Username updated",
+  "@usernameUpdated": {
+    "description": "Username updated message"
+  },
+  "participants": "Participants",
+  "@participants": {
+    "description": "Participants title"
+  },
+  "participant": "Participant",
+  "@participant": {
+    "description": "Participant label"
+  },
+  "fullPlan": "Full Plan",
+  "@fullPlan": {
+    "description": "Full plan label"
+  },
+  "plans": "Plans",
+  "@plans": {
+    "description": "Plans title"
   }
 }

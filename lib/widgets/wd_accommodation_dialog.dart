@@ -10,6 +10,9 @@ import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class AccommodationDialog extends ConsumerStatefulWidget {
   final Accommodation? accommodation;
@@ -43,6 +46,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   String? _costCurrency; // T153: Moneda local del coste
   String? _planCurrency; // T153: Moneda del plan
   bool _costConverting = false; // T153: Flag para evitar loops
+  Plan? _plan; // T109: Plan para verificar estado
   late DateTime _selectedCheckIn;
   late DateTime _selectedCheckOut;
   late String _selectedColor;
@@ -104,7 +108,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     _loadPlanCurrency();
   }
   
-  /// Cargar moneda del plan (T153)
+  /// Cargar moneda del plan (T153) y plan completo (T109)
   Future<void> _loadPlanCurrency() async {
     try {
       final planService = ref.read(planServiceProvider);
@@ -113,6 +117,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         setState(() {
           _planCurrency = plan.currency;
           _costCurrency ??= plan.currency;
+          _plan = plan; // T109: Guardar plan para verificar estado
         });
       }
     } catch (e) {
@@ -123,6 +128,25 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         });
       }
     }
+  }
+  
+  /// T109: Verifica si se puede guardar/crear el alojamiento según el estado del plan
+  bool _canSaveAccommodation() {
+    if (_plan == null) return true; // Si no hay plan cargado, permitir por defecto
+    
+    if (widget.accommodation == null) {
+      // Crear alojamiento nuevo
+      return PlanStatePermissions.canAddEvents(_plan!);
+    } else {
+      // Modificar alojamiento existente
+      return PlanStatePermissions.canModifyEvents(_plan!);
+    }
+  }
+  
+  /// T109: Verifica si se puede eliminar el alojamiento según el estado del plan
+  bool _canDeleteAccommodation() {
+    if (_plan == null) return true; // Si no hay plan cargado, permitir por defecto
+    return PlanStatePermissions.canDeleteEvents(_plan!);
   }
   
   /// Normaliza el tipo de alojamiento a formato capitalizado
@@ -164,18 +188,18 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             // Nombre del hotel/alojamiento
               TextFormField(
                 controller: _hotelNameController,
-                decoration: const InputDecoration(
-                labelText: 'Nombre del alojamiento',
-                hintText: 'Hotel, apartamento, etc.',
+                decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.accommodationName,
+                hintText: AppLocalizations.of(context)!.accommodationNameHint,
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.hotel),
               ),
               maxLines: 1,
               validator: (value) {
                 final v = value?.trim() ?? '';
-                if (v.isEmpty) return 'El nombre del alojamiento es obligatorio';
-                if (v.length < 2) return 'Mínimo 2 caracteres';
-                if (v.length > 100) return 'Máximo 100 caracteres';
+                if (v.isEmpty) return AppLocalizations.of(context)!.accommodationNameRequired;
+                if (v.length < 2) return AppLocalizations.of(context)!.minCharacters(2);
+                if (v.length > 100) return AppLocalizations.of(context)!.maxCharacters(100);
                 return null;
               },
             ),
@@ -184,10 +208,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             // Tipo de alojamiento
             DropdownButtonFormField<String>(
               value: _selectedType,
-              decoration: const InputDecoration(
-                labelText: 'Tipo de alojamiento',
-                  border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.accommodationType,
+                  border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.category),
               ),
               items: _accommodationTypes.map((type) {
                 return DropdownMenuItem(
@@ -203,7 +227,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 validator: (value) {
                 // Validar que el valor esté en la lista
                 if (value == null || !_accommodationTypes.contains(value)) {
-                  return 'Tipo de alojamiento inválido';
+                  return AppLocalizations.of(context)!.invalidAccommodationType;
                   }
                   return null;
                 },
@@ -213,17 +237,17 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
               // Descripción
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción (opcional)',
-                hintText: 'Notas adicionales',
-                  border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.notes),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.descriptionOptional,
+                hintText: AppLocalizations.of(context)!.additionalNotes,
+                  border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.notes),
               ),
               maxLines: 3,
               validator: (value) {
                 final v = value?.trim() ?? '';
                 if (v.isEmpty) return null;
-                if (v.length > 1000) return 'Máximo 1000 caracteres';
+                if (v.length > 1000) return AppLocalizations.of(context)!.maxCharacters(1000);
                 return null;
               },
             ),
@@ -315,10 +339,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         ),
       ),
       actions: [
-        // Botón eliminar (solo si es edición)
+        // Botón eliminar (solo si es edición) (T109: Deshabilitado según estado del plan)
         if (widget.accommodation != null)
           TextButton(
-            onPressed: () => _confirmDelete(),
+            onPressed: _canDeleteAccommodation() ? () => _confirmDelete() : null,
             child: const Text(
               'Eliminar',
               style: TextStyle(color: Colors.red),
@@ -328,13 +352,13 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         // Botón cancelar
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(AppLocalizations.of(context)!.cancel),
         ),
         
-        // Botón guardar
+        // Botón guardar (T109: Deshabilitado según estado del plan)
         ElevatedButton(
-          onPressed: _saveAccommodation,
-          child: Text(widget.accommodation == null ? 'Crear' : 'Guardar'),
+          onPressed: _canSaveAccommodation() ? _saveAccommodation : null,
+          child: Text(widget.accommodation == null ? AppLocalizations.of(context)!.create : AppLocalizations.of(context)!.save),
         ),
       ],
     );
@@ -460,7 +484,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         DropdownButtonFormField<String>(
           value: _costCurrency ?? _planCurrency ?? 'EUR',
           decoration: InputDecoration(
-            labelText: 'Moneda del coste',
+            labelText: AppLocalizations.of(context)!.costCurrency,
             prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR')),
             border: const OutlineInputBorder(),
             filled: true,
@@ -484,8 +508,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         TextFormField(
           controller: _costController,
           decoration: InputDecoration(
-            labelText: 'Coste del alojamiento (opcional)',
-            hintText: 'Ej: 450.00',
+            labelText: AppLocalizations.of(context)!.costOptional,
+            hintText: AppLocalizations.of(context)!.costHint,
             border: const OutlineInputBorder(),
             prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR')),
           ),
@@ -673,22 +697,37 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   }
 
   Future<void> _confirmDelete() async {
+    // T109: Verificar si se puede eliminar según el estado del plan
+    if (!_canDeleteAccommodation() && _plan != null) {
+      final blockedReason = PlanStatePermissions.getBlockedReason('delete_event', _plan!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(blockedReason ?? 'No se pueden eliminar alojamientos en el estado actual del plan.'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar eliminación'),
+        title: Text(AppLocalizations.of(context)!.confirmDeleteTitle),
         content: Text('¿Estás seguro de que quieres eliminar el alojamiento "${widget.accommodation?.hotelName}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
-            child: const Text('Eliminar'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -700,6 +739,22 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   }
 
   Future<void> _saveAccommodation() async {
+    // T109: Verificar si se puede guardar según el estado del plan
+    if (!_canSaveAccommodation() && _plan != null) {
+      final action = widget.accommodation == null ? 'create_event' : 'modify_event';
+      final blockedReason = PlanStatePermissions.getBlockedReason(action, _plan!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(blockedReason ?? 'No se pueden ${widget.accommodation == null ? 'crear' : 'modificar'} alojamientos en el estado actual del plan.'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+    
     if (!_formKey.currentState!.validate()) {
       return;
     }

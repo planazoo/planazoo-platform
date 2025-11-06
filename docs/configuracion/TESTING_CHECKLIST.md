@@ -2,13 +2,38 @@
 
 > Documento vivo que debe actualizarse cada vez que se completa una tarea o se añade nueva funcionalidad.
 
-**Versión:** 1.0  
-**Última actualización:** Enero 2025  
+**Versión:** 1.1  
+**Última actualización:** Enero 2025 (Actualizado - T109 bloqueos funcionales)  
 **Mantenedor:** Equipo de desarrollo
 
 ---
 
 ## 📋 INSTRUCCIONES DE MANTENIMIENTO
+
+### 👥 USUARIOS DE PRUEBA
+
+Para testing, consulta `docs/configuracion/USUARIOS_PRUEBA.md` para:
+- Lista de usuarios recomendados por rol
+- Emails con alias Gmail (unplanazoo+admin@gmail.com, unplanazoo+part1@gmail.com, etc.)
+- Matriz de usuarios por caso de prueba
+- Flujo de testing recomendado
+
+**Nota:** Usa Gmail con alias (`+`) para crear múltiples usuarios desde una sola cuenta. Todos los emails llegan a `unplanazoo@gmail.com`.
+
+**Usuarios de prueba disponibles:**
+- `unplanazoo+admin@gmail.com` - Organizador (contraseña: `test123456`)
+- `unplanazoo+coorg@gmail.com` - Coorganizador (contraseña: `test123456`)
+- `unplanazoo+part1@gmail.com` - Participante 1 (contraseña: `test123456`)
+- `unplanazoo+part2@gmail.com` - Participante 2 (contraseña: `test123456`)
+- `unplanazoo+part3@gmail.com` - Participante 3 (contraseña: `test123456`)
+- `unplanazoo+obs@gmail.com` - Observador (contraseña: `test123456`)
+- Y más... (ver `USUARIOS_PRUEBA.md` para lista completa)
+
+**💡 Crear usuarios automáticamente:** Usa el botón "⚙️ Init Firestore" en el dashboard para crear todos los usuarios de prueba en Firebase Auth y Firestore.
+
+**📋 Estrategia de Usuarios:** Ver sección "Estrategia de Usuarios para Pruebas" en `USUARIOS_PRUEBA.md` para entender qué usuarios deben existir y cuáles no para cada tipo de prueba.
+
+---
 
 ### ⚠️ CUANDO ACTUALIZAR ESTE DOCUMENTO
 
@@ -75,6 +100,7 @@ Cada caso de prueba debe incluir:
 - [ ] **REG-001:** Registrar nuevo usuario con email válido
   - Pasos: Crear cuenta con email válido, contraseña segura
   - Esperado: Usuario creado, redirección a dashboard
+  - **⚠️ IMPORTANTE:** El usuario NO debe existir previamente en Firebase Auth ni Firestore. Usar `unplanazoo+temp1@gmail.com` o eliminar usuario antes de probar.
   - Estado: 🔄
 
 - [ ] **REG-002:** Registrar usuario con email ya existente
@@ -105,8 +131,9 @@ Cada caso de prueba debe incluir:
   - Estado: 🔄
 
 - [ ] **LOGIN-002:** Iniciar sesión con email incorrecto
-  - Pasos: Email no registrado
+  - Pasos: Email no registrado (usar email que NO exista)
   - Esperado: Error "Credenciales inválidas"
+  - **⚠️ IMPORTANTE:** El usuario NO debe existir. Usar email que no esté registrado.
   - Estado: 🔄
 
 - [ ] **LOGIN-003:** Iniciar sesión con contraseña incorrecta
@@ -452,9 +479,14 @@ Cada caso de prueba debe incluir:
   - Estado: 🔄
 
 - [ ] **EVENT-U-003:** Mover evento por drag & drop
-  - Pasos: Arrastrar evento a otra fecha/hora
+  - Pasos: Arrastrar evento a otra fecha/hora (plan en estado permitido)
   - Esperado: Evento movido, cambios guardados
-  - Estado: 🔄
+  - Estado: ✅
+  
+- [ ] **EVENT-U-003a:** Bloqueo de drag & drop según estado del plan
+  - Pasos: Intentar arrastrar evento en plan finalizado/en_curso sin permisos
+  - Esperado: Mensaje de bloqueo, evento no se mueve
+  - Estado: ✅
 
 - [ ] **EVENT-U-004:** Modificar participantes de evento
   - Pasos: Añadir/eliminar participantes
@@ -484,9 +516,9 @@ Cada caso de prueba debe incluir:
 ### 4.4 Eliminar Evento
 
 - [ ] **EVENT-D-001:** Eliminar evento propio
-  - Pasos: Eliminar evento que creé
+  - Pasos: Eliminar evento que creé (plan en estado permitido)
   - Esperado: Evento eliminado del calendario
-  - Estado: 🔄
+  - Estado: ✅
 
 - [ ] **EVENT-D-002:** Intentar eliminar evento de otro usuario
   - Pasos: Intentar eliminar evento creado por otro
@@ -496,7 +528,12 @@ Cada caso de prueba debe incluir:
 - [ ] **EVENT-D-003:** Confirmación antes de eliminar
   - Pasos: Click eliminar evento
   - Esperado: Diálogo de confirmación
-  - Estado: 🔄
+  - Estado: ✅
+  
+- [ ] **EVENT-D-004:** Bloqueo de eliminar según estado del plan
+  - Pasos: Intentar eliminar evento en plan finalizado/cancelado
+  - Esperado: Botón "Eliminar" deshabilitado, mensaje informativo
+  - Estado: ✅
 
 ---
 
@@ -564,9 +601,14 @@ Cada caso de prueba debe incluir:
   - Estado: 🔄
 
 - [ ] **ACC-U-002:** Mover alojamiento por drag & drop
-  - Pasos: Arrastrar a nuevas fechas
+  - Pasos: Arrastrar a nuevas fechas (plan en estado permitido)
   - Esperado: Fechas actualizadas automáticamente
   - Estado: 🔄
+  
+- [ ] **ACC-U-002a:** Bloqueo de editar alojamiento según estado del plan
+  - Pasos: Intentar editar alojamiento en plan finalizado/en_curso sin permisos
+  - Esperado: Botón "Guardar" deshabilitado o mensaje de bloqueo
+  - Estado: ✅
 
 - [ ] **ACC-U-003:** Actualizar coste (T101)
   - Pasos: Modificar coste
@@ -576,9 +618,14 @@ Cada caso de prueba debe incluir:
 ### 5.4 Eliminar Alojamiento
 
 - [ ] **ACC-D-001:** Eliminar alojamiento
-  - Pasos: Eliminar alojamiento
+  - Pasos: Eliminar alojamiento (plan en estado permitido)
   - Esperado: Eliminado del calendario
-  - Estado: 🔄
+  - Estado: ✅
+  
+- [ ] **ACC-D-001a:** Bloqueo de eliminar alojamiento según estado del plan
+  - Pasos: Intentar eliminar alojamiento en plan finalizado/cancelado
+  - Esperado: Botón "Eliminar" deshabilitado, mensaje informativo
+  - Estado: ✅
 
 ---
 
@@ -688,11 +735,13 @@ Cada caso de prueba debe incluir:
 - [ ] **INV-001:** Enviar invitación por email
   - Pasos: Invitar usuario no registrado
   - Esperado: Email enviado con link de invitación
+  - **⚠️ IMPORTANTE:** El usuario invitado NO debe existir. Usar `unplanazoo+invite1@gmail.com` o similar.
   - Estado: ✅
 
 - [ ] **INV-002:** Aceptar invitación desde link
   - Pasos: Click en link de invitación
-  - Esperado: Si no logueado: login, luego aceptar
+  - Esperado: Si no logueado: login, luego aceptar (o registro si usuario no existe)
+  - **⚠️ IMPORTANTE:** Para probar flujo completo, usar invitación a usuario que NO existe para probar registro desde invitación.
   - Estado: ✅
 
 - [ ] **INV-003:** Rechazar invitación
@@ -810,17 +859,89 @@ Cada caso de prueba debe incluir:
 - [ ] **PERM-STATE-001:** Editar plan en estado borrador
   - Pasos: Modificar plan borrador
   - Esperado: Permitido
-  - Estado: 🔄
+  - Estado: ✅
 
 - [ ] **PERM-STATE-002:** Editar plan confirmado
   - Pasos: Intentar modificar plan confirmado
   - Esperado: Restricciones según permisos
-  - Estado: 🔄
+  - Estado: ✅
 
 - [ ] **PERM-STATE-003:** Añadir eventos en plan finalizado
   - Pasos: Intentar crear evento en plan finalizado
-  - Esperado: No permitido o solo lectura
-  - Estado: 🔄
+  - Esperado: No permitido, botón deshabilitado y mensaje informativo
+  - Estado: ✅
+
+### 8.3 Bloqueos Funcionales por Estado (T109)
+
+- [ ] **BLOCK-001:** Crear evento en plan "Finalizado"
+  - Pasos: Plan en estado "finalizado", intentar doble click en calendario
+  - Esperado: Mensaje de bloqueo, no se abre diálogo
+  - Estado: ✅
+
+- [ ] **BLOCK-002:** Crear evento en plan "Cancelado"
+  - Pasos: Plan en estado "cancelado", intentar doble click
+  - Esperado: Mensaje de bloqueo, no se abre diálogo
+  - Estado: ✅
+
+- [ ] **BLOCK-003:** Crear evento en plan "En Curso"
+  - Pasos: Plan en estado "en_curso", intentar doble click
+  - Esperado: Mensaje de bloqueo (solo organizador puede crear eventos urgentes)
+  - Estado: ✅
+
+- [ ] **BLOCK-004:** Mover evento por drag & drop en plan "Finalizado"
+  - Pasos: Plan finalizado, intentar arrastrar evento
+  - Esperado: Mensaje de bloqueo, evento no se mueve
+  - Estado: ✅
+
+- [ ] **BLOCK-005:** Mover evento por drag & drop en plan "En Curso"
+  - Pasos: Plan en_curso, intentar arrastrar evento
+  - Esperado: Mensaje de bloqueo (solo cambios urgentes)
+  - Estado: ✅
+
+- [ ] **BLOCK-006:** Editar evento en plan "Finalizado"
+  - Pasos: Plan finalizado, abrir diálogo de evento
+  - Esperado: Botón "Guardar" deshabilitado
+  - Estado: ✅
+
+- [ ] **BLOCK-007:** Eliminar evento en plan "Finalizado"
+  - Pasos: Plan finalizado, abrir diálogo de evento
+  - Esperado: Botón "Eliminar" deshabilitado
+  - Estado: ✅
+
+- [ ] **BLOCK-008:** Crear alojamiento en plan "Finalizado"
+  - Pasos: Plan finalizado, intentar doble click en fila de alojamientos
+  - Esperado: Mensaje de bloqueo, no se abre diálogo
+  - Estado: ✅
+
+- [ ] **BLOCK-009:** Editar alojamiento en plan "En Curso"
+  - Pasos: Plan en_curso, abrir diálogo de alojamiento
+  - Esperado: Botón "Guardar" deshabilitado o mensaje de bloqueo
+  - Estado: ✅
+
+- [ ] **BLOCK-010:** Añadir participante en plan "En Curso"
+  - Pasos: Plan en_curso, intentar invitar participante
+  - Esperado: Botón de invitar deshabilitado, mensaje informativo
+  - Estado: ✅
+
+- [ ] **BLOCK-011:** Remover participante en plan "En Curso"
+  - Pasos: Plan en_curso, intentar remover participante
+  - Esperado: Opción "Remover" no visible en menú
+  - Estado: ✅
+
+- [ ] **BLOCK-012:** Crear evento en plan "Confirmado"
+  - Pasos: Plan confirmado, intentar crear evento
+  - Esperado: Permitido (se puede crear eventos nuevos)
+  - Estado: ✅
+
+- [ ] **BLOCK-013:** Modificar evento en plan "Confirmado"
+  - Pasos: Plan confirmado, intentar editar evento
+  - Esperado: Permitido (con restricciones menores)
+  - Estado: ✅
+
+- [ ] **BLOCK-014:** Eliminar evento en plan "Confirmado"
+  - Pasos: Plan confirmado, intentar eliminar evento futuro
+  - Esperado: Permitido (eventos futuros)
+  - Estado: ✅
 
 ---
 

@@ -179,4 +179,269 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileTooltip => 'View profile';
+
+  @override
+  String get confirmDeleteTitle => 'Confirm deletion';
+
+  @override
+  String get confirmDeleteMessage =>
+      'Are you sure you want to delete this planazoo? This action cannot be undone.';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get deleteSuccess => 'Planazoo deleted successfully';
+
+  @override
+  String get deleteError => 'Error deleting planazoo';
+
+  @override
+  String get loadError => 'Error loading planazoos';
+
+  @override
+  String get generateGuests => 'Generating guest users...';
+
+  @override
+  String get guestsGenerated => 'guest users generated successfully!';
+
+  @override
+  String get userNotAuthenticated => 'Error: User not authenticated';
+
+  @override
+  String get generateMiniFrank => 'Generating Mini-Frank plan...';
+
+  @override
+  String get miniFrankGenerated => 'Mini-Frank plan generated successfully!';
+
+  @override
+  String get generateMiniFrankError => 'Error generating Mini-Frank plan';
+
+  @override
+  String get view => 'View';
+
+  @override
+  String get accountSettings => 'Account Settings';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get changeLanguage => 'Change the application language';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get createPlan => 'Create Plan';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get editInfo => 'Edit information';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get search => 'Search';
+
+  @override
+  String get filter => 'Filter';
+
+  @override
+  String get sort => 'Sort';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountTitle => 'Delete Account';
+
+  @override
+  String get deleteAccountMessage =>
+      'This action is irreversible. All your data, plans and events will be deleted.';
+
+  @override
+  String get confirmPassword => 'Confirm your password';
+
+  @override
+  String get participantsRegistered => 'Registered participants';
+
+  @override
+  String get accommodationNameRequired => 'Accommodation name is required';
+
+  @override
+  String minCharacters(int count) {
+    return 'Minimum $count characters';
+  }
+
+  @override
+  String maxCharacters(int count) {
+    return 'Maximum $count characters';
+  }
+
+  @override
+  String get accommodationType => 'Accommodation type';
+
+  @override
+  String get invalidAccommodationType => 'Invalid accommodation type';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get descriptionOptional => 'Description (optional)';
+
+  @override
+  String get additionalNotes => 'Additional notes';
+
+  @override
+  String get accommodationName => 'Accommodation name';
+
+  @override
+  String get accommodationNameHint => 'Hotel, apartment, etc.';
+
+  @override
+  String get costCurrency => 'Cost currency';
+
+  @override
+  String get cost => 'Cost';
+
+  @override
+  String get costOptional => 'Accommodation cost (optional)';
+
+  @override
+  String get costHint => 'Ex: 450.00';
+
+  @override
+  String get eventDescription => 'Description';
+
+  @override
+  String get eventDescriptionHint => 'Event name';
+
+  @override
+  String get eventType => 'Event type';
+
+  @override
+  String get eventSubtype => 'Subtype';
+
+  @override
+  String get selectValidTypeFirst => 'Select a valid type first';
+
+  @override
+  String get invalidSubtype => 'Invalid subtype for selected type';
+
+  @override
+  String get isDraft => 'Is draft';
+
+  @override
+  String get isDraftSubtitle => 'Drafts are shown with lower opacity';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get duration => 'Duration';
+
+  @override
+  String get timezone => 'Timezone';
+
+  @override
+  String get arrivalTimezone => 'Arrival timezone';
+
+  @override
+  String get maxParticipants => 'Max participants (optional)';
+
+  @override
+  String get maxParticipantsHint => 'Ex: 10 (leave empty for no limit)';
+
+  @override
+  String get seat => 'Seat';
+
+  @override
+  String get seatHint => 'Ex: 12A, Window';
+
+  @override
+  String get menu => 'Menu/Food';
+
+  @override
+  String get menuHint => 'Ex: Vegetarian, Gluten-free';
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get preferencesHint => 'Ex: Near exit, Quiet';
+
+  @override
+  String get reservationNumber => 'Reservation number';
+
+  @override
+  String get reservationNumberHint => 'Ex: ABC123, 456789';
+
+  @override
+  String get gate => 'Gate';
+
+  @override
+  String get gateHint => 'Ex: Gate A12, Door 3';
+
+  @override
+  String get personalNotes => 'Personal notes';
+
+  @override
+  String get createEvent => 'Create Event';
+
+  @override
+  String get editEvent => 'Edit Event';
+
+  @override
+  String get creator => 'Creator';
+
+  @override
+  String get initializingPermissions => 'Initializing permissions...';
+
+  @override
+  String get eventNotSaved => 'Event not saved. Plan was not expanded.';
+
+  @override
+  String planCreatedSuccess(String name) {
+    return 'Plan \"$name\" created successfully';
+  }
+
+  @override
+  String planDeletedSuccess(String name) {
+    return 'Plan \"$name\" deleted successfully';
+  }
+
+  @override
+  String get usernameUpdated => 'Username updated';
+
+  @override
+  String get participants => 'Participants';
+
+  @override
+  String get participant => 'Participant';
+
+  @override
+  String get fullPlan => 'Full Plan';
+
+  @override
+  String get plans => 'Plans';
 }

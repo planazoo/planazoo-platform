@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/services/language_storage_service.dart';
 
-// Provider para el idioma actual
-final currentLanguageProvider = StateProvider<Locale>((ref) {
-  return const Locale('es', ''); // Español por defecto
+// Servicio de persistencia
+final languageStorageServiceProvider = Provider<LanguageStorageService>((ref) {
+  return LanguageStorageService();
+});
+
+// Provider para el idioma actual (async para cargar desde storage)
+final currentLanguageProvider = FutureProvider<Locale>((ref) async {
+  final storageService = ref.read(languageStorageServiceProvider);
+  return await storageService.getLanguageOrDefault();
+});
+
+// Provider para el idioma actual (síncrono, para usar en UI)
+final currentLanguageSyncProvider = StateProvider<Locale>((ref) {
+  // Inicializar con el valor por defecto, se actualizará cuando cargue
+  return const Locale('es', '');
 });
 
 // Provider para cambiar el idioma
@@ -13,12 +26,25 @@ final languageNotifierProvider = Provider<LanguageNotifier>((ref) {
 
 class LanguageNotifier {
   final Ref _ref;
+  final LanguageStorageService _storageService;
   
-  LanguageNotifier(this._ref);
+  LanguageNotifier(this._ref) : _storageService = _ref.read(languageStorageServiceProvider);
   
-  void changeLanguage(Locale locale) {
-    _ref.read(currentLanguageProvider.notifier).state = locale;
+  /// Cambia el idioma y lo persiste
+  Future<void> changeLanguage(Locale locale) async {
+    // Guardar en storage
+    await _storageService.saveLanguage(locale);
+    
+    // Actualizar providers
+    _ref.read(currentLanguageSyncProvider.notifier).state = locale;
+    _ref.invalidate(currentLanguageProvider);
   }
   
-  Locale get currentLanguage => _ref.read(currentLanguageProvider);
+  /// Carga el idioma guardado al iniciar la app
+  Future<void> loadSavedLanguage() async {
+    final savedLanguage = await _storageService.getLanguageOrDefault();
+    _ref.read(currentLanguageSyncProvider.notifier).state = savedLanguage;
+  }
+  
+  Locale get currentLanguage => _ref.read(currentLanguageSyncProvider);
 }

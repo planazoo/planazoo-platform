@@ -31,13 +31,9 @@ service cloud.firestore {
     
     // Obtener el rol del usuario en el plan
     // NOTA: Como no podemos hacer queries en reglas, asumimos owner = admin
+    // Las funciones en Firestore Rules no pueden usar if/return, solo expresiones
     function getUserRole(planId) {
-      if (isPlanOwner(planId)) {
-        return 'admin';
-      }
-      // Para otros usuarios, asumir 'participant' por defecto
-      // La verificación real se hace en el código cliente
-      return 'participant';
+      return isPlanOwner(planId) ? 'admin' : 'participant';
     }
     
     // Verificar si el usuario es organizador o admin del plan
@@ -114,6 +110,104 @@ service cloud.firestore {
              (!('status' in request.resource.data) || request.resource.data.status in ['pending', 'accepted', 'rejected', 'expired']);
     }
     
+    // Validar estructura de datos de participante de evento
+    function isValidEventParticipantData() {
+      return request.resource.data.keys().hasAll(['eventId', 'userId', 'registeredAt']) &&
+             request.resource.data.eventId is string &&
+             request.resource.data.userId is string &&
+             request.resource.data.registeredAt is timestamp &&
+             (!('status' in request.resource.data) || 
+              request.resource.data.status in ['registered', 'cancelled']) &&
+             (!('confirmationStatus' in request.resource.data) || 
+              request.resource.data.confirmationStatus in ['pending', 'confirmed', 'declined']);
+    }
+    
+    // Validar estructura de datos de grupo de participantes
+    function isValidParticipantGroupData() {
+      return request.resource.data.keys().hasAll(['userId', 'name', 'createdAt', 'updatedAt']) &&
+             request.resource.data.userId is string &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.name is string &&
+             request.resource.data.name.size() >= 1 &&
+             request.resource.data.name.size() <= 100 &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp &&
+             request.resource.data.memberUserIds is list &&
+             request.resource.data.memberEmails is list &&
+             (!('description' in request.resource.data) || 
+              (request.resource.data.description is string && 
+               request.resource.data.description.size() <= 500)) &&
+             (!('icon' in request.resource.data) || 
+              (request.resource.data.icon is string && 
+               request.resource.data.icon.size() <= 10)) &&
+             (!('color' in request.resource.data) || 
+              request.resource.data.color is string);
+    }
+    
+    // Validar estructura de datos de pago personal
+    function isValidPersonalPaymentData() {
+      return request.resource.data.keys().hasAll(['planId', 'participantId', 'amount', 'paymentDate', 'status', 'createdAt', 'updatedAt']) &&
+             request.resource.data.planId is string &&
+             request.resource.data.participantId is string &&
+             request.resource.data.amount is number &&
+             request.resource.data.amount > 0 &&
+             request.resource.data.amount <= 1000000 &&
+             request.resource.data.paymentDate is timestamp &&
+             request.resource.data.status in ['pending', 'paid', 'refunded'] &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp &&
+             (!('eventId' in request.resource.data) || 
+              request.resource.data.eventId is string) &&
+             (!('paymentMethod' in request.resource.data) || 
+              request.resource.data.paymentMethod is string) &&
+             (!('concept' in request.resource.data) || 
+              (request.resource.data.concept is string && 
+               request.resource.data.concept.size() <= 100)) &&
+             (!('description' in request.resource.data) || 
+              (request.resource.data.description is string && 
+               request.resource.data.description.size() <= 500)) &&
+             (!('registeredBy' in request.resource.data) || 
+              request.resource.data.registeredBy is string);
+    }
+    
+    // Validar estructura de datos de tipo de cambio
+    function isValidExchangeRateData() {
+      return request.resource.data.keys().hasAll(['baseCurrency', 'rates', 'updatedAt']) &&
+             request.resource.data.baseCurrency is string &&
+             request.resource.data.rates is map &&
+             request.resource.data.updatedAt is timestamp;
+    }
+    
+    // Validar estructura de datos de permiso de plan
+    function isValidPlanPermissionData() {
+      return request.resource.data.keys().hasAll(['planId', 'userId', 'role', 'assignedAt']) &&
+             request.resource.data.planId is string &&
+             request.resource.data.userId is string &&
+             request.resource.data.role is string &&
+             request.resource.data.assignedAt is timestamp &&
+             request.resource.data.permissions is list &&
+             (!('assignedBy' in request.resource.data) || 
+              request.resource.data.assignedBy is string) &&
+             (!('expiresAt' in request.resource.data) || 
+              request.resource.data.expiresAt is timestamp) &&
+             (!('metadata' in request.resource.data) || 
+              request.resource.data.metadata is map);
+    }
+    
+    // Validar estructura de datos de invitación de plan
+    function isValidPlanInvitationData() {
+      return request.resource.data.keys().hasAll(['planId', 'email', 'token', 'createdAt', 'expiresAt']) &&
+             request.resource.data.planId is string &&
+             request.resource.data.email is string &&
+             request.resource.data.token is string &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.expiresAt is timestamp &&
+             (!('status' in request.resource.data) || 
+              request.resource.data.status in ['pending', 'accepted', 'rejected', 'expired']) &&
+             (!('role' in request.resource.data) || 
+              request.resource.data.role in ['participant', 'observer']);
+    }
+    
     // ============================================
     // REGLAS PARA USUARIOS
     // ============================================
@@ -157,105 +251,92 @@ service cloud.firestore {
       
       // Eliminar: Solo el creador original puede eliminar el plan
       allow delete: if isPlanOwner(planId);
+    }
+    
+    // ============================================
+    // REGLAS PARA EVENTOS (colección raíz)
+    // NOTA: Los eventos están en la colección raíz 'events', no como subcolección
+    // ============================================
+    
+    match /events/{eventId} {
+      // Crear: Solo usuarios autenticados pueden crear eventos
+      // La verificación de participación se hace en el código cliente
+      allow create: if isAuthenticated() && 
+                       isValidEventData(request.resource.data.planId);
       
-      // ============================================
-      // REGLAS PARA EVENTOS (subcolección de planes)
-      // ============================================
+      // Leer: Usuarios autenticados pueden leer eventos
+      // La validación de participación se hace en el código cliente
+      allow read: if isAuthenticated();
       
-      match /events/{eventId} {
-        // Crear: Solo owner/admin o usuarios que son creadores pueden crear eventos
-        // NOTA: La verificación completa de participación se hace en cliente
-        allow create: if isAuthenticated() && 
-                         (isPlanOwner(planId) || isValidEventData(planId));
-        
-        // Leer: Usuarios autenticados pueden leer eventos (validación completa en cliente)
-        // NOTA: Solo se muestran eventos de planes donde el usuario participa (código cliente)
-        allow read: if isAuthenticated();
-        
-        // Actualizar: 
-        // - Owner/admin: puede editar cualquier evento
-        // - Creador del evento: puede editar su parte personal
-        // NOTA: La verificación completa de roles se hace en el código cliente
-        allow update: if isAuthenticated() && (
-          isPlanOwner(planId) || // Owner puede editar todo
-          resource.data.userId == request.auth.uid // Creador puede editar
-        ) && isValidEventData(planId);
-        
-        // Eliminar: Solo owner del plan o creador del evento puede eliminar
-        allow delete: if isAuthenticated() && 
-                         (isPlanOwner(planId) || resource.data.userId == request.auth.uid);
-      }
+      // Actualizar: 
+      // - Owner del plan: puede editar cualquier evento
+      // - Creador del evento: puede editar su evento
+      allow update: if isAuthenticated() && (
+        isPlanOwner(resource.data.planId) || // Owner del plan puede editar todo
+        resource.data.userId == request.auth.uid // Creador puede editar
+      ) && isValidEventData(resource.data.planId);
       
-      // ============================================
-      // REGLAS PARA ALOJAMIENTOS (subcolección de planes)
-      // ============================================
+      // Eliminar: Solo owner del plan o creador del evento puede eliminar
+      allow delete: if isAuthenticated() && 
+                       (isPlanOwner(resource.data.planId) || resource.data.userId == request.auth.uid);
+    }
+    
+    // ============================================
+    // REGLAS PARA ALOJAMIENTOS (colección raíz 'events' con typeFamily='alojamiento')
+    // NOTA: Los alojamientos están en la colección 'events' con typeFamily='alojamiento'
+    // ============================================
+    
+    // Los alojamientos usan la misma colección 'events', así que usan las mismas reglas
+    // Se distinguen por el campo 'typeFamily' = 'alojamiento'
+    
+    // ============================================
+    // REGLAS PARA PAGOS (subcolección de planes) - T101, T102
+    // ============================================
+    
+    match /plans/{planId}/payments/{paymentId} {
+      // Crear: Solo usuarios autenticados pueden crear sus propios pagos
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
       
-      match /accommodations/{accommodationId} {
-        // Crear: Solo owner/admin puede crear alojamientos
-        allow create: if isAuthenticated() && 
-                         (isPlanOwner(planId) && isValidAccommodationData(planId));
-        
-        // Leer: Usuarios autenticados pueden leer alojamientos (validación completa en cliente)
-        allow read: if isAuthenticated();
-        
-        // Actualizar: Solo owner/admin puede editar alojamientos
-        allow update: if isAuthenticated() && 
-                         isPlanOwner(planId) &&
-                         isValidAccommodationData(planId);
-        
-        // Eliminar: Solo owner/admin puede eliminar alojamientos
-        allow delete: if isAuthenticated() && isPlanOwner(planId);
-      }
+      // Leer: Usuarios autenticados pueden leer pagos (validación completa en cliente)
+      allow read: if isAuthenticated();
       
-      // ============================================
-      // REGLAS PARA PAGOS (subcolección de planes) - T101, T102
-      // ============================================
+      // Actualizar: Solo el propietario del pago puede actualizar
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid;
       
-      match /payments/{paymentId} {
-        // Crear: Solo usuarios autenticados pueden crear sus propios pagos
-        allow create: if isAuthenticated() && 
-                         request.resource.data.userId == request.auth.uid;
-        
-        // Leer: Usuarios autenticados pueden leer pagos (validación completa en cliente)
-        allow read: if isAuthenticated();
-        
-        // Actualizar: Solo el propietario del pago puede actualizar
-        allow update: if isAuthenticated() && 
-                         resource.data.userId == request.auth.uid &&
-                         request.resource.data.userId == request.auth.uid;
-        
-        // Eliminar: Solo el propietario del pago puede eliminar
-        allow delete: if isAuthenticated() && 
-                         resource.data.userId == request.auth.uid;
-      }
+      // Eliminar: Solo el propietario del pago puede eliminar
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // ============================================
+    // REGLAS PARA AVISOS/NOTIFICACIONES (subcolección de planes) - T105
+    // ============================================
+    
+    match /plans/{planId}/announcements/{announcementId} {
+      // Crear: Solo usuarios autenticados pueden crear avisos con validación
+      allow create: if isAuthenticated() &&
+                       isValidAnnouncementData(planId);
       
-      // ============================================
-      // REGLAS PARA AVISOS/NOTIFICACIONES (subcolección de planes) - T105
-      // ============================================
+      // Leer: Usuarios autenticados pueden leer avisos (validación completa en cliente)
+      allow read: if isAuthenticated();
       
-      match /announcements/{announcementId} {
-        // Crear: Solo usuarios autenticados pueden crear avisos con validación
-        allow create: if isAuthenticated() &&
-                         isValidAnnouncementData(planId);
-        
-        // Leer: Usuarios autenticados pueden leer avisos (validación completa en cliente)
-        allow read: if isAuthenticated();
-        
-        // Actualizar: Solo el creador del aviso o owner del plan puede actualizar
-        allow update: if isAuthenticated() && 
-                         (isPlanOwner(planId) || resource.data.userId == request.auth.uid);
-        
-        // Eliminar: Solo el creador del aviso o owner del plan puede eliminar
-        allow delete: if isAuthenticated() && 
-                         (isPlanOwner(planId) || resource.data.userId == request.auth.uid);
-      }
+      // Actualizar: Solo el creador del aviso o owner del plan puede actualizar
+      allow update: if isAuthenticated() && 
+                       (isPlanOwner(planId) || resource.data.userId == request.auth.uid);
+      
+      // Eliminar: Solo el creador del aviso o owner del plan puede eliminar
+      allow delete: if isAuthenticated() && 
+                       (isPlanOwner(planId) || resource.data.userId == request.auth.uid);
     }
     
     // ============================================
     // REGLAS PARA PARTICIPACIONES
     // ============================================
     
-    match /planParticipations/{participationId} {
+    match /plan_participations/{participationId} {
       // Crear: Cualquier usuario autenticado puede crear su propia participación
       // o el owner del plan puede crear participaciones
       allow create: if isAuthenticated() && (
@@ -296,28 +377,21 @@ service cloud.firestore {
     // REGLAS PARA PARTICIPANTES POR EVENTO (T117)
     // ============================================
     
-    match /eventParticipants/{participantId} {
-      // Validar estructura de datos
-      function isValidEventParticipantData() {
-        return request.resource.data.keys().hasAll(['eventId', 'userId', 'registeredAt']) &&
-               request.resource.data.eventId is string &&
-               request.resource.data.userId is string &&
-               request.resource.data.registeredAt is timestamp &&
-               (!('status' in request.resource.data) || 
-                request.resource.data.status in ['registered', 'cancelled']) &&
-               (!('confirmationStatus' in request.resource.data) || 
-                request.resource.data.confirmationStatus in ['pending', 'confirmed', 'declined']);
-      }
-      
+    match /event_participants/{participantId} {
       // Crear: Solo usuarios que participan en el plan pueden apuntarse a eventos
       // Verificar que el usuario participa en el plan del evento
       allow create: if isAuthenticated() && 
                        isValidEventParticipantData() &&
                        request.resource.data.userId == request.auth.uid;
       
-      // Leer: Cualquier participante del plan puede leer participantes del evento
-      // (la validación de participación en el plan se hace en el cliente)
+      // Leer: Cualquier usuario autenticado puede leer participantes del evento
+      // IMPORTANTE: Las consultas con múltiples where() y orderBy() requieren índices compuestos
+      // La validación de participación en el plan se hace en el cliente
       allow read: if isAuthenticated();
+      
+      // Listar: Necesario para consultas con where() y orderBy()
+      // Firestore diferencia entre leer un documento individual (read) y listar documentos (list)
+      allow list: if isAuthenticated();
       
       // Actualizar: Solo el mismo usuario puede actualizar su confirmationStatus o status (T120 Fase 2)
       allow update: if isAuthenticated() && 
@@ -341,28 +415,6 @@ service cloud.firestore {
     // ============================================
     
     match /participant_groups/{groupId} {
-      // Validar estructura de datos
-      function isValidParticipantGroupData() {
-        return request.resource.data.keys().hasAll(['userId', 'name', 'createdAt', 'updatedAt']) &&
-               request.resource.data.userId is string &&
-               request.resource.data.userId == request.auth.uid &&
-               request.resource.data.name is string &&
-               request.resource.data.name.size() >= 1 &&
-               request.resource.data.name.size() <= 100 &&
-               request.resource.data.createdAt is timestamp &&
-               request.resource.data.updatedAt is timestamp &&
-               request.resource.data.memberUserIds is list &&
-               request.resource.data.memberEmails is list &&
-               (!('description' in request.resource.data) || 
-                (request.resource.data.description is string && 
-                 request.resource.data.description.size() <= 500)) &&
-               (!('icon' in request.resource.data) || 
-                (request.resource.data.icon is string && 
-                 request.resource.data.icon.size() <= 10)) &&
-               (!('color' in request.resource.data) || 
-                request.resource.data.color is string);
-      }
-      
       // Crear: Solo usuarios autenticados pueden crear grupos
       allow create: if isAuthenticated() && 
                        isValidParticipantGroupData();
@@ -398,32 +450,6 @@ service cloud.firestore {
     // ============================================
     
     match /personal_payments/{paymentId} {
-      // Validar estructura de datos
-      function isValidPersonalPaymentData() {
-        return request.resource.data.keys().hasAll(['planId', 'participantId', 'amount', 'paymentDate', 'status', 'createdAt', 'updatedAt']) &&
-               request.resource.data.planId is string &&
-               request.resource.data.participantId is string &&
-               request.resource.data.amount is number &&
-               request.resource.data.amount > 0 &&
-               request.resource.data.amount <= 1000000 &&
-               request.resource.data.paymentDate is timestamp &&
-               request.resource.data.status in ['pending', 'paid', 'refunded'] &&
-               request.resource.data.createdAt is timestamp &&
-               request.resource.data.updatedAt is timestamp &&
-               (!('eventId' in request.resource.data) || 
-                request.resource.data.eventId is string) &&
-               (!('paymentMethod' in request.resource.data) || 
-                request.resource.data.paymentMethod is string) &&
-               (!('concept' in request.resource.data) || 
-                (request.resource.data.concept is string && 
-                 request.resource.data.concept.size() <= 100)) &&
-               (!('description' in request.resource.data) || 
-                (request.resource.data.description is string && 
-                 request.resource.data.description.size() <= 500)) &&
-               (!('registeredBy' in request.resource.data) || 
-                request.resource.data.registeredBy is string);
-      }
-      
       // Crear: Usuarios autenticados pueden registrar pagos
       // Deben ser participantes del plan (verificado en cliente)
       allow create: if isAuthenticated() && 
@@ -450,14 +476,6 @@ service cloud.firestore {
     // ============================================
     
     match /exchange_rates/{documentId} {
-      // Validar estructura de datos
-      function isValidExchangeRateData() {
-        return request.resource.data.keys().hasAll(['baseCurrency', 'rates', 'updatedAt']) &&
-               request.resource.data.baseCurrency is string &&
-               request.resource.data.rates is map &&
-               request.resource.data.updatedAt is timestamp;
-      }
-      
       // Leer: Cualquiera autenticado puede leer tipos de cambio
       allow read: if isAuthenticated();
       
@@ -467,24 +485,43 @@ service cloud.firestore {
     }
     
     // ============================================
+    // REGLAS PARA PERMISOS DE PLAN (plan_permissions)
+    // ============================================
+    
+    match /plan_permissions/{permissionId} {
+      // Crear: Solo el owner del plan puede asignar permisos
+      allow create: if isAuthenticated() && 
+                       isValidPlanPermissionData() &&
+                       isPlanOwner(request.resource.data.planId) &&
+                       // El ID del documento debe ser '{planId}_{userId}'
+                       permissionId == request.resource.data.planId + '_' + request.resource.data.userId;
+      
+      // Leer: 
+      // - El propio usuario puede leer sus permisos
+      // - El owner del plan puede leer todos los permisos del plan
+      allow read: if isAuthenticated() && (
+                       resource.data.userId == request.auth.uid ||
+                       isPlanOwner(resource.data.planId)
+                     );
+      
+      // Actualizar: Solo el owner del plan puede actualizar permisos
+      allow update: if isAuthenticated() && 
+                       isValidPlanPermissionData() &&
+                       isPlanOwner(resource.data.planId) &&
+                       request.resource.data.planId == resource.data.planId &&
+                       request.resource.data.userId == resource.data.userId &&
+                       permissionId == resource.data.planId + '_' + resource.data.userId;
+      
+      // Eliminar: Solo el owner del plan puede eliminar permisos
+      allow delete: if isAuthenticated() && 
+                       isPlanOwner(resource.data.planId);
+    }
+    
+    // ============================================
     // REGLAS PARA INVITACIONES POR EMAIL (T104)
     // ============================================
     
     match /planInvitations/{invitationId} {
-      // Validar estructura de datos
-      function isValidPlanInvitationData() {
-        return request.resource.data.keys().hasAll(['planId', 'email', 'token', 'createdAt', 'expiresAt']) &&
-               request.resource.data.planId is string &&
-               request.resource.data.email is string &&
-               request.resource.data.token is string &&
-               request.resource.data.createdAt is timestamp &&
-               request.resource.data.expiresAt is timestamp &&
-               (!('status' in request.resource.data) || 
-                request.resource.data.status in ['pending', 'accepted', 'rejected', 'expired']) &&
-               (!('role' in request.resource.data) || 
-                request.resource.data.role in ['participant', 'observer']);
-      }
-      
       // Crear: Solo usuarios autenticados pueden crear invitaciones
       // Deben ser participantes del plan (se verifica en cliente)
       allow create: if isAuthenticated() && 

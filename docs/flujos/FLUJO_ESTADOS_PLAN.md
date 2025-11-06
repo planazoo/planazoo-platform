@@ -4,8 +4,8 @@
 
 **Relacionado con:** T109 ✅ - Estados del Plan, T144 - Gestión del ciclo de vida al finalizar plan, T133 - Exportación PDF, T145 - Álbum digital, T147 - Valoraciones  
 **Completa CRUD de planes:** `FLUJO_CRUD_PLANES.md`  
-**Versión:** 1.3  
-**Fecha:** Enero 2025 (Actualizado - T109 completado)
+**Versión:** 1.4  
+**Fecha:** Enero 2025 (Actualizado - T109 completado con bloqueos funcionales)
 
 ---
 
@@ -451,10 +451,37 @@ stateDiagram-v2
 - ✅ **Lógica de permisos/bloqueos según estado**
 - ✅ **Auto-transición basada en fechas** integrada en dashboard
 
+**Lo que está implementado:**
+- ✅ Campo `state` en modelo Plan con valores: borrador, planificando, confirmado, en_curso, finalizado, cancelado
+- ✅ Campo `visibility` en modelo Plan (private, public)
+- ✅ Campo `timezone` en modelo Plan (IANA timezone)
+- ✅ Planes se crean con `state: 'borrador'` por defecto
+- ✅ Valores por defecto: `state='borrador'`, `visibility='private'`, `timezone=auto-detectada`
+- ✅ Firestore rules valida valores válidos de `state` y `visibility`
+- ✅ Persistencia de estados en Firestore
+- ✅ Modelo soporta todos los estados definidos en el flujo
+- ✅ **Transiciones automáticas entre estados:**
+  - ✅ Borrador → Planificando (al guardar primera vez)
+  - ✅ Confirmado → En Curso (automático al llegar fecha inicio o manual)
+  - ✅ En Curso → Finalizado (automático al llegar fecha fin o manual)
+- ✅ **Servicio de gestión de transiciones** (`lib/features/calendar/domain/services/plan_state_service.dart`)
+- ✅ **Validaciones de transiciones** (permisos, validaciones previas)
+- ✅ **UI para cambiar estados:**
+  - ✅ Badges visuales de estado (`lib/features/calendar/presentation/widgets/plan_state_badge.dart`)
+  - ✅ Diálogos de confirmación para transiciones (`lib/features/calendar/presentation/widgets/state_transition_dialog.dart`)
+  - ✅ Controles de cambio de estado en UI (`PlanDataScreen`)
+  - ✅ Indicadores visuales de bloqueos (`lib/features/calendar/domain/services/plan_state_permissions.dart`)
+- ✅ **Lógica de permisos/bloqueos según estado**
+- ✅ **Auto-transición basada en fechas** integrada en dashboard
+- ✅ **Bloqueos funcionales implementados:**
+  - ✅ Bloqueos en CalendarScreen (doble click, drag & drop)
+  - ✅ Bloqueos en EventDialog (botones crear/editar/eliminar)
+  - ✅ Bloqueos en AccommodationDialog (botones crear/editar/eliminar)
+  - ✅ Bloqueos en gestión de participantes (añadir/remover)
+  - ✅ Mensajes informativos de bloqueo según estado
+
 **Pendiente (mejoras futuras):**
 - ⚠️ Notificaciones automáticas de cambio de estado (T105)
-- ⚠️ Bloqueos funcionales en acciones de evento (actualmente solo visuales en plan)
-- ⚠️ Deshabilitar botones de edición según estado en módulos de eventos/alojamientos
 
 **Archivos creados:**
 - ✅ `lib/features/calendar/domain/services/plan_state_service.dart` - Lógica de transiciones
@@ -466,6 +493,11 @@ stateDiagram-v2
 - ✅ `pg_dashboard_page.dart` - Badges en lista y transiciones automáticas
 - ✅ `wd_plan_card_widget.dart` - Badge en tarjetas
 - ✅ `wd_plan_data_screen.dart` - Gestión manual de estados e indicadores de bloqueo
+- ✅ `wd_calendar_screen.dart` - Bloqueos funcionales en doble click, drag & drop, crear alojamientos
+- ✅ `wd_event_dialog.dart` - Bloqueos funcionales en botones crear/editar/eliminar
+- ✅ `wd_accommodation_dialog.dart` - Bloqueos funcionales en botones crear/editar/eliminar
+- ✅ `pg_plan_participants_page.dart` - Bloqueos funcionales en gestión de participantes
+- ✅ `wd_participants_list_widget.dart` - Bloqueos funcionales en remover participantes
 
 ---
 

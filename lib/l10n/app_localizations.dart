@@ -433,6 +433,516 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver perfil'**
   String get profileTooltip;
+
+  /// Título del diálogo de confirmar eliminación
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar eliminación'**
+  String get confirmDeleteTitle;
+
+  /// Mensaje del diálogo de confirmar eliminación
+  ///
+  /// In es, this message translates to:
+  /// **'¿Estás seguro de que quieres eliminar este planazoo? Esta acción no se puede deshacer.'**
+  String get confirmDeleteMessage;
+
+  /// Botón de eliminar
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get delete;
+
+  /// Mensaje de eliminación exitosa
+  ///
+  /// In es, this message translates to:
+  /// **'Planazoo eliminado exitosamente'**
+  String get deleteSuccess;
+
+  /// Mensaje de error al eliminar
+  ///
+  /// In es, this message translates to:
+  /// **'Error al eliminar planazoo'**
+  String get deleteError;
+
+  /// Mensaje de error al cargar
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar planazoos'**
+  String get loadError;
+
+  /// Mensaje de generando invitados
+  ///
+  /// In es, this message translates to:
+  /// **'Generando usuarios invitados...'**
+  String get generateGuests;
+
+  /// Mensaje de invitados generados
+  ///
+  /// In es, this message translates to:
+  /// **'usuarios invitados generados exitosamente!'**
+  String get guestsGenerated;
+
+  /// Error de usuario no autenticado
+  ///
+  /// In es, this message translates to:
+  /// **'Error: Usuario no autenticado'**
+  String get userNotAuthenticated;
+
+  /// Mensaje de generando Mini-Frank
+  ///
+  /// In es, this message translates to:
+  /// **'Generando plan Mini-Frank...'**
+  String get generateMiniFrank;
+
+  /// Mensaje de Mini-Frank generado
+  ///
+  /// In es, this message translates to:
+  /// **'Plan Mini-Frank generado exitosamente!'**
+  String get miniFrankGenerated;
+
+  /// Error al generar Mini-Frank
+  ///
+  /// In es, this message translates to:
+  /// **'Error al generar plan Mini-Frank'**
+  String get generateMiniFrankError;
+
+  /// Botón de ver
+  ///
+  /// In es, this message translates to:
+  /// **'Ver'**
+  String get view;
+
+  /// Título de configuración de cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Configuración de Cuenta'**
+  String get accountSettings;
+
+  /// Título de idioma
+  ///
+  /// In es, this message translates to:
+  /// **'Idioma'**
+  String get language;
+
+  /// Descripción del selector de idioma
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar el idioma de la aplicación'**
+  String get changeLanguage;
+
+  /// Botón de guardar
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get save;
+
+  /// Botón de crear
+  ///
+  /// In es, this message translates to:
+  /// **'Crear'**
+  String get create;
+
+  /// Botón de crear plan
+  ///
+  /// In es, this message translates to:
+  /// **'Crear Plan'**
+  String get createPlan;
+
+  /// Botón de editar
+  ///
+  /// In es, this message translates to:
+  /// **'Editar'**
+  String get edit;
+
+  /// Botón de editar información
+  ///
+  /// In es, this message translates to:
+  /// **'Editar información'**
+  String get editInfo;
+
+  /// Botón de quitar
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar'**
+  String get remove;
+
+  /// Botón de añadir
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir'**
+  String get add;
+
+  /// Botón o label de buscar
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar'**
+  String get search;
+
+  /// Botón de filtrar
+  ///
+  /// In es, this message translates to:
+  /// **'Filtrar'**
+  String get filter;
+
+  /// Botón de ordenar
+  ///
+  /// In es, this message translates to:
+  /// **'Ordenar'**
+  String get sort;
+
+  /// Botón de aceptar
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptar'**
+  String get accept;
+
+  /// Botón de confirmar
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar'**
+  String get confirm;
+
+  /// Botón de eliminar cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar Cuenta'**
+  String get deleteAccount;
+
+  /// Título del diálogo de eliminar cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar Cuenta'**
+  String get deleteAccountTitle;
+
+  /// Mensaje del diálogo de eliminar cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Esta acción es irreversible. Se eliminarán todos tus datos, planes y eventos.'**
+  String get deleteAccountMessage;
+
+  /// Label del campo de confirmar contraseña para eliminar cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Confirma tu contraseña'**
+  String get confirmPassword;
+
+  /// Título de sección de participantes apuntados
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes apuntados'**
+  String get participantsRegistered;
+
+  /// Error de nombre de alojamiento requerido
+  ///
+  /// In es, this message translates to:
+  /// **'El nombre del alojamiento es obligatorio'**
+  String get accommodationNameRequired;
+
+  /// Error de mínimo de caracteres
+  ///
+  /// In es, this message translates to:
+  /// **'Mínimo {count} caracteres'**
+  String minCharacters(int count);
+
+  /// Error de máximo de caracteres
+  ///
+  /// In es, this message translates to:
+  /// **'Máximo {count} caracteres'**
+  String maxCharacters(int count);
+
+  /// Label del tipo de alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de alojamiento'**
+  String get accommodationType;
+
+  /// Error de tipo de alojamiento inválido
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de alojamiento inválido'**
+  String get invalidAccommodationType;
+
+  /// Label de descripción
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción'**
+  String get description;
+
+  /// Label de descripción opcional
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción (opcional)'**
+  String get descriptionOptional;
+
+  /// Hint de notas adicionales
+  ///
+  /// In es, this message translates to:
+  /// **'Notas adicionales'**
+  String get additionalNotes;
+
+  /// Label del nombre de alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del alojamiento'**
+  String get accommodationName;
+
+  /// Hint del nombre de alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Hotel, apartamento, etc.'**
+  String get accommodationNameHint;
+
+  /// Label de moneda del coste
+  ///
+  /// In es, this message translates to:
+  /// **'Moneda del coste'**
+  String get costCurrency;
+
+  /// Label de coste
+  ///
+  /// In es, this message translates to:
+  /// **'Coste'**
+  String get cost;
+
+  /// Label de coste opcional
+  ///
+  /// In es, this message translates to:
+  /// **'Coste del alojamiento (opcional)'**
+  String get costOptional;
+
+  /// Hint del coste
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 450.00'**
+  String get costHint;
+
+  /// Label de descripción de evento
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción'**
+  String get eventDescription;
+
+  /// Hint de descripción de evento
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del evento'**
+  String get eventDescriptionHint;
+
+  /// Label de tipo de evento
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de evento'**
+  String get eventType;
+
+  /// Label de subtipo de evento
+  ///
+  /// In es, this message translates to:
+  /// **'Subtipo'**
+  String get eventSubtype;
+
+  /// Error de seleccionar tipo válido primero
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona primero un tipo válido'**
+  String get selectValidTypeFirst;
+
+  /// Error de subtipo inválido
+  ///
+  /// In es, this message translates to:
+  /// **'Subtipo inválido para el tipo seleccionado'**
+  String get invalidSubtype;
+
+  /// Label de es borrador
+  ///
+  /// In es, this message translates to:
+  /// **'Es borrador'**
+  String get isDraft;
+
+  /// Subtítulo de es borrador
+  ///
+  /// In es, this message translates to:
+  /// **'Los borradores se muestran con menor opacidad'**
+  String get isDraftSubtitle;
+
+  /// Label de fecha
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha'**
+  String get date;
+
+  /// Label de hora
+  ///
+  /// In es, this message translates to:
+  /// **'Hora'**
+  String get time;
+
+  /// Label de duración
+  ///
+  /// In es, this message translates to:
+  /// **'Duración'**
+  String get duration;
+
+  /// Label de timezone
+  ///
+  /// In es, this message translates to:
+  /// **'Timezone'**
+  String get timezone;
+
+  /// Label de timezone de llegada
+  ///
+  /// In es, this message translates to:
+  /// **'Timezone de llegada'**
+  String get arrivalTimezone;
+
+  /// Label de límite de participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de participantes (opcional)'**
+  String get maxParticipants;
+
+  /// Hint de límite de participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 10 (dejar vacío para sin límite)'**
+  String get maxParticipantsHint;
+
+  /// Label de asiento
+  ///
+  /// In es, this message translates to:
+  /// **'Asiento'**
+  String get seat;
+
+  /// Hint de asiento
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 12A, Ventana'**
+  String get seatHint;
+
+  /// Label de menú/comida
+  ///
+  /// In es, this message translates to:
+  /// **'Menú/Comida'**
+  String get menu;
+
+  /// Hint de menú/comida
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Vegetariano, Sin gluten'**
+  String get menuHint;
+
+  /// Label de preferencias
+  ///
+  /// In es, this message translates to:
+  /// **'Preferencias'**
+  String get preferences;
+
+  /// Hint de preferencias
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Cerca de la salida, Silencioso'**
+  String get preferencesHint;
+
+  /// Label de número de reserva
+  ///
+  /// In es, this message translates to:
+  /// **'Número de reserva'**
+  String get reservationNumber;
+
+  /// Hint de número de reserva
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: ABC123, 456789'**
+  String get reservationNumberHint;
+
+  /// Label de puerta/gate
+  ///
+  /// In es, this message translates to:
+  /// **'Puerta/Gate'**
+  String get gate;
+
+  /// Hint de puerta/gate
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Gate A12, Puerta 3'**
+  String get gateHint;
+
+  /// Label de notas personales
+  ///
+  /// In es, this message translates to:
+  /// **'Notas personales'**
+  String get personalNotes;
+
+  /// Título de crear evento
+  ///
+  /// In es, this message translates to:
+  /// **'Crear Evento'**
+  String get createEvent;
+
+  /// Título de editar evento
+  ///
+  /// In es, this message translates to:
+  /// **'Editar Evento'**
+  String get editEvent;
+
+  /// Badge de creador
+  ///
+  /// In es, this message translates to:
+  /// **'Creador'**
+  String get creator;
+
+  /// Mensaje de inicializando permisos
+  ///
+  /// In es, this message translates to:
+  /// **'Inicializando permisos...'**
+  String get initializingPermissions;
+
+  /// Error de evento no guardado
+  ///
+  /// In es, this message translates to:
+  /// **'Evento no guardado. El plan no fue expandido.'**
+  String get eventNotSaved;
+
+  /// Mensaje de plan creado exitosamente
+  ///
+  /// In es, this message translates to:
+  /// **'Plan \"{name}\" creado exitosamente'**
+  String planCreatedSuccess(String name);
+
+  /// Mensaje de plan eliminado exitosamente
+  ///
+  /// In es, this message translates to:
+  /// **'Plan \"{name}\" eliminado exitosamente'**
+  String planDeletedSuccess(String name);
+
+  /// Mensaje de nombre de usuario actualizado
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de usuario actualizado'**
+  String get usernameUpdated;
+
+  /// Título de participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes'**
+  String get participants;
+
+  /// Label de participante
+  ///
+  /// In es, this message translates to:
+  /// **'Participante'**
+  String get participant;
+
+  /// Label de plan completo
+  ///
+  /// In es, this message translates to:
+  /// **'Plan Completo'**
+  String get fullPlan;
+
+  /// Título de planes
+  ///
+  /// In es, this message translates to:
+  /// **'Plans'**
+  String get plans;
 }
 
 class _AppLocalizationsDelegate

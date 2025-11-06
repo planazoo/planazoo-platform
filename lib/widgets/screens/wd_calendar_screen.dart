@@ -44,6 +44,8 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_calculations.da
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
 import 'package:unp_calendario/widgets/screens/calendar/components/calendar_grid.dart';
 import 'package:unp_calendario/widgets/screens/calendar/components/calendar_tracks.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
+import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -641,9 +643,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final accommodationsForDay = accommodations.where((acc) => acc.isDateInRange(dayDate)).toList();
     
     if (accommodationsForDay.isEmpty) {
+      // T109: Verificar si se puede crear alojamientos según el estado del plan
+      final canCreateAccommodations = PlanStatePermissions.canAddEvents(widget.plan); // Usamos canAddEvents para alojamientos también
+      
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onDoubleTap: () => _showNewAccommodationDialog(dayDate),
+        onDoubleTap: canCreateAccommodations ? () => _showNewAccommodationDialog(dayDate) : () {
+          final blockedReason = PlanStatePermissions.getBlockedReason('create_event', widget.plan);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(blockedReason ?? 'No se pueden crear alojamientos en el estado actual del plan.'),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        },
         child: Container(
           width: double.infinity,
           height: double.infinity,
@@ -655,9 +671,35 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Mostrar el primer alojamiento (si hay varios, mostrar el más relevante)
     final accommodation = accommodationsForDay.first;
     
+    // T109: Verificar si se puede crear/modificar alojamientos según el estado del plan
+    final canModifyAccommodations = PlanStatePermissions.canModifyEvents(widget.plan);
+    final canCreateAccommodations = PlanStatePermissions.canAddEvents(widget.plan);
+    
     return GestureDetector(
-      onTap: () => _showAccommodationDialog(accommodation),
-      onDoubleTap: () => _showNewAccommodationDialog(dayDate),
+      onTap: canModifyAccommodations ? () => _showAccommodationDialog(accommodation) : () {
+        final blockedReason = PlanStatePermissions.getBlockedReason('modify_event', widget.plan);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(blockedReason ?? 'No se pueden modificar alojamientos en el estado actual del plan.'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      },
+      onDoubleTap: canCreateAccommodations ? () => _showNewAccommodationDialog(dayDate) : () {
+        final blockedReason = PlanStatePermissions.getBlockedReason('create_event', widget.plan);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(blockedReason ?? 'No se pueden crear alojamientos en el estado actual del plan.'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
         child: Text(
@@ -2662,6 +2704,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Inicia el drag de un evento
   void _startDrag(Event event, DragStartDetails details) {
+    // T109: Verificar si se puede modificar eventos según el estado del plan
+    if (!PlanStatePermissions.canModifyEvents(widget.plan)) {
+      final blockedReason = PlanStatePermissions.getBlockedReason('modify_event', widget.plan);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(blockedReason ?? 'No se pueden modificar eventos en el estado actual del plan.'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+    
     setState(() {
       _draggingEvent = event;
       _isDragging = true;
@@ -2893,11 +2950,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final dayIndex = dayData['index'] as int;
     final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
     
+    // T109: Verificar si se puede crear eventos según el estado del plan
+    final canCreateEvents = PlanStatePermissions.canAddEvents(widget.plan);
+    
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onDoubleTap: () {
+      onDoubleTap: canCreateEvents ? () {
         // Crear evento para el día específico (asignado al primer participante por defecto)
         _showNewEventDialog(date, hourIndex);
+      } : () {
+        // Mostrar mensaje de bloqueo
+        final blockedReason = PlanStatePermissions.getBlockedReason('create_event', widget.plan);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(blockedReason ?? 'No se pueden crear eventos en el estado actual del plan.'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       },
       child: Container(
         height: AppConstants.cellHeight,
@@ -3017,6 +3089,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Muestra el diálogo para crear un nuevo evento
   void _showNewEventDialog(DateTime date, int hour, {String? participantId}) {
+    // T109: Verificar si se puede crear eventos según el estado del plan
+    if (!PlanStatePermissions.canAddEvents(widget.plan)) {
+      final blockedReason = PlanStatePermissions.getBlockedReason('create_event', widget.plan);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(blockedReason ?? 'No se pueden crear eventos en el estado actual del plan.'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (context) => EventDialog(
@@ -3141,12 +3226,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final calendarNotifier = ref.read(calendarNotifierProvider(calendarParams).notifier);
     calendarNotifier.refreshEvents();
     
+    // Invalidar provider de estadísticas para que se recalcule el presupuesto
+    if (widget.plan.id != null) {
+      ref.invalidate(planStatsProvider(widget.plan.id!));
+    }
+    
     // Forzar actualización de la UI
     setState(() {});
   }
 
   /// Muestra el diálogo para editar un alojamiento existente
   void _showAccommodationDialog(Accommodation accommodation) {
+    // T109: Verificar si se puede modificar alojamientos según el estado del plan
+    if (!PlanStatePermissions.canModifyEvents(widget.plan)) {
+      final blockedReason = PlanStatePermissions.getBlockedReason('modify_event', widget.plan);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(blockedReason ?? 'No se pueden modificar alojamientos en el estado actual del plan.'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (context) => AccommodationDialog(
@@ -3161,6 +3264,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // Invalidar providers de alojamientos después de cerrar el diálogo
           if (mounted) {
             ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+            // Invalidar provider de estadísticas para que se recalcule el presupuesto
+            if (widget.plan.id != null) {
+              ref.invalidate(planStatsProvider(widget.plan.id!));
+            }
             // Forzar actualización de la UI
             setState(() {});
           }
@@ -3172,6 +3279,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // Invalidar providers de alojamientos después de cerrar el diálogo
           if (mounted) {
             ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+            // Invalidar provider de estadísticas para que se recalcule el presupuesto
+            if (widget.plan.id != null) {
+              ref.invalidate(planStatsProvider(widget.plan.id!));
+            }
           }
         },
       ),
@@ -3180,6 +3291,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Muestra el diálogo para crear un nuevo alojamiento
   void _showNewAccommodationDialog(DateTime checkInDate) {
+    // T109: Verificar si se puede crear alojamientos según el estado del plan
+    if (!PlanStatePermissions.canAddEvents(widget.plan)) {
+      final blockedReason = PlanStatePermissions.getBlockedReason('create_event', widget.plan);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(blockedReason ?? 'No se pueden crear alojamientos en el estado actual del plan.'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (context) => AccommodationDialog(
@@ -3195,6 +3319,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // Invalidar providers de alojamientos después de cerrar el diálogo
           if (mounted) {
             ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+            // Invalidar provider de estadísticas para que se recalcule el presupuesto
+            if (widget.plan.id != null) {
+              ref.invalidate(planStatsProvider(widget.plan.id!));
+            }
             // Forzar actualización de la UI
             setState(() {});
           }

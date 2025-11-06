@@ -3,8 +3,8 @@
 > Define todo el ciclo de vida de un plan: crear, leer, actualizar y eliminar
 
 **Relacionado con:** T109 ✅, T107 ✅, T118, T122, T131 - Calendarios externos, T133 - Exportación PDF, T144 - Gestión del ciclo de vida, T145 - Álbum digital, T147 - Valoraciones, T153 ✅, T101 ✅, T102 ✅  
-**Versión:** 1.5  
-**Fecha:** Enero 2025 (Actualizado - T101, T102, T107, T153 implementados)
+**Versión:** 1.6  
+**Fecha:** Enero 2025 (Actualizado - T101, T102, T107, T153, T109 bloqueos funcionales implementados)
 
 ---
 
@@ -836,7 +836,7 @@ Eventos aparecen en el calendario del plan
 - ❌ Invitaciones a participantes (T104)
 - ✅ Sistema de presupuesto integrado (T101) - **COMPLETADA**
 - ❌ Notificaciones automáticas de cambio de estado (T105) - Base completada, pendiente push
-- ❌ Bloqueos funcionales en UI según estado (actualmente solo visuales)
+- ✅ Bloqueos funcionales en UI según estado (T109) - **COMPLETADA**
 
 ---
 

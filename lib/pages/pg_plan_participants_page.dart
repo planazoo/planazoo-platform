@@ -5,6 +5,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/plan_par
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/widgets/dialogs/invite_group_dialog.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 
 class PlanParticipantsPage extends ConsumerStatefulWidget {
   final Plan plan;
@@ -60,15 +61,24 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
+          // T109: Deshabilitar botones según estado del plan
           IconButton(
-            onPressed: _showInviteGroupDialog,
+            onPressed: PlanStatePermissions.canAddParticipants(widget.plan) 
+                ? _showInviteGroupDialog 
+                : null,
             icon: const Icon(Icons.group_add),
-            tooltip: 'Invitar grupo',
+            tooltip: PlanStatePermissions.canAddParticipants(widget.plan) 
+                ? 'Invitar grupo' 
+                : PlanStatePermissions.getBlockedReason('add_participants', widget.plan) ?? 'No disponible',
           ),
           IconButton(
-            onPressed: _showInviteDialog,
+            onPressed: PlanStatePermissions.canAddParticipants(widget.plan) 
+                ? _showInviteDialog 
+                : null,
             icon: const Icon(Icons.person_add),
-            tooltip: 'Invitar usuario',
+            tooltip: PlanStatePermissions.canAddParticipants(widget.plan) 
+                ? 'Invitar usuario' 
+                : PlanStatePermissions.getBlockedReason('add_participants', widget.plan) ?? 'No disponible',
           ),
         ],
       ),
@@ -144,6 +154,19 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
   }
 
   void _showInviteDialog() {
+    // T109: Verificar si se puede añadir participantes según el estado del plan
+    if (!PlanStatePermissions.canAddParticipants(widget.plan)) {
+      final blockedReason = PlanStatePermissions.getBlockedReason('add_participants', widget.plan);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(blockedReason ?? 'No se pueden añadir participantes en el estado actual del plan.'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -182,6 +205,19 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
   }
 
   void _showInviteGroupDialog() {
+    // T109: Verificar si se puede añadir participantes según el estado del plan
+    if (!PlanStatePermissions.canAddParticipants(widget.plan)) {
+      final blockedReason = PlanStatePermissions.getBlockedReason('add_participants', widget.plan);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(blockedReason ?? 'No se pueden añadir participantes en el estado actual del plan.'),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+    
     final currentUser = ref.read(currentUserProvider);
     if (currentUser == null) return;
 

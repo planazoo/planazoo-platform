@@ -230,5 +230,368 @@
   "profileTooltip": "Ver perfil",
   "@profileTooltip": {
     "description": "Tooltip del icono de perfil en W1"
+  },
+  
+  "confirmDeleteTitle": "Confirmar eliminación",
+  "@confirmDeleteTitle": {
+    "description": "Título del diálogo de confirmar eliminación"
+  },
+  "confirmDeleteMessage": "¿Estás seguro de que quieres eliminar este planazoo? Esta acción no se puede deshacer.",
+  "@confirmDeleteMessage": {
+    "description": "Mensaje del diálogo de confirmar eliminación"
+  },
+  "delete": "Eliminar",
+  "@delete": {
+    "description": "Botón de eliminar"
+  },
+  "deleteSuccess": "Planazoo eliminado exitosamente",
+  "@deleteSuccess": {
+    "description": "Mensaje de eliminación exitosa"
+  },
+  "deleteError": "Error al eliminar planazoo",
+  "@deleteError": {
+    "description": "Mensaje de error al eliminar"
+  },
+  "loadError": "Error al cargar planazoos",
+  "@loadError": {
+    "description": "Mensaje de error al cargar"
+  },
+  "generateGuests": "Generando usuarios invitados...",
+  "@generateGuests": {
+    "description": "Mensaje de generando invitados"
+  },
+  "guestsGenerated": "usuarios invitados generados exitosamente!",
+  "@guestsGenerated": {
+    "description": "Mensaje de invitados generados"
+  },
+  "userNotAuthenticated": "Error: Usuario no autenticado",
+  "@userNotAuthenticated": {
+    "description": "Error de usuario no autenticado"
+  },
+  "generateMiniFrank": "Generando plan Mini-Frank...",
+  "@generateMiniFrank": {
+    "description": "Mensaje de generando Mini-Frank"
+  },
+  "miniFrankGenerated": "Plan Mini-Frank generado exitosamente!",
+  "@miniFrankGenerated": {
+    "description": "Mensaje de Mini-Frank generado"
+  },
+  "generateMiniFrankError": "Error al generar plan Mini-Frank",
+  "@generateMiniFrankError": {
+    "description": "Error al generar Mini-Frank"
+  },
+  "view": "Ver",
+  "@view": {
+    "description": "Botón de ver"
+  },
+  "accountSettings": "Configuración de Cuenta",
+  "@accountSettings": {
+    "description": "Título de configuración de cuenta"
+  },
+  "language": "Idioma",
+  "@language": {
+    "description": "Título de idioma"
+  },
+  "changeLanguage": "Cambiar el idioma de la aplicación",
+  "@changeLanguage": {
+    "description": "Descripción del selector de idioma"
+  },
+  
+  "save": "Guardar",
+  "@save": {
+    "description": "Botón de guardar"
+  },
+  "create": "Crear",
+  "@create": {
+    "description": "Botón de crear"
+  },
+  "createPlan": "Crear Plan",
+  "@createPlan": {
+    "description": "Botón de crear plan"
+  },
+  "edit": "Editar",
+  "@edit": {
+    "description": "Botón de editar"
+  },
+  "editInfo": "Editar información",
+  "@editInfo": {
+    "description": "Botón de editar información"
+  },
+  "remove": "Quitar",
+  "@remove": {
+    "description": "Botón de quitar"
+  },
+  "add": "Añadir",
+  "@add": {
+    "description": "Botón de añadir"
+  },
+  "search": "Buscar",
+  "@search": {
+    "description": "Botón o label de buscar"
+  },
+  "filter": "Filtrar",
+  "@filter": {
+    "description": "Botón de filtrar"
+  },
+  "sort": "Ordenar",
+  "@sort": {
+    "description": "Botón de ordenar"
+  },
+  "accept": "Aceptar",
+  "@accept": {
+    "description": "Botón de aceptar"
+  },
+  "confirm": "Confirmar",
+  "@confirm": {
+    "description": "Botón de confirmar"
+  },
+  "deleteAccount": "Eliminar Cuenta",
+  "@deleteAccount": {
+    "description": "Botón de eliminar cuenta"
+  },
+  "deleteAccountTitle": "Eliminar Cuenta",
+  "@deleteAccountTitle": {
+    "description": "Título del diálogo de eliminar cuenta"
+  },
+  "deleteAccountMessage": "Esta acción es irreversible. Se eliminarán todos tus datos, planes y eventos.",
+  "@deleteAccountMessage": {
+    "description": "Mensaje del diálogo de eliminar cuenta"
+  },
+  "confirmPassword": "Confirma tu contraseña",
+  "@confirmPassword": {
+    "description": "Label del campo de confirmar contraseña para eliminar cuenta"
+  },
+  "participantsRegistered": "Participantes apuntados",
+  "@participantsRegistered": {
+    "description": "Título de sección de participantes apuntados"
+  },
+  "accommodationNameRequired": "El nombre del alojamiento es obligatorio",
+  "@accommodationNameRequired": {
+    "description": "Error de nombre de alojamiento requerido"
+  },
+  "minCharacters": "Mínimo {count} caracteres",
+  "@minCharacters": {
+    "description": "Error de mínimo de caracteres",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "maxCharacters": "Máximo {count} caracteres",
+  "@maxCharacters": {
+    "description": "Error de máximo de caracteres",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accommodationType": "Tipo de alojamiento",
+  "@accommodationType": {
+    "description": "Label del tipo de alojamiento"
+  },
+  "invalidAccommodationType": "Tipo de alojamiento inválido",
+  "@invalidAccommodationType": {
+    "description": "Error de tipo de alojamiento inválido"
+  },
+  "description": "Descripción",
+  "@description": {
+    "description": "Label de descripción"
+  },
+  "descriptionOptional": "Descripción (opcional)",
+  "@descriptionOptional": {
+    "description": "Label de descripción opcional"
+  },
+  "additionalNotes": "Notas adicionales",
+  "@additionalNotes": {
+    "description": "Hint de notas adicionales"
+  },
+  
+  "accommodationName": "Nombre del alojamiento",
+  "@accommodationName": {
+    "description": "Label del nombre de alojamiento"
+  },
+  "accommodationNameHint": "Hotel, apartamento, etc.",
+  "@accommodationNameHint": {
+    "description": "Hint del nombre de alojamiento"
+  },
+  "costCurrency": "Moneda del coste",
+  "@costCurrency": {
+    "description": "Label de moneda del coste"
+  },
+  "cost": "Coste",
+  "@cost": {
+    "description": "Label de coste"
+  },
+  "costOptional": "Coste del alojamiento (opcional)",
+  "@costOptional": {
+    "description": "Label de coste opcional"
+  },
+  "costHint": "Ej: 450.00",
+  "@costHint": {
+    "description": "Hint del coste"
+  },
+  "eventDescription": "Descripción",
+  "@eventDescription": {
+    "description": "Label de descripción de evento"
+  },
+  "eventDescriptionHint": "Nombre del evento",
+  "@eventDescriptionHint": {
+    "description": "Hint de descripción de evento"
+  },
+  "eventType": "Tipo de evento",
+  "@eventType": {
+    "description": "Label de tipo de evento"
+  },
+  "eventSubtype": "Subtipo",
+  "@eventSubtype": {
+    "description": "Label de subtipo de evento"
+  },
+  "selectValidTypeFirst": "Selecciona primero un tipo válido",
+  "@selectValidTypeFirst": {
+    "description": "Error de seleccionar tipo válido primero"
+  },
+  "invalidSubtype": "Subtipo inválido para el tipo seleccionado",
+  "@invalidSubtype": {
+    "description": "Error de subtipo inválido"
+  },
+  "isDraft": "Es borrador",
+  "@isDraft": {
+    "description": "Label de es borrador"
+  },
+  "isDraftSubtitle": "Los borradores se muestran con menor opacidad",
+  "@isDraftSubtitle": {
+    "description": "Subtítulo de es borrador"
+  },
+  "date": "Fecha",
+  "@date": {
+    "description": "Label de fecha"
+  },
+  "time": "Hora",
+  "@time": {
+    "description": "Label de hora"
+  },
+  "duration": "Duración",
+  "@duration": {
+    "description": "Label de duración"
+  },
+  "timezone": "Timezone",
+  "@timezone": {
+    "description": "Label de timezone"
+  },
+  "arrivalTimezone": "Timezone de llegada",
+  "@arrivalTimezone": {
+    "description": "Label de timezone de llegada"
+  },
+  "maxParticipants": "Límite de participantes (opcional)",
+  "@maxParticipants": {
+    "description": "Label de límite de participantes"
+  },
+  "maxParticipantsHint": "Ej: 10 (dejar vacío para sin límite)",
+  "@maxParticipantsHint": {
+    "description": "Hint de límite de participantes"
+  },
+  "seat": "Asiento",
+  "@seat": {
+    "description": "Label de asiento"
+  },
+  "seatHint": "Ej: 12A, Ventana",
+  "@seatHint": {
+    "description": "Hint de asiento"
+  },
+  "menu": "Menú/Comida",
+  "@menu": {
+    "description": "Label de menú/comida"
+  },
+  "menuHint": "Ej: Vegetariano, Sin gluten",
+  "@menuHint": {
+    "description": "Hint de menú/comida"
+  },
+  "preferences": "Preferencias",
+  "@preferences": {
+    "description": "Label de preferencias"
+  },
+  "preferencesHint": "Ej: Cerca de la salida, Silencioso",
+  "@preferencesHint": {
+    "description": "Hint de preferencias"
+  },
+  "reservationNumber": "Número de reserva",
+  "@reservationNumber": {
+    "description": "Label de número de reserva"
+  },
+  "reservationNumberHint": "Ej: ABC123, 456789",
+  "@reservationNumberHint": {
+    "description": "Hint de número de reserva"
+  },
+  "gate": "Puerta/Gate",
+  "@gate": {
+    "description": "Label de puerta/gate"
+  },
+  "gateHint": "Ej: Gate A12, Puerta 3",
+  "@gateHint": {
+    "description": "Hint de puerta/gate"
+  },
+  "personalNotes": "Notas personales",
+  "@personalNotes": {
+    "description": "Label de notas personales"
+  },
+  "createEvent": "Crear Evento",
+  "@createEvent": {
+    "description": "Título de crear evento"
+  },
+  "editEvent": "Editar Evento",
+  "@editEvent": {
+    "description": "Título de editar evento"
+  },
+  "creator": "Creador",
+  "@creator": {
+    "description": "Badge de creador"
+  },
+  "initializingPermissions": "Inicializando permisos...",
+  "@initializingPermissions": {
+    "description": "Mensaje de inicializando permisos"
+  },
+  "eventNotSaved": "Evento no guardado. El plan no fue expandido.",
+  "@eventNotSaved": {
+    "description": "Error de evento no guardado"
+  },
+  "planCreatedSuccess": "Plan \"{name}\" creado exitosamente",
+  "@planCreatedSuccess": {
+    "description": "Mensaje de plan creado exitosamente",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "planDeletedSuccess": "Plan \"{name}\" eliminado exitosamente",
+  "@planDeletedSuccess": {
+    "description": "Mensaje de plan eliminado exitosamente",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "usernameUpdated": "Nombre de usuario actualizado",
+  "@usernameUpdated": {
+    "description": "Mensaje de nombre de usuario actualizado"
+  },
+  "participants": "Participantes",
+  "@participants": {
+    "description": "Título de participantes"
+  },
+  "participant": "Participante",
+  "@participant": {
+    "description": "Label de participante"
+  },
+  "fullPlan": "Plan Completo",
+  "@fullPlan": {
+    "description": "Label de plan completo"
+  },
+  "plans": "Plans",
+  "@plans": {
+    "description": "Título de planes"
   }
 }

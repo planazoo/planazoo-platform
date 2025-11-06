@@ -131,6 +131,12 @@ class PlanStatePermissions {
           return 'El plan está en curso. Solo se pueden eliminar participantes en casos excepcionales.';
         case 'modify_budget':
           return 'El plan está en curso. El presupuesto no se puede modificar.';
+        case 'create_event':
+          return 'El plan está en curso. Solo el organizador puede crear eventos urgentes.';
+        case 'modify_event':
+          return 'El plan está en curso. Solo se pueden modificar eventos con cambios urgentes (<24h).';
+        case 'delete_event':
+          return 'El plan está en curso. Solo se pueden eliminar eventos futuros (<7 días).';
       }
     }
     
@@ -138,6 +144,12 @@ class PlanStatePermissions {
       switch (action) {
         case 'modify_dates':
           return 'El plan está confirmado. Las fechas no se pueden modificar.';
+        case 'create_event':
+          return null; // Permitido en confirmado
+        case 'modify_event':
+          return null; // Permitido en confirmado (con restricciones menores)
+        case 'delete_event':
+          return null; // Permitido en confirmado (eventos futuros)
       }
     }
     

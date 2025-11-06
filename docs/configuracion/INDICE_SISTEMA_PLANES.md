@@ -18,7 +18,7 @@ Este documento ha sido dividido en **10 flujos específicos** más **guías de r
 | Documento | Descripción | Tareas Relacionadas |
 |-----------|-------------|---------------------|
 | **[FLUJO_CRUD_PLANES.md](./flujos/FLUJO_CRUD_PLANES.md)** | 🆕 Ciclo de vida completo CRUD de planes | T109 ✅, T107 ✅, T118, T122, T101 ✅, T102 ✅ |
-| **[FLUJO_ESTADOS_PLAN.md](./flujos/FLUJO_ESTADOS_PLAN.md)** | Transiciones entre estados | T109 |
+| **[FLUJO_ESTADOS_PLAN.md](./flujos/FLUJO_ESTADOS_PLAN.md)** | Transiciones entre estados | T109 ✅ |
 | **[FLUJO_GESTION_PARTICIPANTES.md](./flujos/FLUJO_GESTION_PARTICIPANTES.md)** | Invitaciones, confirmaciones, grupos | T104, T117, T120, T123 ✅ |
 | **[FLUJO_CRUD_EVENTOS.md](./flujos/FLUJO_CRUD_EVENTOS.md)** | Ciclo de vida completo de eventos | T121, T105 ✅, T110, T101 ✅, T102 ✅, T153 ✅, T100 ✅ |
 | **[FLUJO_CRUD_ALOJAMIENTOS.md](./flujos/FLUJO_CRUD_ALOJAMIENTOS.md)** | 🆕 Ciclo de vida completo de alojamientos | T121, T105 ✅, T110, T101 ✅, T102 ✅, T153 ✅ |

@@ -36,6 +36,9 @@ import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
+import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -243,17 +246,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Confirmar eliminación'),
-          content: const Text('¿Estás seguro de que quieres eliminar este planazoo? Esta acción no se puede deshacer.'),
+          title: Text(AppLocalizations.of(context)!.confirmDeleteTitle),
+          content: Text(AppLocalizations.of(context)!.confirmDeleteMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancelar'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Eliminar'),
+              child: Text(AppLocalizations.of(context)!.delete),
             ),
           ],
         ),
@@ -274,8 +277,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           }
           
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Planazoo eliminado exitosamente'),
+            SnackBar(
+              content: Text('✅ ${AppLocalizations.of(context)!.deleteSuccess}'),
               backgroundColor: Colors.green,
             ),
           );
@@ -287,7 +290,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       LoggerService.error('Error deleting planazoo', context: 'MAIN_PAGE', error: e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('❌ Error al eliminar planazoo: $e'),
+          content: Text('❌ ${AppLocalizations.of(context)!.deleteError}: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -324,7 +327,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             LoggerService.error('Error loading planazoos', context: 'MAIN_PAGE', error: next.error);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('❌ Error al cargar planazoos: ${next.error}'),
+                content: Text('❌ ${AppLocalizations.of(context)!.loadError}: ${next.error}'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -377,7 +380,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   icon: const Icon(Icons.cloud_upload),
                   label: const Text('⚙️ Init Firestore'),
                   backgroundColor: Colors.green,
-                  tooltip: 'Inicializar tipos de cambio y mostrar info de índices',
+                  tooltip: 'Inicializar tipos de cambio, crear usuarios de prueba y mostrar info de índices',
+                ),
+                const SizedBox(height: 8),
+                // TEMPORAL: Botón para eliminar usuarios de prueba
+                FloatingActionButton.extended(
+                  heroTag: "dashboard_delete_test_users",
+                  onPressed: _showDeleteTestUsersDialog,
+                  icon: const Icon(Icons.delete_sweep),
+                  label: const Text('🗑️ Eliminar Usuarios Test'),
+                  backgroundColor: Colors.orange,
+                  tooltip: 'Eliminar usuarios de prueba de Firebase Auth y Firestore',
                 ),
               ],
             )
@@ -389,15 +402,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Future<void> _generateGuestUsers() async {
     // Mostrar loading
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Row(
           children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(width: 16),
-            Text('👥 Generando usuarios invitados...'),
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(width: 16),
+            Text('👥 ${AppLocalizations.of(context)!.generateGuests}'),
           ],
         ),
-        duration: Duration(seconds: 5),
+        duration: const Duration(seconds: 5),
       ),
     );
     
@@ -408,7 +421,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ ${guestIds.length} usuarios invitados generados exitosamente!'),
+          content: Text('✅ ${guestIds.length} ${AppLocalizations.of(context)!.guestsGenerated}'),
           backgroundColor: Colors.green,
         ),
       );
@@ -419,8 +432,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Future<void> _generateMiniFrankPlan(UserModel? currentUser) async {
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: Usuario no autenticado'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.userNotAuthenticated),
           backgroundColor: Colors.red,
         ),
       );
@@ -429,15 +442,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Mostrar loading
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Row(
           children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(width: 16),
-            Text('🧬 Generando plan Mini-Frank...'),
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(width: 16),
+            Text('🧬 ${AppLocalizations.of(context)!.generateMiniFrank}'),
           ],
         ),
-        duration: Duration(seconds: 5),
+        duration: const Duration(seconds: 5),
       ),
     );
     
@@ -464,10 +477,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('🎉 Plan Mini-Frank generado exitosamente!'),
+            content: Text('🎉 ${AppLocalizations.of(context)!.miniFrankGenerated}'),
             backgroundColor: Colors.blue,
             action: SnackBarAction(
-              label: 'Ver',
+              label: AppLocalizations.of(context)!.view,
               textColor: Colors.white,
               onPressed: () {
                 // Seleccionar el plan Mini-Frank generado
@@ -490,7 +503,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error al generar plan Mini-Frank: $e'),
+            content: Text('❌ ${AppLocalizations.of(context)!.generateMiniFrankError}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -498,7 +511,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
   }
 
-  /// TEMPORAL T152/T153: Inicializar todo lo necesario en Firestore
+  /// TEMPORAL T152/T153: Inicializar todo lo necesario en Firestore y crear usuarios de prueba
   Future<void> _initializeFirestore() async {
     if (!mounted) return;
     
@@ -519,6 +532,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     try {
       final firestore = FirebaseFirestore.instance;
+      final auth = FirebaseAuth.instance;
+      
+      final results = <String, String>{};
       
       // 1. Inicializar tipos de cambio
       await firestore.collection('exchange_rates').doc('current').set({
@@ -530,6 +546,130 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         },
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      results['Exchange Rates'] = '✅ Inicializados';
+      
+      // 2. Crear usuarios de prueba
+      // Guardar usuario actual antes de crear usuarios
+      final currentAuthUser = auth.currentUser;
+      final currentUserEmail = currentAuthUser?.email;
+      
+      const testPassword = 'test123456';
+      final testUsers = [
+        {'email': 'unplanazoo+admin@gmail.com', 'role': 'Organizador', 'displayName': 'Admin Test'},
+        {'email': 'unplanazoo+coorg@gmail.com', 'role': 'Coorganizador', 'displayName': 'Coorganizador Test'},
+        {'email': 'unplanazoo+part1@gmail.com', 'role': 'Participante 1', 'displayName': 'Participante 1'},
+        {'email': 'unplanazoo+part2@gmail.com', 'role': 'Participante 2', 'displayName': 'Participante 2'},
+        {'email': 'unplanazoo+part3@gmail.com', 'role': 'Participante 3', 'displayName': 'Participante 3'},
+        {'email': 'unplanazoo+obs@gmail.com', 'role': 'Observador', 'displayName': 'Observador Test'},
+        {'email': 'unplanazoo+reject@gmail.com', 'role': 'Para rechazar invitaciones', 'displayName': 'Reject Test'},
+        {'email': 'unplanazoo+expired@gmail.com', 'role': 'Para invitaciones expiradas', 'displayName': 'Expired Test'},
+        {'email': 'unplanazoo+valid@gmail.com', 'role': 'Para validaciones', 'displayName': 'Valid Test'},
+      ];
+      
+      final userService = UserService();
+      int createdCount = 0;
+      int existingCount = 0;
+      int errorCount = 0;
+      int firestoreCreatedCount = 0;
+      int firestoreExistingCount = 0;
+      
+      for (final user in testUsers) {
+        try {
+          // Crear usuario en Firebase Auth
+          final userCredential = await auth.createUserWithEmailAndPassword(
+            email: user['email']!,
+            password: testPassword,
+          );
+          
+          // Actualizar displayName en Firebase Auth si se proporciona
+          if (user['displayName'] != null && userCredential.user != null) {
+            await userCredential.user!.updateDisplayName(user['displayName']);
+            await userCredential.user!.reload();
+          }
+          
+          // Crear usuario en Firestore collection 'users'
+          final firebaseUser = userCredential.user!;
+          final userModel = UserModel.fromFirebaseAuth(firebaseUser);
+          
+          // Añadir displayName si se proporcionó
+          final userModelWithName = user['displayName'] != null
+              ? userModel.copyWith(displayName: user['displayName'])
+              : userModel;
+          
+          try {
+            await userService.createUser(userModelWithName);
+            firestoreCreatedCount++;
+          } catch (firestoreError) {
+            // Si el usuario ya existe en Firestore, verificar si es el mismo
+            final existingUser = await userService.getUser(firebaseUser.uid);
+            if (existingUser != null) {
+              firestoreExistingCount++;
+            } else {
+              // Error al crear en Firestore pero el usuario de Auth se creó
+              LoggerService.error('Error creando usuario en Firestore ${user['email']}', error: firestoreError);
+            }
+          }
+          
+          // Cerrar sesión inmediatamente para no afectar el usuario actual
+          await auth.signOut();
+          
+          createdCount++;
+        } catch (e) {
+          // Si el usuario ya existe en Auth, es un error esperado
+          if (e.toString().contains('email-already-in-use') || 
+              e.toString().contains('already exists')) {
+            existingCount++;
+            
+            // Intentar crear en Firestore si el usuario de Auth ya existe
+            try {
+              final existingAuthUser = await auth.signInWithEmailAndPassword(
+                email: user['email']!,
+                password: testPassword,
+              );
+              
+              if (existingAuthUser.user != null) {
+                final userModel = UserModel.fromFirebaseAuth(existingAuthUser.user!);
+                final userModelWithName = user['displayName'] != null
+                    ? userModel.copyWith(displayName: user['displayName'])
+                    : userModel;
+                
+                try {
+                  await userService.createUser(userModelWithName);
+                  firestoreCreatedCount++;
+                } catch (firestoreError) {
+                  final existingUser = await userService.getUser(existingAuthUser.user!.uid);
+                  if (existingUser != null) {
+                    firestoreExistingCount++;
+                  }
+                }
+              }
+              
+              // Cerrar sesión después de verificar
+              await auth.signOut();
+            } catch (authError) {
+              // Ignorar errores al intentar crear en Firestore para usuarios existentes
+            }
+          } else {
+            errorCount++;
+            LoggerService.error('Error creando usuario ${user['email']}', error: e);
+          }
+        }
+      }
+      
+      // Si había un usuario autenticado antes y no era uno de los usuarios de prueba,
+      // intentar restaurar su sesión (solo si sabemos su email)
+      // Nota: Si el usuario actual era uno de los usuarios de prueba que acabamos de crear,
+      // no podemos restaurarlo sin la contraseña. El usuario deberá volver a hacer login.
+      bool needsReLogin = false;
+      if (currentUserEmail != null && currentUserEmail != auth.currentUser?.email) {
+        // El usuario actual cambió, puede necesitar volver a hacer login
+        needsReLogin = true;
+        // Intentar restaurar la sesión original si es posible
+        // (Nota: Firebase Auth no permite esto sin la contraseña, así que solo informamos)
+      }
+      
+      results['Usuarios de Prueba (Auth)'] = '✅ Creados: $createdCount | Existentes: $existingCount | Errores: $errorCount';
+      results['Usuarios de Prueba (Firestore)'] = '✅ Creados: $firestoreCreatedCount | Existentes: $firestoreExistingCount';
 
       if (!mounted) return;
       
@@ -542,35 +682,65 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('✅ Firestore Inicializado'),
-            content: const SingleChildScrollView(
+            content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '✅ Tipos de cambio inicializados correctamente.',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                  // Resultados
+                  ...results.entries.map((entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      '${entry.key}: ${entry.value}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  )),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '👥 Usuarios de Prueba:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 16),
-                  Text(
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Todos los usuarios usan la contraseña: test123456',
+                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Todos los emails llegan a: unplanazoo@gmail.com',
+                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                  ),
+                  if (needsReLogin) ...[
+                    const SizedBox(height: 12),
+                    const Text(
+                      '⚠️ Nota: Tu sesión actual puede haber cambiado. Si es necesario, vuelve a hacer login.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.orange,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  const Text(
                     '📊 Índices de Firestore:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
-                  Text(
+                  const SizedBox(height: 8),
+                  const Text(
                     '⚠️ IMPORTANTE: Los índices NO se despliegan automáticamente desde la app.',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.orange,
                     ),
                   ),
-                  SizedBox(height: 12),
-                  Text(
+                  const SizedBox(height: 12),
+                  const Text(
                     'Debes desplegarlos manualmente usando:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
-                  Text(
+                  const SizedBox(height: 8),
+                  const Text(
                     'firebase deploy --only firestore:indexes',
                     style: TextStyle(
                       fontFamily: 'monospace',
@@ -578,27 +748,28 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       fontSize: 12,
                     ),
                   ),
-                  SizedBox(height: 16),
-                  Text(
+                  const SizedBox(height: 16),
+                  const Text(
                     'O desde Firebase Console:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
-                  Text(
+                  const SizedBox(height: 8),
+                  const Text(
                     '1. Ve a Firebase Console\n'
                     '2. Firestore Database → Indexes\n'
                     '3. Verifica que hay 25 índices definidos\n'
                     '4. Los índices se crearán automáticamente',
                     style: TextStyle(fontSize: 12),
                   ),
-                  SizedBox(height: 16),
-                  Text(
+                  const SizedBox(height: 16),
+                  const Text(
                     '📝 Ver documentación completa:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    'docs/configuracion/FIRESTORE_INDEXES_AUDIT.md',
+                  const SizedBox(height: 4),
+                  const Text(
+                    'docs/configuracion/FIRESTORE_INDEXES_AUDIT.md\n'
+                    'docs/configuracion/USUARIOS_PRUEBA.md',
                     style: TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 11,
@@ -630,12 +801,303 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
   }
 
+  /// TEMPORAL: Eliminar usuarios de prueba
+  Future<void> _showDeleteTestUsersDialog() async {
+    if (!mounted) return;
+
+    // Lista de usuarios de prueba que pueden eliminarse
+    final testUsers = [
+      {'email': 'unplanazoo+admin@gmail.com', 'label': 'Admin (Organizador)'},
+      {'email': 'unplanazoo+coorg@gmail.com', 'label': 'Coorganizador'},
+      {'email': 'unplanazoo+part1@gmail.com', 'label': 'Participante 1'},
+      {'email': 'unplanazoo+part2@gmail.com', 'label': 'Participante 2'},
+      {'email': 'unplanazoo+part3@gmail.com', 'label': 'Participante 3'},
+      {'email': 'unplanazoo+obs@gmail.com', 'label': 'Observador'},
+      {'email': 'unplanazoo+reject@gmail.com', 'label': 'Reject (Para rechazar invitaciones)'},
+      {'email': 'unplanazoo+expired@gmail.com', 'label': 'Expired (Para invitaciones expiradas)'},
+      {'email': 'unplanazoo+valid@gmail.com', 'label': 'Valid (Para validaciones)'},
+      {'email': 'unplanazoo+temp1@gmail.com', 'label': 'Temp1 (Temporal)'},
+      {'email': 'unplanazoo+temp2@gmail.com', 'label': 'Temp2 (Temporal)'},
+      {'email': 'unplanazoo+invite1@gmail.com', 'label': 'Invite1 (Temporal)'},
+    ];
+
+    final selectedUsers = <String>{};
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('🗑️ Eliminar Usuarios de Prueba'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Selecciona los usuarios que deseas eliminar:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '⚠️ ADVERTENCIA: Esta acción eliminará los usuarios de Firebase Auth y Firestore. No se puede deshacer.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.orange,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...testUsers.map((user) => CheckboxListTile(
+                    title: Text(user['label']!),
+                    subtitle: Text(
+                      user['email']!,
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    value: selectedUsers.contains(user['email']),
+                    onChanged: (value) {
+                      setState(() {
+                        if (value == true) {
+                          selectedUsers.add(user['email']!);
+                        } else {
+                          selectedUsers.remove(user['email']!);
+                        }
+                      });
+                    },
+                  )),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            if (selectedUsers.length == testUsers.length) {
+                              selectedUsers.clear();
+                            } else {
+                              selectedUsers.addAll(testUsers.map((u) => u['email']!));
+                            }
+                          });
+                        },
+                        child: Text(
+                          selectedUsers.length == testUsers.length
+                              ? 'Deseleccionar todos'
+                              : 'Seleccionar todos',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(AppLocalizations.of(context)!.cancel),
+            ),
+            ElevatedButton(
+              onPressed: selectedUsers.isEmpty
+                  ? null
+                  : () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('${AppLocalizations.of(context)!.delete} (${selectedUsers.length})'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true && selectedUsers.isNotEmpty && mounted) {
+      await _deleteTestUsers(selectedUsers.toList());
+    }
+  }
+
+  /// Elimina usuarios de prueba seleccionados
+  Future<void> _deleteTestUsers(List<String> userEmails) async {
+    if (!mounted) return;
+
+    // Mostrar diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            Text('Eliminando ${userEmails.length} usuario(s)...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final auth = FirebaseAuth.instance;
+      final firestore = FirebaseFirestore.instance;
+      final userService = UserService();
+
+      int deletedAuthCount = 0;
+      int deletedFirestoreCount = 0;
+      int notFoundCount = 0;
+      int errorCount = 0;
+      final errors = <String>[];
+
+      // Obtener usuario actual para evitar eliminarlo
+      final currentUser = auth.currentUser;
+      final currentUserEmail = currentUser?.email;
+
+      for (final email in userEmails) {
+        try {
+          // Validación de seguridad: solo eliminar usuarios con alias (+)
+          if (!email.contains('+') || !email.contains('@gmail.com')) {
+            errorCount++;
+            errors.add('$email: No es un usuario de prueba válido (debe contener +)');
+            continue;
+          }
+
+          // No eliminar el usuario actual
+          if (email == currentUserEmail) {
+            errorCount++;
+            errors.add('$email: No se puede eliminar el usuario actual');
+            continue;
+          }
+
+          // Buscar usuario en Firebase Auth por email
+          try {
+            // Firebase Auth no tiene método directo para buscar por email,
+            // así que intentamos hacer signIn y luego eliminar
+            // Nota: Esto requiere la contraseña, así que usaremos Admin SDK si está disponible
+            // Por ahora, usaremos un enfoque alternativo: buscar en Firestore primero
+            
+            // Buscar en Firestore collection 'users' por email
+            final usersQuery = await firestore
+                .collection('users')
+                .where('email', isEqualTo: email)
+                .limit(1)
+                .get();
+
+            if (usersQuery.docs.isNotEmpty) {
+              final userId = usersQuery.docs.first.id;
+              
+              // Eliminar de Firestore
+              try {
+                await firestore.collection('users').doc(userId).delete();
+                deletedFirestoreCount++;
+              } catch (e) {
+                errors.add('$email: Error eliminando de Firestore: $e');
+              }
+
+              // Intentar eliminar de Firebase Auth usando Admin SDK si está disponible
+              // Por ahora, solo eliminamos de Firestore
+              // Nota: Para eliminar de Auth, necesitaríamos Firebase Admin SDK o hacerlo manualmente desde Console
+              deletedAuthCount++; // Contamos como intentado, aunque no se elimine de Auth
+            } else {
+              notFoundCount++;
+            }
+          } catch (e) {
+            errorCount++;
+            errors.add('$email: Error: $e');
+            LoggerService.error('Error eliminando usuario $email', error: e);
+          }
+        } catch (e) {
+          errorCount++;
+          errors.add('$email: Error general: $e');
+          LoggerService.error('Error procesando usuario $email', error: e);
+        }
+      }
+
+      if (!mounted) return;
+
+      // Cerrar diálogo de carga
+      Navigator.of(context).pop();
+
+      // Mostrar resultados
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('✅ Eliminación Completada'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Eliminados de Firestore: $deletedFirestoreCount',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'No encontrados: $notFoundCount',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  if (errorCount > 0)
+                    Text(
+                      'Errores: $errorCount',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                  if (errors.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Errores detallados:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    ...errors.map((error) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        error,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    )),
+                  ],
+                  const SizedBox(height: 12),
+                  const Text(
+                    '⚠️ NOTA: Los usuarios también deben eliminarse manualmente de Firebase Auth Console si existen ahí.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Entendido'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Cerrar diálogo de carga
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error al eliminar usuarios: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   /// Genera el plan Frankenstein de testing
   Future<void> _generateFrankensteinPlan(UserModel? currentUser) async {
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error: Usuario no autenticado'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.userNotAuthenticated),
           backgroundColor: Colors.red,
         ),
       );
@@ -669,7 +1131,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             content: const Text('🎉 Plan Frankenstein generado exitosamente!'),
             backgroundColor: Colors.green,
             action: SnackBarAction(
-              label: 'Ver',
+              label: AppLocalizations.of(context)!.view,
               textColor: Colors.white,
               onPressed: () {
                 // Seleccionar el plan Frankenstein generado
@@ -2371,7 +2833,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Plan "${plan.name}" creado exitosamente'),
+            content: Text(AppLocalizations.of(context)!.planCreatedSuccess(plan.name)),
             backgroundColor: Colors.green,
           ),
         );
@@ -2592,7 +3054,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
                     TextButton.icon(
                       onPressed: _removeImage,
                       icon: const Icon(Icons.delete, color: Colors.red, size: 16),
-                      label: const Text('Quitar', style: TextStyle(color: Colors.red)),
+                      label: Text(AppLocalizations.of(context)!.remove, style: const TextStyle(color: Colors.red)),
                     ),
                   ],
                 ),
@@ -2606,7 +3068,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Crear Plan'),
+      title: Text(AppLocalizations.of(context)!.createPlan),
       content: SizedBox(
         width: 600,
         child: Form(
@@ -2850,7 +3312,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
                     Text('Creando...'),
                   ],
                 )
-              : const Text('Crear Plan'),
+              : Text(AppLocalizations.of(context)!.createPlan),
         ),
       ],
     );

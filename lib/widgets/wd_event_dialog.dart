@@ -18,6 +18,7 @@ import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/edit_personal_info_dialog.dart';
 import 'package:unp_calendario/widgets/permission_field.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/widgets/event/event_participant_registration_widget.dart';
 import 'package:unp_calendario/shared/utils/plan_range_utils.dart';
 import 'package:unp_calendario/widgets/dialogs/expand_plan_dialog.dart';
@@ -26,6 +27,9 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -76,6 +80,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   bool _isCreator = false;
   PlanPermissions? _userPermissions;
   bool _isInitializing = true;
+  Plan? _plan; // T109: Plan para verificar estado
   
   // Campos de información personal
   late TextEditingController _asientoController;
@@ -195,16 +200,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     
     // Si es un evento nuevo, por defecto está marcado "para todos" (no necesitamos seleccionar participantes)
     
-    // Cargar moneda del plan (T153)
+    // Cargar moneda del plan (T153) y plan completo (T109)
     if (widget.planId != null) {
       _loadPlanCurrency();
+      _loadPlan();
     }
     
     // Inicializar permisos del usuario
     _initializePermissions();
   }
 
-  /// Cargar moneda del plan (T153)
+  /// Cargar moneda del plan (T153) y plan completo (T109)
   Future<void> _loadPlanCurrency() async {
     if (widget.planId == null) return;
     
@@ -216,6 +222,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           _planCurrency = plan.currency;
           // Si no hay moneda de coste establecida, usar la del plan
           _costCurrency ??= plan.currency;
+          _plan = plan; // T109: Guardar plan para verificar estado
         });
       }
     } catch (e) {
@@ -226,6 +233,23 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           _costCurrency ??= 'EUR';
         });
       }
+    }
+  }
+  
+  /// Cargar plan completo (T109)
+  Future<void> _loadPlan() async {
+    if (widget.planId == null) return;
+    
+    try {
+      final planService = ref.read(planServiceProvider);
+      final plan = await planService.getPlanById(widget.planId!);
+      if (plan != null && mounted) {
+        setState(() {
+          _plan = plan;
+        });
+      }
+    } catch (e) {
+      // Si falla, no hacer nada
     }
   }
 
@@ -298,13 +322,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     // Mostrar indicador de carga mientras se inicializan los permisos
     if (_isInitializing) {
       return AlertDialog(
-        title: Text(widget.event == null ? 'Crear Evento' : 'Editar Evento'),
-        content: const Column(
+        title: Text(widget.event == null ? AppLocalizations.of(context)!.createEvent : AppLocalizations.of(context)!.editEvent),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Inicializando permisos...'),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(AppLocalizations.of(context)!.initializingPermissions),
           ],
         ),
       );
@@ -315,7 +339,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         children: [
           Expanded(
             child: Text(
-              widget.event == null ? 'Crear Evento' : 'Editar Evento',
+              widget.event == null ? AppLocalizations.of(context)!.createEvent : AppLocalizations.of(context)!.editEvent,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
@@ -335,7 +359,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   Icon(Icons.person, size: 14, color: Colors.blue.shade700),
                   const SizedBox(width: 4),
                   Text(
-                    'Creador',
+                    AppLocalizations.of(context)!.creator,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -432,8 +456,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             // Descripción
             PermissionTextField(
               controller: _descriptionController,
-              labelText: 'Descripción',
-              hintText: 'Nombre del evento',
+              labelText: AppLocalizations.of(context)!.eventDescription,
+              hintText: AppLocalizations.of(context)!.eventDescriptionHint,
               canEdit: _canEditGeneral,
               fieldType: 'common',
               tooltipText: 'Información compartida entre todos los participantes',
@@ -455,7 +479,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               value: _typeFamilyController.text.isEmpty || !_typeFamilies.contains(_typeFamilyController.text) 
                   ? null 
                   : _typeFamilyController.text,
-              labelText: 'Tipo de evento',
+              labelText: AppLocalizations.of(context)!.eventType,
               canEdit: _canEditGeneral,
               fieldType: 'common',
               tooltipText: 'Categoría general del evento (compartida)',
@@ -476,7 +500,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 if (!_canEditGeneral) return null;
                 // Tipo es opcional, pero si hay subtipo, debe haber tipo válido
                 if ((_typeSubtypeController.text.isNotEmpty) && (value == null || !_typeFamilies.contains(value))) {
-                  return 'Selecciona primero un tipo válido';
+                  return AppLocalizations.of(context)!.selectValidTypeFirst;
                 }
                 return null;
               },
@@ -490,7 +514,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                        !(_typeSubtypes[_typeFamilyController.text] ?? []).contains(_typeSubtypeController.text)
                     ? null 
                     : _typeSubtypeController.text,
-                labelText: 'Subtipo',
+                labelText: AppLocalizations.of(context)!.eventSubtype,
                 canEdit: _canEditGeneral,
                 fieldType: 'common',
                 tooltipText: 'Especificación detallada del tipo de evento',
@@ -510,7 +534,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   if (!_canEditGeneral) return null;
                   // Subtipo es opcional, pero si hay valor debe pertenecer a la lista
                   if (value != null && !(_typeSubtypes[_typeFamilyController.text] ?? []).contains(value)) {
-                    return 'Subtipo inválido para el tipo seleccionado';
+                    return AppLocalizations.of(context)!.invalidSubtype;
                   }
                   return null;
                 },
@@ -519,8 +543,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             
             // Borrador - Switch estilo iOS
             SwitchListTile.adaptive(
-              title: const Text('Es borrador'),
-              subtitle: const Text('Los borradores se muestran con menor opacidad'),
+              title: Text(AppLocalizations.of(context)!.isDraft),
+              subtitle: Text(AppLocalizations.of(context)!.isDraftSubtitle),
               value: _isDraft,
               onChanged: !_canEditGeneral ? null : (value) {
                 setState(() {
@@ -548,9 +572,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Fecha',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          Text(
+                            AppLocalizations.of(context)!.date,
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -644,7 +668,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             // Timezone
             PermissionDropdownField<String>(
               value: _selectedTimezone,
-              labelText: 'Timezone',
+              labelText: AppLocalizations.of(context)!.timezone,
               canEdit: _canEditGeneral,
               fieldType: 'common',
               tooltipText: 'Zona horaria del evento (se usa para conversiones UTC)',
@@ -667,7 +691,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
               PermissionDropdownField<String>(
                 value: _selectedArrivalTimezone,
-                labelText: 'Timezone de llegada',
+                labelText: AppLocalizations.of(context)!.arrivalTimezone,
                 canEdit: _canEditGeneral,
                 fieldType: 'common',
                 tooltipText: 'Zona horaria del destino (para vuelos internacionales)',
@@ -746,7 +770,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                         Icon(Icons.people_outline, color: Colors.blue.shade700, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Participantes apuntados',
+                          AppLocalizations.of(context)!.participantsRegistered,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.blue.shade700,
@@ -817,8 +841,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           // Campo: Asiento
                           PermissionTextField(
                             controller: _asientoController,
-                            labelText: 'Asiento',
-                            hintText: 'Ej: 12A, Ventana',
+                            labelText: AppLocalizations.of(context)!.seat,
+                            hintText: AppLocalizations.of(context)!.seatHint,
                             canEdit: true, // Siempre editable en parte personal
                             fieldType: 'personal',
                             tooltipText: 'Tu asiento específico para este evento',
@@ -835,8 +859,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           // Campo: Menú/Comida
                           PermissionTextField(
                             controller: _menuController,
-                            labelText: 'Menú/Comida',
-                            hintText: 'Ej: Vegetariano, Sin gluten',
+                            labelText: AppLocalizations.of(context)!.menu,
+                            hintText: AppLocalizations.of(context)!.menuHint,
                             canEdit: true,
                             fieldType: 'personal',
                             tooltipText: 'Tus preferencias alimentarias para este evento',
@@ -853,8 +877,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           // Campo: Preferencias
                           PermissionTextField(
                             controller: _preferenciasController,
-                            labelText: 'Preferencias',
-                            hintText: 'Ej: Cerca de la salida, Silencioso',
+                            labelText: AppLocalizations.of(context)!.preferences,
+                            hintText: AppLocalizations.of(context)!.preferencesHint,
                             canEdit: true,
                             fieldType: 'personal',
                             tooltipText: 'Tus preferencias específicas para este evento',
@@ -872,8 +896,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           // Campo: Número de reserva
                           PermissionTextField(
                             controller: _numeroReservaController,
-                            labelText: 'Número de reserva',
-                            hintText: 'Ej: ABC123, 456789',
+                            labelText: AppLocalizations.of(context)!.reservationNumber,
+                            hintText: AppLocalizations.of(context)!.reservationNumberHint,
                             canEdit: true,
                             fieldType: 'personal',
                             tooltipText: 'Tu número de reserva específico',
@@ -890,8 +914,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           // Campo: Puerta/Gate
                           PermissionTextField(
                             controller: _gateController,
-                            labelText: 'Puerta/Gate',
-                            hintText: 'Ej: Gate A12, Puerta 3',
+                            labelText: AppLocalizations.of(context)!.gate,
+                            hintText: AppLocalizations.of(context)!.gateHint,
                             canEdit: true,
                             fieldType: 'personal',
                             tooltipText: 'Tu puerta o gate específico',
@@ -921,7 +945,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           // Campo: Notas personales
                           PermissionTextField(
                             controller: _notasPersonalesController,
-                            labelText: 'Notas personales',
+                            labelText: AppLocalizations.of(context)!.personalNotes,
                             hintText: 'Información adicional solo para ti',
                             canEdit: true,
                             fieldType: 'personal',
@@ -976,29 +1000,48 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ),
       ),
       actions: [
-        // Botón eliminar (solo si es edición)
+        // Botón eliminar (solo si es edición) (T109: Deshabilitado según estado del plan)
         if (widget.event != null)
           TextButton(
-            onPressed: () => _confirmDelete(),
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(color: Colors.red),
+            onPressed: _canDeleteEvent() ? () => _confirmDelete() : null,
+            child: Text(
+              AppLocalizations.of(context)!.delete,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         
         // Botón cancelar
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(AppLocalizations.of(context)!.cancel),
         ),
         
-        // Botón guardar
+        // Botón guardar (T109: Deshabilitado según estado del plan)
         ElevatedButton(
-          onPressed: _saveEvent,
-          child: Text(widget.event == null ? 'Crear' : 'Guardar'),
+          onPressed: _canSaveEvent() ? _saveEvent : null,
+          child: Text(widget.event == null ? AppLocalizations.of(context)!.create : AppLocalizations.of(context)!.save),
         ),
       ],
     );
+  }
+
+  /// T109: Verifica si se puede guardar/crear el evento según el estado del plan
+  bool _canSaveEvent() {
+    if (_plan == null) return true; // Si no hay plan cargado, permitir por defecto
+    
+    if (widget.event == null) {
+      // Crear evento nuevo
+      return PlanStatePermissions.canAddEvents(_plan!);
+    } else {
+      // Modificar evento existente
+      return PlanStatePermissions.canModifyEvents(_plan!);
+    }
+  }
+  
+  /// T109: Verifica si se puede eliminar el evento según el estado del plan
+  bool _canDeleteEvent() {
+    if (_plan == null) return true; // Si no hay plan cargado, permitir por defecto
+    return PlanStatePermissions.canDeleteEvents(_plan!);
   }
 
   /// Construye el tab de información de otros participantes (solo para admins)
@@ -1107,7 +1150,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 child: ElevatedButton.icon(
                   onPressed: () => _editParticipantInfo(participantId),
                   icon: const Icon(Icons.edit, size: 16),
-                  label: const Text('Editar información'),
+                  label: Text(AppLocalizations.of(context)!.editInfo),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade100,
                     foregroundColor: Colors.blue.shade800,
@@ -1326,22 +1369,37 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   Future<void> _confirmDelete() async {
+    // T109: Verificar si se puede eliminar según el estado del plan
+    if (!_canDeleteEvent() && _plan != null) {
+      final blockedReason = PlanStatePermissions.getBlockedReason('delete_event', _plan!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(blockedReason ?? 'No se pueden eliminar eventos en el estado actual del plan.'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar eliminación'),
+        title: Text(AppLocalizations.of(context)!.confirmDeleteTitle),
         content: Text('¿Estás seguro de que quieres eliminar el evento "${widget.event?.description}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
-            child: const Text('Eliminar'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -1944,8 +2002,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             // Usuario canceló la expansión, no guardar el evento
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Evento no guardado. El plan no fue expandido.'),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context)!.eventNotSaved),
                   duration: Duration(seconds: 2),
                 ),
               );

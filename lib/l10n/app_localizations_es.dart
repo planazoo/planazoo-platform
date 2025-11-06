@@ -181,4 +181,270 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get profileTooltip => 'Ver perfil';
+
+  @override
+  String get confirmDeleteTitle => 'Confirmar eliminación';
+
+  @override
+  String get confirmDeleteMessage =>
+      '¿Estás seguro de que quieres eliminar este planazoo? Esta acción no se puede deshacer.';
+
+  @override
+  String get delete => 'Eliminar';
+
+  @override
+  String get deleteSuccess => 'Planazoo eliminado exitosamente';
+
+  @override
+  String get deleteError => 'Error al eliminar planazoo';
+
+  @override
+  String get loadError => 'Error al cargar planazoos';
+
+  @override
+  String get generateGuests => 'Generando usuarios invitados...';
+
+  @override
+  String get guestsGenerated => 'usuarios invitados generados exitosamente!';
+
+  @override
+  String get userNotAuthenticated => 'Error: Usuario no autenticado';
+
+  @override
+  String get generateMiniFrank => 'Generando plan Mini-Frank...';
+
+  @override
+  String get miniFrankGenerated => 'Plan Mini-Frank generado exitosamente!';
+
+  @override
+  String get generateMiniFrankError => 'Error al generar plan Mini-Frank';
+
+  @override
+  String get view => 'Ver';
+
+  @override
+  String get accountSettings => 'Configuración de Cuenta';
+
+  @override
+  String get language => 'Idioma';
+
+  @override
+  String get changeLanguage => 'Cambiar el idioma de la aplicación';
+
+  @override
+  String get save => 'Guardar';
+
+  @override
+  String get create => 'Crear';
+
+  @override
+  String get createPlan => 'Crear Plan';
+
+  @override
+  String get edit => 'Editar';
+
+  @override
+  String get editInfo => 'Editar información';
+
+  @override
+  String get remove => 'Quitar';
+
+  @override
+  String get add => 'Añadir';
+
+  @override
+  String get search => 'Buscar';
+
+  @override
+  String get filter => 'Filtrar';
+
+  @override
+  String get sort => 'Ordenar';
+
+  @override
+  String get accept => 'Aceptar';
+
+  @override
+  String get confirm => 'Confirmar';
+
+  @override
+  String get deleteAccount => 'Eliminar Cuenta';
+
+  @override
+  String get deleteAccountTitle => 'Eliminar Cuenta';
+
+  @override
+  String get deleteAccountMessage =>
+      'Esta acción es irreversible. Se eliminarán todos tus datos, planes y eventos.';
+
+  @override
+  String get confirmPassword => 'Confirma tu contraseña';
+
+  @override
+  String get participantsRegistered => 'Participantes apuntados';
+
+  @override
+  String get accommodationNameRequired =>
+      'El nombre del alojamiento es obligatorio';
+
+  @override
+  String minCharacters(int count) {
+    return 'Mínimo $count caracteres';
+  }
+
+  @override
+  String maxCharacters(int count) {
+    return 'Máximo $count caracteres';
+  }
+
+  @override
+  String get accommodationType => 'Tipo de alojamiento';
+
+  @override
+  String get invalidAccommodationType => 'Tipo de alojamiento inválido';
+
+  @override
+  String get description => 'Descripción';
+
+  @override
+  String get descriptionOptional => 'Descripción (opcional)';
+
+  @override
+  String get additionalNotes => 'Notas adicionales';
+
+  @override
+  String get accommodationName => 'Nombre del alojamiento';
+
+  @override
+  String get accommodationNameHint => 'Hotel, apartamento, etc.';
+
+  @override
+  String get costCurrency => 'Moneda del coste';
+
+  @override
+  String get cost => 'Coste';
+
+  @override
+  String get costOptional => 'Coste del alojamiento (opcional)';
+
+  @override
+  String get costHint => 'Ej: 450.00';
+
+  @override
+  String get eventDescription => 'Descripción';
+
+  @override
+  String get eventDescriptionHint => 'Nombre del evento';
+
+  @override
+  String get eventType => 'Tipo de evento';
+
+  @override
+  String get eventSubtype => 'Subtipo';
+
+  @override
+  String get selectValidTypeFirst => 'Selecciona primero un tipo válido';
+
+  @override
+  String get invalidSubtype => 'Subtipo inválido para el tipo seleccionado';
+
+  @override
+  String get isDraft => 'Es borrador';
+
+  @override
+  String get isDraftSubtitle => 'Los borradores se muestran con menor opacidad';
+
+  @override
+  String get date => 'Fecha';
+
+  @override
+  String get time => 'Hora';
+
+  @override
+  String get duration => 'Duración';
+
+  @override
+  String get timezone => 'Timezone';
+
+  @override
+  String get arrivalTimezone => 'Timezone de llegada';
+
+  @override
+  String get maxParticipants => 'Límite de participantes (opcional)';
+
+  @override
+  String get maxParticipantsHint => 'Ej: 10 (dejar vacío para sin límite)';
+
+  @override
+  String get seat => 'Asiento';
+
+  @override
+  String get seatHint => 'Ej: 12A, Ventana';
+
+  @override
+  String get menu => 'Menú/Comida';
+
+  @override
+  String get menuHint => 'Ej: Vegetariano, Sin gluten';
+
+  @override
+  String get preferences => 'Preferencias';
+
+  @override
+  String get preferencesHint => 'Ej: Cerca de la salida, Silencioso';
+
+  @override
+  String get reservationNumber => 'Número de reserva';
+
+  @override
+  String get reservationNumberHint => 'Ej: ABC123, 456789';
+
+  @override
+  String get gate => 'Puerta/Gate';
+
+  @override
+  String get gateHint => 'Ej: Gate A12, Puerta 3';
+
+  @override
+  String get personalNotes => 'Notas personales';
+
+  @override
+  String get createEvent => 'Crear Evento';
+
+  @override
+  String get editEvent => 'Editar Evento';
+
+  @override
+  String get creator => 'Creador';
+
+  @override
+  String get initializingPermissions => 'Inicializando permisos...';
+
+  @override
+  String get eventNotSaved => 'Evento no guardado. El plan no fue expandido.';
+
+  @override
+  String planCreatedSuccess(String name) {
+    return 'Plan \"$name\" creado exitosamente';
+  }
+
+  @override
+  String planDeletedSuccess(String name) {
+    return 'Plan \"$name\" eliminado exitosamente';
+  }
+
+  @override
+  String get usernameUpdated => 'Nombre de usuario actualizado';
+
+  @override
+  String get participants => 'Participantes';
+
+  @override
+  String get participant => 'Participante';
+
+  @override
+  String get fullPlan => 'Plan Completo';
+
+  @override
+  String get plans => 'Plans';
 }

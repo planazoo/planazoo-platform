@@ -6,6 +6,9 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/features/auth/presentation/notifiers/user_notifier.dart';
 import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifier.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/edit_profile_page.dart';
+import 'package:unp_calendario/features/language/presentation/providers/language_providers.dart';
+import 'package:unp_calendario/features/language/presentation/widgets/language_selector.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class AccountSettingsPage extends ConsumerStatefulWidget {
   const AccountSettingsPage({super.key});
@@ -30,9 +33,9 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Configuración de Cuenta',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(context)!.accountSettings,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w500,
@@ -95,6 +98,11 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
                     subtitle: 'Gestionar la privacidad de tu cuenta',
                     onTap: () => _showPrivacyDialog(),
                   ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Selector de idioma
+                  _buildLanguageCard(),
                   
                   const SizedBox(height: 24),
                   
@@ -270,6 +278,66 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
     );
   }
 
+  Widget _buildLanguageCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColorScheme.color2.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.language,
+                color: AppColorScheme.color2,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.language,
+                    style: AppTypography.titleStyle.copyWith(
+                      fontSize: 16,
+                      color: AppColorScheme.color4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppLocalizations.of(context)!.changeLanguage,
+                    style: AppTypography.bodyStyle.copyWith(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const LanguageSelector(),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildDangerZone({
     required VoidCallback onDeleteAccount,
   }) {
@@ -323,7 +391,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('Eliminar Cuenta'),
+                child: Text(AppLocalizations.of(context)!.deleteAccount),
               ),
             ),
           ],
@@ -377,7 +445,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
           actions: [
             TextButton(
               onPressed: isLoading ? null : () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
               onPressed: isLoading ? null : () async {
@@ -473,7 +541,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cerrar'),
+            child: Text(AppLocalizations.of(context)!.close),
           ),
         ],
       ),
@@ -488,21 +556,21 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Eliminar Cuenta'),
+          title: Text(AppLocalizations.of(context)!.deleteAccountTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Esta acción es irreversible. Se eliminarán todos tus datos, planes y eventos.',
-                style: TextStyle(color: Colors.red),
+              Text(
+                AppLocalizations.of(context)!.deleteAccountMessage,
+                style: const TextStyle(color: Colors.red),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirma tu contraseña',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.confirmPassword,
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ],
@@ -510,7 +578,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
           actions: [
             TextButton(
               onPressed: isLoading ? null : () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
+              child: Text(AppLocalizations.of(context)!.cancel),
             ),
             ElevatedButton(
               onPressed: isLoading ? null : () async {
@@ -558,7 +626,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Eliminar'),
+                  : Text(AppLocalizations.of(context)!.delete),
             ),
           ],
         ),

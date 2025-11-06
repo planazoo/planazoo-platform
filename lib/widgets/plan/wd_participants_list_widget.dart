@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 
 class ParticipantsListWidget extends ConsumerWidget {
   final String planId;
@@ -18,8 +21,13 @@ class ParticipantsListWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final participantsAsync = ref.watch(planParticipantsProvider(planId));
     final currentUser = ref.watch(currentUserProvider);
+    
+    // T109: Cargar plan para verificar estado
+    final planAsync = ref.watch(planByIdStreamProvider(planId));
 
-    return participantsAsync.when(
+    return planAsync.when(
+      data: (plan) {
+        return participantsAsync.when(
       data: (participations) {
         if (participations.isEmpty) {
           return const Center(
@@ -57,7 +65,7 @@ class ParticipantsListWidget extends ConsumerWidget {
                   ),
                 ),
                 title: Text(
-                  participation.userId
+                  participation.userId,
                   style: TextStyle(
                     fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -81,10 +89,10 @@ class ParticipantsListWidget extends ConsumerWidget {
                     ),
                   ],
                 ),
-                trailing: showActions && isCurrentUser && isOrganizer
+                    trailing: showActions && isCurrentUser && isOrganizer
                     ? PopupMenuButton<String>(
                         onSelected: (value) {
-                          _handleMenuAction(context, ref, participation, value);
+                          _handleMenuAction(context, ref, participation, value, plan);
                         },
                         itemBuilder: (context) => [
                           if (!isOrganizer)
@@ -92,7 +100,8 @@ class ParticipantsListWidget extends ConsumerWidget {
                               value: 'make_organizer',
                               child: Text('Hacer organizador'),
                             ),
-                          if (!isOrganizer)
+                          // T109: Solo mostrar opción de remover si está permitido según estado del plan
+                          if (!isOrganizer && PlanStatePermissions.canRemoveParticipants(plan))
                             const PopupMenuItem(
                               value: 'remove',
                               child: Text('Remover'),
@@ -105,12 +114,23 @@ class ParticipantsListWidget extends ConsumerWidget {
           },
         );
       },
+          loading: () => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          error: (error, stackTrace) => Center(
+            child: Text(
+              'Error al cargar participantes: $error',
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        );
+      },
       loading: () => const Center(
         child: CircularProgressIndicator(),
       ),
       error: (error, stackTrace) => Center(
         child: Text(
-          'Error al cargar participantes: $error',
+          'Error al cargar plan: $error',
           style: const TextStyle(color: Colors.red),
         ),
       ),
@@ -122,6 +142,7 @@ class ParticipantsListWidget extends ConsumerWidget {
     WidgetRef ref,
     PlanParticipation participation,
     String action,
+    Plan plan, // T109: Plan para verificar estado
   ) {
     final notifier = ref.read(planParticipationNotifierProvider(planId).notifier);
 
@@ -146,6 +167,19 @@ class ParticipantsListWidget extends ConsumerWidget {
         );
         break;
       case 'remove':
+        // T109: Verificar si se puede remover participantes según el estado del plan
+        if (!PlanStatePermissions.canRemoveParticipants(plan)) {
+          final blockedReason = PlanStatePermissions.getBlockedReason('remove_participants', plan);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(blockedReason ?? 'No se pueden remover participantes en el estado actual del plan.'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+        
         _showConfirmDialog(
           context,
           'Remover participante',

@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T157**
+**Siguiente código de tarea: T160**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -18,6 +18,8 @@
 - **Testing y Mantenimiento:** T96-T99, T152: Refactoring (en progreso), testing, documentación y optimización Firestore (5 pendientes)
 - **Mejoras Funcionales:** T153: Sistema multi-moneda (1 completada)
 - **UX:** T100: Visualización de Timezones (1 completada)
+- **Ayuda y Documentación:** T157: Sistema de Ayuda Contextual (1 pendiente)
+- **Multi-idioma:** T158: Completar Sistema Multi-idioma (1 pendiente)
 - **Integración:** T131: Sincronización con Calendarios Externos (1 pendiente)
 - **Agencias:** T132: Definición Sistema Agencias de Viajes (1 pendiente)
 - **Exportación:** T133: Exportación Profesional de Planes PDF/Email (1 pendiente)
@@ -26,7 +28,7 @@
 
 **Migración:** T154-T156: Migración a Mac/iOS (3 pendientes)
 
-**Total: 130 tareas documentadas (68 completadas, 62 pendientes)**
+**Total: 132 tareas documentadas (68 completadas, 64 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -2355,9 +2357,24 @@ class ContactGroup {
 - ✅ Indicadores visuales de bloqueos según estado
 - ✅ Servicio de permisos con mensajes explicativos
 
+**Implementación completada:**
+- ✅ Servicio completo de transiciones con validaciones
+- ✅ Transición automática Borrador → Planificando al guardar plan
+- ✅ Transiciones automáticas basadas en fechas (Confirmado → En Curso, En Curso → Finalizado)
+- ✅ Badges en dashboard, tarjetas de plan, y pantalla de datos
+- ✅ Controles manuales para cambiar estados (solo organizador)
+- ✅ Diálogos de confirmación para transiciones críticas
+- ✅ Indicadores visuales de bloqueos según estado
+- ✅ Servicio de permisos con mensajes explicativos
+- ✅ **Bloqueos funcionales implementados:**
+  - ✅ Bloqueos en CalendarScreen (doble click, drag & drop bloqueados según estado)
+  - ✅ Bloqueos en EventDialog (botones crear/editar/eliminar deshabilitados según estado)
+  - ✅ Bloqueos en AccommodationDialog (botones crear/editar/eliminar deshabilitados según estado)
+  - ✅ Bloqueos en gestión de participantes (añadir/remover según estado)
+  - ✅ Mensajes informativos de bloqueo mostrados al usuario
+
 **Mejoras futuras (no críticas):**
 - ⚠️ Notificaciones automáticas de cambio de estado (T105)
-- ⚠️ Bloqueos funcionales en acciones de evento (actualmente solo visuales en plan)
 - ⚠️ Reembolsos al cancelar (T102)
 
 **Relacionado con:** T107, T105, T113, T102
@@ -5734,7 +5751,8 @@ Organizador quiere invitar a alguien a unirse al plan
 9. Configurar Firebase
 10. Verificar compilación en todas las plataformas
 11. Optimizar configuración de Cursor
-12. **Preparar entorno para desarrollo Offline First (T56-T62)**
+12. **Configurar acceso remoto al Mac desde Windows** (para desarrollo remoto)
+13. **Preparar entorno para desarrollo Offline First (T56-T62)**
 
 **Criterios de aceptación:**
 - ✅ Cursor IDE instalado (última versión) y configurado
@@ -5754,6 +5772,8 @@ Organizador quiere invitar a alguien a unirse al plan
 - ✅ Todas las funcionalidades principales probadas
 - ✅ Firebase configurado correctamente
 - ✅ Cursor optimizado para el proyecto
+- ✅ **Acceso remoto al Mac configurado desde Windows**
+- ✅ **Conexión remota verificada y funcionando**
 - ✅ **Entorno preparado para desarrollo Offline First (T56-T62)**
 - ✅ **Métodos de simulación offline documentados**
 - ✅ **Dependencias para offline verificadas (SQLite/Hive)**
@@ -5963,7 +5983,100 @@ Organizador quiere invitar a alguien a unirse al plan
 
 ---
 
-### **FASE 10: Optimización de Cursor**
+### **FASE 10: Configuración de Acceso Remoto al Mac**
+
+**Objetivo:** Permitir acceso remoto al Mac desde Windows para desarrollo a distancia.
+
+**Opciones de acceso remoto:**
+1. **Microsoft Remote Desktop (Recomendado para desarrollo)** - Gratis, oficial de Microsoft, optimizado para Windows
+2. **Chrome Remote Desktop** - Sencillo, multiplataforma, gratuito
+3. **VNC Server (nativo macOS)** - Integrado, pero requiere configuración adicional
+4. **TeamViewer** - Comercial pero robusto (gratis para uso personal)
+5. **AnyDesk** - Gratis para uso personal, ligero
+
+**Recomendación:** Microsoft Remote Desktop para mejor experiencia de desarrollo desde Windows.
+
+#### **Opción A: Microsoft Remote Desktop (Recomendado)**
+
+**En el Mac:**
+- [ ] Instalar Microsoft Remote Desktop desde App Store:
+  - [ ] Buscar "Microsoft Remote Desktop" en App Store
+  - [ ] Instalar la aplicación
+- [ ] Configurar Compartir Pantalla en macOS:
+  - [ ] Ir a Preferencias del Sistema → Compartir
+  - [ ] Activar "Compartir Pantalla"
+  - [ ] Configurar opciones de acceso (usuario y contraseña)
+  - [ ] Anotar la dirección IP del Mac (ver en Preferencias del Sistema → Red)
+- [ ] Verificar que el Mac está conectado a Internet y siempre encendido/despierto
+- [ ] Configurar para que el Mac no se duerma (si es necesario):
+  - [ ] Ir a Preferencias del Sistema → Ahorro de Energía
+  - [ ] Configurar para que no se duerma cuando está conectado a la corriente
+
+**En Windows:**
+- [ ] Instalar Microsoft Remote Desktop desde Microsoft Store (ya viene preinstalado en Windows 10/11 Pro)
+- [ ] Abrir Microsoft Remote Desktop
+- [ ] Añadir nueva conexión:
+  - [ ] Nombre: "Mac Desarrollo"
+  - [ ] PC: [IP del Mac]
+  - [ ] Usuario: [usuario del Mac]
+  - [ ] Guardar credenciales
+- [ ] Probar conexión remota
+- [ ] Verificar que funciona el desarrollo (Cursor, Flutter, terminal, etc.)
+
+#### **Opción B: Chrome Remote Desktop**
+
+**En el Mac:**
+- [ ] Instalar Chrome Remote Desktop desde [remotedesktop.google.com](https://remotedesktop.google.com)
+- [ ] Iniciar sesión con cuenta de Google
+- [ ] Configurar acceso remoto:
+  - [ ] Ir a "Remoto de asistencia" o "Mi equipo"
+  - [ ] Hacer clic en "Activar acceso remoto"
+  - [ ] Seguir las instrucciones para configurar PIN
+  - [ ] Anotar el PIN de acceso
+- [ ] Verificar que el Mac está conectado a Internet
+
+**En Windows:**
+- [ ] Instalar Chrome Remote Desktop desde [remotedesktop.google.com](https://remotedesktop.google.com)
+- [ ] Iniciar sesión con la misma cuenta de Google
+- [ ] En "Mi equipo", debería aparecer el Mac
+- [ ] Hacer clic en el Mac y usar el PIN para conectar
+- [ ] Probar conexión remota
+- [ ] Verificar que funciona el desarrollo
+
+#### **Opción C: VNC Server (Nativo macOS)**
+
+**En el Mac:**
+- [ ] Activar Compartir Pantalla:
+  - [ ] Ir a Preferencias del Sistema → Compartir
+  - [ ] Activar "Compartir Pantalla"
+  - [ ] Configurar usuarios permitidos
+  - [ ] Anotar la dirección IP del Mac
+- [ ] (Opcional) Instalar servidor VNC más robusto si es necesario
+- [ ] Verificar configuración de firewall si hay problemas
+
+**En Windows:**
+- [ ] Instalar cliente VNC (ej: TightVNC, RealVNC Viewer)
+- [ ] Conectar usando la IP del Mac y credenciales
+- [ ] Probar conexión remota
+
+**Verificación:**
+- [ ] Conexión remota funciona correctamente
+- [ ] Cursor IDE funciona a través de conexión remota
+- [ ] Terminal funciona correctamente
+- [ ] Flutter commands funcionan
+- [ ] Compilación funciona (puede ser más lento que local)
+- [ ] Performance es aceptable para desarrollo
+
+**Notas importantes:**
+- El Mac debe estar conectado a Internet y encendido para acceso remoto
+- Considerar usar un router con IP fija o servicio de DNS dinámico si la IP cambia
+- Para mejor performance, usar conexión Ethernet si es posible
+- La compilación puede ser más lenta a través de conexión remota
+- Considerar dejar el Mac conectado a la corriente para evitar que se duerma
+
+---
+
+### **FASE 11: Optimización de Cursor**
 
 - [ ] Configurar settings de Cursor para Flutter:
   - [ ] Configurar formato automático al guardar
@@ -5986,7 +6099,7 @@ Organizador quiere invitar a alguien a unirse al plan
 
 ---
 
-### **FASE 11: Actualizaciones y Paquetes**
+### **FASE 12: Actualizaciones y Paquetes**
 
 - [ ] Actualizar Flutter a la última versión estable:
   ```bash
@@ -6010,7 +6123,7 @@ Organizador quiere invitar a alguien a unirse al plan
 
 ---
 
-### **FASE 12: Documentación y Finalización**
+### **FASE 13: Documentación y Finalización**
 
 - [ ] Documentar cualquier problema encontrado durante la migración
 - [ ] Actualizar documentación del proyecto si hubo cambios
@@ -6268,6 +6381,408 @@ firebase deploy --only firestore:indexes
 - T154 (Migración del Proyecto a Mac/iOS)
 - T155 (Instalación Firebase CLI)
 - T152 (Revisión y Optimización de Índices de Firestore)
+
+---
+
+### T157 - Sistema de Ayuda Contextual
+**Estado:** Pendiente  
+**Complejidad:** 🟡 Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Implementar sistema de ayuda contextual con iconos interactivos que muestran textos de ayuda desde Firebase en múltiples idiomas según el idioma del usuario.
+
+**Contexto:**
+- Los usuarios necesitan ayuda contextual en diferentes partes de la aplicación
+- Los textos de ayuda deben estar en Firebase para poder actualizarlos sin deployar la app
+- El sistema debe soportar múltiples idiomas
+- La ayuda debe mostrarse según el idioma configurado del usuario
+
+**Funcionalidades:**
+1. Sistema de identificación de campos/zonas de ayuda
+2. Widget de icono de ayuda reutilizable
+3. Servicio para cargar textos de ayuda desde Firestore
+4. Modelo de datos para textos de ayuda (multi-idioma)
+5. UI para mostrar ayuda contextual (tooltip, diálogo, o ambos)
+6. Integración con sistema de i18n existente
+7. Caché local de textos de ayuda para funcionar offline
+8. Admin UI para gestionar textos de ayuda (opcional, futura mejora)
+
+**Sistema de Identificación de Campos/Zonas:**
+
+Propuesta de sistema jerárquico usando keys únicas:
+
+**Formato:** `help.{section}.{component}.{field}`
+
+**Ejemplos:**
+- `help.plan.title` - Ayuda para el título del plan
+- `help.plan.dates` - Ayuda para las fechas del plan
+- `help.plan.budget` - Ayuda para el presupuesto del plan
+- `help.event.title` - Ayuda para el título del evento
+- `help.event.description` - Ayuda para la descripción del evento
+- `help.event.participants` - Ayuda para seleccionar participantes
+- `help.event.cost` - Ayuda para el coste del evento
+- `help.participant.add` - Ayuda para añadir participantes
+- `help.participant.role` - Ayuda para los roles de participantes
+- `help.calendar.drag` - Ayuda para arrastrar eventos
+- `help.calendar.filter` - Ayuda para los filtros del calendario
+- `help.budget.total` - Ayuda para el presupuesto total
+- `help.payment.add` - Ayuda para añadir pagos
+- `help.stats.overview` - Ayuda para la vista general de estadísticas
+
+**Estructura de secciones:**
+- `help.plan.*` - Ayuda relacionada con planes
+- `help.event.*` - Ayuda relacionada con eventos
+- `help.accommodation.*` - Ayuda relacionada con alojamientos
+- `help.participant.*` - Ayuda relacionada con participantes
+- `help.calendar.*` - Ayuda relacionada con el calendario
+- `help.budget.*` - Ayuda relacionada con presupuesto
+- `help.payment.*` - Ayuda relacionada con pagos
+- `help.stats.*` - Ayuda relacionada con estadísticas
+- `help.auth.*` - Ayuda relacionada con autenticación
+- `help.settings.*` - Ayuda relacionada con configuración
+
+**Criterios de aceptación:**
+- ✅ Modelo `HelpText` con soporte multi-idioma
+- ✅ Colección `help_texts` en Firestore con estructura:
+  - `helpId` (string): ID único de la ayuda (ej: "help.plan.title")
+  - `texts` (map): Mapa de idioma -> texto
+    - `es` (string): Texto en español
+    - `en` (string): Texto en inglés
+    - `fr` (string): Texto en francés (si se añade)
+    - etc.
+  - `lastUpdated` (timestamp): Última actualización
+- ✅ Servicio `HelpService` para cargar textos desde Firestore
+- ✅ Caché local de textos de ayuda (usar Hive o similar si está disponible)
+- ✅ Widget `HelpIcon` reutilizable:
+  - Icono de ayuda (ícono de información)
+  - Soporte para hover (tooltip) y click (diálogo)
+  - Configurable: solo tooltip, solo diálogo, o ambos
+- ✅ Integración con sistema de i18n existente para detectar idioma del usuario
+- ✅ Fallback a español si el texto no está disponible en el idioma del usuario
+- ✅ Fallback a texto genérico si no existe la ayuda en ningún idioma
+- ✅ UI responsiva (tooltip en móvil puede ser diálogo)
+- ✅ Textos de ayuda iniciales documentados y cargados en Firestore
+- ✅ Firestore Rules para permitir lectura pública de help_texts
+
+**Implementación técnica:**
+
+**Modelo de datos:**
+```dart
+class HelpText {
+  final String helpId;
+  final Map<String, String> texts; // language -> text
+  final DateTime lastUpdated;
+  
+  String getText(String language) {
+    return texts[language] ?? texts['es'] ?? 'Ayuda no disponible';
+  }
+}
+```
+
+**Servicio:**
+```dart
+class HelpService {
+  Future<HelpText?> getHelpText(String helpId);
+  Future<Map<String, HelpText>> getAllHelpTexts();
+  Stream<HelpText> watchHelpText(String helpId);
+}
+```
+
+**Widget:**
+```dart
+class HelpIcon extends StatelessWidget {
+  final String helpId;
+  final bool showOnHover; // Tooltip
+  final bool showOnClick; // Diálogo
+  final IconData icon;
+  final Color? color;
+}
+```
+
+**Estructura en Firestore:**
+```
+help_texts/
+  help.plan.title/
+    helpId: "help.plan.title"
+    texts: {
+      es: "El título del plan...",
+      en: "The plan title..."
+    }
+    lastUpdated: timestamp
+```
+
+**Archivos a crear:**
+- `lib/features/help/domain/models/help_text.dart`
+- `lib/features/help/domain/services/help_service.dart`
+- `lib/features/help/presentation/widgets/help_icon.dart`
+- `lib/features/help/presentation/widgets/help_dialog.dart`
+- `lib/features/help/presentation/providers/help_providers.dart`
+- `lib/features/help/data/repositories/help_repository.dart`
+
+**Archivos a modificar:**
+- `firestore.rules` - Añadir reglas para `help_texts` (lectura pública)
+- Archivos de UI existentes - Añadir `HelpIcon` donde sea necesario
+- `lib/l10n/app_es.arb` y `app_en.arb` - Añadir textos de UI del sistema de ayuda (botones, etc.)
+
+**Ejemplo de uso:**
+```dart
+Row(
+  children: [
+    Text('Título del Plan'),
+    HelpIcon(
+      helpId: 'help.plan.title',
+      showOnHover: true,
+      showOnClick: true,
+    ),
+  ],
+)
+```
+
+**Fase 1 (Base):**
+- Modelo de datos
+- Servicio básico
+- Widget HelpIcon con tooltip
+- Integración con i18n
+- Caché local básica
+- Firestore Rules
+
+**Fase 2 (Mejoras futuras):**
+- Diálogo de ayuda al hacer click
+- Admin UI para gestionar textos (T158 - futura tarea)
+- Analytics de qué ayudas se consultan más
+- Búsqueda de ayudas
+- Tutoriales guiados (futuro)
+
+**Notas importantes:**
+- Los textos de ayuda deben ser claros y concisos
+- Usar formato Markdown para textos largos (opcional)
+- Considerar límite de caracteres para tooltips vs diálogos
+- Los textos deben actualizarse periódicamente según feedback de usuarios
+- Considerar añadir imágenes o videos en el futuro
+
+**Testing:**
+- [ ] Cargar ayuda desde Firestore
+- [ ] Mostrar ayuda en idioma correcto
+- [ ] Fallback a español si no existe idioma
+- [ ] Fallback a texto genérico si no existe ayuda
+- [ ] Tooltip funciona en hover
+- [ ] Diálogo funciona en click
+- [ ] Caché local funciona
+- [ ] Funciona offline (con caché)
+- [ ] Performance: no bloquea UI al cargar ayudas
+
+**Relacionado con:**
+- Sistema de i18n existente (lib/l10n/)
+- T158 (Completar Sistema Multi-idioma) - **⚠️ RECOMENDADO: Completar T158 antes de T157**
+- T159 (Admin UI para gestionar textos de ayuda - futura mejora opcional)
+- Sistema de caché offline (cuando se implemente T56-T62)
+
+**Nota importante:** Se recomienda completar T158 (Completar Sistema Multi-idioma) antes de implementar T157 para tener el sistema de idiomas completo y que los textos de ayuda contextual se integren directamente con soporte multi-idioma.
+
+---
+
+### T158 - Completar Sistema Multi-idioma
+**Estado:** Pendiente  
+**Complejidad:** 🟡 Media  
+**Prioridad:** 🟡 Media  
+**Descripción:** Completar el sistema multi-idioma migrando todos los textos hardcodeados a archivos .arb, añadiendo persistencia de idioma, y mejorando el selector de idioma existente.
+
+**Contexto:**
+- La infraestructura de i18n está implementada (archivos .arb, AppLocalizations, providers)
+- Existe un selector de idioma en la página de login (`LanguageSelector`)
+- Sin embargo, muchos textos están hardcodeados en español en el código
+- El idioma no se persiste entre sesiones
+- La cobertura de i18n es parcial (~30-40% estimado)
+
+**Estado actual:**
+- ✅ Infraestructura base: archivos .arb (español e inglés), ~234 líneas cada uno
+- ✅ Configuración en MaterialApp con localizationsDelegates y supportedLocales
+- ✅ Provider `currentLanguageProvider` para cambiar idioma
+- ✅ Widget `LanguageSelector` existente en login_page
+- ⚠️ Uso parcial: solo en login_page (39 usos) y register_page (31 usos)
+- ❌ Muchos textos hardcodeados en español en el resto de la app
+- ❌ Idioma no se persiste (se resetea al reiniciar)
+- ❌ Selector de idioma solo visible en login (no accesible desde otras páginas)
+
+**Funcionalidades:**
+1. Verificar y mejorar selector de idioma existente en login
+2. Añadir persistencia del idioma (SharedPreferences o Firestore)
+3. Auditoría completa de textos hardcodeados en el código
+4. Migrar todos los textos hardcodeados a archivos .arb
+5. Añadir selector de idioma accesible desde otras páginas (Settings/Perfil)
+6. Verificar cobertura completa de traducciones
+7. Testing de ambos idiomas en toda la app
+
+**Criterios de aceptación:**
+- ✅ Selector de idioma en login verificado y funcionando correctamente
+- ✅ Decisión sobre mantener/mejorar selector existente
+- ✅ Persistencia del idioma implementada:
+  - Idioma se guarda al cambiar
+  - Idioma se restaura al iniciar la app
+  - Opción: SharedPreferences (local) o Firestore (sincronizado entre dispositivos)
+- ✅ Auditoría completa de textos hardcodeados:
+  - Lista de todos los archivos con textos hardcodeados
+  - Identificación de textos que necesitan traducción
+- ✅ Migración completa de textos:
+  - Todos los textos hardcodeados migrados a .arb
+  - Todas las páginas/widgets usan `AppLocalizations.of(context)`
+  - Mensajes de error traducidos
+  - Tooltips traducidos
+  - Diálogos traducidos
+  - SnackBars traducidos
+- ✅ Archivos .arb actualizados:
+  - `app_es.arb` con todas las traducciones en español
+  - `app_en.arb` con todas las traducciones en inglés
+  - Sin textos faltantes
+- ✅ Selector de idioma accesible desde otras páginas:
+  - Añadido en página de Settings/Perfil
+  - O en AppBar/Header principal
+  - Visible y funcional en toda la app
+- ✅ Testing completo:
+  - App funciona correctamente en español
+  - App funciona correctamente en inglés
+  - Cambio de idioma funciona sin errores
+  - No hay textos sin traducir visibles
+
+**Sistema de persistencia:**
+
+**Opción A: SharedPreferences (Recomendado para inicio)**
+- Rápido de implementar
+- Funciona offline
+- No requiere Firestore
+- Solo local (no sincroniza entre dispositivos)
+
+**Opción B: Firestore**
+- Sincroniza entre dispositivos
+- Requiere conexión a internet
+- Integrado con el resto de datos del usuario
+
+**Recomendación:** Empezar con SharedPreferences, luego migrar a Firestore si se necesita sincronización.
+
+**Archivos a crear/modificar:**
+- `lib/features/language/domain/services/language_storage_service.dart` - Servicio de persistencia
+- `lib/features/language/presentation/providers/language_providers.dart` - Modificar para cargar idioma guardado al iniciar
+- `lib/l10n/app_es.arb` - Añadir todas las traducciones faltantes
+- `lib/l10n/app_en.arb` - Añadir todas las traducciones faltantes
+- Todos los archivos de UI - Migrar textos hardcodeados a `AppLocalizations.of(context)`
+- Página de Settings/Perfil - Añadir selector de idioma
+
+**Proceso de auditoría:**
+1. Buscar todos los archivos con `Text('...')` o `Text("...")` hardcodeados
+2. Buscar todos los `SnackBar` con textos hardcodeados
+3. Buscar todos los `AlertDialog` con textos hardcodeados
+4. Buscar todos los tooltips con textos hardcodeados
+5. Buscar todos los mensajes de error hardcodeados
+6. Crear lista priorizada de textos a migrar
+
+**Proceso de migración:**
+1. Añadir nuevas keys a `app_es.arb` y `app_en.arb`
+2. Reemplazar textos hardcodeados por `AppLocalizations.of(context)!.key`
+3. Verificar que no hay textos faltantes
+4. Regenerar archivos de localización: `flutter gen-l10n`
+5. Probar en ambos idiomas
+
+**Ejemplo de migración:**
+```dart
+// Antes:
+Text('Crear Plan')
+SnackBar(content: Text('Plan creado exitosamente'))
+
+// Después:
+Text(AppLocalizations.of(context)!.createPlan)
+SnackBar(content: Text(AppLocalizations.of(context)!.planCreatedSuccessfully))
+```
+
+**Fase 1 (Base):**
+- Verificar selector de idioma existente
+- Implementar persistencia con SharedPreferences
+- Cargar idioma guardado al iniciar app
+- Auditoría inicial de textos hardcodeados
+
+**Fase 2 (Migración):**
+- Migrar textos de páginas principales (Dashboard, Calendar, etc.)
+- Migrar diálogos y mensajes
+- Actualizar archivos .arb
+
+**Fase 3 (Finalización):**
+- Añadir selector de idioma en Settings/Perfil
+- Migrar textos restantes
+- Testing completo en ambos idiomas
+- Verificar cobertura 100%
+
+**Notas importantes:**
+- El selector existente en login parece funcional, pero debe verificarse
+- Considerar mantener el selector en login para usuarios no logueados
+- Añadir selector también en Settings para usuarios logueados
+- Los textos de ayuda contextual (T157) seguirán el mismo sistema de idiomas
+
+**Testing:**
+- [ ] Selector de idioma en login funciona correctamente
+- [ ] Cambio de idioma se refleja inmediatamente en la UI
+- [ ] Idioma se guarda correctamente
+- [ ] Idioma se restaura al reiniciar la app
+- [ ] Todos los textos están traducidos en español
+- [ ] Todos los textos están traducidos en inglés
+- [ ] No hay textos hardcodeados visibles
+- [ ] App funciona correctamente en ambos idiomas
+- [ ] Selector de idioma accesible desde Settings/Perfil
+
+**Relacionado con:**
+- T157 (Sistema de Ayuda Contextual) - **⚠️ IMPORTANTE: Completar T158 antes de T157**
+- Los textos de ayuda contextual (T157) usarán el mismo sistema de idiomas
+- Sistema de i18n existente (lib/l10n/)
+- Login page con selector existente
+
+**Nota importante:** Esta tarea debe completarse antes de T157 (Sistema de Ayuda Contextual) para que los textos de ayuda se integren directamente con soporte multi-idioma completo.
+
+---
+
+## T159 - Corregir Permisos de Firestore para event_participants después de Logout/Login
+
+**Estado:** 🔴 Pendiente  
+**Prioridad:** Media  
+**Grupo:** Seguridad y Firestore  
+**Dependencias:** T152 (Firestore Index Optimization)
+
+### Descripción
+Después de hacer logout y volver a hacer login, aparecen errores de permisos (`permission-denied`) al consultar la colección `event_participants`. El problema ocurre específicamente después de un nuevo login, mientras que funciona correctamente después de un restart completo de la app.
+
+### Problema Identificado
+- Las consultas a `event_participants` usan múltiples `where()` y `orderBy()`
+- En Firestore Rules, estas consultas requieren explícitamente `allow list:` además de `allow read:`
+- Puede haber un problema de sincronización del token de autenticación después del login
+
+### Cambios Realizados (Pendientes de Verificar)
+- ✅ Añadido `allow list:` explícitamente en `firestore.rules` para `event_participants`
+- ✅ Verificado que los índices compuestos necesarios existen en `firestore.indexes.json`
+
+### Tareas Pendientes
+- [ ] Desplegar las reglas actualizadas en Firebase Console
+- [ ] Verificar que los índices compuestos estén desplegados
+- [ ] Probar el flujo completo: logout → login → verificar que no aparezcan errores
+- [ ] Si persiste el problema, investigar si hay un problema de timing/sincronización del token
+- [ ] Verificar si hay otros servicios con el mismo problema (plan_participations, etc.)
+- [ ] Documentar la solución si requiere cambios adicionales
+
+### Archivos Afectados
+- `firestore.rules` - Reglas de seguridad actualizadas
+- `firestore.indexes.json` - Índices compuestos (ya verificados)
+- `lib/features/calendar/domain/services/event_participant_service.dart` - Servicio que hace las consultas
+
+### Criterios de Aceptación
+- ✅ No aparecen errores de permisos después de logout/login
+- ✅ Las consultas a `event_participants` funcionan correctamente en todos los escenarios
+- ✅ Las reglas de Firestore están correctamente desplegadas
+- ✅ Todos los índices necesarios están desplegados
+
+### Notas Técnicas
+- En Firestore Rules, `allow read:` permite leer documentos individuales
+- `allow list:` es necesario para consultas que devuelven múltiples documentos con `where()` y `orderBy()`
+- Las consultas actuales usan: `.where('eventId', isEqualTo: eventId).where('status', isEqualTo: 'registered').orderBy('registeredAt')`
+
+### Relacionado con
+- T152 (Firestore Index Optimization)
+- Sistema de autenticación
+- EventParticipantService
 
 ---
 

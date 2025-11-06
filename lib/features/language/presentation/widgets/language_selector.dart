@@ -7,7 +7,7 @@ class LanguageSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentLanguage = ref.watch(currentLanguageProvider);
+    final currentLanguage = ref.watch(currentLanguageSyncProvider);
     final languageNotifier = ref.watch(languageNotifierProvider);
 
     return PopupMenuButton<Locale>(
@@ -30,8 +30,8 @@ class LanguageSelector extends ConsumerWidget {
           ),
         ],
       ),
-      onSelected: (Locale locale) {
-        languageNotifier.changeLanguage(locale);
+      onSelected: (Locale locale) async {
+        await languageNotifier.changeLanguage(locale);
       },
       itemBuilder: (BuildContext context) => [
         PopupMenuItem<Locale>(
