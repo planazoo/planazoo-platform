@@ -151,6 +151,20 @@ Cada caso de prueba debe incluir:
   - Esperado: Sesión cerrada, redirección a login
   - Estado: 🔄
 
+- [ ] **LOGIN-006:** Ciclo completo logout/login sin errores de permisos (T159)
+  - Pasos: 
+    1. Hacer login con usuario válido
+    2. Navegar a un plan y verificar que eventos/alojamientos se cargan correctamente
+    3. Hacer logout
+    4. Hacer login nuevamente con el mismo usuario
+    5. Navegar al mismo plan y verificar que eventos/alojamientos se cargan correctamente
+  - Esperado: 
+    - No aparecen errores de permisos (`permission-denied`) después del segundo login
+    - Las consultas a `event_participants` y otras colecciones funcionan correctamente
+    - El comportamiento es idéntico al primer login
+  - **⚠️ IMPORTANTE:** Esta prueba verifica que el token de autenticación se sincroniza correctamente después de logout/login. Relacionado con T159.
+  - Estado: 🔄
+
 ### 1.3 Sesión Persistente
 
 - [ ] **SESSION-001:** Persistencia de sesión tras cerrar app
