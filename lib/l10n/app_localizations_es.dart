@@ -24,6 +24,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get emailHint => 'tu@email.com';
 
   @override
+  String get emailOrUsernameLabel => 'Email o Usuario';
+
+  @override
+  String get emailOrUsernameHint => 'tu@email.com o @usuario';
+
+  @override
   String get passwordLabel => 'Contraseña';
 
   @override
@@ -31,6 +37,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get loginButton => 'Iniciar Sesión';
+
+  @override
+  String get continueWithGoogle => 'Continuar con Google';
+
+  @override
+  String get googleSignInError => 'Error al iniciar sesión con Google';
+
+  @override
+  String get googleSignInCancelled => 'Inicio de sesión cancelado';
 
   @override
   String get forgotPassword => '¿Olvidaste tu contraseña?';
@@ -78,17 +93,61 @@ class AppLocalizationsEs extends AppLocalizations {
   String get emailInvalid => 'El formato del email no es válido';
 
   @override
+  String get emailOrUsernameInvalid =>
+      'Ingresa un email válido o un nombre de usuario';
+
+  @override
   String get passwordRequired => 'La contraseña es requerida';
 
   @override
   String get passwordMinLength =>
-      'La contraseña debe tener al menos 6 caracteres';
+      'La contraseña debe tener al menos 8 caracteres';
+
+  @override
+  String get passwordNeedsLowercase =>
+      'La contraseña debe contener al menos una letra minúscula';
+
+  @override
+  String get passwordNeedsUppercase =>
+      'La contraseña debe contener al menos una letra mayúscula';
+
+  @override
+  String get passwordNeedsNumber =>
+      'La contraseña debe contener al menos un número';
+
+  @override
+  String get passwordNeedsSpecialChar =>
+      'La contraseña debe contener al menos un carácter especial (!@#\$%^&*)';
 
   @override
   String get nameRequired => 'El nombre es requerido';
 
   @override
   String get nameMinLength => 'El nombre debe tener al menos 2 caracteres';
+
+  @override
+  String get usernameLabel => 'Nombre de usuario';
+
+  @override
+  String get usernameHint => 'ej: juancarlos, maria_garcia';
+
+  @override
+  String get usernameRequired => 'El nombre de usuario es requerido';
+
+  @override
+  String get usernameInvalid =>
+      'El nombre de usuario debe tener 3-30 caracteres y solo puede contener letras minúsculas, números y guiones bajos (a-z, 0-9, _)';
+
+  @override
+  String get usernameTaken => 'Este nombre de usuario ya está en uso';
+
+  @override
+  String get usernameAvailable => 'Nombre de usuario disponible';
+
+  @override
+  String usernameSuggestion(String suggestions) {
+    return 'Sugerencias: $suggestions';
+  }
 
   @override
   String get confirmPasswordRequired => 'Confirma tu contraseña';
@@ -114,6 +173,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get userNotFound => 'No se encontró una cuenta con este email';
+
+  @override
+  String get usernameNotFound =>
+      'No se encontró un usuario con ese nombre de usuario';
 
   @override
   String get wrongPassword => 'Contraseña incorrecta';
@@ -447,4 +510,86 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get plans => 'Plans';
+
+  @override
+  String get newAccommodation => 'Nuevo Alojamiento';
+
+  @override
+  String get editAccommodation => 'Editar Alojamiento';
+
+  @override
+  String get checkIn => 'Check-in';
+
+  @override
+  String get checkOut => 'Check-out';
+
+  @override
+  String nights(int count) {
+    return '$count noche(s)';
+  }
+
+  @override
+  String get color => 'Color:';
+
+  @override
+  String get participantsLabel => 'Participantes:';
+
+  @override
+  String get noParticipantsSelected =>
+      'Sin participantes seleccionados (aparecerá en el primer track)';
+
+  @override
+  String errorLoadingParticipants(String error) {
+    return 'Error al cargar participantes: $error';
+  }
+
+  @override
+  String get mustBeValidNumber => 'Debe ser un número válido';
+
+  @override
+  String get cannotBeNegative => 'No puede ser negativo';
+
+  @override
+  String get maxAmount => 'Máximo 1.000.000';
+
+  @override
+  String get calculating => 'Calculando...';
+
+  @override
+  String convertedTo(String currency) {
+    return 'Convertido a $currency:';
+  }
+
+  @override
+  String get conversionError => 'No se pudo calcular la conversión';
+
+  @override
+  String get generateGuestsButton => '👥 Invitados';
+
+  @override
+  String get generateMiniFrankButton => '🧬 Mini-Frank';
+
+  @override
+  String get generateFrankensteinButton => '🧟 Frankenstein';
+
+  @override
+  String get accommodationNameRequiredError =>
+      'El nombre del alojamiento es obligatorio';
+
+  @override
+  String get checkOutAfterCheckInError =>
+      'La fecha de check-out debe ser posterior al check-in';
+
+  @override
+  String get requiresConfirmation => 'Requiere confirmación de participantes';
+
+  @override
+  String get requiresConfirmationSubtitle =>
+      'Los participantes deberán confirmar explícitamente su asistencia';
+
+  @override
+  String get cardObtained => 'Tarjeta obtenida';
+
+  @override
+  String get cardObtainedSubtitle => 'Marcar si ya tienes la tarjeta/entrada';
 }

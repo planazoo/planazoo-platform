@@ -374,9 +374,8 @@ Copyright © 2025 Planazoo
 **Pendientes:**
 - T129: Export de Datos Personales (GDPR)
 - T50: Configuración de preferencias
-- Crear documentos legales completos
+- T171: Crear Documentos Legales (Términos, Privacidad, etc.)
 - Implementar modales de consentimiento
-- Crear páginas legales en la app
 
 **Completas ✅:**
 - Aceptación de términos en registro (estructurado en flujos)

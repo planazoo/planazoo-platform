@@ -8,6 +8,7 @@ import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifie
 import 'package:unp_calendario/features/auth/presentation/pages/edit_profile_page.dart';
 import 'package:unp_calendario/features/language/presentation/providers/language_providers.dart';
 import 'package:unp_calendario/features/language/presentation/widgets/language_selector.dart';
+import 'package:unp_calendario/features/security/utils/validator.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class AccountSettingsPage extends ConsumerStatefulWidget {
@@ -459,10 +460,36 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
                   return;
                 }
 
-                if (newPasswordController.text.length < 6) {
+                // Validar nueva contraseña con Validator
+                final passwordValidation = Validator.validatePassword(newPasswordController.text);
+                if (!passwordValidation.isValid && passwordValidation.errorCode != null) {
+                  final loc = AppLocalizations.of(context)!;
+                  String errorMessage;
+                  switch (passwordValidation.errorCode) {
+                    case 'passwordRequired':
+                      errorMessage = loc.passwordRequired;
+                      break;
+                    case 'passwordMinLength':
+                      errorMessage = loc.passwordMinLength;
+                      break;
+                    case 'passwordNeedsLowercase':
+                      errorMessage = loc.passwordNeedsLowercase;
+                      break;
+                    case 'passwordNeedsUppercase':
+                      errorMessage = loc.passwordNeedsUppercase;
+                      break;
+                    case 'passwordNeedsNumber':
+                      errorMessage = loc.passwordNeedsNumber;
+                      break;
+                    case 'passwordNeedsSpecialChar':
+                      errorMessage = loc.passwordNeedsSpecialChar;
+                      break;
+                    default:
+                      errorMessage = loc.passwordMinLength;
+                  }
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('La contraseña debe tener al menos 6 caracteres'),
+                    SnackBar(
+                      content: Text(errorMessage),
                       backgroundColor: Colors.red,
                     ),
                   );

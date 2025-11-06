@@ -177,7 +177,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.accommodation == null ? 'Nuevo Alojamiento' : 'Editar Alojamiento'),
+      title: Text(widget.accommodation == null ? AppLocalizations.of(context)!.newAccommodation : AppLocalizations.of(context)!.editAccommodation),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -261,7 +261,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
               ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.login),
-                title: const Text('Check-in'),
+                title: Text(AppLocalizations.of(context)!.checkIn),
               subtitle: Text('${_selectedCheckIn.day}/${_selectedCheckIn.month}/${_selectedCheckIn.year}'),
               onTap: _selectCheckInDate,
             ),
@@ -270,7 +270,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
               ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.logout),
-                title: const Text('Check-out'),
+                title: Text(AppLocalizations.of(context)!.checkOut),
               subtitle: Text('${_selectedCheckOut.day}/${_selectedCheckOut.month}/${_selectedCheckOut.year}'),
               onTap: _selectCheckOutDate,
             ),
@@ -289,7 +289,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                   const Icon(Icons.nights_stay, size: 20),
                   const SizedBox(width: 8),
                     Text(
-                    '${_selectedCheckOut.difference(_selectedCheckIn).inDays} noche(s)',
+                    AppLocalizations.of(context)!.nights(_selectedCheckOut.difference(_selectedCheckIn).inDays),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -299,7 +299,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             const SizedBox(height: 16),
             
             // Color
-            const Text('Color:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.color, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -417,9 +417,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Participantes:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                Text(
+                  AppLocalizations.of(context)!.participantsLabel,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -451,9 +451,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                   }).toList(),
                 ),
                 if (_selectedParticipantTrackIds.isEmpty)
-                  const Text(
-                    'Sin participantes seleccionados (aparecerá en el primer track)',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  Text(
+                    AppLocalizations.of(context)!.noParticipantsSelected,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
               ],
             );
@@ -465,7 +465,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             ),
           ),
           error: (error, stackTrace) => Text(
-            'Error al cargar participantes: $error',
+            AppLocalizations.of(context)!.errorLoadingParticipants(error.toString()),
             style: const TextStyle(color: Colors.red, fontSize: 12),
           ),
         );
@@ -521,9 +521,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             final v = value?.trim() ?? '';
             if (v.isEmpty) return null;
             final doubleValue = double.tryParse(v.replaceAll(',', '.'));
-            if (doubleValue == null) return 'Debe ser un número válido';
-            if (doubleValue < 0) return 'No puede ser negativo';
-            if (doubleValue > 1000000) return 'Máximo 1.000.000';
+            if (doubleValue == null) return AppLocalizations.of(context)!.mustBeValidNumber;
+            if (doubleValue < 0) return AppLocalizations.of(context)!.cannotBeNegative;
+            if (doubleValue > 1000000) return AppLocalizations.of(context)!.maxAmount;
             return null;
           },
         ),
@@ -542,13 +542,13 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             ),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                      SizedBox(width: 8),
-                      Text('Calculando...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                      const SizedBox(width: 8),
+                      Text(AppLocalizations.of(context)!.calculating, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                     ],
                   ),
                 );
@@ -571,7 +571,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                           Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
                           const SizedBox(width: 4),
                           Text(
-                            'Convertido a ${_planCurrency}:',
+                            AppLocalizations.of(context)!.convertedTo(_planCurrency!),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -607,7 +607,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Text(
-                    'No se pudo calcular la conversión',
+                    AppLocalizations.of(context)!.conversionError,
                     style: TextStyle(fontSize: 11, color: Colors.orange.shade700),
           ),
         );
@@ -761,8 +761,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     // Validar nombre del hotel
     if (_hotelNameController.text.trim().isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-          content: Text('El nombre del alojamiento es obligatorio'),
+            SnackBar(
+          content: Text(AppLocalizations.of(context)!.accommodationNameRequiredError),
                 backgroundColor: Colors.red,
               ),
             );
@@ -772,8 +772,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     // Validar fechas
     if (_selectedCheckOut.isBefore(_selectedCheckIn) || _selectedCheckOut.isAtSameMomentAs(_selectedCheckIn)) {
           ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('La fecha de check-out debe ser posterior al check-in'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.checkOutAfterCheckInError),
               backgroundColor: Colors.red,
             ),
           );

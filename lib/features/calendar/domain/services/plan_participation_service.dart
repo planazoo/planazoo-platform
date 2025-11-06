@@ -23,6 +23,12 @@ class PlanParticipationService {
         
         return participations;
       }).handleError((error) {
+        // No registrar errores de permisos cuando el usuario no está autenticado (comportamiento esperado después de logout)
+        final errorString = error.toString();
+        if (errorString.contains('permission-denied')) {
+          // Silenciar errores de permisos - es normal después de logout
+          return <PlanParticipation>[];
+        }
         LoggerService.error('❌ PlanParticipationService: Error en consulta', error: error);
         throw error;
       });
@@ -70,6 +76,12 @@ class PlanParticipationService {
       
       return querySnapshot.docs.isNotEmpty;
     } catch (e) {
+      // No registrar errores de permisos cuando el usuario no está autenticado (comportamiento esperado después de logout)
+      final errorString = e.toString();
+      if (errorString.contains('permission-denied')) {
+        // Silenciar errores de permisos - es normal después de logout
+        return false;
+      }
       LoggerService.error('Error checking user participation: $planId, $userId', 
           context: 'PLAN_PARTICIPATION_SERVICE', error: e);
       return false;

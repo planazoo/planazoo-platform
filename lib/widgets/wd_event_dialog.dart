@@ -736,8 +736,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             // Requiere confirmación (T120 Fase 2)
             if (_canEditGeneral)
               CheckboxListTile(
-                title: const Text('Requiere confirmación de participantes'),
-                subtitle: const Text('Los participantes deberán confirmar explícitamente su asistencia'),
+                title: Text(AppLocalizations.of(context)!.requiresConfirmation),
+                subtitle: Text(AppLocalizations.of(context)!.requiresConfirmationSubtitle),
                 value: _requiresConfirmation,
                 onChanged: (value) {
                   setState(() {
@@ -931,8 +931,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           
                           // Switch: Tarjeta obtenida
                           SwitchListTile.adaptive(
-                            title: const Text('Tarjeta obtenida'),
-                            subtitle: const Text('Marcar si ya tienes la tarjeta/entrada'),
+                            title: Text(AppLocalizations.of(context)!.cardObtained),
+                            subtitle: Text(AppLocalizations.of(context)!.cardObtainedSubtitle),
                             value: _tarjetaObtenida,
                 onChanged: (value) {
                   setState(() {

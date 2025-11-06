@@ -91,6 +91,25 @@ class UserService {
     }
   }
 
+  // Obtener usuario por username
+  Future<UserModel?> getUserByUsername(String username) async {
+    try {
+      final normalized = username.trim().toLowerCase();
+      final querySnapshot = await _firestore
+          .collection(_collection)
+          .where('usernameLower', isEqualTo: normalized)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return UserModel.fromFirestore(querySnapshot.docs.first);
+      }
+      return null;
+    } catch (e) {
+      throw 'Error al obtener usuario por username: $e';
+    }
+  }
+
   // Actualizar usuario
   Future<void> updateUser(UserModel user) async {
     try {

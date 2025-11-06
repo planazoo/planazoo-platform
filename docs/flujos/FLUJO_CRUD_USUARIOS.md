@@ -1,8 +1,8 @@
 # 👤 FLUJO_CRUD_USUARIOS
 
 Estado: ✅ Alineado  
-Versión: 1.1  
-Fecha: Enero 2025 (Actualizado)
+Versión: 1.2  
+Fecha: Enero 2025 (Actualizado - T163 username obligatorio y login con username)
 
 ---
 
@@ -23,25 +23,42 @@ Relacionado con: `lib/features/auth/presentation/notifiers/auth_notifier.dart`, 
 Estado actual:
 - ✅ Username único implementado con índice `usernameLower` y validación
 - ✅ Sanitización de `displayName` y `username` aplicada
-- ⚠️ Pendiente de pruebas completas antes de cerrar T137
+- ✅ **T163:** Username es **OBLIGATORIO** en el registro (nuevos usuarios)
+- ✅ **T163:** Login acepta email o username (con o sin @)
+- ✅ **T163:** Usuarios existentes sin username reciben uno automático en el login
+- ⚠️ Pendiente de pruebas completas antes de cerrar T137 y T163
 
 ---
 
 ## 🧭 Flujo: Registro
 
-1) Usuario envía email y password
-2) Se crea el usuario en Firebase Auth
-3) Se crea documento en `/users/{uid}` con `UserModel.fromFirebaseAuth`
-4) Se envía email de verificación y se fuerza logout hasta verificar
+1) Usuario envía email, password, **username** (obligatorio) y displayName (opcional)
+2) **Validación de username:**
+   - Formato: 3-30 caracteres, [a-z0-9_], minúsculas
+   - Disponibilidad: verificación en Firestore usando `usernameLower`
+   - Si está ocupado: se muestran sugerencias automáticas (ej: `usuario1`, `usuario2`, `usuario_2025`)
+3) Se crea el usuario en Firebase Auth
+4) Se crea documento en `/users/{uid}` con `UserModel.fromFirebaseAuth` + username
+5) Se guarda `username` y `usernameLower` en Firestore
+6) Se envía email de verificación y se fuerza logout hasta verificar
 
 Implementación actual:
-- `AuthNotifier.registerWithEmailAndPassword()`
+- `AuthNotifier.registerWithEmailAndPassword(email, password, displayName, username)`
+- Validación de formato con `Validator.isValidUsername()`
+- Verificación de disponibilidad con `UserService.isUsernameAvailable()`
+- Generación de sugerencias si username está ocupado
 - Sanitización de `displayName` aplicada (T127)
-- `UserService.createUser()`
+- `UserService.createUser()` guarda username y usernameLower
 - Email de verificación y logout posterior
 
 Reglas Firestore (users):
 - create/update/delete solo por el propio usuario (`request.auth.uid == userId`)
+
+**Cambios T163:**
+- ✅ Username es obligatorio en el formulario de registro
+- ✅ Validación de disponibilidad antes de crear usuario
+- ✅ Sugerencias automáticas si username está ocupado
+- ✅ Campo de username posicionado después del email en el formulario
 
 Gaps/Mejoras:
 - Rate limiting de registro (no crítico ahora) [Tarea futura]
@@ -51,15 +68,68 @@ Gaps/Mejoras:
 
 ## 🔑 Flujo: Login
 
-1) Usuario envía credenciales
-2) Rate limiting (5/15min; CAPTCHA tras 3 fallos) — implementado
-3) Verificación de email antes de establecer estado autenticado
-4) Actualizar `lastLoginAt`
+### Login con Email/Username y Contraseña
+
+1) Usuario envía credenciales (email **o username**)
+2) **Detección de tipo de credencial:**
+   - Si contiene `@`: se trata como email
+   - Si no contiene `@`: se trata como username
+   - Si username empieza con `@`: se quita el `@` antes de buscar
+3) **Si es username:**
+   - Buscar usuario en Firestore usando `UserService.getUserByUsername()`
+   - Obtener el email asociado al username
+   - Si no existe: error "No se encontró un usuario con ese nombre de usuario"
+4) Rate limiting (5/15min; CAPTCHA tras 3 fallos) — implementado (usando email para rate limiting)
+5) Verificación de email antes de establecer estado autenticado
+6) **Generación automática de username (T163):**
+   - Si el usuario no tiene username, se genera automáticamente
+   - Se intenta generar desde `displayName`, luego desde `email`, finalmente aleatorio
+   - Se guarda en Firestore con `updateUsername()`
+7) Actualizar `lastLoginAt`
+
+### Login con Google (T164)
+
+1) Usuario hace clic en "Continuar con Google"
+2) Se abre el selector de cuenta de Google
+3) Usuario selecciona su cuenta de Google
+4) Firebase Auth autentica con Google
+5) **Si el usuario no existe en Firestore:**
+   - Se crea automáticamente un `UserModel` desde los datos de Google
+   - Se genera automáticamente un username
+   - Se guarda en Firestore con `createUser()`
+6) **Si el usuario ya existe:**
+   - Se actualiza `lastLoginAt`
+   - Si no tiene username, se genera automáticamente
+7) **Datos de Google:**
+   - Email: se usa el email de Google
+   - DisplayName: se usa el nombre de Google
+   - PhotoURL: se usa la foto de perfil de Google
+   - Email verificado: automáticamente verificado (Google ya verifica)
 
 Implementación actual:
-- `AuthNotifier.signInWithEmailAndPassword()` + `RateLimiterService`
-- Verificación de `emailVerified` en `_init()` y logout si no verificado
-- `lastLoginAt` se actualiza automáticamente en el stream de autenticación (`_init()` línea 52)
+- `AuthNotifier.signInWithEmailAndPassword(emailOrUsername, password)` - Login tradicional
+- `AuthNotifier.signInWithGoogle()` - Login con Google (T164)
+- `AuthService.signInWithGoogle()` - Integración con Google Sign-In
+- Detección automática de email vs username
+- `UserService.getUserByUsername()` para buscar por username
+- `AuthNotifier._generateAutomaticUsername()` para usuarios sin username
+- Creación automática de usuario en Firestore si no existe (para Google)
+- `RateLimiterService` (usando email para rate limiting, solo para login tradicional)
+- Verificación de `emailVerified` en `_init()` y logout si no verificado (solo para login tradicional)
+- `lastLoginAt` se actualiza automáticamente en el stream de autenticación
+
+**Cambios T163:**
+- ✅ Login acepta email o username (con o sin @)
+- ✅ Validación de campo acepta ambos formatos
+- ✅ Icono dinámico en el campo (email icon o @ icon)
+- ✅ Generación automática de username para usuarios existentes sin username
+
+**Cambios T164:**
+- ✅ Login con Google implementado
+- ✅ Botón "Continuar con Google" en la página de login
+- ✅ Creación automática de usuario en Firestore para usuarios de Google
+- ✅ Generación automática de username para usuarios de Google
+- ✅ Manejo de errores y cancelación
 
 Gaps/Mejoras:
 - Mensajes i18n centralizados (cubierto en UI, ok)

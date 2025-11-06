@@ -22,13 +22,13 @@ Esta guía de referencia documenta todas las medidas de seguridad necesarias par
 
 **Medidas implementadas/requeridas:**
 - ✅ Firebase Auth para login/registro
-- ✅ Requerir contraseña mínima 8 caracteres
+- ✅ Requerir contraseña mínima 8 caracteres (con validación completa: mayúsculas, minúsculas, números, caracteres especiales)
 - ✅ Validación de email único
-- ❌ Rate limiting en intentos de login
-- ❌ CAPTCHA después de X intentos fallidos
-- ❌ Token refresh automático
-- ❌ Detección de dispositivos sospechosos
-- ❌ 2FA (Two Factor Authentication) - Futuro
+- ✅ Rate limiting en intentos de login (T126 - COMPLETADO)
+- ✅ CAPTCHA después de X intentos fallidos (T126 - COMPLETADO)
+- ❌ Token refresh automático (T167)
+- ❌ Detección de dispositivos sospechosos (T168)
+- ❌ 2FA (Two Factor Authentication) - Futuro (T166)
 
 **Implementaciones críticas:**
 ```dart
@@ -455,10 +455,12 @@ flutter pub audit
 - T52: Gestión de permisos
 - T53: Sistema de seguridad avanzado
 - T65-T67: Permisos por rol
-- Implementar rate limiting
-- Implementar CAPTCHA
-- Export de datos (GDPR)
-- Implementar 2FA (futuro)
+- T129: Export de datos (GDPR)
+- T166: Implementar 2FA (Two Factor Authentication)
+- T167: Token refresh automático
+- T168: Detección de dispositivos sospechosos
+- T169: Encriptación de datos sensibles en Firestore
+- T170: Logging sin datos sensibles y no exponer emails en logs/errores
 
 **Completas ✅:**
 - Firebase Auth básico

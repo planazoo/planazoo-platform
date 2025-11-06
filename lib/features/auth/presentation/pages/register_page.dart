@@ -6,6 +6,7 @@ import 'package:unp_calendario/features/auth/domain/models/auth_state.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifier.dart';
 import 'package:unp_calendario/features/language/presentation/widgets/language_selector.dart';
+import 'package:unp_calendario/features/security/utils/validator.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
@@ -19,16 +20,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
+  String? _usernameError;
+  List<String> _usernameSuggestions = [];
+  bool _hasAttemptedSubmit = false; // Flag para controlar cuándo mostrar errores
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -230,6 +236,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 
                 const SizedBox(height: 20),
                 
+                // Campo de username
+                _buildUsernameField(),
+                
+                const SizedBox(height: 20),
+                
                 // Campo de contraseña
                 _buildPasswordField(),
                 
@@ -291,8 +302,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return TextFormField(
       controller: _nameController,
       textInputAction: TextInputAction.next,
+      onChanged: (value) {
+        // Forzar rebuild para actualizar estado del botón
+        setState(() {});
+      },
       decoration: InputDecoration(
-        labelText: AppLocalizations.of(context)!.nameLabel,
+        labelText: '${AppLocalizations.of(context)!.nameLabel} *',
         hintText: AppLocalizations.of(context)!.nameHint,
         prefixIcon: const Icon(Icons.person_outlined),
         border: OutlineInputBorder(
@@ -306,8 +321,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
       ),
       validator: (value) {
+        // Solo mostrar errores si se ha intentado enviar el formulario
+        if (!_hasAttemptedSubmit) return null;
         if (value == null || value.isEmpty) {
           return AppLocalizations.of(context)!.nameRequired;
         }
@@ -322,12 +347,22 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _buildEmailField() {
     return TextFormField(
       controller: _emailController,
-      keyboardType: TextInputType.emailAddress,
+      keyboardType: TextInputType.text, // Cambiado de emailAddress a text para permitir + y otros caracteres
       textInputAction: TextInputAction.next,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onChanged: (value) {
+        // Forzar rebuild para actualizar estado del botón
+        setState(() {});
+      },
+      onFieldSubmitted: (value) {
+        // Validar al presionar Enter o salir del campo
+        _formKey.currentState?.validate();
+      },
       decoration: InputDecoration(
-        labelText: AppLocalizations.of(context)!.emailLabel,
+        labelText: '${AppLocalizations.of(context)!.emailLabel} *',
         hintText: AppLocalizations.of(context)!.emailHint,
         prefixIcon: const Icon(Icons.email_outlined),
+        errorMaxLines: 2,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -339,16 +374,168 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
+          // Solo mostrar error de campo vacío si se ha intentado enviar
+          if (!_hasAttemptedSubmit) return null;
           return AppLocalizations.of(context)!.emailRequired;
         }
-        if (!value.contains('@')) {
+        // Validar formato de email usando Validator
+        if (!Validator.isValidEmail(value)) {
           return AppLocalizations.of(context)!.emailInvalid;
         }
         return null;
       },
+    );
+  }
+
+  Widget _buildUsernameField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: _usernameController,
+          textInputAction: TextInputAction.next,
+          textCapitalization: TextCapitalization.none,
+          autocorrect: false,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          decoration: InputDecoration(
+            labelText: '${AppLocalizations.of(context)!.usernameLabel} *',
+            hintText: AppLocalizations.of(context)!.usernameHint,
+            prefixIcon: const Icon(Icons.alternate_email),
+            errorText: _usernameError,
+            errorMaxLines: 3,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+          ),
+          onChanged: (value) {
+            // Limpiar error cuando el usuario escribe
+            if (_usernameError != null) {
+              setState(() {
+                _usernameError = null;
+                _usernameSuggestions = [];
+              });
+            }
+            // Forzar rebuild para actualizar estado del botón
+            setState(() {});
+          },
+          onFieldSubmitted: (value) {
+            // Validar solo este campo al presionar Enter o salir
+            final trimmed = value.trim();
+            if (trimmed.isEmpty) {
+              setState(() {
+                _usernameError = AppLocalizations.of(context)!.usernameRequired;
+              });
+            } else if (trimmed != trimmed.toLowerCase()) {
+              setState(() {
+                _usernameError = AppLocalizations.of(context)!.usernameInvalid;
+              });
+            } else if (!Validator.isValidUsername(trimmed)) {
+              setState(() {
+                _usernameError = AppLocalizations.of(context)!.usernameInvalid;
+              });
+            } else {
+              setState(() {
+                _usernameError = null;
+              });
+            }
+            // Forzar rebuild para mostrar/ocultar el error
+            if (mounted) {
+              setState(() {});
+            }
+          },
+          validator: (value) {
+            // Si hay un error específico de username (ocupado, etc.), mostrarlo
+            if (_usernameError != null) {
+              return _usernameError;
+            }
+            // Solo validar formato si se ha intentado enviar o si el campo tiene contenido
+            if (value == null || value.isEmpty) {
+              // Solo mostrar error si se ha intentado enviar
+              if (!_hasAttemptedSubmit) return null;
+              return AppLocalizations.of(context)!.usernameRequired;
+            }
+            final trimmed = value.trim();
+            // Validar primero si tiene mayúsculas (antes de convertir a minúsculas)
+            if (trimmed != trimmed.toLowerCase()) {
+              return AppLocalizations.of(context)!.usernameInvalid;
+            }
+            // Luego validar el formato
+            if (!Validator.isValidUsername(trimmed)) {
+              return AppLocalizations.of(context)!.usernameInvalid;
+            }
+            return null;
+          },
+        ),
+        // Mostrar sugerencias si hay
+        if (_usernameSuggestions.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.usernameSuggestion(_usernameSuggestions.join(', ')),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.orange.shade700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 8,
+                  children: _usernameSuggestions.map((suggestion) {
+                    return ActionChip(
+                      label: Text('@$suggestion'),
+                      onPressed: () {
+                        setState(() {
+                          _usernameController.text = suggestion;
+                          _usernameError = null;
+                          _usernameSuggestions = [];
+                        });
+                        // Forzar validación del formulario para limpiar el error visual
+                        _formKey.currentState?.validate();
+                      },
+                      backgroundColor: Colors.orange.shade50,
+                      labelStyle: TextStyle(
+                        color: Colors.orange.shade900,
+                        fontSize: 12,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -358,10 +545,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       obscureText: _obscurePassword,
       textInputAction: TextInputAction.next,
       autofillHints: const [AutofillHints.newPassword],
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onChanged: (value) {
+        // Forzar rebuild para actualizar estado del botón
+        setState(() {});
+      },
+      onFieldSubmitted: (value) {
+        // Validar al presionar Enter o salir del campo
+        _formKey.currentState?.validate();
+      },
       decoration: InputDecoration(
-        labelText: AppLocalizations.of(context)!.passwordLabel,
+        labelText: '${AppLocalizations.of(context)!.passwordLabel} *',
         hintText: AppLocalizations.of(context)!.passwordHint,
         prefixIcon: const Icon(Icons.lock_outlined),
+        errorMaxLines: 2,
         suffixIcon: IconButton(
           icon: Icon(
             _obscurePassword ? Icons.visibility : Icons.visibility_off,
@@ -383,14 +580,43 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) {
+        final validationResult = Validator.validatePassword(value);
+        
+        // Si el campo está vacío, solo mostrar error si se ha intentado enviar
+        if (validationResult.errorCode == 'passwordRequired') {
+          if (!_hasAttemptedSubmit) return null;
           return AppLocalizations.of(context)!.passwordRequired;
         }
-        if (value.length < 6) {
-          return AppLocalizations.of(context)!.passwordMinLength;
+        
+        // Si hay otros errores de validación, mostrarlos siempre
+        if (!validationResult.isValid && validationResult.errorCode != null) {
+          final loc = AppLocalizations.of(context)!;
+          switch (validationResult.errorCode) {
+            case 'passwordMinLength':
+              return loc.passwordMinLength;
+            case 'passwordNeedsLowercase':
+              return loc.passwordNeedsLowercase;
+            case 'passwordNeedsUppercase':
+              return loc.passwordNeedsUppercase;
+            case 'passwordNeedsNumber':
+              return loc.passwordNeedsNumber;
+            case 'passwordNeedsSpecialChar':
+              return loc.passwordNeedsSpecialChar;
+            default:
+              return null;
+          }
         }
+        
         return null;
       },
     );
@@ -401,16 +627,25 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       controller: _confirmPasswordController,
       obscureText: _obscureConfirmPassword,
       textInputAction: TextInputAction.done,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onChanged: (value) {
+        // Forzar rebuild para actualizar estado del botón
+        setState(() {});
+      },
       onFieldSubmitted: (value) {
-        // Ejecutar registro al presionar Enter
-        final authNotifier = ref.read(authNotifierProvider.notifier);
-        _handleRegister(authNotifier);
+        // Validar antes de intentar registrar
+        if (_formKey.currentState?.validate() ?? false) {
+          // Ejecutar registro al presionar Enter si todo es válido
+          final authNotifier = ref.read(authNotifierProvider.notifier);
+          _handleRegister(authNotifier);
+        }
       },
       autofillHints: const [AutofillHints.newPassword],
       decoration: InputDecoration(
-        labelText: AppLocalizations.of(context)!.confirmPasswordLabel,
+        labelText: '${AppLocalizations.of(context)!.confirmPasswordLabel} *',
         hintText: AppLocalizations.of(context)!.confirmPasswordHint,
         prefixIcon: const Icon(Icons.lock_outlined),
+        errorMaxLines: 2,
         suffixIcon: IconButton(
           icon: Icon(
             _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
@@ -432,11 +667,22 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
+          // Solo mostrar error de campo vacío si se ha intentado enviar
+          if (!_hasAttemptedSubmit) return null;
           return AppLocalizations.of(context)!.confirmPasswordRequired;
         }
+        // Validar que coincida con la contraseña siempre
         if (value != _passwordController.text) {
           return AppLocalizations.of(context)!.passwordsNotMatch;
         }
@@ -499,11 +745,36 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     );
   }
 
+  // Verificar si el formulario es válido (sin mostrar errores)
+  bool _isFormValid() {
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+    
+    // Verificar que todos los campos estén completos
+    if (name.isEmpty || email.isEmpty || username.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      return false;
+    }
+    
+    // Verificar que no haya errores de validación
+    if (name.length < 2) return false;
+    if (!email.contains('@')) return false;
+    if (username.isEmpty || username != username.toLowerCase() || !Validator.isValidUsername(username.toLowerCase())) return false;
+    if (password.length < 6) return false;
+    if (password != confirmPassword) return false;
+    if (_usernameError != null) return false;
+    
+    return true;
+  }
+
   Widget _buildRegisterButton(AuthNotifier authNotifier, bool isLoading) {
+    final isFormValid = _isFormValid();
     return SizedBox(
       height: 50,
       child: ElevatedButton(
-        onPressed: isLoading || !_acceptTerms ? null : () => _handleRegister(authNotifier),
+        onPressed: isLoading || !_acceptTerms || !isFormValid ? null : () => _handleRegister(authNotifier),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColorScheme.color2,
           foregroundColor: Colors.white,
@@ -560,25 +831,87 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       return AppLocalizations.of(context)!.networkError;
     } else if (errorMessage.contains('too-many-requests')) {
       return AppLocalizations.of(context)!.tooManyRequests;
+    } else if (errorMessage.contains('username-taken')) {
+      return AppLocalizations.of(context)!.usernameTaken;
     } else {
       return AppLocalizations.of(context)!.registerError;
     }
   }
 
-  void _handleRegister(AuthNotifier authNotifier) {
-    if (_formKey.currentState!.validate() && _acceptTerms) {
-      authNotifier.createUserWithEmailAndPassword(
-        _emailController.text.trim(),
-        _passwordController.text,
-        displayName: _nameController.text.trim(),
-      );
-    } else if (!_acceptTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Debes aceptar los términos y condiciones'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+  // Generar sugerencias de username
+  List<String> _generateUsernameSuggestions(String baseUsername) {
+    final suggestions = <String>[];
+    final base = baseUsername.trim().toLowerCase();
+    
+    // Intentar con números
+    for (int i = 1; i <= 3; i++) {
+      final candidate = '$base$i';
+      if (Validator.isValidUsername(candidate)) {
+        suggestions.add(candidate);
+      }
     }
+    
+    // Intentar con año actual
+    final year = DateTime.now().year.toString();
+    final candidateYear = '${base}_$year';
+    if (Validator.isValidUsername(candidateYear) && !suggestions.contains(candidateYear)) {
+      suggestions.add(candidateYear);
+    }
+    
+    return suggestions.take(3).toList();
+  }
+
+  Future<void> _handleRegister(AuthNotifier authNotifier) async {
+    // Activar flag para mostrar errores en todos los campos
+    setState(() {
+      _hasAttemptedSubmit = true;
+    });
+    
+    if (!_formKey.currentState!.validate() || !_acceptTerms) {
+      if (!_acceptTerms) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.termsRequired),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Validar username antes de registrar
+    final username = _usernameController.text.trim().toLowerCase();
+    
+    // Validar formato
+    if (!Validator.isValidUsername(username)) {
+      setState(() {
+        _usernameError = AppLocalizations.of(context)!.usernameInvalid;
+      });
+      _formKey.currentState!.validate();
+      return;
+    }
+
+    // Verificar disponibilidad
+    final userService = ref.read(userServiceProvider);
+    final isAvailable = await userService.isUsernameAvailable(username);
+    
+    if (!isAvailable) {
+      // Generar sugerencias
+      final suggestions = _generateUsernameSuggestions(username);
+      setState(() {
+        _usernameError = AppLocalizations.of(context)!.usernameTaken;
+        _usernameSuggestions = suggestions;
+      });
+      _formKey.currentState!.validate();
+      return;
+    }
+
+    // Si todo está bien, proceder con el registro
+    authNotifier.createUserWithEmailAndPassword(
+      _emailController.text.trim(),
+      _passwordController.text,
+      displayName: _nameController.text.trim(),
+      username: username,
+    );
   }
 }

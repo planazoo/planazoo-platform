@@ -1,7 +1,9 @@
 class Validator {
   static bool isValidEmail(String? email) {
     if (email == null || email.isEmpty) return false;
-    final re = RegExp(r'^[\w\.-]+@[\w\.-]+\.[A-Za-z]{2,}$');
+    // Permite letras, números, punto, guion, guion bajo y + en la parte local (antes del @)
+    // Permite letras, números, punto y guion en el dominio
+    final re = RegExp(r'^[\w\.\+\-]+@[\w\.-]+\.[A-Za-z]{2,}$');
     return re.hasMatch(email.trim());
   }
 
@@ -19,6 +21,76 @@ class Validator {
     final re = RegExp(r'^[a-z0-9_]{3,30}$');
     return re.hasMatch(u);
   }
+
+  // Password validation result
+  static PasswordValidationResult validatePassword(String? password) {
+    if (password == null || password.isEmpty) {
+      return PasswordValidationResult(
+        isValid: false,
+        errorCode: 'passwordRequired',
+      );
+    }
+
+    final p = password;
+
+    // Longitud mínima: 8 caracteres
+    if (p.length < 8) {
+      return PasswordValidationResult(
+        isValid: false,
+        errorCode: 'passwordMinLength',
+      );
+    }
+
+    // Debe contener al menos una letra minúscula
+    if (!RegExp(r'[a-z]').hasMatch(p)) {
+      return PasswordValidationResult(
+        isValid: false,
+        errorCode: 'passwordNeedsLowercase',
+      );
+    }
+
+    // Debe contener al menos una letra mayúscula
+    if (!RegExp(r'[A-Z]').hasMatch(p)) {
+      return PasswordValidationResult(
+        isValid: false,
+        errorCode: 'passwordNeedsUppercase',
+      );
+    }
+
+    // Debe contener al menos un número
+    if (!RegExp(r'[0-9]').hasMatch(p)) {
+      return PasswordValidationResult(
+        isValid: false,
+        errorCode: 'passwordNeedsNumber',
+      );
+    }
+
+    // Debe contener al menos un carácter especial
+    if (!RegExp(r'[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\/?]').hasMatch(p)) {
+      return PasswordValidationResult(
+        isValid: false,
+        errorCode: 'passwordNeedsSpecialChar',
+      );
+    }
+
+    return PasswordValidationResult(isValid: true);
+  }
+
+  // Helper method for simple boolean check
+  static bool isValidPassword(String? password) {
+    return validatePassword(password).isValid;
+  }
+}
+
+// Resultado de validación de contraseña
+class PasswordValidationResult {
+  final bool isValid;
+  final String? errorCode;
+
+  PasswordValidationResult({
+    required this.isValid,
+    this.errorCode,
+  });
 }
 
 

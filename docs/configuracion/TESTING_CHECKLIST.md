@@ -2,8 +2,8 @@
 
 > Documento vivo que debe actualizarse cada vez que se completa una tarea o se añade nueva funcionalidad.
 
-**Versión:** 1.1  
-**Última actualización:** Enero 2025 (Actualizado - T109 bloqueos funcionales)  
+**Versión:** 1.3  
+**Última actualización:** Enero 2025 (Actualizado - T163 username obligatorio, login con username, T164 Google login, validación de contraseñas mejorada)  
 **Mantenedor:** Equipo de desarrollo
 
 ---
@@ -97,61 +97,285 @@ Cada caso de prueba debe incluir:
 
 ### 1.1 Registro de Usuario
 
-- [ ] **REG-001:** Registrar nuevo usuario con email válido
-  - Pasos: Crear cuenta con email válido, contraseña segura
-  - Esperado: Usuario creado, redirección a dashboard
+**⚠️ IMPORTANTE (T163):** A partir de T163, el campo `username` es **OBLIGATORIO** en el registro. Todos los nuevos usuarios deben tener un username único.
+
+- [ ] **REG-001:** Registrar nuevo usuario con email válido y username válido
+  - Pasos: 
+    1. Crear cuenta con email válido (ej: `unplanazoo+temp1@gmail.com`)
+    2. Completar campo de nombre
+    3. Completar campo de **username** (ej: `usuario_prueba1`)
+    4. Contraseña segura (mínimo 8 caracteres con mayúsculas, minúsculas, números y caracteres especiales)
+    5. Confirmar contraseña
+    6. Aceptar términos y condiciones
+  - Esperado: 
+    - Usuario creado exitosamente
+    - Username guardado en Firestore con `usernameLower`
+    - Redirección a login
+    - Email de verificación enviado
   - **⚠️ IMPORTANTE:** El usuario NO debe existir previamente en Firebase Auth ni Firestore. Usar `unplanazoo+temp1@gmail.com` o eliminar usuario antes de probar.
   - Estado: 🔄
 
 - [ ] **REG-002:** Registrar usuario con email ya existente
-  - Pasos: Intentar registrar email ya registrado
-  - Esperado: Error claro "Email ya registrado"
+  - Pasos: Intentar registrar email ya registrado (con username válido)
+  - Esperado: Error claro "Email ya registrado" (traducido)
   - Estado: 🔄
 
-- [ ] **REG-003:** Registrar con contraseña débil
-  - Pasos: Contraseña < 6 caracteres
-  - Esperado: Validación que exija contraseña segura
+- [ ] **REG-003:** Registrar con username ya existente
+  - Pasos: 
+    1. Intentar registrar con un username que ya existe (ej: usar `admin` si ya existe)
+    2. Completar todos los demás campos correctamente
+  - Esperado: 
+    - Error "Este nombre de usuario ya está en uso"
+    - Se muestran sugerencias de username alternativos (chips clicables)
+    - Al hacer clic en una sugerencia, se rellena el campo automáticamente
   - Estado: 🔄
 
-- [ ] **REG-004:** Registrar con email inválido
+- [ ] **REG-004:** Registrar con username inválido (formato incorrecto)
+  - Pasos: 
+    1. Intentar registrar con username que no cumple el formato:
+       - Menos de 3 caracteres (ej: `ab`)
+       - Más de 30 caracteres (ej: `usuario_muy_largo_que_excede_el_limite`)
+       - Caracteres especiales no permitidos (ej: `usuario@123`, `usuario-123`, `usuario.123`)
+       - Mayúsculas (ej: `Usuario123`)
+  - Esperado: 
+    - Error de validación claro explicando el formato requerido
+    - Mensaje: "El nombre de usuario debe tener 3-30 caracteres y solo puede contener letras minúsculas, números y guiones bajos (a-z, 0-9, _)"
+  - Estado: 🔄
+
+- [ ] **REG-005:** Registrar con contraseña débil (validación mejorada)
+  - Pasos: 
+    1. Intentar registrar con contraseñas que no cumplan los requisitos:
+       - Menos de 8 caracteres (ej: `12345`)
+       - Sin letra mayúscula (ej: `password123!`)
+       - Sin letra minúscula (ej: `PASSWORD123!`)
+       - Sin número (ej: `Password!`)
+       - Sin carácter especial (ej: `Password123`)
+  - Esperado: 
+    - Error específico según el requisito faltante:
+      - "La contraseña debe tener al menos 8 caracteres"
+      - "La contraseña debe contener al menos una letra mayúscula"
+      - "La contraseña debe contener al menos una letra minúscula"
+      - "La contraseña debe contener al menos un número"
+      - "La contraseña debe contener al menos un carácter especial (!@#$%^&*)"
+    - El error se muestra al salir del campo de contraseña
+    - El botón "Crear Cuenta" está deshabilitado si la contraseña no es válida
+  - Estado: ✅
+
+- [ ] **REG-006:** Registrar con email inválido
   - Pasos: Email sin @ o formato incorrecto
   - Esperado: Error de validación de email
   - Estado: 🔄
 
-- [ ] **REG-005:** Registro con campos vacíos
-  - Pasos: Dejar campos requeridos vacíos
+- [ ] **REG-007:** Registro con campos vacíos
+  - Pasos: Dejar campos requeridos vacíos (nombre, email, username, contraseña)
   - Esperado: Validaciones que marquen campos obligatorios
   - Estado: 🔄
 
-### 1.2 Inicio de Sesión
-
-- [ ] **LOGIN-001:** Iniciar sesión con credenciales válidas
-  - Pasos: Email y contraseña correctos
-  - Esperado: Login exitoso, sesión activa
+- [ ] **REG-008:** Validación de sugerencias de username
+  - Pasos: 
+    1. Intentar registrar con username ocupado (ej: `admin`)
+    2. Verificar que aparecen sugerencias (ej: `admin1`, `admin2`, `admin_2025`)
+    3. Hacer clic en una sugerencia
+  - Esperado: 
+    - El campo de username se rellena automáticamente con la sugerencia seleccionada
+    - El error desaparece
+    - Se puede proceder con el registro
   - Estado: 🔄
 
-- [ ] **LOGIN-002:** Iniciar sesión con email incorrecto
+- [ ] **REG-009:** Username con @ al inicio (opcional)
+  - Pasos: Intentar registrar con `@usuario` (con @ al inicio)
+  - Esperado: 
+    - El sistema debe aceptar el username con o sin @
+    - Se guarda sin el @ en Firestore
+  - Estado: 🔄
+
+- [ ] **REG-010:** Validación de contraseña en tiempo real
+  - Pasos: 
+    1. Escribir contraseña débil (ej: `12345`)
+    2. Salir del campo de contraseña
+    3. Escribir contraseña mejor (ej: `12345678`)
+    4. Salir del campo
+    5. Añadir mayúscula (ej: `Password123!`)
+    6. Salir del campo
+  - Esperado: 
+    - Los errores se muestran al salir del campo
+    - Los errores desaparecen cuando se cumplen los requisitos
+    - El botón "Crear Cuenta" se habilita solo cuando la contraseña es válida
+  - Estado: ✅
+
+- [ ] **REG-011:** Validación de email en tiempo real
+  - Pasos: 
+    1. Escribir email inválido (ej: `usuario@`)
+    2. Salir del campo de email
+    3. Escribir email válido (ej: `usuario@email.com`)
+    4. Salir del campo
+  - Esperado: 
+    - Error "El formato del email no es válido" al salir con email inválido
+    - El error desaparece cuando el email es válido
+    - El botón "Crear Cuenta" se habilita solo cuando el email es válido
+  - Estado: ✅
+
+- [ ] **REG-012:** Validación de confirmar contraseña en tiempo real
+  - Pasos: 
+    1. Escribir contraseña válida (ej: `Password123!`)
+    2. Escribir confirmación diferente (ej: `Password456!`)
+    3. Salir del campo de confirmar contraseña
+    4. Escribir la misma contraseña
+    5. Salir del campo
+  - Esperado: 
+    - Error "Las contraseñas no coinciden" al salir si no coinciden
+    - El error desaparece cuando coinciden
+    - El botón "Crear Cuenta" se habilita solo cuando las contraseñas coinciden
+  - Estado: ✅
+
+- [ ] **REG-013:** Botón "Crear Cuenta" deshabilitado hasta que todo sea válido
+  - Pasos: 
+    1. Abrir formulario de registro
+    2. Verificar que el botón está deshabilitado
+    3. Seleccionar checkbox de términos (sin llenar campos)
+    4. Completar todos los campos correctamente uno por uno
+  - Esperado: 
+    - El botón está deshabilitado inicialmente
+    - El botón sigue deshabilitado si solo se selecciona el checkbox
+    - El botón se habilita solo cuando todos los campos son válidos Y el checkbox está seleccionado
+  - Estado: ✅
+
+### 1.2 Inicio de Sesión
+
+**⚠️ IMPORTANTE (T163):** A partir de T163, el login acepta tanto **email** como **username** (con o sin @).
+
+- [ ] **LOGIN-001:** Iniciar sesión con email válido
+  - Pasos: 
+    1. Ingresar email válido (ej: `unplanazoo+admin@gmail.com`)
+    2. Ingresar contraseña correcta
+  - Esperado: 
+    - Login exitoso
+    - Sesión activa
+    - Redirección a dashboard
+  - Estado: ✅
+
+- [ ] **LOGIN-002:** Iniciar sesión con username (con @)
+  - Pasos: 
+    1. Ingresar username con @ (ej: `@admin`)
+    2. Ingresar contraseña correcta
+  - Esperado: 
+    - Login exitoso
+    - El sistema detecta que es username y busca el email asociado
+    - Sesión activa
+  - Estado: ✅
+
+- [ ] **LOGIN-003:** Iniciar sesión con username (sin @)
+  - Pasos: 
+    1. Ingresar username sin @ (ej: `admin`)
+    2. Ingresar contraseña correcta
+  - Esperado: 
+    - Login exitoso
+    - El sistema detecta que es username (no contiene @) y busca el email asociado
+    - Sesión activa
+  - Estado: ✅
+
+- [ ] **LOGIN-004:** Iniciar sesión con email incorrecto
   - Pasos: Email no registrado (usar email que NO exista)
-  - Esperado: Error "Credenciales inválidas"
+  - Esperado: Error "No se encontró una cuenta con este email"
   - **⚠️ IMPORTANTE:** El usuario NO debe existir. Usar email que no esté registrado.
   - Estado: 🔄
 
-- [ ] **LOGIN-003:** Iniciar sesión con contraseña incorrecta
+- [ ] **LOGIN-005:** Iniciar sesión con username incorrecto/no existente
+  - Pasos: 
+    1. Ingresar username que no existe (ej: `usuario_inexistente`)
+    2. Ingresar cualquier contraseña
+  - Esperado: Error "No se encontró un usuario con ese nombre de usuario"
+  - Estado: ✅
+
+- [ ] **LOGIN-006:** Iniciar sesión con contraseña incorrecta (usando email)
   - Pasos: Email correcto, contraseña incorrecta
-  - Esperado: Error "Credenciales inválidas"
+  - Esperado: Error "Contraseña incorrecta"
   - Estado: 🔄
 
-- [ ] **LOGIN-004:** Recuperar contraseña
+- [ ] **LOGIN-007:** Iniciar sesión con contraseña incorrecta (usando username)
+  - Pasos: 
+    1. Username correcto (ej: `@admin`)
+    2. Contraseña incorrecta
+  - Esperado: Error "Contraseña incorrecta"
+  - Estado: 🔄
+
+- [ ] **LOGIN-008:** Validación de campo email/username en login
+  - Pasos: 
+    1. Intentar login con campo vacío
+    2. Intentar login con formato inválido (ni email ni username válido)
+  - Esperado: 
+    - Error de validación: "Ingresa un email válido o un nombre de usuario"
+    - El campo muestra el error claramente
+  - Estado: 🔄
+
+- [ ] **LOGIN-009:** Icono dinámico en campo de login
+  - Pasos: 
+    1. Escribir un email (ej: `usuario@email.com`)
+    2. Borrar y escribir un username (ej: `@usuario`)
+  - Esperado: 
+    - El icono cambia dinámicamente: email icon cuando es email, @ icon cuando es username
+  - Estado: 🔄
+
+- [ ] **LOGIN-015:** Recuperar contraseña
   - Pasos: Click "Olvidé mi contraseña", ingresar email
   - Esperado: Email de recuperación enviado
   - Estado: 🔄
 
-- [ ] **LOGIN-005:** Cerrar sesión
+- [ ] **LOGIN-016:** Cerrar sesión
   - Pasos: Click en logout
   - Esperado: Sesión cerrada, redirección a login
   - Estado: 🔄
 
-- [ ] **LOGIN-006:** Ciclo completo logout/login sin errores de permisos (T159)
+- [ ] **LOGIN-010:** Iniciar sesión con Google (nuevo usuario)
+  - Pasos: 
+    1. Hacer clic en "Continuar con Google"
+    2. Seleccionar una cuenta de Google que NO esté registrada en la app
+    3. Aceptar permisos
+  - Esperado: 
+    - Login exitoso
+    - Se crea automáticamente un usuario en Firestore
+    - Se genera automáticamente un username
+    - Se guardan los datos de Google (email, nombre, foto)
+    - Redirección a dashboard
+  - Estado: 🔄
+
+- [ ] **LOGIN-011:** Iniciar sesión con Google (usuario existente)
+  - Pasos: 
+    1. Hacer clic en "Continuar con Google"
+    2. Seleccionar una cuenta de Google que YA esté registrada en la app
+    3. Aceptar permisos
+  - Esperado: 
+    - Login exitoso
+    - Se actualiza `lastLoginAt`
+    - Si no tiene username, se genera automáticamente
+    - Redirección a dashboard
+  - Estado: 🔄
+
+- [ ] **LOGIN-012:** Cancelar login con Google
+  - Pasos: 
+    1. Hacer clic en "Continuar con Google"
+    2. Cancelar la selección de cuenta
+  - Esperado: 
+    - No se muestra error
+    - El usuario permanece en la pantalla de login
+    - No se crea ningún usuario
+  - Estado: 🔄
+
+- [ ] **LOGIN-013:** Verificar datos de Google en Firestore
+  - Pasos: 
+    1. Hacer login con Google
+    2. Verificar en Firestore que el usuario tiene:
+       - `email` (del Google)
+       - `displayName` (del Google)
+       - `photoURL` (del Google)
+       - `username` (generado automáticamente)
+       - `usernameLower` (en minúsculas)
+  - Esperado: 
+    - Todos los campos están presentes y correctos
+    - El username es único y válido
+  - Estado: 🔄
+
+- [ ] **LOGIN-014:** Ciclo completo logout/login sin errores de permisos (T159)
   - Pasos: 
     1. Hacer login con usuario válido
     2. Navegar a un plan y verificar que eventos/alojamientos se cargan correctamente
@@ -198,9 +422,20 @@ Cada caso de prueba debe incluir:
   - Esperado: Validación y confirmación requerida
   - Estado: 🔄
 
-- [ ] **PROF-004:** Cambiar contraseña
-  - Pasos: Modificar contraseña (actual + nueva)
-  - Esperado: Validación de contraseña actual, cambio exitoso
+- [ ] **PROF-004:** Cambiar contraseña (validación mejorada)
+  - Pasos: 
+    1. Ir a configuración de cuenta
+    2. Intentar cambiar contraseña con nueva contraseña que no cumple requisitos:
+       - Menos de 8 caracteres
+       - Sin mayúscula
+       - Sin minúscula
+       - Sin número
+       - Sin carácter especial
+    3. Cambiar a contraseña válida (ej: `NuevaPass123!`)
+  - Esperado: 
+    - Validación de contraseña actual requerida
+    - Errores específicos para cada requisito faltante en la nueva contraseña
+    - Cambio exitoso solo con contraseña que cumple todos los requisitos
   - Estado: 🔄
 
 - [ ] **PROF-005:** Subir foto de perfil

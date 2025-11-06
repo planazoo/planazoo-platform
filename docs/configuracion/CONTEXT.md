@@ -40,12 +40,19 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - Evitar regresiones de interacción (tap, drag&drop, dobles clics).
 - Revisar lints tras cada cambio en archivos modificados.
 - Al cerrar una tarea: eliminar `print()`, debugs y código temporal que ya no sea necesario.
+- **⚠️ Verificar multi-idioma:** Antes de cerrar una tarea, verificar que todos los textos nuevos usan `AppLocalizations.of(context)!.key` y no están hardcodeados.
 
 ### 6) Documentación
 - Actualizar `docs/especificaciones/CALENDAR_CAPABILITIES.md` cuando cambie el comportamiento del calendario.
 - Añadir notas breves en `docs/arquitectura/ARCHITECTURE_DECISIONS.md` para decisiones relevantes (p. ej., persistencia).
 - Mantener `CONTEXT.md` como referencia viva de normas.
-- **Multi-idioma:** Todas las strings de la UI deben ser traducibles. Usar archivos `.arb` en `lib/l10n/`. No hardcodear textos.
+- **⚠️ Multi-idioma (OBLIGATORIO):** 
+  - **NUNCA hardcodear textos en español** directamente en el código (Text('Hola'), SnackBar(content: Text('Error')), etc.)
+  - **SIEMPRE usar AppLocalizations:** Todos los textos visibles al usuario deben usar `AppLocalizations.of(context)!.key`
+  - **Archivos de traducción:** Añadir nuevas claves en `lib/l10n/app_es.arb` y `lib/l10n/app_en.arb`
+  - **Al crear nueva funcionalidad:** Añadir las traducciones necesarias ANTES de implementar la UI
+  - **Excepciones:** Solo se permite hardcodear textos técnicos/debug que nunca se muestran al usuario
+  - **Ver T158:** Sistema multi-idioma en progreso (~65% completado). Consultar `docs/tareas/TASKS.md` para estado actual
 - **Multi-plataforma:** App soporta Web + iOS + Android. Verificar compatibilidad de plugins/APIs en las 3 plataformas antes de usar. Priorizar soluciones cross-platform.
 - **Offline-First:** Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
 - **UI/UX:** Consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar siempre `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons` para mantener consistencia. Documentar componentes nuevos en la guía.

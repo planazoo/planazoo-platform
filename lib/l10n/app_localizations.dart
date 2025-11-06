@@ -128,6 +128,18 @@ abstract class AppLocalizations {
   /// **'tu@email.com'**
   String get emailHint;
 
+  /// Etiqueta del campo de email o username en login
+  ///
+  /// In es, this message translates to:
+  /// **'Email o Usuario'**
+  String get emailOrUsernameLabel;
+
+  /// Hint del campo de email o username en login
+  ///
+  /// In es, this message translates to:
+  /// **'tu@email.com o @usuario'**
+  String get emailOrUsernameHint;
+
   /// Etiqueta del campo de contraseña
   ///
   /// In es, this message translates to:
@@ -145,6 +157,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Iniciar Sesión'**
   String get loginButton;
+
+  /// Texto del botón de login con Google
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar con Google'**
+  String get continueWithGoogle;
+
+  /// Error genérico de login con Google
+  ///
+  /// In es, this message translates to:
+  /// **'Error al iniciar sesión con Google'**
+  String get googleSignInError;
+
+  /// Mensaje cuando el usuario cancela el login con Google
+  ///
+  /// In es, this message translates to:
+  /// **'Inicio de sesión cancelado'**
+  String get googleSignInCancelled;
 
   /// Enlace de recuperar contraseña
   ///
@@ -236,6 +266,12 @@ abstract class AppLocalizations {
   /// **'El formato del email no es válido'**
   String get emailInvalid;
 
+  /// Error de formato de email o username en login
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa un email válido o un nombre de usuario'**
+  String get emailOrUsernameInvalid;
+
   /// Error de contraseña requerida
   ///
   /// In es, this message translates to:
@@ -245,8 +281,32 @@ abstract class AppLocalizations {
   /// Error de longitud mínima de contraseña
   ///
   /// In es, this message translates to:
-  /// **'La contraseña debe tener al menos 6 caracteres'**
+  /// **'La contraseña debe tener al menos 8 caracteres'**
   String get passwordMinLength;
+
+  /// Error de contraseña sin letra minúscula
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña debe contener al menos una letra minúscula'**
+  String get passwordNeedsLowercase;
+
+  /// Error de contraseña sin letra mayúscula
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña debe contener al menos una letra mayúscula'**
+  String get passwordNeedsUppercase;
+
+  /// Error de contraseña sin número
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña debe contener al menos un número'**
+  String get passwordNeedsNumber;
+
+  /// Error de contraseña sin carácter especial
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña debe contener al menos un carácter especial (!@#\$%^&*)'**
+  String get passwordNeedsSpecialChar;
 
   /// Error de nombre requerido
   ///
@@ -259,6 +319,48 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'El nombre debe tener al menos 2 caracteres'**
   String get nameMinLength;
+
+  /// Etiqueta del campo de username
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de usuario'**
+  String get usernameLabel;
+
+  /// Hint del campo de username
+  ///
+  /// In es, this message translates to:
+  /// **'ej: juancarlos, maria_garcia'**
+  String get usernameHint;
+
+  /// Error de username requerido
+  ///
+  /// In es, this message translates to:
+  /// **'El nombre de usuario es requerido'**
+  String get usernameRequired;
+
+  /// Error de formato de username inválido
+  ///
+  /// In es, this message translates to:
+  /// **'El nombre de usuario debe tener 3-30 caracteres y solo puede contener letras minúsculas, números y guiones bajos (a-z, 0-9, _)'**
+  String get usernameInvalid;
+
+  /// Error de username ya ocupado
+  ///
+  /// In es, this message translates to:
+  /// **'Este nombre de usuario ya está en uso'**
+  String get usernameTaken;
+
+  /// Mensaje de username disponible
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de usuario disponible'**
+  String get usernameAvailable;
+
+  /// Mensaje con sugerencias de username
+  ///
+  /// In es, this message translates to:
+  /// **'Sugerencias: {suggestions}'**
+  String usernameSuggestion(String suggestions);
 
   /// Error de confirmación de contraseña requerida
   ///
@@ -307,6 +409,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No se encontró una cuenta con este email'**
   String get userNotFound;
+
+  /// Error de username no encontrado en login
+  ///
+  /// In es, this message translates to:
+  /// **'No se encontró un usuario con ese nombre de usuario'**
+  String get usernameNotFound;
 
   /// Error de contraseña incorrecta
   ///
@@ -943,6 +1051,150 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Plans'**
   String get plans;
+
+  /// Título de nuevo alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo Alojamiento'**
+  String get newAccommodation;
+
+  /// Título de editar alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Editar Alojamiento'**
+  String get editAccommodation;
+
+  /// Label de check-in
+  ///
+  /// In es, this message translates to:
+  /// **'Check-in'**
+  String get checkIn;
+
+  /// Label de check-out
+  ///
+  /// In es, this message translates to:
+  /// **'Check-out'**
+  String get checkOut;
+
+  /// Duración en noches
+  ///
+  /// In es, this message translates to:
+  /// **'{count} noche(s)'**
+  String nights(int count);
+
+  /// Label de color
+  ///
+  /// In es, this message translates to:
+  /// **'Color:'**
+  String get color;
+
+  /// Label de participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes:'**
+  String get participantsLabel;
+
+  /// Mensaje cuando no hay participantes seleccionados
+  ///
+  /// In es, this message translates to:
+  /// **'Sin participantes seleccionados (aparecerá en el primer track)'**
+  String get noParticipantsSelected;
+
+  /// Error al cargar participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar participantes: {error}'**
+  String errorLoadingParticipants(String error);
+
+  /// Validación de número válido
+  ///
+  /// In es, this message translates to:
+  /// **'Debe ser un número válido'**
+  String get mustBeValidNumber;
+
+  /// Validación de número no negativo
+  ///
+  /// In es, this message translates to:
+  /// **'No puede ser negativo'**
+  String get cannotBeNegative;
+
+  /// Validación de monto máximo
+  ///
+  /// In es, this message translates to:
+  /// **'Máximo 1.000.000'**
+  String get maxAmount;
+
+  /// Mensaje de calculando conversión
+  ///
+  /// In es, this message translates to:
+  /// **'Calculando...'**
+  String get calculating;
+
+  /// Mensaje de conversión
+  ///
+  /// In es, this message translates to:
+  /// **'Convertido a {currency}:'**
+  String convertedTo(String currency);
+
+  /// Error al calcular conversión
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo calcular la conversión'**
+  String get conversionError;
+
+  /// Botón de generar invitados
+  ///
+  /// In es, this message translates to:
+  /// **'👥 Invitados'**
+  String get generateGuestsButton;
+
+  /// Botón de generar Mini-Frank
+  ///
+  /// In es, this message translates to:
+  /// **'🧬 Mini-Frank'**
+  String get generateMiniFrankButton;
+
+  /// Botón de generar Frankenstein
+  ///
+  /// In es, this message translates to:
+  /// **'🧟 Frankenstein'**
+  String get generateFrankensteinButton;
+
+  /// Error de validación: nombre de alojamiento requerido
+  ///
+  /// In es, this message translates to:
+  /// **'El nombre del alojamiento es obligatorio'**
+  String get accommodationNameRequiredError;
+
+  /// Error de validación: check-out debe ser después de check-in
+  ///
+  /// In es, this message translates to:
+  /// **'La fecha de check-out debe ser posterior al check-in'**
+  String get checkOutAfterCheckInError;
+
+  /// Checkbox de requiere confirmación
+  ///
+  /// In es, this message translates to:
+  /// **'Requiere confirmación de participantes'**
+  String get requiresConfirmation;
+
+  /// Subtítulo de requiere confirmación
+  ///
+  /// In es, this message translates to:
+  /// **'Los participantes deberán confirmar explícitamente su asistencia'**
+  String get requiresConfirmationSubtitle;
+
+  /// Switch de tarjeta obtenida
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjeta obtenida'**
+  String get cardObtained;
+
+  /// Subtítulo de tarjeta obtenida
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar si ya tienes la tarjeta/entrada'**
+  String get cardObtainedSubtitle;
 }
 
 class _AppLocalizationsDelegate

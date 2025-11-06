@@ -20,23 +20,9 @@ class AuthGuard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
 
-    // Mostrar SnackBar para errores en lugar de página de error
-    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-      if (next.hasError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.errorMessage!),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    });
+    // No mostrar errores aquí cuando estamos mostrando LoginPage (status = error o unauthenticated)
+    // LoginPage maneja sus propios errores para evitar duplicación
+    // AuthGuard solo muestra LoginPage, no debe mostrar errores de login
 
     return switch (authState.status) {
       AuthStatus.initial => _buildLoading(context),

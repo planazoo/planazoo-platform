@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T160**
+**Siguiente código de tarea: T172**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -11,7 +11,8 @@
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
 - **GRUPO 5:** T40-T45: Timezones (6 completadas, 0 pendientes) - T81, T82: No existen
 - **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 11 pendientes)
-- **Seguridad:** T51-T53: Validación (3 completadas, 0 pendientes)
+- **Seguridad:** T51-T53: Validación (3 completadas, 0 pendientes), T166-T170: Seguridad avanzada (5 pendientes)
+- **Administración:** T165: Usuarios de administración (1 pendiente)
 - **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
@@ -25,10 +26,11 @@
 - **Exportación:** T133: Exportación Profesional de Planes PDF/Email (1 pendiente)
 - **Importación:** T134: Importar desde Email (1 pendiente)
 - **Privacidad:** T135-T136: Gestión de Cookies y App Tracking Transparency (2 pendientes)
+- **Legal:** T171: Documentos Legales (Términos, Privacidad, etc.) (1 pendiente)
 
 **Migración:** T154-T156: Migración a Mac/iOS (3 pendientes)
 
-**Total: 132 tareas documentadas (68 completadas, 64 pendientes)**
+**Total: 139 tareas documentadas (68 completadas, 71 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -6753,20 +6755,22 @@ Después de hacer logout y volver a hacer login, aparecen errores de permisos (`
 
 ### Cambios Realizados (Pendientes de Verificar)
 - ✅ Añadido `allow list:` explícitamente en `firestore.rules` para `event_participants`
+- ✅ Añadido `allow list:` explícitamente en `firestore.rules` para `plan_participations` (mismo problema)
 - ✅ Verificado que los índices compuestos necesarios existen en `firestore.indexes.json`
+- ✅ Mejorado manejo de errores en streams: Los errores de `permission-denied` después de logout ahora se manejan silenciosamente (comportamiento esperado)
 
 ### Tareas Pendientes
 - [ ] Desplegar las reglas actualizadas en Firebase Console
 - [ ] Verificar que los índices compuestos estén desplegados
 - [ ] Probar el flujo completo: logout → login → verificar que no aparezcan errores
 - [ ] Si persiste el problema, investigar si hay un problema de timing/sincronización del token
-- [ ] Verificar si hay otros servicios con el mismo problema (plan_participations, etc.)
 - [ ] Documentar la solución si requiere cambios adicionales
 
 ### Archivos Afectados
-- `firestore.rules` - Reglas de seguridad actualizadas
+- `firestore.rules` - Reglas de seguridad actualizadas (event_participants y plan_participations)
 - `firestore.indexes.json` - Índices compuestos (ya verificados)
-- `lib/features/calendar/domain/services/event_participant_service.dart` - Servicio que hace las consultas
+- `lib/features/calendar/domain/services/event_participant_service.dart` - Servicio que hace las consultas (mejorado manejo de errores)
+- `lib/features/calendar/domain/services/plan_participation_service.dart` - Servicio que también tenía el mismo problema (mejorado manejo de errores)
 
 ### Criterios de Aceptación
 - ✅ No aparecen errores de permisos después de logout/login
@@ -6786,3 +6790,865 @@ Después de hacer logout y volver a hacer login, aparecen errores de permisos (`
 
 ---
 
+
+## T160 - Mostrar "Reenviar verificaci�n" solo cuando sea necesario
+
+**Estado:**  Pendiente  
+**Prioridad:** Media  
+**Grupo:** UX y Mejoras  
+**Dependencias:** Ninguna
+
+### Descripci�n
+El enlace "Reenviar verificaci�n" aparece siempre visible en la pantalla de login, pero deber�a mostrarse solo cuando sea relevante (cuando el usuario intenta hacer login y su email no est� verificado).
+
+### Problema Identificado
+- El enlace "Reenviar verificaci�n" est� siempre visible en login_page.dart (l�neas 196-214)
+- Esto puede confundir a usuarios que ya tienen su email verificado
+- Solo deber�a aparecer cuando hay un error de "email no verificado" o cuando el usuario lo necesita
+
+### Soluci�n Propuesta
+- Mostrar el enlace condicionalmente:
+  - Cuando hay un error de email no verificado despu�s de intentar login
+  - O a�adir un mensaje informativo cuando el login falla por email no verificado
+- Ocultar el enlace cuando no es relevante
+
+### Archivos Afectados
+- lib/features/auth/presentation/pages/login_page.dart - L�gica condicional para mostrar/ocultar el enlace
+
+### Criterios de Aceptaci�n
+-  El enlace "Reenviar verificaci�n" solo aparece cuando es necesario
+-  Se muestra cuando hay error de email no verificado
+-  No aparece cuando el usuario ya tiene su email verificado
+-  La UX es m�s clara y no confunde al usuario
+
+### Notas
+- Detectado durante testing de REG-001
+- Mejora de UX, no es un error cr�tico
+
+---
+
+## T161 - A�adir nota sobre bandeja de spam en mensaje de registro
+
+**Estado:**  Pendiente  
+**Prioridad:** Baja  
+**Grupo:** UX y Mejoras  
+**Dependencias:** Ninguna
+
+### Descripci�n
+Mejorar el mensaje de �xito despu�s del registro para informar al usuario que revise su bandeja de spam si no recibe el email de verificaci�n.
+
+### Problema Identificado
+- Despu�s del registro exitoso, se env�a un email de verificaci�n
+- Los emails pueden llegar a la bandeja de spam
+- El usuario no sabe que debe revisar spam si no ve el email
+
+### Soluci�n Propuesta
+- A�adir en el mensaje de �xito del registro una nota como:
+  - "Si no recibes el email, revisa tu bandeja de spam"
+  - O incluir esta informaci�n en el mensaje de verificaci�n
+
+### Archivos Afectados
+- lib/features/auth/presentation/pages/register_page.dart - Mensaje de �xito despu�s del registro
+- lib/l10n/app_es.arb y lib/l10n/app_en.arb - A�adir texto traducible
+
+### Criterios de Aceptaci�n
+-  El mensaje de �xito del registro menciona revisar spam
+-  El texto est� traducido (ES/EN)
+-  La UX es m�s clara y ayuda al usuario
+
+### Notas
+- Detectado durante testing de REG-001
+- Mejora de UX, no es un error cr�tico
+
+---
+
+## T162 - Traducir mensajes de error en auth_service.dart
+
+**Estado:**  Pendiente  
+**Prioridad:** Media  
+**Grupo:** Multi-idioma (T158)  
+**Dependencias:** Ninguna
+
+### Descripci�n
+Los mensajes de error en uth_service.dart est�n hardcodeados en espa�ol. Aunque 
+egister_page.dart intenta traducirlos, el error original ya viene en espa�ol. Debe devolver c�digos de error en lugar de mensajes traducidos, o usar un sistema de traducci�n.
+
+### Problema Identificado
+- uth_service.dart l�nea 128: 
+eturn 'Ya existe una cuenta con este email'; (hardcodeado)
+- Todos los mensajes de error en _handleFirebaseAuthException est�n en espa�ol hardcodeado
+- Aunque 
+egister_page.dart tiene _getUserFriendlyErrorMessage que intenta traducir, el mensaje original ya viene en espa�ol
+- Detectado durante testing de REG-002
+
+### Soluci�n Propuesta
+**Opci�n A (Recomendada):** Devolver el c�digo de error de Firebase en lugar del mensaje traducido, y dejar que la UI traduzca:
+- Cambiar _handleFirebaseAuthException para devolver el c�digo (ej: 'email-already-in-use')
+- La UI ya tiene l�gica para traducir estos c�digos
+
+**Opci�n B:** Pasar el contexto a uth_service para usar AppLocalizations (menos recomendado, acopla el servicio con la UI)
+
+### Archivos Afectados
+- lib/features/auth/domain/services/auth_service.dart - Cambiar _handleFirebaseAuthException para devolver c�digos
+- Verificar que 
+egister_page.dart y login_page.dart manejen correctamente los c�digos
+
+### Criterios de Aceptaci�n
+-  Los mensajes de error est�n traducidos correctamente
+-  Funciona en espa�ol e ingl�s
+-  El servicio no tiene textos hardcodeados
+
+### Notas
+- Detectado durante testing de REG-002
+- Parte de la migraci�n de textos de T158
+- La clave emailAlreadyInUse ya existe en los archivos .arb
+
+---
+
+## T163 - Hacer username obligatorio en el registro
+
+**Estado:** 🔴 Pendiente
+**Prioridad:** Media
+**Grupo:** UX y Mejoras
+**Dependencias:** T162 (para tener mensajes de error traducidos)
+
+### Descripción
+Hacer que el campo `username` sea obligatorio durante el registro, similar a Instagram. Esto mejora la experiencia de invitaciones y búsqueda de usuarios.
+
+### Problema Identificado
+- Actualmente el `username` es opcional y se configura después del registro
+- Esto dificulta las invitaciones por `@username` si el usuario no lo ha configurado
+- La búsqueda de usuarios es menos eficiente sin username
+- Detectado durante testing de REG-001/REG-002
+
+### Solución Propuesta
+1. **Añadir campo de username en `register_page.dart`:**
+   - Campo obligatorio con validación en tiempo real
+   - Validar formato: 3-30 caracteres, [a-z0-9_], minúsculas
+   - Verificar disponibilidad (puede ser al enviar el formulario o en tiempo real)
+
+2. **Mejorar UX del campo:**
+   - Mostrar ejemplos: "ej: juancarlos, maria_garcia"
+   - Indicador visual de disponibilidad (✓ disponible, ✗ ocupado)
+   - Sugerencias automáticas si el username está ocupado (ej: "juancarlos1", "juancarlos_2025")
+
+3. **Actualizar `auth_notifier.dart`:**
+   - Modificar `registerWithEmailAndPassword` para aceptar `username` como parámetro obligatorio
+   - Validar disponibilidad antes de crear el usuario
+   - Guardar `username` y `usernameLower` en Firestore durante el registro
+
+4. **Traducciones:**
+   - Añadir claves en `app_es.arb` y `app_en.arb`:
+     - `usernameLabel`, `usernameHint`, `usernameRequired`
+     - `usernameInvalid`, `usernameTaken`, `usernameAvailable`
+     - `usernameSuggestion` (para sugerencias)
+
+### Archivos Afectados
+- `lib/features/auth/presentation/pages/register_page.dart` - Añadir campo de username
+- `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Modificar registro para incluir username
+- `lib/features/auth/domain/services/user_service.dart` - Verificar disponibilidad durante registro
+- `lib/l10n/app_es.arb` y `lib/l10n/app_en.arb` - Añadir traducciones
+
+### Criterios de Aceptación
+- ✅ El campo username es obligatorio en el registro
+- ✅ Se valida el formato (3-30 caracteres, [a-z0-9_], minúsculas)
+- ✅ Se verifica disponibilidad antes de crear el usuario
+- ✅ Se muestran mensajes de error claros y traducidos
+- ✅ El username se guarda correctamente en Firestore con `usernameLower`
+- ✅ Funciona en español e inglés
+- ✅ La UX es clara y no confunde al usuario
+
+### Notas
+- Detectado durante testing de REG-001/REG-002
+- Relacionado con T137 (username único ya implementado)
+- Depende de T162 para tener mensajes de error traducidos
+- Similar a Instagram: username obligatorio para mejor experiencia de usuario
+
+---
+
+## T164 - Login con Google (Social Authentication)
+
+**Estado:** ✅ Completado
+**Prioridad:** Media
+**Grupo:** Autenticación
+**Dependencias:** T163 (username obligatorio)
+
+### Descripción
+Implementar login con Google usando Firebase Authentication. Esto permite a los usuarios iniciar sesión con su cuenta de Google sin necesidad de crear una cuenta nueva.
+
+### Funcionalidades
+1. Botón "Continuar con Google" en la página de login
+2. Autenticación con Google usando Firebase Auth
+3. Generación automática de username para usuarios de Google (si no existe)
+4. Creación automática de usuario en Firestore con datos de Google
+5. Manejo de errores y estados de carga
+
+### Implementación
+- ✅ Añadir dependencia `google_sign_in` a `pubspec.yaml`
+- ✅ Implementar `signInWithGoogle()` en `AuthService`
+- ✅ Implementar `signInWithGoogle()` en `AuthNotifier`
+- ✅ Añadir botón de Google en `login_page.dart`
+- ✅ Generar username automático para usuarios de Google
+- ✅ Añadir traducciones (ES/EN)
+- ✅ Actualizar documentación
+- ✅ Crear guía de configuración en Firebase Console
+- ✅ Actualizar TESTING_CHECKLIST.md con casos de prueba
+
+### Configuración Requerida
+1. **Firebase Console:**
+   - Habilitar "Google" como proveedor de autenticación
+   - Configurar dominios autorizados (si aplica)
+
+2. **Android:**
+   - SHA-1 fingerprint configurado en Firebase Console
+   - `google-services.json` actualizado
+
+3. **iOS:**
+   - `GoogleService-Info.plist` actualizado
+   - URL Scheme configurado en Info.plist
+
+### Archivos Afectados
+- `pubspec.yaml` - Añadir `google_sign_in`
+- `lib/features/auth/domain/services/auth_service.dart` - Método `signInWithGoogle()`
+- `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Método `signInWithGoogle()`
+- `lib/features/auth/presentation/pages/login_page.dart` - Botón de Google
+- `lib/l10n/app_es.arb` y `lib/l10n/app_en.arb` - Traducciones
+- `docs/flujos/FLUJO_CRUD_USUARIOS.md` - Actualizar flujo de login
+- `docs/configuracion/TESTING_CHECKLIST.md` - Añadir casos de prueba
+
+### Criterios de Aceptación
+- ✅ Los usuarios pueden iniciar sesión con Google
+- ✅ Se crea automáticamente un usuario en Firestore con datos de Google
+- ✅ Se genera automáticamente un username si no existe
+- ✅ El flujo es similar al login con email/username
+- ✅ Los errores se manejan correctamente y están traducidos
+- ✅ Funciona en Android, iOS y Web
+- ✅ La UI es clara y consistente con el resto de la app
+
+### Notas
+- Los usuarios de Google que no tienen username recibirán uno automático (igual que usuarios existentes)
+- El email de Google se usa como email del usuario
+- El nombre de Google se usa como `displayName`
+- La foto de perfil de Google se guarda en `photoURL`
+- No requiere verificación de email (Google ya verifica)
+
+---
+
+## T165 - Definir y crear usuarios de administración de la app y Firestore
+
+**Estado:** 🔄 Pendiente  
+**Prioridad:** Media  
+**Grupo:** Seguridad y Administración  
+**Dependencias:** Ninguna
+
+### Descripción
+Definir, crear y documentar el sistema de usuarios de administración de la aplicación y Firestore. Estos usuarios tendrán permisos especiales para gestionar la plataforma, acceder a datos administrativos, y realizar tareas de mantenimiento.
+
+### Objetivos
+1. Definir qué es un usuario administrador de la app (diferente de admin de un plan)
+2. Crear la estructura en Firestore para identificar usuarios administradores
+3. Definir permisos y capacidades de los administradores
+4. Crear documentación sobre cómo crear y gestionar usuarios administradores
+5. Implementar verificación de rol de administrador en el código (si aplica)
+
+### Funcionalidades a definir
+
+#### 1. Modelo de Datos
+- Campo en `UserModel` para identificar administradores (ej: `isAppAdmin: bool`)
+- O colección separada `app_admins` con lista de UIDs
+- Definir niveles de administración si aplica (super admin, moderador, soporte, etc.)
+
+#### 2. Permisos de Administrador
+- Acceso a datos de todos los usuarios
+- Acceso a estadísticas globales de la app
+- Gestión de planes (ver, editar, eliminar cualquier plan)
+- Gestión de usuarios (ver, editar, eliminar usuarios)
+- Acceso a logs y métricas
+- Gestión de contenido reportado
+- Acceso a Firebase Console (ya existe, pero documentar)
+
+#### 3. Firestore Rules
+- Reglas especiales para usuarios administradores
+- Verificación de rol de administrador en reglas
+- Permisos de lectura/escritura ampliados
+
+#### 4. UI/UX (si aplica)
+- Página de administración (si se implementa en la app)
+- Indicadores visuales de rol de administrador
+- Herramientas de gestión administrativa
+
+### Implementación Propuesta
+
+#### Opción A: Campo en UserModel (Recomendada)
+```dart
+// En UserModel
+final bool isAppAdmin;
+final List<String>? adminRoles; // ['super_admin', 'moderator', 'support']
+```
+
+#### Opción B: Colección separada
+```dart
+// Colección app_admins/{uid}
+{
+  userId: string,
+  roles: array<string>,
+  grantedAt: timestamp,
+  grantedBy: string,
+  permissions: map
+}
+```
+
+### Archivos Afectados
+- `lib/features/auth/domain/models/user_model.dart` - Añadir campo `isAppAdmin` o similar
+- `firestore.rules` - Añadir función `isAppAdmin()` y reglas especiales
+- `docs/configuracion/USUARIOS_ADMINISTRACION.md` - **NUEVO** - Documentación completa
+- `docs/guias/GUIA_SEGURIDAD.md` - Actualizar con información de administradores
+- `lib/features/auth/domain/services/user_service.dart` - Métodos para verificar rol admin (si aplica)
+
+### Documentación a Crear
+
+#### `docs/configuracion/USUARIOS_ADMINISTRACION.md`
+Debe incluir:
+1. **Qué son los usuarios administradores**
+   - Diferencia entre admin de plan vs admin de app
+   - Casos de uso y responsabilidades
+
+2. **Cómo crear un usuario administrador**
+   - Pasos en Firebase Console (Firestore)
+   - Script o proceso manual
+   - Verificación de creación
+
+3. **Estructura de datos**
+   - Modelo de datos en Firestore
+   - Campos requeridos
+   - Ejemplos de documentos
+
+4. **Permisos y capacidades**
+   - Lista completa de permisos
+   - Limitaciones y restricciones
+   - Buenas prácticas de seguridad
+
+5. **Gestión de administradores**
+   - Cómo añadir nuevos administradores
+   - Cómo revocar permisos
+   - Auditoría y logs
+
+6. **Firestore Rules**
+   - Reglas especiales para administradores
+   - Ejemplos de consultas permitidas
+   - Seguridad y validación
+
+7. **Troubleshooting**
+   - Problemas comunes
+   - Cómo verificar si un usuario es admin
+   - Recuperación de acceso
+
+### Criterios de Aceptación
+- ✅ Documento `USUARIOS_ADMINISTRACION.md` creado y completo
+- ✅ Estructura de datos definida y documentada
+- ✅ Proceso de creación de administradores documentado paso a paso
+- ✅ Firestore Rules actualizadas con verificación de administradores (si aplica)
+- ✅ Modelo de datos actualizado (si se añade campo a UserModel)
+- ✅ Guía de seguridad actualizada con información de administradores
+- ✅ Ejemplos prácticos de creación y gestión incluidos en documentación
+- ✅ Buenas prácticas de seguridad documentadas
+
+### Notas
+- Esta tarea es principalmente de documentación y definición
+- La implementación de UI de administración puede ser una tarea separada (futura)
+- Priorizar seguridad: los administradores tienen acceso amplio, documentar bien los riesgos
+- Considerar crear al menos un usuario administrador inicial para testing
+- Revisar `docs/configuracion/USUARIOS_PRUEBA.md` para ver si hay usuarios de prueba que deban ser administradores
+
+### Relacionado con
+- T51-T53: Validación y seguridad
+- T65-T67: Gestión de permisos
+- `docs/guias/GUIA_SEGURIDAD.md` - Guía de seguridad
+- `docs/configuracion/USUARIOS_PRUEBA.md` - Usuarios de prueba
+
+---
+
+## T166 - Implementar 2FA (Two Factor Authentication)
+
+**Estado:** 🔄 Pendiente  
+**Prioridad:** Baja (Futuro)  
+**Grupo:** Seguridad  
+**Dependencias:** Ninguna
+
+### Descripción
+Implementar autenticación de doble factor (2FA) para mejorar la seguridad de las cuentas de usuario. Los usuarios podrán activar 2FA opcionalmente para proteger sus cuentas con un segundo factor de autenticación.
+
+### Objetivos
+1. Implementar soporte para 2FA en Firebase Authentication
+2. Permitir a los usuarios activar/desactivar 2FA desde la configuración de cuenta
+3. Implementar flujo de login con segundo factor
+4. Soporte para múltiples métodos de 2FA (SMS, TOTP/Google Authenticator)
+
+### Funcionalidades
+
+#### 1. Métodos de 2FA
+- **SMS:** Envío de código por SMS (requiere configuración en Firebase Console)
+- **TOTP:** Códigos generados por apps como Google Authenticator, Authy, etc.
+- **Email:** Código enviado por email (menos seguro, opcional)
+
+#### 2. Activación de 2FA
+- UI en configuración de cuenta para activar 2FA
+- Proceso de configuración guiado
+- Generación de códigos de respaldo
+- QR code para apps TOTP
+
+#### 3. Flujo de Login con 2FA
+- Detectar si el usuario tiene 2FA activado
+- Solicitar segundo factor después de login exitoso
+- Validar código de segundo factor
+- Opción de "recordar dispositivo" para no pedir 2FA en cada login
+
+#### 4. Gestión de 2FA
+- Desactivar 2FA (requiere verificación)
+- Ver códigos de respaldo
+- Regenerar códigos de respaldo
+- Ver dispositivos confiables
+
+### Implementación Propuesta
+
+#### Firebase Authentication
+- Configurar proveedores de 2FA en Firebase Console
+- Usar `firebase_auth` para enviar códigos SMS
+- Implementar TOTP usando librería como `otp` o similar
+
+#### Archivos a Crear/Modificar
+- `lib/features/auth/domain/services/two_factor_service.dart` - Servicio para gestión de 2FA
+- `lib/features/auth/presentation/pages/two_factor_setup_page.dart` - UI para configurar 2FA
+- `lib/features/auth/presentation/pages/two_factor_verify_page.dart` - UI para verificar código 2FA
+- `lib/features/auth/presentation/pages/account_settings_page.dart` - Añadir opción de 2FA
+- `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Integrar 2FA en flujo de login
+- `firestore.rules` - Reglas para almacenar configuración de 2FA (si aplica)
+
+### Criterios de Aceptación
+- ✅ Usuarios pueden activar 2FA desde configuración de cuenta
+- ✅ Login requiere segundo factor si está activado
+- ✅ Soporte para SMS y TOTP (Google Authenticator)
+- ✅ Códigos de respaldo generados y mostrados al usuario
+- ✅ Opción de "recordar dispositivo" funciona correctamente
+- ✅ Usuarios pueden desactivar 2FA (con verificación)
+- ✅ UI clara y guiada para configuración
+- ✅ Manejo de errores (código incorrecto, SMS no recibido, etc.)
+- ✅ Documentación actualizada
+
+### Notas
+- Esta es una funcionalidad de seguridad avanzada
+- Requiere configuración adicional en Firebase Console (SMS)
+- Considerar hacer 2FA obligatorio para administradores (T165)
+- Prioridad baja: implementar cuando sea necesario para seguridad adicional
+
+### Relacionado con
+- T165: Usuarios de administración (2FA obligatorio para admins)
+- `docs/guias/GUIA_SEGURIDAD.md` - Guía de seguridad (línea 31)
+
+---
+
+## T167 - Token Refresh Automático
+
+**Estado:** 🔄 Pendiente  
+**Prioridad:** Media  
+**Grupo:** Seguridad  
+**Dependencias:** Ninguna
+
+### Descripción
+Implementar renovación automática de tokens de autenticación de Firebase para mantener las sesiones activas sin interrupciones y mejorar la seguridad.
+
+### Objetivos
+1. Detectar cuando un token está próximo a expirar
+2. Renovar automáticamente el token antes de que expire
+3. Manejar errores de renovación (logout si falla)
+4. Evitar interrupciones en la experiencia del usuario
+
+### Funcionalidades
+
+#### 1. Detección de Expiración
+- Monitorear tiempo de expiración del token
+- Renovar automáticamente cuando quede X tiempo (ej: 5 minutos)
+- Verificar token antes de operaciones críticas
+
+#### 2. Renovación Automática
+- Renovar token en background sin interrumpir al usuario
+- Manejar múltiples intentos de renovación
+- Notificar al usuario solo si falla la renovación
+
+#### 3. Manejo de Errores
+- Si la renovación falla, hacer logout automático
+- Mostrar mensaje claro al usuario
+- Permitir re-login sin pérdida de datos
+
+### Implementación Propuesta
+
+#### Firebase Auth
+- Usar `FirebaseAuth.instance.currentUser?.getIdToken()` para obtener token
+- Verificar `expirationTime` del token
+- Implementar timer/stream para monitorear expiración
+
+#### Archivos a Crear/Modificar
+- `lib/features/auth/domain/services/token_refresh_service.dart` - Servicio para renovación de tokens
+- `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Integrar renovación automática
+- `lib/features/auth/presentation/providers/auth_providers.dart` - Provider para token refresh
+
+### Criterios de Aceptación
+- ✅ Token se renueva automáticamente antes de expirar
+- ✅ No hay interrupciones en la experiencia del usuario
+- ✅ Si la renovación falla, se hace logout y se notifica al usuario
+- ✅ Funciona correctamente en background
+- ✅ No hay múltiples renovaciones simultáneas
+- ✅ Manejo de errores robusto
+
+### Notas
+- Firebase Auth maneja algunos aspectos automáticamente, pero podemos mejorar la experiencia
+- Considerar renovar token antes de operaciones críticas (cambiar contraseña, eliminar cuenta, etc.)
+
+### Relacionado con
+- `docs/guias/GUIA_SEGURIDAD.md` - Guía de seguridad (línea 29)
+
+---
+
+## T168 - Detección de Dispositivos Sospechosos
+
+**Estado:** 🔄 Pendiente  
+**Prioridad:** Media  
+**Grupo:** Seguridad  
+**Dependencias:** Ninguna
+
+### Descripción
+Implementar detección de accesos desde dispositivos nuevos o sospechosos y notificar al usuario para mejorar la seguridad de la cuenta.
+
+### Objetivos
+1. Detectar cuando un usuario inicia sesión desde un dispositivo nuevo
+2. Almacenar información de dispositivos confiables
+3. Enviar notificación al usuario cuando hay acceso desde dispositivo nuevo
+4. Permitir al usuario ver y gestionar dispositivos confiables
+
+### Funcionalidades
+
+#### 1. Detección de Dispositivos
+- Identificar dispositivo (plataforma, OS, navegador, etc.)
+- Almacenar hash/ID único del dispositivo
+- Comparar con dispositivos conocidos del usuario
+
+#### 2. Notificaciones
+- Enviar email cuando hay acceso desde dispositivo nuevo
+- Mostrar alerta en la app (si está disponible)
+- Incluir información del dispositivo (ubicación aproximada, IP, etc.)
+
+#### 3. Gestión de Dispositivos
+- Lista de dispositivos confiables en configuración de cuenta
+- Opción de marcar dispositivo como confiable
+- Opción de revocar acceso de un dispositivo
+- Ver última actividad de cada dispositivo
+
+### Implementación Propuesta
+
+#### Almacenamiento
+- Colección `user_devices` en Firestore con:
+  - `userId`
+  - `deviceId` (hash único)
+  - `deviceInfo` (plataforma, OS, navegador, etc.)
+  - `lastSeen` (timestamp)
+  - `isTrusted` (boolean)
+  - `ipAddress` (opcional, con máscara parcial)
+
+#### Archivos a Crear/Modificar
+- `lib/features/auth/domain/services/device_detection_service.dart` - Servicio para detección de dispositivos
+- `lib/features/auth/domain/models/device_model.dart` - Modelo de datos de dispositivo
+- `lib/features/auth/presentation/pages/trusted_devices_page.dart` - UI para gestionar dispositivos
+- `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Integrar detección en login
+- `firestore.rules` - Reglas para colección `user_devices`
+
+### Criterios de Aceptación
+- ✅ Se detecta acceso desde dispositivo nuevo
+- ✅ Se envía notificación por email al usuario
+- ✅ Usuario puede ver lista de dispositivos confiables
+- ✅ Usuario puede revocar acceso de dispositivos
+- ✅ Información de dispositivo se almacena correctamente
+- ✅ Privacidad: IP address con máscara parcial, no datos sensibles
+
+### Notas
+- Considerar usar librería para fingerprinting de dispositivos
+- No almacenar información sensible (IP completa, etc.)
+- Integrar con 2FA (T166): dispositivos confiables pueden saltarse 2FA
+
+### Relacionado con
+- T166: 2FA (dispositivos confiables pueden saltarse 2FA)
+- `docs/guias/GUIA_SEGURIDAD.md` - Guía de seguridad (línea 30, 39)
+
+---
+
+## T169 - Encriptación de Datos Sensibles en Firestore
+
+**Estado:** 🔄 Pendiente  
+**Prioridad:** Alta  
+**Grupo:** Seguridad  
+**Dependencias:** Ninguna
+
+### Descripción
+Implementar encriptación de datos sensibles antes de almacenarlos en Firestore para proteger información crítica incluso si hay un compromiso de la base de datos.
+
+### Objetivos
+1. Identificar qué datos son sensibles y requieren encriptación
+2. Implementar encriptación antes de guardar en Firestore
+3. Implementar desencriptación al leer de Firestore
+4. Gestionar claves de encriptación de forma segura
+
+### Datos Sensibles a Encriptar
+- Información financiera (presupuestos, pagos, cuentas bancarias)
+- Datos de contacto sensibles (teléfonos, direcciones completas)
+- Notas personales con información privada
+- Cualquier dato marcado como "sensible" por el usuario
+
+### Implementación Propuesta
+
+#### Encriptación
+- Usar `encrypt` package de Dart para encriptación AES-256
+- Claves derivadas de secretos almacenados de forma segura
+- Encriptar en el cliente antes de enviar a Firestore
+- Desencriptar al leer de Firestore
+
+#### Archivos a Crear/Modificar
+- `lib/features/security/services/encryption_service.dart` - Servicio de encriptación
+- `lib/features/security/utils/encryption_utils.dart` - Utilidades de encriptación
+- Modelos de datos - Añadir métodos `encrypt()` y `decrypt()`
+- Servicios que guardan datos sensibles - Integrar encriptación
+
+### Criterios de Aceptación
+- ✅ Datos sensibles se encriptan antes de guardar en Firestore
+- ✅ Datos se desencriptan correctamente al leer
+- ✅ Claves de encriptación se gestionan de forma segura
+- ✅ No hay pérdida de datos durante encriptación/desencriptación
+- ✅ Performance aceptable (encriptación no bloquea UI)
+- ✅ Documentación de qué datos están encriptados
+
+### Notas
+- Encriptación en el cliente tiene limitaciones (claves deben estar en el cliente)
+- Considerar usar Firebase App Check para proteger contra abuso
+- Para máxima seguridad, considerar encriptación en Cloud Functions (futuro)
+
+### Relacionado con
+- `docs/guias/GUIA_SEGURIDAD.md` - Guía de seguridad (línea 154, 193)
+
+---
+
+## T170 - Logging sin Datos Sensibles y No Exponer Emails en Logs/Errores
+
+**Estado:** 🔄 Pendiente  
+**Prioridad:** Media  
+**Grupo:** Seguridad  
+**Dependencias:** Ninguna
+
+### Descripción
+Revisar y corregir todos los logs y mensajes de error para asegurar que no se exponen datos sensibles como emails, contraseñas, tokens completos, o ubicaciones exactas.
+
+### Objetivos
+1. Auditar todos los logs y mensajes de error en el código
+2. Reemplazar datos sensibles con identificadores seguros
+3. Implementar utilidades para logging seguro
+4. Documentar buenas prácticas de logging
+
+### Datos que NO deben aparecer en logs
+- ❌ Emails completos
+- ❌ Contraseñas (nunca)
+- ❌ Tokens completos
+- ❌ Ubicaciones exactas
+- ❌ Información financiera
+- ❌ Datos personales sensibles
+
+### Implementación Propuesta
+
+#### Utilidades de Logging Seguro
+- Crear `Logger.safeLog()` que sanitiza automáticamente datos sensibles
+- Función para hashear/mascarar emails (ej: `us***@email.com`)
+- Función para truncar tokens (ej: `abc123...xyz`)
+- Función para truncar User IDs (ej: `userId123...`)
+
+#### Archivos a Revisar/Modificar
+- `lib/features/auth/domain/services/auth_service.dart` - Revisar logs
+- `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Revisar logs
+- Todos los servicios que hacen logging
+- Todos los catch blocks que loguean errores
+- `lib/features/security/utils/safe_logger.dart` - **NUEVO** - Utilidades de logging seguro
+
+### Criterios de Aceptación
+- ✅ No hay emails completos en logs
+- ✅ No hay contraseñas en logs (nunca)
+- ✅ Tokens se muestran truncados
+- ✅ User IDs se muestran truncados cuando es necesario
+- ✅ Utilidades de logging seguro implementadas
+- ✅ Documentación de buenas prácticas creada
+- ✅ Todos los logs revisados y corregidos
+
+### Ejemplos
+
+#### ❌ Mal:
+```dart
+Logger.info('User ${user.email} ha creado plan ${planId}');
+Logger.error('Error en ${user.email}');
+print('Password: $password'); // NUNCA
+```
+
+#### ✅ Bien:
+```dart
+Logger.safeLog('User ${maskEmail(user.email)} ha creado plan ${planId}');
+Logger.safeLog('Error en user ${truncateUserId(user.userId)}');
+// Nunca loguear contraseñas
+```
+
+### Notas
+- Esta es una tarea de auditoría y limpieza
+- Puede requerir múltiples iteraciones para encontrar todos los casos
+- Considerar usar un linter o herramienta de análisis estático para detectar patrones peligrosos
+
+### Relacionado con
+- `docs/guias/GUIA_SEGURIDAD.md` - Guía de seguridad (líneas 155-156, 375-378, 387-393)
+
+---
+
+## T171 - Crear Documentos Legales (Términos y Condiciones, Política de Privacidad)
+
+**Estado:** 🔄 Pendiente  
+**Prioridad:** Alta (Requerido para MVP)  
+**Grupo:** Legal y Cumplimiento  
+**Dependencias:** Ninguna
+
+### Descripción
+Crear los documentos legales completos (Términos y Condiciones, Política de Privacidad, Política de Seguridad, Política de Cookies) y implementar las páginas en la app para mostrarlos. Actualmente, el checkbox de registro tiene links a estos documentos pero no funcionan porque no existen.
+
+### Objetivos
+1. Crear documentos legales completos en formato Markdown
+2. Crear páginas en la app para mostrar estos documentos
+3. Conectar los links del checkbox de registro a las páginas correspondientes
+4. Implementar sistema de versionado de términos
+5. Guardar timestamp de aceptación de términos en el perfil del usuario
+
+### Documentos a Crear
+
+#### 1. Términos y Condiciones (`docs/legal/terms_of_service.md`)
+**Contenido requerido:**
+- Descripción del servicio
+- Edad mínima (13+ recomendado por COPPA)
+- Responsabilidades del usuario
+- Uso aceptable y restricciones
+- Terminación de cuenta
+- Limitación de responsabilidad
+- Cambios en términos
+- Jurisdicción aplicable
+- Versión del documento (1.0)
+- Fecha de última actualización
+
+#### 2. Política de Privacidad (`docs/legal/privacy_policy.md`)
+**Contenido requerido:**
+- Datos recopilados (email, nombre, foto, planes, eventos, etc.)
+- Cómo se usan los datos
+- Compartir datos (con quién y cuándo)
+- Almacenamiento y seguridad
+- Derechos del usuario (acceso, rectificación, eliminación, portabilidad)
+- Cookies y tecnologías similares
+- Cambios en la política
+- Contacto para consultas de privacidad
+- Versión del documento (1.0)
+- Fecha de última actualización
+
+#### 3. Política de Seguridad (`docs/legal/security_policy.md`)
+**Contenido requerido:**
+- Medidas de seguridad implementadas
+- Encriptación de datos
+- Protección de contraseñas
+- Acceso a datos
+- Notificación de brechas de seguridad
+- Versión del documento (1.0)
+- Fecha de última actualización
+
+#### 4. Política de Cookies (`docs/legal/cookie_policy.md`)
+**Contenido requerido:**
+- Qué son las cookies
+- Tipos de cookies usadas
+- Propósito de cada tipo
+- Cómo gestionar cookies
+- Cookies de terceros (si aplica)
+- Versión del documento (1.0)
+- Fecha de última actualización
+
+### Implementación en la App
+
+#### 1. Páginas Legales
+- `lib/features/legal/presentation/pages/terms_page.dart` - Página de Términos y Condiciones
+- `lib/features/legal/presentation/pages/privacy_policy_page.dart` - Página de Política de Privacidad
+- `lib/features/legal/presentation/pages/security_policy_page.dart` - Página de Política de Seguridad
+- `lib/features/legal/presentation/pages/cookie_policy_page.dart` - Página de Política de Cookies
+
+**Características de las páginas:**
+- Mostrar contenido desde archivos Markdown o texto formateado
+- Versión del documento visible
+- Fecha de última actualización
+- Botón para cerrar/volver
+- Scroll para contenido largo
+- Opción de imprimir/exportar PDF (opcional)
+
+#### 2. Conectar Links en Registro
+- Modificar `register_page.dart` para que los links "Términos y Condiciones" y "Política de Privacidad" abran las páginas correspondientes
+- Añadir `GestureRecognizer` o `onTap` a los `TextSpan` correspondientes
+
+#### 3. Sistema de Versionado
+- Añadir campo `termsAcceptance` al `UserModel`:
+  ```dart
+  final Map<String, dynamic>? termsAcceptance = {
+    'acceptedAt': Timestamp,
+    'version': '1.0',
+    'accepted': true
+  }
+  ```
+- Guardar timestamp y versión cuando el usuario acepta términos en el registro
+- Implementar lógica para detectar cambios de versión y requerir re-aceptación (futuro)
+
+#### 4. Footer de la App
+- Añadir links a documentos legales en el footer (si existe)
+- O en la página de configuración/ajustes
+
+### Archivos a Crear/Modificar
+
+#### Documentos:
+- `docs/legal/terms_of_service.md` - **NUEVO**
+- `docs/legal/privacy_policy.md` - **NUEVO**
+- `docs/legal/security_policy.md` - **NUEVO**
+- `docs/legal/cookie_policy.md` - **NUEVO**
+
+#### Código:
+- `lib/features/legal/presentation/pages/terms_page.dart` - **NUEVO**
+- `lib/features/legal/presentation/pages/privacy_policy_page.dart` - **NUEVO**
+- `lib/features/legal/presentation/pages/security_policy_page.dart` - **NUEVO**
+- `lib/features/legal/presentation/pages/cookie_policy_page.dart` - **NUEVO**
+- `lib/features/auth/presentation/pages/register_page.dart` - Conectar links
+- `lib/features/auth/domain/models/user_model.dart` - Añadir campo `termsAcceptance`
+- `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Guardar aceptación de términos
+
+### Criterios de Aceptación
+- ✅ Documentos legales creados en `docs/legal/`
+- ✅ Páginas legales implementadas en la app
+- ✅ Links en checkbox de registro funcionan y abren las páginas correspondientes
+- ✅ Contenido de documentos se muestra correctamente (formato, scroll, etc.)
+- ✅ Versión y fecha de actualización visibles en cada documento
+- ✅ Timestamp de aceptación se guarda en el perfil del usuario al registrarse
+- ✅ Sistema de versionado implementado (campo en UserModel)
+- ✅ Documentos traducidos (ES/EN) o al menos en español con estructura para traducción
+- ✅ Documentación actualizada
+
+### Notas
+- **IMPORTANTE:** Estos documentos deben ser revisados por un abogado especializado antes del lanzamiento público
+- Los documentos pueden empezar como versiones básicas y refinarse antes del lanzamiento
+- Considerar usar un package como `flutter_markdown` para renderizar Markdown en las páginas
+- Los documentos deben ser accesibles sin necesidad de estar autenticado
+- Considerar añadir historial de versiones de términos (futuro)
+
+### Relacionado con
+- `docs/guias/GUIA_ASPECTOS_LEGALES.md` - Guía completa de aspectos legales
+- T129: Export de Datos Personales (GDPR)
+- T135: Gestión de Cookies
+- T136: App Tracking Transparency
+- `lib/features/auth/presentation/pages/register_page.dart` - Checkbox de términos
+
+---

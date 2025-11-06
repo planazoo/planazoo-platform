@@ -25,7 +25,12 @@
   5. Proponer reutilizar/adaptar/extender antes de crear de cero
 - **Idioma del código**: Todo el código, variables, métodos, comentarios técnicos en inglés
 - **Comunicación**: Documentación y comunicación entre nosotros en castellano
-- **Multi-idioma**: Usar archivos `.arb` en `lib/l10n/` para strings traducibles. No hardcodear textos en UI.
+- **⚠️ Multi-idioma (OBLIGATORIO)**: 
+  - **NUNCA hardcodear textos en español** en el código (Text('Hola'), SnackBar, AlertDialog, tooltips, etc.)
+  - **SIEMPRE usar AppLocalizations:** `AppLocalizations.of(context)!.key` para todos los textos visibles
+  - **Añadir traducciones:** Al crear nueva funcionalidad, añadir claves en `lib/l10n/app_es.arb` y `app_en.arb` ANTES de implementar
+  - **Verificar antes de commit:** Revisar que no hay textos hardcodeados en español antes de hacer commit
+  - **Estado actual:** T158 en progreso (~65%). Consultar `docs/tareas/TASKS.md` para detalles
 - **Multi-plataforma**: Verificar compatibilidad Web/iOS/Android antes de usar plugins o APIs. Priorizar soluciones cross-platform.
 - **Offline-First**: Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
 - **⚠️ CONSISTENCIA DE UI**: Siempre consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons`. NO crear componentes sin seguir el sistema de diseño. Documentar componentes nuevos en la guía.

@@ -6,6 +6,7 @@ import 'package:unp_calendario/features/auth/domain/models/auth_state.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifier.dart';
 import 'package:unp_calendario/features/language/presentation/widgets/language_selector.dart';
+import 'package:unp_calendario/features/security/utils/validator.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/register_page.dart';
 
@@ -21,6 +22,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _lastShownError; // Para evitar mostrar el mismo error múltiples veces
 
   @override
   void dispose() {
@@ -36,11 +38,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     // Escuchar cambios de estado
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-      if (next.hasError) {
-        // Limpiar el error después de mostrarlo
-        Future.delayed(const Duration(milliseconds: 100), () {
+      if (next.hasError && next.errorMessage != null) {
+        // Evitar mostrar el mismo error múltiples veces
+        final errorMessage = next.errorMessage!;
+        if (_lastShownError == errorMessage) {
+          return; // Ya se mostró este error, no volver a mostrarlo
+        }
+        
+        _lastShownError = errorMessage;
+        
+        // Traducir el mensaje de error
+        final friendlyMessage = _getUserFriendlyErrorMessage(errorMessage);
+        
+        // Limpiar el error después de mostrarlo (dar tiempo para que se muestre el SnackBar)
+        Future.delayed(const Duration(seconds: 5), () {
           if (mounted) {
             ref.read(authNotifierProvider.notifier).clearError();
+            _lastShownError = null; // Resetear después de limpiar
           }
         });
         
@@ -52,7 +66,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _getUserFriendlyErrorMessage(next.errorMessage!),
+                    friendlyMessage,
                     style: const TextStyle(fontSize: 14),
                   ),
                 ),
@@ -74,6 +88,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             ),
           ),
         );
+      } else if (!next.hasError) {
+        // Si no hay error, resetear el último error mostrado
+        _lastShownError = null;
       }
     });
 
@@ -263,6 +280,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 
                 const SizedBox(height: 24),
                 
+                // Botón de Google Sign-In
+                _buildGoogleSignInButton(authNotifier, authState.isLoading),
+                
+                const SizedBox(height: 24),
+                
                 // Enlace de registro
                 _buildRegisterLink(),
                 
@@ -282,10 +304,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Widget _buildEmailField() {
+    final isEmail = _emailController.text.contains('@');
+    final isUsername = _emailController.text.isNotEmpty && 
+                       !_emailController.text.contains('@') && 
+                       _emailController.text.startsWith('@');
+    
     return TextFormField(
       controller: _emailController,
-      keyboardType: TextInputType.emailAddress,
+      keyboardType: TextInputType.text,
       textInputAction: TextInputAction.next,
+      textCapitalization: TextCapitalization.none,
+      autocorrect: false,
       onChanged: (value) {
         // Validación en tiempo real
         if (value.isNotEmpty) {
@@ -293,11 +322,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         }
       },
       decoration: InputDecoration(
-        labelText: AppLocalizations.of(context)!.emailLabel,
-        hintText: AppLocalizations.of(context)!.emailHint,
+        labelText: AppLocalizations.of(context)!.emailOrUsernameLabel,
+        hintText: AppLocalizations.of(context)!.emailOrUsernameHint,
         prefixIcon: Icon(
-          Icons.email_outlined,
-          color: _emailController.text.isNotEmpty && _emailController.text.contains('@')
+          isEmail ? Icons.email_outlined : Icons.alternate_email,
+          color: _emailController.text.isNotEmpty
               ? AppColorScheme.color2
               : Colors.grey.shade400,
         ),
@@ -329,8 +358,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (value == null || value.isEmpty) {
           return AppLocalizations.of(context)!.emailRequired;
         }
-        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-          return AppLocalizations.of(context)!.emailInvalid;
+        // Validar que sea email válido o username válido (con o sin @)
+        final trimmed = value.trim();
+        final isEmailFormat = Validator.isValidEmail(trimmed);
+        final isUsernameFormat = trimmed.startsWith('@') 
+            ? Validator.isValidUsername(trimmed.substring(1))
+            : Validator.isValidUsername(trimmed);
+        
+        if (!isEmailFormat && !isUsernameFormat) {
+          return AppLocalizations.of(context)!.emailOrUsernameInvalid;
         }
         return null;
       },
@@ -406,6 +442,31 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         }
         return null;
       },
+    );
+  }
+
+  Widget _buildGoogleSignInButton(AuthNotifier authNotifier, bool isLoading) {
+    return SizedBox(
+      height: 56,
+      child: OutlinedButton.icon(
+        onPressed: isLoading ? null : () => _handleGoogleSignIn(authNotifier),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        icon: const Icon(Icons.g_mobiledata, size: 24, color: Colors.black87),
+        label: Text(
+          AppLocalizations.of(context)!.continueWithGoogle,
+          style: AppTypography.interactiveStyle.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+      ),
     );
   }
 
@@ -534,22 +595,45 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
   }
 
+  void _handleGoogleSignIn(AuthNotifier authNotifier) {
+    authNotifier.signInWithGoogle();
+  }
+
   String _getUserFriendlyErrorMessage(String errorMessage) {
+    // Normalizar el mensaje para comparación (convertir a minúsculas y eliminar espacios)
+    final normalizedError = errorMessage.toLowerCase().trim();
+    
     // Convertir errores técnicos en mensajes amigables
-    if (errorMessage.contains('user-not-found')) {
+    // Manejar variaciones: "username-not-found", "user-name-not-found", etc.
+    if (normalizedError.contains('username-not-found') || 
+        normalizedError.contains('user-name-not-found') ||
+        normalizedError == 'username-not-found' ||
+        normalizedError == 'user-name-not-found') {
+      return AppLocalizations.of(context)!.usernameNotFound;
+    } else if (normalizedError.contains('user-not-found') && !normalizedError.contains('username')) {
       return AppLocalizations.of(context)!.userNotFound;
-    } else if (errorMessage.contains('wrong-password')) {
+    } else if (normalizedError.contains('google-sign-in-cancelled')) {
+      return AppLocalizations.of(context)!.googleSignInCancelled;
+    } else if (errorMessage.contains('google-sign-in-error') || errorMessage.contains('Error desconocido al iniciar sesión con Google')) {
+      return AppLocalizations.of(context)!.googleSignInError;
+    } else if (normalizedError.contains('wrong-password') || 
+               normalizedError.contains('contraseña incorrecta') ||
+               errorMessage.contains('Contraseña incorrecta')) {
       return AppLocalizations.of(context)!.wrongPassword;
-    } else if (errorMessage.contains('invalid-email')) {
+    } else if (normalizedError.contains('invalid-credential') ||
+               normalizedError.contains('credenciales inválidas') ||
+               errorMessage.contains('Credenciales inválidas')) {
+      // invalid-credential puede significar contraseña incorrecta (dependiendo del contexto)
+      // Por ahora, asumimos que es contraseña incorrecta si viene de login
+      return AppLocalizations.of(context)!.wrongPassword;
+    } else if (normalizedError.contains('invalid-email')) {
       return AppLocalizations.of(context)!.invalidEmail;
-    } else if (errorMessage.contains('user-disabled')) {
+    } else if (normalizedError.contains('user-disabled')) {
       return AppLocalizations.of(context)!.userDisabled;
-    } else if (errorMessage.contains('too-many-requests')) {
+    } else if (normalizedError.contains('too-many-requests')) {
       return AppLocalizations.of(context)!.tooManyRequests;
-    } else if (errorMessage.contains('network-request-failed')) {
+    } else if (normalizedError.contains('network-request-failed')) {
       return AppLocalizations.of(context)!.networkError;
-    } else if (errorMessage.contains('invalid-credential')) {
-      return AppLocalizations.of(context)!.invalidCredentials;
     } else if (errorMessage.contains('operation-not-allowed')) {
       return AppLocalizations.of(context)!.operationNotAllowed;
     } else if (errorMessage.contains('verifica tu email')) {
@@ -586,7 +670,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: emailController,
-                keyboardType: TextInputType.emailAddress,
+                keyboardType: TextInputType.text, // Permite + y otros caracteres
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: 'Email',
@@ -721,7 +805,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const SizedBox(height: 20),
               TextFormField(
                 controller: emailController,
-                keyboardType: TextInputType.emailAddress,
+                keyboardType: TextInputType.text, // Permite + y otros caracteres
                 decoration: InputDecoration(
                   labelText: 'Email',
                   hintText: 'tu@email.com',

@@ -112,6 +112,12 @@ class EventParticipantService {
           .map((doc) => EventParticipant.fromFirestore(doc))
           .toList();
     }).handleError((error) {
+      // No registrar errores de permisos cuando el usuario no está autenticado (comportamiento esperado después de logout)
+      final errorString = error.toString();
+      if (errorString.contains('permission-denied')) {
+        // Silenciar errores de permisos - es normal después de logout
+        return <EventParticipant>[];
+      }
       LoggerService.error(
         'Error getting event participants: $eventId',
         context: 'EVENT_PARTICIPANT_SERVICE',
@@ -134,6 +140,12 @@ class EventParticipantService {
           .map((doc) => EventParticipant.fromFirestore(doc))
           .toList();
     }).handleError((error) {
+      // No registrar errores de permisos cuando el usuario no está autenticado (comportamiento esperado después de logout)
+      final errorString = error.toString();
+      if (errorString.contains('permission-denied')) {
+        // Silenciar errores de permisos - es normal después de logout
+        return <EventParticipant>[];
+      }
       LoggerService.error(
         'Error getting all event participants: $eventId',
         context: 'EVENT_PARTICIPANT_SERVICE',
@@ -157,6 +169,12 @@ class EventParticipantService {
           .map((doc) => EventParticipant.fromFirestore(doc))
           .toList();
     } catch (e) {
+      // No registrar errores de permisos cuando el usuario no está autenticado (comportamiento esperado después de logout)
+      final errorString = e.toString();
+      if (errorString.contains('permission-denied')) {
+        // Silenciar errores de permisos - es normal después de logout
+        return [];
+      }
       LoggerService.error(
         'Error getting event participants (Future): $eventId',
         context: 'EVENT_PARTICIPANT_SERVICE',

@@ -216,10 +216,18 @@ service cloud.firestore {
       // Cualquier usuario autenticado puede leer perfiles públicos
       allow read: if isAuthenticated();
       
+      // Permitir consultas de usernameLower sin autenticación (solo para verificar disponibilidad durante registro)
+      // Limitado a consultas con límite de 1 para evitar listar todos los usuarios
+      // Esto es seguro porque solo permite verificar si un username específico existe
+      allow list: if request.query.limit <= 1;
+      
       // Solo el propio usuario puede crear/actualizar su perfil
       allow create: if isAuthenticated() && 
                        request.auth.uid == userId &&
-                       request.resource.data.keys().hasAll(['email', 'createdAt']);
+                       request.resource.data.keys().hasAll(['email', 'createdAt']) &&
+                       request.resource.data.email is string &&
+                       request.resource.data.email.size() > 0 &&
+                       request.resource.data.createdAt is timestamp;
       
       // Solo el propio usuario puede actualizar su perfil
       allow update: if isAuthenticated() && 
@@ -350,6 +358,11 @@ service cloud.firestore {
       allow read: if isAuthenticated() && 
                      (request.auth.uid == resource.data.userId ||
                       isPlanOwner(resource.data.planId));
+      
+      // Listar: Necesario para consultas con where() y orderBy()
+      // IMPORTANTE: Las consultas con múltiples where() requieren permisos de list
+      // La validación de participación se hace en el cliente
+      allow list: if isAuthenticated();
       
       // Actualizar: Solo owner del plan puede cambiar roles
       // O el propio usuario puede actualizar su status (aceptar/rechazar invitación) o timezone

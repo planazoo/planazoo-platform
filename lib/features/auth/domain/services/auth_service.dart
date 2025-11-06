@@ -1,11 +1,37 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 
 class AuthService {
   final fb_auth.FirebaseAuth _firebaseAuth;
+  GoogleSignIn? _googleSignIn;
+  final GoogleSignIn? _providedGoogleSignIn;
 
-  AuthService({fb_auth.FirebaseAuth? firebaseAuth})
-      : _firebaseAuth = firebaseAuth ?? fb_auth.FirebaseAuth.instance;
+  AuthService({
+    fb_auth.FirebaseAuth? firebaseAuth,
+    GoogleSignIn? googleSignIn,
+  })  : _firebaseAuth = firebaseAuth ?? fb_auth.FirebaseAuth.instance,
+        _providedGoogleSignIn = googleSignIn;
+
+  // Lazy initialization de GoogleSignIn para evitar errores en web si no hay Client ID
+  // Solo se inicializa cuando realmente se necesita (en signInWithGoogle)
+  // Esto evita que falle al crear el AuthService si no hay Client ID configurado
+  GoogleSignIn _getGoogleSignInInstance() {
+    if (_googleSignIn == null) {
+      try {
+        _googleSignIn = _providedGoogleSignIn ?? GoogleSignIn(
+          // Para web, el clientId se puede obtener del meta tag o pasarlo aquí
+          // Si no se proporciona, google_sign_in intentará leerlo del meta tag
+          // clientId: 'YOUR_CLIENT_ID.apps.googleusercontent.com', // Descomentar y reemplazar si es necesario
+        );
+      } catch (e) {
+        // Si falla la inicialización (por ejemplo, falta Client ID en web),
+        // lanzar un error más descriptivo
+        throw Exception('Google Sign-In no está configurado correctamente. Verifica que el Client ID esté configurado en web/index.html o en el código. Error: $e');
+      }
+    }
+    return _googleSignIn!;
+  }
 
   // Stream de cambios de usuario de Firebase Auth
   Stream<fb_auth.User?> get userChanges => _firebaseAuth.authStateChanges();
@@ -117,31 +143,47 @@ class AuthService {
     }
   }
 
-  // Manejar excepciones de Firebase Auth
-  String _handleFirebaseAuthException(fb_auth.FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return 'No se encontró una cuenta con este email';
-      case 'wrong-password':
-        return 'Contraseña incorrecta';
-      case 'email-already-in-use':
-        return 'Ya existe una cuenta con este email';
-      case 'weak-password':
-        return 'La contraseña es muy débil';
-      case 'invalid-email':
-        return 'El email no es válido';
-      case 'user-disabled':
-        return 'Esta cuenta ha sido deshabilitada';
-      case 'too-many-requests':
-        return 'Demasiados intentos. Intenta más tarde';
-      case 'operation-not-allowed':
-        return 'Esta operación no está permitida';
-      case 'invalid-credential':
-        return 'Credenciales inválidas';
-      case 'requires-recent-login':
-        return 'Esta operación requiere un inicio de sesión reciente';
-      default:
-        return 'Error de autenticación: ${e.message}';
+  // Iniciar sesión con Google
+  Future<fb_auth.UserCredential> signInWithGoogle() async {
+    try {
+      // Iniciar el flujo de autenticación de Google
+      // Inicializar GoogleSignIn solo cuando se necesita
+      final GoogleSignIn googleSignIn = _getGoogleSignInInstance();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        // El usuario canceló el inicio de sesión
+        throw Exception('google-sign-in-cancelled');
+      }
+
+      // Obtener los detalles de autenticación del usuario
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Crear una nueva credencial
+      final credential = fb_auth.GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Iniciar sesión con Firebase usando la credencial de Google
+      return await _firebaseAuth.signInWithCredential(credential);
+    } on fb_auth.FirebaseAuthException catch (e) {
+      throw _handleFirebaseAuthException(e);
+    } catch (e) {
+      // Si es el error de cancelación, re-lanzarlo tal cual
+      if (e.toString().contains('google-sign-in-cancelled')) {
+        throw Exception('google-sign-in-cancelled');
+      }
+      throw Exception('Error desconocido al iniciar sesión con Google: $e');
     }
+  }
+
+  // Manejar excepciones de Firebase Auth
+  // Devuelve el código de error para que la UI pueda traducirlo
+  // TODO (T162): Esto debería devolver códigos en lugar de mensajes traducidos
+  Exception _handleFirebaseAuthException(fb_auth.FirebaseAuthException e) {
+    // Devolver Exception con el código de error como mensaje
+    // Esto permite que la UI traduzca el mensaje correctamente
+    return Exception(e.code);
   }
 }

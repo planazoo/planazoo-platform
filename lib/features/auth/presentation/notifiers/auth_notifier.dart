@@ -33,8 +33,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
       
       if (firebaseUser != null) {
         // Verificar si el email está verificado ANTES de procesar
-        if (!firebaseUser.emailVerified) {
-          // Cerrar sesión si el email no está verificado
+        // Excepción: usuarios de Google no requieren verificación (Google ya verifica)
+        final isGoogleUser = firebaseUser.providerData.any((provider) => provider.providerId == 'google.com');
+        
+        if (!firebaseUser.emailVerified && !isGoogleUser) {
+          // Cerrar sesión si el email no está verificado (solo para usuarios de email/password)
           await _authService.signOut();
           state = AuthState(
             status: AuthStatus.error,
@@ -48,8 +51,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
           final userModel = await _userService.getUser(firebaseUser.uid);
           
           if (userModel != null) {
-            // Actualizar último login
-            final updatedUser = userModel.copyWith(lastLoginAt: DateTime.now());
+            UserModel updatedUser = userModel.copyWith(lastLoginAt: DateTime.now());
+            
+            // Generar username automático si no tiene uno
+            if (updatedUser.username == null || updatedUser.username!.isEmpty) {
+              final generatedUsername = await _generateAutomaticUsername(updatedUser);
+              if (generatedUsername != null) {
+                updatedUser = updatedUser.copyWith(username: generatedUsername);
+                await _userService.updateUsername(updatedUser.id, generatedUsername);
+              }
+            }
+            
             await _userService.updateUser(updatedUser);
             
             state = AuthState(
@@ -57,10 +69,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
               user: updatedUser,
             );
           } else {
-            // Usuario no existe en Firestore
+            // Usuario no existe en Firestore - crear uno nuevo (puede ser de Google)
+            final newUserModel = UserModel.fromFirebaseAuth(firebaseUser);
+            
+            // Generar username automático
+            final generatedUsername = await _generateAutomaticUsername(newUserModel);
+            final userModelWithUsername = generatedUsername != null
+                ? newUserModel.copyWith(username: generatedUsername)
+                : newUserModel;
+            
+            // Crear usuario en Firestore
+            await _userService.createUser(userModelWithUsername);
+            
+            // Actualizar último login
+            final updatedUser = userModelWithUsername.copyWith(lastLoginAt: DateTime.now());
+            await _userService.updateUser(updatedUser);
+            
             state = AuthState(
-              status: AuthStatus.error,
-              errorMessage: 'Usuario no encontrado. Por favor, regístrate primero.',
+              status: AuthStatus.authenticated,
+              user: updatedUser,
             );
           }
         } catch (e) {
@@ -76,9 +103,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
     });
   }
 
-  // Iniciar sesión con email y contraseña
-  Future<void> signInWithEmailAndPassword(String email, String password) async {
+  // Iniciar sesión con email/username y contraseña
+  Future<void> signInWithEmailAndPassword(String emailOrUsername, String password) async {
     try {
+      String email = emailOrUsername;
+      
+      // Detectar si es email o username
+      final trimmed = emailOrUsername.trim();
+      final isEmail = trimmed.contains('@');
+      
+      if (!isEmail) {
+        // Es username - buscar el email asociado
+        String username = trimmed;
+        // Quitar @ si está presente
+        if (username.startsWith('@')) {
+          username = username.substring(1);
+        }
+        
+        final user = await _userService.getUserByUsername(username);
+        if (user == null) {
+          state = AuthState(
+            status: AuthStatus.error,
+            errorMessage: 'username-not-found',
+          );
+          return;
+        }
+        email = user.email;
+      }
+      
       // Verificar rate limiting antes de intentar login
       final rateLimitCheck = await _rateLimiter.checkLoginAttempt(email);
       
@@ -104,7 +156,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
         
         // Re-verificar rate limiting para mostrar mensaje actualizado
         final updatedCheck = await _rateLimiter.checkLoginAttempt(email);
+        
+        // Extraer el código de error del mensaje
         String errorMessage = e.toString();
+        // Si viene como "Exception: wrong-password", extraer solo "wrong-password"
+        if (errorMessage.startsWith('Exception: ')) {
+          errorMessage = errorMessage.substring(11); // Remover "Exception: "
+        }
         
         if (updatedCheck.requiresCaptcha) {
           errorMessage = 'Por seguridad, completa el CAPTCHA para continuar. ${errorMessage}';
@@ -118,18 +176,41 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
     } catch (e) {
+      // Extraer el código de error del mensaje
+      String errorMessage = e.toString();
+      // Si viene como "Exception: wrong-password", extraer solo "wrong-password"
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11); // Remover "Exception: "
+      }
+      
       state = AuthState(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: errorMessage,
       );
     }
   }
 
   // Registrarse con email y contraseña
-  Future<void> registerWithEmailAndPassword(String email, String password, {String? displayName}) async {
+  Future<void> registerWithEmailAndPassword(String email, String password, {String? displayName, String? username}) async {
     try {
       _isRegistering = true; // Marcar que estamos registrando
       state = state.copyWith(status: AuthStatus.loading);
+      
+      // Validar y normalizar username si se proporciona
+      String? normalizedUsername;
+      if (username != null && username.isNotEmpty) {
+        normalizedUsername = username.trim().toLowerCase();
+        // Verificar disponibilidad (la validación de formato ya se hizo en la UI)
+        final isAvailable = await _userService.isUsernameAvailable(normalizedUsername);
+        if (!isAvailable) {
+          _isRegistering = false;
+          state = AuthState(
+            status: AuthStatus.error,
+            errorMessage: 'username-taken',
+          );
+          return;
+        }
+      }
       
       await _authService.registerWithEmailAndPassword(email, password);
       
@@ -147,11 +228,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final currentUser = _authService.currentUser;
       if (currentUser != null) {
         final userModel = UserModel.fromFirebaseAuth(currentUser);
-        // Asegurar que el displayName sanitizado se guarde en Firestore
-        final userModelWithSanitizedName = sanitizedDisplayName != null
-            ? userModel.copyWith(displayName: sanitizedDisplayName)
-            : userModel;
-        await _userService.createUser(userModelWithSanitizedName);
+        // Asegurar que el displayName sanitizado y username se guarden en Firestore
+        final userModelWithData = userModel.copyWith(
+          displayName: sanitizedDisplayName,
+          username: normalizedUsername,
+        );
+        await _userService.createUser(userModelWithData);
         
         // Enviar email de verificación
         await _authService.sendEmailVerification();
@@ -162,7 +244,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Emitir estado de éxito de registro
         state = AuthState(
           status: AuthStatus.registrationSuccess,
-          user: userModelWithSanitizedName,
+          user: userModelWithData,
         );
       }
       
@@ -177,8 +259,128 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // Alias para compatibilidad
-  Future<void> createUserWithEmailAndPassword(String email, String password, {String? displayName}) async {
-    return registerWithEmailAndPassword(email, password, displayName: displayName);
+  Future<void> createUserWithEmailAndPassword(String email, String password, {String? displayName, String? username}) async {
+    return registerWithEmailAndPassword(email, password, displayName: displayName, username: username);
+  }
+
+  // Iniciar sesión con Google
+  Future<void> signInWithGoogle() async {
+    try {
+      state = state.copyWith(status: AuthStatus.loading);
+      
+      // Iniciar sesión con Google usando AuthService
+      await _authService.signInWithGoogle();
+      
+      // El estado se actualizará automáticamente a través del stream en _init()
+      // que detectará el usuario autenticado y creará/actualizará el usuario en Firestore
+    } catch (e) {
+      String errorMessage = e.toString();
+      
+      // Manejar cancelación de Google Sign-In
+      if (errorMessage.contains('google-sign-in-cancelled')) {
+        // No mostrar error si el usuario canceló
+        state = const AuthState(status: AuthStatus.unauthenticated);
+        return;
+      }
+      
+      state = AuthState(
+        status: AuthStatus.error,
+        errorMessage: errorMessage,
+      );
+    }
+  }
+
+  // Generar username automático basado en email o displayName
+  Future<String?> _generateAutomaticUsername(UserModel user) async {
+    // Intentar generar desde displayName primero
+    if (user.displayName != null && user.displayName!.isNotEmpty) {
+      final fromDisplayName = _extractUsernameFromDisplayName(user.displayName!);
+      if (fromDisplayName != null) {
+        final available = await _findAvailableUsername(fromDisplayName);
+        if (available != null) return available;
+      }
+    }
+    
+    // Si no funciona, intentar desde email
+    if (user.email.isNotEmpty) {
+      final fromEmail = _extractUsernameFromEmail(user.email);
+      if (fromEmail != null) {
+        final available = await _findAvailableUsername(fromEmail);
+        if (available != null) return available;
+      }
+    }
+    
+    // Si todo falla, generar uno aleatorio
+    return await _findAvailableUsername('user${DateTime.now().millisecondsSinceEpoch % 10000}');
+  }
+
+  // Extraer username válido desde displayName
+  String? _extractUsernameFromDisplayName(String displayName) {
+    // Convertir a minúsculas y reemplazar espacios y caracteres especiales
+    var username = displayName
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9_]'), '')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    
+    // Asegurar longitud mínima
+    if (username.length < 3) return null;
+    
+    // Truncar a 30 caracteres
+    if (username.length > 30) {
+      username = username.substring(0, 30);
+    }
+    
+    return Validator.isValidUsername(username) ? username : null;
+  }
+
+  // Extraer username válido desde email
+  String? _extractUsernameFromEmail(String email) {
+    // Obtener la parte antes del @
+    final parts = email.split('@');
+    if (parts.isEmpty) return null;
+    
+    var username = parts[0]
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9_]'), '')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+    
+    // Asegurar longitud mínima
+    if (username.length < 3) return null;
+    
+    // Truncar a 30 caracteres
+    if (username.length > 30) {
+      username = username.substring(0, 30);
+    }
+    
+    return Validator.isValidUsername(username) ? username : null;
+  }
+
+  // Encontrar un username disponible, probando variaciones
+  Future<String?> _findAvailableUsername(String base) async {
+    // Probar el base primero
+    if (await _userService.isUsernameAvailable(base)) {
+      return base;
+    }
+    
+    // Intentar con números
+    for (int i = 1; i <= 999; i++) {
+      final candidate = '$base$i';
+      if (candidate.length > 30) break; // No exceder límite
+      if (await _userService.isUsernameAvailable(candidate)) {
+        return candidate;
+      }
+    }
+    
+    // Intentar con timestamp corto
+    final timestamp = DateTime.now().millisecondsSinceEpoch % 10000;
+    final candidate = '${base}_$timestamp';
+    if (candidate.length <= 30 && await _userService.isUsernameAvailable(candidate)) {
+      return candidate;
+    }
+    
+    return null;
   }
 
   // Cerrar sesión
@@ -357,7 +559,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // Limpiar errores
   void clearError() {
-    state = state.copyWith(errorMessage: null);
+    // Solo limpiar el error si no estamos en estado de error
+    // Esto evita cambiar el estado cuando se está mostrando el error
+    if (state.hasError) {
+      state = state.copyWith(
+        errorMessage: null,
+        status: state.user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated,
+      );
+    }
   }
 
   // Actualizar username del usuario

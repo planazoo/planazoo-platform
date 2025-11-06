@@ -21,6 +21,14 @@
   "@emailHint": {
     "description": "Hint del campo de email"
   },
+  "emailOrUsernameLabel": "Email o Usuario",
+  "@emailOrUsernameLabel": {
+    "description": "Etiqueta del campo de email o username en login"
+  },
+  "emailOrUsernameHint": "tu@email.com o @usuario",
+  "@emailOrUsernameHint": {
+    "description": "Hint del campo de email o username en login"
+  },
   "passwordLabel": "Contraseña",
   "@passwordLabel": {
     "description": "Etiqueta del campo de contraseña"
@@ -32,6 +40,18 @@
   "loginButton": "Iniciar Sesión",
   "@loginButton": {
     "description": "Texto del botón de login"
+  },
+  "continueWithGoogle": "Continuar con Google",
+  "@continueWithGoogle": {
+    "description": "Texto del botón de login con Google"
+  },
+  "googleSignInError": "Error al iniciar sesión con Google",
+  "@googleSignInError": {
+    "description": "Error genérico de login con Google"
+  },
+  "googleSignInCancelled": "Inicio de sesión cancelado",
+  "@googleSignInCancelled": {
+    "description": "Mensaje cuando el usuario cancela el login con Google"
   },
   "forgotPassword": "¿Olvidaste tu contraseña?",
   "@forgotPassword": {
@@ -95,13 +115,33 @@
   "@emailInvalid": {
     "description": "Error de formato de email"
   },
+  "emailOrUsernameInvalid": "Ingresa un email válido o un nombre de usuario",
+  "@emailOrUsernameInvalid": {
+    "description": "Error de formato de email o username en login"
+  },
   "passwordRequired": "La contraseña es requerida",
   "@passwordRequired": {
     "description": "Error de contraseña requerida"
   },
-  "passwordMinLength": "La contraseña debe tener al menos 6 caracteres",
+  "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
   "@passwordMinLength": {
     "description": "Error de longitud mínima de contraseña"
+  },
+  "passwordNeedsLowercase": "La contraseña debe contener al menos una letra minúscula",
+  "@passwordNeedsLowercase": {
+    "description": "Error de contraseña sin letra minúscula"
+  },
+  "passwordNeedsUppercase": "La contraseña debe contener al menos una letra mayúscula",
+  "@passwordNeedsUppercase": {
+    "description": "Error de contraseña sin letra mayúscula"
+  },
+  "passwordNeedsNumber": "La contraseña debe contener al menos un número",
+  "@passwordNeedsNumber": {
+    "description": "Error de contraseña sin número"
+  },
+  "passwordNeedsSpecialChar": "La contraseña debe contener al menos un carácter especial (!@#$%^&*)",
+  "@passwordNeedsSpecialChar": {
+    "description": "Error de contraseña sin carácter especial"
   },
   "nameRequired": "El nombre es requerido",
   "@nameRequired": {
@@ -110,6 +150,39 @@
   "nameMinLength": "El nombre debe tener al menos 2 caracteres",
   "@nameMinLength": {
     "description": "Error de longitud mínima de nombre"
+  },
+  "usernameLabel": "Nombre de usuario",
+  "@usernameLabel": {
+    "description": "Etiqueta del campo de username"
+  },
+  "usernameHint": "ej: juancarlos, maria_garcia",
+  "@usernameHint": {
+    "description": "Hint del campo de username"
+  },
+  "usernameRequired": "El nombre de usuario es requerido",
+  "@usernameRequired": {
+    "description": "Error de username requerido"
+  },
+  "usernameInvalid": "El nombre de usuario debe tener 3-30 caracteres y solo puede contener letras minúsculas, números y guiones bajos (a-z, 0-9, _)",
+  "@usernameInvalid": {
+    "description": "Error de formato de username inválido"
+  },
+  "usernameTaken": "Este nombre de usuario ya está en uso",
+  "@usernameTaken": {
+    "description": "Error de username ya ocupado"
+  },
+  "usernameAvailable": "Nombre de usuario disponible",
+  "@usernameAvailable": {
+    "description": "Mensaje de username disponible"
+  },
+  "usernameSuggestion": "Sugerencias: {suggestions}",
+  "@usernameSuggestion": {
+    "description": "Mensaje con sugerencias de username",
+    "placeholders": {
+      "suggestions": {
+        "type": "String"
+      }
+    }
   },
   "confirmPasswordRequired": "Confirma tu contraseña",
   "@confirmPasswordRequired": {
@@ -144,6 +217,10 @@
   "userNotFound": "No se encontró una cuenta con este email",
   "@userNotFound": {
     "description": "Error de usuario no encontrado"
+  },
+  "usernameNotFound": "No se encontró un usuario con ese nombre de usuario",
+  "@usernameNotFound": {
+    "description": "Error de username no encontrado en login"
   },
   "wrongPassword": "Contraseña incorrecta",
   "@wrongPassword": {
@@ -593,5 +670,116 @@
   "plans": "Plans",
   "@plans": {
     "description": "Título de planes"
+  },
+  "newAccommodation": "Nuevo Alojamiento",
+  "@newAccommodation": {
+    "description": "Título de nuevo alojamiento"
+  },
+  "editAccommodation": "Editar Alojamiento",
+  "@editAccommodation": {
+    "description": "Título de editar alojamiento"
+  },
+  "checkIn": "Check-in",
+  "@checkIn": {
+    "description": "Label de check-in"
+  },
+  "checkOut": "Check-out",
+  "@checkOut": {
+    "description": "Label de check-out"
+  },
+  "nights": "{count} noche(s)",
+  "@nights": {
+    "description": "Duración en noches",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "color": "Color:",
+  "@color": {
+    "description": "Label de color"
+  },
+  "participantsLabel": "Participantes:",
+  "@participantsLabel": {
+    "description": "Label de participantes"
+  },
+  "noParticipantsSelected": "Sin participantes seleccionados (aparecerá en el primer track)",
+  "@noParticipantsSelected": {
+    "description": "Mensaje cuando no hay participantes seleccionados"
+  },
+  "errorLoadingParticipants": "Error al cargar participantes: {error}",
+  "@errorLoadingParticipants": {
+    "description": "Error al cargar participantes",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mustBeValidNumber": "Debe ser un número válido",
+  "@mustBeValidNumber": {
+    "description": "Validación de número válido"
+  },
+  "cannotBeNegative": "No puede ser negativo",
+  "@cannotBeNegative": {
+    "description": "Validación de número no negativo"
+  },
+  "maxAmount": "Máximo 1.000.000",
+  "@maxAmount": {
+    "description": "Validación de monto máximo"
+  },
+  "calculating": "Calculando...",
+  "@calculating": {
+    "description": "Mensaje de calculando conversión"
+  },
+  "convertedTo": "Convertido a {currency}:",
+  "@convertedTo": {
+    "description": "Mensaje de conversión",
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "conversionError": "No se pudo calcular la conversión",
+  "@conversionError": {
+    "description": "Error al calcular conversión"
+  },
+  "generateGuestsButton": "👥 Invitados",
+  "@generateGuestsButton": {
+    "description": "Botón de generar invitados"
+  },
+  "generateMiniFrankButton": "🧬 Mini-Frank",
+  "@generateMiniFrankButton": {
+    "description": "Botón de generar Mini-Frank"
+  },
+  "generateFrankensteinButton": "🧟 Frankenstein",
+  "@generateFrankensteinButton": {
+    "description": "Botón de generar Frankenstein"
+  },
+  "accommodationNameRequiredError": "El nombre del alojamiento es obligatorio",
+  "@accommodationNameRequiredError": {
+    "description": "Error de validación: nombre de alojamiento requerido"
+  },
+  "checkOutAfterCheckInError": "La fecha de check-out debe ser posterior al check-in",
+  "@checkOutAfterCheckInError": {
+    "description": "Error de validación: check-out debe ser después de check-in"
+  },
+  "requiresConfirmation": "Requiere confirmación de participantes",
+  "@requiresConfirmation": {
+    "description": "Checkbox de requiere confirmación"
+  },
+  "requiresConfirmationSubtitle": "Los participantes deberán confirmar explícitamente su asistencia",
+  "@requiresConfirmationSubtitle": {
+    "description": "Subtítulo de requiere confirmación"
+  },
+  "cardObtained": "Tarjeta obtenida",
+  "@cardObtained": {
+    "description": "Switch de tarjeta obtenida"
+  },
+  "cardObtainedSubtitle": "Marcar si ya tienes la tarjeta/entrada",
+  "@cardObtainedSubtitle": {
+    "description": "Subtítulo de tarjeta obtenida"
   }
 }
