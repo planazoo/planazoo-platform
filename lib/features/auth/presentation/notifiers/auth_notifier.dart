@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:unp_calendario/features/auth/domain/models/auth_state.dart';
@@ -13,6 +14,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final UserService _userService;
   final RateLimiterService _rateLimiter = RateLimiterService();
   bool _isRegistering = false; // Flag para evitar conflictos durante registro
+  String? _pendingErrorMessage; // Error pendiente de consumir por la UI
 
   AuthNotifier({
     required AuthService authService,
@@ -98,7 +100,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
       } else {
         // Usuario no autenticado
-        state = const AuthState(status: AuthStatus.unauthenticated);
+        if (_pendingErrorMessage != null) {
+          state = AuthState(
+            status: AuthStatus.error,
+            errorMessage: _pendingErrorMessage,
+          );
+          _pendingErrorMessage = null;
+          return;
+        }
+
+        if (!state.hasError) {
+          state = const AuthState(status: AuthStatus.unauthenticated);
+        } else {
+          // Mantener el error vigente y asegurar que no sigamos en loading
+          state = state.copyWith(isLoading: false);
+        }
       }
     });
   }
@@ -130,6 +146,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
         email = user.email;
       }
+      else {
+        // Verificar si el email existe en Firestore antes de intentar login
+        final normalizedEmail = trimmed;
+        final existingUser = await _userService.getUserByEmail(normalizedEmail);
+        if (existingUser == null) {
+          _pendingErrorMessage = 'user-not-found';
+          state = const AuthState(
+            status: AuthStatus.error,
+            errorMessage: 'user-not-found',
+          );
+          return;
+        }
+        email = normalizedEmail;
+      }
       
       // Verificar rate limiting antes de intentar login
       final rateLimitCheck = await _rateLimiter.checkLoginAttempt(email);
@@ -142,12 +172,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return;
       }
 
-      state = state.copyWith(status: AuthStatus.loading);
+      state = AuthState(
+        status: AuthStatus.loading,
+        user: state.user,
+        isLoading: true,
+      );
       
       try {
         await _authService.signInWithEmailAndPassword(email, password);
         // Login exitoso - limpiar contador
         await _rateLimiter.recordLoginAttempt(email, true);
+        _pendingErrorMessage = null;
         // El estado se actualizará automáticamente a través del stream
         // La verificación de email se hace en _init()
       } catch (e) {
@@ -163,12 +198,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         if (errorMessage.startsWith('Exception: ')) {
           errorMessage = errorMessage.substring(11); // Remover "Exception: "
         }
-        
+
         if (updatedCheck.requiresCaptcha) {
           errorMessage = 'Por seguridad, completa el CAPTCHA para continuar. ${errorMessage}';
         } else if (!updatedCheck.allowed) {
           errorMessage = updatedCheck.getErrorMessage();
         }
+
+        _pendingErrorMessage = errorMessage;
         
         state = AuthState(
           status: AuthStatus.error,
@@ -182,11 +219,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (errorMessage.startsWith('Exception: ')) {
         errorMessage = errorMessage.substring(11); // Remover "Exception: "
       }
-      
+
+      _pendingErrorMessage = errorMessage;
+
       state = AuthState(
         status: AuthStatus.error,
         errorMessage: errorMessage,
       );
+    } finally {
+      // No reiniciar _pendingErrorMessage aquí para que la UI lo consuma
     }
   }
 
@@ -266,11 +307,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // Iniciar sesión con Google
   Future<void> signInWithGoogle() async {
     try {
-      state = state.copyWith(status: AuthStatus.loading);
-      
-      // Iniciar sesión con Google usando AuthService
+      _pendingErrorMessage = null;
+
+      state = AuthState(
+        status: state.isAuthenticated ? AuthStatus.authenticated : AuthStatus.unauthenticated,
+        user: state.user,
+        isLoading: true,
+      );
+
+      Future.delayed(const Duration(seconds: 2), () {
+        if (!state.isLoading) return;
+        state = state.copyWith(isLoading: false);
+      });
+
       await _authService.signInWithGoogle();
-      
+
+      state = state.copyWith(isLoading: false);
+
       // El estado se actualizará automáticamente a través del stream en _init()
       // que detectará el usuario autenticado y creará/actualizará el usuario en Firestore
     } catch (e) {
@@ -278,8 +331,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       
       // Manejar cancelación de Google Sign-In
       if (errorMessage.contains('google-sign-in-cancelled')) {
-        // No mostrar error si el usuario canceló
-        state = const AuthState(status: AuthStatus.unauthenticated);
+        state = AuthState(
+          status: state.isAuthenticated ? AuthStatus.authenticated : AuthStatus.unauthenticated,
+        );
+        return;
+      }
+
+      if (errorMessage.contains('google-sign-in-gapi-client-missing')) {
+        state = const AuthState(
+          status: AuthStatus.error,
+          errorMessage: 'Para iniciar sesión con Google en web, asegúrate de haber configurado correctamente el Client ID y los scripts de Google en index.html.',
+        );
         return;
       }
       
@@ -421,8 +483,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await _authService.sendPasswordResetEmail(email);
         // Registrar envío exitoso
         await _rateLimiter.recordPasswordReset(email);
-        // No cambiar el estado aquí, solo limpiar el loading
-        // El SnackBar de éxito se maneja en la UI
+        state = const AuthState(status: AuthStatus.unauthenticated);
       } catch (e) {
         state = AuthState(
           status: AuthStatus.error,

@@ -143,6 +143,50 @@
   "@passwordNeedsSpecialChar": {
     "description": "Error de contraseña sin carácter especial"
   },
+  "passwordRulesTitle": "La nueva contraseña debe incluir:",
+  "@passwordRulesTitle": {
+    "description": "Título que introduce las reglas de contraseña en el diálogo"
+  },
+  "changePasswordTitle": "Cambiar contraseña",
+  "@changePasswordTitle": {
+    "description": "Título del diálogo para cambiar contraseña"
+  },
+  "changePasswordSubtitle": "Introduce tu contraseña actual y define una nueva contraseña segura.",
+  "@changePasswordSubtitle": {
+    "description": "Texto introductorio del diálogo para cambiar contraseña"
+  },
+  "currentPasswordLabel": "Contraseña actual",
+  "@currentPasswordLabel": {
+    "description": "Etiqueta del campo para la contraseña actual"
+  },
+  "newPasswordLabel": "Nueva contraseña",
+  "@newPasswordLabel": {
+    "description": "Etiqueta del campo para introducir la nueva contraseña"
+  },
+  "confirmNewPasswordLabel": "Confirmar nueva contraseña",
+  "@confirmNewPasswordLabel": {
+    "description": "Etiqueta del campo para confirmar la nueva contraseña"
+  },
+  "passwordMustBeDifferent": "La nueva contraseña debe ser distinta a la actual",
+  "@passwordMustBeDifferent": {
+    "description": "Mensaje de error cuando la contraseña nueva coincide con la actual"
+  },
+  "passwordsDoNotMatch": "Las contraseñas no coinciden",
+  "@passwordsDoNotMatch": {
+    "description": "Mensaje de error de confirmación de contraseña"
+  },
+  "passwordChangedSuccess": "Contraseña cambiada correctamente",
+  "@passwordChangedSuccess": {
+    "description": "Mensaje de éxito al cambiar la contraseña"
+  },
+  "passwordChangeError": "Error al cambiar la contraseña",
+  "@passwordChangeError": {
+    "description": "Mensaje genérico de error al cambiar la contraseña"
+  },
+  "saveChanges": "Guardar cambios",
+  "@saveChanges": {
+    "description": "Texto del botón para guardar cambios"
+  },
   "nameRequired": "El nombre es requerido",
   "@nameRequired": {
     "description": "Error de nombre requerido"

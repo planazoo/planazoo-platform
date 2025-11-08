@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'dart:async';
 import '../../domain/models/accommodation.dart';
 import '../../domain/services/accommodation_service.dart';
 
@@ -58,6 +60,7 @@ class AccommodationState {
 class AccommodationNotifier extends StateNotifier<AccommodationState> {
   final AccommodationService _accommodationService;
   final String _planId;
+  StreamSubscription<List<Accommodation>>? _accommodationSubscription;
   
   AccommodationNotifier(this._accommodationService, this._planId)
       : super(const AccommodationState()) {
@@ -67,21 +70,28 @@ class AccommodationNotifier extends StateNotifier<AccommodationState> {
   /// Cargar alojamientos desde Firestore
   Future<void> _loadAccommodations() async {
     state = state.copyWith(isLoading: true, error: null);
-    
-    try {
-      await for (final accommodations in _accommodationService.getAccommodations(_planId)) {
-        state = state.copyWith(
-          accommodations: accommodations,
-          isLoading: false,
-          hasUnsavedChanges: false,
-        );
-      }
-    } catch (e) {
+
+    await _accommodationSubscription?.cancel();
+
+    _accommodationSubscription = _accommodationService
+        .getAccommodations(_planId)
+        .listen((accommodations) {
+      if (!mounted) return;
+      state = state.copyWith(
+        accommodations: accommodations,
+        isLoading: false,
+        hasUnsavedChanges: false,
+      );
+    }, onError: (error, _) {
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
-        error: 'Error al cargar alojamientos: $e',
+        error: 'Error al cargar alojamientos: $error',
       );
-    }
+    }, onDone: () {
+      if (!mounted) return;
+      state = state.copyWith(isLoading: false);
+    });
   }
   
   /// Crear o actualizar un alojamiento
@@ -141,10 +151,17 @@ class AccommodationNotifier extends StateNotifier<AccommodationState> {
   Future<void> refresh() async {
     await _loadAccommodations();
   }
+
+  @override
+  void dispose() {
+    _accommodationSubscription?.cancel();
+    super.dispose();
+  }
 }
 
 // Provider para el notifier de alojamientos
 final accommodationNotifierProvider = StateNotifierProvider.family<AccommodationNotifier, AccommodationState, AccommodationNotifierParams>((ref, params) {
+  ref.watch(authNotifierProvider);
   final accommodationService = ref.watch(accommodationServiceProvider);
   return AccommodationNotifier(accommodationService, params.planId);
 });

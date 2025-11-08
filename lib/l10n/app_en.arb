@@ -143,6 +143,50 @@
   "@passwordNeedsSpecialChar": {
     "description": "Password missing special character error"
   },
+  "passwordRulesTitle": "Your new password must include:",
+  "@passwordRulesTitle": {
+    "description": "Title introducing the password rules in the dialog"
+  },
+  "changePasswordTitle": "Change password",
+  "@changePasswordTitle": {
+    "description": "Dialog title for changing the password"
+  },
+  "changePasswordSubtitle": "Enter your current password and set a new secure one.",
+  "@changePasswordSubtitle": {
+    "description": "Introductory text in the change password dialog"
+  },
+  "currentPasswordLabel": "Current password",
+  "@currentPasswordLabel": {
+    "description": "Label for the current password field"
+  },
+  "newPasswordLabel": "New password",
+  "@newPasswordLabel": {
+    "description": "Label for the new password field"
+  },
+  "confirmNewPasswordLabel": "Confirm new password",
+  "@confirmNewPasswordLabel": {
+    "description": "Label for the confirm new password field"
+  },
+  "passwordMustBeDifferent": "The new password must be different from the current one",
+  "@passwordMustBeDifferent": {
+    "description": "Error message when the new password matches the current one"
+  },
+  "passwordsDoNotMatch": "Passwords do not match",
+  "@passwordsDoNotMatch": {
+    "description": "Confirm password error message"
+  },
+  "passwordChangedSuccess": "Password updated successfully",
+  "@passwordChangedSuccess": {
+    "description": "Success message after changing the password"
+  },
+  "passwordChangeError": "Unable to change the password",
+  "@passwordChangeError": {
+    "description": "Generic error message when changing the password"
+  },
+  "saveChanges": "Save changes",
+  "@saveChanges": {
+    "description": "Button text to save changes"
+  },
   "nameRequired": "Name is required",
   "@nameRequired": {
     "description": "Name required error"

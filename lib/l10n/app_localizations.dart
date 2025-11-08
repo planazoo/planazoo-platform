@@ -308,6 +308,72 @@ abstract class AppLocalizations {
   /// **'La contraseña debe contener al menos un carácter especial (!@#\$%^&*)'**
   String get passwordNeedsSpecialChar;
 
+  /// Título que introduce las reglas de contraseña en el diálogo
+  ///
+  /// In es, this message translates to:
+  /// **'La nueva contraseña debe incluir:'**
+  String get passwordRulesTitle;
+
+  /// Título del diálogo para cambiar contraseña
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar contraseña'**
+  String get changePasswordTitle;
+
+  /// Texto introductorio del diálogo para cambiar contraseña
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce tu contraseña actual y define una nueva contraseña segura.'**
+  String get changePasswordSubtitle;
+
+  /// Etiqueta del campo para la contraseña actual
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña actual'**
+  String get currentPasswordLabel;
+
+  /// Etiqueta del campo para introducir la nueva contraseña
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva contraseña'**
+  String get newPasswordLabel;
+
+  /// Etiqueta del campo para confirmar la nueva contraseña
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar nueva contraseña'**
+  String get confirmNewPasswordLabel;
+
+  /// Mensaje de error cuando la contraseña nueva coincide con la actual
+  ///
+  /// In es, this message translates to:
+  /// **'La nueva contraseña debe ser distinta a la actual'**
+  String get passwordMustBeDifferent;
+
+  /// Mensaje de error de confirmación de contraseña
+  ///
+  /// In es, this message translates to:
+  /// **'Las contraseñas no coinciden'**
+  String get passwordsDoNotMatch;
+
+  /// Mensaje de éxito al cambiar la contraseña
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña cambiada correctamente'**
+  String get passwordChangedSuccess;
+
+  /// Mensaje genérico de error al cambiar la contraseña
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cambiar la contraseña'**
+  String get passwordChangeError;
+
+  /// Texto del botón para guardar cambios
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar cambios'**
+  String get saveChanges;
+
   /// Error de nombre requerido
   ///
   /// In es, this message translates to:

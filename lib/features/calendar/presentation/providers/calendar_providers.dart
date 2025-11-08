@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/calendar_state.dart';
 import '../../domain/models/event.dart';
@@ -19,7 +20,13 @@ final planServiceProvider = Provider<PlanService>((ref) {
 
 /// StreamProvider para todos los planes (actualización automática)
 final plansStreamProvider = StreamProvider<List<Plan>>((ref) {
+  final authState = ref.watch(authNotifierProvider);
   final planService = ref.watch(planServiceProvider);
+
+  if (!authState.isAuthenticated || authState.user == null) {
+    return Stream.value(const <Plan>[]);
+  }
+
   return planService.getPlans();
 });
 
@@ -41,6 +48,7 @@ final planByIdStreamProvider = StreamProvider.family<Plan?, String>((ref, planId
 /// Provider para CalendarNotifier
 final calendarNotifierProvider = StateNotifierProvider.family<CalendarNotifier, CalendarState, CalendarNotifierParams>(
   (ref, params) {
+    ref.watch(authNotifierProvider);
     final eventService = ref.read(eventServiceProvider);
     
     return CalendarNotifier(

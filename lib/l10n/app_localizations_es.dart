@@ -120,6 +120,41 @@ class AppLocalizationsEs extends AppLocalizations {
       'La contraseña debe contener al menos un carácter especial (!@#\$%^&*)';
 
   @override
+  String get passwordRulesTitle => 'La nueva contraseña debe incluir:';
+
+  @override
+  String get changePasswordTitle => 'Cambiar contraseña';
+
+  @override
+  String get changePasswordSubtitle =>
+      'Introduce tu contraseña actual y define una nueva contraseña segura.';
+
+  @override
+  String get currentPasswordLabel => 'Contraseña actual';
+
+  @override
+  String get newPasswordLabel => 'Nueva contraseña';
+
+  @override
+  String get confirmNewPasswordLabel => 'Confirmar nueva contraseña';
+
+  @override
+  String get passwordMustBeDifferent =>
+      'La nueva contraseña debe ser distinta a la actual';
+
+  @override
+  String get passwordsDoNotMatch => 'Las contraseñas no coinciden';
+
+  @override
+  String get passwordChangedSuccess => 'Contraseña cambiada correctamente';
+
+  @override
+  String get passwordChangeError => 'Error al cambiar la contraseña';
+
+  @override
+  String get saveChanges => 'Guardar cambios';
+
+  @override
   String get nameRequired => 'El nombre es requerido';
 
   @override

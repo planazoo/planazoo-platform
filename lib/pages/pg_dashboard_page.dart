@@ -310,10 +310,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       // Procesar cuando hay datos disponibles
       if (next.hasValue && next.value != null) {
         final plans = next.value!;
-        // Solo procesar si es el primer valor o si realmente cambió
-        if (previous == null || previous.value != plans) {
-          _processPlansUpdate(plans);
-        }
+        _processPlansUpdate(plans);
       }
       
       // Manejar errores

@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T172**
+**Siguiente código de tarea: T173**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -11,7 +11,7 @@
 - **GRUPO 4:** T56-T60, T63, T64: Infraestructura Offline (7 pendientes)
 - **GRUPO 5:** T40-T45: Timezones (6 completadas, 0 pendientes) - T81, T82: No existen
 - **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 11 pendientes)
-- **Seguridad:** T51-T53: Validación (3 completadas, 0 pendientes), T166-T170: Seguridad avanzada (5 pendientes)
+- **Seguridad:** T51-T53: Validación (3 completadas, 0 pendientes), T166-T172: Seguridad avanzada (6 pendientes)
 - **Administración:** T165: Usuarios de administración (1 pendiente)
 - **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
@@ -30,7 +30,7 @@
 
 **Migración:** T154-T156: Migración a Mac/iOS (3 pendientes)
 
-**Total: 139 tareas documentadas (68 completadas, 71 pendientes)**
+**Total: 140 tareas documentadas (69 completadas, 71 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -797,7 +797,6 @@ catch (e) {
 - El evento ocurre en una ubicación física específica con su timezone
 - Ej: "Reunión en Nueva York" → timezone: America/New_York
 - Ej: "Vuelo a Tokio" → timezone: Asia/Tokyo
-
 **Criterios de aceptación:**
 - Dropdown de timezone en EventDialog
 - Búsqueda/filtrado de timezones por nombre o ciudad
@@ -1597,7 +1596,6 @@ Se implementó una **combinación de opciones 1, 3 y 4** para maximizar la clari
 - ✅ `lib/widgets/screens/calendar/components/calendar_tracks.dart` - Barra lateral en tracks
 - ✅ `lib/widgets/screens/wd_calendar_screen.dart` - Barra lateral en celdas de datos y tooltips en eventos
 - ✅ `lib/features/calendar/domain/services/timezone_service.dart` - Métodos `getTimezoneColor()` y `getTimezoneBarColor()`
-
 **Funcionalidades implementadas:**
 - ✅ Sistema de colores para timezones basado en offset UTC
 - ✅ Barra lateral de color en todos los tracks (headers, celdas, alojamientos)
@@ -2397,7 +2395,6 @@ class ContactGroup {
 5. Notificaciones SMS (opcional, solo críticas)
 6. Preferencias de usuario para notificaciones
 7. Silenciar notificaciones temporalmente
-
 **Criterios de aceptación:**
 - Configurar alarmas por evento
 - Múltiples alarmas por evento
@@ -2906,7 +2903,7 @@ class PlatformStats {
 - Ubicación: W1 (parte superior izquierda del header, antes del acceso a perfil)
 - Acción: abrir pantalla/panel de configuración de la app (acción existente si está implementada)
 - Icono sugerido: `Icons.settings`
-- Accesibilidad: tooltip “Configuración”
+- Accesibilidad: tooltip "Configuración"
 
 **Criterios de aceptación:**
 - Botón visible en W1 por encima/delante del icono de perfil
@@ -2942,7 +2939,7 @@ class PlatformStats {
 - Crear encuesta con ≥1 opción de fecha/hora
 - Los invitados pueden votar (autenticados o por enlace con token si se habilita)
 - Resultados visibles al organizador (y a votantes si se habilita)
-- Botón “Aplicar opción ganadora” que actualiza fechas del plan (previa confirmación)
+- Botón "Aplicar opción ganadora" que actualiza fechas del plan (previa confirmación)
 - Registro de quién votó y cuándo
 
 **Datos (borrador):**
@@ -2955,7 +2952,7 @@ class PlatformStats {
 - Reglas: lectura para invitados del plan; escritura de votos por el propio usuario
 
 **UX/Entradas:**
-- UI en plan: “Proponer fechas” → editor de opciones
+- UI en plan: "Proponer fechas" → editor de opciones
 - Vista de resultados con barras/tabla
 - Avisos/notificaciones opcionales (T105) y enlaces compartibles
 
@@ -3187,7 +3184,6 @@ Icono cuadrado formado por 9 círculos iguales (3×3 grid) con espacio entre ell
 2. **Secundaria:** Patrocinios contextuales por categoría/subcategoría
 3. **Comisión:** Marketing de afiliados (tracking de clicks y conversiones)
 4. **Valor añadido:** Ofertas exclusivas de patrocinadores para usuarios de la app
-
 **Sistema de Patrocinios Contextuales:**
 
 **Funcionamiento:**
@@ -3985,7 +3981,6 @@ Una app en sí misma es fácil de copiar. Necesitamos identificar y desarrollar 
 - Usuario siempre tiene información actualizada
 - Notificaciones automáticas de cambios críticos
 - La competencia que requiere entrada manual no puede igualar esto
-
 **Ejemplos:**
 - Vuelo cambia de puerta → Actualización automática en app
 - Hotel cambia check-in → Notificación + actualización automática
@@ -4784,7 +4779,6 @@ No todo puede estar en la v1.0. Necesitamos ser selectivos y enfocarnos en lo es
 - ✅ Validación de formularios (T51) - **IMPLEMENTADO**
 - ✅ `mounted` checks (T52) - **IMPLEMENTADO**
 - ✅ LoggerService (T53) - **IMPLEMENTADO**
-
 **5.2 - Cumplimiento legal mínimo:**
 - ⚠️ Privacy Policy básica - **REQUERIDO para MVP**
 - ⚠️ Terms of Service básicos - **REQUERIDO para MVP**
@@ -5584,7 +5578,6 @@ Crear Evento/Alojamiento en el plan
   - ¿Qué información mostrar?
   - Lenguaje del contenido
   - Profundidad de detalles
-
 #### 4. Diseño y Personalización
 - [ ] **Plantillas:**
   - Plantilla "Clásica" (elegante, formal)
@@ -6139,7 +6132,7 @@ Organizador quiere invitar a alguien a unirse al plan
   ```
 - [ ] Completar T155 (Instalación Firebase CLI)
 - [ ] Completar T156 (Actualización de índices)
-- [ ] **Preparar entorno para Offline First:**
+- [ ] **Preparar entorno para desarrollo Offline First:**
   - [ ] Documentar métodos de simulación offline (iOS/Android/Web)
   - [ ] Verificar dependencias para offline (SQLite/Hive) en `pubspec.yaml`
   - [ ] Revisar documentación de T56-T62 (Infraestructura Offline)
@@ -6383,7 +6376,6 @@ firebase deploy --only firestore:indexes
 - T154 (Migración del Proyecto a Mac/iOS)
 - T155 (Instalación Firebase CLI)
 - T152 (Revisión y Optimización de Índices de Firestore)
-
 ---
 
 ### T157 - Sistema de Ayuda Contextual
@@ -6905,67 +6897,6 @@ egister_page.dart y login_page.dart manejen correctamente los c�digos
 
 ---
 
-## T163 - Hacer username obligatorio en el registro
-
-**Estado:** 🔴 Pendiente
-**Prioridad:** Media
-**Grupo:** UX y Mejoras
-**Dependencias:** T162 (para tener mensajes de error traducidos)
-
-### Descripción
-Hacer que el campo `username` sea obligatorio durante el registro, similar a Instagram. Esto mejora la experiencia de invitaciones y búsqueda de usuarios.
-
-### Problema Identificado
-- Actualmente el `username` es opcional y se configura después del registro
-- Esto dificulta las invitaciones por `@username` si el usuario no lo ha configurado
-- La búsqueda de usuarios es menos eficiente sin username
-- Detectado durante testing de REG-001/REG-002
-
-### Solución Propuesta
-1. **Añadir campo de username en `register_page.dart`:**
-   - Campo obligatorio con validación en tiempo real
-   - Validar formato: 3-30 caracteres, [a-z0-9_], minúsculas
-   - Verificar disponibilidad (puede ser al enviar el formulario o en tiempo real)
-
-2. **Mejorar UX del campo:**
-   - Mostrar ejemplos: "ej: juancarlos, maria_garcia"
-   - Indicador visual de disponibilidad (✓ disponible, ✗ ocupado)
-   - Sugerencias automáticas si el username está ocupado (ej: "juancarlos1", "juancarlos_2025")
-
-3. **Actualizar `auth_notifier.dart`:**
-   - Modificar `registerWithEmailAndPassword` para aceptar `username` como parámetro obligatorio
-   - Validar disponibilidad antes de crear el usuario
-   - Guardar `username` y `usernameLower` en Firestore durante el registro
-
-4. **Traducciones:**
-   - Añadir claves en `app_es.arb` y `app_en.arb`:
-     - `usernameLabel`, `usernameHint`, `usernameRequired`
-     - `usernameInvalid`, `usernameTaken`, `usernameAvailable`
-     - `usernameSuggestion` (para sugerencias)
-
-### Archivos Afectados
-- `lib/features/auth/presentation/pages/register_page.dart` - Añadir campo de username
-- `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Modificar registro para incluir username
-- `lib/features/auth/domain/services/user_service.dart` - Verificar disponibilidad durante registro
-- `lib/l10n/app_es.arb` y `lib/l10n/app_en.arb` - Añadir traducciones
-
-### Criterios de Aceptación
-- ✅ El campo username es obligatorio en el registro
-- ✅ Se valida el formato (3-30 caracteres, [a-z0-9_], minúsculas)
-- ✅ Se verifica disponibilidad antes de crear el usuario
-- ✅ Se muestran mensajes de error claros y traducidos
-- ✅ El username se guarda correctamente en Firestore con `usernameLower`
-- ✅ Funciona en español e inglés
-- ✅ La UX es clara y no confunde al usuario
-
-### Notas
-- Detectado durante testing de REG-001/REG-002
-- Relacionado con T137 (username único ya implementado)
-- Depende de T162 para tener mensajes de error traducidos
-- Similar a Instagram: username obligatorio para mejor experiencia de usuario
-
----
-
 ## T164 - Login con Google (Social Authentication)
 
 **Estado:** ✅ Completado
@@ -7183,7 +7114,6 @@ Implementar autenticación de doble factor (2FA) para mejorar la seguridad de la
 2. Permitir a los usuarios activar/desactivar 2FA desde la configuración de cuenta
 3. Implementar flujo de login con segundo factor
 4. Soporte para múltiples métodos de 2FA (SMS, TOTP/Google Authenticator)
-
 ### Funcionalidades
 
 #### 1. Métodos de 2FA
@@ -7650,5 +7580,48 @@ Crear los documentos legales completos (Términos y Condiciones, Política de Pr
 - T135: Gestión de Cookies
 - T136: App Tracking Transparency
 - `lib/features/auth/presentation/pages/register_page.dart` - Checkbox de términos
+
+---
+
+## T172 - Personalizar flujo web de restablecimiento de contraseña
+
+**Estado:** 🔄 Pendiente  
+**Prioridad:** Media  
+**Grupo:** Seguridad / UX  
+**Dependencias:** Ninguna inmediata (coordinar con T170 para lineamientos de logging)
+
+### Descripción
+Diseñar e implementar una página propia que sustituya la plantilla genérica de Firebase cuando el usuario abre el enlace de restablecimiento de contraseña enviado por email. La nueva pantalla debe respetar la identidad visual de Planazoo y aplicar las mismas reglas de seguridad definidas para las contraseñas dentro de la app.
+
+### Objetivos
+1. Reemplazar la interfaz estándar de Firebase por una página hospedada por nosotros (Firebase Hosting) que reciba el `oobCode`.
+2. Aplicar las mismas validaciones de contraseña (mínimo 8 caracteres, mayúscula, minúscula, número, carácter especial) antes de confirmar el cambio.
+3. Mostrar mensajes claros y localizados (ES/EN) para estados de éxito y error.
+4. Opcionalmente redirigir al login de la app/web tras un restablecimiento exitoso mediante `continueUrl`.
+
+### Funcionalidades
+- Página responsive (`reset-password.html` o similar) con checklist de requisitos y doble campo (contraseña + confirmación).
+- Feedback visual consistente con la app (colores, tipografía, botones).
+- Manejo de estados: enlace caducado, código inválido, contraseña débil, restablecimiento exitoso.
+- Registro mínimo de métricas (sin datos sensibles) para auditar intentos.
+
+### Implementación Propuesta
+- Configurar Firebase Hosting (si aún no está activo) y desplegar la página personalizada.
+- Usar `firebase-app.js` y `firebase-auth.js` para consumir `verifyPasswordResetCode` y `confirmPasswordReset`.
+- Compartir variables de branding (paleta, tipografía) para mantener coherencia visual.
+- Actualizar el envío de emails de reset (`ActionCodeSettings`) para apuntar a la nueva URL.
+- Documentar el proceso en `docs/guias/GUIA_SEGURIDAD.md` y añadir el caso en `docs/configuracion/TESTING_CHECKLIST.md`.
+
+### Criterios de Aceptación
+- ✅ El enlace del email abre la página personalizada (no la plantilla por defecto).
+- ✅ Las reglas de contraseña coinciden con las de la app.
+- ✅ Se muestran mensajes claros para cada estado (éxito, código inválido, enlace caducado, etc.).
+- ✅ Tras el éxito se informa del siguiente paso o se redirige al login.
+- ✅ Documentación y checklist de testing actualizados.
+
+### Relacionado con
+- LOGIN-015 (Testing de recuperación de contraseña)
+- T170 - Logging sin datos sensibles
+- `docs/guias/GUIA_SEGURIDAD.md`
 
 ---

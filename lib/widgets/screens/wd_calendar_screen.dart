@@ -280,16 +280,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Sincronizar tracks con participantes reales
     _syncTracksWithParticipants();
     
-    // Forzar inicialización del CalendarNotifier para asegurar que se carguen los eventos
+    final currentUser = ref.watch(currentUserProvider);
+
+    if (currentUser == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final calendarParams = CalendarNotifierParams(
       planId: widget.plan.id!,
-      userId: widget.plan.userId,
+      userId: currentUser.id,
       initialDate: widget.plan.startDate,
       initialColumnCount: widget.plan.columnCount,
     );
-    
-    // Leer el notifier para forzar su inicialización
-    ref.read(calendarNotifierProvider(calendarParams));
+
+    ref.watch(calendarNotifierProvider(calendarParams));
     
     // Verificar si hay invitación pendiente
     WidgetsBinding.instance.addPostFrameCallback((_) {

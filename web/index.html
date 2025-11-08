@@ -22,11 +22,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <!-- Google Sign-In Client ID for Web -->
-  <!-- ⚠️ IMPORTANTE: Reemplaza el valor de content con tu Client ID real de Firebase Console -->
-  <!-- Obtener de: Firebase Console > Authentication > Sign-in method > Google > Web SDK configuration -->
-  <!-- Formato: XXXXX-XXXXX.apps.googleusercontent.com -->
-  <!-- Si no configuras esto, el login con Google NO funcionará en web -->
-  <!-- <meta name="google-signin-client_id" content="TU_CLIENT_ID_AQUI.apps.googleusercontent.com"> -->
+  <meta name="google-signin-client_id" content="794752310537-dje2erfe25fdnfu8janse3g4keemvnqh.apps.googleusercontent.com">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -39,6 +35,9 @@
 
   <title>unp_calendario</title>
   <link rel="manifest" href="manifest.json">
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

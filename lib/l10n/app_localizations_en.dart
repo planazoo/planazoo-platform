@@ -117,6 +117,41 @@ class AppLocalizationsEn extends AppLocalizations {
       'Password must contain at least one special character (!@#\$%^&*)';
 
   @override
+  String get passwordRulesTitle => 'Your new password must include:';
+
+  @override
+  String get changePasswordTitle => 'Change password';
+
+  @override
+  String get changePasswordSubtitle =>
+      'Enter your current password and set a new secure one.';
+
+  @override
+  String get currentPasswordLabel => 'Current password';
+
+  @override
+  String get newPasswordLabel => 'New password';
+
+  @override
+  String get confirmNewPasswordLabel => 'Confirm new password';
+
+  @override
+  String get passwordMustBeDifferent =>
+      'The new password must be different from the current one';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwords do not match';
+
+  @override
+  String get passwordChangedSuccess => 'Password updated successfully';
+
+  @override
+  String get passwordChangeError => 'Unable to change the password';
+
+  @override
+  String get saveChanges => 'Save changes';
+
+  @override
   String get nameRequired => 'Name is required';
 
   @override

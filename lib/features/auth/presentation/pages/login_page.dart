@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -23,9 +24,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   String? _lastShownError; // Para evitar mostrar el mismo error múltiples veces
+  late final ProviderSubscription<AuthState> _authStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _authStateSubscription = ref.listenManual<AuthState>(
+      authNotifierProvider,
+      _handleAuthState,
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final currentState = ref.read(authNotifierProvider);
+      if (currentState.hasError && currentState.errorMessage != null) {
+        _handleAuthState(null, currentState);
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _authStateSubscription.close();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -36,279 +57,272 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final authState = ref.watch(authNotifierProvider);
     final authNotifier = ref.read(authNotifierProvider.notifier);
 
-    // Escuchar cambios de estado
-    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-      if (next.hasError && next.errorMessage != null) {
-        // Evitar mostrar el mismo error múltiples veces
-        final errorMessage = next.errorMessage!;
-        if (_lastShownError == errorMessage) {
-          return; // Ya se mostró este error, no volver a mostrarlo
-        }
-        
-        _lastShownError = errorMessage;
-        
-        // Traducir el mensaje de error
-        final friendlyMessage = _getUserFriendlyErrorMessage(errorMessage);
-        
-        // Limpiar el error después de mostrarlo (dar tiempo para que se muestre el SnackBar)
-        Future.delayed(const Duration(seconds: 5), () {
-          if (mounted) {
-            ref.read(authNotifierProvider.notifier).clearError();
-            _lastShownError = null; // Resetear después de limpiar
-          }
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    friendlyMessage,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: AppLocalizations.of(context)!.close,
-              textColor: Colors.white,
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              },
-            ),
-          ),
-        );
-      } else if (!next.hasError) {
-        // Si no hay error, resetear el último error mostrado
-        _lastShownError = null;
-      }
-    });
-
     return Scaffold(
       backgroundColor: AppColorScheme.color0,
-      body: Column(
+      body: Stack(
         children: [
-          // Barra superior
-          Container(
-            width: double.infinity,
-            height: 60,
-            color: AppColorScheme.color2,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40.0),
-              child: Row(
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.appTitle,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+          Column(
+            children: [
+              // Barra superior
+              Container(
+                width: double.infinity,
+                height: 60,
+                color: AppColorScheme.color2,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                  child: Row(
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.appTitle,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      const LanguageSelector(),
+                    ],
                   ),
-                  const Spacer(),
-                  const LanguageSelector(),
-                ],
+                ),
               ),
-            ),
-          ),
-          
-          // Contenido principal
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Center(
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 480),
-                  child: Card(
-                    elevation: 8,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Logo centrado
-                            Center(
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          AppColorScheme.color2,
-                                          AppColorScheme.color2.withOpacity(0.8),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColorScheme.color2.withOpacity(0.3),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
+              // Contenido principal
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 480),
+                      child: Card(
+                        elevation: 8,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Logo centrado
+                                Center(
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        width: 80,
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              AppColorScheme.color2,
+                                              AppColorScheme.color2.withOpacity(0.8),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(20),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppColorScheme.color2.withOpacity(0.3),
+                                              blurRadius: 12,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.calendar_today_rounded,
-                                      color: Colors.white,
-                                      size: 40,
-                                    ),
+                                        child: const Icon(
+                                          Icons.calendar_today_rounded,
+                                          color: Colors.white,
+                                          size: 40,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        AppLocalizations.of(context)!.loginTitle,
+                                        style: AppTypography.titleStyle.copyWith(
+                                          fontSize: 28,
+                                          color: AppColorScheme.color4,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        AppLocalizations.of(context)!.loginSubtitle,
+                                        style: AppTypography.bodyStyle.copyWith(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    AppLocalizations.of(context)!.loginTitle,
-                                    style: AppTypography.titleStyle.copyWith(
-                                      fontSize: 28,
-                                      color: AppColorScheme.color4,
-                                      fontWeight: FontWeight.w700,
+                                ),
+                                const SizedBox(height: 40),
+                                // Campo de email
+                                _buildEmailField(),
+                                const SizedBox(height: 20),
+                                // Campo de contraseña
+                                _buildPasswordField(),
+                                const SizedBox(height: 12),
+                                // Enlaces de ayuda
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // Enlace de reenviar verificación
+                                    Flexible(
+                                      child: TextButton(
+                                        onPressed: _showResendVerificationDialog,
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          AppLocalizations.of(context)!.resendVerification,
+                                          style: AppTypography.interactiveStyle.copyWith(
+                                            color: Colors.orange.shade600,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    AppLocalizations.of(context)!.loginSubtitle,
-                                    style: AppTypography.bodyStyle.copyWith(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 16,
+                                    // Enlace de restablecer contraseña
+                                    Flexible(
+                                      child: TextButton(
+                                        onPressed: _showForgotPasswordDialog,
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          AppLocalizations.of(context)!.forgotPassword,
+                                          style: AppTypography.interactiveStyle.copyWith(
+                                            color: AppColorScheme.color2,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
+                                // Botón de iniciar sesión
+                                _buildLoginButton(authNotifier, authState.isLoading),
+                                const SizedBox(height: 24),
+                                // Divider
+                                Row(
+                                  children: [
+                                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Text(
+                                        'o',
+                                        style: AppTypography.bodyStyle.copyWith(
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(child: Divider(color: Colors.grey.shade300)),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+                                // Botón de Google Sign-In
+                                _buildGoogleSignInButton(authNotifier, authState.isLoading),
+                                const SizedBox(height: 24),
+                                // Enlace de registro
+                                _buildRegisterLink(),
+                                const SizedBox(height: 32),
+                              ],
                             ),
-                            
-                            const SizedBox(height: 40),
-                
-                // Campo de email
-                _buildEmailField(),
-                
-                const SizedBox(height: 20),
-                
-                // Campo de contraseña
-                _buildPasswordField(),
-                
-                const SizedBox(height: 12),
-                
-                // Enlaces de ayuda
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Enlace de reenviar verificación
-                    Flexible(
-                      child: TextButton(
-                        onPressed: _showResendVerificationDialog,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context)!.resendVerification,
-                          style: AppTypography.interactiveStyle.copyWith(
-                            color: Colors.orange.shade600,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    
-                    // Enlace de restablecer contraseña
-                    Flexible(
-                      child: TextButton(
-                        onPressed: _showForgotPasswordDialog,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context)!.forgotPassword,
-                          style: AppTypography.interactiveStyle.copyWith(
-                            color: AppColorScheme.color2,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Botón de iniciar sesión
-                _buildLoginButton(authNotifier, authState.isLoading),
-                
-                const SizedBox(height: 24),
-                
-                // Divider
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'o',
-                        style: AppTypography.bodyStyle.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Botón de Google Sign-In
-                _buildGoogleSignInButton(authNotifier, authState.isLoading),
-                
-                const SizedBox(height: 24),
-                
-                // Enlace de registro
-                _buildRegisterLink(),
-                
-                            const SizedBox(height: 32),
-                          ],
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
+          if (authState.status == AuthStatus.loading && authState.isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.2),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
+  void _handleAuthState(AuthState? previous, AuthState next) {
+    if (!mounted) return;
+
+    if (next.hasError && next.errorMessage != null) {
+      final errorMessage = next.errorMessage!;
+      if (_lastShownError == errorMessage) {
+        return;
+      }
+
+      _lastShownError = errorMessage;
+
+      final friendlyMessage = _getUserFriendlyErrorMessage(errorMessage);
+
+      Future.delayed(const Duration(seconds: 5), () {
+        if (mounted) {
+          ref.read(authNotifierProvider.notifier).clearError();
+          _lastShownError = null;
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  friendlyMessage,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: AppLocalizations.of(context)!.close,
+            textColor: Colors.white,
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+          ),
+        ),
+      );
+    } else if (!next.hasError) {
+      _lastShownError = null;
+    }
+  }
+
   Widget _buildEmailField() {
     final isEmail = _emailController.text.contains('@');
-    final isUsername = _emailController.text.isNotEmpty && 
-                       !_emailController.text.contains('@') && 
+    final isUsername = _emailController.text.isNotEmpty &&
+                       !_emailController.text.contains('@') &&
                        _emailController.text.startsWith('@');
-    
+
     return TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.text,
@@ -361,10 +375,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         // Validar que sea email válido o username válido (con o sin @)
         final trimmed = value.trim();
         final isEmailFormat = Validator.isValidEmail(trimmed);
-        final isUsernameFormat = trimmed.startsWith('@') 
+        final isUsernameFormat = trimmed.startsWith('@')
             ? Validator.isValidUsername(trimmed.substring(1))
             : Validator.isValidUsername(trimmed);
-        
+
         if (!isEmailFormat && !isUsernameFormat) {
           return AppLocalizations.of(context)!.emailOrUsernameInvalid;
         }
@@ -457,13 +471,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
           backgroundColor: Colors.white,
         ),
-        icon: const Icon(Icons.g_mobiledata, size: 24, color: Colors.black87),
+        icon: isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.g_mobiledata, size: 24, color: Colors.black87),
         label: Text(
-          AppLocalizations.of(context)!.continueWithGoogle,
+          isLoading
+              ? 'Iniciando…'
+              : AppLocalizations.of(context)!.continueWithGoogle,
           style: AppTypography.interactiveStyle.copyWith(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
           ),
         ),
       ),
@@ -602,10 +623,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   String _getUserFriendlyErrorMessage(String errorMessage) {
     // Normalizar el mensaje para comparación (convertir a minúsculas y eliminar espacios)
     final normalizedError = errorMessage.toLowerCase().trim();
-    
+
     // Convertir errores técnicos en mensajes amigables
     // Manejar variaciones: "username-not-found", "user-name-not-found", etc.
-    if (normalizedError.contains('username-not-found') || 
+    if (normalizedError.contains('username-not-found') ||
         normalizedError.contains('user-name-not-found') ||
         normalizedError == 'username-not-found' ||
         normalizedError == 'user-name-not-found') {
@@ -616,7 +637,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return AppLocalizations.of(context)!.googleSignInCancelled;
     } else if (errorMessage.contains('google-sign-in-error') || errorMessage.contains('Error desconocido al iniciar sesión con Google')) {
       return AppLocalizations.of(context)!.googleSignInError;
-    } else if (normalizedError.contains('wrong-password') || 
+    } else if (normalizedError.contains('wrong-password') ||
                normalizedError.contains('contraseña incorrecta') ||
                errorMessage.contains('Contraseña incorrecta')) {
       return AppLocalizations.of(context)!.wrongPassword;
@@ -647,7 +668,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -670,7 +691,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: emailController,
-                keyboardType: TextInputType.text, // Permite + y otros caracteres
+                keyboardType: TextInputType.text,
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: 'Email',
@@ -684,7 +705,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   if (value == null || value.isEmpty) {
                     return AppLocalizations.of(context)!.emailRequired;
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                  if (!Validator.isValidEmail(value.trim())) {
                     return AppLocalizations.of(context)!.emailInvalid;
                   }
                   return null;
@@ -730,7 +751,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         emailController.text.trim(),
                         passwordController.text,
                       );
-                  
+
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -773,7 +794,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   void _showForgotPasswordDialog() {
     final emailController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -805,7 +826,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const SizedBox(height: 20),
               TextFormField(
                 controller: emailController,
-                keyboardType: TextInputType.text, // Permite + y otros caracteres
+                keyboardType: TextInputType.text,
                 decoration: InputDecoration(
                   labelText: 'Email',
                   hintText: 'tu@email.com',
@@ -829,7 +850,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   if (value == null || value.isEmpty) {
                     return AppLocalizations.of(context)!.emailRequired;
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                  if (!Validator.isValidEmail(value.trim())) {
                     return AppLocalizations.of(context)!.emailInvalid;
                   }
                   return null;
@@ -852,7 +873,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 try {
                   await ref.read(authNotifierProvider.notifier)
                       .sendPasswordResetEmail(emailController.text.trim());
-                  
+
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

@@ -1,8 +1,8 @@
 # 👤 FLUJO_CRUD_USUARIOS
 
 Estado: ✅ Alineado  
-Versión: 1.2  
-Fecha: Enero 2025 (Actualizado - T163 username obligatorio y login con username)
+Versión: 1.3  
+Fecha: Noviembre 2025 (Actualizado - Validaciones reforzadas, flujo completo de autenticación y recuperación)
 
 ---
 
@@ -146,10 +146,11 @@ Gaps:
 
 ---
 
-## ✏️ Actualización de Perfil
+## ✏️ Actualización de Perfil y Cambio de Contraseña
 
 - `AuthNotifier.updateProfile()` y `UserService.updateUserProfile()`
 - `AuthNotifier.updateUsername()` + `UserService.updateUsername()` (nuevo)
+- `AuthNotifier.changePassword()` + diálogo UX (Noviembre 2025)
 - Reglas: solo el propio usuario; email no mutable
 
 Validaciones y seguridad:
@@ -157,6 +158,11 @@ Validaciones y seguridad:
 - Validar `photoURL` (opcional: `Validator.isSafeUrl`) — aplicado
 - Validar `username` con `Validator.isValidUsername` (minúsculas, [a-z0-9_], 3–30) — aplicado
 - Persistir índice `usernameLower` para búsquedas unicidad — aplicado
+- Cambio de contraseña:
+  - UI de `AccountSettingsPage` actualizada con checklist de requisitos y estilo Planazoo
+  - Validaciones `Validator.validatePassword` (8+ caracteres, mayúscula, minúscula, número, símbolo)
+  - Campo de confirmación y mensajes i18n (ES/EN) alineados con `app_es/en.arb`
+  - Snackbars de éxito/error coherentes con el resto de la app
 
 Acciones:
 - [Hecho] Sanitización en `updateProfile`
@@ -182,6 +188,9 @@ Gaps:
 
 - `AuthNotifier.sendPasswordResetEmail()`
 - Rate limiting: 3 emails/hora
+- Formulario admite alias con `+`
+- Snackbar de confirmación y retorno inmediato al login tras enviar
+- La pantalla web de Firebase mantiene la plantilla por defecto; ver T172 para personalización futura
 
 Ok y alineado con `RateLimiterService`.
 
@@ -218,6 +227,9 @@ Ref: ver `firestore.rules` sección `REGLAS PARA USUARIOS`.
   - Exportar `/users/{uid}`, participaciones, planes creados, eventos creados
 - **T135 - Cookies/Consent (web): Captcha opcional** (Pendiente)
   - Captcha opcional para registro/login (mejora de seguridad)
+- **T172 - Personalizar flujo web de restablecimiento de contraseña** (Pendiente)
+  - Diseñar UI propia hospedada en Firebase Hosting para enlaces de reset
+  - Aplicar mismas validaciones y estilo que en la app + mensajes localizados
 
 ---
 

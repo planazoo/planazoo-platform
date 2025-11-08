@@ -130,6 +130,31 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T163 - Hacer username obligatorio en el registro
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Noviembre 2025  
+**Descripción:** Refuerza el flujo de registro obligando a definir un nombre de usuario único, con validaciones y mensajes consistentes en toda la experiencia de autenticación.
+
+**Implementación destacada:**
+- Campo `username` obligatorio en `register_page.dart`, con validación en tiempo real, iconografía y mensajes ES/EN.
+- Comprobación de formato (`Validator.isValidUsername`) y disponibilidad mediante `UserService.isUsernameAvailable`.
+- Generación de sugerencias automáticas (chips interactivos) cuando el nombre está ocupado.
+- `AuthNotifier.registerWithEmailAndPassword` exige username y lo guarda junto a `usernameLower` en Firestore.
+- AuthNotifier renueva usernames faltantes para usuarios existentes/Google; errores basados en códigos para i18n.
+- Documentación (`FLUJO_CRUD_USUARIOS.md`, `TESTING_CHECKLIST.md`) y pruebas REG-001→REG-013 / LOGIN-001→LOGIN-016 actualizadas.
+
+**Criterios de aceptación:**
+- ✅ Username obligatorio y validado (3-30 caracteres, `a-z0-9_`, minúsculas).
+- ✅ Disponibilidad verificada antes de crear el usuario.
+- ✅ Mensajes y sugerencias claras cuando el username está ocupado.
+- ✅ Persistencia correcta en Firestore (`username`, `usernameLower`).
+- ✅ Funciona en español e inglés.
+- ✅ Testing documental completado.
+
+**Relacionado con:** T137 (username único), T164 (Login Google), T172 (flujo web reset).
+
+---
+
 ## T107 - Actualización Dinámica de Duración del Plan
 **Estado:** ✅ Base completada  
 **Fecha de finalización:** Enero 2025  

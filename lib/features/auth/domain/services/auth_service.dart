@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 
@@ -146,6 +147,24 @@ class AuthService {
   // Iniciar sesión con Google
   Future<fb_auth.UserCredential> signInWithGoogle() async {
     try {
+      if (kIsWeb) {
+        final googleProvider = fb_auth.GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+        googleProvider.setCustomParameters({'prompt': 'select_account'});
+        try {
+          return await _firebaseAuth.signInWithPopup(googleProvider);
+        } on fb_auth.FirebaseAuthException catch (e) {
+          if (e.code == 'popup-closed-by-user' ||
+              e.code == 'cancelled-popup-request' ||
+              e.code == 'user-cancelled' ||
+              e.code == 'web-context-canceled') {
+            throw Exception('google-sign-in-cancelled');
+          }
+          throw _handleFirebaseAuthException(e);
+        }
+      }
+
       // Iniciar el flujo de autenticación de Google
       // Inicializar GoogleSignIn solo cuando se necesita
       final GoogleSignIn googleSignIn = _getGoogleSignInInstance();
@@ -170,8 +189,12 @@ class AuthService {
     } on fb_auth.FirebaseAuthException catch (e) {
       throw _handleFirebaseAuthException(e);
     } catch (e) {
-      // Si es el error de cancelación, re-lanzarlo tal cual
-      if (e.toString().contains('google-sign-in-cancelled')) {
+      final errorString = e.toString();
+      if (errorString.contains('google-sign-in-cancelled') ||
+          errorString.contains('popup-closed-by-user') ||
+          errorString.contains('cancelled-popup-request') ||
+          errorString.contains('user-cancelled') ||
+          errorString.contains('web-context-canceled')) {
         throw Exception('google-sign-in-cancelled');
       }
       throw Exception('Error desconocido al iniciar sesión con Google: $e');
