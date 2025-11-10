@@ -353,12 +353,13 @@ Guardar timezone en PlanParticipation
 
 **Escenario:** Participante viaja y cambia de timezone
 
+**UI soporte:** Desde el perfil del usuario → Seguridad y acceso → **Configurar zona horaria** (actualiza `plan_participations.personalTimezone` para todas las participaciones activas).
+
 **Flujo:**
 ```
 Participante llega a Sydney (antes estaba en Madrid)
   ↓
 Sistema detecta cambio de timezone
-(Opcional: Participante actualiza manualmente)
   ↓
 Actualizar `personalTimezone` del participante
   ↓

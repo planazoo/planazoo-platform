@@ -41,8 +41,8 @@ class _AppState extends ConsumerState<App> {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('es', ''), // Español
-        Locale('en', ''), // Inglés
+        Locale('es'), // Español
+        Locale('en'), // Inglés
       ],
       // Rutas (T104)
       home: const AuthGuard(

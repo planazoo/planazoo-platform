@@ -37,8 +37,6 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_state_serv
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
-import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -55,9 +53,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   List<Plan> planazoos = [];
   List<Plan> filteredPlanazoos = [];
   bool isLoading = true;
+  bool _isTimezoneBannerLoading = false;
   
   // NUEVO: Estado de navegación para W31
   String currentScreen = 'calendar'; // 'calendar', 'planData', 'participants', 'profile', etc.
+  String _previousScreen = 'calendar';
   
   // NUEVO: Estado para trackear qué widget de W14-W25 está seleccionado
   String? selectedWidgetId; // 'W14', 'W15', 'W16', etc.
@@ -74,6 +74,148 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   void dispose() {
     super.dispose();
+  }
+
+  Widget _buildTimezoneBanner(
+    BuildContext context, {
+    required String? configuredTimezone,
+    required String deviceTimezone,
+  }) {
+    final loc = AppLocalizations.of(context)!;
+    final userTz = configuredTimezone ?? deviceTimezone;
+    final deviceDisplay = TimezoneService.getTimezoneDisplayName(deviceTimezone);
+    final userDisplay = TimezoneService.getTimezoneDisplayName(userTz);
+    final shouldShowDifference = configuredTimezone != null && configuredTimezone != deviceTimezone;
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 640),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.travel_explore, color: AppColorScheme.color2),
+              const SizedBox(width: 8),
+              Text(
+                loc.timezoneBannerTitle,
+                style: AppTypography.largeTitle.copyWith(
+                  fontSize: 18,
+                  color: AppColorScheme.color2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            loc.timezoneBannerMessage(deviceDisplay, userDisplay),
+            style: AppTypography.bodyStyle.copyWith(
+              fontSize: 14,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          if (!shouldShowDifference)
+            Padding(
+              padding: const EdgeInsets.only(top: 6.0),
+              child: Text(
+                loc.profileTimezoneDialogDeviceHint,
+                style: AppTypography.caption.copyWith(
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: _isTimezoneBannerLoading
+                    ? null
+                    : () async {
+                        setState(() {
+                          _isTimezoneBannerLoading = true;
+                        });
+                        try {
+                          await ref.read(authNotifierProvider.notifier).updateDefaultTimezone(deviceTimezone);
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(loc.timezoneBannerUpdateSuccess),
+                              backgroundColor: Colors.green.shade600,
+                            ),
+                          );
+                          if (mounted) {
+                            setState(() {
+                              _isTimezoneBannerLoading = false;
+                            });
+                          }
+                        } catch (e) {
+                          if (!mounted) return;
+                          setState(() {
+                            _isTimezoneBannerLoading = false;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(loc.timezoneBannerUpdateError),
+                              backgroundColor: Colors.red.shade600,
+                            ),
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColorScheme.color2,
+                  foregroundColor: Colors.white,
+                ),
+                child: _isTimezoneBannerLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(loc.timezoneBannerUpdateButton(deviceDisplay)),
+              ),
+              const SizedBox(width: 12),
+              TextButton(
+                onPressed: () {
+                  ref.read(authNotifierProvider.notifier).dismissTimezoneSuggestion();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(loc.timezoneBannerKeepMessage(userDisplay)),
+                      backgroundColor: Colors.blueGrey.shade700,
+                    ),
+                  );
+                  setState(() {
+                    _isTimezoneBannerLoading = false;
+                  });
+                },
+                child: Text(
+                  loc.timezoneBannerKeepButton(userDisplay),
+                  style: AppTypography.bodyStyle.copyWith(
+                    color: AppColorScheme.color4,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   // Método helper para procesar cambios en la lista de planes
@@ -188,7 +330,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // NUEVO: Método para cambiar la pantalla mostrada en W31
   void _changeScreen(String screen) {
     setState(() {
+      if (screen == 'profile') {
+        if (currentScreen != 'profile') {
+          _previousScreen = currentScreen;
+        }
+      } else {
+        _previousScreen = screen;
+      }
       currentScreen = screen;
+    });
+  }
+  
+  void _closeProfileScreen() {
+    setState(() {
+      final target = _previousScreen == 'profile' ? 'calendar' : _previousScreen;
+      currentScreen = target;
     });
   }
   
@@ -300,6 +456,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
+    final authState = ref.watch(authNotifierProvider);
+    final timezoneSuggestion = authState.timezoneSuggestion;
+    final deviceTimezoneSuggestion = authState.deviceTimezone;
+    final configuredTimezone = authState.user?.defaultTimezone;
     
     // Usar plansStreamProvider directamente con Riverpod
     ref.watch(plansStreamProvider);
@@ -334,7 +494,27 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     });
     
     return Scaffold(
-      body: _buildGrid(),
+      body: Stack(
+        children: [
+          _buildGrid(),
+          if (timezoneSuggestion != null && deviceTimezoneSuggestion != null)
+            Positioned(
+              top: 24,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: _buildTimezoneBanner(
+                    context,
+                    configuredTimezone: configuredTimezone,
+                    deviceTimezone: deviceTimezoneSuggestion,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
       // 🧟 Botones de testing (solo en modo debug)
       floatingActionButton: kDebugMode
           ? Column(
@@ -1277,9 +1457,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               message: AppLocalizations.of(context)!.profileTooltip,
               child: GestureDetector(
                 onTap: () {
-                  setState(() {
-                    currentScreen = 'profile';
-                  });
+                  _changeScreen('profile');
                 },
                 child: Container(
                   width: 48,
@@ -2376,6 +2554,24 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final w31Width = columnWidth * 12;
     final w31Height = rowHeight * 10;
     
+    if (currentScreen == 'profile') {
+      final overlayLeft = columnWidth;
+      final overlayTop = 0.0;
+      final overlayWidth = columnWidth * 16;
+      final overlayHeight = rowHeight * 13;
+
+      return Positioned(
+        left: overlayLeft,
+        top: overlayTop,
+        child: Container(
+          width: overlayWidth,
+          height: overlayHeight,
+          color: AppColorScheme.color0,
+          child: _buildProfileScreen(),
+        ),
+      );
+    }
+
     return Positioned(
       left: w31X,
       top: w31Y,
@@ -2435,7 +2631,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   // NUEVO: Pantalla de perfil
   Widget _buildProfileScreen() {
-    return const ProfilePage();
+    return ProfilePage(
+      onClose: _closeProfileScreen,
+    );
   }
 
   // NUEVO: Pantalla de email (temporal)

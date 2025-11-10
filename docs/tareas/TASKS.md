@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T173**
+**Siguiente código de tarea: T178**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -30,7 +30,7 @@
 
 **Migración:** T154-T156: Migración a Mac/iOS (3 pendientes)
 
-**Total: 140 tareas documentadas (69 completadas, 71 pendientes)**
+**Total: 145 tareas documentadas (70 completadas, 75 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -166,6 +166,26 @@ Para optimizar el tiempo de testing y desarrollo, las tareas se organizan en gru
 **Depende de:** Grupos 1-5
 **Duración estimada:** 2-3 semanas
 **Resultado:** Sistema completo y optimizado
+
+---
+
+### **Nuevas Tareas Pendientes**
+
+- **T174 - Definir canal de soporte para cambios de email**
+  - **Prioridad:** Baja
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo producto/soporte
+  - **Descripción:** Crear landing o canal de soporte (FAQ, formulario o email oficial) para gestionar cambios de email de usuario. Actualizar la nota del modal de perfil para enlazar al nuevo canal.
+- **T175 - Unificar UI de validación de contraseñas**
+  - **Prioridad:** Media
+  - **Estado:** ✅ Completada (Noviembre 2025)
+  - **Responsable:** Equipo app
+  - **Descripción:** Crear componente común de reglas de contraseña y reutilizarlo en registro y cambio de contraseña para mostrar checklist de validaciones con el mismo estilo.
+- **T176 - Unificar plantillas de correos transaccionales**
+  - **Prioridad:** Baja
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo producto/app
+  - **Descripción:** Diseñar plantilla estándar para correos de verificación, recuperación, eliminación, invitaciones, etc., y adaptar el sistema de envío (Firebase Auth + Functions) para usarla cuando sea posible.
 
 ---
 
@@ -619,7 +639,6 @@ validator: (value) {
 **Relacionado con:** T127 (Sanitización)
 
 ---
-
 ### T52 - Añadir Checks `mounted` antes de usar Context
 **Estado:** ✅ Completada  
 **Complejidad:** ⚠️ Baja-Media  
@@ -660,7 +679,7 @@ Future<void> _deleteItem() async {
    - `_generateMiniFrankPlan()` - check después de `await`
    - `_createPlan()` - checks múltiples después de operaciones async
    - `_loadUsers()` - check después de `await`
-   - `_pickImage()` - checks después de `await`
+   - `_pickImage()` - check después de `await`
    - `_selectStartDate()` - check después de `showDatePicker`
    - `_selectEndDate()` - check después de `showDatePicker`
    - Subida de imágenes - checks después de operaciones async
@@ -760,7 +779,6 @@ catch (e) {
 **Descripción:** Implementar la base fundamental del sistema de timezones. Añadir soporte para que cada evento almacene y muestre su hora en la timezone local donde ocurre el evento.  
 
 **Concepto clave:** Un evento "Almuerzo en Delhi a las 13:00h" debe mostrarse a las 13:00h tanto si lo ve alguien desde España como desde India. La hora es LOCAL del lugar donde ocurre el evento, no del dispositivo que lo visualiza.
-
 **Criterios de aceptación:** 
 - Añadir campo `timezone` (String) al modelo Event (`lib/features/calendar/domain/models/event.dart`)
 - Modificar `toFirestore()` y `fromFirestore()` para incluir timezone
@@ -771,14 +789,12 @@ catch (e) {
 - Mostrar eventos en calendario con hora LOCAL (convertida desde UTC usando timezone del evento)
 - Migración suave: eventos existentes sin timezone usan timezone por defecto
 - Testing con al menos 3 timezones diferentes (Europa, Asia, América)
-
 **Consideraciones técnicas:**
 - Usar paquete `timezone: ^0.9.0` (o última versión estable)
 - Almacenar en Firestore: `DateTime` en UTC + `String timezone` (ej: "Asia/Kolkata", "Europe/Madrid")
 - Para mostrar: convertir UTC → timezone del evento usando `TZDateTime`
 - Formato timezone: IANA timezone database (ej: "Europe/Madrid", "Asia/Kolkata", "America/New_York")
 - Manejar DST (Daylight Saving Time) automáticamente con librería timezone
-
 **Archivos a modificar:**
 - `lib/features/calendar/domain/models/event.dart` - añadir campo timezone
 - `lib/features/calendar/domain/services/event_service.dart` - manejar conversión UTC
@@ -792,7 +808,6 @@ catch (e) {
 **Complejidad:** ⚠️ Media  
 **Depende de:** T40  
 **Descripción:** Añadir selector de timezone en EventDialog para que el usuario pueda especificar en qué timezone ocurre el evento.
-
 **Concepto clave:** 
 - El evento ocurre en una ubicación física específica con su timezone
 - Ej: "Reunión en Nueva York" → timezone: America/New_York
@@ -908,7 +923,7 @@ catch (e) {
 **Descripción:** Añadir casos de prueba de timezones al Plan Frankenstein.
 
 **Casos a añadir:**
-```dart
+```
 // Día 6: Eventos en diferentes timezones
 - Evento 1: "Llamada con NY" (America/New_York, GMT-5)
 - Evento 2: "Reunión Madrid" (Europe/Madrid, GMT+1)
@@ -1557,7 +1572,6 @@ CalendarScreen (orchestrator)
 - `docs/SERVICE_EXAMPLES.md`
 
 ---
-
 ### T100 - Visualización de Timezones en el Calendario
 **Estado:** ✅ Completada  
 **Complejidad:** ⚠️ Media  
@@ -1567,13 +1581,11 @@ CalendarScreen (orchestrator)
 
 **Solución implementada:**
 Se implementó una **combinación de opciones 1, 3 y 4** para maximizar la claridad sin sobrecargar la interfaz:
-
 #### ✅ **Opción 1: Indicador mejorado en el AppBar** - IMPLEMENTADO
 - Icono de reloj (⏰) más prominente junto al selector de usuario
 - Texto con formato: "Madrid (GMT+1)"
 - Ubicación: AppBar, en el `UserPerspectiveSelector`
 - Mejora: Icono visible y tamaño de fuente aumentado
-
 #### ✅ **Opción 3: Barra lateral de color en tracks** - IMPLEMENTADO
 - Barra lateral de 3px de ancho en el lado izquierdo de cada track
 - Colores basados en offset UTC (paleta visual):
@@ -1590,7 +1602,6 @@ Se implementó una **combinación de opciones 1, 3 y 4** para maximizar la clari
 - Para eventos con timezone única: "Salida: Madrid (GMT+1)"
 - Para eventos con timezones diferentes: "✈️ Vuelo/Desplazamiento\nSalida: Madrid (GMT+1)\nLlegada: Tokio (GMT+9)"
 - Información contextual sin ocupar espacio visual
-
 **Archivos modificados:**
 - ✅ `lib/widgets/screens/calendar/user_perspective_selector.dart` - Indicador mejorado en AppBar
 - ✅ `lib/widgets/screens/calendar/components/calendar_tracks.dart` - Barra lateral en tracks
@@ -1610,7 +1621,7 @@ Se implementó una **combinación de opciones 1, 3 y 4** para maximizar la clari
 **Nota:** T105 completado - Sistema base de avisos implementado. Pendiente notificaciones push con FCM.
 
 ### T105 - Sistema de Avisos del Plan (Base)
-**Estado:** ✅ Completado  
+**Estado:** 🔄 Pendiente  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
 **Descripción:** Sistema de avisos unidireccionales para el plan (base funcional), no un chat bidireccional.
@@ -1718,11 +1729,12 @@ Se implementó una **combinación de opciones 1, 3 y 4** para maximizar la clari
 
 **Objetivos:**
 1. Revisar todos los índices definidos en `firestore.indexes.json`
-2. Validar que cada índice corresponde a una query real en el código
-3. Eliminar índices no utilizados o redundantes
-4. Añadir índices faltantes si se detectan queries sin soporte
-5. Revisar coherencia entre reglas de seguridad y colecciones utilizadas
-6. Eliminar campos y colecciones obsoletas o no utilizadas
+2. Buscar en el código todas las queries a Firestore que usan `where()` y `orderBy()`
+3. Mapear cada query con su índice correspondiente
+4. Identificar índices sin queries asociadas (redundantes)
+5. Identificar queries sin índices (necesitan índices nuevos)
+6. Revisar coherencia entre reglas de seguridad y colecciones utilizadas
+7. Eliminar campos y colecciones obsoletas o no utilizadas
 
 **Pasos a seguir:**
 
@@ -1919,7 +1931,6 @@ Permitir que cada plan tenga su moneda base (EUR, USD, GBP, JPY, etc.) y facilit
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
 **Descripción:** Permitir que los participantes se apunten a eventos individuales dentro de un plan, no solo al plan completo.
-
 **Concepto:**
 - Los usuarios se apuntan al PLAN (participan en el plan)
 - Además, los usuarios pueden APUNTARSE A EVENTOS ESPECÍFICOS dentro del plan
@@ -2312,7 +2323,7 @@ class ContactGroup {
 ---
 
 ### T109 - Estados del Plan
-**Estado:** ✅ Completado  
+**Estado:** 🔄 Pendiente  
 **Complejidad:** ⚠️ Media-Alta  
 **Prioridad:** 🟡 Media  
 **Descripción:** Implementar sistema completo de estados del plan (Borrador, Planificando, Confirmado, En Curso, Finalizado, Cancelado) con transiciones controladas y permisos por estado.
@@ -2339,14 +2350,13 @@ class ContactGroup {
 - ✅ Permisos por estado implementados con servicio y UI
 - ✅ UI con badges de estado
 - ⚠️ Notificaciones de cambio de estado (T105)
-- ⚠️ Reembolsos al cancelar (T102)
+- ✅ Bloqueos funcionales implementados
 
 **Archivos creados:**
 - ✅ `lib/features/calendar/domain/services/plan_state_service.dart` - Servicio de gestión de transiciones
 - ✅ `lib/features/calendar/presentation/widgets/plan_state_badge.dart` - Widget badge de estado
 - ✅ `lib/features/calendar/presentation/widgets/state_transition_dialog.dart` - Diálogo de confirmación
 - ✅ `lib/features/calendar/domain/services/plan_state_permissions.dart` - Servicio de permisos
-
 **Implementado:**
 - ✅ Servicio completo de transiciones con validaciones
 - ✅ Transición automática Borrador → Planificando al guardar plan
@@ -2356,7 +2366,6 @@ class ContactGroup {
 - ✅ Diálogos de confirmación para transiciones críticas
 - ✅ Indicadores visuales de bloqueos según estado
 - ✅ Servicio de permisos con mensajes explicativos
-
 **Implementación completada:**
 - ✅ Servicio completo de transiciones con validaciones
 - ✅ Transición automática Borrador → Planificando al guardar plan
@@ -2372,7 +2381,6 @@ class ContactGroup {
   - ✅ Bloqueos en AccommodationDialog (botones crear/editar/eliminar deshabilitados según estado)
   - ✅ Bloqueos en gestión de participantes (añadir/remover según estado)
   - ✅ Mensajes informativos de bloqueo mostrados al usuario
-
 **Mejoras futuras (no críticas):**
 - ⚠️ Notificaciones automáticas de cambio de estado (T105)
 - ⚠️ Reembolsos al cancelar (T102)
@@ -2386,7 +2394,6 @@ class ContactGroup {
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media  
 **Descripción:** Sistema de notificaciones automáticas antes de eventos (push, email, SMS) con configuración por evento y por usuario.
-
 **Funcionalidades:**
 1. Configurar alarmas al crear/editar evento
 2. Recordatorios configurables (24h, 2h, 30min antes)
@@ -2571,7 +2578,6 @@ class ContactGroup {
 - Días promedio de duración de planes
 - Planes públicos vs privados (si implementamos visibilidad)
 - Planes creados vs completados
-
 #### 4. Estadísticas de Eventos
 - Eventos por tipo (Desplazamiento, Restauración, Actividad, Alojamiento)
 - Eventos más populares por subtipo (Avión, Hotel, Museo, etc.)
@@ -3145,14 +3151,12 @@ Icono cuadrado formado por 9 círculos iguales (3×3 grid) con espacio entre ell
 - **Cierre:** Tocar fuera del panel, botón X, o después de seleccionar acción
 - **Estados:** Loading states si alguna acción tarda, disabled states para funciones no disponibles
 - **Navegación:** Mantener contexto del plan al abrir modales/diálogos desde el menú
-
 **Consideraciones técnicas:**
 - Componente reutilizable para diferentes contextos (plan, dashboard global, etc.)
 - Gestión de estados: abierto/cerrado, animaciones, posición
 - Accesibilidad: tamaños táctiles adecuados, soporte de teclado, lectores de pantalla
 - Performance: carga lazy de iconos, animaciones optimizadas (no bloquean UI)
 - Offline: Indicar qué acciones requieren conexión
-
 **Criterios de aceptación (futuros):**
 - Icono 3×3 visible y accesible en vista de detalle del plan
 - Panel 5×5 se expande correctamente con animación suave
@@ -3172,7 +3176,6 @@ Icono cuadrado formado por 9 círculos iguales (3×3 grid) con espacio entre ell
 **Nota:** Esta es una feature de UX avanzada planificada para el futuro. Requiere validación visual con mockups/imágenes antes de implementación. El diseño puede ajustarse según feedback del usuario y pruebas de usabilidad.
 
 ---
-
 ### T143 - Sistema de Patrocinios y Monetización (Publicidad Contextual)
 **Estado:** Pendiente (Futuro - Monetización)  
 **Complejidad:** ⚠️ Alta  
@@ -3185,7 +3188,6 @@ Icono cuadrado formado por 9 círculos iguales (3×3 grid) con espacio entre ell
 3. **Comisión:** Marketing de afiliados (tracking de clicks y conversiones)
 4. **Valor añadido:** Ofertas exclusivas de patrocinadores para usuarios de la app
 **Sistema de Patrocinios Contextuales:**
-
 **Funcionamiento:**
 - Patrocinios asociados a categorías/subcategorías de eventos y alojamientos
 - Ejemplo: Crear evento tipo "Desplazamiento > Vuelos" → Muestra logo de Edreams
@@ -3225,7 +3227,6 @@ Incluye patrocinadores para:
 - Restauración: Takeaway (Glovo), Restaurantes (TripAdvisor)
 - Actividades: Tours (Free tours), Escape Rooms (Civitatis)
 - Y más categorías (ver documento)
-
 **Componentes Técnicos:**
 
 1. **Sistema de Gestión de Patrocinadores:**
@@ -3348,7 +3349,7 @@ Los planes finalizados ocupan espacio en el servidor (Firestore) generando coste
 - Campo `archived: true` y `archivedAt: timestamp`
 
 **Exportación:**
-- Integrar con T133 (Exportación profesional PDF/Email)
+- Integrar con T133 (Exportación profesional)
 - Exportación JSON/ZIP para respaldo técnico
 - Incluir todos los datos: eventos, alojamientos, fotos, participantes
 
@@ -3871,7 +3872,6 @@ Una app en sí misma es fácil de copiar. Necesitamos identificar y desarrollar 
 - **Reducir esfuerzo del usuario al mínimo absoluto**
 
 **Análisis del mercado y posicionamiento:**
-
 **¿Qué existe en el mercado?**
 - Calendarios genéricos (Google Calendar, Outlook)
 - Apps de viaje (TripIt, TripCase)
@@ -3947,9 +3947,7 @@ Una app en sí misma es fácil de copiar. Necesitamos identificar y desarrollar 
 **Barrera de entrada:** Modelos ML entrenados, algoritmo de parsing robusto
 
 ### 3. **Red de Efectos de Red (Red de Participantes)**
-
 **Concepto:** Cuantos más usuarios usen la app, más valiosa se vuelve para todos.
-
 **Factores:**
 - Usuarios pueden compartir planes fácilmente
 - Historial agregado de viajes mejora recomendaciones para todos
@@ -3972,7 +3970,6 @@ Una app en sí misma es fácil de copiar. Necesitamos identificar y desarrollar 
 - La competencia no tiene acceso a estos datos agregados
 
 **Barrera de entrada:** Necesita masa crítica de usuarios y datos históricos
-
 ### 5. **Sincronización Bidireccional con Proveedores**
 
 **Concepto:** No solo importar, sino actualizar automáticamente cuando hay cambios.
@@ -3985,22 +3982,7 @@ Una app en sí misma es fácil de copiar. Necesitamos identificar y desarrollar 
 - Vuelo cambia de puerta → Actualización automática en app
 - Hotel cambia check-in → Notificación + actualización automática
 - Cancelación de vuelo → Notificación crítica + opciones alternativas
-
 **Barrera de entrada:** APIs de proveedores, webhooks, acuerdos técnicos
-
-### 6. **Integración con Sistemas de Pago y Facturación**
-
-**Concepto:** No solo planificar, sino gestionar pagos reales entre participantes.
-
-**Ventajas:**
-- Usuario puede pagar directamente desde la app
-- División automática de costes
-- Integración con servicios de pago (Stripe, PayPal)
-- La competencia suele ser solo "planificación", no ejecución real
-
-**Implementación futura:**
-- T101: Sistema de presupuesto
-- T102: Sistema de pagos
 
 ### 7. **Historial y Análisis Longitudinal**
 
@@ -4538,7 +4520,6 @@ Es crítico anticipar estos riesgos y tener planes de mitigación listos antes d
 - Desastre natural/fallo de Firebase
 
 **Impacto:** Crítico - Pérdida de datos de usuarios, app inutilizable
-
 **Mitigación:**
 - **Backups automáticos:**
   - Firebase export automático diario
@@ -4757,14 +4738,12 @@ No todo puede estar en la v1.0. Necesitamos ser selectivos y enfocarnos en lo es
 - ⚠️ Conexión con proveedores - **POSTPONER a v1.2**
 
 ### CORE - Autenticación y Usuarios ✅
-
 **4.1 - Sistema de autenticación:**
 - ✅ Registro con email/password - **IMPLEMENTADO**
 - ✅ Login/logout - **IMPLEMENTADO**
 - ✅ Recuperación de contraseña - **IMPLEMENTADO**
 - ✅ Perfil básico de usuario - **IMPLEMENTADO**
 - ✅ Username único (T137) - **IMPLEMENTADO**
-
 **4.2 - Gestión de perfil:**
 - ✅ Editar perfil básico
 - ✅ Foto de perfil
@@ -4785,9 +4764,7 @@ No todo puede estar en la v1.0. Necesitamos ser selectivos y enfocarnos en lo es
 - ⚠️ Gestión de cookies web básica (T135) - **REQUERIDO para MVP si hay web**
 - ⚠️ ATT iOS básico (T136) - **REQUERIDO para MVP iOS**
 - ⚠️ Consentimiento GDPR básico - **REQUERIDO para MVP**
-
 ### DIFERENCIADORES COMPETITIVOS (MVP)
-
 **6.1 - Importación desde Email (T134) - PRIORIDAD ALTA:**
 - ⚠️ Parsing básico de emails de confirmación
 - ⚠️ Crear eventos/alojamientos automáticamente
@@ -5186,7 +5163,6 @@ Una vez completado el MVP y lanzada la v1.0, es el momento adecuado para documen
    - Sincronización automática periódica
    - Resolución de conflictos (última modificación gana)
    - Filtros configurable por usuario (qué eventos sincronizar)
-
 **Criterios de aceptación:**
 - Exportar eventos del plan a archivo .ics funcional
 - Archivo .ics se puede abrir en Google Calendar, Outlook, Apple Calendar
@@ -5563,7 +5539,6 @@ Crear Evento/Alojamiento en el plan
   - Timeline visual de días
   - Indicadores de ubicaciones importantes
   - Conexiones entre eventos
-
 #### 3. Información Externa de Sitios
 - [ ] **Integración APIs:**
   - Google Places API (fotos, descripciones, ratings)
@@ -5628,11 +5603,6 @@ Crear Evento/Alojamiento en el plan
 **Casos de Uso:**
 
 **Caso 1 - Organizador → Participantes:**
-```
-Organizador crea plan "Vacaciones Roma 2025"
-→ Exporta a PDF
-→ Comparte PDF con participantes antes del viaje
-→ Incluye: itinerario, alojamientos, información de sitios
 ```
 
 **Caso 2 - Agencia de Viajes → Cliente:**
@@ -5932,7 +5902,7 @@ Organizador quiere invitar a alguien a unirse al plan
     - iOS: `ios/Runner/GoogleService-Info.plist`
 - [ ] Verificar configuración de Firebase en el proyecto
 - [ ] Revisar `firebase.json` y `firestore.rules`
-- [ ] Verificar `.gitignore` para asegurar que no se suben archivos de Mac
+- [ ] Verificar `.gitignore` para asegurar que no se suban archivos de Mac
 
 ---
 
@@ -6189,7 +6159,7 @@ Organizador quiere invitar a alguien a unirse al plan
 
 **Relacionado con:**
 - T155 (Instalación Firebase CLI)
-- T156 (Actualización índices Firestore)
+- T156 (Actualización de índices de Firestore)
 - T152 (Revisión y Optimización de Índices de Firestore)
 - docs/configuracion/MIGRACION_MAC_PLAYBOOK.md
 - docs/configuracion/DEPLOY_INDICES_FIREBASE_CONSOLE.md
@@ -6356,14 +6326,12 @@ firebase deploy --only firestore:indexes
 - `users` - `displayName` + `IsActive` (debería ser `isActive`)
 - `users` - `createdAt` + `IsActive` (debería ser `isActive`)
 - `plan_participations` - `isActive` + `planID` + `joinedAt` (debería ser `planId`)
-
 **Notas importantes:**
 - Esta tarea se completa DESPUÉS de T154 y T155
 - El despliegue de índices puede tardar varios minutos (Firebase los crea en background)
 - No eliminar índices obsoletos hasta que los nuevos estén "Enabled"
 - Si hay errores, revisar `INDICES_ANALISIS_COMPARACION.md` para detalles
 - Los índices con problemas de nomenclatura pueden funcionar (Firebase puede ser flexible), verificar antes de eliminar
-
 **Documentación relacionada:**
 - docs/configuracion/FIRESTORE_INDEXES_AUDIT.md
 - docs/configuracion/INDICES_ANALISIS_COMPARACION.md
@@ -6377,7 +6345,6 @@ firebase deploy --only firestore:indexes
 - T155 (Instalación Firebase CLI)
 - T152 (Revisión y Optimización de Índices de Firestore)
 ---
-
 ### T157 - Sistema de Ayuda Contextual
 **Estado:** Pendiente  
 **Complejidad:** 🟡 Media  
@@ -6389,7 +6356,6 @@ firebase deploy --only firestore:indexes
 - Los textos de ayuda deben estar en Firebase para poder actualizarlos sin deployar la app
 - El sistema debe soportar múltiples idiomas
 - La ayuda debe mostrarse según el idioma configurado del usuario
-
 **Funcionalidades:**
 1. Sistema de identificación de campos/zonas de ayuda
 2. Widget de icono de ayuda reutilizable
@@ -6491,7 +6457,6 @@ class HelpIcon extends StatelessWidget {
   final Color? color;
 }
 ```
-
 **Estructura en Firestore:**
 ```
 help_texts/
@@ -6965,6 +6930,44 @@ Implementar login con Google usando Firebase Authentication. Esto permite a los 
 
 ---
 
+## T173 - Refinar UX de perfil de usuario
+
+**Estado:** 🔄 Pendiente  
+**Prioridad:** Media  
+**Grupo:** UX / Autenticación  
+**Dependencias:** Ninguna inmediata  
+
+### Descripción
+Actualizar la pantalla/modal de perfil para alinearla con la identidad actual de Planazoo y completar funcionalidades pendientes (foto de perfil, botones obsoletos).
+
+### Alcance
+1. Convertir "Editar Perfil" en modal; eliminar la flecha de back redundante.  
+2. Presentar en la cabecera el nombre completo + email, y mover el username al appbar en lugar de "Planazoo".  
+3. Eliminar el recuadro duplicado que muestra únicamente el username.  
+4. Reactivar la edición de foto de perfil (tomar foto / galería / URL) o, si sigue temporal, indicarlo claramente.  
+5. Retirar los botones "Migrar Eventos" y "Participar en Todos los Planes" (código, UI, documentación).  
+6. Sustituir la página "Configuración de cuenta" por modales específicos (contraseña, privacidad, idioma).  
+
+### Archivos a revisar/modificar
+- `lib/pages/pg_profile_page.dart`
+- `lib/features/auth/presentation/pages/edit_profile_page.dart`
+- `docs/configuracion/TESTING_CHECKLIST.md` (sección perfil/configuración)
+- `docs/flujos/FLUJO_CRUD_USUARIOS.md`
+- `docs/ux/pages/profile_page.md`
+
+### Criterios de aceptación
+- ✅ Cabecera muestra nombre + email, username visible en appbar.  
+- ✅ Diálogo/modal coherente con UI global, sin flecha redundante.  
+- ✅ Foto de perfil gestionada (o comunicada como no disponible).  
+- ✅ Botones "Migrar eventos" y "Participar en todos los planes" removidos de código y docs.  
+- ✅ Documentación y checklist actualizados.  
+
+### Notas
+- Revisar interacción con `ProfilePage` y navegación general para evitar duplicidades.
+- A coordinar con futuras tareas de UI/UX si afectan a layout global del dashboard.
+
+---
+
 ## T165 - Definir y crear usuarios de administración de la app y Firestore
 
 **Estado:** 🔄 Pendiente  
@@ -7100,7 +7103,6 @@ Debe incluir:
 ---
 
 ## T166 - Implementar 2FA (Two Factor Authentication)
-
 **Estado:** 🔄 Pendiente  
 **Prioridad:** Baja (Futuro)  
 **Grupo:** Seguridad  
@@ -7120,13 +7122,11 @@ Implementar autenticación de doble factor (2FA) para mejorar la seguridad de la
 - **SMS:** Envío de código por SMS (requiere configuración en Firebase Console)
 - **TOTP:** Códigos generados por apps como Google Authenticator, Authy, etc.
 - **Email:** Código enviado por email (menos seguro, opcional)
-
 #### 2. Activación de 2FA
 - UI en configuración de cuenta para activar 2FA
 - Proceso de configuración guiado
 - Generación de códigos de respaldo
 - QR code para apps TOTP
-
 #### 3. Flujo de Login con 2FA
 - Detectar si el usuario tiene 2FA activado
 - Solicitar segundo factor después de login exitoso
@@ -7140,12 +7140,10 @@ Implementar autenticación de doble factor (2FA) para mejorar la seguridad de la
 - Ver dispositivos confiables
 
 ### Implementación Propuesta
-
 #### Firebase Authentication
 - Configurar proveedores de 2FA en Firebase Console
 - Usar `firebase_auth` para enviar códigos SMS
 - Implementar TOTP usando librería como `otp` o similar
-
 #### Archivos a Crear/Modificar
 - `lib/features/auth/domain/services/two_factor_service.dart` - Servicio para gestión de 2FA
 - `lib/features/auth/presentation/pages/two_factor_setup_page.dart` - UI para configurar 2FA

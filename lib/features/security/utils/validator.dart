@@ -80,6 +80,23 @@ class Validator {
   static bool isValidPassword(String? password) {
     return validatePassword(password).isValid;
   }
+
+  static PasswordRulesStatus getPasswordRulesStatus(String? password) {
+    final pwd = password ?? '';
+    final hasMinLength = pwd.length >= 8;
+    final hasLowercase = RegExp(r'[a-z]').hasMatch(pwd);
+    final hasUppercase = RegExp(r'[A-Z]').hasMatch(pwd);
+    final hasNumber = RegExp(r'[0-9]').hasMatch(pwd);
+    final hasSpecialChar = RegExp(r'[!@#$%^&*()_+\-=\[\]{};:"\\|,.<>\/?]').hasMatch(pwd);
+
+    return PasswordRulesStatus(
+      hasMinLength: hasMinLength,
+      hasLowercase: hasLowercase,
+      hasUppercase: hasUppercase,
+      hasNumber: hasNumber,
+      hasSpecialChar: hasSpecialChar,
+    );
+  }
 }
 
 // Resultado de validación de contraseña
@@ -92,5 +109,25 @@ class PasswordValidationResult {
     this.errorCode,
   });
 }
+
+class PasswordRulesStatus {
+  final bool hasMinLength;
+  final bool hasLowercase;
+  final bool hasUppercase;
+  final bool hasNumber;
+  final bool hasSpecialChar;
+
+  const PasswordRulesStatus({
+    required this.hasMinLength,
+    required this.hasLowercase,
+    required this.hasUppercase,
+    required this.hasNumber,
+    required this.hasSpecialChar,
+  });
+
+  bool get isValid =>
+      hasMinLength && hasLowercase && hasUppercase && hasNumber && hasSpecialChar;
+}
+
 
 

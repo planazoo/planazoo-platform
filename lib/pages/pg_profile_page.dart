@@ -2,25 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
-import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifier.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/edit_profile_page.dart';
-import 'package:unp_calendario/features/auth/presentation/pages/account_settings_page.dart';
-import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/features/language/presentation/providers/language_providers.dart';
+import 'package:unp_calendario/features/security/utils/validator.dart';
+import 'package:unp_calendario/features/security/widgets/password_rules_checklist.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 
 class ProfilePage extends ConsumerWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({super.key, this.onClose});
+
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
     final authNotifier = ref.read(authNotifierProvider.notifier);
+    final appLocalizations = AppLocalizations.of(context)!;
 
     // Método para formatear fechas
     String _formatDate(DateTime date) {
       return '${date.day}/${date.month}/${date.year}';
     }
+
+    final systemTimezone = TimezoneService.getSystemTimezone();
+    final currentUserTimezone = currentUser?.defaultTimezone ?? systemTimezone;
+    final currentTimezoneDisplay = TimezoneService.getTimezoneDisplayName(currentUserTimezone);
 
     return Scaffold(
       backgroundColor: AppColorScheme.color0,
@@ -45,21 +54,32 @@ class ProfilePage extends ConsumerWidget {
                     ],
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      IconButton(
+                        onPressed: () {
+                          if (onClose != null) {
+                            onClose!();
+                            return;
+                          }
+                          final navigator = Navigator.of(context);
+                          if (navigator.canPop()) {
+                            navigator.pop();
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const Spacer(),
                       Text(
-                        'Planazoo',
+                        currentUser.username != null && currentUser.username!.isNotEmpty
+                            ? '@${currentUser.username!}'
+                            : currentUser.displayIdentifier,
                         style: AppTypography.largeTitle.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 24,
                         ),
                       ),
                     ],
@@ -68,16 +88,14 @@ class ProfilePage extends ConsumerWidget {
                 
                 // Contenido principal
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: 24),
-                        
                         // Header compacto con foto y datos
                         Row(
                           children: [
-                            // Foto de perfil más pequeña
                             Container(
                               width: 80,
                               height: 80,
@@ -89,7 +107,7 @@ class ProfilePage extends ConsumerWidget {
                                   width: 2,
                                 ),
                               ),
-                              child: currentUser.photoURL != null
+                              child: currentUser.photoURL != null && currentUser.photoURL!.isNotEmpty
                                   ? ClipOval(
                                       child: Image.network(
                                         currentUser.photoURL!,
@@ -111,26 +129,39 @@ class ProfilePage extends ConsumerWidget {
                                       color: AppColorScheme.color2,
                                     ),
                             ),
-                            
                             const SizedBox(width: 20),
-                            
-                            // Información del usuario
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    currentUser.displayIdentifier,
+                                    (currentUser.displayName ?? currentUser.displayIdentifier),
                                     style: AppTypography.mediumTitle.copyWith(
                                       color: AppColorScheme.color4,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    currentUser.email,
+                                    style: AppTypography.bodyStyle.copyWith(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Miembro desde ${_formatDate(currentUser.createdAt)}',
+                                    appLocalizations.profileMemberSince(_formatDate(currentUser.createdAt)),
                                     style: AppTypography.caption.copyWith(
                                       color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    appLocalizations.profileCurrentTimezone(currentTimezoneDisplay),
+                                    style: AppTypography.bodyStyle.copyWith(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 ],
@@ -138,195 +169,50 @@ class ProfilePage extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 32),
-                        
-                        // Opciones de texto simple
-                        Column(
-                          children: [
-                            // Campo para editar username con validación básica
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppColorScheme.color2.withValues(alpha: 0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.alternate_email, size: 18, color: Colors.grey),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: TextFormField(
-                                      initialValue: currentUser.username ?? '',
-                                      decoration: const InputDecoration(
-                                        border: InputBorder.none,
-                                        hintText: 'Nombre de usuario (a-z, 0-9, _) ',
-                                      ),
-                                      style: AppTypography.bodyStyle,
-                                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                                      validator: (v) {
-                                        final value = (v ?? '').trim().toLowerCase();
-                                        if (value.isEmpty) return null; // opcional
-                                        final re = RegExp(r'^[a-z0-9_]{3,30}$');
-                                        if (!re.hasMatch(value)) {
-                                          return '3-30 caráct., minúsculas y _';
-                                        }
-                                        return null;
-                                      },
-                                      onFieldSubmitted: (v) async {
-                                        final value = v.trim();
-                                        if (value.isEmpty) return; // opcional
-                                        await authNotifier.updateUsername(value);
-                                        if (context.mounted) {
-                                          final error = ref.read(authNotifierProvider).errorMessage;
-                                          if (error != null) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(content: Text(error), backgroundColor: Colors.red),
-                                            );
-                                          } else {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Nombre de usuario actualizado')), 
-                                            );
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
+
+                        _buildSectionCard(
+                          title: appLocalizations.profilePersonalDataTitle,
+                          subtitle: appLocalizations.profilePersonalDataSubtitle,
+                          options: [
                             _buildTextOption(
-                              'Editar Perfil',
+                              appLocalizations.profileEditPersonalInformation,
                               () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const EditProfilePage(),
-                                  ),
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (dialogContext) => const EditProfilePage(),
                                 );
                               },
                             ),
-                            
-                            const SizedBox(height: 8),
-                            
-                            _buildTextOption(
-                              'Configuración de Cuenta',
-                              () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const AccountSettingsPage(),
-                                  ),
-                                );
-                              },
-                            ),
-                            
-                            const SizedBox(height: 8),
-                            
-                            _buildTextOption(
-                              'Migrar Eventos',
-                              () async {
-                                if (currentUser != null) {
-                                  final eventService = ref.read(eventServiceProvider);
-                                  final success = await eventService.migrateEventsWithUserId(currentUser!.id);
-                                  
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          success 
-                                            ? 'Eventos migrados correctamente' 
-                                            : 'Error al migrar eventos',
-                                        ),
-                                        backgroundColor: success ? Colors.green : Colors.red,
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                            ),
-                            
-                            const SizedBox(height: 8),
-                            
-                            _buildTextOption(
-                              'Participar en Todos los Planes',
-                              () async {
-                                if (currentUser != null) {
-                                  // Mostrar diálogo de confirmación
-                                  final confirmed = await showDialog<bool>(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: const Text('Participar en Planes'),
-                                        content: const Text(
-                                          '¿Quieres añadirte como participante a todos los planes existentes?\n\n'
-                                          'Esto te permitirá ver los eventos de todos los planes en el calendario.',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.of(context).pop(false),
-                                            child: const Text('Cancelar'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () => Navigator.of(context).pop(true),
-                                            child: const Text('Participar'),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
+                          ],
+                        ),
 
-                                  if (confirmed == true) {
-                                    // Mostrar indicador de carga
-                                    showDialog(
-                                      context: context,
-                                      barrierDismissible: false,
-                                      builder: (context) => const Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    );
+                        const SizedBox(height: 24),
 
-                                    try {
-                                      final planParticipationService = PlanParticipationService();
-                                      final result = await planParticipationService.addUserToAllPlans(currentUser!.id);
-                                      
-                                      // Cerrar indicador de carga
-                                      if (context.mounted) {
-                                        Navigator.of(context).pop();
-                                        
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(result['message'] as String),
-                                            backgroundColor: result['success'] as bool ? Colors.green : Colors.orange,
-                                            duration: const Duration(seconds: 5),
-                                          ),
-                                        );
-                                      }
-                                    } catch (e) {
-                                      // Cerrar indicador de carga
-                                      if (context.mounted) {
-                                        Navigator.of(context).pop();
-                                        
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error: $e'),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  }
-                                }
-                              },
+                        _buildSectionCard(
+                          title: appLocalizations.profileSecurityAndAccessTitle,
+                          subtitle: appLocalizations.profileSecurityAndAccessSubtitle,
+                          options: [
+                              _buildTextOption(
+                                appLocalizations.profileTimezoneOption,
+                                () => _showTimezonePreferenceDialog(context, ref),
+                              ),
+                              _buildTextOption(
+                              appLocalizations.changePasswordTitle,
+                              () => _showChangePasswordDialog(context, ref),
                             ),
-                            
-                            const SizedBox(height: 8),
-                            
                             _buildTextOption(
-                              'Cerrar Sesión',
+                              appLocalizations.profilePrivacyAndSecurityOption,
+                              () => _showPrivacyDialog(context),
+                            ),
+                            _buildTextOption(
+                              appLocalizations.profileLanguageOption,
+                              () => _showLanguageDialog(context, ref),
+                            ),
+                            _buildTextOption(
+                              appLocalizations.profileSignOutOption,
                               () async {
                                 await authNotifier.signOut();
                                 if (context.mounted) {
@@ -337,64 +223,26 @@ class ProfilePage extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 24),
+
+                        _buildSectionCard(
+                          title: appLocalizations.profileAdvancedActionsTitle,
+                          subtitle: appLocalizations.profileAdvancedActionsSubtitle,
+                          options: [
+                            _buildTextOption(
+                              appLocalizations.profileDeleteAccountOption,
+                              () => _showDeleteAccountDialog(context, ref, authNotifier),
+                              isDestructive: true,
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
                 ),
               ],
             ),
-    );
-  }
-
-  Widget _buildInfoSection({
-    required String title,
-    required List<Widget> items,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: AppTypography.mediumTitle.copyWith(
-            color: AppColorScheme.color4,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        ...items,
-      ],
-    );
-  }
-
-  Widget _buildInfoItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 140,
-            child: Text(
-              label,
-              style: AppTypography.bodyStyle.copyWith(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: AppTypography.bodyStyle.copyWith(
-                color: AppColorScheme.color4,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -438,12 +286,10 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
+  Widget _buildSectionCard({
     required String title,
-    required VoidCallback onTap,
-    bool isDestructive = false,
-    String? subtitle,
+    required String subtitle,
+    required List<Widget> options,
   }) {
     return Container(
       width: double.infinity,
@@ -451,7 +297,7 @@ class ProfilePage extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDestructive ? Colors.red.shade200 : AppColorScheme.color2.withValues(alpha: 0.3),
+          color: AppColorScheme.color2.withValues(alpha: 0.2),
           width: 1,
         ),
         boxShadow: [
@@ -462,63 +308,667 @@ class ProfilePage extends ConsumerWidget {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isDestructive 
-                        ? Colors.red.withValues(alpha: 0.1)
-                        : AppColorScheme.color2.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isDestructive ? Colors.red : AppColorScheme.color2,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: AppTypography.bodyStyle.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: isDestructive ? Colors.red : AppColorScheme.color4,
-                        ),
-                      ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: AppTypography.caption.copyWith(
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.grey.shade400,
-                  size: 16,
-                ),
-              ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: AppTypography.mediumTitle.copyWith(
+                color: AppColorScheme.color4,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: AppTypography.bodyStyle.copyWith(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 16),
+            for (int i = 0; i < options.length; i++) ...[
+              options[i],
+              if (i != options.length - 1) const SizedBox(height: 12),
+            ],
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _showTimezonePreferenceDialog(BuildContext context, WidgetRef ref) async {
+    final loc = AppLocalizations.of(context)!;
+    final authState = ref.read(authNotifierProvider);
+    final authNotifier = ref.read(authNotifierProvider.notifier);
+
+    final systemTimezone = TimezoneService.getSystemTimezone();
+    final userTimezone = authState.user?.defaultTimezone ?? systemTimezone;
+
+    final allTimezones = <String>{systemTimezone, userTimezone, ...TimezoneService.getCommonTimezones()}.toList()
+      ..sort((a, b) => a.compareTo(b));
+
+    String selectedTimezone = userTimezone;
+    String searchQuery = '';
+    bool isLoading = false;
+    final searchController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: !isLoading,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) {
+          List<String> filteredTimezones = allTimezones
+              .where((tz) => tz.toLowerCase().contains(searchQuery.toLowerCase()))
+              .toList();
+
+          if (!filteredTimezones.contains(selectedTimezone)) {
+            filteredTimezones.insert(0, selectedTimezone);
+          }
+
+          final systemDisplay = TimezoneService.getTimezoneDisplayName(systemTimezone);
+          final selectedDisplay = TimezoneService.getTimezoneDisplayName(selectedTimezone);
+
+          return AlertDialog(
+            title: Text(loc.profileTimezoneDialogTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.profileTimezoneDialogDescription(selectedDisplay),
+                  style: AppTypography.bodyStyle.copyWith(
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                  ),
+                ),
+                if (systemTimezone != selectedTimezone) ...[
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedTimezone = systemTimezone;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.my_location, color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  loc.profileTimezoneDialogDeviceSuggestion(systemDisplay),
+                                  style: AppTypography.bodyStyle.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                ),
+                                Text(
+                                  loc.profileTimezoneDialogDeviceHint,
+                                  style: AppTypography.caption.copyWith(
+                                    color: Colors.blueGrey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: loc.profileTimezoneDialogSearchHint,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      searchQuery = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 280,
+                  width: double.maxFinite,
+                  child: filteredTimezones.isEmpty
+                      ? Center(
+                          child: Text(
+                            loc.profileTimezoneDialogNoResults,
+                            style: AppTypography.bodyStyle.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: filteredTimezones.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final timezone = filteredTimezones[index];
+                            final displayName = TimezoneService.getTimezoneDisplayName(timezone);
+                            return RadioListTile<String>(
+                              value: timezone,
+                              groupValue: selectedTimezone,
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    selectedTimezone = value;
+                                  });
+                                }
+                              },
+                              title: Text(displayName),
+                              subtitle: timezone == systemTimezone
+                                  ? Text(
+                                      loc.profileTimezoneDialogSystemTag,
+                                      style: AppTypography.caption.copyWith(
+                                        color: Colors.blueGrey.shade700,
+                                      ),
+                                    )
+                                  : null,
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
+                child: Text(loc.cancel),
+              ),
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() {
+                          isLoading = true;
+                        });
+                        try {
+                          await authNotifier.updateDefaultTimezone(selectedTimezone);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(loc.profileTimezoneUpdateSuccess),
+                                backgroundColor: Colors.green.shade600,
+                              ),
+                            );
+                          }
+                          if (dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop();
+                          }
+                        } catch (e) {
+                          setState(() {
+                            isLoading = false;
+                          });
+                          final message = e.toString().contains('invalid-timezone')
+                              ? loc.profileTimezoneInvalidError
+                              : loc.profileTimezoneUpdateError;
+                          if (dialogContext.mounted) {
+                            ScaffoldMessenger.of(dialogContext).showSnackBar(
+                              SnackBar(
+                                content: Text(message),
+                                backgroundColor: Colors.red.shade600,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                child: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(loc.saveChanges),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    searchController.dispose();
+  }
+
+  Future<void> _showChangePasswordDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final loc = AppLocalizations.of(context)!;
+    final authNotifier = ref.read(authNotifierProvider.notifier);
+
+    final formKey = GlobalKey<FormState>();
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
+    bool obscureCurrent = true;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+    bool isLoading = false;
+
+    bool canSubmit() {
+      final current = currentPasswordController.text.trim();
+      final newPwd = newPasswordController.text.trim();
+      final confirm = confirmPasswordController.text.trim();
+      final passwordValidation = Validator.validatePassword(newPwd);
+
+      final isCurrentFilled = current.isNotEmpty;
+      final isNewValid = passwordValidation.isValid && newPwd != current;
+      final isConfirmValid = confirm.isNotEmpty && confirm == newPwd;
+
+      return isCurrentFilled && isNewValid && isConfirmValid && !isLoading;
+    }
+
+    String? mapPasswordError(String? errorCode) {
+      switch (errorCode) {
+        case 'passwordRequired':
+          return loc.passwordRequired;
+        case 'passwordMinLength':
+          return loc.passwordMinLength;
+        case 'passwordNeedsLowercase':
+          return loc.passwordNeedsLowercase;
+        case 'passwordNeedsUppercase':
+          return loc.passwordNeedsUppercase;
+        case 'passwordNeedsNumber':
+          return loc.passwordNeedsNumber;
+        case 'passwordNeedsSpecialChar':
+          return loc.passwordNeedsSpecialChar;
+        default:
+          return loc.passwordMinLength;
+      }
+    }
+
+    await showDialog(
+      context: context,
+      barrierDismissible: !isLoading,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(loc.changePasswordTitle),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    loc.changePasswordSubtitle,
+                    style: AppTypography.bodyStyle.copyWith(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: currentPasswordController,
+                    obscureText: obscureCurrent,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      labelText: loc.currentPasswordLabel,
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureCurrent ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () => setState(() => obscureCurrent = !obscureCurrent),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return loc.passwordRequired;
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: newPasswordController,
+                    obscureText: obscureNew,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      labelText: loc.newPasswordLabel,
+                      prefixIcon: const Icon(Icons.lock_reset_outlined),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureNew ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () => setState(() => obscureNew = !obscureNew),
+                      ),
+                    ),
+                    validator: (value) {
+                      final result = Validator.validatePassword(value);
+                      if (!result.isValid) {
+                        return mapPasswordError(result.errorCode);
+                      }
+                      if (value == currentPasswordController.text) {
+                        return loc.passwordMustBeDifferent;
+                      }
+                      return null;
+                    },
+                  ),
+                  PasswordRulesChecklist(
+                    password: newPasswordController.text,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: confirmPasswordController,
+                    obscureText: obscureConfirm,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      labelText: loc.confirmNewPasswordLabel,
+                      prefixIcon: const Icon(Icons.check_circle_outline),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscureConfirm ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () => setState(() => obscureConfirm = !obscureConfirm),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return loc.passwordRequired;
+                      }
+                      if (value != newPasswordController.text) {
+                        return loc.passwordsDoNotMatch;
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
+                child: Text(loc.cancel),
+              ),
+              ElevatedButton(
+                onPressed: !canSubmit()
+                    ? null
+                    : () async {
+                        if (!formKey.currentState!.validate()) {
+                          return;
+                        }
+
+                        setState(() => isLoading = true);
+
+                        await authNotifier.changePassword(
+                          currentPasswordController.text.trim(),
+                          newPasswordController.text.trim(),
+                        );
+
+                        final authState = ref.read(authNotifierProvider);
+                        if (authState.errorMessage != null) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${loc.passwordChangeError}: ${authState.errorMessage}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                          setState(() => isLoading = false);
+                          return;
+                        }
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(loc.passwordChangedSuccess),
+                              backgroundColor: Colors.green.shade600,
+                            ),
+                          );
+                        }
+
+                        if (dialogContext.mounted) {
+                          Navigator.of(dialogContext).pop();
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColorScheme.color2,
+                  foregroundColor: Colors.white,
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(loc.saveChanges),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    currentPasswordController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+  }
+
+  Future<void> _showPrivacyDialog(BuildContext context) async {
+    final loc = AppLocalizations.of(context)!;
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(loc.profilePrivacyDialogTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(loc.profilePrivacyDialogIntro),
+            const SizedBox(height: 12),
+            Text('• ${loc.profilePrivacyDialogEncryption}'),
+            Text('• ${loc.profilePrivacyDialogEmailVerification}'),
+            Text('• ${loc.profilePrivacyDialogRateLimiting}'),
+            Text('• ${loc.profilePrivacyDialogAccessControl}'),
+            const SizedBox(height: 16),
+            Text(loc.profilePrivacyDialogMoreInfo),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(AppLocalizations.of(context)!.close),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showLanguageDialog(BuildContext context, WidgetRef ref) async {
+    final loc = AppLocalizations.of(context)!;
+    final languageNotifier = ref.read(languageNotifierProvider);
+    String selectedLanguageCode = ref.read(currentLanguageSyncProvider).languageCode;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(loc.profileLanguageDialogTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                value: 'es',
+                groupValue: selectedLanguageCode,
+                title: Text(loc.profileLanguageOptionSpanish),
+                onChanged: (value) => setState(() => selectedLanguageCode = value ?? selectedLanguageCode),
+              ),
+              RadioListTile<String>(
+                value: 'en',
+                groupValue: selectedLanguageCode,
+                title: Text(loc.profileLanguageOptionEnglish),
+                onChanged: (value) => setState(() => selectedLanguageCode = value ?? selectedLanguageCode),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(loc.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await languageNotifier.changeLanguage(Locale(selectedLanguageCode));
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+              child: Text(loc.saveChanges),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDeleteAccountDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AuthNotifier authNotifier,
+  ) async {
+    final loc = AppLocalizations.of(context)!;
+    final passwordController = TextEditingController();
+    bool isLoading = false;
+    String? errorMessage;
+
+    String _mapDeleteAccountError(String rawMessage) {
+      final code = rawMessage.replaceFirst('Exception: ', '');
+      switch (code) {
+        case 'wrong-password':
+        case 'invalid-credential':
+          return loc.profileDeleteAccountWrongPasswordError;
+        case 'too-many-requests':
+          return loc.profileDeleteAccountTooManyAttemptsError;
+        case 'requires-recent-login':
+          return loc.profileDeleteAccountRecentLoginError;
+        default:
+          return loc.profileDeleteAccountGenericError;
+      }
+    }
+
+    await showDialog(
+      context: context,
+      barrierDismissible: !isLoading,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: Text(loc.profileDeleteAccountOption),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(loc.profileDeleteAccountDescription),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: loc.passwordLabel,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                if (errorMessage != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    errorMessage!,
+                    style: AppTypography.bodyStyle.copyWith(
+                      color: Colors.red.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
+                child: Text(loc.cancel),
+              ),
+              ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        final password = passwordController.text.trim();
+                        if (password.isEmpty) {
+                          setState(() {
+                            errorMessage = loc.profileDeleteAccountEmptyPasswordError;
+                          });
+                          return;
+                        }
+
+                        setState(() {
+                          isLoading = true;
+                          errorMessage = null;
+                        });
+
+                        try {
+                          await authNotifier.deleteAccount(password);
+                        } catch (e) {
+                          setState(() {
+                            isLoading = false;
+                            errorMessage = _mapDeleteAccountError(e.toString());
+                          });
+                          return;
+                        }
+
+                        if (dialogContext.mounted) {
+                          Navigator.of(dialogContext).pop();
+                        }
+                        if (context.mounted) {
+                          Navigator.of(context).pushReplacementNamed('/');
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade600,
+                  foregroundColor: Colors.white,
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(loc.profileDeleteAccountOption),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    passwordController.dispose();
   }
 }

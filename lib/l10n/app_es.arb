@@ -352,6 +352,235 @@
   "@profileTooltip": {
     "description": "Tooltip del icono de perfil en W1"
   },
+  "profileCurrentTimezone": "Zona horaria actual: {timezone}",
+  "@profileCurrentTimezone": {
+    "description": "Texto que muestra la zona horaria actual del usuario en el perfil",
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "profileTimezoneOption": "Configurar zona horaria",
+  "@profileTimezoneOption": {
+    "description": "Opción del perfil para abrir el diálogo de zona horaria"
+  },
+  "profileTimezoneDialogTitle": "Seleccionar zona horaria",
+  "@profileTimezoneDialogTitle": {
+    "description": "Título del diálogo de selección de zona horaria"
+  },
+  "profileTimezoneDialogDescription": "Estás usando {timezone}. Si no coincide con tu ubicación actual, los horarios podrían mostrarse desfasados.",
+  "@profileTimezoneDialogDescription": {
+    "description": "Descripción del diálogo de zona horaria",
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "profileTimezoneDialogDeviceSuggestion": "Usar hora del dispositivo ({timezone})",
+  "@profileTimezoneDialogDeviceSuggestion": {
+    "description": "Texto del botón que sugiere usar la hora detectada del dispositivo",
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "profileTimezoneDialogDeviceHint": "Te recomendamos actualizarla si estás viajando.",
+  "@profileTimezoneDialogDeviceHint": {
+    "description": "Texto de ayuda para el botón de hora del dispositivo"
+  },
+  "profileTimezoneDialogSearchHint": "Buscar ciudad o zona",
+  "@profileTimezoneDialogSearchHint": {
+    "description": "Placeholder del campo de búsqueda de zonas horarias"
+  },
+  "profileTimezoneDialogNoResults": "No encontramos zonas que coincidan.",
+  "@profileTimezoneDialogNoResults": {
+    "description": "Mensaje cuando no hay resultados en la búsqueda de zonas horarias"
+  },
+  "profileTimezoneDialogSystemTag": "Zona del dispositivo",
+  "@profileTimezoneDialogSystemTag": {
+    "description": "Etiqueta para identificar la zona horaria del dispositivo"
+  },
+  "profileTimezoneUpdateSuccess": "Zona horaria actualizada correctamente.",
+  "@profileTimezoneUpdateSuccess": {
+    "description": "Mensaje de éxito al actualizar la zona horaria"
+  },
+  "profileTimezoneInvalidError": "La zona horaria seleccionada no es válida.",
+  "@profileTimezoneInvalidError": {
+    "description": "Mensaje de error cuando la zona horaria no pasa validación"
+  },
+  "profileTimezoneUpdateError": "No pudimos actualizar la zona horaria. Inténtalo de nuevo.",
+  "@profileTimezoneUpdateError": {
+    "description": "Mensaje de error cuando falla la actualización de zona horaria"
+  },
+  "timezoneBannerTitle": "¿Actualizar la zona horaria?",
+  "@timezoneBannerTitle": {
+    "description": "Título del banner que avisa de cambio de timezone"
+  },
+  "timezoneBannerMessage": "Detectamos que tu dispositivo está en {deviceTimezone}, pero tu preferencia actual es {userTimezone}. Si no la cambias, los horarios pueden mostrarse desfasados.",
+  "@timezoneBannerMessage": {
+    "description": "Mensaje del banner que describe la diferencia de timezone",
+    "placeholders": {
+      "deviceTimezone": {
+        "type": "String"
+      },
+      "userTimezone": {
+        "type": "String"
+      }
+    }
+  },
+  "timezoneBannerUpdateButton": "Actualizar a {timezone}",
+  "@timezoneBannerUpdateButton": {
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "timezoneBannerKeepButton": "Mantener {timezone}",
+  "@timezoneBannerKeepButton": {
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "timezoneBannerUpdateSuccess": "Actualizamos tu zona horaria. Todos los horarios ya están sincronizados.",
+  "@timezoneBannerUpdateSuccess": {
+    "description": "Mensaje de éxito tras aceptar el cambio de timezone"
+  },
+  "timezoneBannerUpdateError": "No pudimos actualizar la zona horaria del perfil. Inténtalo más tarde.",
+  "@timezoneBannerUpdateError": {
+    "description": "Mensaje de error si falla la actualización de timezone desde el banner"
+  },
+  "timezoneBannerKeepMessage": "Mantendremos {timezone}. Puedes cambiarla en el perfil cuando quieras.",
+  "@timezoneBannerKeepMessage": {
+    "description": "Mensaje mostrado cuando el usuario decide mantener su timezone actual",
+    "placeholders": {
+      "timezone": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMemberSince": "Miembro desde {date}",
+  "@profileMemberSince": {
+    "description": "Etiqueta que muestra la fecha de alta del usuario",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "profilePersonalDataTitle": "Datos personales",
+  "@profilePersonalDataTitle": {
+    "description": "Título de la sección de datos personales"
+  },
+  "profilePersonalDataSubtitle": "Actualiza tu nombre y foto de perfil.",
+  "@profilePersonalDataSubtitle": {
+    "description": "Subtítulo de la sección de datos personales"
+  },
+  "profileEditPersonalInformation": "Editar información personal",
+  "@profileEditPersonalInformation": {
+    "description": "Opción para editar información personal"
+  },
+  "profileSecurityAndAccessTitle": "Seguridad y acceso",
+  "@profileSecurityAndAccessTitle": {
+    "description": "Título de la sección de seguridad"
+  },
+  "profileSecurityAndAccessSubtitle": "Gestiona la seguridad de tu cuenta.",
+  "@profileSecurityAndAccessSubtitle": {
+    "description": "Subtítulo de la sección de seguridad"
+  },
+  "profilePrivacyAndSecurityOption": "Privacidad y seguridad",
+  "@profilePrivacyAndSecurityOption": {
+    "description": "Opción para abrir el modal de privacidad"
+  },
+  "profileLanguageOption": "Idioma",
+  "@profileLanguageOption": {
+    "description": "Opción para abrir el selector de idioma"
+  },
+  "profileSignOutOption": "Cerrar sesión",
+  "@profileSignOutOption": {
+    "description": "Opción para cerrar sesión"
+  },
+  "profileAdvancedActionsTitle": "Acciones avanzadas",
+  "@profileAdvancedActionsTitle": {
+    "description": "Título de la sección de acciones avanzadas"
+  },
+  "profileAdvancedActionsSubtitle": "Opciones adicionales disponibles para tu cuenta.",
+  "@profileAdvancedActionsSubtitle": {
+    "description": "Subtítulo de la sección de acciones avanzadas"
+  },
+  "profileDeleteAccountOption": "Eliminar cuenta",
+  "@profileDeleteAccountOption": {
+    "description": "Opción para eliminar la cuenta"
+  },
+  "profilePrivacyDialogTitle": "Privacidad y seguridad",
+  "@profilePrivacyDialogTitle": {
+    "description": "Título del diálogo de privacidad"
+  },
+  "profilePrivacyDialogIntro": "Tus datos están protegidos con:",
+  "@profilePrivacyDialogIntro": {
+    "description": "Texto introductorio del diálogo de privacidad"
+  },
+  "profilePrivacyDialogEncryption": "Encriptación de extremo a extremo en Firestore",
+  "@profilePrivacyDialogEncryption": {
+    "description": "Punto sobre encriptación en el diálogo de privacidad"
+  },
+  "profilePrivacyDialogEmailVerification": "Verificación de email obligatoria (excepto Google)",
+  "@profilePrivacyDialogEmailVerification": {
+    "description": "Punto sobre verificación de email en el diálogo de privacidad"
+  },
+  "profilePrivacyDialogRateLimiting": "Rate limiting para prevenir abuso",
+  "@profilePrivacyDialogRateLimiting": {
+    "description": "Punto sobre rate limiting en el diálogo de privacidad"
+  },
+  "profilePrivacyDialogAccessControl": "Controles de acceso por roles (organizador, coorganizador, etc.)",
+  "@profilePrivacyDialogAccessControl": {
+    "description": "Punto sobre controles de acceso en el diálogo de privacidad"
+  },
+  "profilePrivacyDialogMoreInfo": "Para más información consulta GUIA_SEGURIDAD.md.",
+  "@profilePrivacyDialogMoreInfo": {
+    "description": "Nota al pie del diálogo de privacidad"
+  },
+  "profileLanguageDialogTitle": "Seleccionar idioma",
+  "@profileLanguageDialogTitle": {
+    "description": "Título del diálogo de selección de idioma"
+  },
+  "profileLanguageOptionSpanish": "Español",
+  "@profileLanguageOptionSpanish": {
+    "description": "Opción de idioma español"
+  },
+  "profileLanguageOptionEnglish": "English",
+  "@profileLanguageOptionEnglish": {
+    "description": "Opción de idioma inglés"
+  },
+  "profileDeleteAccountDescription": "Esta acción es irreversible. Para confirmar, introduce tu contraseña.",
+  "@profileDeleteAccountDescription": {
+    "description": "Descripción del diálogo de eliminación de cuenta"
+  },
+  "profileDeleteAccountEmptyPasswordError": "Introduce tu contraseña para continuar.",
+  "@profileDeleteAccountEmptyPasswordError": {
+    "description": "Error cuando la contraseña está vacía en la eliminación de cuenta"
+  },
+  "profileDeleteAccountWrongPasswordError": "Contraseña incorrecta. Inténtalo de nuevo.",
+  "@profileDeleteAccountWrongPasswordError": {
+    "description": "Error de contraseña incorrecta al eliminar cuenta"
+  },
+  "profileDeleteAccountTooManyAttemptsError": "Demasiados intentos fallidos. Espera unos minutos antes de volver a intentarlo.",
+  "@profileDeleteAccountTooManyAttemptsError": {
+    "description": "Error por demasiados intentos al eliminar cuenta"
+  },
+  "profileDeleteAccountRecentLoginError": "Vuelve a iniciar sesión y repite la operación para confirmar la eliminación.",
+  "@profileDeleteAccountRecentLoginError": {
+    "description": "Error por requerir login reciente al eliminar cuenta"
+  },
+  "profileDeleteAccountGenericError": "No se pudo eliminar la cuenta. Inténtalo de nuevo en unos minutos.",
+  "@profileDeleteAccountGenericError": {
+    "description": "Error genérico al eliminar cuenta"
+  },
   
   "confirmDeleteTitle": "Confirmar eliminación",
   "@confirmDeleteTitle": {

@@ -410,11 +410,74 @@ El paquete `timezone` maneja automáticamente el horario de verano, pero es impo
 - `Europe/London` (no `GMT`)
 - `America/New_York` (no `EST`)
 
+#### 5.1 - Configuración Inicial de Timezone
+
+**Cuándo:** Al añadir participante  
+**Valor por defecto:** Timezone del plan o timezone del usuario
+
+**UI actual:** Perfil → Seguridad y acceso → **Configurar zona horaria** (aplica a todas las participaciones activas del usuario).
+
+**Flujo:**
+```
+Añadir participante
+  ↓
+Seleccionar timezone inicial
+```
+
+#### 5.2 - Actualizar Timezone durante Ejecución
+
+**Escenario:** Participante viaja y cambia de timezone
+
+**UI soporte:** Desde el perfil del usuario → Seguridad y acceso → **Configurar zona horaria** (actualiza `plan_participations.personalTimezone` para todas las participaciones activas).
+
+**Flujo:**
+```
+Participante llega a Sydney (antes estaba en Madrid)
+  ↓
+Sistema detecta cambio de timezone
+  ↓
+Actualizar `personalTimezone` del participante
+  ↓
+Recalcular eventos del participante
+  ↓
+Actualizar visualización en calendario
+  ↓
+Notificar a otros participantes (opcional)
+```
+
+**Implementación actual:** ✅ Ya implementado
+
+#### 5.3 - Aviso Automático al Abrir la App (T178)
+- Comparación entre `users.defaultTimezone` y `TimezoneService.getSystemTimezone()` tras la autenticación.
+- Si difieren, se muestra un banner amigable en el dashboard con copy de soporte:
+  - Botón "Actualizar zona" → `AuthNotifier.updateDefaultTimezone()` + snackbar verde.
+  - Botón "Mantener" → `AuthNotifier.dismissTimezoneSuggestion()` + snackbar informativo.
+- El banner destaca que los horarios pueden quedar desfasados si no se actualiza.
+- Se reutiliza la misma lógica de persistencia que el modal manual del perfil.
+
+**Casos de uso:**
+- Viajes internacionales.
+- Cambios de timezone del dispositivo (manualmente o por GPS).
+- Movilidad frecuente entre sedes.
+
 ## 📚 Referencias
 
 - [Paquete timezone de Dart](https://pub.dev/packages/timezone)
 - [IANA Time Zone Database](https://www.iana.org/time-zones)
 - [Flutter Timezone Tutorial](https://fluttercurious.com/tutorial-on-the-flutter-timezone-package/)
+
+## 🧪 Testing recomendado
+
+Para garantizar que la arquitectura funciona en escenarios reales, cubrir al menos los siguientes casos (ver detalle en `docs/configuracion/TESTING_CHECKLIST.md`, sección 13):
+
+1. **Plan multi-timezone (TZ-001)** – Crear plan en `Europe/Madrid` y revisarlo desde un usuario configurado en `America/New_York`.
+2. **Cambio de timezone del plan (TZ-002)** – Editar el plan anterior y comprobar que los eventos existentes se reajustan sin duplicados.
+3. **Evento local vs. preferencia de usuario (TZ-EVENT-001 / 003)** – Crear un evento desde un usuario con timezone distinto y verificar la conversión.
+4. **Eventos de viaje (TZ-EVENT-002)** – Vuelos con timezone de salida y llegada distintas; revisar cómo lo ven participantes y observadores.
+5. **Vistas derivadas (TZ-EVENT-004)** – Confirmar que `CalendarScreen`, estadísticas y exportaciones muestran la misma hora convertida.
+6. **Fallback cuando no hay preferencia guardada (TZ-003)** – Usuario nuevo sin `personalTimezone` debería ver la zona del plan hasta configurarla.
+
+> ⚠️ **Nota:** La UI para configurar la preferencia personal de timezone está pendiente. Mientras tanto, puede definirse manualmente en Firestore (`planParticipations.personalTimezone`) para escenarios multiusuario.
 
 ---
 

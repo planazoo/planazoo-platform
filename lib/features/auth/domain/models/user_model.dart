@@ -7,6 +7,7 @@ class UserModel {
   final String? username; // @username para búsqueda fácil (ej: @juancarlos)
   final String? displayName;
   final String? photoURL;
+  final String? defaultTimezone;
   final DateTime createdAt;
   final DateTime? lastLoginAt;
   final bool isActive;
@@ -17,6 +18,7 @@ class UserModel {
     this.username, // Opcional, usado para búsqueda y identificación amigable
     this.displayName,
     this.photoURL,
+    this.defaultTimezone,
     required this.createdAt,
     this.lastLoginAt,
     this.isActive = true,
@@ -31,6 +33,7 @@ class UserModel {
       username: data['username'],
       displayName: data['displayName'],
       photoURL: data['photoURL'],
+      defaultTimezone: data['defaultTimezone'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       lastLoginAt: data['lastLoginAt'] != null 
           ? (data['lastLoginAt'] as Timestamp).toDate() 
@@ -47,6 +50,7 @@ class UserModel {
       username: null, // Username se asigna después de registro
       displayName: firebaseUser.displayName,
       photoURL: firebaseUser.photoURL,
+      defaultTimezone: null,
       createdAt: DateTime.now(),
       lastLoginAt: DateTime.now(),
       isActive: true,
@@ -62,6 +66,7 @@ class UserModel {
       'usernameLower': usernameLower,
       'displayName': displayName,
       'photoURL': photoURL,
+      if (defaultTimezone != null) 'defaultTimezone': defaultTimezone,
       'createdAt': Timestamp.fromDate(createdAt),
       'lastLoginAt': lastLoginAt != null ? Timestamp.fromDate(lastLoginAt!) : null,
       'isActive': isActive,
@@ -75,6 +80,7 @@ class UserModel {
     String? username,
     String? displayName,
     String? photoURL,
+    String? defaultTimezone,
     DateTime? createdAt,
     DateTime? lastLoginAt,
     bool? isActive,
@@ -85,6 +91,7 @@ class UserModel {
       username: username ?? this.username,
       displayName: displayName ?? this.displayName,
       photoURL: photoURL ?? this.photoURL,
+      defaultTimezone: defaultTimezone ?? this.defaultTimezone,
       createdAt: createdAt ?? this.createdAt,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
       isActive: isActive ?? this.isActive,
@@ -102,7 +109,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, email: $email, username: $username, displayName: $displayName)';
+    return 'UserModel(id: $id, email: $email, username: $username, displayName: $displayName, defaultTimezone: $defaultTimezone)';
   }
   
   // Getter para mostrar nombre amigable

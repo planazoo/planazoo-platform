@@ -101,7 +101,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **REG-001:** Registrar nuevo usuario con email válido y username válido
   - Pasos: 
-    1. Crear cuenta con email válido (ej: `unplanazoo+temp1@gmail.com`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Completar campo de nombre
     3. Completar campo de **username** (ej: `usuario_prueba1`)
     4. Contraseña segura (mínimo 8 caracteres con mayúsculas, minúsculas, números y caracteres especiales)
@@ -122,7 +122,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **REG-003:** Registrar con username ya existente
   - Pasos: 
-    1. Intentar registrar con un username que ya existe (ej: usar `admin` si ya existe)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Completar todos los demás campos correctamente
   - Esperado: 
     - Error "Este nombre de usuario ya está en uso"
@@ -132,7 +132,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **REG-004:** Registrar con username inválido (formato incorrecto)
   - Pasos: 
-    1. Intentar registrar con username que no cumple el formato:
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
        - Menos de 3 caracteres (ej: `ab`)
        - Más de 30 caracteres (ej: `usuario_muy_largo_que_excede_el_limite`)
        - Caracteres especiales no permitidos (ej: `usuario@123`, `usuario-123`, `usuario.123`)
@@ -144,7 +144,7 @@ Cada caso de prueba debe incluir:
 
 - [ ] **REG-005:** Registrar con contraseña débil (validación mejorada)
   - Pasos: 
-    1. Intentar registrar con contraseñas que no cumplan los requisitos:
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
        - Menos de 8 caracteres (ej: `12345`)
        - Sin letra mayúscula (ej: `password123!`)
        - Sin letra minúscula (ej: `PASSWORD123!`)
@@ -173,7 +173,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **REG-008:** Validación de sugerencias de username
   - Pasos: 
-    1. Intentar registrar con username ocupado (ej: `admin`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Verificar que aparecen sugerencias (ej: `admin1`, `admin2`, `admin_2025`)
     3. Hacer clic en una sugerencia
   - Esperado: 
@@ -191,7 +191,7 @@ Cada caso de prueba debe incluir:
 
 - [ ] **REG-010:** Validación de contraseña en tiempo real
   - Pasos: 
-    1. Escribir contraseña débil (ej: `12345`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Salir del campo de contraseña
     3. Escribir contraseña mejor (ej: `12345678`)
     4. Salir del campo
@@ -205,7 +205,7 @@ Cada caso de prueba debe incluir:
 
 - [ ] **REG-011:** Validación de email en tiempo real
   - Pasos: 
-    1. Escribir email inválido (ej: `usuario@`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Salir del campo de email
     3. Escribir email válido (ej: `usuario@email.com`)
     4. Salir del campo
@@ -217,7 +217,7 @@ Cada caso de prueba debe incluir:
 
 - [ ] **REG-012:** Validación de confirmar contraseña en tiempo real
   - Pasos: 
-    1. Escribir contraseña válida (ej: `Password123!`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Escribir confirmación diferente (ej: `Password456!`)
     3. Salir del campo de confirmar contraseña
     4. Escribir la misma contraseña
@@ -230,7 +230,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **REG-013:** Botón "Crear Cuenta" deshabilitado hasta que todo sea válido
   - Pasos: 
-    1. Abrir formulario de registro
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Verificar que el botón está deshabilitado
     3. Seleccionar checkbox de términos (sin llenar campos)
     4. Completar todos los campos correctamente uno por uno
@@ -246,7 +246,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **LOGIN-001:** Iniciar sesión con email válido
   - Pasos: 
-    1. Ingresar email válido (ej: `unplanazoo+admin@gmail.com`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Ingresar contraseña correcta
   - Esperado: 
     - Login exitoso
@@ -256,7 +256,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **LOGIN-002:** Iniciar sesión con username (con @)
   - Pasos: 
-    1. Ingresar username con @ (ej: `@admin`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Ingresar contraseña correcta
   - Esperado: 
     - Login exitoso
@@ -266,7 +266,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **LOGIN-003:** Iniciar sesión con username (sin @)
   - Pasos: 
-    1. Ingresar username sin @ (ej: `admin`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Ingresar contraseña correcta
   - Esperado: 
     - Login exitoso
@@ -282,7 +282,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **LOGIN-005:** Iniciar sesión con username incorrecto/no existente
   - Pasos: 
-    1. Ingresar username que no existe (ej: `usuario_inexistente`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Ingresar cualquier contraseña
   - Esperado: Error "No se encontró un usuario con ese nombre de usuario"
   - Estado: ✅
@@ -294,14 +294,14 @@ Cada caso de prueba debe incluir:
 
 - [ ] **LOGIN-007:** Iniciar sesión con contraseña incorrecta (usando username)
   - Pasos: 
-    1. Username correcto (ej: `@admin`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Contraseña incorrecta
   - Esperado: Error "Contraseña incorrecta"
   - Estado: ✅
 
 - [ ] **LOGIN-008:** Validación de campo email/username en login
   - Pasos: 
-    1. Intentar login con campo vacío
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Intentar login con formato inválido (ni email ni username válido)
   - Esperado: 
     - Error de validación: "Ingresa un email válido o un nombre de usuario"
@@ -310,7 +310,7 @@ Cada caso de prueba debe incluir:
 
 - [ ] **LOGIN-009:** Icono dinámico en campo de login
   - Pasos: 
-    1. Escribir un email (ej: `usuario@email.com`)
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Borrar y escribir un username (ej: `@usuario`)
   - Esperado: 
     - El icono cambia dinámicamente: email icon cuando es email, @ icon cuando es username
@@ -328,7 +328,7 @@ Cada caso de prueba debe incluir:
 
 - [ ] **LOGIN-010:** Iniciar sesión con Google (nuevo usuario)
   - Pasos: 
-    1. Hacer clic en "Continuar con Google"
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Seleccionar una cuenta de Google que NO esté registrada en la app
     3. Aceptar permisos
   - Esperado: 
@@ -341,7 +341,7 @@ Cada caso de prueba debe incluir:
 
 - [ ] **LOGIN-011:** Iniciar sesión con Google (usuario existente)
   - Pasos: 
-    1. Hacer clic en "Continuar con Google"
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Seleccionar una cuenta de Google que YA esté registrada en la app
     3. Aceptar permisos
   - Esperado: 
@@ -353,7 +353,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **LOGIN-012:** Cancelar login con Google
   - Pasos: 
-    1. Hacer clic en "Continuar con Google"
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Cancelar la selección de cuenta
   - Esperado: 
     - No se muestra error
@@ -363,7 +363,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **LOGIN-013:** Verificar datos de Google en Firestore
   - Pasos: 
-    1. Hacer login con Google
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Verificar en Firestore que el usuario tiene:
        - `email` (del Google)
        - `displayName` (del Google)
@@ -377,7 +377,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **LOGIN-014:** Ciclo completo logout/login sin errores de permisos (T159)
   - Pasos: 
-    1. Hacer login con usuario válido
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Navegar a un plan y verificar que eventos/alojamientos se cargan correctamente
     3. Hacer logout
     4. Hacer login nuevamente con el mismo usuario
@@ -409,24 +409,41 @@ Cada caso de prueba debe incluir:
 
 ### 2.1 Perfil de Usuario
 
-- [ ] **PROF-001:** Ver perfil propio
-  - Pasos: Acceder a página de perfil
-  - Esperado: Muestra información del usuario actual
+- [x] **PROF-001:** Ver perfil propio (pantalla completa)
+  - Pasos:
+    1. Abrir perfil desde el icono lateral del dashboard
+    2. Confirmar que la vista cubre el grid principal dejando visible solo la barra lateral W1
+    3. Intentar interactuar con listado de planes/menús laterales mientras el perfil está abierto (no deben responder)
+    4. Verificar cabecera: flecha hacia la izquierda en la parte izquierda, `@username` alineado a la derecha, bloque superior con nombre completo, email y fecha de alta
+  - Esperado:
+    - El perfil bloquea la interacción con el resto del dashboard
+    - Se muestra toda la información de cabecera y tarjetas (`Datos personales`, `Seguridad y acceso`, `Acciones avanzadas`)
   - Estado: 🔄
 
-- [ ] **PROF-002:** Editar nombre de usuario
-  - Pasos: Modificar nombre en perfil
-  - Esperado: Cambios guardados correctamente
+- [x] **PROF-002:** Editar información personal (modal)
+  - Pasos:
+    1. Perfil → tarjeta "Datos personales" → "Editar información personal"
+    2. Verificar que se abre modal centrado (480px máx) con overlay y sin navegación detrás
+    3. Editar nombre completo, pulsar "Guardar" y confirmar snackbar verde + datos actualizados en cabecera
+    4. Repetir apertura y cancelar con el botón "Cancelar" y con el icono `X` (no debe persistir cambios)
+  - Esperado:
+    - El modal bloquea interacción externa mientras está abierto
+    - Guardar actualiza `displayName` y foto (cuando corresponda)
+    - Cancelar cierra sin cambios
   - Estado: 🔄
 
-- [ ] **PROF-003:** Cambiar email
-  - Pasos: Modificar email
-  - Esperado: Validación y confirmación requerida
+- [x] **PROF-003:** Cambiar email
+  - Pasos:
+    1. Abrir perfil → tarjeta "Datos personales" → "Editar información personal"
+    2. Verificar que el campo email aparece bloqueado y muestra la nota de soporte
+  - Esperado:
+    - El email es de solo lectura; no permite edición ni guardado
+    - Se mantiene el mensaje de "El email no se puede cambiar. Contacta con soporte si necesitas cambiarlo."
   - Estado: 🔄
 
-- [ ] **PROF-004:** Cambiar contraseña (modal UX actualizado)
+- [x] **PROF-004:** Cambiar contraseña (modal UX actualizado)
   - Pasos: 
-    1. Ir a configuración de cuenta
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
     2. Intentar guardar con nueva contraseña que no cumple requisitos (cada regla)
     3. Completar confirmación con contraseña diferente
     4. Introducir contraseña válida que cumpla todos los requisitos y coincida en ambos campos
@@ -437,15 +454,20 @@ Cada caso de prueba debe incluir:
     - Cambio exitoso solo con contraseña válida; snackbar verde de confirmación
   - Estado: 🔄
 
-- [ ] **PROF-005:** Subir foto de perfil
-  - Pasos: Seleccionar imagen desde dispositivo
-  - Esperado: Imagen subida y visible en perfil
+  - Pasos:
+    1. Perfil → "Editar información personal" → pulsar icono de cámara
+    2. Probar opciones "Tomar foto" y "Elegir de galería" (muestran snackbar informando que estará disponible)
+    3. Usar "Usar URL" con imagen válida; guardar y verificar actualización en cabecera
+    4. Repetir flujo eliminando foto desde la opción correspondiente
+  - Esperado:
+    - Se muestran avisos amigables para cámara/galería (pendiente)
+    - Subir mediante URL actualiza avatar en cabecera y Firestore
+    - Eliminar foto revierte al icono por defecto
   - Estado: 🔄
 
-- [ ] **PROF-006:** Eliminar cuenta propia
   - Pasos: 
-    1. Iniciar sesión con usuario válido
-    2. Abrir configuración → Eliminar cuenta
+    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
+    2. Perfil → tarjeta "Acciones avanzadas" → "Eliminar cuenta"
     3. Introducir contraseña y confirmar
   - Esperado:
     - Se cierra sesión y se vuelve a la pantalla de login
@@ -453,19 +475,41 @@ Cada caso de prueba debe incluir:
     - No es posible volver a iniciar sesión con ese email/username sin registrar de nuevo
   - Estado: 🔄
 
+- [x] **PROF-007:** Acciones de "Seguridad y acceso"
+  - Pasos:
+    1. Abrir perfil → tarjeta "Seguridad y acceso"
+    2. Abrir y cerrar modal de "Privacidad y seguridad" (solo lectura)
+    3. Abrir "Idioma", cambiar a EN, confirmar traducciones en perfil y revertir a ES
+    4. Pulsar "Cerrar sesión" y validar que retorna a login; repetir login para continuar pruebas
+  - Esperado:
+    - Cada opción abre modal/dialog dedicado y bloquea el fondo
+    - Cambio de idioma persiste tras cerrar el perfil
+    - Logout funciona sin dejar overlays residuales
+  - Estado: 🔄
+
+- [x] **PROF-008:** Cerrar pantalla de perfil
+  - Pasos:
+    1. Abrir perfil (pantalla completa)
+    2. Pulsar la flecha hacia la izquierda de la barra superior
+    3. Verificar que se regresa al último panel abierto (calendar/plan/etc.) sin elementos superpuestos
+  - Esperado:
+    - El cierre limpia el overlay y restituye interacción con el dashboard
+    - No se pierden selecciones previas (plan activo, filtros)
+  - Estado: 🔄
+
 ### 2.2 Configuración de Usuario
 
-- [ ] **CONF-001:** Configurar preferencias de notificaciones
+- [ ] **CONF-001:** Configurar preferencias de notificaciones *(pendiente de implementación en UI)*
   - Pasos: Ajustar preferencias en configuración
   - Esperado: Preferencias guardadas y aplicadas
   - Estado: 🔄
 
-- [ ] **CONF-002:** Seleccionar idioma de la app
+- [x] **CONF-002:** Seleccionar idioma de la app
   - Pasos: Cambiar idioma (ES/EN)
   - Esperado: UI actualizada al idioma seleccionado
   - Estado: 🔄
 
-- [ ] **CONF-003:** Configurar timezone por defecto
+- [ ] **CONF-003:** Configurar timezone por defecto *(⚠️ pendiente: falta UI para preferencia personal; ver tareas T177/T178)*
   - Pasos: Establecer timezone preferido
   - Esperado: Nuevos eventos usan timezone por defecto
   - Estado: 🔄
@@ -1496,35 +1540,108 @@ Cada caso de prueba debe incluir:
 ---
 
 ## 13. TIMEZONES
+- [ ] **⚠️ IMPORTANTE:** Esta sección es crítica para la funcionalidad de la app.
 
++### 13.0 Pruebas genéricas de timezones
++- [x] **TZ-GEN-001:** Verificar preferencia personal
++  - Pasos:
++    1. Abrir perfil → Seguridad y acceso → Configurar zona horaria.
++    2. Seleccionar timezone distinta a la del dispositivo y guardar.
++    3. Reabrir perfil y comprobar que la preferencia se mantiene.
++  - Esperado: `users.defaultTimezone` actualizado y visible en cabecera del perfil.
++- [ ] **TZ-GEN-002:** Comprobar propagación a participaciones
++  - Pasos:
++    1. Tras cambiar la preferencia, abrir un plan donde el usuario participe.
++    2. Inspeccionar Firestore (`plan_participations.personalTimezone`) o revisar eventos en calendario.
++  - Esperado: Todas las participaciones activas usan la nueva zona; eventos muestran horarios convertidos.
++  - Nota: Se completará en conjunto con las pruebas de planes y eventos (sección 3 y 4).
++- [x] **TZ-GEN-003:** Banner de detección automática (si aplica)
++  - Pasos:
++    1. Cambiar `users.defaultTimezone` manualmente en Firestore a un valor diferente al timezone del dispositivo.
++    2. Volver a iniciar sesión.
++  - Esperado: Banner con copy de soporte, opciones "Actualizar zona" y "Mantener". Al elegir cada opción se muestra snackbar correspondiente.
++- [ ] **TZ-GEN-004:** Consistencia tras recargar sesión
++  - Pasos:
++    1. Cambiar preferencia de timezone.
++    2. Hacer logout/login y abrir el mismo plan.
++  - Esperado: La preferencia persiste y el calendario respeta la zona configurada.
++  - Nota: Persistencia confirmada. Verificación visual del calendario se realizará junto con eventos multi-timezone.
++- [ ] **TZ-GEN-005:** Fallback sin preferencia
++  - Pasos:
++    1. Crear usuario nuevo (sin `defaultTimezone`).
++    2. Abrir plan existente con timezone definida.
++  - Esperado: El usuario ve los horarios en la zona del plan hasta que configure su preferencia.
++
 ### 13.1 Timezones en Planes (T40)
 
-- [ ] **TZ-001:** Crear plan con timezone específico
-  - Pasos: Seleccionar timezone al crear plan
-  - Esperado: Plan usa timezone seleccionado
+#### TZ-001 — Creación de plan
+
+- Usuarios:  
+  - Usuario A (preferencia timezone `Europe/Madrid` – UTC+01)  
+  - Usuario B (preferencia timezone `America/New_York` – UTC−05)
+- Pasos: 
+  1. Usuario A crea plan nuevo → selecciona timezone `Europe/Madrid`. 
+  2. Usuario B abre el plan sin refrescar el navegador.
+  3. Ambos revisan la cabecera del plan y la franja horaria de los días.
+- Esperado: 
+  - El plan queda persistido con timezone Madrid.
+  - Usuario B visualiza fechas convertidas a UTC−05 (mismas horas absolutas, hora local distinta).
+- Estado: 🔄
+
+- [ ] **TZ-002:** Cambio de timezone del plan existente
+  - Pasos:
+    1. Usuario A edita plan creado en `TZ-001` → cambia timezone a `America/New_York`.
+    2. Usuario B vuelve a abrir el plan.
+    3. Verificar que los eventos existentes (creados en la zona anterior) se reajustan correctamente.
+  - Esperado:
+    - La UI refleja inmediatamente el nuevo timezone del plan.
+    - No hay duplicados/solapamientos inesperados.
   - Estado: 🔄
 
-- [ ] **TZ-002:** Ver eventos con timezone correcta
-  - Pasos: Plan con timezone diferente
-  - Esperado: Horas mostradas en timezone del plan
+- [ ] **TZ-003:** Plan sin preferencia de usuario definida
+  - Pasos:
+    1. Usuario C (sin preferencia guardada) inicia sesión.
+    2. Abre un plan con timezone UTC-03 (creado por otro usuario).
+  - Esperado: Se utiliza la zona del plan como fallback hasta que configure su preferencia personal. *(UI para preferencia pendiente — ver tareas T40/T176)* 
   - Estado: 🔄
 
 ### 13.2 Timezones en Eventos
 
-- [ ] **TZ-EVENT-001:** Evento con timezone de salida
-  - Pasos: Crear evento con timezone específica
-  - Esperado: Hora correcta según timezone
+- [ ] **TZ-EVENT-001:** Evento local al timezone del plan
+  - Pasos:
+    1. Usuario A crea evento en plan (hora 10:00 Madrid).
+    2. Usuario B revisa la agenda.
+  - Esperado: Usuario B visualiza el evento convertido (por ejemplo 04:00 New York) sin desplazar el día.
   - Estado: 🔄
 
-- [ ] **TZ-EVENT-002:** Evento con timezone de llegada (T40)
-  - Pasos: Vuelo con timezones diferentes
-  - Esperado: Conversión correcta de horarios
+- [ ] **TZ-EVENT-002:** Evento "viaje" con timezone de llegada
+  - Pasos:
+    1. Crear evento de tipo viaje con salida Madrid 09:00 y llegada New York 13:00 local.
+    2. Indicar explicitly `departureTimezone` y `arrivalTimezone` si el diálogo lo soporta.
+    3. Visualizar como Usuario A y Usuario B.
+  - Esperado: El rango visible respeta ambos husos (span correcto, tooltips con hora local y convertida).
   - Estado: 🔄
 
-- [ ] **TZ-EVENT-003:** Conversión automática entre timezones
-  - Pasos: Evento con timezone diferente al plan
-  - Esperado: Conversión y visualización correcta
+- [ ] **TZ-EVENT-003:** Evento creado por usuario con preferencia distinta
+  - Pasos: Usuario B (timezone NY) crea evento en plan configurado en Madrid.
+  - Esperado: El evento se guarda en UTC del plan y ambos usuarios ven hora coherente.
   - Estado: 🔄
+
+- [ ] **TZ-EVENT-004:** Conversión en vistas derivadas
+  - Pasos: Comprobar `CalendarScreen`, `PlanStats` y exportaciones (si aplica) después de crear eventos multi-timezone.
+  - Esperado: Mismas franjas horarias en todas las vistas; estadísticas no duplicadas.
+  - Estado: 🔄
+
+#### TZ-EVENT-004 — Alertas automáticas por cambio de timezone (T178)
+- Pasos:
+  1. Iniciar sesión con usuario cuya `defaultTimezone` sea distinta a la del dispositivo.
+  2. Verificar aparición del banner en el dashboard.
+  3. Pulsar "Actualizar zona" → comprobar que se actualiza `users.defaultTimezone` y todas las participaciones.
+  4. Repetir escenario pero pulsando "Mantener" → el banner desaparece y se registra el snackbar informativo.
+- Esperado:
+  - Banner con copy amigable, botones "Actualizar zona" / "Mantener".
+  - Mensajes localizados y sin bloqueos en la navegación.
+  - Tras actualizar, los eventos recalculan su horario según la nueva preferencia.
 
 ---
 
@@ -1831,4 +1948,5 @@ Cada caso de prueba debe incluir:
 
 **Última actualización:** Enero 2025  
 **Próxima revisión:** Tras completar T102
+
 

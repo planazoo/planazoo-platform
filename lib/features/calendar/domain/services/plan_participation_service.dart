@@ -172,6 +172,39 @@ class PlanParticipationService {
     }
   }
 
+  // Actualizar timezone personal del usuario en todas sus participaciones activas
+  Future<void> updateUserTimezone(String userId, String timezone) async {
+    try {
+      final snapshot = await _firestore
+          .collection(_collectionName)
+          .where('userId', isEqualTo: userId)
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        return;
+      }
+
+      final batch = _firestore.batch();
+      for (final doc in snapshot.docs) {
+        batch.update(doc.reference, {'personalTimezone': timezone});
+      }
+
+      await batch.commit();
+      LoggerService.database(
+        'Updated personalTimezone for user $userId across ${snapshot.docs.length} participations',
+        operation: 'UPDATE',
+      );
+    } catch (e) {
+      LoggerService.error(
+        'Error updating personalTimezone for user: $userId',
+        context: 'PLAN_PARTICIPATION_SERVICE',
+        error: e,
+      );
+      rethrow;
+    }
+  }
+
   // Eliminar participación (desactivar)
   Future<bool> removeParticipation(String planId, String userId) async {
     try {

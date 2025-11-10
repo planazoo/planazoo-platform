@@ -159,7 +159,7 @@ Validaciones y seguridad:
 - Validar `username` con `Validator.isValidUsername` (minúsculas, [a-z0-9_], 3–30) — aplicado
 - Persistir índice `usernameLower` para búsquedas unicidad — aplicado
 - Cambio de contraseña:
-  - UI de `AccountSettingsPage` actualizada con checklist de requisitos y estilo Planazoo
+  - Modal dedicado desde `ProfilePage` (`_showChangePasswordDialog`) con checklist de requisitos y estilo Planazoo
   - Validaciones `Validator.validatePassword` (8+ caracteres, mayúscula, minúscula, número, símbolo)
   - Campo de confirmación y mensajes i18n (ES/EN) alineados con `app_es/en.arb`
   - Snackbars de éxito/error coherentes con el resto de la app
@@ -167,6 +167,12 @@ Validaciones y seguridad:
 Acciones:
 - [Hecho] Sanitización en `updateProfile`
 - [Hecho] Validación/normalización de `username` y control de colisiones
+- [Hecho] Pantalla de perfil reorganizada en tres tarjetas (Datos personales, Seguridad, Acciones avanzadas)
+- [Hecho] Vista de perfil ocupa el grid principal (W2-W17) dejando visible la barra lateral W1 para mantener contexto
+- [Hecho] Top bar con flecha de retorno a la izquierda y `@username` alineado a la derecha
+- [Hecho] Modal de edición centrado (480px máx) sin flecha redundante
+- [Hecho] Botones “Migrar eventos” y “Participar en todos los planes” eliminados (solo quedan acciones relevantes)
+- [Hecho] Se sustituyó `AccountSettingsPage` por modales específicos (cambiar contraseña, privacidad, idioma)
 
 ---
 
@@ -176,7 +182,6 @@ Acciones:
   - Reautenticación
   - Borrado en `/users/{uid}`
   - Borrado en Firebase Auth
-- Reglas: solo el propio usuario puede eliminar
 
 Gaps:
 - Soft-delete opcional (`isActive=false`) ya soportado en `UserService.deactivateUser()`
@@ -251,4 +256,6 @@ Ref: ver `firestore.rules` sección `REGLAS PARA USUARIOS`.
 - ✅ Username único con validación y normalización (T137 - implementado, pendiente pruebas)
 - ✅ UI actualizada para usar `displayIdentifier` en W6 (no mostrar email directamente)
 - ✅ Corregido `account_settings_page.dart` para usar `AuthNotifier` en lugar de `UserNotifier` para `deleteAccount` y `changePassword`
+
+
 

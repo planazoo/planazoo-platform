@@ -281,6 +281,184 @@ class AppLocalizationsEs extends AppLocalizations {
   String get profileTooltip => 'Ver perfil';
 
   @override
+  String profileCurrentTimezone(String timezone) {
+    return 'Zona horaria actual: $timezone';
+  }
+
+  @override
+  String get profileTimezoneOption => 'Configurar zona horaria';
+
+  @override
+  String get profileTimezoneDialogTitle => 'Seleccionar zona horaria';
+
+  @override
+  String profileTimezoneDialogDescription(String timezone) {
+    return 'Estás usando $timezone. Si no coincide con tu ubicación actual, los horarios podrían mostrarse desfasados.';
+  }
+
+  @override
+  String profileTimezoneDialogDeviceSuggestion(String timezone) {
+    return 'Usar hora del dispositivo ($timezone)';
+  }
+
+  @override
+  String get profileTimezoneDialogDeviceHint =>
+      'Te recomendamos actualizarla si estás viajando.';
+
+  @override
+  String get profileTimezoneDialogSearchHint => 'Buscar ciudad o zona';
+
+  @override
+  String get profileTimezoneDialogNoResults =>
+      'No encontramos zonas que coincidan.';
+
+  @override
+  String get profileTimezoneDialogSystemTag => 'Zona del dispositivo';
+
+  @override
+  String get profileTimezoneUpdateSuccess =>
+      'Zona horaria actualizada correctamente.';
+
+  @override
+  String get profileTimezoneInvalidError =>
+      'La zona horaria seleccionada no es válida.';
+
+  @override
+  String get profileTimezoneUpdateError =>
+      'No pudimos actualizar la zona horaria. Inténtalo de nuevo.';
+
+  @override
+  String get timezoneBannerTitle => '¿Actualizar la zona horaria?';
+
+  @override
+  String timezoneBannerMessage(String deviceTimezone, String userTimezone) {
+    return 'Detectamos que tu dispositivo está en $deviceTimezone, pero tu preferencia actual es $userTimezone. Si no la cambias, los horarios pueden mostrarse desfasados.';
+  }
+
+  @override
+  String timezoneBannerUpdateButton(String timezone) {
+    return 'Actualizar a $timezone';
+  }
+
+  @override
+  String timezoneBannerKeepButton(String timezone) {
+    return 'Mantener $timezone';
+  }
+
+  @override
+  String get timezoneBannerUpdateSuccess =>
+      'Actualizamos tu zona horaria. Todos los horarios ya están sincronizados.';
+
+  @override
+  String get timezoneBannerUpdateError =>
+      'No pudimos actualizar la zona horaria del perfil. Inténtalo más tarde.';
+
+  @override
+  String timezoneBannerKeepMessage(String timezone) {
+    return 'Mantendremos $timezone. Puedes cambiarla en el perfil cuando quieras.';
+  }
+
+  @override
+  String profileMemberSince(String date) {
+    return 'Miembro desde $date';
+  }
+
+  @override
+  String get profilePersonalDataTitle => 'Datos personales';
+
+  @override
+  String get profilePersonalDataSubtitle =>
+      'Actualiza tu nombre y foto de perfil.';
+
+  @override
+  String get profileEditPersonalInformation => 'Editar información personal';
+
+  @override
+  String get profileSecurityAndAccessTitle => 'Seguridad y acceso';
+
+  @override
+  String get profileSecurityAndAccessSubtitle =>
+      'Gestiona la seguridad de tu cuenta.';
+
+  @override
+  String get profilePrivacyAndSecurityOption => 'Privacidad y seguridad';
+
+  @override
+  String get profileLanguageOption => 'Idioma';
+
+  @override
+  String get profileSignOutOption => 'Cerrar sesión';
+
+  @override
+  String get profileAdvancedActionsTitle => 'Acciones avanzadas';
+
+  @override
+  String get profileAdvancedActionsSubtitle =>
+      'Opciones adicionales disponibles para tu cuenta.';
+
+  @override
+  String get profileDeleteAccountOption => 'Eliminar cuenta';
+
+  @override
+  String get profilePrivacyDialogTitle => 'Privacidad y seguridad';
+
+  @override
+  String get profilePrivacyDialogIntro => 'Tus datos están protegidos con:';
+
+  @override
+  String get profilePrivacyDialogEncryption =>
+      'Encriptación de extremo a extremo en Firestore';
+
+  @override
+  String get profilePrivacyDialogEmailVerification =>
+      'Verificación de email obligatoria (excepto Google)';
+
+  @override
+  String get profilePrivacyDialogRateLimiting =>
+      'Rate limiting para prevenir abuso';
+
+  @override
+  String get profilePrivacyDialogAccessControl =>
+      'Controles de acceso por roles (organizador, coorganizador, etc.)';
+
+  @override
+  String get profilePrivacyDialogMoreInfo =>
+      'Para más información consulta GUIA_SEGURIDAD.md.';
+
+  @override
+  String get profileLanguageDialogTitle => 'Seleccionar idioma';
+
+  @override
+  String get profileLanguageOptionSpanish => 'Español';
+
+  @override
+  String get profileLanguageOptionEnglish => 'English';
+
+  @override
+  String get profileDeleteAccountDescription =>
+      'Esta acción es irreversible. Para confirmar, introduce tu contraseña.';
+
+  @override
+  String get profileDeleteAccountEmptyPasswordError =>
+      'Introduce tu contraseña para continuar.';
+
+  @override
+  String get profileDeleteAccountWrongPasswordError =>
+      'Contraseña incorrecta. Inténtalo de nuevo.';
+
+  @override
+  String get profileDeleteAccountTooManyAttemptsError =>
+      'Demasiados intentos fallidos. Espera unos minutos antes de volver a intentarlo.';
+
+  @override
+  String get profileDeleteAccountRecentLoginError =>
+      'Vuelve a iniciar sesión y repite la operación para confirmar la eliminación.';
+
+  @override
+  String get profileDeleteAccountGenericError =>
+      'No se pudo eliminar la cuenta. Inténtalo de nuevo en unos minutos.';
+
+  @override
   String get confirmDeleteTitle => 'Confirmar eliminación';
 
   @override

@@ -45,7 +45,7 @@ Página para crear una nueva cuenta de usuario. Permite el registro con email, c
   - **Contraseña**: 
     - Mismo estilo que email
     - Botón de mostrar/ocultar contraseña
-    - Validación de longitud mínima (6 caracteres)
+    - Checklist de requisitos con `PasswordRulesChecklist` (8+ caracteres, mayúscula, minúscula, número, símbolo)
     - `autofillHints: [AutofillHints.newPassword]`
     - Icono `Icons.lock_outlined`
   - **Confirmar contraseña**: 
@@ -93,10 +93,15 @@ Página para crear una nueva cuenta de usuario. Permite el registro con email, c
 - **Tiempo real**: Validación mientras el usuario escribe
 
 ### **Validación de Contraseña:**
-- **Longitud mínima**: 6 caracteres
+- **Checklist dinámica**: `PasswordRulesChecklist` muestra en tiempo real el cumplimiento de cada regla
+- **Reglas**:
+  - 8 caracteres mínimo
+  - 1 letra minúscula
+  - 1 letra mayúscula
+  - 1 número
+  - 1 carácter especial (!@#…)
 - **Requerido**: Campo obligatorio
-- **Feedback visual**: Icono cambia de color cuando cumple requisitos
-- **Tiempo real**: Validación mientras el usuario escribe
+- **Feedback visual**: Icono y checklist se actualizan mientras escribe
 - **Autofill**: Configurado para evitar sugerencias de guardar
 
 ### **Validación de Confirmar Contraseña:**
@@ -138,9 +143,9 @@ Página para crear una nueva cuenta de usuario. Permite el registro con email, c
 
 ### **Validaciones Mejoradas:**
 - **Email:** Regex más estricto para validación de formato
-- **Contraseña:** Validación de longitud mínima (6 caracteres)
+- **Contraseña:** Reglas reforzadas (8+ caracteres, mix de tipos) con checklist compartido
 - **Confirmación:** Validación de coincidencia de contraseñas
-- **Feedback visual:** Iconos cambian de color según validación
+- **Feedback visual:** Iconos y checklist cambian según validación
 - **Validación en tiempo real:** Los campos se actualizan mientras el usuario escribe
 
 ### **Seguridad y Privacidad:**

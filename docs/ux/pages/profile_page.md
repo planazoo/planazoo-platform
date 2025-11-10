@@ -15,33 +15,46 @@ La **Página de Perfil** es una pantalla dedicada que muestra la información de
 ### **Top Bar**
 - **Color de fondo**: `AppColorScheme.color2`
 - **Padding**: 40px horizontal, 16px vertical
-- **Elementos**: Logo "Planazoo" y botón cerrar
+- **Elementos**: Flecha hacia la izquierda (`Icons.arrow_back`) alineada a la izquierda y `@username` alineado a la derecha
 - **Sombra**: Sutil para separación visual
 
 ### **Header del Usuario**
 - **Layout**: Horizontal (foto + datos)
 - **Foto de perfil**: 80x80px con borde color2
 - **Información**: Nombre, email y fecha de registro
+- **Resumen extra**: Línea con la zona horaria actual (`defaultTimezone`) usando `TimezoneService.getTimezoneDisplayName`
 - **Posicionamiento**: Centrado con espaciado adecuado
 
-### **Opciones de Texto**
-- **Diseño**: Lista vertical de opciones
-- **Estilo**: Texto con flecha indicadora
-- **Bordes**: Sutiles para definición
-- **Espaciado**: 8px entre opciones
+### **Secciones de Opciones**
+- **Diseño**: Tarjetas (cards) verticales con título, subtítulo y lista de acciones
+- **Cards disponibles**:
+  1. **Datos personales** → Acceso al modal de edición (nombre, foto)
+  2. **Seguridad y acceso** → Configurar zona horaria (nuevo), Cambiar contraseña, Privacidad y seguridad, Idioma, Cerrar sesión
+  3. **Acciones avanzadas** → Eliminación de cuenta
+- **Estilo**: Bordes suaves, iconografía mínima y separación de 24px entre tarjetas
 
 ## 🌐 Funcionalidad
 
 ### **Navegación**
 - **Acceso**: Desde W1 (icono de perfil)
-- **Cierre**: Botón "X" en top bar
-- **Retorno**: `Navigator.pop()`
+- **Cobertura**: La vista cubre las columnas W2-W17 del dashboard, dejando visible únicamente W1 para mantener el contexto del layout principal
+- **Cierre**: Flecha hacia la izquierda en el top bar
+- **Retorno**: `Navigator.pop()` o `onClose` inyectado desde `DashboardPage`
 
 ### **Opciones Disponibles**
-1. **Editar Perfil** → `EditProfilePage`
-2. **Configuración de Cuenta** → `AccountSettingsPage`
-3. **Migrar Eventos** → Ejecuta migración
-4. **Cerrar Sesión** → Cierra sesión y redirige
+1. **Datos personales**
+   - “Editar información personal” → abre modal `EditProfilePage` (diálogo centrado, ancho máx. 480px)
+2. **Seguridad y acceso**
+   - “Configurar zona horaria” → abre un diálogo con lista (filtrable) de timezones comunes + sugerencia automática de la zona detectada en el dispositivo. Al confirmar:
+     - Actualiza `users.defaultTimezone`.
+     - Propaga el cambio a todas las participaciones activas (`plan_participations.personalTimezone`).
+     - Muestra snackbar de confirmación o error.
+   - “Cambiar contraseña” → modal propio (`_showChangePasswordDialog`) con checklist compartido (`PasswordRulesChecklist`) para reglas de contraseña
+   - “Privacidad y seguridad” → modal informativo
+   - “Idioma” → modal selector (ES/EN)
+   - “Cerrar sesión” → Sign-out inmediato
+3. **Acciones avanzadas**
+   - “Eliminar cuenta” → Diálogo propio solicitando contraseña (usa `AuthNotifier.deleteAccount`)
 
 ## 🔧 Implementación Técnica
 
@@ -51,7 +64,7 @@ Scaffold(
   backgroundColor: AppColorScheme.color0,
   body: Column(
     children: [
-      // Top bar con logo y cerrar
+      // Top bar con flecha atrás y username
       Container(
         padding: EdgeInsets.symmetric(horizontal: 40.0, vertical: 16.0),
         decoration: BoxDecoration(
@@ -59,35 +72,52 @@ Scaffold(
           boxShadow: [BoxShadow(...)],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Planazoo', style: AppTypography.largeTitle...),
-            IconButton(onPressed: () => Navigator.pop(), icon: Icons.close),
+            IconButton(onPressed: onClose, icon: Icons.arrow_back),
+            Spacer(),
+            Text('@username', style: AppTypography.largeTitle...),
           ],
         ),
       ),
-      
       // Contenido principal
       Expanded(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 40.0),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header del usuario
               Row(
                 children: [
                   Container(/* Foto de perfil */),
-                  Expanded(/* Datos del usuario */),
+                  Expanded(/* Nombre, email, fecha alta, zona horaria */),
                 ],
               ),
-              
-              // Opciones de texto
-              Column(
-                children: [
-                  _buildTextOption('Editar Perfil', onTap),
-                  _buildTextOption('Configuración de Cuenta', onTap),
-                  _buildTextOption('Migrar Eventos', onTap),
-                  _buildTextOption('Cerrar Sesión', onTap, isDestructive: true),
+              SizedBox(height: 32),
+              _buildSectionCard(
+                title: loc.profilePersonalDataTitle,
+                subtitle: loc.profilePersonalDataSubtitle,
+                options: [
+                  _buildTextOption(loc.profileEditPersonalInformation, onTap),
+                ],
+              ),
+              SizedBox(height: 24),
+              _buildSectionCard(
+                title: loc.profileSecurityAndAccessTitle,
+                subtitle: loc.profileSecurityAndAccessSubtitle,
+                options: [
+                  _buildTextOption(loc.profileTimezoneOption, _showTimezonePreferenceDialog),
+                  _buildTextOption(loc.changePasswordTitle, _showChangePasswordDialog),
+                  _buildTextOption(loc.profilePrivacyAndSecurityOption, _showPrivacyDialog),
+                  _buildTextOption(loc.profileLanguageOption, _showLanguageDialog),
+                  _buildTextOption(loc.profileSignOutOption, signOut, isDestructive: true),
+                ],
+              ),
+              SizedBox(height: 24),
+              _buildSectionCard(
+                title: loc.profileAdvancedActionsTitle,
+                subtitle: loc.profileAdvancedActionsSubtitle,
+                options: [
+                  _buildTextOption(loc.profileDeleteAccountOption, _showDeleteAccountDialog, isDestructive: true),
                 ],
               ),
             ],
@@ -97,6 +127,23 @@ Scaffold(
     ],
   ),
 )
+```
+
+### **Modal "Configurar zona horaria"**
+- `TimezoneService.getCommonTimezones()` + zona del usuario + zona del dispositivo.
+- Campo de búsqueda (filtra por nombre/ID).
+- Sugerencia de “Usar hora del dispositivo”.
+- Confirmar → `AuthNotifier.updateDefaultTimezone()` → actualiza `users.defaultTimezone` y todas las participaciones activas.
+- Mensajes localizados (`profileTimezoneUpdateSuccess`, `profileTimezoneUpdateError`).
+
+### **Método `_showTimezonePreferenceDialog`**
+```dart
+Future<void> _showTimezonePreferenceDialog(BuildContext context, WidgetRef ref) async {
+  final currentTimezone = state.user?.defaultTimezone ?? TimezoneService.getSystemTimezone();
+  final commonTimezones = <String>{currentTimezone, TimezoneService.getSystemTimezone(), ...TimezoneService.getCommonTimezones()};
+  // ... build dialog con búsqueda, sugerencia del dispositivo y RadioListTile
+  await authNotifier.updateDefaultTimezone(selectedTimezone);
+}
 ```
 
 ### **Método _buildTextOption**
@@ -126,6 +173,45 @@ Widget _buildTextOption(String title, VoidCallback onTap, {bool isDestructive = 
   );
 }
 ```
+
+### **Helper `_buildSectionCard`**
+```dart
+Widget _buildSectionCard({
+  required String title,
+  required String subtitle,
+  required List<Widget> options,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColorScheme.color2.withValues(alpha: 0.2)),
+      boxShadow: [BoxShadow(...)],
+    ),
+    child: Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppTypography.mediumTitle...),
+          SizedBox(height: 6),
+          Text(subtitle, style: AppTypography.bodyStyle...),
+          SizedBox(height: 16),
+          ...List.generate(options.length * 2 - 1, (index) {
+            if (index.isEven) return options[index ~/ 2];
+            return SizedBox(height: 12);
+          }),
+        ],
+      ),
+    ),
+  );
+}
+```
+
+### **Eliminación de cuenta**
+- Se presenta un `AlertDialog` que solicita la contraseña.
+- Usa `_showDeleteAccountDialog` para delegar en `AuthNotifier.deleteAccount`.
+- Al completarse, redirige al login (`Navigator.pushReplacementNamed('/')`).
 
 ## 📱 Responsive Design
 
@@ -168,12 +254,16 @@ Widget _buildTextOption(String title, VoidCallback onTap, {bool isDestructive = 
 - Botones complejos con iconos
 - Múltiples secciones de información
 
-### **v2.0** - Rediseño minimalista (ACTUAL)
-- Diseño consistente con login/registro
+### **v2.0** - Rediseño minimalista
 - Header horizontal compacto
 - Opciones de texto simples
-- Márgenes laterales de 40px
 - Sin recuadro principal
+
+### **v2.1** - Tarjetas por secciones (ACTUAL)
+- Tarjetas por secciones: Datos personales, Seguridad y Acciones
+- Modal `EditProfilePage` centrado
+- Appbar muestra `@username`
+- Acceso directo a eliminación de cuenta
 
 ## 🚀 Próximas Mejoras
 
@@ -208,3 +298,7 @@ Widget _buildTextOption(String title, VoidCallback onTap, {bool isDestructive = 
 - [Edit Profile Page](../../features/auth/presentation/pages/edit_profile_page.dart)
 - [Account Settings Page](../../features/auth/presentation/pages/account_settings_page.dart)
 - [Profile Page](../../pages/pg_profile_page.dart)
+
+
+
+

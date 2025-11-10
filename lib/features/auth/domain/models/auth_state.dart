@@ -10,16 +10,22 @@ enum AuthStatus {
 }
 
 class AuthState {
+  static const _unset = Object();
+
   final AuthStatus status;
   final UserModel? user;
   final String? errorMessage;
   final bool isLoading;
+  final String? timezoneSuggestion;
+  final String? deviceTimezone;
 
   const AuthState({
     required this.status,
     this.user,
     this.errorMessage,
     this.isLoading = false,
+    this.timezoneSuggestion,
+    this.deviceTimezone,
   });
 
   // Estado inicial
@@ -53,12 +59,20 @@ class AuthState {
     UserModel? user,
     String? errorMessage,
     bool? isLoading,
+    Object? timezoneSuggestion = _unset,
+    Object? deviceTimezone = _unset,
   }) {
     return AuthState(
       status: status ?? this.status,
       user: user ?? this.user,
       errorMessage: errorMessage ?? this.errorMessage,
       isLoading: isLoading ?? this.isLoading,
+      timezoneSuggestion: identical(timezoneSuggestion, _unset)
+          ? this.timezoneSuggestion
+          : timezoneSuggestion as String?,
+      deviceTimezone: identical(deviceTimezone, _unset)
+          ? this.deviceTimezone
+          : deviceTimezone as String?,
     );
   }
 
@@ -69,7 +83,9 @@ class AuthState {
         other.status == status &&
         other.user == user &&
         other.errorMessage == errorMessage &&
-        other.isLoading == isLoading;
+        other.isLoading == isLoading &&
+        other.timezoneSuggestion == timezoneSuggestion &&
+        other.deviceTimezone == deviceTimezone;
   }
 
   @override
@@ -77,11 +93,13 @@ class AuthState {
     return status.hashCode ^
         user.hashCode ^
         errorMessage.hashCode ^
-        isLoading.hashCode;
+        isLoading.hashCode ^
+        timezoneSuggestion.hashCode ^
+        deviceTimezone.hashCode;
   }
 
   @override
   String toString() {
-    return 'AuthState(status: $status, user: $user, errorMessage: $errorMessage, isLoading: $isLoading)';
+    return 'AuthState(status: $status, user: $user, errorMessage: $errorMessage, isLoading: $isLoading, timezoneSuggestion: $timezoneSuggestion, deviceTimezone: $deviceTimezone)';
   }
 }

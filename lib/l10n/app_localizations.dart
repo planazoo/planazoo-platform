@@ -608,6 +608,288 @@ abstract class AppLocalizations {
   /// **'Ver perfil'**
   String get profileTooltip;
 
+  /// Texto que muestra la zona horaria actual del usuario en el perfil
+  ///
+  /// In es, this message translates to:
+  /// **'Zona horaria actual: {timezone}'**
+  String profileCurrentTimezone(String timezone);
+
+  /// Opción del perfil para abrir el diálogo de zona horaria
+  ///
+  /// In es, this message translates to:
+  /// **'Configurar zona horaria'**
+  String get profileTimezoneOption;
+
+  /// Título del diálogo de selección de zona horaria
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar zona horaria'**
+  String get profileTimezoneDialogTitle;
+
+  /// Descripción del diálogo de zona horaria
+  ///
+  /// In es, this message translates to:
+  /// **'Estás usando {timezone}. Si no coincide con tu ubicación actual, los horarios podrían mostrarse desfasados.'**
+  String profileTimezoneDialogDescription(String timezone);
+
+  /// Texto del botón que sugiere usar la hora detectada del dispositivo
+  ///
+  /// In es, this message translates to:
+  /// **'Usar hora del dispositivo ({timezone})'**
+  String profileTimezoneDialogDeviceSuggestion(String timezone);
+
+  /// Texto de ayuda para el botón de hora del dispositivo
+  ///
+  /// In es, this message translates to:
+  /// **'Te recomendamos actualizarla si estás viajando.'**
+  String get profileTimezoneDialogDeviceHint;
+
+  /// Placeholder del campo de búsqueda de zonas horarias
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar ciudad o zona'**
+  String get profileTimezoneDialogSearchHint;
+
+  /// Mensaje cuando no hay resultados en la búsqueda de zonas horarias
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos zonas que coincidan.'**
+  String get profileTimezoneDialogNoResults;
+
+  /// Etiqueta para identificar la zona horaria del dispositivo
+  ///
+  /// In es, this message translates to:
+  /// **'Zona del dispositivo'**
+  String get profileTimezoneDialogSystemTag;
+
+  /// Mensaje de éxito al actualizar la zona horaria
+  ///
+  /// In es, this message translates to:
+  /// **'Zona horaria actualizada correctamente.'**
+  String get profileTimezoneUpdateSuccess;
+
+  /// Mensaje de error cuando la zona horaria no pasa validación
+  ///
+  /// In es, this message translates to:
+  /// **'La zona horaria seleccionada no es válida.'**
+  String get profileTimezoneInvalidError;
+
+  /// Mensaje de error cuando falla la actualización de zona horaria
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos actualizar la zona horaria. Inténtalo de nuevo.'**
+  String get profileTimezoneUpdateError;
+
+  /// Título del banner que avisa de cambio de timezone
+  ///
+  /// In es, this message translates to:
+  /// **'¿Actualizar la zona horaria?'**
+  String get timezoneBannerTitle;
+
+  /// Mensaje del banner que describe la diferencia de timezone
+  ///
+  /// In es, this message translates to:
+  /// **'Detectamos que tu dispositivo está en {deviceTimezone}, pero tu preferencia actual es {userTimezone}. Si no la cambias, los horarios pueden mostrarse desfasados.'**
+  String timezoneBannerMessage(String deviceTimezone, String userTimezone);
+
+  /// No description provided for @timezoneBannerUpdateButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizar a {timezone}'**
+  String timezoneBannerUpdateButton(String timezone);
+
+  /// No description provided for @timezoneBannerKeepButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Mantener {timezone}'**
+  String timezoneBannerKeepButton(String timezone);
+
+  /// Mensaje de éxito tras aceptar el cambio de timezone
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizamos tu zona horaria. Todos los horarios ya están sincronizados.'**
+  String get timezoneBannerUpdateSuccess;
+
+  /// Mensaje de error si falla la actualización de timezone desde el banner
+  ///
+  /// In es, this message translates to:
+  /// **'No pudimos actualizar la zona horaria del perfil. Inténtalo más tarde.'**
+  String get timezoneBannerUpdateError;
+
+  /// Mensaje mostrado cuando el usuario decide mantener su timezone actual
+  ///
+  /// In es, this message translates to:
+  /// **'Mantendremos {timezone}. Puedes cambiarla en el perfil cuando quieras.'**
+  String timezoneBannerKeepMessage(String timezone);
+
+  /// Etiqueta que muestra la fecha de alta del usuario
+  ///
+  /// In es, this message translates to:
+  /// **'Miembro desde {date}'**
+  String profileMemberSince(String date);
+
+  /// Título de la sección de datos personales
+  ///
+  /// In es, this message translates to:
+  /// **'Datos personales'**
+  String get profilePersonalDataTitle;
+
+  /// Subtítulo de la sección de datos personales
+  ///
+  /// In es, this message translates to:
+  /// **'Actualiza tu nombre y foto de perfil.'**
+  String get profilePersonalDataSubtitle;
+
+  /// Opción para editar información personal
+  ///
+  /// In es, this message translates to:
+  /// **'Editar información personal'**
+  String get profileEditPersonalInformation;
+
+  /// Título de la sección de seguridad
+  ///
+  /// In es, this message translates to:
+  /// **'Seguridad y acceso'**
+  String get profileSecurityAndAccessTitle;
+
+  /// Subtítulo de la sección de seguridad
+  ///
+  /// In es, this message translates to:
+  /// **'Gestiona la seguridad de tu cuenta.'**
+  String get profileSecurityAndAccessSubtitle;
+
+  /// Opción para abrir el modal de privacidad
+  ///
+  /// In es, this message translates to:
+  /// **'Privacidad y seguridad'**
+  String get profilePrivacyAndSecurityOption;
+
+  /// Opción para abrir el selector de idioma
+  ///
+  /// In es, this message translates to:
+  /// **'Idioma'**
+  String get profileLanguageOption;
+
+  /// Opción para cerrar sesión
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar sesión'**
+  String get profileSignOutOption;
+
+  /// Título de la sección de acciones avanzadas
+  ///
+  /// In es, this message translates to:
+  /// **'Acciones avanzadas'**
+  String get profileAdvancedActionsTitle;
+
+  /// Subtítulo de la sección de acciones avanzadas
+  ///
+  /// In es, this message translates to:
+  /// **'Opciones adicionales disponibles para tu cuenta.'**
+  String get profileAdvancedActionsSubtitle;
+
+  /// Opción para eliminar la cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar cuenta'**
+  String get profileDeleteAccountOption;
+
+  /// Título del diálogo de privacidad
+  ///
+  /// In es, this message translates to:
+  /// **'Privacidad y seguridad'**
+  String get profilePrivacyDialogTitle;
+
+  /// Texto introductorio del diálogo de privacidad
+  ///
+  /// In es, this message translates to:
+  /// **'Tus datos están protegidos con:'**
+  String get profilePrivacyDialogIntro;
+
+  /// Punto sobre encriptación en el diálogo de privacidad
+  ///
+  /// In es, this message translates to:
+  /// **'Encriptación de extremo a extremo en Firestore'**
+  String get profilePrivacyDialogEncryption;
+
+  /// Punto sobre verificación de email en el diálogo de privacidad
+  ///
+  /// In es, this message translates to:
+  /// **'Verificación de email obligatoria (excepto Google)'**
+  String get profilePrivacyDialogEmailVerification;
+
+  /// Punto sobre rate limiting en el diálogo de privacidad
+  ///
+  /// In es, this message translates to:
+  /// **'Rate limiting para prevenir abuso'**
+  String get profilePrivacyDialogRateLimiting;
+
+  /// Punto sobre controles de acceso en el diálogo de privacidad
+  ///
+  /// In es, this message translates to:
+  /// **'Controles de acceso por roles (organizador, coorganizador, etc.)'**
+  String get profilePrivacyDialogAccessControl;
+
+  /// Nota al pie del diálogo de privacidad
+  ///
+  /// In es, this message translates to:
+  /// **'Para más información consulta GUIA_SEGURIDAD.md.'**
+  String get profilePrivacyDialogMoreInfo;
+
+  /// Título del diálogo de selección de idioma
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar idioma'**
+  String get profileLanguageDialogTitle;
+
+  /// Opción de idioma español
+  ///
+  /// In es, this message translates to:
+  /// **'Español'**
+  String get profileLanguageOptionSpanish;
+
+  /// Opción de idioma inglés
+  ///
+  /// In es, this message translates to:
+  /// **'English'**
+  String get profileLanguageOptionEnglish;
+
+  /// Descripción del diálogo de eliminación de cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Esta acción es irreversible. Para confirmar, introduce tu contraseña.'**
+  String get profileDeleteAccountDescription;
+
+  /// Error cuando la contraseña está vacía en la eliminación de cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce tu contraseña para continuar.'**
+  String get profileDeleteAccountEmptyPasswordError;
+
+  /// Error de contraseña incorrecta al eliminar cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña incorrecta. Inténtalo de nuevo.'**
+  String get profileDeleteAccountWrongPasswordError;
+
+  /// Error por demasiados intentos al eliminar cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Demasiados intentos fallidos. Espera unos minutos antes de volver a intentarlo.'**
+  String get profileDeleteAccountTooManyAttemptsError;
+
+  /// Error por requerir login reciente al eliminar cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'Vuelve a iniciar sesión y repite la operación para confirmar la eliminación.'**
+  String get profileDeleteAccountRecentLoginError;
+
+  /// Error genérico al eliminar cuenta
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo eliminar la cuenta. Inténtalo de nuevo en unos minutos.'**
+  String get profileDeleteAccountGenericError;
+
   /// Título del diálogo de confirmar eliminación
   ///
   /// In es, this message translates to:

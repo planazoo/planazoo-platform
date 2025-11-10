@@ -5,6 +5,8 @@ import 'package:unp_calendario/features/auth/domain/models/auth_state.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/domain/services/auth_service.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/features/security/services/rate_limiter_service.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/features/security/utils/validator.dart';
@@ -12,6 +14,7 @@ import 'package:unp_calendario/features/security/utils/validator.dart';
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
   final UserService _userService;
+  final PlanParticipationService _planParticipationService;
   final RateLimiterService _rateLimiter = RateLimiterService();
   bool _isRegistering = false; // Flag para evitar conflictos durante registro
   String? _pendingErrorMessage; // Error pendiente de consumir por la UI
@@ -19,8 +22,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier({
     required AuthService authService,
     required UserService userService,
+    required PlanParticipationService planParticipationService,
   })  : _authService = authService,
         _userService = userService,
+        _planParticipationService = planParticipationService,
         super(const AuthState(status: AuthStatus.initial)) {
     _init();
   }
@@ -54,6 +59,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
           
           if (userModel != null) {
             UserModel updatedUser = userModel.copyWith(lastLoginAt: DateTime.now());
+
+            if (updatedUser.defaultTimezone == null) {
+              final inferredTimezone = TimezoneService.getSystemTimezone();
+              updatedUser = updatedUser.copyWith(defaultTimezone: inferredTimezone);
+            }
             
             // Generar username automático si no tiene uno
             if (updatedUser.username == null || updatedUser.username!.isEmpty) {
@@ -65,14 +75,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
             }
             
             await _userService.updateUser(updatedUser);
+
+            final deviceTimezone = TimezoneService.getSystemTimezone();
+            final shouldSuggestTimezone = updatedUser.defaultTimezone != null &&
+                updatedUser.defaultTimezone != deviceTimezone;
             
             state = AuthState(
               status: AuthStatus.authenticated,
               user: updatedUser,
+              timezoneSuggestion: shouldSuggestTimezone ? deviceTimezone : null,
+              deviceTimezone: shouldSuggestTimezone ? deviceTimezone : null,
             );
           } else {
             // Usuario no existe en Firestore - crear uno nuevo (puede ser de Google)
-            final newUserModel = UserModel.fromFirebaseAuth(firebaseUser);
+            final newUserModel = UserModel.fromFirebaseAuth(firebaseUser)
+                .copyWith(defaultTimezone: TimezoneService.getSystemTimezone());
             
             // Generar username automático
             final generatedUsername = await _generateAutomaticUsername(newUserModel);
@@ -86,10 +103,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
             // Actualizar último login
             final updatedUser = userModelWithUsername.copyWith(lastLoginAt: DateTime.now());
             await _userService.updateUser(updatedUser);
+
+            final deviceTimezone = TimezoneService.getSystemTimezone();
             
             state = AuthState(
               status: AuthStatus.authenticated,
               user: updatedUser,
+              timezoneSuggestion: updatedUser.defaultTimezone != deviceTimezone ? deviceTimezone : null,
+              deviceTimezone: updatedUser.defaultTimezone != deviceTimezone ? deviceTimezone : null,
             );
           }
         } catch (e) {
@@ -548,22 +569,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final sanitizedDisplayName = displayName != null
           ? Sanitizer.sanitizePlainText(displayName, maxLength: 100)
           : null;
-      final validPhotoUrl = photoURL != null && photoURL.isNotEmpty
-          ? (Validator.isSafeUrl(photoURL) ? photoURL : null)
-          : null;
+
+      String? sanitizedPhotoUrl;
+      final shouldUpdatePhoto = photoURL != null;
+      if (photoURL != null) {
+        if (photoURL.isEmpty) {
+          sanitizedPhotoUrl = null; // Eliminar foto
+        } else {
+          if (!Validator.isSafeUrl(photoURL)) {
+            throw Exception('invalid-photo-url');
+          }
+          sanitizedPhotoUrl = photoURL.trim();
+        }
+      }
 
       // Actualizar en Firebase Auth
       if (sanitizedDisplayName != null) {
         await _authService.updateDisplayName(sanitizedDisplayName);
       }
-      if (validPhotoUrl != null) {
-        await _authService.updatePhotoURL(validPhotoUrl);
+      if (shouldUpdatePhoto) {
+        await _authService.updatePhotoURL(sanitizedPhotoUrl);
       }
 
+      final currentUser = state.user!;
       // Actualizar en Firestore
-      final updatedUser = state.user!.copyWith(
-        displayName: sanitizedDisplayName ?? state.user!.displayName,
-        photoURL: validPhotoUrl ?? state.user!.photoURL,
+      final updatedUser = UserModel(
+        id: currentUser.id,
+        email: currentUser.email,
+        username: currentUser.username,
+        displayName: sanitizedDisplayName ?? currentUser.displayName,
+        photoURL: shouldUpdatePhoto ? sanitizedPhotoUrl : currentUser.photoURL,
+        defaultTimezone: currentUser.defaultTimezone,
+        createdAt: currentUser.createdAt,
+        lastLoginAt: currentUser.lastLoginAt,
+        isActive: currentUser.isActive,
       );
       
       await _userService.updateUser(updatedUser);
@@ -575,6 +614,46 @@ class AuthNotifier extends StateNotifier<AuthState> {
         errorMessage: 'Error al actualizar perfil: $e',
       );
     }
+  }
+
+  // Actualizar timezone preferido del usuario
+  Future<void> updateDefaultTimezone(String timezone) async {
+    final currentUser = state.user;
+    if (currentUser == null) {
+      throw Exception('user-not-authenticated');
+    }
+
+    if (!TimezoneService.isValidTimezone(timezone)) {
+      throw Exception('invalid-timezone');
+    }
+
+    try {
+      await _userService.updateUserProfile(
+        userId: currentUser.id,
+        defaultTimezone: timezone,
+      );
+
+      await _planParticipationService.updateUserTimezone(currentUser.id, timezone);
+
+      final updatedUser = currentUser.copyWith(defaultTimezone: timezone);
+      state = state.copyWith(
+        user: updatedUser,
+        timezoneSuggestion: null,
+        deviceTimezone: null,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error updating default timezone: $e');
+      }
+      throw Exception('timezone-update-error');
+    }
+  }
+
+  void dismissTimezoneSuggestion() {
+    state = state.copyWith(
+      timezoneSuggestion: null,
+      deviceTimezone: null,
+    );
   }
 
   // Cambiar contraseña
@@ -599,23 +678,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> deleteAccount(String password) async {
     if (state.user == null) return;
 
-    try {
-      // Reautenticar usuario
-      await _authService.reauthenticateUser(state.user!.email, password);
-      
-      // Eliminar de Firestore
-      await _userService.deleteUser(state.user!.id);
-      
-      // Eliminar de Firebase Auth
-      await _authService.deleteUser();
-      
-      // El estado se actualizará automáticamente a través del stream
-    } catch (e) {
-      state = AuthState(
-        status: AuthStatus.error,
-        errorMessage: e.toString(),
-      );
-    }
+    // Reautenticar usuario
+    await _authService.reauthenticateUser(state.user!.email, password);
+    
+    // Eliminar de Firestore
+    await _userService.deleteUser(state.user!.id);
+    
+    // Eliminar de Firebase Auth
+    await _authService.deleteUser();
+    
+    // El estado se actualizará automáticamente a través del stream
   }
 
   // Limpiar errores

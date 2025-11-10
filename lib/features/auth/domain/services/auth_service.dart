@@ -100,7 +100,7 @@ class AuthService {
   }
 
   // Actualizar URL de foto de perfil
-  Future<void> updatePhotoURL(String photoURL) async {
+  Future<void> updatePhotoURL(String? photoURL) async {
     try {
       await _firebaseAuth.currentUser?.updatePhotoURL(photoURL);
     } on fb_auth.FirebaseAuthException catch (e) {

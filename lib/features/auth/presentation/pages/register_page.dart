@@ -7,6 +7,7 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifier.dart';
 import 'package:unp_calendario/features/language/presentation/widgets/language_selector.dart';
 import 'package:unp_calendario/features/security/utils/validator.dart';
+import 'package:unp_calendario/features/security/widgets/password_rules_checklist.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
@@ -243,6 +244,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 
                 // Campo de contraseña
                 _buildPasswordField(),
+                PasswordRulesChecklist(
+                  password: _passwordController.text,
+                ),
                 
                 const SizedBox(height: 20),
                 

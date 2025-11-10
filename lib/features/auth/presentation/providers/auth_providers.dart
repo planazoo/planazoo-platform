@@ -3,6 +3,7 @@ import 'package:unp_calendario/features/auth/domain/models/auth_state.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/domain/services/auth_service.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifier.dart';
 import 'package:unp_calendario/features/auth/presentation/notifiers/user_notifier.dart';
 
@@ -15,11 +16,16 @@ final userServiceProvider = Provider<UserService>((ref) {
   return UserService();
 });
 
+final planParticipationServiceForAuthProvider = Provider<PlanParticipationService>((ref) {
+  return PlanParticipationService();
+});
+
 // Provider para AuthNotifier
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     authService: ref.read(authServiceProvider),
     userService: ref.read(userServiceProvider),
+    planParticipationService: ref.read(planParticipationServiceForAuthProvider),
   );
 });
 

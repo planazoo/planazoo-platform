@@ -154,6 +154,7 @@ class UserService {
     required String userId,
     String? displayName,
     String? photoURL,
+    String? defaultTimezone,
   }) async {
     try {
       final updateData = <String, dynamic>{};
@@ -163,6 +164,9 @@ class UserService {
       }
       if (photoURL != null) {
         updateData['photoURL'] = photoURL;
+      }
+      if (defaultTimezone != null) {
+        updateData['defaultTimezone'] = defaultTimezone;
       }
 
       if (updateData.isNotEmpty) {

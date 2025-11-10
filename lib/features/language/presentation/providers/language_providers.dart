@@ -16,7 +16,7 @@ final currentLanguageProvider = FutureProvider<Locale>((ref) async {
 // Provider para el idioma actual (síncrono, para usar en UI)
 final currentLanguageSyncProvider = StateProvider<Locale>((ref) {
   // Inicializar con el valor por defecto, se actualizará cuando cargue
-  return const Locale('es', '');
+  return const Locale('es');
 });
 
 // Provider para cambiar el idioma

@@ -155,6 +155,22 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T175 - Unificar UI de validación de contraseñas
+**Estado:** ✅ Completado  
+**Fecha de finalización:** Noviembre 2025  
+**Descripción:** Unificación del feedback de contraseñas fuertes mediante un componente compartido entre el registro y el modal de cambio de contraseña.
+
+**Criterios de aceptación:**
+- ✅ Nuevo widget `PasswordRulesChecklist` con checklist dinámico (longitud, mayúscula, minúscula, número, símbolo).
+- ✅ Registro y modal de cambio de contraseña actualizados para mostrar el checklist en tiempo real.
+- ✅ Reglas reutilizadas a través de `Validator.getPasswordRulesStatus`.
+- ✅ Botón de guardar en el modal deshabilitado hasta que los tres campos sean válidos.
+- ✅ Documentación UX (`register_page.md`, `profile_page.md`) y tareas actualizadas.
+
+**Relacionado con:** T163 (registro reforzado), T172 (flujo de recuperación), seguridad general.
+
+---
+
 ## T107 - Actualización Dinámica de Duración del Plan
 **Estado:** ✅ Base completada  
 **Fecha de finalización:** Enero 2025  
@@ -2969,3 +2985,35 @@ Sistema completo de multi-moneda implementado. Cada plan tiene su moneda base (E
 - El proceso de revisión periódica está documentado para futuras revisiones
 
 ---
+
+## T177 - Exponer preferencia de timezone del usuario
+**Estado:** ✅ Completada (Noviembre 2025)  
+**Descripción:** Interfaz consistente para que cada usuario configure su zona horaria preferida y sincronice todos los planes y eventos a partir de esa elección.
+
+**Entregables:**
+- UI en `ProfilePage` → tarjeta Seguridad y acceso → "Configurar zona horaria" con búsqueda y sugerencia del dispositivo.
+- Persistencia en `users.defaultTimezone` + propagación a todas las participaciones activas (`plan_participations.personalTimezone`).
+- Checklist de pruebas actualizada (`TZ-EVENT-004`) y documentación en `docs/ux/pages/profile_page.md`, `docs/guias/GESTION_TIMEZONES.md`.
+- Internacionalización completa (ES/EN) con mensajes de éxito/error reutilizados.
+
+**Impacto:**
+- Permite completar la batería de pruebas multiusuario de timezones.
+- Simplifica la gestión manual desde Firestore y evita inconsistencias entre planes.
+
+---
+
+## T178 - Aviso de cambio de timezone del dispositivo
+**Estado:** ✅ Completada (Noviembre 2025)  
+**Descripción:** Detección automática del timezone del dispositivo tras autenticación y aviso proactivo en el dashboard para mantener horarios coherentes.
+
+**Entregables:**
+- Banner inteligente en `DashboardPage` con copy de soporte, botones "Actualizar zona" / "Mantener" y feedback por snackbar.
+- Integración con `AuthState` (`timezoneSuggestion`, `deviceTimezone`) y métodos `updateDefaultTimezone()` / `dismissTimezoneSuggestion()`.
+- Documentación y checklist actualizados (sección 5.3 de `GESTION_TIMEZONES.md`, caso `TZ-EVENT-004`).
+
+**Impacto:**
+- Reduce errores de agenda tras viajes o cambios de configuración regional.
+- Refuerza la experiencia de soporte sin bloquear el flujo principal del usuario.
+
+---
+
