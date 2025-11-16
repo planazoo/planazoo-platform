@@ -21,9 +21,8 @@ class ParticipantsListWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final participantsAsync = ref.watch(planParticipantsProvider(planId));
     final currentUser = ref.watch(currentUserProvider);
-    
-    // T109: Cargar plan para verificar estado
     final planAsync = ref.watch(planByIdStreamProvider(planId));
+    final userService = ref.watch(userServiceProvider);
 
     return planAsync.when(
       data: (plan) {
@@ -50,66 +49,87 @@ class ParticipantsListWidget extends ConsumerWidget {
             final isCurrentUser = participation.userId == currentUser?.id;
             final isOrganizer = participation.isOrganizer;
 
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: isOrganizer 
-                      ? Colors.blue.shade100 
-                      : Colors.green.shade100,
-                  child: Icon(
-                    isOrganizer ? Icons.admin_panel_settings : Icons.person,
-                    color: isOrganizer 
-                        ? Colors.blue.shade700 
-                        : Colors.green.shade700,
-                  ),
-                ),
-                title: Text(
-                  participation.userId,
-                  style: TextStyle(
-                    fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isOrganizer ? 'Organizador' : 'Participante',
-                      style: TextStyle(
-                        color: isOrganizer ? Colors.blue.shade700 : Colors.green.shade700,
-                        fontWeight: FontWeight.w500,
+            return FutureBuilder(
+              future: userService.getUser(participation.userId),
+              builder: (context, snapshot) {
+                final user = snapshot.data;
+                final displayName = user?.displayName ?? participation.userId;
+                final username = user?.username != null ? '@${user!.username}' : participation.userId;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: isOrganizer
+                          ? Colors.blue.shade100
+                          : Colors.green.shade100,
+                      child: Icon(
+                        isOrganizer ? Icons.admin_panel_settings : Icons.person,
+                        color: isOrganizer
+                            ? Colors.blue.shade700
+                            : Colors.green.shade700,
                       ),
                     ),
-                    Text(
-                      'Se unió: ${_formatDate(participation.joinedAt)}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayName,
+                          style: TextStyle(
+                            fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          username,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                    trailing: showActions && isCurrentUser && isOrganizer
-                    ? PopupMenuButton<String>(
-                        onSelected: (value) {
-                          _handleMenuAction(context, ref, participation, value, plan);
-                        },
-                        itemBuilder: (context) => [
-                          if (!isOrganizer)
-                            const PopupMenuItem(
-                              value: 'make_organizer',
-                              child: Text('Hacer organizador'),
-                            ),
-                          // T109: Solo mostrar opción de remover si está permitido según estado del plan
-                          if (!isOrganizer && PlanStatePermissions.canRemoveParticipants(plan))
-                            const PopupMenuItem(
-                              value: 'remove',
-                              child: Text('Remover'),
-                            ),
-                        ],
-                      )
-                    : null,
-              ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isOrganizer ? 'Organizador' : 'Participante',
+                          style: TextStyle(
+                            color: isOrganizer ? Colors.blue.shade700 : Colors.green.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          'Se unió: ${_formatDate(participation.joinedAt)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: showActions && isCurrentUser && isOrganizer && plan != null
+                        ? PopupMenuButton<String>(
+                            onSelected: (value) {
+                              _handleMenuAction(context, ref, participation, value, plan!);
+                            },
+                            itemBuilder: (context) => [
+                              if (!isOrganizer)
+                                const PopupMenuItem(
+                                  value: 'make_organizer',
+                                  child: Text('Hacer organizador'),
+                                ),
+                              if (!isOrganizer &&
+                                  PlanStatePermissions.canRemoveParticipants(plan!))
+                                const PopupMenuItem(
+                                  value: 'remove',
+                                  child: Text('Remover'),
+                                ),
+                            ],
+                          )
+                        : null,
+                  ),
+                );
+              },
             );
           },
         );

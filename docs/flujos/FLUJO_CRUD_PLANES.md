@@ -82,73 +82,46 @@ graph TB
 
 ### 1. CREAR PLAN
 
-#### 1.1 - Creación Manual (Desde Cero)
+#### 1.1 - Creación manual (modal rápido)
 
 **Cuándo:** Usuario crea nuevo plan desde cero  
 **Quién:** Usuario registrado
 
-**Flujo completo:**
+**Flujo actualizado (2025):**
 ```
-Usuario → Dashboard → "Crear plan"
+Usuario → Dashboard → botón "Crear plan"
   ↓
-Mostrar sugerencias del Oráculo de Delfos (T146) si disponible:
-- Sugerencias de "primer evento" según tipo de plan
-- Ideas de actividades iniciales basadas en historial del usuario
-- Recomendaciones opcionales (no bloquean creación)
+Modal rápido:
+- Campo único: Nombre del plan (obligatorio)
+- Se muestra “ID: …” con el UNP ID generado automáticamente
   ↓
-Formulario inicial:
-- Nombre del plan (requerido, validar longitud)
-- Fechas: inicio y fin (requerido, validar rango)
-- Descripción (opcional, máximo 1000 caracteres)
-- Imagen del plan (opcional, máx 5MB)
-- Visibilidad: Público/Privado (default: Privado)
-- Timezone: Auto-detectada del organizador (default)
-- Moneda del plan: EUR/USD/GBP/JPY (T153, default: EUR)
-  ↓
-Guardar (primer guardado)
-  ↓
-Crear Plan en Firestore:
-- id: Auto-generado
-- name: Nombre del plan
-- organizerId: userId del creador
-- startDate, endDate: Fechas
-- description: Descripción
-- imageUrl: URL de imagen
-- visibility: "private" o "public"
-- timezone: Timezone del organizador
-- currency: "EUR" (T153, default EUR, seleccionable: EUR/USD/GBP/JPY)
+Crear documento en Firestore:
+- name: Nombre proporcionado
+- organizerId: Usuario actual
 - state: "borrador"
-- createdAt: Timestamp
-- updatedAt: Timestamp
+- visibility: "private"
+- currency: valor por defecto (por ahora EUR)
+- timezone: null (se establecerá más tarde) o `defaultTimezone` del organizador si existe
+- createdAt / updatedAt
   ↓
-Crear PlanParticipation para el organizador:
-- planId: ID del plan
-- userId: organizerId
-- role: "organizer"
-- joinedAt: Timestamp
-- isActive: true
+Crear `plan_participation` para el organizador (role "organizer", isActive true)
   ↓
-Estado: "Borrador"
+Cerrar modal → seleccionar plan en W28 → abrir `PlanDataScreen` en modo edición
   ↓
-Usuario completa configuración:
-- Añadir participantes (T104)
-- Añadir eventos y alojamientos (con costes en moneda del plan o local) (T101/T153)
-- Configurar presupuesto (T101)
-- Configurar alarmas (T110)
+Desde `PlanDataScreen` el organizador completa:
+- Fechas de inicio/fin (pickers con validación)
+- Descripción, imagen, visibilidad
+- Timezone del plan (dropdown de zonas comunes)
+- Presupuesto estimado
+- Gestión de estado (“Gestión de estado” card)
+- Acceso a `ParticipantsScreen` para invitar y asignar roles
   ↓
-Guardar cambios
+Cada cambio relevante muestra banner de “Cambios sin guardar” (botones Guardar / Cancelar)
   ↓
-Validaciones automáticas:
-- ¿Tiene al menos 1 evento?
-- ¿Tiene al menos 1 participante además del organizador?
-- ¿Fechas son coherentes?
+Validaciones automáticas (PlanValidation / PlanStateService):
+- Días vacíos, participantes sin eventos, etc.
   ↓
-Si cumple validaciones: Estado: "Planificando"
-Si no cumple: Mantener "Borrador" con aviso
-  ↓
-Organizador marca como "listo" (opcional)
-  ↓
-Si marca "listo": Estado: "Confirmado"
+Al cumplir requisitos, el organizador marca como “Listo” → Estado “Confirmado”
 ```
 
 #### 1.2 - Creación por Copia (T118)
@@ -250,31 +223,24 @@ Estado: "Planificando"
 
 **Flujo:**
 ```
-Usuario hace click en plan
+Usuario hace click en plan (W28 o W6)
   ↓
-Validar permisos:
-- ¿Usuario tiene acceso al plan? (PlanParticipation.isActive == true)
-- ¿Plan es público o el usuario es participante?
+Validar permisos de acceso:
+- ¿Existe PlanParticipation activa o plan público?
+- Si plan es "Borrador" y usuario no es organizador/coorganizador → sólo lectura
   ↓
-Verificar estado del plan:
-- Si plan está "Cancelado" o "Finalizado": mostrar vista de solo lectura
-- Si plan está "Borrador" y usuario no es organizador: bloquear acceso
+Abrir `PlanDataScreen` con layout modular:
+- Cabecera: nombre, imagen, estado actual y enlace a `ParticipantsScreen`
+- Cards principales:
+  • Resumen + Gestión de estado
+  • Información detallada (fechas, moneda, visibilidad, timezone, presupuesto)
+  • Identificadores (UNP ID, ID interno, creación)
+  • Participantes (enlace “Gestionar participantes”)
+  • Anuncios activos
+  • Zona de peligro (sólo visible para organizador)
+- Banner “Cambios sin guardar” con botones Guardar / Cancelar si hay modificaciones locales
   ↓
-Mostrar pantalla principal del plan:
-┌────────────────────────────────────┐
-│ 🏖️ Vacaciones Londres 2025         │
-│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   │
-│ 📅 15/11/2025 - 21/11/2025        │
-│ 👥 6 participantes                 │
-│ 📊 12 eventos, 2 alojamientos     │
-│ 💰 Presupuesto: €3,500            │
-│ 🔔 Estado: Confirmado             │
-│                                    │
-│ Vista:                            │
-│ [Calendario] [Mapa] [Resumen]     │
-│                                    │
-│ [Participantes] [Eventos] [Config] │
-└────────────────────────────────────┘
+Acciones disponibles dependen del rol (ver 2.2)
 ```
 
 #### 2.2 - Acceso Según Rol
@@ -295,6 +261,16 @@ Mostrar pantalla principal del plan:
 - Ver estructura del plan
 - Ver eventos (sin detalles personales)
 - Solo lectura
+
+#### 2.3 - Acceso desde Dashboard (W27/W28)
+
+- `W28` muestra los planes relevantes:
+  - Vista “Lista”: cards con nombre, rango de fechas, estado y número de participantes activos (datos en tiempo real).
+  - Vista “Calendario” (toggle en `W27`):
+    - Scroll vertical de 12 meses con el mes actual centrado al entrar.
+    - Tooltip al pasar el ratón por un día con planes muestra los nombres.
+    - Clic en un día con múltiples planes abre modal para elegir cuál abrir.
+- Cambiar entre lista y calendario **no** pierde la selección del plan ni rompe la navegación hacia `PlanDataScreen` o `CalendarScreen`.
 
 ---
 
@@ -588,6 +564,24 @@ Plan eliminado permanentemente e irreversiblemente
 - Plan NO puede estar "En Curso" o "Finalizado" reciente
 - Solo organizador original
 - Notificación EXTREMA a participantes
+
+**⚠️ IMPORTANTE - Orden de eliminación en cascada:**
+
+**Para planes (`PlanService.deletePlan()`):**
+1. `event_participants` (participantes de eventos del plan) - eliminación física
+2. `plan_permissions` (permisos del plan) - eliminación física
+3. `plan_participations` (participaciones) - eliminación física
+4. `plan` (el plan mismo) - eliminación física
+
+**Para eventos (`EventService.deleteEvent()` y `deleteEventsByPlanId()`):**
+1. `event_participants` (participantes registrados en el evento) - eliminación física
+2. Copias del evento (si es un evento base con copias) - eliminación física
+3. `event` (el evento mismo) - eliminación física
+
+**📋 Recordatorio para nuevas estructuras de datos:**
+- **Si se crea una nueva colección relacionada con un plan** (ej: `plan_comments`, `plan_attachments`, etc.), **DEBE** añadirse la lógica de eliminación en cascada en `PlanService.deletePlan()`.
+- **Si se crea una nueva colección relacionada con un evento** (ej: `event_comments`, `event_attachments`, etc.), **DEBE** añadirse la lógica de eliminación en cascada en `EventService.deleteEvent()`.
+- Verificar también que las reglas de Firestore permitan la eliminación cuando el plan/evento ya no existe.
 
 ---
 

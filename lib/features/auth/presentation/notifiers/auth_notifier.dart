@@ -678,13 +678,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> deleteAccount(String password) async {
     if (state.user == null) return;
 
+    final userId = state.user!.id!;
+    final userEmail = state.user!.email;
+
     // Reautenticar usuario
-    await _authService.reauthenticateUser(state.user!.email, password);
+    await _authService.reauthenticateUser(userEmail, password);
     
-    // Eliminar de Firestore
-    await _userService.deleteUser(state.user!.id);
+    // Eliminar todos los datos del usuario de Firestore (planes, eventos, participaciones, etc.)
+    await _userService.deleteAllUserData(userId);
     
-    // Eliminar de Firebase Auth
+    // Eliminar de Firebase Auth (esto debe ser lo último)
     await _authService.deleteUser();
     
     // El estado se actualizará automáticamente a través del stream

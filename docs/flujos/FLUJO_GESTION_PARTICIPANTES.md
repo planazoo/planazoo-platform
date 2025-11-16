@@ -31,6 +31,8 @@ Documentar todos los escenarios de gestión de participantes: añadir, eliminar,
 
 ### 1. AÑADIR PARTICIPANTES
 
+> Todas las acciones de invitación se ejecutan desde `ParticipantsScreen` (W16), accesible mediante el enlace “Gestionar participantes” en `PlanDataScreen`.
+
 #### 1.1 - Invitar por Email (no tiene app)
 
 **Flujo:**
@@ -163,7 +165,7 @@ Recordatorio automático en 2 días
 
 **Flujo:**
 ```
-Organizador → "Eliminar participante"
+Organizador → ParticipantsScreen → “Eliminar participante”
   ↓
 Confirmación: "¿Eliminar [nombre] del plan?"
   ↓
@@ -191,7 +193,7 @@ Si eventos pagados: Calcular reembolsos (T102)
 
 **Flujo:**
 ```
-Organizador → "Eliminar participante" (con confirmación crítica)
+Organizador → ParticipantsScreen → “Eliminar participante” (con confirmación crítica)
   ↓
 Modal de advertencia:
 "⚠️ ELIMINAR PARTICIPANTE DURANTE PLAN EN CURSO
@@ -235,7 +237,7 @@ Actualizar calendario en tiempo real
 
 **Flujo:**
 ```
-Organizador → "Cambiar rol: Participante → Observador"
+Organizador → ParticipantsScreen → menú “Cambiar rol” → Participante → Observador
   ↓
 Confirmación:
 "¿Cambiar [nombre] a Observador?
@@ -266,7 +268,7 @@ Notificar al participante (T105)
 
 **Flujo:**
 ```
-Organizador → "Cambiar rol: Observador → Participante"
+Organizador → ParticipantsScreen → menú “Cambiar rol” → Observador → Participante
   ↓
 Confirmación:
 "¿Cambiar [nombre] a Participante?
@@ -297,7 +299,7 @@ Notificar al participante (T105)
 
 **Flujo:**
 ```
-Organizador → "Añadir como Coorganizador"
+Organizador → ParticipantsScreen → menú “Cambiar rol” → Organizador
   ↓
 Confirmación:
 "¿Añadir [nombre] como Coorganizador?

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 
-class PlanCardWidget extends StatelessWidget {
+class PlanCardWidget extends ConsumerWidget {
   final Plan plan;
   final VoidCallback? onTap;
   final bool isSelected;
@@ -21,11 +23,18 @@ class PlanCardWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final participantsCount = plan.id != null
+        ? ref.watch(planRealParticipantsProvider(plan.id!)).maybeWhen(
+              data: (list) => list.length,
+              orElse: () => plan.participants ?? 0,
+            )
+        : plan.participants ?? 0;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
       decoration: BoxDecoration(
-        color: isSelected ? AppColorScheme.color1 : AppColorScheme.color0, // fondo1 si seleccionado, fondo0 si no
+        color: isSelected ? AppColorScheme.color1 : AppColorScheme.color0,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: isSelected ? AppColorScheme.color1 : AppColorScheme.color0,
@@ -39,51 +48,44 @@ class PlanCardWidget extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              // Imagen del plan (izquierda)
               _buildPlanImage(),
               const SizedBox(width: 8),
-              // Información del plan (centro)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Nombre del plan (doble línea)
                     Text(
-                      plan.name ?? 'Unnamed Plan',
+                      plan.name,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: AppColorScheme.color2, // texto2
+                        color: AppColorScheme.color2,
                         fontSize: 12,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    // Fechas del plan
                     Text(
                       _formatPlanDates(),
                       style: TextStyle(
-                        color: AppColorScheme.color2, // texto2
+                        color: AppColorScheme.color2,
                         fontSize: 10,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    // Duración en días
                     Text(
                       '${plan.columnCount} días',
                       style: TextStyle(
-                        color: AppColorScheme.color2, // texto2
+                        color: AppColorScheme.color2,
                         fontSize: 10,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Badge de estado
                     PlanStateBadgeCompact(
                       plan: plan,
                       fontSize: 8,
                     ),
                     const SizedBox(height: 2),
-                    // Indicador de días restantes (solo si está confirmado)
                     DaysRemainingIndicator(
                       plan: plan,
                       fontSize: 8,
@@ -91,18 +93,16 @@ class PlanCardWidget extends StatelessWidget {
                       showIcon: false,
                     ),
                     const SizedBox(height: 2),
-                    // Participantes (fuente pequeña)
                     Text(
-                      _formatParticipants(),
+                      'Participantes: $participantsCount',
                       style: TextStyle(
-                        color: AppColorScheme.color2, // texto2
+                        color: AppColorScheme.color2,
                         fontSize: 8,
                       ),
                     ),
                   ],
                 ),
               ),
-              // Iconos (derecha) - de momento ninguno según especificación
               const SizedBox(width: 8),
             ],
           ),
@@ -112,26 +112,18 @@ class PlanCardWidget extends StatelessWidget {
   }
 
   String _formatPlanDates() {
-    if (plan.startDate != null && plan.endDate != null) {
-      final start = plan.startDate!;
-      final end = plan.endDate!;
-      return '${_formatDate(start)} - ${_formatDate(end)}';
-    }
-    return 'Sin fechas';
+    final start = plan.startDate;
+    final end = plan.endDate;
+    return '${_formatDate(start)} - ${_formatDate(end)}';
   }
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  String _formatParticipants() {
-    // Por ahora mostramos un placeholder, ya que no tenemos la información de participantes
-    return 'Participantes: 0';
-  }
-
   Widget _buildPlanImage() {
-    const double imageSize = 40.0; // Imagen más pequeña para la lista
-    
+    const double imageSize = 40.0;
+
     if (plan.imageUrl != null && ImageService.isValidImageUrl(plan.imageUrl)) {
       return Container(
         width: imageSize,

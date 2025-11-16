@@ -12,9 +12,23 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    // Verificar si el usuario es administrador de la plataforma
+    // Los administradores tienen permisos completos para gestión y mantenimiento
+    function isAdmin(userId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.isAdmin == true;
+    }
+    
+    // Verificar si el plan existe
+    function planExists(planId) {
+      return exists(/databases/$(database)/documents/plans/$(planId));
+    }
+    
     // Verificar si el usuario es el creador del plan
     function isPlanOwner(planId) {
       return isAuthenticated() && 
+             planExists(planId) &&
              get(/databases/$(database)/documents/plans/$(planId)).data.userId == request.auth.uid;
     }
     
@@ -214,29 +228,36 @@ service cloud.firestore {
     
     match /users/{userId} {
       // Cualquier usuario autenticado puede leer perfiles públicos
+      // Los administradores pueden leer todos los perfiles
       allow read: if isAuthenticated();
       
       // Permitir consultas de usernameLower sin autenticación (solo para verificar disponibilidad durante registro)
       // Limitado a consultas con límite de 1 para evitar listar todos los usuarios
       // Esto es seguro porque solo permite verificar si un username específico existe
-      allow list: if request.query.limit <= 1;
+      // Los administradores pueden listar sin límite
+      allow list: if request.query.limit <= 1 || isAdmin(request.auth.uid);
       
-      // Solo el propio usuario puede crear/actualizar su perfil
-      allow create: if isAuthenticated() && 
+      // Solo el propio usuario puede crear su perfil
+      // Los administradores pueden crear perfiles (útil para gestión)
+      allow create: if (isAuthenticated() && 
                        request.auth.uid == userId &&
                        request.resource.data.keys().hasAll(['email', 'createdAt']) &&
                        request.resource.data.email is string &&
                        request.resource.data.email.size() > 0 &&
-                       request.resource.data.createdAt is timestamp;
+                       request.resource.data.createdAt is timestamp) ||
+                      isAdmin(request.auth.uid);
       
       // Solo el propio usuario puede actualizar su perfil
-      allow update: if isAuthenticated() && 
+      // Los administradores pueden actualizar cualquier perfil (útil para correcciones)
+      allow update: if (isAuthenticated() && 
                        request.auth.uid == userId &&
                        (!('email' in request.resource.data.diff(resource.data).affectedKeys()) ||
-                        request.resource.data.email == resource.data.email); // No permitir cambiar email
+                        request.resource.data.email == resource.data.email)) || // No permitir cambiar email
+                      isAdmin(request.auth.uid);
       
       // Solo el propio usuario puede eliminar su perfil (con validación adicional en el cliente)
-      allow delete: if isAuthenticated() && request.auth.uid == userId;
+      // Los administradores pueden eliminar perfiles (útil para limpieza)
+      allow delete: if (isAuthenticated() && request.auth.uid == userId) || isAdmin(request.auth.uid);
     }
     
     // ============================================
@@ -245,20 +266,24 @@ service cloud.firestore {
     
     match /plans/{planId} {
       // Crear: Solo usuarios autenticados pueden crear planes
-      allow create: if isAuthenticated() && 
-                       isValidPlanData();
+      // Los administradores pueden crear planes
+      allow create: if (isAuthenticated() && isValidPlanData()) || isAdmin(request.auth.uid);
       
       // Leer: Usuarios autenticados pueden leer (validación completa en cliente)
+      // Los administradores pueden leer todos los planes
       // NOTA: La verificación de participación real se hace en el código cliente
       allow read: if isAuthenticated();
       
       // Actualizar: Solo owner del plan puede actualizar
-      allow update: if isPlanOwner(planId) &&
+      // Los administradores pueden actualizar cualquier plan
+      allow update: if (isPlanOwner(planId) &&
                        request.resource.data.userId == resource.data.userId && // No permitir cambiar owner
-                       request.resource.data.createdAt == resource.data.createdAt; // No permitir cambiar fecha creación
+                       request.resource.data.createdAt == resource.data.createdAt) || // No permitir cambiar fecha creación
+                      isAdmin(request.auth.uid);
       
       // Eliminar: Solo el creador original puede eliminar el plan
-      allow delete: if isPlanOwner(planId);
+      // Los administradores pueden eliminar cualquier plan
+      allow delete: if isPlanOwner(planId) || isAdmin(request.auth.uid);
     }
     
     // ============================================
@@ -268,25 +293,29 @@ service cloud.firestore {
     
     match /events/{eventId} {
       // Crear: Solo usuarios autenticados pueden crear eventos
+      // Los administradores pueden crear eventos
       // La verificación de participación se hace en el código cliente
-      allow create: if isAuthenticated() && 
-                       isValidEventData(request.resource.data.planId);
+      allow create: if (isAuthenticated() && isValidEventData(request.resource.data.planId)) || isAdmin(request.auth.uid);
       
       // Leer: Usuarios autenticados pueden leer eventos
+      // Los administradores pueden leer todos los eventos
       // La validación de participación se hace en el código cliente
       allow read: if isAuthenticated();
       
       // Actualizar: 
       // - Owner del plan: puede editar cualquier evento
       // - Creador del evento: puede editar su evento
-      allow update: if isAuthenticated() && (
+      // - Administradores: pueden editar cualquier evento
+      allow update: if (isAuthenticated() && (
         isPlanOwner(resource.data.planId) || // Owner del plan puede editar todo
         resource.data.userId == request.auth.uid // Creador puede editar
-      ) && isValidEventData(resource.data.planId);
+      ) && isValidEventData(resource.data.planId)) || isAdmin(request.auth.uid);
       
       // Eliminar: Solo owner del plan o creador del evento puede eliminar
-      allow delete: if isAuthenticated() && 
-                       (isPlanOwner(resource.data.planId) || resource.data.userId == request.auth.uid);
+      // Los administradores pueden eliminar cualquier evento
+      allow delete: if (isAuthenticated() && 
+                       (isPlanOwner(resource.data.planId) || resource.data.userId == request.auth.uid)) ||
+                      isAdmin(request.auth.uid);
     }
     
     // ============================================
@@ -347,26 +376,30 @@ service cloud.firestore {
     match /plan_participations/{participationId} {
       // Crear: Cualquier usuario autenticado puede crear su propia participación
       // o el owner del plan puede crear participaciones
-      allow create: if isAuthenticated() && (
+      // Los administradores pueden crear participaciones
+      allow create: if (isAuthenticated() && (
         request.resource.data.userId == request.auth.uid || // Usuario acepta su propia invitación
         isPlanOwner(request.resource.data.planId) // Owner añade participante
-      ) && isValidParticipationData(request.resource.data.planId);
+      ) && isValidParticipationData(request.resource.data.planId)) || isAdmin(request.auth.uid);
       
       // Leer: Usuarios autenticados pueden leer participaciones
       // - Pueden leer su propia participación
       // - Pueden leer participaciones si son owner del plan
-      allow read: if isAuthenticated() && 
+      // Los administradores pueden leer todas las participaciones
+      allow read: if (isAuthenticated() && 
                      (request.auth.uid == resource.data.userId ||
-                      isPlanOwner(resource.data.planId));
+                      isPlanOwner(resource.data.planId))) || isAdmin(request.auth.uid);
       
       // Listar: Necesario para consultas con where() y orderBy()
       // IMPORTANTE: Las consultas con múltiples where() requieren permisos de list
       // La validación de participación se hace en el cliente
+      // Los administradores pueden listar todas las participaciones
       allow list: if isAuthenticated();
       
       // Actualizar: Solo owner del plan puede cambiar roles
       // O el propio usuario puede actualizar su status (aceptar/rechazar invitación) o timezone
-      allow update: if isAuthenticated() && (
+      // Los administradores pueden actualizar cualquier participación
+      allow update: if (isAuthenticated() && (
         isPlanOwner(resource.data.planId) || // Owner puede cambiar roles y status
         (request.auth.uid == resource.data.userId && // Usuario puede actualizar su info
          (
@@ -379,11 +412,17 @@ service cloud.firestore {
             !('status' in request.resource.data.diff(resource.data).affectedKeys()))
          )
         )
-      );
+      )) || isAdmin(request.auth.uid);
       
-      // Eliminar: Solo owner del plan puede eliminar participaciones
-      allow delete: if isAuthenticated() && 
-                       isPlanOwner(resource.data.planId);
+      // Eliminar: 
+      // - Owner del plan puede eliminar participaciones (si el plan existe)
+      // - Usuario puede eliminar su propia participación si el plan no existe (huérfana)
+      // - Los administradores pueden eliminar cualquier participación (útil para limpiar huérfanas)
+      allow delete: if (isAuthenticated() && (
+                       isPlanOwner(resource.data.planId) || // Owner del plan
+                       (!planExists(resource.data.planId) && // Plan no existe (huérfana)
+                        resource.data.userId == request.auth.uid) // Y es la propia participación
+                     )) || isAdmin(request.auth.uid);
     }
     
     // ============================================
@@ -393,34 +432,39 @@ service cloud.firestore {
     match /event_participants/{participantId} {
       // Crear: Solo usuarios que participan en el plan pueden apuntarse a eventos
       // Verificar que el usuario participa en el plan del evento
-      allow create: if isAuthenticated() && 
+      // Los administradores pueden crear participantes
+      allow create: if (isAuthenticated() && 
                        isValidEventParticipantData() &&
-                       request.resource.data.userId == request.auth.uid;
+                       request.resource.data.userId == request.auth.uid) || isAdmin(request.auth.uid);
       
       // Leer: Cualquier usuario autenticado puede leer participantes del evento
+      // Los administradores pueden leer todos los participantes
       // IMPORTANTE: Las consultas con múltiples where() y orderBy() requieren índices compuestos
       // La validación de participación en el plan se hace en el cliente
       allow read: if isAuthenticated();
       
       // Listar: Necesario para consultas con where() y orderBy()
       // Firestore diferencia entre leer un documento individual (read) y listar documentos (list)
+      // Los administradores pueden listar todos los participantes
       allow list: if isAuthenticated();
       
       // Actualizar: Solo el mismo usuario puede actualizar su confirmationStatus o status (T120 Fase 2)
-      allow update: if isAuthenticated() && 
+      // Los administradores pueden actualizar cualquier participante
+      allow update: if (isAuthenticated() && 
                        isValidEventParticipantData() &&
                        resource.data.userId == request.auth.uid &&
                        request.resource.data.userId == request.auth.uid &&
                        // Solo se pueden actualizar confirmationStatus y status, no otros campos críticos
                        request.resource.data.eventId == resource.data.eventId &&
-                       request.resource.data.registeredAt == resource.data.registeredAt;
+                       request.resource.data.registeredAt == resource.data.registeredAt) || isAdmin(request.auth.uid);
       
       // Eliminar: Solo el mismo usuario o el owner del plan
-      allow delete: if isAuthenticated() && (
+      // Los administradores pueden eliminar cualquier participante
+      allow delete: if (isAuthenticated() && (
                        resource.data.userId == request.auth.uid ||
                        // El owner del plan puede eliminar (se verifica en cliente que sea owner)
                        false // Se valida en cliente que el usuario es owner del plan
-                     );
+                     )) || isAdmin(request.auth.uid);
     }
     
     // ============================================
@@ -465,23 +509,27 @@ service cloud.firestore {
     match /personal_payments/{paymentId} {
       // Crear: Usuarios autenticados pueden registrar pagos
       // Deben ser participantes del plan (verificado en cliente)
-      allow create: if isAuthenticated() && 
-                       isValidPersonalPaymentData();
+      // Los administradores pueden crear pagos
+      allow create: if (isAuthenticated() && isValidPersonalPaymentData()) || isAdmin(request.auth.uid);
       
       // Leer: Solo participantes del plan pueden leer pagos
+      // Los administradores pueden leer todos los pagos
       // (verificado en cliente que el usuario es participante)
       allow read: if isAuthenticated();
       
       // Actualizar: Cualquier participante autenticado puede actualizar
+      // Los administradores pueden actualizar cualquier pago
       // (para corregir errores, cambiar estado, etc.)
-      allow update: if isAuthenticated() && 
+      allow update: if (isAuthenticated() && 
                        isValidPersonalPaymentData() &&
                        request.resource.data.planId == resource.data.planId &&
-                       request.resource.data.participantId == resource.data.participantId;
+                       request.resource.data.participantId == resource.data.participantId) ||
+                      isAdmin(request.auth.uid);
       
       // Eliminar: Cualquier participante autenticado puede eliminar
+      // Los administradores pueden eliminar cualquier pago
       // (para corregir errores de registro)
-      allow delete: if isAuthenticated();
+      allow delete: if isAuthenticated() || isAdmin(request.auth.uid);
     }
     
     // ============================================
@@ -503,31 +551,37 @@ service cloud.firestore {
     
     match /plan_permissions/{permissionId} {
       // Crear: Solo el owner del plan puede asignar permisos
-      allow create: if isAuthenticated() && 
+      // Los administradores pueden crear permisos
+      allow create: if (isAuthenticated() && 
                        isValidPlanPermissionData() &&
                        isPlanOwner(request.resource.data.planId) &&
                        // El ID del documento debe ser '{planId}_{userId}'
-                       permissionId == request.resource.data.planId + '_' + request.resource.data.userId;
+                       permissionId == request.resource.data.planId + '_' + request.resource.data.userId) ||
+                      isAdmin(request.auth.uid);
       
       // Leer: 
       // - El propio usuario puede leer sus permisos
       // - El owner del plan puede leer todos los permisos del plan
-      allow read: if isAuthenticated() && (
+      // Los administradores pueden leer todos los permisos
+      allow read: if (isAuthenticated() && (
                        resource.data.userId == request.auth.uid ||
                        isPlanOwner(resource.data.planId)
-                     );
+                     )) || isAdmin(request.auth.uid);
       
       // Actualizar: Solo el owner del plan puede actualizar permisos
-      allow update: if isAuthenticated() && 
+      // Los administradores pueden actualizar cualquier permiso
+      allow update: if (isAuthenticated() && 
                        isValidPlanPermissionData() &&
                        isPlanOwner(resource.data.planId) &&
                        request.resource.data.planId == resource.data.planId &&
                        request.resource.data.userId == resource.data.userId &&
-                       permissionId == resource.data.planId + '_' + resource.data.userId;
+                       permissionId == resource.data.planId + '_' + resource.data.userId) ||
+                      isAdmin(request.auth.uid);
       
       // Eliminar: Solo el owner del plan puede eliminar permisos
-      allow delete: if isAuthenticated() && 
-                       isPlanOwner(resource.data.planId);
+      // Los administradores pueden eliminar cualquier permiso
+      allow delete: if (isAuthenticated() && 
+                       isPlanOwner(resource.data.planId)) || isAdmin(request.auth.uid);
     }
     
     // ============================================

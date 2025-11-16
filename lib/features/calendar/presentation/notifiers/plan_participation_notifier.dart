@@ -22,6 +22,10 @@ class PlanParticipationNotifier extends StateNotifier<AsyncValue<List<PlanPartic
     _loadParticipations();
   }
 
+  Future<void> reload() async {
+    await _loadParticipations();
+  }
+
   @override
   void dispose() {
     _subscription?.cancel();

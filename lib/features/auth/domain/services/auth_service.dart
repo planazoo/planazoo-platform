@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
-
 class AuthService {
   final fb_auth.FirebaseAuth _firebaseAuth;
   GoogleSignIn? _googleSignIn;
@@ -141,6 +139,35 @@ class AuthService {
       throw _handleFirebaseAuthException(e);
     } catch (e) {
       throw Exception('Error desconocido al reautenticar: $e');
+    }
+  }
+
+  Future<bool> deletePlan({
+    required String planId,
+    bool reauthenticate = false,
+    String? password,
+  }) async {
+    try {
+      assert(planId.isNotEmpty);
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        throw Exception('auth/no-current-user');
+      }
+      if (reauthenticate) {
+        final email = user.email;
+        if (email == null) {
+          throw Exception('auth/no-email');
+        }
+        if (password == null || password.isEmpty) {
+          throw Exception('auth/missing-password');
+        }
+        await reauthenticateUser(email, password);
+      }
+      return true;
+    } on fb_auth.FirebaseAuthException catch (e) {
+      throw _handleFirebaseAuthException(e);
+    } catch (e) {
+      throw Exception('Error reautenticando para eliminar plan: $e');
     }
   }
 

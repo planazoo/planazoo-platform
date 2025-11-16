@@ -15,6 +15,7 @@ class PersonalPayment {
   final String? registeredBy; // Usuario que registró el pago (puede ser diferente al que pagó)
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? _adminCreatedBy; // Campo administrativo: ID del usuario que creó este registro (no expuesto al cliente)
 
   const PersonalPayment({
     this.id,
@@ -30,7 +31,8 @@ class PersonalPayment {
     this.registeredBy,
     required this.createdAt,
     required this.updatedAt,
-  });
+    String? adminCreatedBy, // Campo administrativo interno
+  }) : _adminCreatedBy = adminCreatedBy;
 
   /// Crear desde Firestore
   factory PersonalPayment.fromFirestore(DocumentSnapshot doc) {
@@ -49,6 +51,7 @@ class PersonalPayment {
       registeredBy: data['registeredBy'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      adminCreatedBy: data['_adminCreatedBy'], // Campo administrativo
     );
   }
 
@@ -67,6 +70,7 @@ class PersonalPayment {
       if (registeredBy != null) 'registeredBy': registeredBy,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      if (_adminCreatedBy != null) '_adminCreatedBy': _adminCreatedBy, // Campo administrativo
     };
   }
 
@@ -84,6 +88,7 @@ class PersonalPayment {
     String? registeredBy,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? adminCreatedBy,
   }) {
     return PersonalPayment(
       id: id ?? this.id,
@@ -99,6 +104,7 @@ class PersonalPayment {
       registeredBy: registeredBy ?? this.registeredBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      adminCreatedBy: adminCreatedBy ?? this._adminCreatedBy,
     );
   }
 

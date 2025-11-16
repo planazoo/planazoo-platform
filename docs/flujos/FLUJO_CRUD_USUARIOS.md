@@ -16,7 +16,8 @@ Relacionado con: `lib/features/auth/presentation/notifiers/auth_notifier.dart`, 
 ## 🔐 Modelo de Datos
 
 - Clase: `UserModel`
-  - Campos: `id`, `email`, `username?`, `displayName?`, `photoURL?`, `createdAt`, `lastLoginAt?`, `isActive`
+  - Campos: `id`, `email`, `username?`, `displayName?`, `photoURL?`, `createdAt`, `lastLoginAt?`, `isActive`, `defaultTimezone?`
+  - `AuthState`: añade `deviceTimezone` y `timezoneSuggestion?` para mostrar banners contextuales
   - Serialización: `toFirestore()` usa `Timestamp` para fechas
   - Creación desde Auth: `UserModel.fromFirebaseAuth()`
 
@@ -54,11 +55,13 @@ Implementación actual:
 Reglas Firestore (users):
 - create/update/delete solo por el propio usuario (`request.auth.uid == userId`)
 
-**Cambios T163:**
+**Cambios T163 / T177 / T178:**
 - ✅ Username es obligatorio en el formulario de registro
 - ✅ Validación de disponibilidad antes de crear usuario
 - ✅ Sugerencias automáticas si username está ocupado
 - ✅ Campo de username posicionado después del email en el formulario
+- ✅ Preferencia de timezone por usuario (`defaultTimezone`) inicializada con timezone del dispositivo si no existe
+- ✅ Banner de sugerencia de timezone (`timezoneSuggestion`) cuando el dispositivo y la preferencia difieren
 
 Gaps/Mejoras:
 - Rate limiting de registro (no crítico ahora) [Tarea futura]
@@ -173,15 +176,32 @@ Acciones:
 - [Hecho] Modal de edición centrado (480px máx) sin flecha redundante
 - [Hecho] Botones “Migrar eventos” y “Participar en todos los planes” eliminados (solo quedan acciones relevantes)
 - [Hecho] Se sustituyó `AccountSettingsPage` por modales específicos (cambiar contraseña, privacidad, idioma)
+- [Hecho] Opción “Configurar zona horaria” en tarjeta de Seguridad: selector de timezone con búsqueda, preferencia guardada en `defaultTimezone`
+- [Hecho] Banner de recomendación de timezone si `deviceTimezone` ≠ `defaultTimezone`, con acciones “Actualizar zona” / “Mantener”
 
 ---
 
 ## 🗑️ Eliminación de Cuenta
 
 - `AuthNotifier.deleteAccount(password)`
-  - Reautenticación
-  - Borrado en `/users/{uid}`
-  - Borrado en Firebase Auth
+  - Reautenticación del usuario
+  - Llamada a `UserService.deleteAllUserData(userId)` que elimina:
+    1. Planes creados por el usuario (y todos sus datos relacionados en cascada)
+    2. Participaciones en planes (`plan_participations`)
+    3. Eventos creados por el usuario (y sus `event_participants`)
+    4. Participaciones en eventos (`event_participants`)
+    5. Permisos del usuario (`plan_permissions`)
+    6. Invitaciones por email (`planInvitations`)
+    7. Pagos personales (`personal_payments`)
+    8. Grupos de participantes (`participant_groups`)
+    9. Preferencias del usuario (`userPreferences`)
+    10. Preferencias por plan (`plans/{planId}/userPreferences/{userId}`)
+    11. El usuario mismo (`users/{userId}`)
+  - Borrado en Firebase Auth (último paso)
+
+**⚠️ IMPORTANTE:** La eliminación es **completa e irreversible**. Todos los datos del usuario se eliminan físicamente de Firestore.
+
+**Para administradores:** Si necesitas eliminar los datos de un usuario desde código o consola, puedes llamar directamente a `UserService.deleteAllUserData(userId)`. Esto es útil para limpieza administrativa o cumplimiento de solicitudes de eliminación de datos (GDPR).
 
 Gaps:
 - Soft-delete opcional (`isActive=false`) ya soportado en `UserService.deactivateUser()`

@@ -10,6 +10,8 @@
 
 ## 📋 INSTRUCCIONES DE MANTENIMIENTO
 
+> ⚠️ **Recordatorio:** Antes de marcar cualquier caso como completado, verifica que la documentación afectada (UX, flujos, tareas) esté actualizada y coherente con los cambios realizados.
+
 ### 👥 USUARIOS DE PRUEBA
 
 Para testing, consulta `docs/configuracion/USUARIOS_PRUEBA.md` para:
@@ -520,40 +522,47 @@ Cada caso de prueba debe incluir:
 
 ### 3.1 Crear Plan
 
-- [ ] **PLAN-C-001:** Crear plan básico
+- [x] **PLAN-C-001:** Crear plan básico
   - Pasos: Nombre, fechas, descripción, crear
   - Esperado: Plan creado en estado "borrador"
   - Estado: 🔄
 
-- [ ] **PLAN-C-002:** Crear plan sin nombre
+- [x] **PLAN-C-002:** Crear plan sin nombre
   - Pasos: Intentar crear sin nombre obligatorio
   - Esperado: Validación que requiera nombre
-  - Estado: 🔄
+  - Estado: ✅
 
-- [ ] **PLAN-C-003:** Crear plan con fechas inválidas
-  - Pasos: Fecha fin anterior a fecha inicio
-  - Esperado: Validación de rango de fechas
-  - Estado: 🔄
+- [x] **PLAN-C-003:** Crear plan con fechas inválidas
+  - Pasos: Intentar definir fecha fin anterior a inicio
+  - Esperado: Datepickers bloquean la selección (no permite fin < inicio)
+  - Estado: ✅
 
 - [ ] **PLAN-C-004:** Crear plan con imagen
   - Pasos: Añadir imagen al crear plan
   - Esperado: Imagen subida y visible en plan
   - Estado: 🔄
 
-- [ ] **PLAN-C-005:** Crear plan con participantes iniciales
-  - Pasos: Invitar usuarios al crear plan
-  - Esperado: Participantes añadidos al plan
-  - Estado: 🔄
+- [x] **PLAN-C-005:** Crear plan con participantes iniciales
+  - Pasos:
+    1. Crear plan desde dashboard (modal inicial solo nombre).
+    2. En la página del plan, abrir “Participantes” → “Añadir participantes” y seleccionar usuarios adicionales.
+    3. Guardar cambios.
+    4. Volver al dashboard y comprobar que W28 muestra el contador actualizado.
+  - Esperado: El organizador se registra automáticamente como participante; los usuarios añadidos aparecen en el recuadro del plan y el contador de la lista refleja el total en tiempo real.
+  - Estado: ✅
 
-- [ ] **PLAN-C-006:** Crear plan con presupuesto inicial
+- [x] **PLAN-C-006:** Crear plan con presupuesto inicial
   - Pasos: Establecer presupuesto estimado
   - Esperado: Presupuesto guardado y visible
-  - Estado: 🔄
+  - Estado: ✅
 
-- [ ] **PLAN-C-007:** Crear plan con timezone específico
-  - Pasos: Seleccionar timezone diferente al por defecto
-  - Esperado: Plan usa timezone seleccionado
-  - Estado: 🔄
+- [x] **PLAN-C-007:** Crear plan con timezone específico
+  - Pasos:
+    1. Crear un plan desde el dashboard.
+    2. En la página del plan, cambiar la zona horaria en “Información detallada”.
+    3. Guardar y volver a abrir el plan para comprobar que la zona se conserva.
+  - Esperado: La zona horaria elegida se persiste en el plan y se aplica por defecto al crear eventos.
+  - Estado: ✅
 
 ### 3.2 Leer/Ver Plan
 
@@ -582,17 +591,33 @@ Cada caso de prueba debe incluir:
   - Esperado: Resultados coincidentes con búsqueda
   - Estado: 🔄
 
+- [x] **PLAN-R-006:** Alternar vista listado ↔ calendario (W27)
+  - Pasos:
+    1. En el dashboard, usar el toggle de W27 para pasar de lista a calendario y viceversa.
+    2. Confirmar que el mes actual aparece centrado al abrir la vista calendario.
+    3. Volver a la vista lista y verificar que la selección del plan se mantiene.
+  - Esperado: El cambio de vista no pierde la selección del plan ni produce errores visuales.
+  - Estado: ✅
+
+- [x] **PLAN-R-007:** Comprobación de calendario W28 (tooltips y selección)
+  - Pasos:
+    1. Con planes distribuidos en distintos días, pasar a la vista calendario.
+    2. Hover sobre un día con planes y comprobar que el tooltip muestra los nombres.
+    3. Hacer clic en un día con varios planes y verificar que el modal lista todas las opciones y permite abrir cada plan.
+  - Esperado: Tooltip visible sin cortar texto; modal muestra la lista completa y navega al plan al seleccionarlo.
+  - Estado: ✅
+
 ### 3.3 Actualizar Plan
 
-- [ ] **PLAN-U-001:** Modificar nombre del plan
+- [x] **PLAN-U-001:** Modificar nombre del plan
   - Pasos: Editar nombre en plan existente
   - Esperado: Cambio guardado correctamente
-  - Estado: 🔄
+  - Estado: ✅
 
-- [ ] **PLAN-U-002:** Modificar fechas del plan
+- [x] **PLAN-U-002:** Modificar fechas del plan
   - Pasos: Cambiar fechas de inicio/fin
   - Esperado: Fechas actualizadas, calendario ajustado
-  - Estado: 🔄
+  - Estado: ✅
 
 - [ ] **PLAN-U-003:** Expandir rango del plan (T107)
   - Pasos: Crear evento fuera del rango actual
@@ -602,19 +627,19 @@ Cada caso de prueba debe incluir:
 - [ ] **PLAN-U-004:** Cambiar imagen del plan
   - Pasos: Reemplazar imagen existente
   - Esperado: Nueva imagen visible en plan
-  - Estado: 🔄
+  - Estado: ⏳ (bloqueado: falta almacenamiento configurado)
 
-- [ ] **PLAN-U-005:** Actualizar descripción
+- [x] **PLAN-U-005:** Actualizar descripción
   - Pasos: Modificar descripción del plan
   - Esperado: Descripción actualizada
-  - Estado: 🔄
+  - Estado: ✅
 
-- [ ] **PLAN-U-006:** Cambiar timezone del plan
+- [x] **PLAN-U-006:** Cambiar timezone del plan
   - Pasos: Modificar timezone en plan existente
   - Esperado: Eventos ajustados al nuevo timezone
-  - Estado: 🔄
+  - Estado: ✅
 
-- [ ] **PLAN-U-007:** Actualizar presupuesto del plan
+- [x] **PLAN-U-007:** Actualizar presupuesto del plan
   - Pasos: Modificar presupuesto estimado
   - Esperado: Presupuesto actualizado
   - Estado: 🔄
@@ -640,6 +665,33 @@ Cada caso de prueba debe incluir:
   - Pasos: Eliminar plan que tiene eventos
   - Esperado: Eliminación en cascada o aviso de eventos asociados
   - Estado: 🔄
+
+- [ ] **PLAN-D-005:** Verificar eliminación en cascada completa
+  - Pasos: 
+    1. Crear plan con eventos, participantes, permisos y event_participants
+    2. Eliminar el plan como organizador
+    3. Verificar en Firestore que se eliminaron físicamente:
+       - `event_participants` (eliminación física)
+       - `plan_permissions` (eliminación física)
+       - `plan_participations` (eliminación física)
+       - `events` (eliminación física, desde `event_service`)
+       - `plan` (eliminación física)
+  - Esperado: No quedan documentos huérfanos relacionados con el plan eliminado. Todas las colecciones relacionadas deben estar completamente vacías para ese plan.
+  - Estado: 🔄
+
+**⚠️ RECORDATORIO IMPORTANTE:**
+- **Si se crea una nueva colección relacionada con un plan** (ej: `plan_comments`, `plan_attachments`, `plan_notes`, etc.), **DEBE**:
+  1. Añadirse la lógica de eliminación en cascada en `PlanService.deletePlan()`
+  2. Verificar que las reglas de Firestore permitan la eliminación cuando el plan ya no existe
+  3. Añadir un caso de prueba en esta sección para verificar la eliminación
+  4. Actualizar la documentación en `FLUJO_CRUD_PLANES.md` con el nuevo orden de eliminación
+
+- **Si se crea una nueva colección relacionada con un evento** (ej: `event_comments`, `event_attachments`, etc.), **DEBE**:
+  1. Añadirse la lógica de eliminación en cascada en `EventService.deleteEvent()`
+  2. Verificar que las reglas de Firestore permitan la eliminación cuando el evento ya no existe
+  3. Añadir un caso de prueba en la sección 4.4 (Eliminar Evento) para verificar la eliminación
+
+Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación de planes y eventos.
 
 ---
 
@@ -837,6 +889,18 @@ Cada caso de prueba debe incluir:
   - Pasos: Intentar eliminar evento en plan finalizado/cancelado
   - Esperado: Botón "Eliminar" deshabilitado, mensaje informativo
   - Estado: ✅
+
+- [ ] **EVENT-D-005:** Verificar eliminación en cascada de evento
+  - Pasos: 
+    1. Crear un evento con participantes registrados (event_participants)
+    2. Si el evento es base, crear copias del evento
+    3. Eliminar el evento
+    4. Verificar en Firestore que se eliminaron:
+       - `event_participants` del evento (eliminación física)
+       - Copias del evento (si era evento base, eliminación física)
+       - `event` (eliminación física)
+  - Esperado: No quedan documentos huérfanos relacionados con el evento eliminado
+  - Estado: 🔄
 
 ---
 
@@ -1586,7 +1650,7 @@ Cada caso de prueba debe incluir:
 - Esperado: 
   - El plan queda persistido con timezone Madrid.
   - Usuario B visualiza fechas convertidas a UTC−05 (mismas horas absolutas, hora local distinta).
-- Estado: 🔄
+- Estado: ✅
 
 - [ ] **TZ-002:** Cambio de timezone del plan existente
   - Pasos:

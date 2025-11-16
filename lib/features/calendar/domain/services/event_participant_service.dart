@@ -14,10 +14,13 @@ class EventParticipantService {
   /// Apuntarse a un evento
   /// 
   /// Verifica que el usuario participe en el plan del evento antes de permitir el registro
+  /// 
+  /// [createdBy] - ID del usuario que crea el registro (para uso administrativo). Si no se proporciona, se mantiene null.
   Future<bool> registerParticipant({
     required String eventId,
     required String userId,
     required String planId,
+    String? createdBy,
   }) async {
     try {
       // Verificar que el usuario participa en el plan
@@ -40,6 +43,7 @@ class EventParticipantService {
         userId: userId,
         registeredAt: DateTime.now(),
         status: 'registered',
+        adminCreatedBy: createdBy, // Campo administrativo
       );
 
       await _firestore
@@ -133,7 +137,6 @@ class EventParticipantService {
     return _firestore
         .collection(_collectionName)
         .where('eventId', isEqualTo: eventId)
-        .orderBy('registeredAt', descending: false)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
@@ -466,6 +469,60 @@ class EventParticipantService {
     } catch (e) {
       LoggerService.error(
         'Error deleting all participants for event: $eventId',
+        context: 'EVENT_PARTICIPANT_SERVICE',
+        error: e,
+      );
+      return false;
+    }
+  }
+
+  /// Eliminar todos los participantes de eventos de un plan
+  /// 
+  /// Obtiene todos los eventos del plan y elimina sus event_participants
+  Future<bool> deleteAllEventParticipantsByPlanId(String planId) async {
+    try {
+      // Obtener todos los eventos del plan
+      final eventsSnapshot = await _firestore
+          .collection('events')
+          .where('planId', isEqualTo: planId)
+          .get();
+
+      if (eventsSnapshot.docs.isEmpty) {
+        // No hay eventos, no hay nada que eliminar
+        return true;
+      }
+
+      // Obtener todos los IDs de eventos
+      final eventIds = eventsSnapshot.docs.map((doc) => doc.id).toList();
+
+      // Eliminar todos los event_participants de estos eventos
+      final batch = _firestore.batch();
+      int deletedCount = 0;
+
+      for (final eventId in eventIds) {
+        final participantsSnapshot = await _firestore
+            .collection(_collectionName)
+            .where('eventId', isEqualTo: eventId)
+            .get();
+
+        for (var doc in participantsSnapshot.docs) {
+          batch.delete(doc.reference);
+          deletedCount++;
+        }
+      }
+
+      if (deletedCount > 0) {
+        await batch.commit();
+      }
+
+      LoggerService.database(
+        'All event participants deleted for plan $planId ($deletedCount records)',
+        operation: 'DELETE',
+      );
+      return true;
+    } catch (e) {
+      LoggerService.error(
+        'Error deleting all event participants for plan: $planId',
         context: 'EVENT_PARTICIPANT_SERVICE',
         error: e,
       );

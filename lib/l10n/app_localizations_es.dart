@@ -517,6 +517,260 @@ class AppLocalizationsEs extends AppLocalizations {
   String get createPlan => 'Crear Plan';
 
   @override
+  String get createPlanGeneralSectionTitle => 'Información general';
+
+  @override
+  String get createPlanNameLabel => 'Nombre del plan';
+
+  @override
+  String get createPlanNameHint => 'Ej: Vacaciones Londres 2025';
+
+  @override
+  String get createPlanNameRequiredError => 'Por favor ingresa un nombre';
+
+  @override
+  String get createPlanNameTooShortError =>
+      'El nombre debe tener al menos 3 caracteres';
+
+  @override
+  String get createPlanNameTooLongError =>
+      'El nombre no puede exceder 100 caracteres';
+
+  @override
+  String get createPlanUnpIdLabel => 'UNP ID';
+
+  @override
+  String get createPlanUnpIdHint => 'Generando...';
+
+  @override
+  String get createPlanUnpGeneratedHelper => 'Generado automáticamente';
+
+  @override
+  String createPlanUnpIdHeader(String id) {
+    return 'ID: $id';
+  }
+
+  @override
+  String get createPlanUnpIdLoading => 'Generando UNP ID...';
+
+  @override
+  String get createPlanQuickIntro =>
+      'Podrás completar el resto de la configuración del plan en la siguiente pantalla.';
+
+  @override
+  String get createPlanContinueButton => 'Continuar';
+
+  @override
+  String get createPlanAuthError =>
+      'Necesitas iniciar sesión para crear un plan.';
+
+  @override
+  String get createPlanGenericError =>
+      'No se pudo crear el plan. Inténtalo de nuevo.';
+
+  @override
+  String get createPlanDescriptionLabel => 'Descripción (opcional)';
+
+  @override
+  String get createPlanDescriptionHint => 'Describe brevemente el plan';
+
+  @override
+  String get createPlanConfigurationSectionTitle => 'Configuración';
+
+  @override
+  String get createPlanCurrencyLabel => 'Moneda del plan';
+
+  @override
+  String get createPlanVisibilityLabel => 'Visibilidad';
+
+  @override
+  String get createPlanVisibilityPrivate => 'Privado - Solo participantes';
+
+  @override
+  String get createPlanVisibilityPublic => 'Público - Visible para todos';
+
+  @override
+  String get createPlanVisibilityPrivateShort => 'Privado';
+
+  @override
+  String get createPlanVisibilityPublicShort => 'Público';
+
+  @override
+  String get createPlanImageSectionTitle => 'Imagen del plan (opcional)';
+
+  @override
+  String get createPlanSelectImage => 'Cambiar imagen';
+
+  @override
+  String get planDetailsNoDescription => 'Sin descripción añadida.';
+
+  @override
+  String get planDetailsNoParticipants =>
+      'Todavía no has añadido participantes.';
+
+  @override
+  String get planDetailsInfoTitle => 'Información detallada';
+
+  @override
+  String get planDetailsMetaTitle => 'Identificación del plan';
+
+  @override
+  String get planTimezoneLabel => 'Zona horaria del plan';
+
+  @override
+  String get planTimezoneHelper =>
+      'Se aplicará como referencia al crear eventos y convertir horarios para los participantes.';
+
+  @override
+  String get planDetailsStateTitle => 'Gestión de estado';
+
+  @override
+  String get planDetailsParticipantsTitle => 'Participantes';
+
+  @override
+  String get planDetailsParticipantsManageLink => 'Gestionar participantes';
+
+  @override
+  String get planDetailsBudgetLabel => 'Presupuesto estimado';
+
+  @override
+  String get planDetailsBudgetInvalid =>
+      'Introduce un número positivo válido (usa punto decimal)';
+
+  @override
+  String get cancelChanges => 'Cancelar cambios';
+
+  @override
+  String get planDetailsSaveSuccess => 'Cambios guardados correctamente.';
+
+  @override
+  String get planDetailsUnsavedChanges => 'Tienes cambios sin guardar.';
+
+  @override
+  String get planDetailsNoAvailableParticipants =>
+      'No hay usuarios disponibles para añadir.';
+
+  @override
+  String planDetailsParticipantsAdded(int count) {
+    return 'Se añadieron $count participantes.';
+  }
+
+  @override
+  String get planDetailsSaveError => 'No se pudieron guardar los cambios.';
+
+  @override
+  String get planDeleteDialogTitle => 'Eliminar plan';
+
+  @override
+  String get planDeleteDialogMessage =>
+      '¿Quieres eliminar este plan definitivamente?\\n\\nSe borrarán el plan, sus eventos y participaciones. Esta acción no se puede deshacer. Introduce tu contraseña para confirmarlo.';
+
+  @override
+  String get planDeleteDialogPasswordLabel => 'Contraseña';
+
+  @override
+  String get planDeleteDialogPasswordRequired =>
+      'Introduce tu contraseña para confirmar.';
+
+  @override
+  String get planDeleteDialogAuthError =>
+      'Contraseña incorrecta o sin permisos para eliminar este plan.';
+
+  @override
+  String get planDeleteDialogConfirm => 'Eliminar plan';
+
+  @override
+  String planDeleteSuccess(String name) {
+    return 'Plan \"$name\" eliminado correctamente.';
+  }
+
+  @override
+  String get planDeleteError => 'Error al eliminar el plan';
+
+  @override
+  String planRoleLabel(String role) {
+    return 'Rol: $role';
+  }
+
+  @override
+  String get planRoleOrganizer => 'Organizador';
+
+  @override
+  String get planRoleParticipant => 'Participante';
+
+  @override
+  String get planRoleObserver => 'Observador';
+
+  @override
+  String get planRoleUnknown => 'Rol desconocido';
+
+  @override
+  String get planViewModeList => 'Lista';
+
+  @override
+  String get planViewModeCalendar => 'Calendario';
+
+  @override
+  String get planCalendarEmpty => 'No hay planes en estos meses.';
+
+  @override
+  String get createPlanDatesSectionTitle => 'Fechas del plan';
+
+  @override
+  String createPlanStartDateLabel(String date) {
+    return 'Inicio: $date';
+  }
+
+  @override
+  String createPlanEndDateLabel(String date) {
+    return 'Fin: $date';
+  }
+
+  @override
+  String get createPlanDurationLabel => 'Duración';
+
+  @override
+  String createPlanDurationValue(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '# días',
+      one: '# día',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get createPlanParticipantsSectionTitle => 'Participantes (opcional)';
+
+  @override
+  String get createPlanImageSelected => 'Imagen seleccionada';
+
+  @override
+  String get createPlanImageSelectedSuccess =>
+      'Imagen seleccionada correctamente';
+
+  @override
+  String get createPlanImageSelectError => 'Error al seleccionar imagen';
+
+  @override
+  String get createPlanCreating => 'Creando...';
+
+  @override
+  String get createPlanAddParticipantsButton => 'Añadir participantes';
+
+  @override
+  String get createPlanNoParticipants =>
+      'Todavía no has añadido participantes.';
+
+  @override
+  String get createPlanParticipantsBottomSheetTitle =>
+      'Selecciona participantes';
+
+  @override
+  String get createPlanParticipantsSave => 'Guardar selección';
+
+  @override
   String get edit => 'Editar';
 
   @override
@@ -805,4 +1059,114 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cardObtainedSubtitle => 'Marcar si ya tienes la tarjeta/entrada';
+
+  @override
+  String get adminInsightsTooltip => 'Vista administrativa';
+
+  @override
+  String get adminInsightsTitle => 'Vista administrativa de planes';
+
+  @override
+  String get adminInsightsExportCsv => 'Exportar CSV';
+
+  @override
+  String get adminInsightsExportCopied => 'CSV copiado al portapapeles';
+
+  @override
+  String get adminInsightsRefresh => 'Actualizar';
+
+  @override
+  String get adminInsightsEmpty => 'No hay planes activos para mostrar.';
+
+  @override
+  String get adminInsightsError => 'No se pudieron cargar los datos.';
+
+  @override
+  String get adminInsightsRetry => 'Reintentar';
+
+  @override
+  String get adminInsightsClose => 'Cerrar';
+
+  @override
+  String get adminInsightsParticipantsSection => 'Participantes';
+
+  @override
+  String get adminInsightsEventsSection => 'Eventos';
+
+  @override
+  String get adminInsightsAccommodationsSection => 'Alojamientos';
+
+  @override
+  String get adminInsightsNoParticipants =>
+      'No hay participantes activos en este plan.';
+
+  @override
+  String get adminInsightsNoEvents => 'No hay eventos activos registrados.';
+
+  @override
+  String get adminInsightsNoAccommodations =>
+      'No hay alojamientos registrados.';
+
+  @override
+  String get adminInsightsColumnPlan => 'Plan';
+
+  @override
+  String get adminInsightsColumnStart => 'Inicio';
+
+  @override
+  String get adminInsightsColumnEnd => 'Fin';
+
+  @override
+  String get adminInsightsColumnParticipant => 'Participante';
+
+  @override
+  String get adminInsightsColumnRole => 'Rol';
+
+  @override
+  String get adminInsightsColumnTimezone => 'Zona horaria';
+
+  @override
+  String get adminInsightsColumnJoined => 'Alta';
+
+  @override
+  String get adminInsightsColumnEvent => 'Evento';
+
+  @override
+  String get adminInsightsColumnDate => 'Fecha';
+
+  @override
+  String get adminInsightsColumnTime => 'Hora';
+
+  @override
+  String get adminInsightsColumnParticipantsShort => 'Participantes';
+
+  @override
+  String get adminInsightsColumnAccommodation => 'Alojamiento';
+
+  @override
+  String get adminInsightsColumnCheckIn => 'Check-in';
+
+  @override
+  String get adminInsightsColumnCheckOut => 'Check-out';
+
+  @override
+  String get adminInsightsEventStatusRegistered => 'Participa';
+
+  @override
+  String get adminInsightsEventStatusNotRegistered => 'No participa';
+
+  @override
+  String get adminInsightsEventStatusCancelled => 'Cancelado';
+
+  @override
+  String get adminInsightsEventConfirmationPending => 'Pendiente';
+
+  @override
+  String get adminInsightsEventConfirmationAccepted => 'Aceptado';
+
+  @override
+  String get adminInsightsEventConfirmationDeclined => 'Rechazado';
+
+  @override
+  String get adminInsightsEventConfirmationMissing => 'Sin respuesta';
 }

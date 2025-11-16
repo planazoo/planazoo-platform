@@ -54,6 +54,8 @@ class PermissionService {
   }
 
   /// Asigna permisos a un usuario en un plan
+  /// 
+  /// [createdBy] - ID del usuario que crea el registro (para uso administrativo). Si no se proporciona, se mantiene null.
   Future<bool> assignPermissions({
     required String planId,
     required String userId,
@@ -62,6 +64,7 @@ class PermissionService {
     String? assignedBy,
     DateTime? expiresAt,
     Map<String, dynamic>? metadata,
+    String? createdBy, // Campo administrativo
   }) async {
     try {
       final permissions = customPermissions ?? DefaultPermissions.getDefaultPermissions(role);
@@ -75,6 +78,7 @@ class PermissionService {
         assignedAt: DateTime.now(),
         expiresAt: expiresAt,
         metadata: metadata,
+        adminCreatedBy: createdBy, // Campo administrativo
       );
 
       await _firestore
@@ -348,6 +352,44 @@ class PermissionService {
     } catch (e) {
 
       return {};
+    }
+  }
+
+  /// Eliminar todos los permisos de un plan
+  /// 
+  /// Elimina físicamente todos los documentos de plan_permissions asociados al plan
+  Future<bool> deleteAllPlanPermissions(String planId) async {
+    try {
+      // Obtener todos los permisos del plan
+      final querySnapshot = await _firestore
+          .collection('plan_permissions')
+          .where('planId', isEqualTo: planId)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        // No hay permisos, no hay nada que eliminar
+        return true;
+      }
+
+      // Eliminar todos los permisos en batch
+      final batch = _firestore.batch();
+      for (var doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+        
+        // Limpiar cache
+        final data = doc.data();
+        final userId = data['userId'] as String?;
+        if (userId != null) {
+          final cacheKey = '${planId}_$userId';
+          _permissionsCache.remove(cacheKey);
+          _cacheTimestamps.remove(cacheKey);
+        }
+      }
+
+      await batch.commit();
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 }

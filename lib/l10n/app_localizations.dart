@@ -998,11 +998,449 @@ abstract class AppLocalizations {
   /// **'Crear'**
   String get create;
 
-  /// Botón de crear plan
+  /// Título del formulario para crear un plan
   ///
   /// In es, this message translates to:
   /// **'Crear Plan'**
   String get createPlan;
+
+  /// No description provided for @createPlanGeneralSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Información general'**
+  String get createPlanGeneralSectionTitle;
+
+  /// No description provided for @createPlanNameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del plan'**
+  String get createPlanNameLabel;
+
+  /// No description provided for @createPlanNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Vacaciones Londres 2025'**
+  String get createPlanNameHint;
+
+  /// No description provided for @createPlanNameRequiredError.
+  ///
+  /// In es, this message translates to:
+  /// **'Por favor ingresa un nombre'**
+  String get createPlanNameRequiredError;
+
+  /// No description provided for @createPlanNameTooShortError.
+  ///
+  /// In es, this message translates to:
+  /// **'El nombre debe tener al menos 3 caracteres'**
+  String get createPlanNameTooShortError;
+
+  /// No description provided for @createPlanNameTooLongError.
+  ///
+  /// In es, this message translates to:
+  /// **'El nombre no puede exceder 100 caracteres'**
+  String get createPlanNameTooLongError;
+
+  /// No description provided for @createPlanUnpIdLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'UNP ID'**
+  String get createPlanUnpIdLabel;
+
+  /// No description provided for @createPlanUnpIdHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Generando...'**
+  String get createPlanUnpIdHint;
+
+  /// No description provided for @createPlanUnpGeneratedHelper.
+  ///
+  /// In es, this message translates to:
+  /// **'Generado automáticamente'**
+  String get createPlanUnpGeneratedHelper;
+
+  /// No description provided for @createPlanUnpIdHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'ID: {id}'**
+  String createPlanUnpIdHeader(String id);
+
+  /// No description provided for @createPlanUnpIdLoading.
+  ///
+  /// In es, this message translates to:
+  /// **'Generando UNP ID...'**
+  String get createPlanUnpIdLoading;
+
+  /// No description provided for @createPlanQuickIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Podrás completar el resto de la configuración del plan en la siguiente pantalla.'**
+  String get createPlanQuickIntro;
+
+  /// No description provided for @createPlanContinueButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar'**
+  String get createPlanContinueButton;
+
+  /// No description provided for @createPlanAuthError.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas iniciar sesión para crear un plan.'**
+  String get createPlanAuthError;
+
+  /// No description provided for @createPlanGenericError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo crear el plan. Inténtalo de nuevo.'**
+  String get createPlanGenericError;
+
+  /// No description provided for @createPlanDescriptionLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción (opcional)'**
+  String get createPlanDescriptionLabel;
+
+  /// No description provided for @createPlanDescriptionHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Describe brevemente el plan'**
+  String get createPlanDescriptionHint;
+
+  /// No description provided for @createPlanConfigurationSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Configuración'**
+  String get createPlanConfigurationSectionTitle;
+
+  /// No description provided for @createPlanCurrencyLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Moneda del plan'**
+  String get createPlanCurrencyLabel;
+
+  /// No description provided for @createPlanVisibilityLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Visibilidad'**
+  String get createPlanVisibilityLabel;
+
+  /// No description provided for @createPlanVisibilityPrivate.
+  ///
+  /// In es, this message translates to:
+  /// **'Privado - Solo participantes'**
+  String get createPlanVisibilityPrivate;
+
+  /// No description provided for @createPlanVisibilityPublic.
+  ///
+  /// In es, this message translates to:
+  /// **'Público - Visible para todos'**
+  String get createPlanVisibilityPublic;
+
+  /// No description provided for @createPlanVisibilityPrivateShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Privado'**
+  String get createPlanVisibilityPrivateShort;
+
+  /// No description provided for @createPlanVisibilityPublicShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Público'**
+  String get createPlanVisibilityPublicShort;
+
+  /// No description provided for @createPlanImageSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Imagen del plan (opcional)'**
+  String get createPlanImageSectionTitle;
+
+  /// No description provided for @createPlanSelectImage.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar imagen'**
+  String get createPlanSelectImage;
+
+  /// No description provided for @planDetailsNoDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin descripción añadida.'**
+  String get planDetailsNoDescription;
+
+  /// No description provided for @planDetailsNoParticipants.
+  ///
+  /// In es, this message translates to:
+  /// **'Todavía no has añadido participantes.'**
+  String get planDetailsNoParticipants;
+
+  /// No description provided for @planDetailsInfoTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Información detallada'**
+  String get planDetailsInfoTitle;
+
+  /// No description provided for @planDetailsMetaTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Identificación del plan'**
+  String get planDetailsMetaTitle;
+
+  /// No description provided for @planTimezoneLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Zona horaria del plan'**
+  String get planTimezoneLabel;
+
+  /// No description provided for @planTimezoneHelper.
+  ///
+  /// In es, this message translates to:
+  /// **'Se aplicará como referencia al crear eventos y convertir horarios para los participantes.'**
+  String get planTimezoneHelper;
+
+  /// No description provided for @planDetailsStateTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestión de estado'**
+  String get planDetailsStateTitle;
+
+  /// No description provided for @planDetailsParticipantsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes'**
+  String get planDetailsParticipantsTitle;
+
+  /// No description provided for @planDetailsParticipantsManageLink.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestionar participantes'**
+  String get planDetailsParticipantsManageLink;
+
+  /// No description provided for @planDetailsBudgetLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Presupuesto estimado'**
+  String get planDetailsBudgetLabel;
+
+  /// No description provided for @planDetailsBudgetInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce un número positivo válido (usa punto decimal)'**
+  String get planDetailsBudgetInvalid;
+
+  /// No description provided for @cancelChanges.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar cambios'**
+  String get cancelChanges;
+
+  /// No description provided for @planDetailsSaveSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambios guardados correctamente.'**
+  String get planDetailsSaveSuccess;
+
+  /// No description provided for @planDetailsUnsavedChanges.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes cambios sin guardar.'**
+  String get planDetailsUnsavedChanges;
+
+  /// No description provided for @planDetailsNoAvailableParticipants.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay usuarios disponibles para añadir.'**
+  String get planDetailsNoAvailableParticipants;
+
+  /// No description provided for @planDetailsParticipantsAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'Se añadieron {count} participantes.'**
+  String planDetailsParticipantsAdded(int count);
+
+  /// No description provided for @planDetailsSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron guardar los cambios.'**
+  String get planDetailsSaveError;
+
+  /// No description provided for @planDeleteDialogTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar plan'**
+  String get planDeleteDialogTitle;
+
+  /// No description provided for @planDeleteDialogMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quieres eliminar este plan definitivamente?\\n\\nSe borrarán el plan, sus eventos y participaciones. Esta acción no se puede deshacer. Introduce tu contraseña para confirmarlo.'**
+  String get planDeleteDialogMessage;
+
+  /// No description provided for @planDeleteDialogPasswordLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña'**
+  String get planDeleteDialogPasswordLabel;
+
+  /// No description provided for @planDeleteDialogPasswordRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce tu contraseña para confirmar.'**
+  String get planDeleteDialogPasswordRequired;
+
+  /// No description provided for @planDeleteDialogAuthError.
+  ///
+  /// In es, this message translates to:
+  /// **'Contraseña incorrecta o sin permisos para eliminar este plan.'**
+  String get planDeleteDialogAuthError;
+
+  /// No description provided for @planDeleteDialogConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar plan'**
+  String get planDeleteDialogConfirm;
+
+  /// No description provided for @planDeleteSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Plan \"{name}\" eliminado correctamente.'**
+  String planDeleteSuccess(String name);
+
+  /// No description provided for @planDeleteError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al eliminar el plan'**
+  String get planDeleteError;
+
+  /// No description provided for @planRoleLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Rol: {role}'**
+  String planRoleLabel(String role);
+
+  /// No description provided for @planRoleOrganizer.
+  ///
+  /// In es, this message translates to:
+  /// **'Organizador'**
+  String get planRoleOrganizer;
+
+  /// No description provided for @planRoleParticipant.
+  ///
+  /// In es, this message translates to:
+  /// **'Participante'**
+  String get planRoleParticipant;
+
+  /// No description provided for @planRoleObserver.
+  ///
+  /// In es, this message translates to:
+  /// **'Observador'**
+  String get planRoleObserver;
+
+  /// No description provided for @planRoleUnknown.
+  ///
+  /// In es, this message translates to:
+  /// **'Rol desconocido'**
+  String get planRoleUnknown;
+
+  /// No description provided for @planViewModeList.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista'**
+  String get planViewModeList;
+
+  /// No description provided for @planViewModeCalendar.
+  ///
+  /// In es, this message translates to:
+  /// **'Calendario'**
+  String get planViewModeCalendar;
+
+  /// No description provided for @planCalendarEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay planes en estos meses.'**
+  String get planCalendarEmpty;
+
+  /// No description provided for @createPlanDatesSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Fechas del plan'**
+  String get createPlanDatesSectionTitle;
+
+  /// No description provided for @createPlanStartDateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicio: {date}'**
+  String createPlanStartDateLabel(String date);
+
+  /// No description provided for @createPlanEndDateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Fin: {date}'**
+  String createPlanEndDateLabel(String date);
+
+  /// No description provided for @createPlanDurationLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Duración'**
+  String get createPlanDurationLabel;
+
+  /// No description provided for @createPlanDurationValue.
+  ///
+  /// In es, this message translates to:
+  /// **'{days, plural, one {# día} other {# días}}'**
+  String createPlanDurationValue(int days);
+
+  /// No description provided for @createPlanParticipantsSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes (opcional)'**
+  String get createPlanParticipantsSectionTitle;
+
+  /// No description provided for @createPlanImageSelected.
+  ///
+  /// In es, this message translates to:
+  /// **'Imagen seleccionada'**
+  String get createPlanImageSelected;
+
+  /// No description provided for @createPlanImageSelectedSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Imagen seleccionada correctamente'**
+  String get createPlanImageSelectedSuccess;
+
+  /// No description provided for @createPlanImageSelectError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al seleccionar imagen'**
+  String get createPlanImageSelectError;
+
+  /// No description provided for @createPlanCreating.
+  ///
+  /// In es, this message translates to:
+  /// **'Creando...'**
+  String get createPlanCreating;
+
+  /// No description provided for @createPlanAddParticipantsButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir participantes'**
+  String get createPlanAddParticipantsButton;
+
+  /// No description provided for @createPlanNoParticipants.
+  ///
+  /// In es, this message translates to:
+  /// **'Todavía no has añadido participantes.'**
+  String get createPlanNoParticipants;
+
+  /// No description provided for @createPlanParticipantsBottomSheetTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona participantes'**
+  String get createPlanParticipantsBottomSheetTitle;
+
+  /// No description provided for @createPlanParticipantsSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar selección'**
+  String get createPlanParticipantsSave;
 
   /// Botón de editar
   ///
@@ -1543,6 +1981,222 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Marcar si ya tienes la tarjeta/entrada'**
   String get cardObtainedSubtitle;
+
+  /// No description provided for @adminInsightsTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Vista administrativa'**
+  String get adminInsightsTooltip;
+
+  /// No description provided for @adminInsightsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Vista administrativa de planes'**
+  String get adminInsightsTitle;
+
+  /// No description provided for @adminInsightsExportCsv.
+  ///
+  /// In es, this message translates to:
+  /// **'Exportar CSV'**
+  String get adminInsightsExportCsv;
+
+  /// No description provided for @adminInsightsExportCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'CSV copiado al portapapeles'**
+  String get adminInsightsExportCopied;
+
+  /// No description provided for @adminInsightsRefresh.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizar'**
+  String get adminInsightsRefresh;
+
+  /// No description provided for @adminInsightsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay planes activos para mostrar.'**
+  String get adminInsightsEmpty;
+
+  /// No description provided for @adminInsightsError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar los datos.'**
+  String get adminInsightsError;
+
+  /// No description provided for @adminInsightsRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get adminInsightsRetry;
+
+  /// No description provided for @adminInsightsClose.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar'**
+  String get adminInsightsClose;
+
+  /// No description provided for @adminInsightsParticipantsSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes'**
+  String get adminInsightsParticipantsSection;
+
+  /// No description provided for @adminInsightsEventsSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Eventos'**
+  String get adminInsightsEventsSection;
+
+  /// No description provided for @adminInsightsAccommodationsSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamientos'**
+  String get adminInsightsAccommodationsSection;
+
+  /// No description provided for @adminInsightsNoParticipants.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay participantes activos en este plan.'**
+  String get adminInsightsNoParticipants;
+
+  /// No description provided for @adminInsightsNoEvents.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay eventos activos registrados.'**
+  String get adminInsightsNoEvents;
+
+  /// No description provided for @adminInsightsNoAccommodations.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay alojamientos registrados.'**
+  String get adminInsightsNoAccommodations;
+
+  /// No description provided for @adminInsightsColumnPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Plan'**
+  String get adminInsightsColumnPlan;
+
+  /// No description provided for @adminInsightsColumnStart.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicio'**
+  String get adminInsightsColumnStart;
+
+  /// No description provided for @adminInsightsColumnEnd.
+  ///
+  /// In es, this message translates to:
+  /// **'Fin'**
+  String get adminInsightsColumnEnd;
+
+  /// No description provided for @adminInsightsColumnParticipant.
+  ///
+  /// In es, this message translates to:
+  /// **'Participante'**
+  String get adminInsightsColumnParticipant;
+
+  /// No description provided for @adminInsightsColumnRole.
+  ///
+  /// In es, this message translates to:
+  /// **'Rol'**
+  String get adminInsightsColumnRole;
+
+  /// No description provided for @adminInsightsColumnTimezone.
+  ///
+  /// In es, this message translates to:
+  /// **'Zona horaria'**
+  String get adminInsightsColumnTimezone;
+
+  /// No description provided for @adminInsightsColumnJoined.
+  ///
+  /// In es, this message translates to:
+  /// **'Alta'**
+  String get adminInsightsColumnJoined;
+
+  /// No description provided for @adminInsightsColumnEvent.
+  ///
+  /// In es, this message translates to:
+  /// **'Evento'**
+  String get adminInsightsColumnEvent;
+
+  /// No description provided for @adminInsightsColumnDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha'**
+  String get adminInsightsColumnDate;
+
+  /// No description provided for @adminInsightsColumnTime.
+  ///
+  /// In es, this message translates to:
+  /// **'Hora'**
+  String get adminInsightsColumnTime;
+
+  /// No description provided for @adminInsightsColumnParticipantsShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes'**
+  String get adminInsightsColumnParticipantsShort;
+
+  /// No description provided for @adminInsightsColumnAccommodation.
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamiento'**
+  String get adminInsightsColumnAccommodation;
+
+  /// No description provided for @adminInsightsColumnCheckIn.
+  ///
+  /// In es, this message translates to:
+  /// **'Check-in'**
+  String get adminInsightsColumnCheckIn;
+
+  /// No description provided for @adminInsightsColumnCheckOut.
+  ///
+  /// In es, this message translates to:
+  /// **'Check-out'**
+  String get adminInsightsColumnCheckOut;
+
+  /// No description provided for @adminInsightsEventStatusRegistered.
+  ///
+  /// In es, this message translates to:
+  /// **'Participa'**
+  String get adminInsightsEventStatusRegistered;
+
+  /// No description provided for @adminInsightsEventStatusNotRegistered.
+  ///
+  /// In es, this message translates to:
+  /// **'No participa'**
+  String get adminInsightsEventStatusNotRegistered;
+
+  /// No description provided for @adminInsightsEventStatusCancelled.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelado'**
+  String get adminInsightsEventStatusCancelled;
+
+  /// No description provided for @adminInsightsEventConfirmationPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente'**
+  String get adminInsightsEventConfirmationPending;
+
+  /// No description provided for @adminInsightsEventConfirmationAccepted.
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptado'**
+  String get adminInsightsEventConfirmationAccepted;
+
+  /// No description provided for @adminInsightsEventConfirmationDeclined.
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazado'**
+  String get adminInsightsEventConfirmationDeclined;
+
+  /// No description provided for @adminInsightsEventConfirmationMissing.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin respuesta'**
+  String get adminInsightsEventConfirmationMissing;
 }
 
 class _AppLocalizationsDelegate

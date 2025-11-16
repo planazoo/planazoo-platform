@@ -54,12 +54,15 @@ class PaymentService {
   }
 
   /// Crear un nuevo pago
-  Future<String?> createPayment(PersonalPayment payment) async {
+  /// 
+  /// [createdBy] - ID del usuario que crea el registro (para uso administrativo). Si no se proporciona, se mantiene null.
+  Future<String?> createPayment(PersonalPayment payment, {String? createdBy}) async {
     try {
       final now = DateTime.now();
       final paymentToCreate = payment.copyWith(
         createdAt: now,
         updatedAt: now,
+        adminCreatedBy: createdBy, // Campo administrativo
       );
 
       final docRef = await _firestore

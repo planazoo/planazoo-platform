@@ -1,26 +1,78 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/services/permission_service.dart';
 import '../../../../features/security/services/rate_limiter_service.dart';
 import '../models/plan.dart';
 import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
 import 'invitation_service.dart';
+import 'event_participant_service.dart';
 
 class PlanService {
   static const String _collectionName = 'plans';
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PlanParticipationService _participationService = PlanParticipationService();
   final InvitationService _invitationService = InvitationService();
+  final EventParticipantService _eventParticipantService = EventParticipantService();
+  final PermissionService _permissionService = PermissionService();
 
-  // Obtener todos los planes
+  // TODO: deprecate cuando todos los consumidores usen getPlansForUser
   Stream<List<Plan>> getPlans() {
     return _firestore
         .collection(_collectionName)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => Plan.fromFirestore(doc)).toList();
-    });
+        .map((snapshot) => snapshot.docs.map((doc) => Plan.fromFirestore(doc)).toList());
+  }
+
+  // Obtener todos los planes visibles para un usuario (creados y donde participa)
+  Stream<List<Plan>> getPlansForUser(String userId) {
+    final controller = StreamController<List<Plan>>();
+    List<Plan> ownedPlans = const <Plan>[];
+    List<Plan> participantPlans = const <Plan>[];
+
+    void emitCombined() {
+      final Map<String, Plan> planMap = {};
+      for (final plan in ownedPlans) {
+        if (plan.id != null) {
+          planMap[plan.id!] = plan;
+        }
+      }
+      for (final plan in participantPlans) {
+        if (plan.id != null) {
+          planMap[plan.id!] = plan;
+        }
+      }
+
+      final combined = planMap.values.toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      controller.add(combined);
+    }
+
+    final ownedSubscription = _firestore
+        .collection(_collectionName)
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .listen((snapshot) {
+      ownedPlans = snapshot.docs.map((doc) => Plan.fromFirestore(doc)).toList();
+      emitCombined();
+    }, onError: controller.addError);
+
+    final participationSubscription = getPlansWhereUserParticipates(userId).listen(
+      (plans) {
+        participantPlans = plans.where((plan) => plan.userId != userId).toList();
+        emitCombined();
+      },
+      onError: controller.addError,
+    );
+
+    controller.onCancel = () async {
+      await ownedSubscription.cancel();
+      await participationSubscription.cancel();
+    };
+
+    return controller.stream;
   }
 
   // Obtener planes por userId (solo planes creados por el usuario)
@@ -237,12 +289,28 @@ class PlanService {
   }
 
   // Eliminar un plan
+  /// 
+  /// Elimina un plan y todos sus datos relacionados en el siguiente orden:
+  /// 1. event_participants (participantes de eventos del plan)
+  /// 2. events (eventos del plan - se eliminan desde event_service)
+  /// 3. plan_permissions (permisos del plan)
+  /// 4. plan_participations (participaciones - eliminación física)
+  /// 5. plan (el plan mismo)
+  /// 
+  /// NOTA: La eliminación de eventos e imagen del plan se hace desde wd_plan_data_screen.dart
+  /// antes de llamar a este método.
   Future<bool> deletePlan(String id) async {
     try {
-      // Eliminar todas las participaciones del plan
-      await _participationService.removeAllPlanParticipations(id);
+      // 1. Eliminar todos los event_participants del plan
+      await _eventParticipantService.deleteAllEventParticipantsByPlanId(id);
       
-      // Eliminar el plan
+      // 2. Eliminar todos los permisos del plan
+      await _permissionService.deleteAllPlanPermissions(id);
+      
+      // 3. Eliminar físicamente todas las participaciones del plan
+      await _participationService.deleteAllPlanParticipations(id);
+      
+      // 4. Eliminar el plan
       await _firestore.collection(_collectionName).doc(id).delete();
       LoggerService.database('Plan deleted successfully: $id', operation: 'DELETE');
       return true;

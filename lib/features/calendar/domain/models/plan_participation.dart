@@ -11,6 +11,7 @@ class PlanParticipation {
   final String? invitedBy; // ID del usuario que invitó
   final DateTime? lastActiveAt;
   final String? status; // 'pending', 'accepted', 'rejected', 'expired' (para invitaciones)
+  final String? _adminCreatedBy; // Campo administrativo: ID del usuario que creó este registro (no expuesto al cliente)
 
   const PlanParticipation({
     this.id,
@@ -23,7 +24,8 @@ class PlanParticipation {
     this.invitedBy,
     this.lastActiveAt,
     this.status, // null para participaciones antiguas (aceptadas por defecto)
-  });
+    String? adminCreatedBy, // Campo administrativo interno
+  }) : _adminCreatedBy = adminCreatedBy;
 
   // Crear desde Firestore
   factory PlanParticipation.fromFirestore(DocumentSnapshot doc) {
@@ -41,6 +43,7 @@ class PlanParticipation {
           ? (data['lastActiveAt'] as Timestamp).toDate() 
           : null,
       status: data['status'], // null por defecto para compatibilidad hacia atrás
+      adminCreatedBy: data['_adminCreatedBy'], // Campo administrativo
     );
   }
 
@@ -56,6 +59,7 @@ class PlanParticipation {
       if (invitedBy != null) 'invitedBy': invitedBy,
       if (lastActiveAt != null) 'lastActiveAt': Timestamp.fromDate(lastActiveAt!),
       if (status != null) 'status': status,
+      if (_adminCreatedBy != null) '_adminCreatedBy': _adminCreatedBy, // Campo administrativo
     };
   }
 
@@ -71,6 +75,7 @@ class PlanParticipation {
     String? invitedBy,
     DateTime? lastActiveAt,
     String? status,
+    String? adminCreatedBy,
   }) {
     return PlanParticipation(
       id: id ?? this.id,
@@ -83,6 +88,7 @@ class PlanParticipation {
       invitedBy: invitedBy ?? this.invitedBy,
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
       status: status ?? this.status,
+      adminCreatedBy: adminCreatedBy ?? this._adminCreatedBy,
     );
   }
 

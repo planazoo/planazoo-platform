@@ -1,21 +1,21 @@
-import 'dart:io';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/testing/demo_data_generator.dart';
 import 'package:unp_calendario/features/testing/family_users_generator.dart';
 import 'package:unp_calendario/features/testing/mini_frank_simple_generator.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
@@ -27,14 +27,17 @@ import 'package:unp_calendario/widgets/grid/wd_grid_painter.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
+import 'package:unp_calendario/widgets/screens/wd_admin_insights_screen.dart';
 import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
 import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
 import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
+import 'package:unp_calendario/widgets/plan/plan_calendar_view.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
@@ -54,6 +57,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   List<Plan> filteredPlanazoos = [];
   bool isLoading = true;
   bool _isTimezoneBannerLoading = false;
+  bool _isCalendarView = false;
+  final PlanParticipationService _planParticipationService = PlanParticipationService();
   
   // NUEVO: Estado de navegación para W31
   String currentScreen = 'calendar'; // 'calendar', 'planData', 'participants', 'profile', etc.
@@ -65,6 +70,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   // Flag para evitar procesar transiciones múltiples veces en la misma carga
   List<String> _processedPlanIds = [];
+  final PlanParticipationService _participationService = PlanParticipationService();
+  final Map<String, List<String>> _planParticipantNames = {};
+  final Map<String, StreamSubscription<List<PlanParticipation>>> _participantSubscriptions = {};
+  final Map<String, String> _userNameCache = {};
   
   @override
   void initState() {
@@ -73,6 +82,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   @override
   void dispose() {
+    for (final subscription in _participantSubscriptions.values) {
+      subscription.cancel();
+    }
+    _participantSubscriptions.clear();
+    _planParticipantNames.clear();
+    _userNameCache.clear();
     super.dispose();
   }
 
@@ -227,6 +242,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     if (!plansChanged) return; // No hacer nada si no cambió
     
+    _syncParticipantListeners(plans);
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       
@@ -239,6 +256,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         if (selectedPlan == null && plans.isNotEmpty) {
           selectedPlanId = plans.first.id;
           selectedPlan = plans.first;
+          selectedWidgetId ??= 'W15';
+          currentScreen = 'calendar';
         }
         
         // Si el plan seleccionado fue actualizado, actualizar la referencia
@@ -293,6 +312,100 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return true; // Iguales
   }
 
+  void _syncParticipantListeners(List<Plan> plans) {
+    final activeIds = plans
+        .where((plan) => plan.id != null)
+        .map((plan) => plan.id!)
+        .toSet();
+
+    for (final planId in activeIds) {
+      if (_participantSubscriptions.containsKey(planId)) continue;
+
+      final subscription = _participationService.getPlanParticipations(planId).listen(
+        (participations) async {
+          final activeParticipants = participations
+              .where((participant) => participant.isActive && !participant.isObserver)
+              .toList();
+
+          final names = <String>[];
+          for (final participant in activeParticipants) {
+            final resolvedName = await _resolveParticipantName(participant.userId);
+            if (!names.contains(resolvedName)) {
+              names.add(resolvedName);
+            }
+          }
+
+          if (!mounted) return;
+          final previous = _planParticipantNames[planId];
+          if (previous != null && _listEquals(previous, names)) {
+            return;
+          }
+
+          setState(() {
+            _planParticipantNames[planId] = names;
+          });
+        },
+        onError: (error, stackTrace) {
+          LoggerService.error(
+            'Error loading participants for plan $planId',
+            context: 'DASHBOARD_PARTICIPANTS',
+            error: error,
+          );
+        },
+      );
+
+      _participantSubscriptions[planId] = subscription;
+    }
+
+    final toRemove = _participantSubscriptions.keys
+        .where((id) => !activeIds.contains(id))
+        .toList();
+
+    for (final planId in toRemove) {
+      _participantSubscriptions[planId]?.cancel();
+      _participantSubscriptions.remove(planId);
+      _planParticipantNames.remove(planId);
+    }
+  }
+
+  Future<String> _resolveParticipantName(String userId) async {
+    final cached = _userNameCache[userId];
+    if (cached != null) return cached;
+
+    try {
+      final userService = ref.read(userServiceProvider);
+      final user = await userService.getUser(userId);
+
+      String resolved;
+      if (user == null) {
+        resolved = userId;
+      } else if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+        resolved = user.displayName!.trim();
+      } else if (user.username != null && user.username!.trim().isNotEmpty) {
+        resolved = '@${user.username!.trim()}';
+      } else if (user.email != null && user.email!.trim().isNotEmpty) {
+        resolved = user.email!.trim();
+      } else {
+        resolved = userId;
+      }
+
+      _userNameCache[userId] = resolved;
+      return resolved;
+    } catch (_) {
+      _userNameCache[userId] = userId;
+      return userId;
+    }
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
   void _showCreatePlanDialog() {
     showDialog(
       context: context,
@@ -300,7 +413,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       builder: (BuildContext context) {
         return _CreatePlanModal(
           onPlanCreated: (plan) {
-            // El stream se actualizará automáticamente, no necesitamos actualizar manualmente
+            if (plan.id != null && mounted) {
+              setState(() {
+                selectedPlanId = plan.id;
+                selectedPlan = plan;
+                currentScreen = 'planData';
+              });
+            }
           },
         );
       },
@@ -312,14 +431,22 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       if (query.isEmpty) {
         filteredPlanazoos = List.from(planazoos);
       } else {
+        final searchQuery = query.toLowerCase();
         filteredPlanazoos = planazoos.where((planazoo) {
-          final name = planazoo.name.toLowerCase();
-          final id = planazoo.id?.toLowerCase() ?? '';
-          final unpId = planazoo.unpId.toLowerCase();
-          final searchQuery = query.toLowerCase();
-          return name.contains(searchQuery) || 
-                 id.contains(searchQuery) || 
-                 unpId.contains(searchQuery);
+          final nameMatch = planazoo.name.toLowerCase().contains(searchQuery);
+          final stateMatch = (planazoo.state ?? '').toLowerCase().contains(searchQuery);
+          final startMatch = DateFormatter.formatDate(planazoo.startDate).toLowerCase().contains(searchQuery);
+          final endMatch = DateFormatter.formatDate(planazoo.endDate).toLowerCase().contains(searchQuery);
+          final participantNames = _planParticipantNames[planazoo.id] ?? const <String>[];
+          final participantsMatch = participantNames.any((name) => name.toLowerCase().contains(searchQuery));
+          final participantsCountMatch = (planazoo.participants?.toString() ?? '').contains(searchQuery);
+
+          return nameMatch ||
+              stateMatch ||
+              startMatch ||
+              endMatch ||
+              participantsMatch ||
+              participantsCountMatch;
         }).toList();
       }
     });
@@ -392,6 +519,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         selectedPlan = null;
       }
       // NUEVO: Activar calendario por defecto al seleccionar plan
+      selectedWidgetId = 'W15';
       currentScreen = 'calendar';
     });
   }
@@ -474,7 +602,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       }
       
       // Manejar errores
-      if (next.hasError) {
+        if (next.hasError) {
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
@@ -482,12 +610,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               isLoading = false;
             });
             LoggerService.error('Error loading planazoos', context: 'MAIN_PAGE', error: next.error);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('❌ ${AppLocalizations.of(context)!.loadError}: ${next.error}'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            final messenger = ScaffoldMessenger.maybeOf(context);
+            if (messenger != null && mounted) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text('❌ ${AppLocalizations.of(context)!.loadError}: ${next.error}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           });
         }
       }
@@ -515,63 +646,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             ),
         ],
       ),
-      // 🧟 Botones de testing (solo en modo debug)
-      floatingActionButton: kDebugMode
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // Botón para generar usuarios invitados
-                FloatingActionButton.extended(
-                  heroTag: "dashboard_guest_users_button",
-                  onPressed: () => _generateGuestUsers(),
-                  icon: const Icon(Icons.person_add),
-                  label: Text(AppLocalizations.of(context)!.generateGuestsButton),
-                  backgroundColor: Colors.orange.shade700,
-                  tooltip: 'Generar usuarios invitados',
-                ),
-                const SizedBox(height: 8),
-                // Botón Mini-Frank
-                FloatingActionButton.extended(
-                  heroTag: "dashboard_mini_frank_button",
-                  onPressed: () => _generateMiniFrankPlan(currentUser),
-                  icon: const Icon(Icons.science),
-                  label: Text(AppLocalizations.of(context)!.generateMiniFrankButton),
-                  backgroundColor: Colors.blue.shade700,
-                  tooltip: 'Generar plan de prueba paso a paso',
-                ),
-                const SizedBox(height: 8),
-                // Botón Frankenstein
-                FloatingActionButton.extended(
-                  heroTag: "dashboard_frankenstein_button",
-                  onPressed: () => _generateFrankensteinPlan(currentUser),
-                  icon: const Icon(Icons.science),
-                  label: Text(AppLocalizations.of(context)!.generateFrankensteinButton),
-                  backgroundColor: Colors.green.shade700,
-                  tooltip: 'Generar plan de testing completo',
-                ),
-                const SizedBox(height: 8),
-                // TEMPORAL T152/T153: Botón para inicializar todo lo necesario
-                FloatingActionButton.extended(
-                  heroTag: "dashboard_init_firestore",
-                  onPressed: _initializeFirestore,
-                  icon: const Icon(Icons.cloud_upload),
-                  label: const Text('⚙️ Init Firestore'),
-                  backgroundColor: Colors.green,
-                  tooltip: 'Inicializar tipos de cambio, crear usuarios de prueba y mostrar info de índices',
-                ),
-                const SizedBox(height: 8),
-                // TEMPORAL: Botón para eliminar usuarios de prueba
-                FloatingActionButton.extended(
-                  heroTag: "dashboard_delete_test_users",
-                  onPressed: _showDeleteTestUsersDialog,
-                  icon: const Icon(Icons.delete_sweep),
-                  label: const Text('🗑️ Eliminar Usuarios Test'),
-                  backgroundColor: Colors.orange,
-                  tooltip: 'Eliminar usuarios de prueba de Firebase Auth y Firestore',
-                ),
-              ],
-            )
-          : null,
+      floatingActionButton: null,
     );
   }
 
@@ -1438,6 +1513,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final w1Y = 0.0; // Empieza en la fila R1 (índice 0)
     final w1Width = columnWidth; // Ancho de 1 columna
     final w1Height = gridHeight; // Alto de todas las filas (R1-R13)
+    final loc = AppLocalizations.of(context)!;
     
     return Positioned(
       left: w1X,
@@ -1449,36 +1525,63 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           color: AppColorScheme.color2, // Color de elementos interactivos de la app
           // Sin borderRadius - esquinas cuadradas
         ),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: Tooltip(
-              message: AppLocalizations.of(context)!.profileTooltip,
-              child: GestureDetector(
-                onTap: () {
-                  _changeScreen('profile');
-                },
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(24), // Icono redondo
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 2,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 24.0),
+              child: Tooltip(
+                message: loc.adminInsightsTooltip,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      currentScreen = 'adminInsights';
+                      selectedPlanId = null;
+                      selectedPlan = null;
+                      selectedWidgetId = null;
+                    });
+                  },
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(24),
                     ),
-                  ),
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 24,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.table_chart_outlined,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Tooltip(
+                message: loc.profileTooltip,
+                child: GestureDetector(
+                  onTap: () {
+                    _changeScreen('profile');
+                  },
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(24), // Icono redondo
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1686,6 +1789,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   /// Construye el contenido de información del plan seleccionado
   Widget _buildPlanInfoContent() {
+    final loc = AppLocalizations.of(context)!;
+    final roleLabel = _currentPlanRoleLabel(loc);
+    final currentUser = ref.watch(currentUserProvider);
+    final handle = _formatUserHandle(currentUser);
+
     return Padding(
       padding: const EdgeInsets.all(3.0), // Reducido aún más
       child: Column(
@@ -1693,11 +1801,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Nombre del plan (primera línea)
           Text(
             selectedPlan!.name,
             style: TextStyle(
-              fontSize: 13, // Reducido ligeramente
+              fontSize: 13,
               fontWeight: FontWeight.bold,
               color: AppColorScheme.color1,
             ),
@@ -1705,36 +1812,30 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 1),
-          // Fechas de inicio y fin (segunda línea)
-          Text(
-            '${_formatDate(selectedPlan!.startDate)} - ${_formatDate(selectedPlan!.endDate)}',
-            style: TextStyle(
-              fontSize: 8,
-              color: AppColorScheme.color1,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${_formatDate(selectedPlan!.startDate)} - ${_formatDate(selectedPlan!.endDate)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColorScheme.color1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 1),
-          // Badge de estado del plan (más compacto)
-          PlanStateBadgeCompact(
-            plan: selectedPlan!,
-            fontSize: 6, // Reducido de 7 a 6
-          ),
-          // Indicador de días restantes (solo si está confirmado)
-          DaysRemainingIndicator(
-            plan: selectedPlan!,
-            fontSize: 6,
-            compact: true,
-            showIcon: false,
-          ),
-          const SizedBox(height: 0.5),
-          // Email del administrador del plan
           Text(
-            'Admin: ${_getAdminEmail()}',
+            [
+              if (handle.isNotEmpty) handle,
+              if (roleLabel != null) loc.planRoleLabel(roleLabel),
+            ].where((segment) => segment.isNotEmpty).join(' • '),
             style: TextStyle(
-              fontSize: 6, // Reducido de 7 a 6
-              color: AppColorScheme.color1.withOpacity(0.8),
+              fontSize: 11,
+              color: AppColorScheme.color1.withOpacity(0.85),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1762,10 +1863,57 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  /// Obtiene el email del administrador del plan
-  String _getAdminEmail() {
-    final currentUser = ref.read(currentUserProvider);
-    return currentUser?.email ?? 'N/A';
+  String? _currentPlanRoleLabel(AppLocalizations loc) {
+    final plan = selectedPlan;
+    if (plan == null || plan.id == null) return null;
+    final currentUser = ref.watch(currentUserProvider);
+    if (currentUser == null) return null;
+    if (plan.userId == currentUser.id) {
+      return loc.planRoleOrganizer;
+    }
+    final participantsAsync = ref.watch(planParticipantsProvider(plan.id!));
+    final role = participantsAsync.maybeWhen<String?>(
+      data: (participants) {
+        for (final participation in participants) {
+          if (participation.userId == currentUser.id) {
+            return participation.role;
+          }
+        }
+        return null;
+      },
+      orElse: () => null,
+    );
+    return _mapRoleToText(role, loc);
+  }
+
+  String _mapRoleToText(String? role, AppLocalizations loc) {
+    switch (role) {
+      case 'organizer':
+        return loc.planRoleOrganizer;
+      case 'participant':
+        return loc.planRoleParticipant;
+      case 'observer':
+        return loc.planRoleObserver;
+      default:
+        return loc.planRoleUnknown;
+    }
+  }
+
+  String _formatUserHandle(UserModel? user) {
+    if (user == null) return '';
+    final username = user.username?.trim();
+    if (username != null && username.isNotEmpty) {
+      return '@$username';
+    }
+    final email = user.email?.trim();
+    if (email != null && email.isNotEmpty) {
+      return email;
+    }
+    final displayName = user.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName;
+    }
+    return '';
   }
 
   Widget _buildW7(double columnWidth, double rowHeight) {
@@ -1946,7 +2094,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   'planazoo',
                   style: AppTypography.caption.copyWith(
                     color: textColor,
-                    fontSize: 6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -2003,7 +2152,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   'calendario',
                   style: AppTypography.caption.copyWith(
                     color: textColor,
-                    fontSize: 6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -2060,7 +2210,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   'in',
                   style: AppTypography.caption.copyWith(
                     color: textColor,
-                    fontSize: 6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -2117,7 +2268,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   'stats',
                   style: AppTypography.caption.copyWith(
                     color: textColor,
-                    fontSize: 6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -2174,7 +2326,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   'pagos',
                   style: AppTypography.caption.copyWith(
                     color: textColor,
-                    fontSize: 6,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -2478,6 +2631,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final w27Y = rowHeight * 3; // Empieza en la fila R4 (índice 3)
     final w27Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
     final w27Height = rowHeight; // Alto de 1 fila (R4)
+    final loc = AppLocalizations.of(context)!;
     
     return Positioned(
       left: w27X,
@@ -2490,7 +2644,76 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           // Sin borde
           // Sin borderRadius (esquinas en ángulo recto)
         ),
-        // Sin contenido
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        alignment: Alignment.centerRight,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColorScheme.color2.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: ToggleButtons(
+            isSelected: [
+              !_isCalendarView,
+              _isCalendarView,
+            ],
+            onPressed: (index) {
+              setState(() {
+                _isCalendarView = index == 1;
+              });
+            },
+            borderRadius: BorderRadius.circular(24),
+            renderBorder: false,
+            constraints: const BoxConstraints(minHeight: 36, minWidth: 48),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.view_list_outlined,
+                      color: !_isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      loc.planViewModeList,
+                      style: AppTypography.bodyStyle.copyWith(
+                        fontSize: 12,
+                        color: !_isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.calendar_month_outlined,
+                      color: _isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      loc.planViewModeCalendar,
+                      style: AppTypography.bodyStyle.copyWith(
+                        fontSize: 12,
+                        color: _isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -2513,12 +2736,29 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           border: Border.all(color: AppColorScheme.color0, width: 1), // Bordes blancos
           borderRadius: BorderRadius.circular(4),
         ),
-        child: PlanListWidget(
-          plans: filteredPlanazoos,
-          selectedPlanId: selectedPlanId,
-          isLoading: isLoading,
-          onPlanSelected: _selectPlanazoo,
-          onPlanDeleted: _deletePlanazoo,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          child: _isCalendarView
+              ? PlanCalendarView(
+                  key: const ValueKey('plan-calendar-view'),
+                  plans: filteredPlanazoos,
+                  isLoading: isLoading,
+                  onPlanSelected: (plan) {
+                    if (plan.id != null) {
+                      _selectPlanazoo(plan.id!);
+                    }
+                  },
+                )
+              : PlanListWidget(
+                  key: const ValueKey('plan-list-view'),
+                  plans: filteredPlanazoos,
+                  selectedPlanId: selectedPlanId,
+                  isLoading: isLoading,
+                  onPlanSelected: _selectPlanazoo,
+                  onPlanDeleted: _deletePlanazoo,
+                ),
         ),
       ),
     );
@@ -2572,6 +2812,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       );
     }
 
+    // Si no hay planes y no estamos cargando, mostrar estado vacío general
+    final bool noPlans = !isLoading && planazoos.isEmpty;
+
+    final screensRequiringPlan = <String>{
+      'planData',
+      'stats',
+      'payments',
+      'participants',
+    };
+    final needsPlanSelection = screensRequiringPlan.contains(currentScreen);
+    final hasSelectedPlan = selectedPlanId != null;
+
     return Positioned(
       left: w31X,
       top: w31Y,
@@ -2583,9 +2835,41 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           border: Border.all(color: AppColorScheme.color2, width: 3),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: (selectedPlanId == null && currentScreen != 'profile' && currentScreen != 'email')
-          ? _buildNoPlanSelected()
-          : _buildScreenContent(),
+        child: noPlans
+            ? _buildNoPlansYet()
+            : (needsPlanSelection && !hasSelectedPlan)
+                ? _buildNoPlanSelected()
+                : _buildScreenContent(),
+      ),
+    );
+  }
+
+  Widget _buildNoPlansYet() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.event_busy,
+            size: 64,
+            color: AppColorScheme.color2,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Aún no tienes planes',
+            style: AppTypography.titleStyle.copyWith(
+              color: AppColorScheme.color4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Crea tu primer plan con el botón +',
+            style: AppTypography.bodyStyle.copyWith(
+              color: AppColorScheme.color4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -2605,6 +2889,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return _buildEmailScreen();
       case 'participants':
         return _buildParticipantsScreen();
+      case 'adminInsights':
+        return AdminInsightsScreen(
+          onClose: () {
+            setState(() {
+              currentScreen = 'calendar';
+            });
+          },
+        );
       case 'calendar':
       default:
         return _buildCalendarWidget();
@@ -2624,6 +2916,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           selectedPlan = null;
           selectedPlanId = null;
           currentScreen = 'calendar'; // Volver al calendario
+        });
+      },
+      onManageParticipants: () {
+        setState(() {
+          currentScreen = 'participants';
+          selectedWidgetId = 'W16';
         });
       },
     );
@@ -2732,7 +3030,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   // Nuevo método para mostrar el calendario
   Widget _buildCalendarWidget() {
-    if (selectedPlan == null) return const SizedBox.shrink();
+    if (selectedPlan == null) {
+      return _buildNoPlanSelected();
+    }
     return CalendarScreen(
       key: ValueKey(selectedPlan!.id), // Forzar rebuild cuando cambie el plan
       plan: selectedPlan!,
@@ -2835,34 +3135,11 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _unpIdController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  // Servicios accedidos via providers cuando se necesiten
   bool _isCreating = false;
-  
-  // Variables para fechas y duración
-  DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(days: 6));
-  int _columnCount = 7;
-  
-  // Variables para configuración
-  String _visibility = 'private'; // 'private' o 'public'
-  String _selectedCurrency = 'EUR'; // T153: Moneda del plan (default EUR)
-  
-  // Variables para participantes
-  List<UserModel> _allUsers = [];
-  List<UserModel> _selectedParticipants = [];
-  bool _isLoadingUsers = true;
-  
-  // Variables para imagen
-  XFile? _selectedImage;
-  String? _imageUrl;
-  bool _isUploadingImage = false;
 
   @override
   void initState() {
     super.initState();
-    _updateColumnCount();
-    _loadUsers();
     _generateAutoUnpId();
   }
 
@@ -2890,47 +3167,27 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
   void dispose() {
     _nameController.dispose();
     _unpIdController.dispose();
-    _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadUsers() async {
-    try {
-      final userService = ref.read(userServiceProvider);
-      final users = await userService.getAllUsers();
-      
-      if (!mounted) return;
-      
-      setState(() {
-        _allUsers = users;
-        _isLoadingUsers = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      
-      setState(() {
-        _isLoadingUsers = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al cargar usuarios: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  void _updateColumnCount() {
-    final difference = _endDate.difference(_startDate).inDays;
-    setState(() {
-      _columnCount = difference + 1;
-    });
-  }
-
   Future<void> _createPlan() async {
-    if (!_formKey.currentState!.validate()) {
+    final formState = _formKey.currentState;
+    if (formState == null) {
+      return;
+    }
+    if (!formState.validate()) {
+      return;
+    }
+
+    final currentUser = ref.read(currentUserProvider);
+    final loc = AppLocalizations.of(context)!;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.createPlanAuthError),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -2940,574 +3197,141 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
 
     try {
       final now = DateTime.now();
-      final currentUser = ref.read(currentUserProvider);
-      final userId = currentUser?.id ?? '';
-      
-      // Sanitizar input antes de crear plan
       final sanitizedName = Sanitizer.sanitizePlainText(_nameController.text, maxLength: 100);
-      final sanitizedUnpId = Sanitizer.sanitizePlainText(_unpIdController.text, maxLength: 20);
-      final sanitizedDescription = Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000);
-      
-      // Obtener timezone del sistema (default)
-      final systemTimezone = TimezoneService.getSystemTimezone();
-      
-      // Crear el plan
+      final sanitizedUnpId = Sanitizer.sanitizePlainText(_unpIdController.text, maxLength: 40);
+      final startDate = DateTime(now.year, now.month, now.day);
+      final endDate = startDate.add(const Duration(days: 6));
+      final columnCount = endDate.difference(startDate).inDays + 1;
+
       final plan = Plan(
         name: sanitizedName,
         unpId: sanitizedUnpId,
-        userId: userId,
-        baseDate: _startDate,
-        startDate: _startDate,
-        endDate: _endDate,
-        columnCount: _columnCount,
-        description: sanitizedDescription.isEmpty ? null : sanitizedDescription,
-        state: 'borrador', // Default según flujo 1.1
-        visibility: _visibility, // Usar valor seleccionado
-        timezone: systemTimezone, // Auto-detectada según flujo 1.1
-        currency: _selectedCurrency, // T153
+        userId: currentUser.id,
+        baseDate: startDate,
+        startDate: startDate,
+        endDate: endDate,
+        columnCount: columnCount,
+        description: null,
+        state: 'borrador',
+        visibility: 'private',
+        timezone: TimezoneService.getSystemTimezone(),
+        currency: 'EUR',
+        participants: 0,
         createdAt: now,
         updatedAt: now,
         savedAt: now,
       );
 
-      // Crear el plan usando createPlan (genera ID automático y participaciones)
       final planService = ref.read(planServiceProvider);
       final planId = await planService.createPlan(plan);
-      
+
       if (planId == null) {
-        throw Exception('Error al crear el plan');
+        throw Exception('plan-create-error');
       }
 
-      if (!mounted) return;
-
-      // Subir imagen si hay una seleccionada
-      String? uploadedImageUrl;
-      if (_selectedImage != null) {
-        setState(() {
-          _isUploadingImage = true;
-        });
-        
-        uploadedImageUrl = await ImageService.uploadPlanImage(_selectedImage!, planId);
-        
-        if (!mounted) return;
-        
-        setState(() {
-          _isUploadingImage = false;
-        });
-
-        // Actualizar el plan con la URL de la imagen
-        final updatedPlan = plan.copyWith(id: planId, imageUrl: uploadedImageUrl);
-        await planService.updatePlan(updatedPlan);
-      }
-
-      // Añadir participantes seleccionados adicionales (el creador ya está incluido por createPlan)
-      if (_selectedParticipants.isNotEmpty) {
-        final planParticipationService = PlanParticipationService();
-        for (final participant in _selectedParticipants) {
-          // Evitar duplicar el creador si está en la lista de seleccionados
-          if (participant.id != userId) {
-            await planParticipationService.createParticipation(
-              planId: planId,
-              userId: participant.id,
-              role: 'participant',
-              invitedBy: userId,
-            );
-          }
-        }
-      }
-
-      // Transición automática: Borrador → Planificando
-      final planStateService = PlanStateService();
-      await planStateService.transitionToPlanningIfDraft(planId: planId);
-
-      if (!mounted) return;
-
-      // Obtener el plan actualizado para mostrar en la lista
       final createdPlan = await planService.getPlanById(planId);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.planCreatedSuccess(plan.name)),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // Cerrar el modal antes de actualizar la lista
-        Navigator.of(context).pop();
-        if (createdPlan != null) {
-          widget.onPlanCreated(createdPlan);
-        }
+      if (!mounted) return;
+
+      Navigator.of(context).pop();
+      if (createdPlan != null) {
+        widget.onPlanCreated(createdPlan);
       }
     } catch (e) {
-      if (mounted) {
-        String errorMessage = 'Error al crear el plan';
-        if (e.toString().contains('intentos') || e.toString().contains('límite')) {
-          errorMessage = e.toString().replaceFirst('Exception: ', '');
-        } else {
-          errorMessage = 'Error: $e';
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.createPlanGenericError),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
           _isCreating = false;
-          _isUploadingImage = false;
         });
       }
     }
-  }
-
-  Future<void> _selectStartDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _startDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    
-    if (!mounted) return;
-    
-    if (picked != null && picked != _startDate) {
-      setState(() {
-        _startDate = picked;
-        if (_endDate.isBefore(_startDate)) {
-          _endDate = _startDate.add(const Duration(days: 6));
-        }
-        _updateColumnCount();
-      });
-    }
-  }
-
-  Future<void> _selectEndDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _endDate,
-      firstDate: _startDate,
-      lastDate: _startDate.add(const Duration(days: 365)),
-    );
-    
-    if (!mounted) return;
-    
-    if (picked != null && picked != _endDate) {
-      setState(() {
-        _endDate = picked;
-        _updateColumnCount();
-      });
-    }
-  }
-
-  void _toggleParticipant(UserModel user) {
-    setState(() {
-      if (_selectedParticipants.contains(user)) {
-        _selectedParticipants.remove(user);
-      } else {
-        _selectedParticipants.add(user);
-      }
-    });
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final XFile? image = await ImageService.pickImageFromGallery();
-      
-      if (!mounted) return;
-      
-      if (image != null) {
-        setState(() {
-          _selectedImage = image;
-        });
-        
-        // Validar imagen
-        final validationError = await ImageService.validateImage(image);
-        
-        if (!mounted) return;
-        
-        if (validationError != null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(validationError),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          return;
-        }
-        
-        // Mostrar previsualización
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Imagen seleccionada correctamente'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al seleccionar imagen: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _removeImage() async {
-    setState(() {
-      _selectedImage = null;
-      _imageUrl = null;
-    });
-  }
-
-  Widget _buildImageSelector() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.image, color: Colors.grey),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Imagen del Plan (Opcional)',
-                  style: AppTypography.bodyStyle.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (_selectedImage == null)
-            // Botón para seleccionar imagen
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isUploadingImage ? null : _pickImage,
-                icon: const Icon(Icons.add_photo_alternate),
-                label: const Text('Seleccionar Imagen'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColorScheme.color2,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            )
-          else
-            // Mostrar imagen seleccionada
-            Column(
-              children: [
-                Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(_selectedImage!.path),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey.shade200,
-                          child: const Center(
-                            child: Icon(Icons.error, color: Colors.red),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Imagen seleccionada',
-                      style: AppTypography.bodyStyle.copyWith(
-                        color: Colors.green,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: _removeImage,
-                      icon: const Icon(Icons.delete, color: Colors.red, size: 16),
-                      label: Text(AppLocalizations.of(context)!.remove, style: const TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: Text(AppLocalizations.of(context)!.createPlan),
+      title: Text(loc.createPlan),
       content: SizedBox(
-        width: 600,
+        width: 420,
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Campo nombre
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre del Plan',
-                    hintText: 'Ej: Vacaciones Londres 2025',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.edit),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                decoration: InputDecoration(
+                  labelText: loc.createPlanNameLabel,
+                  hintText: loc.createPlanNameHint,
+                  prefixIcon: const Icon(Icons.edit),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Por favor ingresa un nombre';
-                    }
-                    if (value.trim().length < 3) {
-                      return 'El nombre debe tener al menos 3 caracteres';
-                    }
-                    if (value.trim().length > 100) {
-                      return 'El nombre no puede exceder 100 caracteres';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Campo UNP ID (auto-generado, solo lectura)
-                TextFormField(
-                  controller: _unpIdController,
-                  decoration: InputDecoration(
-                    labelText: 'UNP ID',
-                    hintText: 'Generando...',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.tag),
-                    suffixIcon: const Icon(Icons.autorenew, size: 18, color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 18,
+                    horizontal: 16,
                   ),
-                  readOnly: true,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0, left: 8.0),
-                  child: Text(
-                    'Generado automáticamente',
-                    style: TextStyle(
-                      fontSize: 11,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return loc.createPlanNameRequiredError;
+                  }
+                  if (value.trim().length < 3) {
+                    return loc.createPlanNameTooShortError;
+                  }
+                  if (value.trim().length > 100) {
+                    return loc.createPlanNameTooLongError;
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _unpIdController.text.isEmpty
+                    ? loc.createPlanUnpIdLoading
+                    : loc.createPlanUnpIdHeader(_unpIdController.text),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Campo Descripción
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Descripción (Opcional)',
-                    hintText: 'Describe brevemente el plan',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.description),
-                  ),
-                  maxLines: 3,
-                  maxLength: 1000,
-                ),
-                const SizedBox(height: 16),
-                // Selector de Moneda (T153)
-                DropdownButtonFormField<String>(
-                  value: _selectedCurrency,
-                  decoration: const InputDecoration(
-                    labelText: 'Moneda del Plan',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.currency_exchange),
-                  ),
-                  items: Currency.supportedCurrencies.map((currency) {
-                    return DropdownMenuItem<String>(
-                      value: currency.code,
-                      child: Text('${currency.code} - ${currency.symbol} ${currency.name}'),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedCurrency = value;
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Selector Visibilidad
-                DropdownButtonFormField<String>(
-                  value: _visibility,
-                  decoration: const InputDecoration(
-                    labelText: 'Visibilidad',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.visibility),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'private',
-                      child: Text('Privado - Solo participantes'),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                loc.createPlanQuickIntro,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
                     ),
-                    DropdownMenuItem(
-                      value: 'public',
-                      child: Text('Público - Visible para todos'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _visibility = value!;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Selector de imagen
-                _buildImageSelector(),
-                const SizedBox(height: 16),
-                // Selector fecha inicio
-                InkWell(
-                  onTap: _selectStartDate,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today, color: Colors.green),
-                        const SizedBox(width: 12),
-                        Text('Inicio: ${DateFormatter.formatDate(_startDate)}'),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Selector fecha fin
-                InkWell(
-                  onTap: _selectEndDate,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.event, color: Colors.blue),
-                        const SizedBox(width: 12),
-                        Text('Fin: ${DateFormatter.formatDate(_endDate)}'),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Duración
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    border: Border.all(color: Colors.blue.shade200),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Duración:'),
-                      Text(
-                        '$_columnCount día${_columnCount > 1 ? 's' : ''}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Selector de participantes
-                Text(
-                  'Participantes:',
-                  style: AppTypography.bodyStyle.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (_isLoadingUsers)
-                  const Center(child: CircularProgressIndicator())
-                else
-                  Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: ListView.builder(
-                      itemCount: _allUsers.length,
-                      itemBuilder: (context, index) {
-                        final user = _allUsers[index];
-                        final isSelected = _selectedParticipants.contains(user);
-                        return CheckboxListTile(
-                          title: Text(user.displayName ?? user.email),
-                          subtitle: Text(user.email),
-                          value: isSelected,
-                          onChanged: (value) => _toggleParticipant(user),
-                          dense: true,
-                        );
-                      },
-                    ),
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          onPressed: _isCreating ? null : () => Navigator.of(context).pop(),
+          child: Text(loc.cancel),
         ),
         ElevatedButton(
           onPressed: _isCreating ? null : _createPlan,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColorScheme.color3,
-          ),
           child: _isCreating
-              ? const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text('Creando...'),
-                  ],
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
-              : Text(AppLocalizations.of(context)!.createPlan),
+              : Text(loc.createPlanContinueButton),
         ),
       ],
     );

@@ -36,6 +36,44 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     _loadUsers();
   }
 
+  UserModel? _findUser(String userId) {
+    try {
+      return _allUsers.firstWhere((user) => user.id == userId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _formatUserDisplay(UserModel? user, String fallback) {
+    if (user == null) return fallback;
+
+    if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+      return user.displayName!;
+    }
+    if (user.username != null && user.username!.trim().isNotEmpty) {
+      return '@${user.username!}';
+    }
+    return user.email;
+  }
+
+  String _initialsFor(UserModel? user, String fallback) {
+    final source = user?.displayName?.trim();
+    if (source != null && source.isNotEmpty) {
+      final parts = source.split(' ');
+      if (parts.length >= 2) {
+        return (parts.first[0] + parts.last[0]).toUpperCase();
+      }
+      return source.substring(0, 1).toUpperCase();
+    }
+    if (user?.username != null && user!.username!.isNotEmpty) {
+      return user.username![0].toUpperCase();
+    }
+    if (user != null) {
+      return user.email[0].toUpperCase();
+    }
+    return fallback.isNotEmpty ? fallback.substring(0, 1).toUpperCase() : '?';
+  }
+
   Future<void> _loadUsers() async {
     try {
       final userService = ref.read(userServiceProvider);
@@ -91,7 +129,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         userId: user.id,
         role: 'participant',
         invitedBy: currentUser.id,
+        autoAccept: true,
       );
+
+      await ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
+      ref
+        ..invalidate(planParticipantsProvider(widget.plan.id!))
+        ..invalidate(planRealParticipantsProvider(widget.plan.id!));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -139,6 +183,11 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         final participationService = ref.read(planParticipationServiceProvider);
         await participationService.removeParticipation(widget.plan.id!, participation.userId);
 
+        await ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
+        ref
+          ..invalidate(planParticipantsProvider(widget.plan.id!))
+          ..invalidate(planRealParticipantsProvider(widget.plan.id!));
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -167,6 +216,11 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       await participationService.updateParticipation(
         participation.copyWith(role: newRole),
       );
+
+      await ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
+      ref
+        ..invalidate(planParticipantsProvider(widget.plan.id!))
+        ..invalidate(planRealParticipantsProvider(widget.plan.id!));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -256,6 +310,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
   }
 
   Widget _buildParticipantCard(PlanParticipation participation) {
+    final user = _findUser(participation.userId);
+    final displayName = _formatUserDisplay(user, participation.userId);
+    final usernameLabel = user?.username != null && user!.username!.trim().isNotEmpty
+        ? '@${user.username!}'
+        : null;
+    final emailLabel = user?.email;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -266,7 +327,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             CircleAvatar(
               backgroundColor: _getRoleColor(participation.role),
               child: Text(
-                _getInitials(participation.userId),
+                _initialsFor(user, participation.userId),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -281,13 +342,32 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    participation.userId,
+                    displayName,
                     style: AppTypography.bodyStyle.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   const SizedBox(height: 4),
+                  if (usernameLabel != null) ...[
+                    Text(
+                      usernameLabel,
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  if (emailLabel != null) ...[
+                    Text(
+                      emailLabel,
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                  ] else
+                    const SizedBox(height: 6),
                   Row(
                     children: [
                       Container(
@@ -371,6 +451,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             const SizedBox(height: 16),
             _buildRoleOption(participation, 'organizer', 'Organizador'),
             _buildRoleOption(participation, 'participant', 'Participante'),
+            _buildRoleOption(participation, 'observer', 'Observador'),
           ],
         ),
       ),
@@ -394,98 +475,128 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     );
   }
 
-  Widget _buildInviteUsersSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColorScheme.color0,
-        border: Border(
-          bottom: BorderSide(color: AppColorScheme.color2, width: 1),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildInviteUsersSection({required bool showCloseButton}) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final participantsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColorScheme.color0,
+            border: Border(
+              bottom: BorderSide(color: AppColorScheme.color2, width: 1),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Invitar usuarios',
-                style: AppTypography.titleStyle.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Invitar usuarios',
+                    style: AppTypography.titleStyle.copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (showCloseButton && widget.onBack != null)
+                    IconButton(
+                      onPressed: widget.onBack,
+                      icon: const Icon(Icons.close),
+                      tooltip: 'Cerrar',
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                onChanged: _filterUsers,
+                decoration: InputDecoration(
+                  hintText: 'Buscar usuarios por nombre, email o @usuario...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
               ),
-              IconButton(
-                onPressed: widget.onBack,
-                icon: const Icon(Icons.close),
-                tooltip: 'Cerrar',
+              const SizedBox(height: 16),
+              participantsAsync.when(
+                data: (participations) {
+                  final existingIds = participations.map((p) => p.userId).toSet();
+                  final availableUsers = _filteredUsers
+                      .where((user) => !existingIds.contains(user.id))
+                      .toList();
+
+                  if (_isLoadingUsers) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  return Container(
+                    height: 240,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: availableUsers.isEmpty
+                        ? Center(
+                            child: Text(
+                              _searchQuery.isEmpty
+                                  ? 'No hay usuarios disponibles'
+                                  : 'No se encontraron usuarios',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: availableUsers.length,
+                            itemBuilder: (context, index) {
+                              final user = availableUsers[index];
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: AppColorScheme.color2,
+                                  child: Text(
+                                    _computeInitials(user),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                title: Text(_formatUserDisplay(user, user.email)),
+                                subtitle: Text(user.email),
+                                trailing: ElevatedButton(
+                                  onPressed: () => _inviteUser(user),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColorScheme.color2,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: const Text('Invitar'),
+                                ),
+                              );
+                            },
+                          ),
+                  );
+                },
+                loading: () => const SizedBox(
+                  height: 120,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, _) => Container(
+                  height: 120,
+                  alignment: Alignment.center,
+                  child: Text(
+                    'No se pudo cargar la lista de participantes: $error',
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          
-          // Campo de búsqueda
-          TextField(
-            onChanged: _filterUsers,
-            decoration: InputDecoration(
-              hintText: 'Buscar usuarios por nombre o email...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Lista de usuarios filtrados
-          if (_isLoadingUsers)
-            const Center(child: CircularProgressIndicator())
-          else
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: _filteredUsers.isEmpty
-                  ? Center(
-                      child: Text(
-                        _searchQuery.isEmpty 
-                            ? 'No hay usuarios disponibles'
-                            : 'No se encontraron usuarios',
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                    )
-                  : ListView.builder(
-                      itemCount: _filteredUsers.length,
-                      itemBuilder: (context, index) {
-                        final user = _filteredUsers[index];
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: AppColorScheme.color2,
-                            child: Text(
-                              _getInitials(user.id),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          title: Text(user.displayName ?? user.email),
-                          subtitle: Text(user.email),
-                          trailing: ElevatedButton(
-                            onPressed: () => _inviteUser(user),
-                            child: const Text('Invitar'),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -495,6 +606,8 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         return Colors.purple;
       case 'participant':
         return Colors.blue;
+      case 'observer':
+        return Colors.teal;
       default:
         return Colors.grey;
     }
@@ -506,6 +619,8 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         return 'Organizador';
       case 'participant':
         return 'Participante';
+      case 'observer':
+        return 'Observador';
       default:
         return 'Desconocido';
     }
@@ -517,14 +632,29 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         return 'Puede editar el plan y gestionar participantes';
       case 'participant':
         return 'Puede ver y participar en el plan';
+      case 'observer':
+        return 'Puede ver el plan sin realizar cambios';
       default:
         return '';
     }
   }
 
-  String _getInitials(String userId) {
-    if (userId.isEmpty) return '?';
-    return userId.substring(0, 1).toUpperCase();
+  String _computeInitials(UserModel user) {
+    final display = user.displayName?.trim();
+    if (display != null && display.isNotEmpty) {
+      final parts = display.split(' ');
+      if (parts.length >= 2) {
+        return (parts.first[0] + parts.last[0]).toUpperCase();
+      }
+      return display.substring(0, 1).toUpperCase();
+    }
+    if (user.username != null && user.username!.trim().isNotEmpty) {
+      return user.username![0].toUpperCase();
+    }
+    if (user.email.isNotEmpty) {
+      return user.email[0].toUpperCase();
+    }
+    return '?';
   }
 
   String _formatDate(DateTime date) {
@@ -533,13 +663,41 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildInviteUsersSection(),
-        Expanded(
-          child: _buildParticipantsList(),
+    final isCompact = MediaQuery.of(context).size.width < 900;
+
+    Widget content() {
+      return Container(
+        color: Colors.grey.shade50,
+        child: Column(
+          children: [
+            _buildInviteUsersSection(showCloseButton: !isCompact),
+            Expanded(
+              child: _buildParticipantsList(),
+            ),
+          ],
         ),
-      ],
-    );
+      );
+    }
+
+    final body = content();
+
+    if (isCompact) {
+      final canPop = Navigator.of(context).canPop();
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Participantes • ${widget.plan.name}'),
+          leading: canPop
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                )
+              : null,
+        ),
+        backgroundColor: Colors.grey.shade50,
+        body: body,
+      );
+    }
+
+    return body;
   }
 }

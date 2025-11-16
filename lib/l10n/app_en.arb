@@ -657,8 +657,196 @@
   },
   "createPlan": "Create Plan",
   "@createPlan": {
-    "description": "Create plan button"
+    "description": "Title for the create plan dialog"
   },
+  "createPlanGeneralSectionTitle": "General Information",
+  "@createPlanGeneralSectionTitle": {},
+  "createPlanNameLabel": "Plan name",
+  "@createPlanNameLabel": {},
+  "createPlanNameHint": "Eg: London Vacation 2025",
+  "@createPlanNameHint": {},
+  "createPlanNameRequiredError": "Please enter a name",
+  "@createPlanNameRequiredError": {},
+  "createPlanNameTooShortError": "The name must have at least 3 characters",
+  "@createPlanNameTooShortError": {},
+  "createPlanNameTooLongError": "The name cannot exceed 100 characters",
+  "@createPlanNameTooLongError": {},
+  "createPlanUnpIdLabel": "UNP ID",
+  "@createPlanUnpIdLabel": {},
+  "createPlanUnpIdHint": "Generating...",
+  "@createPlanUnpIdHint": {},
+  "createPlanUnpGeneratedHelper": "Generated automatically",
+  "@createPlanUnpGeneratedHelper": {},
+  "createPlanUnpIdHeader": "ID: {id}",
+  "@createPlanUnpIdHeader": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "createPlanUnpIdLoading": "Generating UNP ID...",
+  "@createPlanUnpIdLoading": {},
+  "createPlanQuickIntro": "You can complete the rest of the plan configuration on the next screen.",
+  "@createPlanQuickIntro": {},
+  "createPlanContinueButton": "Continue",
+  "@createPlanContinueButton": {},
+  "createPlanAuthError": "You need to sign in to create a plan.",
+  "@createPlanAuthError": {},
+  "createPlanGenericError": "We couldn't create the plan. Please try again.",
+  "@createPlanGenericError": {},
+  "createPlanDescriptionLabel": "Description (optional)",
+  "@createPlanDescriptionLabel": {},
+  "createPlanDescriptionHint": "Briefly describe the plan",
+  "@createPlanDescriptionHint": {},
+  "createPlanConfigurationSectionTitle": "Configuration",
+  "@createPlanConfigurationSectionTitle": {},
+  "createPlanCurrencyLabel": "Plan currency",
+  "@createPlanCurrencyLabel": {},
+  "createPlanVisibilityLabel": "Visibility",
+  "@createPlanVisibilityLabel": {},
+  "createPlanVisibilityPrivateShort": "Private",
+  "@createPlanVisibilityPrivateShort": {},
+  "createPlanVisibilityPublicShort": "Public",
+  "@createPlanVisibilityPublicShort": {},
+  "createPlanVisibilityPrivate": "Private - Only participants",
+  "@createPlanVisibilityPrivate": {},
+  "createPlanVisibilityPublic": "Public - Visible to everyone",
+  "@createPlanVisibilityPublic": {},
+  "createPlanImageSectionTitle": "Plan image (optional)",
+  "@createPlanImageSectionTitle": {},
+  "createPlanSelectImage": "Change image",
+  "@createPlanSelectImage": {},
+  "planDetailsNoDescription": "No description provided yet.",
+  "@planDetailsNoDescription": {},
+  "planDetailsNoParticipants": "No participants added yet.",
+  "@planDetailsNoParticipants": {},
+  "planDetailsInfoTitle": "Detailed information",
+  "@planDetailsInfoTitle": {},
+  "planDetailsMetaTitle": "Plan identifiers",
+  "@planDetailsMetaTitle": {},
+  "planTimezoneLabel": "Plan timezone",
+  "@planTimezoneLabel": {},
+  "planTimezoneHelper": "Used as the default reference when creating events and converting participants' schedules.",
+  "@planTimezoneHelper": {},
+  "planDetailsStateTitle": "State management",
+  "@planDetailsStateTitle": {},
+  "planDetailsParticipantsTitle": "Participants",
+  "@planDetailsParticipantsTitle": {},
+  "planDetailsParticipantsManageLink": "Manage participants",
+  "@planDetailsParticipantsManageLink": {},
+  "planDetailsBudgetLabel": "Estimated budget",
+  "@planDetailsBudgetLabel": {},
+  "planDetailsBudgetInvalid": "Enter a valid positive number (use a decimal point)",
+  "@planDetailsBudgetInvalid": {},
+  "cancelChanges": "Discard changes",
+  "@cancelChanges": {},
+  "planDetailsSaveSuccess": "Changes saved successfully.",
+  "@planDetailsSaveSuccess": {},
+  "planDetailsUnsavedChanges": "You have unsaved changes.",
+  "@planDetailsUnsavedChanges": {},
+  "planDetailsNoAvailableParticipants": "There are no users available to add.",
+  "@planDetailsNoAvailableParticipants": {},
+  "planDetailsParticipantsAdded": "{count} participants added.",
+  "@planDetailsParticipantsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planDetailsSaveError": "Could not save the changes.",
+  "@planDetailsSaveError": {},
+  "planDeleteDialogTitle": "Delete plan",
+  "@planDeleteDialogTitle": {},
+  "planDeleteDialogMessage": "This will permanently remove the plan, all events, and participations.\\n\\nPlease re-enter your password to confirm.",
+  "@planDeleteDialogMessage": {},
+  "planDeleteDialogPasswordLabel": "Password",
+  "@planDeleteDialogPasswordLabel": {},
+  "planDeleteDialogPasswordRequired": "Enter your password to confirm.",
+  "@planDeleteDialogPasswordRequired": {},
+  "planDeleteDialogAuthError": "Incorrect password or insufficient permissions to delete this plan.",
+  "@planDeleteDialogAuthError": {},
+  "planDeleteDialogConfirm": "Delete plan",
+  "@planDeleteDialogConfirm": {},
+  "planDeleteSuccess": "Plan \"{name}\" deleted successfully.",
+  "@planDeleteSuccess": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "planDeleteError": "Error deleting plan",
+  "@planDeleteError": {},
+  "planRoleLabel": "Role: {role}",
+  "@planRoleLabel": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "planRoleOrganizer": "Organizer",
+  "@planRoleOrganizer": {},
+  "planRoleParticipant": "Participant",
+  "@planRoleParticipant": {},
+  "planRoleObserver": "Observer",
+  "@planRoleObserver": {},
+  "planRoleUnknown": "Unknown role",
+  "@planRoleUnknown": {},
+  "planViewModeList": "List",
+  "@planViewModeList": {},
+  "planViewModeCalendar": "Calendar",
+  "@planViewModeCalendar": {},
+  "planCalendarEmpty": "No plans scheduled in these months.",
+  "@planCalendarEmpty": {},
+  "createPlanDatesSectionTitle": "Plan dates",
+  "@createPlanDatesSectionTitle": {},
+  "createPlanStartDateLabel": "Start: {date}",
+  "@createPlanStartDateLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "createPlanEndDateLabel": "End: {date}",
+  "@createPlanEndDateLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "createPlanDurationLabel": "Duration",
+  "@createPlanDurationLabel": {},
+  "createPlanDurationValue": "{days, plural, one {# day} other {# days}}",
+  "@createPlanDurationValue": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "createPlanParticipantsSectionTitle": "Participants (optional)",
+  "@createPlanParticipantsSectionTitle": {},
+  "createPlanImageSelected": "Image selected",
+  "@createPlanImageSelected": {},
+  "createPlanImageSelectedSuccess": "Image selected successfully",
+  "@createPlanImageSelectedSuccess": {},
+  "createPlanImageSelectError": "There was an error selecting the image",
+  "@createPlanImageSelectError": {},
+  "createPlanCreating": "Creating...",
+  "@createPlanCreating": {},
+  "createPlanAddParticipantsButton": "Add participants",
+  "@createPlanAddParticipantsButton": {},
+  "createPlanNoParticipants": "No participants added yet.",
+  "@createPlanNoParticipants": {},
+  "createPlanParticipantsBottomSheetTitle": "Select participants",
+  "@createPlanParticipantsBottomSheetTitle": {},
+  "createPlanParticipantsSave": "Save selection",
+  "@createPlanParticipantsSave": {},
   "edit": "Edit",
   "@edit": {
     "description": "Edit button"
@@ -1054,5 +1242,41 @@
   "cardObtainedSubtitle": "Mark if you already have the card/ticket",
   "@cardObtainedSubtitle": {
     "description": "Card obtained subtitle"
-  }
+  },
+  "adminInsightsTooltip": "Admin view",
+  "adminInsightsTitle": "Plan administration overview",
+  "adminInsightsExportCsv": "Export CSV",
+  "adminInsightsExportCopied": "CSV copied to clipboard",
+  "adminInsightsRefresh": "Refresh",
+  "adminInsightsEmpty": "There are no active plans to display.",
+  "adminInsightsError": "We couldn't load the data.",
+  "adminInsightsRetry": "Retry",
+  "adminInsightsClose": "Close",
+  "adminInsightsParticipantsSection": "Participants",
+  "adminInsightsEventsSection": "Events",
+  "adminInsightsAccommodationsSection": "Accommodations",
+  "adminInsightsNoParticipants": "No active participants in this plan.",
+  "adminInsightsNoEvents": "No active events registered.",
+  "adminInsightsNoAccommodations": "No accommodations registered.",
+  "adminInsightsColumnPlan": "Plan",
+  "adminInsightsColumnStart": "Start",
+  "adminInsightsColumnEnd": "End",
+  "adminInsightsColumnParticipant": "Participant",
+  "adminInsightsColumnRole": "Role",
+  "adminInsightsColumnTimezone": "Timezone",
+  "adminInsightsColumnJoined": "Joined",
+  "adminInsightsColumnEvent": "Event",
+  "adminInsightsColumnDate": "Date",
+  "adminInsightsColumnTime": "Time",
+  "adminInsightsColumnParticipantsShort": "Participants",
+  "adminInsightsColumnAccommodation": "Accommodation",
+  "adminInsightsColumnCheckIn": "Check-in",
+  "adminInsightsColumnCheckOut": "Check-out",
+  "adminInsightsEventStatusRegistered": "Participating",
+  "adminInsightsEventStatusNotRegistered": "Not participating",
+  "adminInsightsEventStatusCancelled": "Cancelled",
+  "adminInsightsEventConfirmationPending": "Pending",
+  "adminInsightsEventConfirmationAccepted": "Accepted",
+  "adminInsightsEventConfirmationDeclined": "Declined",
+  "adminInsightsEventConfirmationMissing": "No response"
 }

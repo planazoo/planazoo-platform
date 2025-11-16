@@ -111,19 +111,54 @@ class PlanParticipationService {
   }
 
   // Crear participación (usuario se une al plan)
+  /// 
+  /// [createdBy] - ID del usuario que crea el registro (para uso administrativo). Si no se proporciona, se mantiene null.
   Future<String?> createParticipation({
     required String planId,
     required String userId,
     required String role,
     String? invitedBy,
     bool autoAccept = false, // false = invitar (pending), true = aceptar directamente
+    String? createdBy, // Campo administrativo
   }) async {
     try {
       // Verificar si ya existe una participación activa
-      final existingParticipation = await getParticipation(planId, userId);
-      if (existingParticipation != null) {
-        LoggerService.warning('User $userId already participates in plan $planId');
-        return existingParticipation.id;
+      final existingParticipation = await _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
+      if (existingParticipation.docs.isNotEmpty) {
+        final doc = existingParticipation.docs.first;
+        final data = PlanParticipation.fromFirestore(doc);
+        if (data.isActive) {
+          LoggerService.warning('User $userId already participates in plan $planId');
+          return data.id;
+        } else {
+          await doc.reference.update({
+            'isActive': true,
+            'status': autoAccept ? 'accepted' : 'pending',
+            'joinedAt': Timestamp.fromDate(DateTime.now()),
+            'lastActiveAt': Timestamp.fromDate(DateTime.now()),
+          });
+          try {
+            await _firestore.collection('plans').doc(planId).update({
+              'participants': FieldValue.increment(1),
+            });
+          } catch (e) {
+            LoggerService.error(
+              'Error incrementing participants count for plan (reactivate): $planId',
+              context: 'PLAN_PARTICIPATION_SERVICE',
+              error: e,
+            );
+          }
+          LoggerService.database(
+            'Participation reactivated: ${doc.id} (${autoAccept ? "accepted" : "pending"})',
+            operation: 'UPDATE',
+          );
+          return doc.id;
+        }
       }
 
       final participation = PlanParticipation(
@@ -135,6 +170,7 @@ class PlanParticipationService {
         invitedBy: invitedBy,
         lastActiveAt: DateTime.now(),
         status: autoAccept ? 'accepted' : 'pending', // Si autoAccept = true, aceptar; sino, pendiente
+        adminCreatedBy: createdBy, // Campo administrativo
       );
 
       final docRef = await _firestore
@@ -145,6 +181,18 @@ class PlanParticipationService {
         'Participation created: ${docRef.id} (${autoAccept ? "accepted" : "pending"})', 
         operation: 'CREATE'
       );
+      try {
+        await _firestore
+            .collection('plans')
+            .doc(planId)
+            .update({'participants': FieldValue.increment(1)});
+      } catch (e) {
+        LoggerService.error(
+          'Error incrementing participants count for plan: $planId',
+          context: 'PLAN_PARTICIPATION_SERVICE',
+          error: e,
+        );
+      }
       return docRef.id;
     } catch (e) {
       LoggerService.error('Error creating participation: $planId, $userId', 
@@ -223,6 +271,18 @@ class PlanParticipationService {
           .collection(_collectionName)
           .doc(participation.id!)
           .update(updatedParticipation.toFirestore());
+      try {
+        await _firestore
+            .collection('plans')
+            .doc(planId)
+            .update({'participants': FieldValue.increment(-1)});
+      } catch (e) {
+        LoggerService.error(
+          'Error decrementing participants count for plan: $planId',
+          context: 'PLAN_PARTICIPATION_SERVICE',
+          error: e,
+        );
+      }
       
       LoggerService.database('Participation removed: ${participation.id}', operation: 'UPDATE');
       return true;
@@ -322,7 +382,8 @@ class PlanParticipationService {
     }
   }
 
-  // Eliminar todas las participaciones de un plan (cuando se elimina el plan)
+  // Eliminar todas las participaciones de un plan (soft delete)
+  // Usado cuando se elimina un participante individual del plan
   Future<bool> removeAllPlanParticipations(String planId) async {
     try {
       final querySnapshot = await _firestore
@@ -348,6 +409,174 @@ class PlanParticipationService {
       LoggerService.error('Error removing all plan participations: $planId', 
           context: 'PLAN_PARTICIPATION_SERVICE', error: e);
       return false;
+    }
+  }
+
+  // Eliminar físicamente todas las participaciones de un plan
+  // Usado cuando se elimina el plan completo
+  Future<bool> deleteAllPlanParticipations(String planId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .get(); // Obtener todas, no solo las activas
+
+      if (querySnapshot.docs.isEmpty) {
+        return true; // No hay participaciones, no hay nada que eliminar
+      }
+
+      final batch = _firestore.batch();
+      for (final doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
+      LoggerService.database('All participations deleted for plan: $planId (${querySnapshot.docs.length} records)', operation: 'DELETE');
+      return true;
+    } catch (e) {
+      LoggerService.error('Error deleting all plan participations: $planId', 
+          context: 'PLAN_PARTICIPATION_SERVICE', error: e);
+      return false;
+    }
+  }
+
+  Future<PlanParticipationAuditResult> auditParticipations({
+    bool deleteOrphans = false,
+  }) async {
+    try {
+      final snapshot = await _firestore.collection(_collectionName).get();
+      if (snapshot.docs.isEmpty) {
+        return PlanParticipationAuditResult(
+          totalRecords: 0,
+          orphanRecords: const [],
+          deletedRecords: 0,
+        );
+      }
+
+      final plansCollection = _firestore.collection('plans');
+      final orphanEntries = <PlanParticipationAuditEntry>[];
+
+      for (final doc in snapshot.docs) {
+        final participation = PlanParticipation.fromFirestore(doc);
+        final planId = participation.planId;
+
+        if (planId.isEmpty) {
+          orphanEntries.add(
+            PlanParticipationAuditEntry(
+              documentId: doc.id,
+              planId: '(empty)',
+              userId: participation.userId,
+              role: participation.role,
+              isActive: participation.isActive,
+            ),
+          );
+          continue;
+        }
+
+        try {
+          final planDoc = await plansCollection.doc(planId).get();
+          if (!planDoc.exists) {
+            orphanEntries.add(
+              PlanParticipationAuditEntry(
+                documentId: doc.id,
+                planId: planId,
+                userId: participation.userId,
+                role: participation.role,
+                isActive: participation.isActive,
+              ),
+            );
+          }
+        } catch (e) {
+          // Si no se puede leer el plan, asumir que no existe (huérfano)
+          final errorString = e.toString();
+          if (errorString.contains('permission-denied')) {
+            // Si no hay permisos para leer el plan, no podemos verificar
+            // pero no lo marcamos como huérfano para evitar falsos positivos
+            continue;
+          }
+          // Otros errores: asumir que el plan no existe
+          orphanEntries.add(
+            PlanParticipationAuditEntry(
+              documentId: doc.id,
+              planId: planId,
+              userId: participation.userId,
+              role: participation.role,
+              isActive: participation.isActive,
+            ),
+          );
+        }
+      }
+
+      var deletedCount = 0;
+      if (deleteOrphans && orphanEntries.isNotEmpty) {
+        // Eliminar cada participación individualmente para manejar permisos correctamente
+        // Las reglas de Firestore solo permiten eliminar participaciones huérfanas propias
+        for (final entry in orphanEntries) {
+          try {
+            await _firestore
+                .collection(_collectionName)
+                .doc(entry.documentId)
+                .delete();
+            deletedCount++;
+          } catch (e) {
+            final errorString = e.toString();
+            if (errorString.contains('permission-denied')) {
+              // Esta participación no se puede eliminar (probablemente es de otro usuario)
+              // Continuar con la siguiente
+              LoggerService.debug(
+                'Cannot delete orphan participation ${entry.documentId}: insufficient permissions (likely belongs to another user)',
+                context: 'PLAN_PARTICIPATION_SERVICE',
+              );
+              continue;
+            } else {
+              // Otro tipo de error, registrar pero continuar
+              LoggerService.warning(
+                'Error deleting orphan participation ${entry.documentId}: $e',
+                context: 'PLAN_PARTICIPATION_SERVICE',
+              );
+            }
+          }
+        }
+
+        if (deletedCount > 0) {
+          LoggerService.database(
+            'Orphan participations deleted: $deletedCount of ${orphanEntries.length}',
+            operation: 'DELETE',
+          );
+        } else if (orphanEntries.isNotEmpty) {
+          LoggerService.warning(
+            'No orphan participations could be deleted (likely all belong to other users or insufficient permissions)',
+            context: 'PLAN_PARTICIPATION_SERVICE',
+          );
+        }
+      }
+
+      return PlanParticipationAuditResult(
+        totalRecords: snapshot.docs.length,
+        orphanRecords: orphanEntries,
+        deletedRecords: deletedCount,
+      );
+    } catch (e) {
+      final errorString = e.toString();
+      if (errorString.contains('permission-denied')) {
+        // No registrar error de permisos - es normal si el usuario no tiene permisos admin
+        LoggerService.warning(
+          'Cannot audit plan participations: insufficient permissions',
+          context: 'PLAN_PARTICIPATION_SERVICE',
+        );
+        // Devolver resultado vacío en lugar de rethrow
+        return PlanParticipationAuditResult(
+          totalRecords: 0,
+          orphanRecords: const [],
+          deletedRecords: 0,
+        );
+      }
+      LoggerService.error(
+        'Error auditing plan participations',
+        context: 'PLAN_PARTICIPATION_SERVICE',
+        error: e,
+      );
+      rethrow;
     }
   }
 
@@ -497,4 +726,34 @@ class PlanParticipationService {
       return false;
     }
   }
+}
+
+class PlanParticipationAuditResult {
+  final int totalRecords;
+  final List<PlanParticipationAuditEntry> orphanRecords;
+  final int deletedRecords;
+
+  PlanParticipationAuditResult({
+    required this.totalRecords,
+    required this.orphanRecords,
+    required this.deletedRecords,
+  });
+
+  int get orphanCount => orphanRecords.length;
+}
+
+class PlanParticipationAuditEntry {
+  final String documentId;
+  final String planId;
+  final String userId;
+  final String role;
+  final bool isActive;
+
+  PlanParticipationAuditEntry({
+    required this.documentId,
+    required this.planId,
+    required this.userId,
+    required this.role,
+    required this.isActive,
+  });
 }

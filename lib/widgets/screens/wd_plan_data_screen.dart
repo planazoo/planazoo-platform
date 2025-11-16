@@ -9,8 +9,8 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
-import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/state_transition_dialog.dart';
+import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
@@ -20,17 +20,22 @@ import 'package:unp_calendario/shared/utils/days_remaining_utils.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 import 'package:unp_calendario/shared/utils/plan_validation_utils.dart';
 import 'package:unp_calendario/widgets/dialogs/plan_validation_dialog.dart';
-import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
+import 'package:unp_calendario/shared/models/currency.dart';
+import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
   final VoidCallback? onPlanDeleted;
+  final VoidCallback? onManageParticipants;
 
   const PlanDataScreen({
     super.key,
     required this.plan,
     this.onPlanDeleted,
+    this.onManageParticipants,
   });
 
   @override
@@ -41,119 +46,613 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   late Plan currentPlan;
   XFile? _selectedImage;
   bool _isUploadingImage = false;
+  final _planFormKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _budgetController;
+  late String _selectedVisibility;
+  late String _selectedCurrency;
+  late DateTime _startDate;
+  late DateTime _endDate;
+  String? _selectedTimezone;
+  double? _budget;
+  bool _hasUnsavedChanges = false;
+  bool _isSavingPlan = false;
 
   @override
   void initState() {
     super.initState();
     currentPlan = widget.plan;
+    _initializeFormState();
+  }
+
+  void _initializeFormState() {
+    _nameController = TextEditingController(text: currentPlan.name);
+    _descriptionController = TextEditingController(text: currentPlan.description ?? '');
+    _budget = currentPlan.budget;
+    _budgetController = TextEditingController(
+      text: _budget != null ? _formatBudgetForInput(_budget!) : '',
+    );
+    _selectedVisibility = currentPlan.visibility ?? 'private';
+    _selectedCurrency = currentPlan.currency;
+    _startDate = currentPlan.startDate;
+    _endDate = currentPlan.endDate;
+    _selectedTimezone = currentPlan.timezone ?? TimezoneService.getSystemTimezone();
+    _hasUnsavedChanges = false;
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(currentPlan.name ?? 'Plan Data'),
-        backgroundColor: AppColorScheme.color2,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: () => _showDeleteConfirmation(context),
-            icon: const Icon(Icons.delete),
-            tooltip: 'Eliminar Plan',
+  void didUpdateWidget(covariant PlanDataScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.plan.id != oldWidget.plan.id ||
+        widget.plan.updatedAt != oldWidget.plan.updatedAt ||
+        widget.plan != oldWidget.plan) {
+      currentPlan = widget.plan;
+      _nameController.text = currentPlan.name;
+      _descriptionController.text = currentPlan.description ?? '';
+      _budget = currentPlan.budget;
+      _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
+      _selectedVisibility = currentPlan.visibility ?? 'private';
+      _selectedCurrency = currentPlan.currency;
+      _startDate = currentPlan.startDate;
+      _endDate = currentPlan.endDate;
+      _selectedTimezone = currentPlan.timezone ?? TimezoneService.getSystemTimezone();
+      _hasUnsavedChanges = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _budgetController.dispose();
+    super.dispose();
+  }
+
+  void _markDirty() {
+    if (!_hasUnsavedChanges) {
+      setState(() {
+        _hasUnsavedChanges = true;
+      });
+    }
+  }
+
+  Future<void> _pickStartDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      final normalized = DateTime(picked.year, picked.month, picked.day);
+      if (normalized != _startDate) {
+        setState(() {
+          _startDate = normalized;
+          if (_endDate.isBefore(_startDate)) {
+            _endDate = _startDate;
+          }
+          _markDirty();
+        });
+      }
+    }
+  }
+
+  Future<void> _pickEndDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate,
+      firstDate: _startDate,
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      final normalized = DateTime(picked.year, picked.month, picked.day);
+      if (normalized != _endDate) {
+        setState(() {
+          _endDate = normalized;
+          _markDirty();
+        });
+      }
+    }
+  }
+
+  Future<void> _savePlanDetails() async {
+    final formState = _planFormKey.currentState;
+    if (formState == null) return;
+    if (!formState.validate()) return;
+    if (currentPlan.id == null) return;
+
+    setState(() {
+      _isSavingPlan = true;
+    });
+
+    final loc = AppLocalizations.of(context)!;
+    try {
+      final sanitizedName = _nameController.text.trim();
+      final sanitizedDescription = _descriptionController.text.trim();
+      final normalizedStart = DateTime(_startDate.year, _startDate.month, _startDate.day);
+      final normalizedEnd = DateTime(_endDate.year, _endDate.month, _endDate.day);
+      final newColumnCount = normalizedEnd.difference(normalizedStart).inDays + 1;
+
+      final updatedPlan = currentPlan.copyWith(
+        name: sanitizedName,
+        description: sanitizedDescription.isEmpty ? null : sanitizedDescription,
+        baseDate: normalizedStart,
+        startDate: normalizedStart,
+        endDate: normalizedEnd,
+        columnCount: newColumnCount,
+        visibility: _selectedVisibility,
+        currency: _selectedCurrency,
+        timezone: _selectedTimezone,
+        budget: _budget,
+      );
+
+      final planService = ref.read(planServiceProvider);
+      final success = await planService.updatePlan(updatedPlan);
+
+      if (!mounted) return;
+
+      if (success) {
+        final refreshedPlan = await planService.getPlanById(updatedPlan.id!);
+        if (!mounted) return;
+        setState(() {
+          currentPlan = refreshedPlan ?? updatedPlan;
+          _budget = currentPlan.budget;
+          _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
+          _hasUnsavedChanges = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.planDetailsSaveSuccess),
+            backgroundColor: Colors.green,
           ),
-        ],
-      ),
-      body: Container(
-        color: Colors.grey.shade50,
-      child: Column(
-        children: [
-            // Header personalizado similar al perfil
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.planDetailsSaveError),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al guardar el plan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingPlan = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildParticipantsSection(
+    AppLocalizations loc,
+    AsyncValue<List<PlanParticipation>> participantsAsync,
+  ) {
+    if (currentPlan.id == null) {
+      return const SizedBox.shrink();
+    }
+
+    return participantsAsync.when(
+      data: (participants) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                  Text(
-                    'Planazoo',
-                    style: AppTypography.mediumTitle.copyWith(
-                      color: AppColorScheme.color1,
-                      fontWeight: FontWeight.bold,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.group_outlined, color: AppColorScheme.color4),
+                      const SizedBox(width: 8),
+                      Text(
+                        loc.planDetailsParticipantsTitle,
+                        style: AppTypography.mediumTitle.copyWith(
+                          color: AppColorScheme.color4,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Chip(
+                    label: Text(
+                      '${participants.length}',
+                      style: AppTypography.bodyStyle.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColorScheme.color2,
+                      ),
+                    ),
+                    backgroundColor: AppColorScheme.color2.withOpacity(0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.grey,
-                        size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-            ),
-            // Contenido principal con scroll
-          Expanded(
-            child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                    // Información de permisos según estado (si hay restricciones)
-                    if (PlanStatePermissions.isReadOnly(currentPlan)) ...[
-                      _buildReadOnlyWarning(),
-                      const SizedBox(height: 24),
-                    ],
-                    
-                    // Imagen del plan
-                    _buildPlanImageSection(),
-                    const SizedBox(height: 24),
-                    
-                    // Información del plan en formato compacto
-                    _buildInfoSection(),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Gestión de estado del plan
-                    _buildStateManagementSection(),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Avisos del plan
-                    _buildAnnouncementsSection(),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Botón de eliminar
-                    _buildDeleteButton(),
                 ],
               ),
-            ),
+              if (widget.onManageParticipants != null) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: widget.onManageParticipants,
+                    icon: const Icon(Icons.open_in_new),
+                    label: Text(loc.planDetailsParticipantsManageLink),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColorScheme.color2,
+                      textStyle: AppTypography.bodyStyle.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              if (participants.isEmpty)
+                Text(
+                  loc.planDetailsNoParticipants,
+                  style: AppTypography.bodyStyle.copyWith(
+                    color: Colors.grey.shade600,
+                  ),
+                )
+              else
+                ParticipantsListWidget(
+                  planId: currentPlan.id!,
+                  showActions: false,
+                ),
+            ],
           ),
-          ],
+        );
+      },
+      loading: () => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red.shade200),
+        ),
+        child: Text(
+          'Error al cargar participantes: $error',
+          style: AppTypography.bodyStyle.copyWith(color: Colors.red),
         ),
       ),
     );
   }
 
-  Widget _buildInfoSection() {
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final currentUser = ref.watch(currentUserProvider);
+    final allParticipantsAsync = currentPlan.id != null
+        ? ref.watch(planParticipantsProvider(currentPlan.id!))
+        : const AsyncValue<List<PlanParticipation>>.data(<PlanParticipation>[]);
+    final participantsAsync = currentPlan.id != null
+        ? ref.watch(planRealParticipantsProvider(currentPlan.id!))
+        : const AsyncValue<List<PlanParticipation>>.data(<PlanParticipation>[]);
+    final participantsCount = participantsAsync.maybeWhen(
+      data: (list) => list.length,
+      orElse: () => 0,
+    );
+    final currentRoleLabel = _resolveCurrentUserRoleLabel(
+      currentUser,
+      allParticipantsAsync,
+      loc,
+    );
+    final currentUserHandle = _formatUserHandle(currentUser);
+
+    final isCompact = MediaQuery.of(context).size.width < 900;
+
+    Widget buildHeader() {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              currentPlan.name,
+              style: AppTypography.mediumTitle.copyWith(
+                color: AppColorScheme.color1,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(),
+          ],
+        ),
+      );
+    }
+
+    Widget buildBody() {
+      final horizontalPadding = isCompact ? 16.0 : 20.0;
+      final verticalPadding = isCompact ? 16.0 : 20.0;
+
+      return Container(
+        color: Colors.grey.shade50,
+        child: Column(
+          children: [
+            if (!isCompact) buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  verticalPadding,
+                  horizontalPadding,
+                  verticalPadding,
+                ),
+                child: Form(
+                  key: _planFormKey,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth >= 960;
+                      const double cardSpacing = 24;
+                      const double sideCardWidth = 320;
+
+                      Widget buildTopSection() {
+                        if (isWide) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _buildPlanSummarySection(loc, participantsCount, currentRoleLabel, currentUserHandle),
+                              ),
+                              const SizedBox(width: cardSpacing),
+                              SizedBox(
+                                width: sideCardWidth,
+                                child: _buildStateManagementSection(loc),
+                              ),
+                            ],
+                          );
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildPlanSummarySection(loc, participantsCount, currentRoleLabel, currentUserHandle),
+                            const SizedBox(height: cardSpacing),
+                            _buildStateManagementSection(loc),
+                          ],
+                        );
+                      }
+
+                      Widget buildInfoBlocks() {
+                        if (isWide) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _buildInfoSection(loc, showBaseInfo: true),
+                              ),
+                              const SizedBox(width: cardSpacing),
+                              SizedBox(
+                                width: sideCardWidth,
+                                child: _buildInfoSection(loc, showBaseInfo: false),
+                              ),
+                            ],
+                          );
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildInfoSection(loc, showBaseInfo: true),
+                            const SizedBox(height: cardSpacing),
+                            _buildInfoSection(loc, showBaseInfo: false),
+                          ],
+                        );
+                      }
+
+                      Widget buildParticipantsAndAnnouncements() {
+                        if (isWide) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _buildParticipantsSection(loc, participantsAsync),
+                              ),
+                              const SizedBox(width: cardSpacing),
+                              Expanded(
+                                child: _buildAnnouncementsSection(),
+                              ),
+                            ],
+                          );
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildParticipantsSection(loc, participantsAsync),
+                            const SizedBox(height: cardSpacing),
+                            _buildAnnouncementsSection(),
+                          ],
+                        );
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (PlanStatePermissions.isReadOnly(currentPlan)) ...[
+                            _buildReadOnlyWarning(),
+                            const SizedBox(height: cardSpacing),
+                          ],
+                          if (_hasUnsavedChanges) ...[
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.orange.shade200),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.info_outline, color: Colors.orange.shade700),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      loc.planDetailsUnsavedChanges,
+                                      style: AppTypography.bodyStyle.copyWith(
+                                        color: Colors.orange.shade900,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  OutlinedButton(
+                                    onPressed: _isSavingPlan ? null : () {
+                                      _nameController.text = currentPlan.name;
+                                      _descriptionController.text = currentPlan.description ?? '';
+                                      _budget = currentPlan.budget;
+                                      _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
+                                      _selectedVisibility = currentPlan.visibility ?? 'private';
+                                      _selectedCurrency = currentPlan.currency;
+                                      _startDate = currentPlan.startDate;
+                                      _endDate = currentPlan.endDate;
+                                      _selectedTimezone = currentPlan.timezone ?? TimezoneService.getSystemTimezone();
+                                      setState(() {
+                                        _hasUnsavedChanges = false;
+                                      });
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                      side: BorderSide(color: Colors.orange.shade300),
+                                      foregroundColor: Colors.orange.shade800,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(loc.cancelChanges),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  FilledButton.icon(
+                                    onPressed: _isSavingPlan || PlanStatePermissions.isReadOnly(currentPlan)
+                                        ? null
+                                        : _savePlanDetails,
+                                    icon: _isSavingPlan
+                                        ? SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Icon(Icons.save_outlined),
+                                    label: Text(loc.saveChanges),
+                                    style: FilledButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: cardSpacing),
+                          ],
+                          buildTopSection(),
+                          const SizedBox(height: cardSpacing),
+                          buildInfoBlocks(),
+                          const SizedBox(height: cardSpacing),
+                          buildParticipantsAndAnnouncements(),
+                          const SizedBox(height: cardSpacing),
+                          _buildDeleteButton(),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final body = buildBody();
+
+    if (isCompact) {
+      final canPop = Navigator.of(context).canPop();
+      final headerMeta = [
+        if (currentUserHandle.isNotEmpty) currentUserHandle,
+        if (currentRoleLabel != null) loc.planRoleLabel(currentRoleLabel),
+      ].join(' • ');
+      return Scaffold(
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(currentPlan.name),
+              if (headerMeta.isNotEmpty)
+                Text(
+                  headerMeta,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                      ),
+                ),
+            ],
+          ),
+          leading: canPop
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                )
+              : null,
+          actions: [
+            if (widget.onManageParticipants != null)
+              IconButton(
+                icon: const Icon(Icons.group_outlined),
+                tooltip: loc.planDetailsParticipantsTitle,
+                onPressed: widget.onManageParticipants,
+              ),
+          ],
+        ),
+        backgroundColor: Colors.grey.shade50,
+        body: body,
+      );
+    }
+
+    return body;
+  }
+
+  Widget _buildInfoSection(AppLocalizations loc, {required bool showBaseInfo}) {
+    final showCountdown = DaysRemainingUtils.shouldShowDaysRemaining(currentPlan);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -165,71 +664,169 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Información del Plan',
-            style: AppTypography.mediumTitle.copyWith(
-              color: AppColorScheme.color4,
-              fontWeight: FontWeight.bold,
+          if (showBaseInfo) ...[
+            Text(
+              loc.planDetailsInfoTitle,
+              style: AppTypography.mediumTitle.copyWith(
+                color: AppColorScheme.color4,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          _buildCompactInfoItem('Nombre:', currentPlan.name ?? 'N/A', 
-              editable: PlanStatePermissions.canEditBasicInfo(currentPlan)),
-          _buildCompactInfoItem('UNP ID:', currentPlan.unpId ?? 'N/A', editable: false),
-          _buildCompactInfoItem('ID:', currentPlan.id ?? 'N/A', editable: false),
-          _buildCompactInfoItem('Fecha de Inicio:', _formatDate(currentPlan.startDate),
-              editable: PlanStatePermissions.canModifyDates(currentPlan),
-              blockedReason: PlanStatePermissions.getBlockedReason('modify_dates', currentPlan)),
-          _buildCompactInfoItem('Fecha de Fin:', _formatDate(currentPlan.endDate),
-              editable: PlanStatePermissions.canModifyDates(currentPlan),
-              blockedReason: PlanStatePermissions.getBlockedReason('modify_dates', currentPlan)),
-          _buildCompactInfoItem('Duración:', '${currentPlan.columnCount} días', editable: false),
-          _buildCompactInfoItem('Creado:', _formatDate(currentPlan.createdAt), editable: false),
-          const SizedBox(height: 12),
-          // Badge de estado
-          Row(
-            children: [
-              SizedBox(
-                width: 100,
-                child: Text(
-                  'Estado:',
-                  style: AppTypography.bodyStyle.copyWith(
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              PlanStateBadge(
-                plan: currentPlan,
-                fontSize: 12,
-              ),
-            ],
-          ),
-          // Indicador de días restantes (solo si está confirmado)
-          if (DaysRemainingUtils.shouldShowDaysRemaining(currentPlan)) ...[
-            const SizedBox(height: 12),
-            Row(
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
               children: [
-                SizedBox(
-                  width: 100,
-                  child: Text(
-                    'Inicio:',
-                    style: AppTypography.bodyStyle.copyWith(
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
+                _buildDateTile(
+                  label: loc.createPlanStartDateLabel(_formatDate(_startDate)),
+                  value: _startDate,
+                  onTap: _pickStartDate,
+                ),
+                _buildDateTile(
+                  label: loc.createPlanEndDateLabel(_formatDate(_endDate)),
+                  value: _endDate,
+                  onTap: _pickEndDate,
+                ),
+                _buildDropdownTile(
+                  label: loc.createPlanCurrencyLabel,
+                  value: _selectedCurrency,
+                  items: Currency.supportedCurrencies
+                      .map(
+                        (currency) => DropdownMenuItem(
+                          value: currency.code,
+                          child: Text(
+                            '${currency.code} - ${currency.symbol} ${currency.name}',
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  selectedItemBuilder: (context) => Currency.supportedCurrencies
+                      .map(
+                        (currency) => Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            currency.code,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCurrency = value;
+                      _markDirty();
+                    });
+                  },
+                ),
+                _buildBudgetField(loc),
+                _buildDropdownTile(
+                  label: loc.createPlanVisibilityLabel,
+                  value: _selectedVisibility,
+                  items: [
+                    DropdownMenuItem(
+                      value: 'private',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            loc.createPlanVisibilityPrivateShort,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            loc.createPlanVisibilityPrivate,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    DropdownMenuItem(
+                      value: 'public',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            loc.createPlanVisibilityPublicShort,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            loc.createPlanVisibilityPublic,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey.shade600,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  selectedItemBuilder: (context) => [
+                    loc.createPlanVisibilityPrivateShort,
+                    loc.createPlanVisibilityPublicShort,
+                  ]
+                      .map(
+                        (short) => Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            short,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedVisibility = value;
+                      _markDirty();
+                    });
+                  },
                 ),
-                DaysRemainingIndicator(
-                  plan: currentPlan,
-                  fontSize: 14,
-                  compact: false,
-                  showIcon: true,
-                  showStartingSoonBadge: true,
-                ),
+                _buildTimezoneTile(loc),
               ],
+            ),
+          ] else ...[
+            Text(
+              loc.planDetailsMetaTitle,
+              style: AppTypography.mediumTitle.copyWith(
+                color: AppColorScheme.color4,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                _buildReadOnlyTile('UNP ID', currentPlan.unpId),
+                if (currentPlan.id != null)
+                  _buildReadOnlyTile('ID interno', currentPlan.id!),
+                _buildReadOnlyTile('Creado', _formatDate(currentPlan.createdAt)),
+              ],
+            ),
+          ],
+          if (showCountdown) ...[
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColorScheme.color2.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DaysRemainingIndicator(
+                plan: currentPlan,
+                fontSize: 14,
+                compact: false,
+                showIcon: true,
+                showStartingSoonBadge: true,
+              ),
             ),
           ],
         ],
@@ -237,70 +834,193 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     );
   }
 
-  Widget _buildCompactInfoItem(String label, String value, {
-    bool editable = false,
-    String? blockedReason,
-  }) {
-    final isBlocked = !editable && blockedReason != null;
-    
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
+  Widget _buildReadOnlyTile(String label, String value) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Row(
-              children: [
-                if (isBlocked)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4.0),
-                    child: Icon(
-                      Icons.lock,
-                      size: 14,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                Flexible(
-                  child: Text(
-                    label,
-                    style: AppTypography.bodyStyle.copyWith(
-                      color: isBlocked ? Colors.grey.shade500 : Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
+          Text(
+            label,
+            style: AppTypography.bodyStyle.copyWith(
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: AppTypography.bodyStyle.copyWith(
-                    color: isBlocked ? Colors.grey.shade400 : AppColorScheme.color4,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 14,
-                  ),
-                ),
-                if (isBlocked && blockedReason != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    blockedReason!,
-                    style: AppTypography.bodyStyle.copyWith(
-                      color: Colors.orange.shade700,
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ],
+          const SizedBox(height: 6),
+          SelectableText(
+            value,
+            style: AppTypography.bodyStyle.copyWith(
+              color: AppColorScheme.color4,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTimezoneTile(AppLocalizations loc) {
+    final textTheme = Theme.of(context).textTheme;
+    final commonTimezones = TimezoneService.getCommonTimezones().toList();
+    final fallbackTimezone = TimezoneService.getSystemTimezone();
+    final availableTimezones = commonTimezones.isNotEmpty ? commonTimezones : [fallbackTimezone];
+    final selected = _selectedTimezone ?? currentPlan.timezone ?? fallbackTimezone;
+    final safeSelectedTimezone = availableTimezones.contains(selected) ? selected : availableTimezones.first;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
+      child: DropdownButtonFormField<String>(
+        value: safeSelectedTimezone,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: loc.planTimezoneLabel,
+          labelStyle: textTheme.bodySmall,
+          helperText: loc.planTimezoneHelper,
+          helperMaxLines: 2,
+          helperStyle: textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        items: availableTimezones
+            .map(
+              (tz) => DropdownMenuItem<String>(
+                value: tz,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        TimezoneService.getTimezoneDisplayName(tz),
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      TimezoneService.getUtcOffsetFormatted(tz),
+                      style: textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+        selectedItemBuilder: (context) => availableTimezones
+            .map(
+              (tz) => Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  TimezoneService.getTimezoneDisplayName(tz),
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodyMedium,
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: (value) {
+          if (value == null) return;
+          setState(() {
+            _selectedTimezone = value;
+            _markDirty();
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildDropdownTile({
+    required String label,
+    required String value,
+    required List<DropdownMenuItem<String>> items,
+    required ValueChanged<String> onChanged,
+    DropdownButtonBuilder? selectedItemBuilder,
+  }) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: textTheme.bodySmall,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        items: items,
+        selectedItemBuilder: selectedItemBuilder,
+        onChanged: (selected) {
+          if (selected != null) {
+            onChanged(selected);
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildBudgetField(AppLocalizations loc) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
+      child: TextFormField(
+        controller: _budgetController,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(
+          labelText: loc.planDetailsBudgetLabel,
+          labelStyle: textTheme.bodySmall,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          suffixText: _selectedCurrency,
+        ),
+        validator: (value) {
+          final trimmed = value?.trim() ?? '';
+          if (trimmed.isEmpty) return null;
+          final sanitized = trimmed.replaceAll(',', '.');
+          final parsed = double.tryParse(sanitized);
+          if (parsed == null || parsed < 0) {
+            return loc.planDetailsBudgetInvalid;
+          }
+          return null;
+        },
+        onChanged: (raw) {
+          final trimmed = raw.trim();
+          final sanitized = trimmed.replaceAll(',', '.');
+          setState(() {
+            _budget = trimmed.isEmpty ? null : double.tryParse(sanitized);
+          });
+          _markDirty();
+        },
+      ),
+    );
+  }
+
+  Widget _buildDateTile({
+    required String label,
+    required DateTime value,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: 220,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: label,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            suffixIcon: const Icon(Icons.edit_calendar),
+          ),
+          child: Text(_formatDate(value)),
+        ),
       ),
     );
   }
@@ -337,12 +1057,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     );
   }
 
-  Widget _buildStateManagementSection() {
+  Widget _buildStateManagementSection(AppLocalizations loc) {
     final currentUser = ref.read(currentUserProvider);
     final isOwner = currentUser?.id == currentPlan.userId;
     final currentState = currentPlan.state ?? 'borrador';
-    final stateService = PlanStateService();
-
     // Solo mostrar controles si es el organizador y el plan no está finalizado o cancelado
     if (!isOwner || currentState == 'finalizado' || currentState == 'cancelado') {
       return const SizedBox.shrink();
@@ -412,31 +1130,50 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Icon(Icons.sync_alt, color: AppColorScheme.color3),
+              const SizedBox(width: 8),
+              Text(
+                loc.planDetailsStateTitle,
+                style: AppTypography.mediumTitle.copyWith(
+                  color: AppColorScheme.color4,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           Text(
-            'Gestión de Estado',
-            style: AppTypography.mediumTitle.copyWith(
-              color: AppColorScheme.color4,
-              fontWeight: FontWeight.bold,
+            'Estado actual: ${PlanStateService.getStateDisplayInfo(currentState)['label']}',
+            style: AppTypography.bodyStyle.copyWith(
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 16),
-          ...availableTransitions.map((transition) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _changePlanState(transition['state'] as String),
-                    icon: Icon(transition['icon'] as IconData, size: 18),
-                    label: Text(transition['label'] as String),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: availableTransitions
+                .map(
+                  (transition) => SizedBox(
+                    height: 44,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _changePlanState(transition['state'] as String),
+                      icon: Icon(transition['icon'] as IconData, size: 18),
+                      label: Text(transition['label'] as String),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              )),
+                )
+                .toList(),
+          ),
         ],
       ),
     );
@@ -449,7 +1186,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       if (currentUser != null) {
         // Obtener eventos y participantes
         final eventService = ref.read(eventServiceProvider);
-        final participantsAsync = ref.read(planParticipantsProvider(currentPlan.id!));
+      final participantsAsync = ref.read(planRealParticipantsProvider(currentPlan.id!));
         
         final events = await eventService
             .getEventsByPlanId(currentPlan.id!, currentUser.id)
@@ -548,6 +1285,12 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   Widget _buildDeleteButton() {
+    final currentUser = ref.watch(currentUserProvider);
+    final isOwner = currentUser?.id == currentPlan.userId;
+    if (!isOwner) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -597,115 +1340,254 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     );
   }
 
+  String _formatUserHandle(UserModel? user) {
+    if (user == null) return '';
+    final username = user.username?.trim();
+    if (username != null && username.isNotEmpty) {
+      return '@$username';
+    }
+    final email = user.email?.trim();
+    if (email != null && email.isNotEmpty) {
+      return email;
+    }
+    final displayName = user.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName;
+    }
+    return '';
+  }
+
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  Future<void> _showDeleteConfirmation(BuildContext context) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Eliminar Plan'),
-          content: const Text(
-            '¿Estás seguro de que quieres eliminar este plan definitivamente?\n\n'
-            'Esta acción eliminará:\n'
-            '• El plan de la base de datos\n'
-            '• Todos los eventos del plan\n'
-            '• Todas las participaciones\n\n'
-            'Esta acción no se puede deshacer.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
-              child: const Text('Eliminar'),
-            ),
-          ],
-        );
-      },
-    );
+  String _formatBudgetForInput(double value) {
+    if (value % 1 == 0) {
+      return value.toStringAsFixed(0);
+    }
+    return value.toStringAsFixed(2);
+  }
 
-    if (result == true) {
-      await _deletePlan(context);
+  Future<void> _showDeleteConfirmation(BuildContext context) async {
+    final loc = AppLocalizations.of(context)!;
+    final passwordController = TextEditingController();
+    bool isDeleting = false;
+    String? errorText;
+
+    bool? confirmed;
+    try {
+      confirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: Text(loc.planDeleteDialogTitle),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      loc.planDeleteDialogMessage,
+                      style: AppTypography.bodyStyle.copyWith(
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: passwordController,
+                      obscureText: true,
+                      enabled: !isDeleting,
+                      decoration: InputDecoration(
+                        labelText: loc.planDeleteDialogPasswordLabel,
+                        errorText: errorText,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isDeleting ? null : () => Navigator.of(context).pop(false),
+                    child: Text(loc.cancelChanges),
+                  ),
+                  FilledButton(
+                    onPressed: isDeleting
+                        ? null
+                        : () async {
+                            final password = passwordController.text.trim();
+                            if (password.isEmpty) {
+                              setState(() {
+                                errorText = loc.planDeleteDialogPasswordRequired;
+                              });
+                              return;
+                            }
+                            setState(() {
+                              isDeleting = true;
+                              errorText = null;
+                            });
+                            final success = await _deletePlan(password);
+                            if (!context.mounted) return;
+                            if (success) {
+                              Navigator.of(context).pop(true);
+                            } else {
+                              setState(() {
+                                isDeleting = false;
+                                errorText = loc.planDeleteDialogAuthError;
+                              });
+                            }
+                          },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: isDeleting
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(loc.planDeleteDialogConfirm),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      passwordController.dispose();
+    }
+
+    if (confirmed == true) {
+      widget.onPlanDeleted?.call();
     }
   }
 
-  Future<void> _deletePlan(BuildContext context) async {
-    try {
-      // Mostrar indicador de carga
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+  Future<bool> _deletePlan(String password) async {
+    if (currentPlan.id == null) return false;
 
+    try {
+      final loc = AppLocalizations.of(context)!;
+      final authService = ref.read(authServiceProvider);
       final planService = ref.read(planServiceProvider);
       final eventService = ref.read(eventServiceProvider);
 
-      // Eliminar imagen si existe
+      final planId = currentPlan.id!;
+
+      final success = await authService.deletePlan(
+        planId: planId,
+        reauthenticate: true,
+        password: password,
+      );
+
+      if (!success) {
+        return false;
+      }
+
       if (currentPlan.imageUrl != null) {
         await ImageService.deletePlanImage(currentPlan.imageUrl!);
       }
-      
-      // Eliminar eventos del plan primero
-      await eventService.deleteEventsByPlanId(currentPlan.id!);
-      
-      // Eliminar el plan (esto también elimina las participaciones)
-      final success = await planService.deletePlan(currentPlan.id!);
 
-      // Cerrar el indicador de carga
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
+      await eventService.deleteEventsByPlanId(planId);
 
-      if (success) {
-        // Mostrar mensaje de éxito
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Plan "${currentPlan.name}" eliminado exitosamente'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-        
-        // Notificar que el plan fue eliminado
-        widget.onPlanDeleted?.call();
-      } else {
-        // Mostrar mensaje de error
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al eliminar el plan'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      // Cerrar el indicador de carga si está abierto
-      if (context.mounted) {
-        Navigator.of(context).pop();
+      final deleted = await planService.deletePlan(planId);
+      if (!context.mounted) return deleted;
+
+      if (!deleted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(loc.planDeleteError),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.planDeleteSuccess(currentPlan.name)),
+          backgroundColor: Colors.green,
+        ),
+      );
+      return true;
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_mapDeleteErrorMessage(e.toString().replaceFirst('Exception: ', ''), AppLocalizations.of(context)!)),
             backgroundColor: Colors.red,
           ),
         );
       }
+      return false;
     }
   }
 
-  Widget _buildPlanImageSection() {
+  String _mapDeleteErrorMessage(String errorCode, AppLocalizations loc) {
+    String normalized = errorCode.trim();
+    if (normalized.startsWith('Exception: ')) {
+      normalized = normalized.substring('Exception: '.length);
+    }
+    switch (normalized) {
+      case 'wrong-password':
+      case 'invalid-credential':
+      case 'requires-recent-login':
+        return loc.planDeleteDialogAuthError;
+      case 'auth/missing-password':
+        return loc.planDeleteDialogPasswordRequired;
+      case 'auth/no-email':
+      case 'auth/no-current-user':
+        return loc.planDeleteError;
+      default:
+        return loc.planDeleteError;
+    }
+  }
+
+  String? _resolveCurrentUserRoleLabel(
+    UserModel? currentUser,
+    AsyncValue<List<PlanParticipation>> participantsAsync,
+    AppLocalizations loc,
+  ) {
+    if (currentUser == null) return null;
+    if (currentPlan.userId == currentUser.id) {
+      return loc.planRoleOrganizer;
+    }
+
+    final role = participantsAsync.maybeWhen<String?>(
+      data: (participants) {
+        for (final participation in participants) {
+          if (participation.userId == currentUser.id) {
+            return participation.role;
+          }
+        }
+        return null;
+      },
+      orElse: () => null,
+    );
+
+    return _mapRoleToText(role, loc);
+  }
+
+  String _mapRoleToText(String? role, AppLocalizations loc) {
+    switch (role) {
+      case 'organizer':
+        return loc.planRoleOrganizer;
+      case 'participant':
+        return loc.planRoleParticipant;
+      case 'observer':
+        return loc.planRoleObserver;
+      default:
+        return loc.planRoleUnknown;
+    }
+  }
+
+  Widget _buildPlanSummarySection(AppLocalizations loc, int participantsCount, String? roleLabel, String userHandle) {
+    const double avatarSize = 110;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -714,140 +1596,160 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Imagen del Plan',
-                style: AppTypography.mediumTitle.copyWith(
-                  color: AppColorScheme.color4,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+          _buildPlanAvatar(avatarSize),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: loc.createPlanNameLabel,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  onChanged: (_) => _markDirty(),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return loc.createPlanNameRequiredError;
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              Row(
-                children: [
-                  if (currentPlan.imageUrl != null)
-                    _buildActionButton(
-                      icon: Icons.edit,
-                      label: 'Cambiar',
-                      onPressed: _isUploadingImage ? null : _pickImage,
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(
+                    labelText: loc.createPlanDescriptionLabel,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  if (currentPlan.imageUrl == null)
-                    _buildActionButton(
-                      icon: Icons.add_photo_alternate,
-                      label: 'Añadir',
-                      onPressed: _isUploadingImage ? null : _pickImage,
-                    ),
-                ],
-              ),
-            ],
+                  ),
+                  minLines: 2,
+                  maxLines: 4,
+                  onChanged: (_) => _markDirty(),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  [
+                    if (userHandle.isNotEmpty) userHandle,
+                    if (roleLabel != null) loc.planRoleLabel(roleLabel),
+                  ].where((segment) => segment.isNotEmpty).join(' • '),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColorScheme.color2,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          _buildPlanImageDisplay(),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback? onPressed,
-  }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColorScheme.color2.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: AppColorScheme.color2,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: AppTypography.bodyStyle.copyWith(
-                color: AppColorScheme.color2,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+  Widget _buildPlanAvatar(double size) {
+    final imageUrl = currentPlan.imageUrl;
+
+    Widget buildImage() {
+      if (_selectedImage != null) {
+        return ClipOval(
+          child: Image.file(
+            File(_selectedImage!.path),
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+          ),
+        );
+      }
+      if (imageUrl != null && ImageService.isValidImageUrl(imageUrl)) {
+        return ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                color: AppColorScheme.color2.withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
-          ],
+            errorWidget: (context, url, error) => _buildAvatarFallback(size),
+          ),
+        );
+      }
+      return _buildAvatarFallback(size);
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: buildImage(),
         ),
-      ),
+        Positioned(
+          bottom: -4,
+          right: -4,
+          child: GestureDetector(
+            onTap: _isUploadingImage ? null : _pickImage,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColorScheme.color2,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: _isUploadingImage
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.photo_camera, color: Colors.white, size: 18),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildPlanImageDisplay() {
-    if (currentPlan.imageUrl != null && ImageService.isValidImageUrl(currentPlan.imageUrl)) {
-      return Container(
-        height: 150,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: CachedNetworkImage(
-            imageUrl: currentPlan.imageUrl!,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Container(
-              color: AppColorScheme.color2.withOpacity(0.1),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-            errorWidget: (context, url, error) => _buildDefaultImage(),
-          ),
-        ),
-      );
-    } else {
-      return Container(
-        height: 150,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: _buildDefaultImage(),
-      );
-    }
-  }
-
-  Widget _buildDefaultImage() {
+  Widget _buildAvatarFallback(double size) {
     return Container(
-      color: AppColorScheme.color2.withOpacity(0.1),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.image,
-              size: 48,
-              color: AppColorScheme.color2.withOpacity(0.5),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Sin imagen',
-              style: AppTypography.bodyStyle.copyWith(
-                color: AppColorScheme.color2.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppColorScheme.color2.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        Icons.image_outlined,
+        color: AppColorScheme.color2.withOpacity(0.5),
+        size: size * 0.4,
       ),
     );
   }

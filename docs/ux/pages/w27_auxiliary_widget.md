@@ -1,7 +1,7 @@
 # W27 - Auxiliar
 
 ## Descripción
-Widget auxiliar que proporciona espacio adicional en el dashboard. Ubicado entre los filtros (W26) y la lista de planes (W28), sirve como área de reserva para futuras funcionalidades o como espaciador visual.
+Interruptor de vista que permite alternar la lista de planes (W28) entre modo lista y modo calendario. Se ubica entre los filtros (W26) y el contenedor principal de planes (W28).
 
 ## Ubicación en el Grid
 - **Posición**: C2-C5, R4
@@ -12,17 +12,23 @@ Widget auxiliar que proporciona espacio adicional en el dashboard. Ubicado entre
 
 ### Colores
 - **Fondo**: `AppColorScheme.color0` (color base)
-- **Borde**: Sin borde
-- **Esquinas**: Ángulo recto (sin borderRadius)
+- **Toggle**: Pastilla blanca con borde `AppColorScheme.color2` al 30 %
+- **Iconografía**: `AppColorScheme.color2` cuando está activo, gris medio cuando está inactivo
 
 ### Contenido
-- **Estado actual**: Sin contenido visible
-- **Propósito**: Área auxiliar reservada
+- **Componente**: `ToggleButtons` con dos opciones (`Lista`, `Calendario`)
+- **Tipografía**: `AppTypography.bodyStyle`, 12 px, semibold
+- **Distribución**: Alineado a la derecha con padding horizontal de 20 px
 
 ## Funcionalidad
-- **Interacción**: Ninguna
-- **Estado**: Estático
-- **Propósito**: Espacio auxiliar para futuras implementaciones
+- **Acción**: Cambiar la variable `_isCalendarView`
+- **Estados**: 
+  - `Lista` (valor por defecto) → W28 muestra tarjetas
+  - `Calendario` → W28 muestra el nuevo calendario bimestral
+- **Comportamiento adicional**:
+  - Al entrar en modo calendario, W28 centra el scroll en el mes actual.
+  - Al volver a modo lista se conserva el plan seleccionado previamente.
+- **Feedback**: Cambio de color en icono y texto al estado seleccionado
 
 ## Implementación Técnica
 
@@ -34,6 +40,7 @@ Widget _buildW27(double columnWidth, double rowHeight) {
   final w27Y = rowHeight * 3; // Empieza en la fila R4 (índice 3)
   final w27Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
   final w27Height = rowHeight; // Alto de 1 fila (R4)
+  final loc = AppLocalizations.of(context)!;
   
   return Positioned(
     left: w27X,
@@ -46,19 +53,93 @@ Widget _buildW27(double columnWidth, double rowHeight) {
         // Sin borde
         // Sin borderRadius (esquinas en ángulo recto)
       ),
-      // Sin contenido
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      alignment: Alignment.centerRight,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: AppColorScheme.color2.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: ToggleButtons(
+          isSelected: [
+            !_isCalendarView,
+            _isCalendarView,
+          ],
+          onPressed: (index) {
+            setState(() {
+              _isCalendarView = index == 1;
+            });
+          },
+          borderRadius: BorderRadius.circular(24),
+          renderBorder: false,
+          constraints: const BoxConstraints(minHeight: 36, minWidth: 48),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.view_list_outlined,
+                    color: !_isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    loc.planViewModeList,
+                    style: AppTypography.bodyStyle.copyWith(
+                      fontSize: 12,
+                      color: !_isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_month_outlined,
+                    color: _isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    loc.planViewModeCalendar,
+                    style: AppTypography.bodyStyle.copyWith(
+                      fontSize: 12,
+                      color: _isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     ),
   );
 }
 ```
 
 ### Características Técnicas
-- **Tipo**: `Positioned` con `Container`
-- **Decoración**: Solo color de fondo
-- **Responsive**: Se adapta al tamaño de columnas y filas
-- **Sin interacción**: No tiene `InkWell` ni `GestureDetector`
+- **Tipo**: `Positioned` con `Container` y `ToggleButtons`
+- **Decoración**: Pastilla blanca con borde suave
+- **Responsive**: Ocupa toda la fila reservada; los botones se adaptan al ancho
+- **Interacción**: Gestionada con `setState` (cambio inmediato de `_isCalendarView`)
 
 ## Historial de Cambios
+
+### v2.0 - Selector lista/calendario (enero 2025)
+- Se reemplaza el espacio vacío por el toggle de vistas
+- Se internacionalizan las etiquetas (`Lista`, `Calendario`)
+- Se alinea el componente a la derecha para evitar interferir con filtros
 
 ### T13 - Implementación inicial
 - **Fecha**: Diciembre 2024
@@ -81,13 +162,12 @@ Widget _buildW27(double columnWidth, double rowHeight) {
 - **Preparado para contenido**: Estructura lista para futuras implementaciones
 
 ## Estado Actual
-- ✅ **Implementado**: Widget básico con colores correctos
-- ✅ **Documentado**: Especificaciones completas
-- ⏳ **Pendiente**: Contenido específico (futuro)
-- ⏳ **Pendiente**: Funcionalidades específicas (futuro)
+- ✅ **Implementado**: Toggle funcional lista ↔ calendario
+- ✅ **Documentado**: Especificaciones y estilo actualizados
+- ⏳ **Pendiente**: Animaciones adicionales (si fueran necesarias)
+- ⏳ **Pendiente**: Estadísticas visuales complementarias (futuro)
 
 ## Notas de Desarrollo
-- El widget está preparado para recibir contenido futuro
-- Mantiene consistencia visual con el resto del dashboard
-- Sigue las especificaciones de la T13
-- Puede ser utilizado como área de reserva o espaciador visual
+- Mantener sincronía con nuevas vistas posibles en W28 (p.ej. timeline)
+- Evaluar accesos rápidos (shortcuts) si se añaden más modos
+- Verificar contraste del estado activo al actualizar el esquema de colores

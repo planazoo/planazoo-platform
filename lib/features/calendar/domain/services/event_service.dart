@@ -5,12 +5,15 @@ import '../models/event.dart';
 import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
 import 'event_participant_service.dart';
+import 'event_sync_service.dart';
 import 'timezone_service.dart';
 
 class EventService {
   static const String _collectionName = 'events';
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PlanParticipationService _participationService = PlanParticipationService();
+  final EventParticipantService _eventParticipantService = EventParticipantService();
+  final EventSyncService _eventSyncService = EventSyncService();
 
   // Obtener todos los eventos de un plan (solo para participantes)
   Stream<List<Event>> getEventsByPlanId(String planId, String userId) {
@@ -162,14 +165,33 @@ class EventService {
   }
 
   // Eliminar un evento
+  /// 
+  /// Elimina un evento y todos sus datos relacionados:
+  /// 1. event_participants (participantes registrados en el evento)
+  /// 2. Copias del evento (si es un evento base con copias)
+  /// 3. El evento mismo
+  /// 
+  /// NOTA: Los documentos adjuntos en Firebase Storage deberían eliminarse
+  /// desde el código que llama a este método si es necesario.
   Future<bool> deleteEvent(String eventId) async {
     try {
       final event = await getEventById(eventId);
       if (event == null) return false;
       
-      // Eliminación directa del evento
+      // 1. Eliminar todos los event_participants del evento
+      await _eventParticipantService.deleteAllParticipants(eventId);
       
+      // 2. Si es un evento base, eliminar todas sus copias
+      if (event.isBaseEvent) {
+        await _eventSyncService.deleteEventCopies(eventId);
+      }
+      
+      // 3. Si es una copia, no hay que hacer nada especial (las copias no tienen copias propias)
+      
+      // 4. Eliminar el evento
       await _firestore.collection(_collectionName).doc(eventId).delete();
+      
+      LoggerService.database('Event deleted successfully: $eventId', operation: 'DELETE');
       return true;
     } catch (e) {
       LoggerService.error('Error deleting event', context: 'EVENT_SERVICE', error: e);
@@ -328,6 +350,16 @@ class EventService {
   }
 
   // Eliminar todos los eventos de un plan
+  /// 
+  /// Elimina todos los eventos de un plan y sus datos relacionados.
+  /// 
+  /// NOTA: Los event_participants se eliminan antes desde PlanService.deletePlan(),
+  /// pero este método también los elimina por si se llama directamente.
+  /// 
+  /// Orden de eliminación:
+  /// 1. event_participants de cada evento
+  /// 2. Copias de eventos base
+  /// 3. Eventos del plan
   Future<bool> deleteEventsByPlanId(String planId) async {
     try {
       final querySnapshot = await _firestore
@@ -335,11 +367,33 @@ class EventService {
           .where('planId', isEqualTo: planId)
           .get();
 
+      if (querySnapshot.docs.isEmpty) {
+        return true; // No hay eventos, no hay nada que eliminar
+      }
+
+      // Eliminar datos relacionados de cada evento antes de eliminar los eventos
+      for (final doc in querySnapshot.docs) {
+        final eventId = doc.id;
+        final eventData = doc.data();
+        final isBaseEvent = eventData['isBaseEvent'] as bool? ?? false;
+        
+        // 1. Eliminar event_participants del evento
+        await _eventParticipantService.deleteAllParticipants(eventId);
+        
+        // 2. Si es un evento base, eliminar sus copias
+        if (isBaseEvent) {
+          await _eventSyncService.deleteEventCopies(eventId);
+        }
+      }
+
+      // 3. Eliminar todos los eventos en batch
       final batch = _firestore.batch();
       for (final doc in querySnapshot.docs) {
         batch.delete(doc.reference);
       }
       await batch.commit();
+      
+      LoggerService.database('All events deleted for plan: $planId (${querySnapshot.docs.length} events)', operation: 'DELETE');
       return true;
     } catch (e) {
       LoggerService.error('Error deleting events by planId', context: 'EVENT_SERVICE', error: e);

@@ -1,7 +1,7 @@
 # W28 - Lista de planes
 
 ## Descripción
-Widget que muestra la lista de planes disponibles. Cada plan se muestra con su imagen, información detallada y estado de selección. Los usuarios pueden seleccionar planes para ver sus detalles y calendario.
+Widget que muestra los planes disponibles en dos modos: listado clásico y vista calendario bimestral. El usuario puede alternar el modo desde W27; ambos permiten seleccionar un plan para abrir sus detalles y el calendario principal.
 
 ## Ubicación en el Grid
 - **Posición**: C2-C5, R5-R12
@@ -11,38 +11,43 @@ Widget que muestra la lista de planes disponibles. Cada plan se muestra con su i
 ## Diseño Visual
 
 ### Colores
-- **Contenedor W28**:
-  - Fondo: `AppColorScheme.color0` (blanco)
-  - Bordes: `AppColorScheme.color0` (blancos, prácticamente invisibles)
-- **Plan no seleccionado**: 
-  - Fondo: `AppColorScheme.color0`
-  - Texto: `AppColorScheme.color2`
-- **Plan seleccionado**:
-  - Fondo: `AppColorScheme.color1`
-  - Texto: `AppColorScheme.color2`
+- **Contenedor W28**: Fondo `AppColorScheme.color0`, borde blanco, esquinas 4 px
+- **Modo lista**:
+  - Plan no seleccionado: fondo `color0`, texto `color2`
+  - Plan seleccionado: fondo `color1`, texto `color2`
+- **Modo calendario**:
+  - Celda sin planes: fondo blanco, borde gris claro
+  - Celda con planes: fondo `color2` al 12 %, borde `color2` 80 %, badge `color2`
 
-### Estructura de cada Plan
-- **Izquierda**: Icono/imagen del plan (40x40px)
-- **Centro**: Información del plan en doble línea
-  - Nombre del plan (fuente 12px, negrita)
-  - Fechas del plan (fuente 10px)
-  - Duración en días (fuente 10px)
-  - Participantes (fuente 8px, pequeña)
-- **Derecha**: Sin iconos (según especificación)
+### Estructuras
+- **Modo lista**:
+  - Imagen circular de 40 px
+  - Nombre (12 px bold), fechas (10 px), duración y participantes (8–10 px)
+  - Selección mediante `InkWell`
+- **Modo calendario**:
+  - Mes actual aparece al abrir; scroll arriba para meses previos y abajo para los siguientes (ventana: 5 anteriores, mes actual, 6 posteriores)
+  - Scroll vertical con inercia (`ListView`)
+  - Encabezado `MMMM yyyy` con `AppTypography.mediumTitle`
+  - Cabecera de días (L–D) en mayúsculas
+  - Celdas cuadradas con contador de planes, tooltip al pasar el ratón y selección táctil
 
 ## Funcionalidad
 
 ### Selección de Planes
-- **Clic en plan**: Selecciona el plan y actualiza W5, W6, W31
-- **Estado visual**: El plan seleccionado se destaca con fondo color1
-- **Navegación**: Al seleccionar, se activa el calendario por defecto
+- **Clic en tarjeta (modo lista)**: Selecciona el plan y actualiza W5, W6, W31
+- **Tap en día con planes (modo calendario)**:
+  - Si hay 1 plan → selección directa
+  - Si hay varios → modal con lista de planes para elegir
+- **Estado visual (lista)**: Plan seleccionado con fondo color1
 
 ### Información Mostrada
-- **Imagen del plan**: Circular, con fallback a icono por defecto
-- **Nombre**: Hasta 2 líneas con ellipsis si es muy largo
-- **Fechas**: Formato DD/MM/YYYY - DD/MM/YYYY
-- **Duración**: Número de días del plan
-- **Participantes**: Placeholder por ahora (se implementará en T20)
+- **Modo lista**: Imagen, nombre, fechas, duración (días), participantes activos
+- **Modo calendario**:
+  - Leyenda visual con badge numérico
+  - Tooltip con lista de planes al hover
+  - Modal de detalle muestra nombre + rango de fechas
+  - Texto “No hay planes en estos meses” cuando no hay datos
+  - Scroll que permite revisar meses anteriores y posteriores
 
 ## Implementación Técnica
 
@@ -66,19 +71,36 @@ Widget _buildW28(double columnWidth, double rowHeight) {
         border: Border.all(color: AppColorScheme.color0, width: 1), // Bordes blancos
         borderRadius: BorderRadius.circular(4),
       ),
-      child: PlanListWidget(
-        plans: filteredPlanazoos,
-        selectedPlanId: selectedPlanId,
-        isLoading: isLoading,
-        onPlanSelected: _selectPlanazoo,
-        onPlanDeleted: _deletePlanazoo,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: _isCalendarView
+            ? PlanCalendarView(
+                key: const ValueKey('plan-calendar-view'),
+                plans: filteredPlanazoos,
+                isLoading: isLoading,
+                onPlanSelected: (plan) {
+                  if (plan.id != null) {
+                    _selectPlanazoo(plan.id!);
+                  }
+                },
+              )
+            : PlanListWidget(
+                key: const ValueKey('plan-list-view'),
+                plans: filteredPlanazoos,
+                selectedPlanId: selectedPlanId,
+                isLoading: isLoading,
+                onPlanSelected: _selectPlanazoo,
+                onPlanDeleted: _deletePlanazoo,
+              ),
       ),
     ),
   );
 }
 ```
 
-### PlanCardWidget
+### PlanListWidget (modo lista)
 ```dart
 Widget build(BuildContext context) {
   return Container(
@@ -124,14 +146,52 @@ Widget build(BuildContext context) {
 }
 ```
 
+### PlanCalendarView (modo calendario)
+```dart
+return Padding(
+  padding: const EdgeInsets.all(16),
+  child: ListView.builder(
+    itemCount: months.length,
+    physics: const BouncingScrollPhysics(),
+    itemBuilder: (context, index) {
+      final month = months[index];
+      return Padding(
+        padding: EdgeInsets.only(bottom: index == months.length - 1 ? 0 : 20),
+        child: _MonthCalendar(
+          month: month,
+          planDays: planDays,
+          onPlanSelected: onPlanSelected,
+        ),
+      );
+    },
+  ),
+);
+```
+
 ### Características Técnicas
-- **Tipo**: `Positioned` con `Container` + `PlanListWidget`
-- **Lista**: `ListView.builder` para rendimiento
-- **Responsive**: Se adapta al tamaño de columnas y filas
-- **Estado**: Mantiene el plan seleccionado en `selectedPlanId`
-- **Interacción**: `InkWell` para feedback táctil
+- **Contenedor**: `Positioned` + `AnimatedSwitcher` para transición entre vistas
+- **Modo lista**: `PlanListWidget` (ListView, selección por `InkWell`)
+- **Modo calendario**:
+  - Lista vertical de meses (`ListView`) con ventana fija (mes actual ± 6), scroll inicial posicionado en el mes vigente
+  - Cada mes calcula su altura en función de las semanas
+  - Badge numérico con cantidad de planes por día y tooltip con nombres
+  - Modal inferior con listado cuando hay múltiples planes
+- **Estado**: Controlado por `_isCalendarView` (toggle en W27)
+- **Rendimiento**: Se reutilizan los planes filtrados (`filteredPlanazoos`)
 
 ## Historial de Cambios
+
+### v2.1 - Calendario vertical desplazable (enero 2025)
+- El calendario muestra ventana de 12 meses (scroll vertical) iniciando en el mes actual
+- Cada mes ajusta su altura al número de semanas
+- Tooltip con listado de planes al pasar el ratón por un día con contenido
+- Scroll permite revisar meses previos y futuros sin salir de la vista
+
+### v2.0 - Vista calendario opcional (enero 2025)
+- Añadido `AnimatedSwitcher` para alternar lista/calendario
+- Creado `PlanCalendarView` con selección de días
+- Modal de selección cuando hay varios planes en la misma fecha
+- Mensaje vacío cuando no existen planes en el rango mostrado
 
 ### T14 - Actualización según especificaciones
 - **Fecha**: Diciembre 2024
@@ -148,23 +208,25 @@ Widget build(BuildContext context) {
 ## Consideraciones de UX
 
 ### Experiencia de Usuario
-- **Selección clara**: El plan seleccionado se distingue visualmente
-- **Información completa**: Muestra todos los datos relevantes del plan
-- **Feedback táctil**: `InkWell` proporciona respuesta al tocar
-- **Información organizada**: Estructura clara y legible
+- **Selección clara**: Plan destacado tanto en lista como al elegir desde el calendario
+- **Información completa**: Datos esenciales disponibles en ambos modos
+- **Calendario visual**: Vista rápida de ocupación mensual
+- **Tooltips contextuales**: Nombres de planes disponibles sin abrir el modal
+- **Scroll natural**: Revisión de meses anteriores/posteriores con inercia suave
+- **Feedback táctil**: `InkWell` en lista y celdas animadas en calendario
 
 ### Integración
 - **Con W5**: Muestra la imagen del plan seleccionado
-- **Con W6**: Muestra la información del plan seleccionado
-- **Con W31**: Navega al calendario del plan seleccionado
-- **Con W13**: Se filtra según la búsqueda
+- **Con W6**: Actualiza la información del plan seleccionado
+- **Con W31**: Abre el calendario principal del plan elegido
+- **Con W13/W27**: La lista filtrada se comparte entre ambos modos
 
 ## Estado Actual
-- ✅ **Implementado**: Widget funcional con especificaciones correctas
-- ✅ **Colores correctos**: Sigue el esquema de colores de la app
-- ✅ **Información completa**: Muestra nombre, fechas, duración, participantes
-- ✅ **Documentado**: Especificaciones completas
-- ⏳ **Pendiente**: Implementación real de participantes (T20)
+- ✅ **Implementado**: Lista + calendario conmutables
+- ✅ **Colores correctos**: Se mantiene la paleta del dashboard
+- ✅ **Información completa**: Nombre, fechas, participantes, ocupación mensual
+- ✅ **Documentado**: Especificaciones actualizadas
+- ⏳ **Pendiente**: Resumen de participantes en calendario (futuro)
 
 ## Notas de Desarrollo
 - El widget está completamente funcional según las especificaciones

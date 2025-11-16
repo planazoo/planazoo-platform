@@ -159,8 +159,13 @@ class EventSyncService {
   }) async {
     try {
       // 1. Obtener el evento original
-      final baseEvent = await _eventService.getEventById(baseEventId);
-      if (baseEvent == null || !baseEvent.isBaseEvent) {
+      final baseEventDoc = await _firestore.collection(_collectionName).doc(baseEventId).get();
+      if (!baseEventDoc.exists) {
+        return false;
+      }
+      
+      final baseEvent = Event.fromFirestore(baseEventDoc);
+      if (!baseEvent.isBaseEvent) {
         return false;
       }
 

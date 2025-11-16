@@ -11,6 +11,7 @@ class UserModel {
   final DateTime createdAt;
   final DateTime? lastLoginAt;
   final bool isActive;
+  final bool isAdmin; // Indica si el usuario es administrador de la plataforma
 
   const UserModel({
     required this.id,
@@ -22,6 +23,7 @@ class UserModel {
     required this.createdAt,
     this.lastLoginAt,
     this.isActive = true,
+    this.isAdmin = false, // Por defecto, los usuarios no son administradores
   });
 
   // Factory constructor para crear desde Firestore
@@ -39,6 +41,7 @@ class UserModel {
           ? (data['lastLoginAt'] as Timestamp).toDate() 
           : null,
       isActive: data['isActive'] ?? true,
+      isAdmin: data['isAdmin'] ?? false,
     );
   }
 
@@ -54,6 +57,7 @@ class UserModel {
       createdAt: DateTime.now(),
       lastLoginAt: DateTime.now(),
       isActive: true,
+      isAdmin: false,
     );
   }
 
@@ -70,6 +74,7 @@ class UserModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'lastLoginAt': lastLoginAt != null ? Timestamp.fromDate(lastLoginAt!) : null,
       'isActive': isActive,
+      'isAdmin': isAdmin,
     };
   }
 
@@ -84,6 +89,7 @@ class UserModel {
     DateTime? createdAt,
     DateTime? lastLoginAt,
     bool? isActive,
+    bool? isAdmin,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -95,6 +101,7 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
       isActive: isActive ?? this.isActive,
+      isAdmin: isAdmin ?? this.isAdmin,
     );
   }
 

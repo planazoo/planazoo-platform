@@ -20,6 +20,7 @@ class EventParticipant {
   // NUEVO: estado de confirmación para eventos que requieren confirmación (T120 Fase 2)
   // null = no aplica (evento no requiere confirmación), 'pending' = pendiente, 'confirmed' = confirmado, 'declined' = declinado
   final String? confirmationStatus;
+  final String? _adminCreatedBy; // Campo administrativo: ID del usuario que creó este registro (no expuesto al cliente)
 
   const EventParticipant({
     this.id,
@@ -28,7 +29,8 @@ class EventParticipant {
     required this.registeredAt,
     this.status, // null = 'registered' por defecto
     this.confirmationStatus, // null = no aplica, 'pending' = pendiente, 'confirmed' = confirmado, 'declined' = declinado
-  });
+    String? adminCreatedBy, // Campo administrativo interno
+  }) : _adminCreatedBy = adminCreatedBy;
 
   // Crear desde Firestore
   factory EventParticipant.fromFirestore(DocumentSnapshot doc) {
@@ -40,6 +42,7 @@ class EventParticipant {
       registeredAt: (data['registeredAt'] as Timestamp).toDate(),
       status: data['status'] ?? 'registered', // 'registered' por defecto
       confirmationStatus: data['confirmationStatus'], // null por defecto (compatibilidad hacia atrás)
+      adminCreatedBy: data['_adminCreatedBy'], // Campo administrativo
     );
   }
 
@@ -51,6 +54,7 @@ class EventParticipant {
       'registeredAt': Timestamp.fromDate(registeredAt),
       if (status != null) 'status': status,
       if (confirmationStatus != null) 'confirmationStatus': confirmationStatus,
+      if (_adminCreatedBy != null) '_adminCreatedBy': _adminCreatedBy, // Campo administrativo
     };
   }
 
@@ -62,6 +66,7 @@ class EventParticipant {
     DateTime? registeredAt,
     String? status,
     String? confirmationStatus,
+    String? adminCreatedBy,
   }) {
     return EventParticipant(
       id: id ?? this.id,
@@ -70,6 +75,7 @@ class EventParticipant {
       registeredAt: registeredAt ?? this.registeredAt,
       status: status ?? this.status,
       confirmationStatus: confirmationStatus ?? this.confirmationStatus,
+      adminCreatedBy: adminCreatedBy ?? this._adminCreatedBy,
     );
   }
 

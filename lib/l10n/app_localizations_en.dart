@@ -510,6 +510,256 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createPlan => 'Create Plan';
 
   @override
+  String get createPlanGeneralSectionTitle => 'General Information';
+
+  @override
+  String get createPlanNameLabel => 'Plan name';
+
+  @override
+  String get createPlanNameHint => 'Eg: London Vacation 2025';
+
+  @override
+  String get createPlanNameRequiredError => 'Please enter a name';
+
+  @override
+  String get createPlanNameTooShortError =>
+      'The name must have at least 3 characters';
+
+  @override
+  String get createPlanNameTooLongError =>
+      'The name cannot exceed 100 characters';
+
+  @override
+  String get createPlanUnpIdLabel => 'UNP ID';
+
+  @override
+  String get createPlanUnpIdHint => 'Generating...';
+
+  @override
+  String get createPlanUnpGeneratedHelper => 'Generated automatically';
+
+  @override
+  String createPlanUnpIdHeader(String id) {
+    return 'ID: $id';
+  }
+
+  @override
+  String get createPlanUnpIdLoading => 'Generating UNP ID...';
+
+  @override
+  String get createPlanQuickIntro =>
+      'You can complete the rest of the plan configuration on the next screen.';
+
+  @override
+  String get createPlanContinueButton => 'Continue';
+
+  @override
+  String get createPlanAuthError => 'You need to sign in to create a plan.';
+
+  @override
+  String get createPlanGenericError =>
+      'We couldn\'t create the plan. Please try again.';
+
+  @override
+  String get createPlanDescriptionLabel => 'Description (optional)';
+
+  @override
+  String get createPlanDescriptionHint => 'Briefly describe the plan';
+
+  @override
+  String get createPlanConfigurationSectionTitle => 'Configuration';
+
+  @override
+  String get createPlanCurrencyLabel => 'Plan currency';
+
+  @override
+  String get createPlanVisibilityLabel => 'Visibility';
+
+  @override
+  String get createPlanVisibilityPrivate => 'Private - Only participants';
+
+  @override
+  String get createPlanVisibilityPublic => 'Public - Visible to everyone';
+
+  @override
+  String get createPlanVisibilityPrivateShort => 'Private';
+
+  @override
+  String get createPlanVisibilityPublicShort => 'Public';
+
+  @override
+  String get createPlanImageSectionTitle => 'Plan image (optional)';
+
+  @override
+  String get createPlanSelectImage => 'Change image';
+
+  @override
+  String get planDetailsNoDescription => 'No description provided yet.';
+
+  @override
+  String get planDetailsNoParticipants => 'No participants added yet.';
+
+  @override
+  String get planDetailsInfoTitle => 'Detailed information';
+
+  @override
+  String get planDetailsMetaTitle => 'Plan identifiers';
+
+  @override
+  String get planTimezoneLabel => 'Plan timezone';
+
+  @override
+  String get planTimezoneHelper =>
+      'Used as the default reference when creating events and converting participants\' schedules.';
+
+  @override
+  String get planDetailsStateTitle => 'State management';
+
+  @override
+  String get planDetailsParticipantsTitle => 'Participants';
+
+  @override
+  String get planDetailsParticipantsManageLink => 'Manage participants';
+
+  @override
+  String get planDetailsBudgetLabel => 'Estimated budget';
+
+  @override
+  String get planDetailsBudgetInvalid =>
+      'Enter a valid positive number (use a decimal point)';
+
+  @override
+  String get cancelChanges => 'Discard changes';
+
+  @override
+  String get planDetailsSaveSuccess => 'Changes saved successfully.';
+
+  @override
+  String get planDetailsUnsavedChanges => 'You have unsaved changes.';
+
+  @override
+  String get planDetailsNoAvailableParticipants =>
+      'There are no users available to add.';
+
+  @override
+  String planDetailsParticipantsAdded(int count) {
+    return '$count participants added.';
+  }
+
+  @override
+  String get planDetailsSaveError => 'Could not save the changes.';
+
+  @override
+  String get planDeleteDialogTitle => 'Delete plan';
+
+  @override
+  String get planDeleteDialogMessage =>
+      'This will permanently remove the plan, all events, and participations.\\n\\nPlease re-enter your password to confirm.';
+
+  @override
+  String get planDeleteDialogPasswordLabel => 'Password';
+
+  @override
+  String get planDeleteDialogPasswordRequired =>
+      'Enter your password to confirm.';
+
+  @override
+  String get planDeleteDialogAuthError =>
+      'Incorrect password or insufficient permissions to delete this plan.';
+
+  @override
+  String get planDeleteDialogConfirm => 'Delete plan';
+
+  @override
+  String planDeleteSuccess(String name) {
+    return 'Plan \"$name\" deleted successfully.';
+  }
+
+  @override
+  String get planDeleteError => 'Error deleting plan';
+
+  @override
+  String planRoleLabel(String role) {
+    return 'Role: $role';
+  }
+
+  @override
+  String get planRoleOrganizer => 'Organizer';
+
+  @override
+  String get planRoleParticipant => 'Participant';
+
+  @override
+  String get planRoleObserver => 'Observer';
+
+  @override
+  String get planRoleUnknown => 'Unknown role';
+
+  @override
+  String get planViewModeList => 'List';
+
+  @override
+  String get planViewModeCalendar => 'Calendar';
+
+  @override
+  String get planCalendarEmpty => 'No plans scheduled in these months.';
+
+  @override
+  String get createPlanDatesSectionTitle => 'Plan dates';
+
+  @override
+  String createPlanStartDateLabel(String date) {
+    return 'Start: $date';
+  }
+
+  @override
+  String createPlanEndDateLabel(String date) {
+    return 'End: $date';
+  }
+
+  @override
+  String get createPlanDurationLabel => 'Duration';
+
+  @override
+  String createPlanDurationValue(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '# days',
+      one: '# day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get createPlanParticipantsSectionTitle => 'Participants (optional)';
+
+  @override
+  String get createPlanImageSelected => 'Image selected';
+
+  @override
+  String get createPlanImageSelectedSuccess => 'Image selected successfully';
+
+  @override
+  String get createPlanImageSelectError =>
+      'There was an error selecting the image';
+
+  @override
+  String get createPlanCreating => 'Creating...';
+
+  @override
+  String get createPlanAddParticipantsButton => 'Add participants';
+
+  @override
+  String get createPlanNoParticipants => 'No participants added yet.';
+
+  @override
+  String get createPlanParticipantsBottomSheetTitle => 'Select participants';
+
+  @override
+  String get createPlanParticipantsSave => 'Save selection';
+
+  @override
   String get edit => 'Edit';
 
   @override
@@ -796,4 +1046,113 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cardObtainedSubtitle => 'Mark if you already have the card/ticket';
+
+  @override
+  String get adminInsightsTooltip => 'Admin view';
+
+  @override
+  String get adminInsightsTitle => 'Plan administration overview';
+
+  @override
+  String get adminInsightsExportCsv => 'Export CSV';
+
+  @override
+  String get adminInsightsExportCopied => 'CSV copied to clipboard';
+
+  @override
+  String get adminInsightsRefresh => 'Refresh';
+
+  @override
+  String get adminInsightsEmpty => 'There are no active plans to display.';
+
+  @override
+  String get adminInsightsError => 'We couldn\'t load the data.';
+
+  @override
+  String get adminInsightsRetry => 'Retry';
+
+  @override
+  String get adminInsightsClose => 'Close';
+
+  @override
+  String get adminInsightsParticipantsSection => 'Participants';
+
+  @override
+  String get adminInsightsEventsSection => 'Events';
+
+  @override
+  String get adminInsightsAccommodationsSection => 'Accommodations';
+
+  @override
+  String get adminInsightsNoParticipants =>
+      'No active participants in this plan.';
+
+  @override
+  String get adminInsightsNoEvents => 'No active events registered.';
+
+  @override
+  String get adminInsightsNoAccommodations => 'No accommodations registered.';
+
+  @override
+  String get adminInsightsColumnPlan => 'Plan';
+
+  @override
+  String get adminInsightsColumnStart => 'Start';
+
+  @override
+  String get adminInsightsColumnEnd => 'End';
+
+  @override
+  String get adminInsightsColumnParticipant => 'Participant';
+
+  @override
+  String get adminInsightsColumnRole => 'Role';
+
+  @override
+  String get adminInsightsColumnTimezone => 'Timezone';
+
+  @override
+  String get adminInsightsColumnJoined => 'Joined';
+
+  @override
+  String get adminInsightsColumnEvent => 'Event';
+
+  @override
+  String get adminInsightsColumnDate => 'Date';
+
+  @override
+  String get adminInsightsColumnTime => 'Time';
+
+  @override
+  String get adminInsightsColumnParticipantsShort => 'Participants';
+
+  @override
+  String get adminInsightsColumnAccommodation => 'Accommodation';
+
+  @override
+  String get adminInsightsColumnCheckIn => 'Check-in';
+
+  @override
+  String get adminInsightsColumnCheckOut => 'Check-out';
+
+  @override
+  String get adminInsightsEventStatusRegistered => 'Participating';
+
+  @override
+  String get adminInsightsEventStatusNotRegistered => 'Not participating';
+
+  @override
+  String get adminInsightsEventStatusCancelled => 'Cancelled';
+
+  @override
+  String get adminInsightsEventConfirmationPending => 'Pending';
+
+  @override
+  String get adminInsightsEventConfirmationAccepted => 'Accepted';
+
+  @override
+  String get adminInsightsEventConfirmationDeclined => 'Declined';
+
+  @override
+  String get adminInsightsEventConfirmationMissing => 'No response';
 }

@@ -20,6 +20,12 @@ class PlanListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Si no hay planes, W28 debe quedar en blanco (sin spinner ni mensajes)
+    if (plans.isEmpty) {
+      return Container();
+    }
+
+    // Si hay planes pero estamos en carga, mostrar spinner
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }

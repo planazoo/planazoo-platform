@@ -102,9 +102,13 @@ Widget _buildPlanInfoContent() {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 1),
-        // Email del administrador del plan
+        // Información del usuario actual (username + rol)
         Text(
-          'Admin: ${_getAdminEmail()}',
+          [
+            if (_formatUserHandle(ref.watch(currentUserProvider)).isNotEmpty)
+              _formatUserHandle(ref.watch(currentUserProvider)),
+            if (roleLabel != null) loc.planRoleLabel(roleLabel),
+          ].where((segment) => segment.isNotEmpty).join(' • '),
           style: TextStyle(
             fontSize: 7,
             color: AppColorScheme.color1.withOpacity(0.8),
@@ -133,9 +137,21 @@ String _formatDate(DateTime date) {
   return '${date.day}/${date.month}/${date.year}';
 }
 
-String _getAdminEmail() {
-  final currentUser = ref.read(currentUserProvider);
-  return currentUser?.email ?? 'N/A';
+String _formatUserHandle(UserModel? user) {
+  if (user == null) return '';
+  final username = user.username?.trim();
+  if (username != null && username.isNotEmpty) {
+    return '@$username';
+  }
+  final email = user.email?.trim();
+  if (email != null && email.isNotEmpty) {
+    return email;
+  }
+  final displayName = user.displayName?.trim();
+  if (displayName != null && displayName.isNotEmpty) {
+    return displayName;
+  }
+  return '';
 }
 ```
 
@@ -155,7 +171,7 @@ String _getAdminEmail() {
 ## 🎯 Principios de UX
 
 ### **Información Clara**:
-- Jerarquía visual clara (nombre > fechas > admin)
+- Jerarquía visual clara (nombre > fechas > usuario actual + rol)
 - Tamaños de fuente diferenciados por importancia
 - Colores consistentes con el esquema de la app
 
@@ -170,6 +186,11 @@ String _getAdminEmail() {
 - Integración visual con otros widgets
 
 ## 🔄 Historial de Cambios
+
+### **v1.1** - Manejo de roles visibles
+- Se reemplaza el email del admin por `@username • Rol: …` del usuario actual
+- Se refuerza la coherencia con la cabecera móvil y la pantalla de datos del plan
+- Se mantiene la jerarquía visual y tamaños originales
 
 ### **v1.0** - Implementación inicial
 - Widget básico con información del plan seleccionado

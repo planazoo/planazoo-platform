@@ -27,7 +27,7 @@ final plansStreamProvider = StreamProvider<List<Plan>>((ref) {
     return Stream.value(const <Plan>[]);
   }
 
-  return planService.getPlans();
+  return planService.getPlansForUser(authState.user!.id);
 });
 
 /// StreamProvider para un plan específico por ID (T107: actualización automática cuando se expande)

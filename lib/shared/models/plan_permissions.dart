@@ -12,6 +12,7 @@ class PlanPermissions {
   final DateTime assignedAt;
   final DateTime? expiresAt; // Permisos temporales
   final Map<String, dynamic>? metadata; // Datos adicionales
+  final String? _adminCreatedBy; // Campo administrativo: ID del usuario que creó este registro (no expuesto al cliente)
 
   const PlanPermissions({
     required this.planId,
@@ -22,7 +23,8 @@ class PlanPermissions {
     required this.assignedAt,
     this.expiresAt,
     this.metadata,
-  });
+    String? adminCreatedBy, // Campo administrativo interno
+  }) : _adminCreatedBy = adminCreatedBy;
 
   /// Crea permisos desde Firestore
   factory PlanPermissions.fromFirestore(DocumentSnapshot doc) {
@@ -41,6 +43,7 @@ class PlanPermissions {
           ? (data['expiresAt'] as Timestamp).toDate()
           : null,
       metadata: data['metadata'] as Map<String, dynamic>?,
+      adminCreatedBy: data['_adminCreatedBy'], // Campo administrativo
     );
   }
 
@@ -55,6 +58,7 @@ class PlanPermissions {
       'assignedAt': Timestamp.fromDate(assignedAt),
       'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
       'metadata': metadata,
+      if (_adminCreatedBy != null) '_adminCreatedBy': _adminCreatedBy, // Campo administrativo
     };
   }
 
@@ -68,6 +72,7 @@ class PlanPermissions {
     DateTime? assignedAt,
     DateTime? expiresAt,
     Map<String, dynamic>? metadata,
+    String? adminCreatedBy,
   }) {
     return PlanPermissions(
       planId: planId ?? this.planId,
@@ -78,6 +83,7 @@ class PlanPermissions {
       assignedAt: assignedAt ?? this.assignedAt,
       expiresAt: expiresAt ?? this.expiresAt,
       metadata: metadata ?? this.metadata,
+      adminCreatedBy: adminCreatedBy ?? this._adminCreatedBy,
     );
   }
 

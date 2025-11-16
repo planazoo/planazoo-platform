@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T178**
+**Siguiente código de tarea: T189**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -12,7 +12,7 @@
 - **GRUPO 5:** T40-T45: Timezones (6 completadas, 0 pendientes) - T81, T82: No existen
 - **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 11 pendientes)
 - **Seguridad:** T51-T53: Validación (3 completadas, 0 pendientes), T166-T172: Seguridad avanzada (6 pendientes)
-- **Administración:** T165: Usuarios de administración (1 pendiente)
+- **Administración:** T165: Usuarios de administración (1 pendiente), T188: Sistema de gestión administrativa (1 en progreso)
 - **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
@@ -186,6 +186,125 @@ Para optimizar el tiempo de testing y desarrollo, las tareas se organizan en gru
   - **Estado:** Pendiente
   - **Responsable:** Equipo producto/app
   - **Descripción:** Diseñar plantilla estándar para correos de verificación, recuperación, eliminación, invitaciones, etc., y adaptar el sistema de envío (Firebase Auth + Functions) para usarla cuando sea posible.
+- **T177 - Aviso de cambio de timezone del dispositivo**
+  - **Prioridad:** Media
+  - **Estado:** ✅ Completada (Noviembre 2025)
+  - **Responsable:** Equipo app
+  - **Descripción:** Implementar modal de aviso cuando el usuario cambia la timezone del dispositivo para evitar problemas de sincronización y conversión de timezones.
+- **T178 - Aviso de cambio de timezone del dispositivo**
+  - **Prioridad:** Media
+  - **Estado:** ✅ Completada (Noviembre 2025)
+  - **Responsable:** Equipo app
+  - **Descripción:** Implementar modal de aviso cuando el usuario cambia la timezone del dispositivo para evitar problemas de sincronización y conversión de timezones.
+- **T179 - IA: Diseño flujo importación desde correo**
+  - **Prioridad:** Media
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo producto/app
+  - **Descripción:** Definir alcance del asistente IA para importar eventos desde correos pegados en la UI. Documentar prompts, campos a extraer (título, fechas, timezone, participantes), validaciones y casos edge (ambiguos, multi-evento). Actualizar guías y checklist de testing.
+- **T180 - IA: Importar evento desde correo (MVP)**
+  - **Prioridad:** Media
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo app/backend
+  - **Descripción:** Implementar modal "Importar desde correo" con integración al orquestador IA (function calling) para parsear texto pegado y rellenar el formulario de evento. Incluir validaciones, logging, consentimiento y fallback manual.
+- **T181 - Definir guía de layout modular para pantallas**
+  - **Prioridad:** Media
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo de diseño/UX
+  - **Descripción:** Documentar plantillas de disposición (grid de recuadros) para páginas clave (perfil, datos de plan, formularios). Incluir reglas de secciones, espaciados, tamaños mínimos y cómo combinar columnas/filas para que el equipo comparta el mismo lenguaje visual.
+
+- **T182 - Afinar UI de calendario en W28**
+  - **Prioridad:** Media
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo app
+  - **Descripción:** Ajustar tamaños de celdas, tipografía y espaciado de la vista calendario en W28 para mejorar legibilidad en portátiles de 14" sin cortar filas. Revisar comportamiento de tooltips y consistencia con la lista.
+
+- **T183 - Vista administrativa de planes y participaciones**
+  - **Prioridad:** Media
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo app
+  - **Descripción:** Crear página temporal accesible desde W1 que liste planes activos con sus participantes (roles) y permita exportar la información. Incluir secciones expandibles con eventos y alojamientos activos (nombre, fecha/hora) y exportación por tabla.
+
+- **T184 - Exportar datos administrativos a CSV**
+  - **Prioridad:** Media
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo app
+  - **Descripción:** Implementar exportaciones en formato CSV para planes/eventos/alojamientos desde la vista administrativa temporal, asegurando codificación UTF-8 y separación por comas con cabeceras localizadas.
+
+- **T185 - Seed automático de usuarios de prueba**
+  - **Prioridad:** Media
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo app/backend
+  - **Descripción:** Crear script de seed que lea `docs/configuracion/DATOS_SEMILLA.md`, cree/actualice los usuarios definidos (Firebase Auth + colección `users`) y elimine los que no estén en la lista, usando `username` como identificador. Documentar ejecución y precauciones.
+
+- **T186 - Limpieza/cierre módulo legacy de permisos**
+  - **Prioridad:** Media
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo app/backend
+  - **Descripción:** Revisar uso actual de `plan_permissions`, eliminar o migrar el código legacy (PermissionService, diálogos relacionados) si no se usa, y asegurar que al borrar un plan se limpian todas las colecciones asociadas (`plan_participations`, `plan_permissions`, etc.). Añadir tests/manual checklist para confirmarlo.
+
+- **T187 - Herramienta administrativa para eliminar datos de usuario**
+  - **Prioridad:** Baja
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo app/backend
+  - **Descripción:** Añadir botón o sección en `AdminInsightsScreen` para eliminar todos los datos de un usuario específico. Debe usar `UserService.deleteAllUserData(userId)` y mostrar confirmación crítica con advertencia de que es irreversible. Útil para cumplimiento GDPR y limpieza administrativa. Incluir validación de permisos (solo administradores).
+
+- **T188 - Sistema de gestión administrativa**
+  - **Prioridad:** Alta
+  - **Estado:** En progreso (Fase 1 completada, Fase 2 pendiente)
+  - **Responsable:** Equipo app/backend
+  - **Descripción:** Crear sistema completo de gestión administrativa para permitir modificar/limpiar registros en casos de emergencia (usuarios eliminados, datos huérfanos, borrados por error, etc.). Sistema multi-capa con acceso desde app, scripts locales y futuro panel web.
+  
+  **Componentes:**
+  1. ✅ **Campo `isAdmin` en usuarios:** Añadir campo `isAdmin: bool` a `UserModel` y persistencia en Firestore - **COMPLETADO**
+  2. ✅ **Reglas de Firestore para admins:** Función helper `isAdmin(userId)` y reglas que permitan a admins leer/escribir/eliminar en todas las colecciones - **COMPLETADO**
+  3. ⚠️ **Campo `_adminCreatedBy` en registros críticos:** Añadir campo administrativo (no expuesto al cliente) a `plan_participations`, `event_participants`, `plan_permissions`, `personal_payments` para identificar quién creó cada registro y facilitar limpieza de huérfanos - **PARCIAL (solo PlanParticipation)**
+  4. ⏳ **Actualizar servicios para añadir `_adminCreatedBy`:** Modificar servicios que crean registros para añadir automáticamente `_adminCreatedBy` con el `userId` del usuario autenticado - **PENDIENTE**
+  5. ⏳ **Scripts administrativos locales:** Crear estructura de scripts con Firebase Admin SDK para limpieza de huérfanos, eliminación de datos de usuario, auditorías, etc. - **PENDIENTE**
+  6. ⏳ **Pantalla administrativa en app (fase 2):** UI en la app para admins con herramientas de gestión (auditar, limpiar, modificar registros) - **PENDIENTE**
+  
+  **Criterios de aceptación:**
+  - ✅ Campo `isAdmin` añadido a `UserModel` y persistencia en Firestore
+  - ✅ Reglas de Firestore actualizadas con función `isAdmin()` y permisos para admins
+  - ⚠️ Campo `_adminCreatedBy` añadido a modelos críticos (`PlanParticipation` ✅, `EventParticipant` ⏳, `plan_permissions` ⏳, `personal_payments` ⏳)
+  - ⏳ Servicios actualizados para añadir `_adminCreatedBy` automáticamente al crear registros
+  - ⏳ Scripts administrativos básicos creados (limpiar huérfanos, eliminar datos de usuario)
+  - ⏳ Documentación de scripts administrativos en `docs/admin/SCRIPTS_ADMINISTRATIVOS.md`
+  - ✅ Lista blanca de admins documentada (`docs/admin/ADMINS_WHITELIST.md`)
+  - ✅ `DATOS_SEMILLA.md` actualizado con columna `isAdmin` para todos los usuarios
+  - ⏳ Logs de acciones administrativas (futuro)
+  
+  **Archivos creados:**
+  - ✅ `docs/admin/ADMINS_WHITELIST.md`
+  
+  **Archivos pendientes:**
+  - ⏳ `docs/admin/SCRIPTS_ADMINISTRATIVOS.md`
+  - ⏳ `docs/admin/PROCEDIMIENTOS_EMERGENCIA.md`
+  - ⏳ `scripts/admin/cleanup_orphans.dart` (futuro)
+  - ⏳ `scripts/admin/delete_user_data.dart` (futuro)
+  - ⏳ `scripts/admin/audit_database.dart` (futuro)
+  
+  **Archivos modificados:**
+  - ✅ `lib/features/auth/domain/models/user_model.dart` - Añadido `isAdmin`
+  - ✅ `lib/features/calendar/domain/models/plan_participation.dart` - Añadido `_adminCreatedBy`
+  - ✅ `firestore.rules` - Añadida función `isAdmin()` y reglas para admins
+  - ✅ `docs/configuracion/DATOS_SEMILLA.md` - Añadida columna `isAdmin`
+  - ⏳ `lib/features/calendar/domain/models/event_participant.dart` - Añadir `_adminCreatedBy` (si existe)
+  - ⏳ Servicios que crean registros - Añadir `_adminCreatedBy` al crear:
+    - `PlanParticipationService.createParticipation()`
+    - `EventParticipantService.addParticipant()`
+    - `PermissionService.createPermission()` (si existe)
+    - Otros servicios que crean registros críticos
+  
+  **Estado actual:**
+  - **Fase 1 (Infraestructura base):** ✅ Completada
+    - Sistema de roles de administrador implementado
+    - Reglas de Firestore configuradas
+    - Documentación base creada
+  - **Fase 2 (Implementación completa):** ⏳ Pendiente
+    - Añadir `_adminCreatedBy` a todos los modelos críticos
+    - Actualizar servicios para poblar `_adminCreatedBy` automáticamente
+    - Crear scripts administrativos
+    - Documentar procedimientos
 
 ---
 
@@ -771,13 +890,11 @@ catch (e) {
 **⚠️ Recordatorio:** Al completar estas tareas, actualizar el Plan Frankenstein (`lib/features/testing/demo_data_generator.dart`) con casos de prueba para eventos con diferentes timezones y vuelos cross-timezone.
 
 **📌 Nota Importante:** Esta serie debe implementarse ANTES de T46-T50 (Participantes), ya que el sistema de participantes requiere conversión de timezone por usuario.
-
 ### T40 - Fundamentos Timezone (Base)
 **Estado:** Pendiente  
 **Complejidad:** ⚠️ Alta  
 **Prioridad:** 🔴 Bloqueante para T41-T45 (y recomendado para T46-T50)  
 **Descripción:** Implementar la base fundamental del sistema de timezones. Añadir soporte para que cada evento almacene y muestre su hora en la timezone local donde ocurre el evento.  
-
 **Concepto clave:** Un evento "Almuerzo en Delhi a las 13:00h" debe mostrarse a las 13:00h tanto si lo ve alguien desde España como desde India. La hora es LOCAL del lugar donde ocurre el evento, no del dispositivo que lo visualiza.
 **Criterios de aceptación:** 
 - Añadir campo `timezone` (String) al modelo Event (`lib/features/calendar/domain/models/event.dart`)
@@ -1564,13 +1681,11 @@ CalendarScreen (orchestrator)
 - Documentar parámetros y retornos
 - Crear diagramas de arquitectura
 - Guía de contribución clara
-
 **Archivos a crear:**
 - `docs/API_DOCUMENTATION.md`
 - `docs/arquitectura/ARCHITECTURE_DECISIONS.md`
 - `docs/CONTRIBUTING.md`
 - `docs/SERVICE_EXAMPLES.md`
-
 ---
 ### T100 - Visualización de Timezones en el Calendario
 **Estado:** ✅ Completada  
@@ -1734,7 +1849,7 @@ Se implementó una **combinación de opciones 1, 3 y 4** para maximizar la clari
 4. Identificar índices sin queries asociadas (redundantes)
 5. Identificar queries sin índices (necesitan índices nuevos)
 6. Revisar coherencia entre reglas de seguridad y colecciones utilizadas
-7. Eliminar campos y colecciones obsoletas o no utilizadas
+7. Eliminar campos y colecciones obsoletos o no utilizadas
 
 **Pasos a seguir:**
 
@@ -2351,7 +2466,6 @@ class ContactGroup {
 - ✅ UI con badges de estado
 - ⚠️ Notificaciones de cambio de estado (T105)
 - ✅ Bloqueos funcionales implementados
-
 **Archivos creados:**
 - ✅ `lib/features/calendar/domain/services/plan_state_service.dart` - Servicio de gestión de transiciones
 - ✅ `lib/features/calendar/presentation/widgets/plan_state_badge.dart` - Widget badge de estado
@@ -3145,7 +3259,6 @@ Icono cuadrado formado por 9 círculos iguales (3×3 grid) con espacio entre ell
 2. **Punto centralizado** para todas las opciones del plan
 3. **Visualización clara** de funcionalidades disponibles sin saturar la UI principal
 4. **Personalización futura:** Organizador puede reorganizar iconos (V2)
-
 **Consideraciones UX:**
 - **Animaciones:** Expansión suave del icono 3×3 → panel 5×5, feedback táctil claro
 - **Cierre:** Tocar fuera del panel, botón X, o después de seleccionar acción
@@ -3164,7 +3277,6 @@ Icono cuadrado formado por 9 círculos iguales (3×3 grid) con espacio entre ell
 - Cierre intuitivo (tocar fuera, botón X, o después de acción)
 - Funciona en web y app móvil con adaptación responsive
 - Accesibilidad verificada (tamaños táctiles, contraste, teclado)
-
 **Archivos a crear (futuro):**
 - `lib/widgets/plan/plan_launcher_menu.dart` - Componente principal del menú
 - `lib/widgets/plan/launcher_icon.dart` - Icono 3×3 colapsado
@@ -3945,7 +4057,6 @@ Una app en sí misma es fácil de copiar. Necesitamos identificar y desarrollar 
 - Validación y confirmación con usuario antes de crear
 
 **Barrera de entrada:** Modelos ML entrenados, algoritmo de parsing robusto
-
 ### 3. **Red de Efectos de Red (Red de Participantes)**
 **Concepto:** Cuantos más usuarios usen la app, más valiosa se vuelve para todos.
 **Factores:**
@@ -3962,7 +4073,6 @@ Una app en sí misma es fácil de copiar. Necesitamos identificar y desarrollar 
 ### 4. **Oráculo de Delfos + Valoraciones (T146 + T147)**
 
 **Concepto:** Sistema de recomendaciones inteligentes basado en datos reales de usuarios, no en marketing.
-
 **Ventajas:**
 - Recomendaciones genuinamente útiles (no patrocinadas)
 - Aprende de comportamiento real de usuarios
@@ -4736,7 +4846,6 @@ No todo puede estar en la v1.0. Necesitamos ser selectivos y enfocarnos en lo es
 - ✅ Parte común/personal básica - **IMPLEMENTADO**
 - ⚠️ Habitaciones individuales (T130) - **POSTPONER a v1.1**
 - ⚠️ Conexión con proveedores - **POSTPONER a v1.2**
-
 ### CORE - Autenticación y Usuarios ✅
 **4.1 - Sistema de autenticación:**
 - ✅ Registro con email/password - **IMPLEMENTADO**
@@ -4750,7 +4859,6 @@ No todo puede estar en la v1.0. Necesitamos ser selectivos y enfocarnos en lo es
 - ⚠️ Export de datos GDPR (T129) - **POSTPONER a v1.1** (crítico para UE pero puede ser post-lanzamiento inmediato)
 
 ### SEGURIDAD Y ESTABILIDAD (Crítico) ✅
-
 **5.1 - Seguridad básica:**
 - ✅ Firestore Security Rules (T125) - **IMPLEMENTADO**
 - ✅ Rate Limiting básico (T126) - **IMPLEMENTADO**
@@ -6036,7 +6144,7 @@ Organizador quiere invitar a alguien a unirse al plan
 - El Mac debe estar conectado a Internet y encendido para acceso remoto
 - Considerar usar un router con IP fija o servicio de DNS dinámico si la IP cambia
 - Para mejor performance, usar conexión Ethernet si es posible
-- La compilación puede ser más lenta a través de conexión remota
+- La compilación puede ser más lenta a través de conexión remoto
 - Considerar dejar el Mac conectado a la corriente para evitar que se duerma
 
 ---
@@ -6321,7 +6429,6 @@ firebase deploy --only firestore:indexes
 1. `Hours` - `horaFecha` + `horaNum` (colección obsoleta)
 2. `users` - `email` + `isActive` (no se usa en el código)
 3. `users` - `planId` + `date` + `hour` (índice incorrecto - estos campos no existen en `users`)
-
 **Índices con problemas de nomenclatura (verificar antes de eliminar):**
 - `users` - `displayName` + `IsActive` (debería ser `isActive`)
 - `users` - `createdAt` + `IsActive` (debería ser `isActive`)
@@ -6339,7 +6446,6 @@ firebase deploy --only firestore:indexes
 - docs/configuracion/DEPLOY_INDICES_INSTRUCCIONES.md
 - docs/configuracion/ESTRATEGIA_INDICES_ELIMINAR_TODOS.md
 - firestore.indexes.json
-
 **Relacionado con:**
 - T154 (Migración del Proyecto a Mac/iOS)
 - T155 (Instalación Firebase CLI)
@@ -7117,7 +7223,6 @@ Implementar autenticación de doble factor (2FA) para mejorar la seguridad de la
 3. Implementar flujo de login con segundo factor
 4. Soporte para múltiples métodos de 2FA (SMS, TOTP/Google Authenticator)
 ### Funcionalidades
-
 #### 1. Métodos de 2FA
 - **SMS:** Envío de código por SMS (requiere configuración en Firebase Console)
 - **TOTP:** Códigos generados por apps como Google Authenticator, Authy, etc.
@@ -7138,7 +7243,6 @@ Implementar autenticación de doble factor (2FA) para mejorar la seguridad de la
 - Ver códigos de respaldo
 - Regenerar códigos de respaldo
 - Ver dispositivos confiables
-
 ### Implementación Propuesta
 #### Firebase Authentication
 - Configurar proveedores de 2FA en Firebase Console
