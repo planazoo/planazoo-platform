@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/participant_group.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/participant_group_providers.dart';
-import 'package:unp_calendario/features/calendar/domain/services/user_service.dart';
-import 'package:unp_calendario/shared/models/user_model.dart';
+import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
+import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 
 /// T123: Diálogo para crear o editar grupos de participantes
 class GroupEditDialog extends ConsumerStatefulWidget {
@@ -262,7 +262,11 @@ class _GroupEditDialogState extends ConsumerState<GroupEditDialog> {
                         ..._memberUserIds.map((userId) {
                           final user = _allUsers.firstWhere(
                             (u) => u.id == userId,
-                            orElse: () => UserModel(id: userId, email: userId),
+                            orElse: () => UserModel(
+                              id: userId,
+                              email: userId,
+                              createdAt: DateTime.now(),
+                            ),
                           );
                           return ListTile(
                             dense: true,

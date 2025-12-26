@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/permission.dart';
 import '../models/plan_permissions.dart';
+import '../models/user_role.dart';
 
 /// Widget que muestra un campo de formulario con permisos
 class PermissionBasedField extends StatelessWidget {

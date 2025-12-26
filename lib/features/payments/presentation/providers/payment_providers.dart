@@ -84,7 +84,7 @@ final paymentSummaryProvider = FutureProvider.family<PaymentSummary, String>((re
   final auth = FirebaseAuth.instance;
   for (final participation in participations) {
     try {
-      final userRecord = await auth.currentUser;
+      final userRecord = auth.currentUser;
       // Por ahora usar el userId como nombre, luego se puede mejorar con UserService
       userIdToName[participation.userId] = participation.userId;
     } catch (e) {

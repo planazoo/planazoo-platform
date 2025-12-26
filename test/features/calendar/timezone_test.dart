@@ -239,7 +239,7 @@ void main() {
 
       // Simular DocumentSnapshot
       final mockDoc = MockDocumentSnapshot(firestoreData);
-      final event = Event.fromFirestore(mockDoc);
+      final event = Event.fromFirestore(mockDoc as dynamic);
       
       expect(event.timezone, 'Europe/Madrid');
       expect(event.description, 'Test event from Firestore');
@@ -249,10 +249,10 @@ void main() {
 
 // Mock para DocumentSnapshot
 class MockDocumentSnapshot {
-  final Map<String, dynamic> data;
+  final Map<String, dynamic> _data;
   final String id = 'test-doc-id';
 
-  MockDocumentSnapshot(this.data);
+  MockDocumentSnapshot(this._data);
 
-  Map<String, dynamic> data() => data;
+  Map<String, dynamic> data() => _data;
 }

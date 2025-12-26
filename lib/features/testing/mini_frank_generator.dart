@@ -48,8 +48,7 @@ class MiniFrankGenerator {
     // Crear participantes
     final participants = await _createParticipants(planId, userId);
     
-    // Solo el evento del vuelo a Sídney
-    await _createFlightEvent(planId, userId, participants);
+    // Solo el evento del vuelo a Sídney (se crea en _createDay1Events)
     
 
     
@@ -126,24 +125,10 @@ class MiniFrankGenerator {
       autoAccept: true,
     );
     
-    // Actualizar con timezones personales
-    await participationService.updateParticipation(
-      planId: planId,
-      userId: userId,
-      personalTimezone: 'Europe/Madrid', // Organizador en Madrid
-    );
-    
-    await participationService.updateParticipation(
-      planId: planId,
-      userId: 'mini_frank_participant',
-      personalTimezone: 'America/New_York', // Participante en Nueva York
-    );
-    
-    await participationService.updateParticipation(
-      planId: planId,
-      userId: 'mini_frank_observer',
-      personalTimezone: 'Europe/Paris', // Observador en París
-    );
+    // Actualizar con timezones personales usando el método correcto
+    await participationService.updateUserTimezone(userId, 'Europe/Madrid'); // Organizador en Madrid
+    await participationService.updateUserTimezone('mini_frank_participant', 'America/New_York'); // Participante en Nueva York
+    await participationService.updateUserTimezone('mini_frank_observer', 'Europe/Paris'); // Observador en París
     
 
 
