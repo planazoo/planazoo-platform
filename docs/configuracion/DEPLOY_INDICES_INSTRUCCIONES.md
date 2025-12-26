@@ -97,7 +97,7 @@ firebase firestore:indexes
 1. **plans** (2 índices)
 2. **events** (3 índices)
 3. **plan_participations** (5 índices)
-4. **planInvitations** (4 índices)
+4. **plan_invitations** (4 índices)
 5. **event_participants** (5 índices)
 6. **personal_payments** (3 índices)
 7. **participant_groups** (1 índice)

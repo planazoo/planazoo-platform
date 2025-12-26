@@ -3,8 +3,8 @@
 > Define el sistema de invitaciones a planes y notificaciones de cambios
 
 **Relacionado con:** T104, T105, T110  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Versión:** 1.1  
+**Fecha:** Enero 2025 (Actualizado: Noviembre 2025)
 
 ---
 
@@ -19,6 +19,7 @@ Documentar el sistema completo de invitaciones a participantes y notificaciones 
 | Tipo | Descripción | Prioridad | Canal | Cuándo |
 |------|-------------|-----------|-------|--------|
 | **Invitación** | Invitación a un plan nuevo | Alta | Email + Push | Al invitar |
+| **Invitación cancelada** | El organizador cancela una invitación pendiente | Alta | Email + Push | Al cancelar |
 | **Confirmación** | Participante acepta/rechaza | Normal | Push | Al responder |
 | **Cambio evento** | Modificación de evento | Variable | Variable | Al cambiar |
 | **Cambio participante** | Añadir/eliminar participante | Alta | Email + Push | Al cambiar |
@@ -162,6 +163,78 @@ Notificar a organizador:
 Puedes re-enviar la invitación o eliminarla."
 ```
 
+#### 1.5 - Cancelación de Invitación (Owner/Admin)
+
+**Flujo completo:**
+```
+Organizador → Participantes → Invitaciones pendientes → "Cancelar"
+  ↓
+Confirmación:
+"¿Seguro que deseas cancelar esta invitación para [email]?"
+  ↓
+Sistema:
+- Cambia `status` → "cancelled"
+- Estampa `respondedAt`
+  ↓
+Notificaciones:
+- Email al invitado:
+  Asunto: "Se ha cancelado tu invitación al plan [Nombre]"
+  Contenido: "El organizador ha cancelado la invitación. No necesitas realizar ninguna acción."
+- Push (si el invitado tiene cuenta/app): "Tu invitación a [Nombre] ha sido cancelada"
+- Email al organizador (opcional) o snackbar de confirmación en la app
+  ↓
+UI:
+- La invitación desaparece de la lista de pendientes
+- El contador de invitaciones pendientes se actualiza
+```
+
+**Reglas y seguridad:**
+- Solo el owner del plan o un admin pueden cancelar invitaciones (ver `firestore.rules` `plan_invitations.update` con `status: 'cancelled'`).
+- No se permiten cambios de otros campos al cancelar (solo `status` y `respondedAt`).
+
+#### 1.6 - Aceptar/Rechazar Invitación (Usuario Invitado)
+
+**Flujo completo:**
+```
+Usuario invitado recibe invitación (email o en app)
+  ↓
+Usuario hace clic en link o abre invitación en app
+  ↓
+Sistema verifica:
+- Token válido (si es link)
+- Invitación no expirada (7 días)
+- Estado de invitación es "pending"
+  ↓
+Usuario acepta o rechaza
+  ↓
+Si ACEPTA:
+- Sistema crea `PlanParticipation` con estado "accepted"
+- Sistema actualiza `plan_invitations.status` → "accepted"
+- Sistema estampa `plan_invitations.respondedAt`
+- Usuario es añadido al plan
+- Notificar al organizador
+  ↓
+Si RECHAZA:
+- Sistema actualiza `plan_invitations.status` → "rejected"
+- Sistema estampa `plan_invitations.respondedAt`
+- Usuario NO es añadido al plan
+- Notificar al organizador
+```
+
+**Reglas y seguridad:**
+- **Solo el usuario invitado puede aceptar/rechazar su propia invitación** (ver `firestore.rules` `plan_invitations.update`).
+- La verificación del email se hace de dos formas:
+  1. Primero verifica el email del token de Firebase Auth (`request.auth.token.email`)
+  2. Si no coincide, verifica el email del documento de usuario en Firestore (`users/{userId}.email`)
+- Esta doble verificación asegura que funcione incluso si el email del token no coincide exactamente con el email de la invitación.
+- Solo se pueden actualizar los campos `status` y `respondedAt` (no se pueden modificar `planId`, `email`, `token`, `createdAt`, `expiresAt`, `role`).
+- Solo se puede cambiar el estado de "pending" a "accepted" o "rejected".
+- **Solo el organizador del plan puede eliminar invitaciones** (ver `firestore.rules` `plan_invitations.delete`).
+
+**Notas importantes:**
+- Si la actualización del estado de la invitación falla por permisos, pero la participación se crea correctamente, el sistema continúa funcionando (la participación es lo más importante).
+- El estado de la invitación puede actualizarse manualmente por el organizador o mediante una Cloud Function si es necesario.
+
 ---
 
 ### 2. NOTIFICACIONES DE CAMBIOS (T105)
@@ -215,12 +288,12 @@ Timeline del plan:
 Hace 2 horas
 Aviso de Juan Ramos:
 "Recordatorio: El vuelo sale mañana
-a las 08:00h. Llegar al aeropuerto a las 6:00h."
+ a las 08:00h. Llegar al aeropuerto a las 6:00h."
 ───────────────────────────
 Hace 1 día
 Aviso de Juan Ramos:
 "Actualización: El restaurante ha cambiado
-a uno más cercano al hotel."
+ a uno más cercano al hotel."
 ───────────────────────────
 Hace 3 días
 Aviso de Juan Ramos:
@@ -471,17 +544,25 @@ graph TD
 - ✅ Sistema de invitaciones por email/usuario - COMPLETADO (T104):
   - ✅ Modelo PlanInvitation con token único y expiración (7 días)
   - ✅ InvitationService para gestionar invitaciones
-  - ✅ Búsqueda de usuario por email (si existe, crea participación directa)
+  - ✅ Búsqueda de usuario por email (si existe, requiere aceptación explícita)
   - ✅ Generación de links únicos con token
   - ✅ Página InvitationPage para procesar links (/invitation/{token})
   - ✅ Email HTML con botones "Aceptar" / "Rechazar" (Firebase Functions + SendGrid)
   - ✅ Template HTML responsive con información del plan
-  - ✅ Firestore rules para planInvitations
+  - ✅ Firestore rules para plan_invitations con verificación de email mejorada (token + fallback a documento usuario)
   - ✅ Campo status en PlanParticipation (pending, accepted, rejected, expired)
-  - ✅ Métodos acceptInvitation y rejectInvitation en servicio
-  - ✅ UI diálogo para aceptar/rechazar invitaciones (InvitationResponseDialog)
-  - ✅ Integración en CalendarScreen para detectar invitaciones pendientes
+  - ✅ Métodos acceptInvitationByToken y rejectInvitationByToken en servicio
+  - ✅ UI diálogo para aceptar/rechazar invitaciones por token en app
+  - ✅ Integración en ParticipantsScreen y DashboardPage para mostrar invitaciones pendientes
+  - ✅ Validación de email antes de crear invitación
+  - ✅ Prevención de invitaciones duplicadas (detecta invitaciones pendientes existentes)
+  - ✅ Prevención de invitar usuarios que ya son participantes
+  - ✅ Gestión de invitaciones canceladas por organizador
+  - ✅ Verificación de permisos: solo el usuario invitado puede aceptar/rechazar su propia invitación
+  - ✅ Verificación de permisos: solo el organizador puede eliminar invitaciones
+  - ✅ Manejo de errores cuando la actualización del estado falla pero la participación se crea correctamente
   - ⚠️ Pendiente: Invitaciones por username/nickname (T104 - parte opcional)
+  - ⚠️ Pendiente: Cloud Function para actualizar automáticamente el estado de la invitación cuando se crea una participación
 - ❌ Notificaciones push (Firebase Cloud Messaging) - Pendiente FCM
 - ❌ Historial de notificaciones
 - ✅ Sistema de confirmación de asistencia a eventos - Base (T120 Fase 2):
@@ -501,5 +582,12 @@ graph TD
 ---
 
 *Documento de flujo de invitaciones y notificaciones*  
-*Última actualización: Enero 2025*
+*Última actualización: Noviembre 2025*
+
+**Cambios recientes (v1.1):**
+- ✅ Aclarado que solo el usuario invitado puede aceptar/rechazar su propia invitación
+- ✅ Aclarado que solo el organizador puede eliminar invitaciones
+- ✅ Documentada la verificación de email mejorada (token + fallback a documento usuario)
+- ✅ Documentado el manejo de errores cuando la actualización del estado falla pero la participación se crea correctamente
+- ✅ Actualizada la sección de implementación con todos los detalles completados
 

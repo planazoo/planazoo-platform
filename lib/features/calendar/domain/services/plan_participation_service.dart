@@ -253,7 +253,7 @@ class PlanParticipationService {
     }
   }
 
-  // Eliminar participación (desactivar)
+  // Eliminar participación (eliminar físicamente de Firestore)
   Future<bool> removeParticipation(String planId, String userId) async {
     try {
       final participation = await getParticipation(planId, userId);
@@ -262,15 +262,19 @@ class PlanParticipationService {
         return false;
       }
 
-      final updatedParticipation = participation.copyWith(
-        isActive: false,
-        lastActiveAt: DateTime.now(),
-      );
+      // 1. Eliminar todos los event_participants de este usuario en este plan
+      await _deleteEventParticipantsByUser(planId, userId);
 
+      // 2. Eliminar todos los permisos de este usuario en este plan
+      await _deletePlanPermissionsByUser(planId, userId);
+
+      // 3. Eliminar físicamente el documento de plan_participations
       await _firestore
           .collection(_collectionName)
           .doc(participation.id!)
-          .update(updatedParticipation.toFirestore());
+          .delete();
+
+      // 4. Decrementar contador de participantes del plan
       try {
         await _firestore
             .collection('plans')
@@ -284,12 +288,93 @@ class PlanParticipationService {
         );
       }
       
-      LoggerService.database('Participation removed: ${participation.id}', operation: 'UPDATE');
+      LoggerService.database('Participation deleted: ${participation.id}', operation: 'DELETE');
       return true;
     } catch (e) {
       LoggerService.error('Error removing participation: $planId, $userId', 
           context: 'PLAN_PARTICIPATION_SERVICE', error: e);
       return false;
+    }
+  }
+
+  /// Eliminar todos los event_participants de un usuario en un plan
+  Future<void> _deleteEventParticipantsByUser(String planId, String userId) async {
+    try {
+      // Obtener todos los eventos del plan
+      final eventsSnapshot = await _firestore
+          .collection('events')
+          .where('planId', isEqualTo: planId)
+          .get();
+
+      if (eventsSnapshot.docs.isEmpty) {
+        return;
+      }
+
+      // Obtener todos los IDs de eventos
+      final eventIds = eventsSnapshot.docs.map((doc) => doc.id).toList();
+
+      // Eliminar todos los event_participants de este usuario en estos eventos
+      final batch = _firestore.batch();
+      int deletedCount = 0;
+
+      for (final eventId in eventIds) {
+        final participantsSnapshot = await _firestore
+            .collection('event_participants')
+            .where('eventId', isEqualTo: eventId)
+            .where('userId', isEqualTo: userId)
+            .get();
+
+        for (var doc in participantsSnapshot.docs) {
+          batch.delete(doc.reference);
+          deletedCount++;
+        }
+      }
+
+      if (deletedCount > 0) {
+        await batch.commit();
+        LoggerService.database(
+          'Deleted $deletedCount event participants for user $userId in plan $planId',
+          operation: 'DELETE',
+        );
+      }
+    } catch (e) {
+      LoggerService.error(
+        'Error deleting event participants for user: $userId, plan: $planId',
+        context: 'PLAN_PARTICIPATION_SERVICE',
+        error: e,
+      );
+    }
+  }
+
+  /// Eliminar todos los permisos de un usuario en un plan
+  Future<void> _deletePlanPermissionsByUser(String planId, String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('plan_permissions')
+          .where('planId', isEqualTo: planId)
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return;
+      }
+
+      final batch = _firestore.batch();
+      for (var doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
+      LoggerService.database(
+        'Deleted ${querySnapshot.docs.length} plan permissions for user $userId in plan $planId',
+        operation: 'DELETE',
+      );
+    } catch (e) {
+      LoggerService.error(
+        'Error deleting plan permissions for user: $userId, plan: $planId',
+        context: 'PLAN_PARTICIPATION_SERVICE',
+        error: e,
+      );
     }
   }
 

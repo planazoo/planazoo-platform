@@ -52,7 +52,7 @@ firebase functions:log
 
 ### `sendInvitationEmail`
 
-**Trigger:** Se ejecuta automáticamente cuando se crea un documento en `planInvitations/{invitationId}`.
+**Trigger:** Se ejecuta automáticamente cuando se crea un documento en `plan_invitations/{invitationId}`.
 
 **Qué hace:**
 1. Verifica que la invitación tenga status `pending`

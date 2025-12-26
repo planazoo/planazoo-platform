@@ -180,7 +180,7 @@ function getInvitationEmailTemplate(invitationData) {
 
 // Cloud Function: Enviar email cuando se crea una invitación (T104)
 exports.sendInvitationEmail = functions.firestore
-  .document('planInvitations/{invitationId}')
+  .document('plan_invitations/{invitationId}')
   .onCreate(async (snap, context) => {
     const invitation = snap.data();
     const invitationId = context.params.invitationId;

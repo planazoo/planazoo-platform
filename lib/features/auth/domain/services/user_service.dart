@@ -238,7 +238,7 @@ class UserService {
   /// 4. Eventos creados por el usuario (y sus event_participants)
   /// 5. Participaciones en eventos (event_participants donde el usuario es participante)
   /// 6. Permisos del usuario (plan_permissions)
-  /// 7. Invitaciones por email (planInvitations)
+  /// 7. Invitaciones por email (plan_invitations)
   /// 8. Pagos personales (personal_payments)
   /// 9. Grupos de participantes (participant_groups)
   /// 10. Preferencias del usuario (userPreferences)
@@ -327,10 +327,10 @@ class UserService {
         LoggerService.database('Deleted ${permissionsSnapshot.docs.length} plan permissions', operation: 'DELETE');
       }
       
-      // 6. Eliminar invitaciones por email (planInvitations)
+      // 6. Eliminar invitaciones por email (plan_invitations) y las creadas por el usuario (invitedBy)
       if (userEmail != null) {
         final invitationsSnapshot = await _firestore
-            .collection('planInvitations')
+            .collection('plan_invitations')
             .where('email', isEqualTo: userEmail.toLowerCase())
             .get();
         
@@ -342,6 +342,19 @@ class UserService {
           await batch.commit();
           LoggerService.database('Deleted ${invitationsSnapshot.docs.length} plan invitations', operation: 'DELETE');
         }
+      }
+      // Invitaciones creadas por el usuario (pueden ser de planes de otros owners)
+      final createdInvitationsSnapshot = await _firestore
+          .collection('plan_invitations')
+          .where('invitedBy', isEqualTo: userId)
+          .get();
+      if (createdInvitationsSnapshot.docs.isNotEmpty) {
+        final batch = _firestore.batch();
+        for (final doc in createdInvitationsSnapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+        LoggerService.database('Deleted ${createdInvitationsSnapshot.docs.length} plan invitations created by user', operation: 'DELETE');
       }
       
       // 7. Eliminar pagos personales (personal_payments)

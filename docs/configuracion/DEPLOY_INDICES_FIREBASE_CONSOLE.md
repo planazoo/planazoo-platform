@@ -120,11 +120,11 @@
 
 ---
 
-### **COLLECTION: `planInvitations`** (4 índices)
+### **COLLECTION: `plan_invitations`** (4 índices)
 
 #### Índice 11: `planId` + `status` + `createdAt`
 1. Haz clic en **"Add Index"**
-2. **Collection ID:** `planInvitations`
+2. **Collection ID:** `plan_invitations`
 3. **Fields:**
    - Campo 1: `planId` → **Ascending** ⬆️
    - Campo 2: `status` → **Ascending** ⬆️
@@ -133,14 +133,14 @@
 
 #### Índice 12: `token`
 1. Haz clic en **"Add Index"**
-2. **Collection ID:** `planInvitations`
+2. **Collection ID:** `plan_invitations`
 3. **Fields:**
    - Campo 1: `token` → **Ascending** ⬆️
 4. Haz clic en **"Create"**
 
 #### Índice 13: `planId` + `email` + `status`
 1. Haz clic en **"Add Index"**
-2. **Collection ID:** `planInvitations`
+2. **Collection ID:** `plan_invitations`
 3. **Fields:**
    - Campo 1: `planId` → **Ascending** ⬆️
    - Campo 2: `email` → **Ascending** ⬆️
@@ -149,7 +149,7 @@
 
 #### Índice 14: `status` + `expiresAt`
 1. Haz clic en **"Add Index"**
-2. **Collection ID:** `planInvitations`
+2. **Collection ID:** `plan_invitations`
 3. **Fields:**
    - Campo 1: `status` → **Ascending** ⬆️
    - Campo 2: `expiresAt` → **Ascending** ⬆️
@@ -343,7 +343,7 @@ Después de completar todos los pasos, deberías tener:
 - [ ] Crear 2 índices de `plans`
 - [ ] Crear 3 índices de `events`
 - [ ] Crear 5 índices de `plan_participations`
-- [ ] Crear 4 índices de `planInvitations`
+- [ ] Crear 4 índices de `plan_invitations`
 - [ ] Crear 5 índices de `event_participants`
 - [ ] Crear 3 índices de `personal_payments`
 - [ ] Crear 1 índice de `participant_groups`

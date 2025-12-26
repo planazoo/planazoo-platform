@@ -38,9 +38,12 @@ import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
+import 'package:flutter/services.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -74,6 +77,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   final Map<String, List<String>> _planParticipantNames = {};
   final Map<String, StreamSubscription<List<PlanParticipation>>> _participantSubscriptions = {};
   final Map<String, String> _userNameCache = {};
+  final InvitationService _invitationService = InvitationService();
   
   @override
   void initState() {
@@ -240,7 +244,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     // Comparar si la lista realmente cambió (comparación por referencia e IDs)
     final plansChanged = forceUpdate || !_listsEqual(planazoos, plans);
     
-    if (!plansChanged) return; // No hacer nada si no cambió
+    // SIEMPRE actualizar isLoading a false, incluso si la lista no cambió
+    // Esto asegura que la pantalla "Aún no tienes planes" se muestre correctamente
+    final shouldUpdate = plansChanged || isLoading;
+    
+    if (!shouldUpdate) return; // No hacer nada si no cambió y ya no está cargando
     
     _syncParticipantListeners(plans);
     
@@ -595,14 +603,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     // Escuchar cambios en el stream y actualizar el estado local
     // ref.listen solo se ejecuta cuando el valor cambia, no en cada build
     ref.listen<AsyncValue<List<Plan>>>(plansStreamProvider, (previous, next) {
-      // Procesar cuando hay datos disponibles
+      // Procesar cuando hay datos disponibles (incluso si es una lista vacía)
       if (next.hasValue && next.value != null) {
         final plans = next.value!;
         _processPlansUpdate(plans);
+      } else if (next.hasValue && next.value == null) {
+        // Si el valor es null, tratar como lista vacía
+        _processPlansUpdate([]);
       }
       
       // Manejar errores
-        if (next.hasError) {
+      if (next.hasError) {
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
@@ -623,6 +634,24 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         }
       }
     });
+    
+    // También verificar el estado actual del provider para manejar el caso inicial
+    final plansAsync = ref.read(plansStreamProvider);
+    if (plansAsync.hasValue && plansAsync.value != null) {
+      // Si ya hay datos disponibles, procesarlos inmediatamente
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _processPlansUpdate(plansAsync.value!);
+        }
+      });
+    } else if (plansAsync.hasValue && plansAsync.value == null) {
+      // Si el valor es null, tratar como lista vacía
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _processPlansUpdate([]);
+        }
+      });
+    }
     
     return Scaffold(
       body: Stack(
@@ -2845,10 +2874,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildNoPlansYet() {
-    return Center(
+    final user = ref.watch(currentUserProvider);
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // Sección de invitaciones pendientes
+          if (user != null) _buildPendingInvitationsBanner(),
+          
+          const SizedBox(height: 32),
+          
+          // Mensaje de no planes
           Icon(
             Icons.event_busy,
             size: 64,
@@ -2874,33 +2912,320 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     );
   }
 
+  Widget _buildPendingInvitationsBanner() {
+    final user = ref.watch(currentUserProvider);
+    if (user == null) return const SizedBox.shrink();
+    
+    return FutureBuilder<List<PlanInvitation>>(
+      future: _invitationService.getPendingInvitationsByEmail(user.email),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const SizedBox.shrink();
+        }
+        
+        final invitations = snapshot.data ?? [];
+        if (invitations.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.orange.shade50,
+            border: Border.all(
+              color: Colors.orange.shade300,
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.mail_outline, color: Colors.orange.shade700, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Tienes ${invitations.length} invitación(es) pendiente(s)',
+                      style: AppTypography.titleStyle.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...invitations.map((inv) => _buildInvitationCard(inv)),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showAcceptRejectDialog(),
+                  icon: const Icon(Icons.vpn_key_outlined),
+                  label: const Text('Aceptar/Rechazar por token'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInvitationCard(PlanInvitation invitation) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.orange.shade200),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Plan: ${invitation.planId}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                if (invitation.role != null)
+                  Text(
+                    'Rol: ${invitation.role}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                if (invitation.token != null)
+                  TextButton.icon(
+                    onPressed: () async {
+                      final link = _invitationService.generateInvitationLink(invitation.token!);
+                      await Clipboard.setData(ClipboardData(text: link));
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Link copiado al portapapeles')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.link, size: 16),
+                    label: const Text('Copiar link'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showAcceptRejectDialog() async {
+    final tokenController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isAccept = true;
+    final user = ref.read(currentUserProvider);
+    
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Debes iniciar sesión para aceptar invitaciones'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Gestionar invitación por token'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: tokenController,
+                  decoration: const InputDecoration(
+                    labelText: 'Link o token de invitación',
+                    hintText: 'Pega el link completo o solo el token',
+                    helperText: 'Ejemplo: https://planazoo.app/invitation/abc123... o solo abc123...',
+                  ),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Introduce el link o token';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<bool>(
+                        title: const Text('Aceptar'),
+                        value: true,
+                        groupValue: isAccept,
+                        onChanged: (v) => setDialogState(() => isAccept = v ?? true),
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<bool>(
+                        title: const Text('Rechazar'),
+                        value: false,
+                        groupValue: isAccept,
+                        onChanged: (v) => setDialogState(() => isAccept = v ?? false),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (!formKey.currentState!.validate()) return;
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('Continuar'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true) {
+      String input = tokenController.text.trim();
+      String token = input;
+      if (input.contains('/invitation/')) {
+        final parts = input.split('/invitation/');
+        if (parts.length > 1) {
+          token = parts[1].split('?').first;
+        }
+      }
+      
+      if (token.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Token inválido'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+      
+      bool ok = false;
+      if (isAccept) {
+        ok = await _invitationService.acceptInvitationByToken(token, user.id);
+        if (ok && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Invitación aceptada. Has sido añadido al plan.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          setState(() {}); // Refrescar para mostrar cambios
+        } else if (!ok && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ No se pudo procesar el token. Verifica que sea válido y no haya expirado.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ok = await _invitationService.rejectInvitationByToken(token);
+        if (ok && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Invitación rechazada'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          setState(() {}); // Refrescar para mostrar cambios
+        } else if (!ok && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ No se pudo procesar el token. Verifica que sea válido y no haya expirado.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   // NUEVO: Método para mostrar contenido según la pantalla seleccionada
   Widget _buildScreenContent() {
+    Widget content;
     switch (currentScreen) {
       case 'planData':
-        return _buildPlanDataScreen();
+        content = _buildPlanDataScreen();
+        break;
       case 'stats':
-        return _buildStatsScreen();
+        content = _buildStatsScreen();
+        break;
       case 'payments':
-        return _buildPaymentsScreen();
+        content = _buildPaymentsScreen();
+        break;
       case 'profile':
-        return _buildProfileScreen();
+        content = _buildProfileScreen();
+        break;
       case 'email':
-        return _buildEmailScreen();
+        content = _buildEmailScreen();
+        break;
       case 'participants':
-        return _buildParticipantsScreen();
+        content = _buildParticipantsScreen();
+        break;
       case 'adminInsights':
-        return AdminInsightsScreen(
+        content = AdminInsightsScreen(
           onClose: () {
             setState(() {
               currentScreen = 'calendar';
             });
           },
         );
+        break;
       case 'calendar':
       default:
-        return _buildCalendarWidget();
+        content = _buildCalendarWidget();
+        break;
     }
+    
+    // Añadir banner de invitaciones pendientes en la parte superior
+    return Column(
+      children: [
+        _buildPendingInvitationsBanner(),
+        Expanded(child: content),
+      ],
+    );
   }
 
   // NUEVO: Pantalla de datos principales del plan

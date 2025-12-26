@@ -11,7 +11,7 @@ Usuario invita por email
   ↓
 InvitationService.createInvitation()
   ↓
-Firestore: planInvitations/{id} creado
+Firestore: plan_invitations/{id} creado
   ↓
 Cloud Function: sendInvitationEmail (trigger onCreate)
   ↓
@@ -74,7 +74,7 @@ El email incluye:
    - `InvitationService.createInvitation()` crea el documento en Firestore
 
 2. **Cloud Function se activa**
-   - Detecta creación en `planInvitations/{id}`
+   - Detecta creación en `plan_invitations/{id}`
    - Obtiene datos del plan y organizador
    - Genera HTML del email
    - Envía email vía SendGrid

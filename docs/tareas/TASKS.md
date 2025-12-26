@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T189**
+**Siguiente código de tarea: T190**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -30,7 +30,7 @@
 
 **Migración:** T154-T156: Migración a Mac/iOS (3 pendientes)
 
-**Total: 145 tareas documentadas (70 completadas, 75 pendientes)**
+**Total: 146 tareas documentadas (70 completadas, 76 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -646,7 +646,6 @@ Layer 5: OverlaysLayer (tooltips, menus)
 **Complejidad:** ⚠️ Media  
 **Depende de:** T63, T64  
 **Descripción:** Permitir transferir la propiedad de un evento de un usuario a otro.
-
 **Criterios de aceptación:**
 - Opción "Transferir evento" en EventDialog (solo para creador + admins)
 - Selector de nuevo propietario
@@ -1289,7 +1288,6 @@ Al desplegar:
 - Funcionalidades de administración
 
 ---
-
 ## T19 - Valorar mouse hover en widgets W14-W25
 **Estado:** Pendiente  
 **Descripción:** Valorar si activamos el mouse hover en los widgets W14 a W25. Evaluar si añadir efectos visuales cuando el usuario pasa el mouse por encima de estos widgets mejoraría la experiencia de usuario.  
@@ -1905,7 +1903,7 @@ Se implementó una **combinación de opciones 1, 3 y 4** para maximizar la clari
 - `plans`: 2 nuevos índices
 - `events`: 3 nuevos índices
 - `plan_participations`: 5 nuevos índices
-- `planInvitations`: 2 nuevos índices
+- `plan_invitations`: 2 nuevos índices
 - `event_participants`: 3 nuevos índices
 - `participant_groups`: 1 nuevo índice
 - `users`: 2 nuevos índices
@@ -1934,7 +1932,6 @@ Permitir que cada plan tenga su moneda base (EUR, USD, GBP, JPY, etc.) y facilit
   - Locale para formateo
 - [x] Lista de monedas soportadas (EUR, USD, GBP, JPY como mínimo)
 - [x] Método para obtener moneda por código ISO
-
 #### 1.2 - Integración en Plan
 - [x] Añadir campo `currency` al modelo `Plan` (String, código ISO)
 - [x] Default: 'EUR' para planes existentes y nuevos
@@ -2202,6 +2199,37 @@ Permitir que cada plan tenga su moneda base (EUR, USD, GBP, JPY, etc.) y facilit
 - ✅ UI clara para organizador y participantes (Completada)
 - ✅ Persistencia en Firestore
 - ⚠️ Testing básico del flujo (pendiente testing completo)
+
+---
+
+### T189 - Mejorar UX del diálogo de invitaciones por email
+**Estado:** Pendiente  
+**Complejidad:** ⚠️ Baja  
+**Prioridad:** 🟡 Baja  
+**Relacionado con:** T120 (Sistema de Invitaciones), T104 (Invitaciones a Planes)  
+**Descripción:** Mejorar la experiencia de usuario del diálogo de invitaciones por email para que los mensajes de error y validación aparezcan dentro del modal en lugar de después de cerrarlo.
+
+**Problema actual:**
+- Los mensajes de error (email inválido, usuario ya participante, etc.) aparecen como snackbars después de cerrar el modal
+- Esto crea una experiencia confusa donde el usuario cierra el diálogo y luego ve el error
+
+**Solución propuesta:**
+- Convertir el diálogo actual en un `StatefulWidget` con validación en tiempo real
+- Mostrar errores de validación directamente en los campos del formulario (usando `errorText` en `TextField`)
+- Mostrar mensajes de error específicos (usuario ya participante, email inválido) dentro del diálogo antes de cerrarlo
+- Mantener el diálogo abierto cuando hay errores para que el usuario pueda corregirlos
+- Solo cerrar el diálogo cuando la invitación se crea exitosamente
+
+**Criterios de aceptación:**
+- ✅ Validación de email en tiempo real dentro del diálogo
+- ✅ Mensaje de error "Este usuario ya es participante" visible dentro del diálogo
+- ✅ Mensaje de error "Email inválido" visible en el campo de email
+- ✅ El diálogo solo se cierra cuando la invitación se crea exitosamente
+- ✅ Mejor feedback visual durante el proceso de creación (loading state)
+- ✅ Mantener funcionalidad existente (copiar link, etc.)
+
+**Archivos a modificar:**
+- `lib/widgets/screens/wd_participants_screen.dart` - Método `_inviteByEmailDialog()`
 
 ---
 
@@ -2581,7 +2609,6 @@ class ContactGroup {
 - ⚠️ Comparación presupuesto (pendiente - requiere T101)
 - ⚠️ Exportar a PDF/Excel (pendiente - mejora futura)
 - ✅ UI responsive
-
 **Archivos creados:**
 - ✅ `lib/features/stats/domain/models/plan_stats.dart` - Modelo de estadísticas
 - ✅ `lib/features/stats/domain/services/plan_stats_service.dart` - Servicio de cálculo
@@ -3230,7 +3257,6 @@ Los desplazamientos largos (vuelos, trenes, autobuses) pueden ser momentos de es
 Icono cuadrado formado por 9 círculos iguales (3×3 grid) con espacio entre ellos. Al pulsar, se expande un panel de 5×5 iconos redondos que actúan como atajos a funcionalidades y creación de elementos.
 
 **Propuesta de Diseño:**
-
 **Icono principal (estado colapsado):**
 - **Diseño:** Cuadrado formado por 9 círculos iguales (3×3) con espacio entre ellos
 - **Ubicación:** Vista de detalle del plan
@@ -3876,7 +3902,6 @@ Rating {
    - Input clave para algoritmos de recomendación
    - Eventos/alojamientos mejor valorados → más probabilidad de recomendación
    - Usuarios con gustos similares (collaborative filtering)
-
 2. **Análisis de tendencias:**
    - Qué tipos de eventos son más valorados
    - Qué alojamientos funcionan mejor por ubicación
@@ -4525,7 +4550,6 @@ Es crítico anticipar estos riesgos y tener planes de mitigación listos antes d
 - Google, Microsoft, o grandes empresas copian features
 - Competidores con más recursos lanzan producto similar
 - Pérdida de usuarios a competencia
-
 **Impacto:** Alto - Pérdida masiva de usuarios, reducción de market share
 
 **Mitigación:**
@@ -5173,7 +5197,6 @@ Una vez completado el MVP y lanzada la v1.0, es el momento adecuado para documen
 5. T130: Habitaciones individuales
 6. T129: GDPR completo
 7. **LANZAMIENTO v1.1**
-
 **Fase 3 - v1.2 (4-6 meses post-lanzamiento):**
 1. APIs de proveedores (Iberia, Booking.com)
 2. T101, T102: Presupuesto y pagos
@@ -5811,7 +5834,6 @@ Organizador quiere invitar a alguien a unirse al plan
 - Durante la migración se aprovechará para instalar Firebase CLI y actualizar índices (T155, T156)
 - Se quiere mantener toda la configuración de Cursor y chats de IA si es posible
 - **IMPORTANTE:** Después de completar la migración, el usuario quiere empezar a trabajar en la implementación de Offline First (Tareas T56-T62). El entorno debe estar preparado para este desarrollo.
-
 **Funcionalidades:**
 1. Instalar y configurar Cursor IDE
 2. Conectar proyecto con GitHub
@@ -6144,7 +6166,7 @@ Organizador quiere invitar a alguien a unirse al plan
 - El Mac debe estar conectado a Internet y encendido para acceso remoto
 - Considerar usar un router con IP fija o servicio de DNS dinámico si la IP cambia
 - Para mejor performance, usar conexión Ethernet si es posible
-- La compilación puede ser más lenta a través de conexión remoto
+- La compilación puede ser más lenta a través de conexión remota
 - Considerar dejar el Mac conectado a la corriente para evitar que se duerma
 
 ---
@@ -6456,7 +6478,6 @@ firebase deploy --only firestore:indexes
 **Complejidad:** 🟡 Media  
 **Prioridad:** 🟡 Media  
 **Descripción:** Implementar sistema de ayuda contextual con iconos interactivos que muestran textos de ayuda desde Firebase en múltiples idiomas según el idioma del usuario.
-
 **Contexto:**
 - Los usuarios necesitan ayuda contextual en diferentes partes de la aplicación
 - Los textos de ayuda deben estar en Firebase para poder actualizarlos sin deployar la app
@@ -7106,7 +7127,6 @@ Definir, crear y documentar el sistema de usuarios de administración de la apli
 - Acceso a logs y métricas
 - Gestión de contenido reportado
 - Acceso a Firebase Console (ya existe, pero documentar)
-
 #### 3. Firestore Rules
 - Reglas especiales para usuarios administradores
 - Verificación de rol de administrador en reglas

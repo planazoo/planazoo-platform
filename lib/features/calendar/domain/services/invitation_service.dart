@@ -13,7 +13,7 @@ import '../../../auth/domain/services/user_service.dart';
 /// Genera links únicos con token que expiran en 7 días.
 class InvitationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _collectionName = 'planInvitations';
+  static const String _collectionName = 'plan_invitations';
   final PlanParticipationService _participationService = PlanParticipationService();
   final UserService _userService = UserService();
 
@@ -27,8 +27,10 @@ class InvitationService {
 
   /// Crea una invitación por email
   /// 
-  /// Si el usuario ya existe (por email), busca su ID y crea participación directamente.
-  /// Si no existe, crea una invitación con token.
+  /// Siempre crea una invitación con token que requiere aceptación explícita,
+  /// independientemente de si el usuario ya existe en el sistema o no.
+  /// Esto asegura que todos los usuarios (nuevos o previamente eliminados) 
+  /// deben aceptar explícitamente la invitación.
   Future<String?> createInvitation({
     required String planId,
     required String email,
@@ -40,48 +42,37 @@ class InvitationService {
       // Normalizar email a minúsculas
       final normalizedEmail = email.toLowerCase().trim();
 
-      // Primero, intentar buscar si el usuario ya existe por email
+      // Verificar si el usuario ya es participante activo del plan
       final existingUser = await _userService.getUserByEmail(normalizedEmail);
-      
       if (existingUser != null) {
-        // Usuario existe: crear participación directamente
-        LoggerService.database(
-          'User found by email: $normalizedEmail, creating participation directly',
-          operation: 'CREATE',
-        );
+        final isAlreadyParticipant = await _participationService.isUserParticipant(planId, existingUser.id);
         
-        final participationId = await _participationService.createParticipation(
-          planId: planId,
-          userId: existingUser.id,
-          role: role,
-          invitedBy: invitedBy,
-          autoAccept: false, // Invitación pendiente
-        );
-        
-        if (participationId != null) {
-          // TODO: Enviar notificación push si está disponible
-          LoggerService.database(
-            'Participation created directly for user: ${existingUser.id}',
-            operation: 'CREATE',
+        if (isAlreadyParticipant) {
+          LoggerService.warning(
+            'User $normalizedEmail already participates in plan $planId',
           );
-          return participationId; // Retornar el ID de participación en lugar de invitación
+          // Retornar null para indicar que no se puede crear la invitación
+          // El código que llama debe manejar este caso y mostrar un error al usuario
+          return null;
         }
-        return null;
       }
 
-      // Usuario no existe: crear invitación con token
-      final token = _generateToken();
-      final now = DateTime.now();
-      final expiresAt = now.add(const Duration(days: 7)); // Expira en 7 días
-
       // Verificar si ya existe una invitación pendiente para este email y plan
-      final existingInvitation = await _getPendingInvitationByEmail(planId, normalizedEmail);
+      final existingInvitation = await getPendingInvitationByEmail(planId, normalizedEmail);
       if (existingInvitation != null) {
         LoggerService.warning(
           'Pending invitation already exists for email: $normalizedEmail, plan: $planId',
         );
-        return existingInvitation.id;
+        // Retornar null para indicar que ya existe una invitación pendiente
+        // El código que llama debe manejar este caso y mostrar un error al usuario
+        return null;
       }
+
+      // Siempre crear una invitación con token (requiere aceptación explícita)
+      // Esto aplica tanto para usuarios nuevos como para usuarios previamente eliminados
+      final token = _generateToken();
+      final now = DateTime.now();
+      final expiresAt = now.add(const Duration(days: 7)); // Expira en 7 días
 
       final invitation = PlanInvitation(
         planId: planId,
@@ -100,7 +91,7 @@ class InvitationService {
           .add(invitation.toFirestore());
 
       LoggerService.database(
-        'Invitation created: ${docRef.id} for email: $normalizedEmail',
+        'Invitation created: ${docRef.id} for email: $normalizedEmail (requires explicit acceptance)',
         operation: 'CREATE',
       );
 
@@ -156,8 +147,20 @@ class InvitationService {
     }
   }
 
-  /// Obtener invitación pendiente por email y plan
-  Future<PlanInvitation?> _getPendingInvitationByEmail(String planId, String email) async {
+  /// Obtener invitación por ID
+  Future<PlanInvitation?> getInvitationById(String id) async {
+    try {
+      final doc = await _firestore.collection(_collectionName).doc(id).get();
+      if (!doc.exists) return null;
+      return PlanInvitation.fromFirestore(doc);
+    } catch (e) {
+      LoggerService.error('Error getting invitation by id: $id', context: 'INVITATION_SERVICE', error: e);
+      return null;
+    }
+  }
+
+  /// Obtener invitación pendiente por email y plan (público para uso en UI)
+  Future<PlanInvitation?> getPendingInvitationByEmail(String planId, String email) async {
     try {
       final normalizedEmail = email.toLowerCase().trim();
       final querySnapshot = await _firestore
@@ -183,6 +186,25 @@ class InvitationService {
     }
   }
 
+  /// Listar invitaciones pendientes para un email (todas los planes)
+  Future<List<PlanInvitation>> getPendingInvitationsByEmail(String email) async {
+    try {
+      final normalizedEmail = email.toLowerCase().trim();
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where('email', isEqualTo: normalizedEmail)
+          .where('status', isEqualTo: 'pending')
+          .get();
+      final list = querySnapshot.docs.map((d) => PlanInvitation.fromFirestore(d)).toList();
+      list.sort((a, b) => (b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+          .compareTo(a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)));
+      return list;
+    } catch (e) {
+      LoggerService.error('Error getting pending invitations by email: $email', context: 'INVITATION_SERVICE', error: e);
+      return [];
+    }
+  }
+
   /// Aceptar invitación por token
   /// 
   /// Crea la participación si el usuario existe, o marca la invitación como aceptada
@@ -193,6 +215,25 @@ class InvitationService {
       if (invitation == null || !invitation.isValid) {
         LoggerService.warning('Invalid or expired invitation token: $token');
         return false;
+      }
+
+      // Obtener el email del usuario desde Firestore para verificar que coincide con la invitación
+      final user = await _userService.getUser(userId);
+      if (user == null) {
+        LoggerService.warning('User not found: $userId');
+        return false;
+      }
+
+      // Verificar que el email del usuario coincide con el email de la invitación
+      final userEmail = user.email.toLowerCase().trim();
+      final invitationEmail = invitation.email?.toLowerCase().trim() ?? '';
+      
+      if (userEmail != invitationEmail) {
+        LoggerService.warning(
+          'User email ($userEmail) does not match invitation email ($invitationEmail). '
+          'This may cause permission issues when updating invitation status.',
+        );
+        // Continuar de todas formas, la participación se puede crear
       }
 
       // Crear participación
@@ -206,18 +247,85 @@ class InvitationService {
 
       if (participationId != null) {
         // Marcar invitación como aceptada
-        await _firestore
-            .collection(_collectionName)
-            .doc(invitation.id!)
-            .update({
-          'status': 'accepted',
-          'respondedAt': Timestamp.fromDate(DateTime.now()),
-        });
+        // Primero intentar como el usuario invitado, si falla, el owner del plan puede actualizarla
+        bool updateSuccess = false;
+        try {
+          await _firestore
+              .collection(_collectionName)
+              .doc(invitation.id!)
+              .update({
+            'status': 'accepted',
+            'respondedAt': Timestamp.fromDate(DateTime.now()),
+          });
 
-        LoggerService.database(
-          'Invitation accepted: ${invitation.id}, participation created: $participationId',
-          operation: 'UPDATE',
-        );
+          LoggerService.database(
+            'Invitation accepted: ${invitation.id}, participation created: $participationId',
+            operation: 'UPDATE',
+          );
+          updateSuccess = true;
+        } catch (updateError) {
+          // Si falla, puede ser un problema de permisos (email del token no coincide)
+          // En este caso, el owner del plan puede actualizar la invitación según las reglas
+          // Pero no podemos hacerlo desde aquí porque no tenemos el contexto del owner
+          // El error se registra para diagnóstico
+          LoggerService.error(
+            'Error updating invitation status to accepted: ${invitation.id}. '
+            'Invitation email: ${invitation.email}, User email: $userEmail, Error: $updateError. '
+            'The invitation status may need to be updated manually by the plan owner or via Cloud Function.',
+            context: 'INVITATION_SERVICE',
+            error: updateError,
+          );
+          // Continuar y retornar true porque la participación se creó correctamente
+          // El estado de la invitación se puede actualizar manualmente si es necesario
+          // O se puede actualizar desde una Cloud Function que tenga permisos de admin
+        }
+        
+        // Si la actualización falló, intentar obtener el plan y verificar si el usuario actual es el owner
+        // Si es el owner, intentar actualizar de nuevo (las reglas permiten que el owner actualice)
+        if (!updateSuccess) {
+          try {
+            final planDoc = await _firestore.collection('plans').doc(invitation.planId).get();
+            if (planDoc.exists) {
+              final planData = planDoc.data();
+              final planOwnerId = planData?['userId'] as String?;
+              
+              // Si el usuario actual es el owner del plan, intentar actualizar de nuevo
+              // Nota: Esto solo funcionará si el usuario actual es el owner
+              // En la mayoría de los casos, el usuario que acepta NO es el owner
+              // Por lo tanto, esta actualización probablemente también fallará
+              // Pero lo intentamos por si acaso
+              if (planOwnerId == userId) {
+                try {
+                  await _firestore
+                      .collection(_collectionName)
+                      .doc(invitation.id!)
+                      .update({
+                    'status': 'accepted',
+                    'respondedAt': Timestamp.fromDate(DateTime.now()),
+                  });
+                  LoggerService.database(
+                    'Invitation accepted by plan owner: ${invitation.id}',
+                    operation: 'UPDATE',
+                  );
+                  updateSuccess = true;
+                } catch (ownerUpdateError) {
+                  LoggerService.error(
+                    'Error updating invitation status as plan owner: ${invitation.id}',
+                    context: 'INVITATION_SERVICE',
+                    error: ownerUpdateError,
+                  );
+                }
+              }
+            }
+          } catch (planError) {
+            LoggerService.error(
+              'Error getting plan to check owner: ${invitation.planId}',
+              context: 'INVITATION_SERVICE',
+              error: planError,
+            );
+          }
+        }
+        
         return true;
       }
 
@@ -265,6 +373,21 @@ class InvitationService {
     }
   }
 
+  /// Cancelar invitación (owner/admin)
+  Future<bool> cancelInvitation(String invitationId) async {
+    try {
+      await _firestore.collection(_collectionName).doc(invitationId).update({
+        'status': 'cancelled',
+        'respondedAt': Timestamp.fromDate(DateTime.now()),
+      });
+      LoggerService.database('Invitation cancelled: $invitationId', operation: 'UPDATE');
+      return true;
+    } catch (e) {
+      LoggerService.error('Error cancelling invitation: $invitationId', context: 'INVITATION_SERVICE', error: e);
+      return false;
+    }
+  }
+
   /// Genera el link de invitación
   String generateInvitationLink(String token) {
     // TODO: Configurar URL base desde configuración
@@ -279,12 +402,14 @@ class InvitationService {
           .collection(_collectionName)
           .where('planId', isEqualTo: planId)
           .where('status', isEqualTo: 'pending')
-          .orderBy('createdAt', descending: true)
           .get();
 
-      return querySnapshot.docs
+      final list = querySnapshot.docs
           .map((doc) => PlanInvitation.fromFirestore(doc))
           .toList();
+      list.sort((a, b) => (b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+          .compareTo(a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)));
+      return list;
     } catch (e) {
       LoggerService.error(
         'Error getting pending invitations: $planId',
@@ -325,6 +450,93 @@ class InvitationService {
     } catch (e) {
       LoggerService.error(
         'Error cleaning expired invitations',
+        context: 'INVITATION_SERVICE',
+        error: e,
+      );
+      return 0;
+    }
+  }
+
+  /// Eliminar todas las invitaciones (cualquier estado) de un plan
+  Future<int> deleteInvitationsByPlanId(String planId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) return 0;
+
+      final batch = _firestore.batch();
+      for (final doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      LoggerService.database(
+        'Deleted ${querySnapshot.docs.length} invitations for plan $planId',
+        operation: 'DELETE',
+      );
+      return querySnapshot.docs.length;
+    } catch (e) {
+      LoggerService.error(
+        'Error deleting invitations by planId: $planId',
+        context: 'INVITATION_SERVICE',
+        error: e,
+      );
+      return 0;
+    }
+  }
+
+  /// Eliminar todas las invitaciones dirigidas a un email (cualquier estado)
+  Future<int> deleteInvitationsByEmail(String email) async {
+    try {
+      final normalized = email.toLowerCase().trim();
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where('email', isEqualTo: normalized)
+          .get();
+      if (querySnapshot.docs.isEmpty) return 0;
+      final batch = _firestore.batch();
+      for (final doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      LoggerService.database(
+        'Deleted ${querySnapshot.docs.length} invitations for email $normalized',
+        operation: 'DELETE',
+      );
+      return querySnapshot.docs.length;
+    } catch (e) {
+      LoggerService.error(
+        'Error deleting invitations by email: $email',
+        context: 'INVITATION_SERVICE',
+        error: e,
+      );
+      return 0;
+    }
+  }
+
+  /// Eliminar todas las invitaciones creadas por un usuario (invitedBy)
+  Future<int> deleteInvitationsByInviter(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where('invitedBy', isEqualTo: userId)
+          .get();
+      if (querySnapshot.docs.isEmpty) return 0;
+      final batch = _firestore.batch();
+      for (final doc in querySnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      LoggerService.database(
+        'Deleted ${querySnapshot.docs.length} invitations created by $userId',
+        operation: 'DELETE',
+      );
+      return querySnapshot.docs.length;
+    } catch (e) {
+      LoggerService.error(
+        'Error deleting invitations by inviter: $userId',
         context: 'INVITATION_SERVICE',
         error: e,
       );

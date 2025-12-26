@@ -545,7 +545,7 @@ Cada caso de prueba debe incluir:
 - [x] **PLAN-C-005:** Crear plan con participantes iniciales
   - Pasos:
     1. Crear plan desde dashboard (modal inicial solo nombre).
-    2. En la página del plan, abrir “Participantes” → “Añadir participantes” y seleccionar usuarios adicionales.
+    2. En la página del plan, abrir "Participantes" → "Añadir participantes" y seleccionar usuarios adicionales.
     3. Guardar cambios.
     4. Volver al dashboard y comprobar que W28 muestra el contador actualizado.
   - Esperado: El organizador se registra automáticamente como participante; los usuarios añadidos aparecen en el recuadro del plan y el contador de la lista refleja el total en tiempo real.
@@ -559,7 +559,7 @@ Cada caso de prueba debe incluir:
 - [x] **PLAN-C-007:** Crear plan con timezone específico
   - Pasos:
     1. Crear un plan desde el dashboard.
-    2. En la página del plan, cambiar la zona horaria en “Información detallada”.
+    2. En la página del plan, cambiar la zona horaria en "Información detallada".
     3. Guardar y volver a abrir el plan para comprobar que la zona se conserva.
   - Esperado: La zona horaria elegida se persiste en el plan y se aplica por defecto al crear eventos.
   - Estado: ✅
@@ -671,12 +671,26 @@ Cada caso de prueba debe incluir:
     1. Crear plan con eventos, participantes, permisos y event_participants
     2. Eliminar el plan como organizador
     3. Verificar en Firestore que se eliminaron físicamente:
+       - `plan_invitations` del plan (cualquier estado)
        - `event_participants` (eliminación física)
        - `plan_permissions` (eliminación física)
        - `plan_participations` (eliminación física)
        - `events` (eliminación física, desde `event_service`)
        - `plan` (eliminación física)
   - Esperado: No quedan documentos huérfanos relacionados con el plan eliminado. Todas las colecciones relacionadas deben estar completamente vacías para ese plan.
+  - Estado: 🔄
+
+- [ ] **PLAN-D-006 (Reglas):** Borrado de participaciones huérfanas permitido
+  - Pasos:
+    1. Simular `plan_participations` con `planId` inexistente (eliminar plan previamente)
+    2. Intentar eliminar la participación como el propio `userId`
+  - Esperado: Permitido por reglas (`!planExists && resource.data.userId == request.auth.uid`)
+  - Estado: 🔄
+
+- [ ] **PLAN-D-007 (Reglas):** Borrado de participaciones por owner del plan
+  - Pasos:
+    1. Con plan existente, intentar eliminar `plan_participations` de cualquier `userId` siendo owner
+  - Esperado: Permitido por reglas (`isPlanOwner(resource.data.planId)`)
   - Estado: 🔄
 
 **⚠️ RECORDATORIO IMPORTANTE:**
@@ -692,6 +706,19 @@ Cada caso de prueba debe incluir:
   3. Añadir un caso de prueba en la sección 4.4 (Eliminar Evento) para verificar la eliminación
 
 Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación de planes y eventos.
+
+### 3.5 Eliminación de Usuario (cobertura de invitaciones)
+
+- [ ] **USER-D-006:** Eliminar cuenta borra todas sus invitaciones
+  - Pasos:
+    1. Con el Usuario A, crear invitaciones para varios planes (siendo owner y también como coorganizador en plan ajeno).
+    2. Enviar invitaciones a su propio email (para simular invitaciones recibidas) y a otros emails.
+    3. Eliminar completamente la cuenta del Usuario A desde "Eliminar cuenta" (flujo con reautenticación).
+    4. Verificar en Firestore que se eliminaron:
+       - `plan_invitations` donde `email == usuarioA.email` (recibidas)
+       - `plan_invitations` donde `invitedBy == usuarioA.userId` (enviadas)
+  - Esperado: No quedan invitaciones asociadas al email ni al `invitedBy` del usuario eliminado.
+  - Estado: 🔄
 
 ---
 
@@ -1097,39 +1124,358 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ## 7. INVITACIONES Y NOTIFICACIONES
 
-### 7.1 Invitaciones por Email (T104)
+### 7.1 Invitaciones a Planes (T104)
 
-- [ ] **INV-001:** Enviar invitación por email
-  - Pasos: Invitar usuario no registrado
-  - Esperado: Email enviado con link de invitación
+#### 7.1.1 Invitar por Email
+
+- [x] **INV-001:** Enviar invitación por email (usuario no registrado)
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar por email"
+    2. Completar formulario:
+       - Email: `unplanazoo+invite1@gmail.com` (usuario que NO existe)
+       - Rol: Participante
+       - Mensaje personalizado: (opcional, ej: "¡Espero verte!")
+    3. Enviar invitación
+  - Esperado: 
+    - Se crea documento en `plan_invitations` con `status: 'pending'`
+    - Se genera token único y link de invitación
+    - Email enviado con link (si Cloud Function configurada) o se muestra link para copiar
+    - Link válido por 7 días
   - **⚠️ IMPORTANTE:** El usuario invitado NO debe existir. Usar `unplanazoo+invite1@gmail.com` o similar.
   - Estado: ✅
 
-- [ ] **INV-002:** Aceptar invitación desde link
-  - Pasos: Click en link de invitación
-  - Esperado: Si no logueado: login, luego aceptar (o registro si usuario no existe)
+- [x] **INV-002:** Enviar invitación por email (usuario ya registrado)
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar por email"
+    2. Email: `unplanazoo+part1@gmail.com` (usuario que YA existe)
+    3. Rol: Observador
+    4. Enviar invitación
+  - Esperado: 
+    - Se crea invitación en `plan_invitations`
+    - Si el usuario tiene app, recibe notificación push
+    - Si no tiene app, recibe email
+  - Estado: ✅
+
+- [x] **INV-003:** Enviar invitación con rol Observador
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar por email"
+    2. Email: `unplanazoo+obs1@gmail.com`
+    3. Rol: Observador
+    4. Enviar invitación
+  - Esperado: 
+    - Invitación creada con `role: 'observer'`
+    - Al aceptar, se crea participación con rol Observador
+  - Estado: ✅
+
+- [x] **INV-004:** Enviar invitación con mensaje personalizado
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar por email"
+    2. Completar email y rol
+    3. Añadir mensaje personalizado: "¡Espero verte en Londres!"
+    4. Enviar invitación
+  - Esperado: 
+    - El mensaje se guarda en `plan_invitations.message`
+    - El mensaje aparece en el email (si Cloud Function configurada)
+  - Estado: ✅
+
+- [x] **INV-005:** Validación de email inválido
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar por email"
+    2. Email: `email-invalido` (sin @, formato incorrecto)
+    3. Intentar enviar
+  - Esperado: 
+    - Error de validación: "El formato del email no es válido"
+    - No se crea invitación
+  - Estado: ✅
+
+- [x] **INV-006:** Invitar email ya invitado (pendiente)
+  - Pasos: 
+    1. Organizador envía invitación a `unplanazoo+invite2@gmail.com`
+    2. Sin aceptar/rechazar, intentar invitar de nuevo al mismo email
+  - Esperado: 
+    - Validación: "Ya existe una invitación pendiente para este email"
+    - Opción de re-enviar invitación o cancelar la anterior
+  - Estado: ✅
+
+- [x] **INV-007:** Invitar email que ya es participante
+  - Pasos: 
+    1. Usuario `unplanazoo+part1@gmail.com` ya es participante del plan
+    2. Organizador intenta invitar al mismo email
+  - Esperado: 
+    - Validación: "Este usuario ya es participante del plan"
+    - No se crea invitación
+  - Estado: ✅
+
+#### 7.1.2 Aceptar/Rechazar Invitaciones
+
+- [ ] **INV-008:** Aceptar invitación desde link (usuario no registrado)
+  - Pasos: 
+    1. Usuario no registrado hace clic en link de invitación
+    2. Si no tiene app: ver web con detalles del plan
+    3. Click en "Aceptar" o "Aceptar sin app"
+    4. Si no tiene cuenta: completar registro
+    5. Confirmar aceptación
+  - Esperado: 
+    - Si no tiene cuenta: se crea cuenta automática
+    - Se crea `plan_participations` con `status: 'accepted'` y `role` asignado
+    - Se actualiza `plan_invitations.status` a `'accepted'` y `respondedAt`
+    - Se crea track del participante
+    - Contador de participantes se actualiza
+    - Notificación al organizador (email/push): "[Nombre] ha aceptado tu invitación"
   - **⚠️ IMPORTANTE:** Para probar flujo completo, usar invitación a usuario que NO existe para probar registro desde invitación.
   - Estado: ✅
 
-- [ ] **INV-003:** Rechazar invitación
-  - Pasos: Rechazar desde link
-  - Esperado: Invitación marcada como rechazada
+- [ ] **INV-009:** Aceptar invitación desde link (usuario ya registrado)
+  - Pasos: 
+    1. Usuario registrado hace clic en link de invitación
+    2. Si no está logueado: login
+    3. Ver detalles del plan en app
+    4. Click en "Aceptar"
+  - Esperado: 
+    - Se crea `plan_participations` con `status: 'accepted'`
+    - Se actualiza `plan_invitations.status` a `'accepted'` y `respondedAt`
+    - Usuario puede acceder al plan inmediatamente
+    - Notificación al organizador
   - Estado: ✅
 
-- [ ] **INV-004:** Invitación expirada
-  - Pasos: Usar link después de expiración
-  - Esperado: Mensaje de invitación expirada
-  - Estado: 🔄
-
-- [ ] **INV-005:** Invitación ya aceptada
-  - Pasos: Usar link de invitación ya aceptada
-  - Esperado: Mensaje de ya participante
-  - Estado: 🔄
-
-- [ ] **INV-006:** Invitación con token inválido
-  - Pasos: Usar token modificado o falso
-  - Esperado: Error de seguridad, no acceso
+- [ ] **INV-010:** Aceptar invitación desde app (por token)
+  - Pasos: 
+    1. Organizador envía invitación y copia el link
+    2. Invitado (usuario registrado) abre app
+    3. Ir a Participantes → "Aceptar invitación por token"
+    4. Pegar token del link
+    5. Click en "Aceptar"
+  - Esperado: 
+    - Se valida el token
+    - Se crea participación con estado "Aceptada"
+    - Se actualiza invitación
+    - Usuario puede acceder al plan
   - Estado: ✅
+
+- [ ] **INV-011:** Rechazar invitación desde link
+  - Pasos: 
+    1. Usuario hace clic en link de invitación
+    2. Click en "Rechazar"
+    3. Confirmar rechazo
+  - Esperado: 
+    - Se actualiza `plan_invitations.status` a `'rejected'` y `respondedAt`
+    - NO se crea `plan_participations`
+    - Notificación al organizador: "[Nombre] ha rechazado tu invitación"
+    - Usuario no puede acceder al plan
+  - Estado: ✅
+
+- [ ] **INV-012:** Rechazar invitación desde app (por token)
+  - Pasos: 
+    1. Invitado (usuario registrado) abre app
+    2. Ir a Participantes → "Aceptar invitación por token"
+    3. Pegar token del link
+    4. Click en "Rechazar"
+  - Esperado: 
+    - Se valida el token
+    - Se actualiza `plan_invitations.status` a `'rejected'` y `respondedAt`
+    - NO se crea participación
+    - Notificación al organizador
+  - Estado: ✅
+
+#### 7.1.3 Estados y Validaciones de Invitaciones
+
+- [ ] **INV-013:** Invitación expirada (7 días)
+  - Pasos: 
+    1. Crear invitación
+    2. Modificar manualmente `plan_invitations.expiresAt` en Firestore a fecha pasada (o esperar 7 días)
+    3. Usuario intenta usar el link
+  - Esperado: 
+    - Mensaje: "Esta invitación ha expirado. Contacta al organizador para una nueva invitación."
+    - No se puede aceptar/rechazar
+    - El sistema puede marcar automáticamente `status: 'expired'`
+  - Estado: 🔄
+
+- [ ] **INV-014:** Invitación ya aceptada
+  - Pasos: 
+    1. Usuario acepta invitación
+    2. Intentar usar el mismo link de nuevo
+  - Esperado: 
+    - Mensaje: "Ya eres participante de este plan" o "Esta invitación ya fue aceptada"
+    - Redirección al plan si está logueado
+  - Estado: 🔄
+
+- [ ] **INV-015:** Invitación ya rechazada
+  - Pasos: 
+    1. Usuario rechaza invitación
+    2. Intentar usar el mismo link de nuevo
+  - Esperado: 
+    - Mensaje: "Esta invitación fue rechazada. Contacta al organizador si deseas unirte al plan."
+    - No se puede aceptar
+  - Estado: 🔄
+
+- [ ] **INV-016:** Invitación con token inválido
+  - Pasos: 
+    1. Modificar token en link (ej: cambiar caracteres)
+    2. Intentar usar link modificado
+  - Esperado: 
+    - Error de seguridad: "Token de invitación inválido"
+    - No se puede acceder al plan
+    - No se crea participación
+  - Estado: ✅
+
+- [ ] **INV-017:** Invitación cancelada (intentar usar link)
+  - Pasos: 
+    1. Organizador cancela invitación pendiente
+    2. Invitado intenta usar el link original
+  - Esperado: 
+    - Mensaje: "Esta invitación ha sido cancelada por el organizador"
+    - No se puede aceptar/rechazar
+  - Estado: 🔄
+
+#### 7.1.4 Cancelación de Invitaciones (Owner/Admin)
+
+- [ ] **INV-018:** Cancelar invitación pendiente (owner)
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitaciones pendientes"
+    2. Ver lista de invitaciones con `status: 'pending'`
+    3. Click en "Cancelar" en una invitación
+    4. Confirmar cancelación: "¿Seguro que deseas cancelar esta invitación para [email]?"
+  - Esperado: 
+    - Se actualiza `plan_invitations.status` a `'cancelled'`
+    - Se estampa `respondedAt` con fecha actual
+    - La invitación desaparece de la lista de pendientes
+    - El contador de invitaciones pendientes se actualiza
+    - Email al invitado: "Se ha cancelado tu invitación al plan [Nombre]" (si Cloud Function configurada)
+    - Push al invitado (si tiene cuenta/app): "Tu invitación a [Nombre] ha sido cancelada"
+    - Snackbar de confirmación al organizador
+  - Estado: ✅
+
+- [ ] **INV-019:** Intentar cancelar invitación como participante (no owner)
+  - Pasos: 
+    1. Participante (no organizador) intenta acceder a "Invitaciones pendientes"
+    2. Intentar cancelar una invitación
+  - Esperado: 
+    - No se muestra opción de cancelar invitaciones (solo owner/admin)
+    - Si intenta por API: error de permisos
+  - Estado: ✅
+
+- [ ] **INV-020:** Cancelar múltiples invitaciones
+  - Pasos: 
+    1. Organizador tiene 3 invitaciones pendientes
+    2. Cancelar una por una
+  - Esperado: 
+    - Cada cancelación funciona independientemente
+    - El contador se actualiza correctamente después de cada cancelación
+    - Todas las notificaciones se envían correctamente
+  - Estado: 🔄
+
+#### 7.1.5 Visualización de Invitaciones
+
+- [ ] **INV-021:** Ver invitaciones pendientes (organizador)
+  - Pasos: 
+    1. Organizador → Plan → Participantes
+    2. Ver sección "Invitaciones pendientes"
+  - Esperado: 
+    - Lista muestra todas las invitaciones con `status: 'pending'`
+    - Para cada invitación: email, rol, fecha de envío, opción "Cancelar"
+    - Contador: "Invitaciones: N pendientes"
+  - Estado: ✅
+
+- [ ] **INV-022:** Ver mis invitaciones pendientes (invitado)
+  - Pasos: 
+    1. Usuario invitado (logueado) → Plan → Participantes
+    2. Ver sección "Mis invitaciones"
+  - Esperado: 
+    - Lista muestra invitaciones donde `email` coincide con el email del usuario
+    - Para cada invitación: nombre del plan, organizador, fecha, botones "Aceptar" / "Rechazar"
+    - Estado actual visible (pending, accepted, rejected, cancelled, expired)
+  - Estado: ✅
+
+- [ ] **INV-023:** Copiar link de invitación
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar por email"
+    2. Enviar invitación
+    3. Click en "Copiar link" o icono de copiar
+  - Esperado: 
+    - Link copiado al portapapeles
+    - Snackbar: "Link copiado al portapapeles"
+    - El link es válido y funcional
+  - Estado: ✅
+
+#### 7.1.6 Invitar por Username (T104 - Futuro)
+
+- [ ] **INV-024:** Invitar por username (búsqueda)
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar por username"
+    2. Campo de búsqueda: escribir `@usuario` o `usuario` o email
+    3. Ver resultados de autocompletar
+    4. Seleccionar usuario
+    5. Enviar invitación
+  - Esperado: 
+    - Búsqueda funciona por username, email o nombre
+    - Autocompletar muestra resultados relevantes
+    - Se crea invitación (o participación directa si el usuario existe)
+    - Usuario recibe notificación push (si tiene app)
+  - Estado: 🔄 (Pendiente implementación)
+
+- [ ] **INV-025:** Invitar usuario que no existe por username
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar por username"
+    2. Buscar username que no existe: `@usuario_inexistente`
+  - Esperado: 
+    - Mensaje: "No se encontró ningún usuario con ese username"
+    - Sugerencia: "¿Quieres invitar por email en su lugar?"
+  - Estado: 🔄 (Pendiente implementación)
+
+#### 7.1.7 Invitar Grupo (T123)
+
+- [ ] **INV-026:** Invitar grupo completo
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar grupo"
+    2. Seleccionar grupo: "Familia Ramos"
+    3. Ver lista de miembros con estados (activo ✅, inactivo ❓, sin app ❓)
+    4. Seleccionar todos o subconjunto
+    5. Enviar invitaciones
+  - Esperado: 
+    - Se crean invitaciones individuales para cada miembro seleccionado
+    - A usuarios activos: notificación push
+    - A usuarios inactivos/sin app: email
+    - Cada miembro gestiona su invitación independientemente
+  - Estado: 🔄 (Pendiente implementación T123)
+
+- [ ] **INV-027:** Invitar grupo con miembros ya participantes
+  - Pasos: 
+    1. Grupo "Familia Ramos" tiene 5 miembros
+    2. 2 miembros ya son participantes del plan
+    3. Invitar grupo completo
+  - Esperado: 
+    - Se muestran advertencias: "X miembros ya son participantes"
+    - Solo se envían invitaciones a miembros que no son participantes
+  - Estado: 🔄 (Pendiente implementación T123)
+
+#### 7.1.8 Recordatorios de Invitaciones Pendientes (Futuro)
+
+- [ ] **INV-028:** Recordatorio automático después de 2 días
+  - Pasos: 
+    1. Crear invitación pendiente
+    2. Esperar 2 días sin respuesta (o simular fecha)
+  - Esperado: 
+    - Sistema envía recordatorio 1 (suave): "Te enviamos una invitación hace 2 días. ¿Puedes responder?"
+    - Email/push al invitado
+  - Estado: 🔄 (Pendiente implementación Cloud Function)
+
+- [ ] **INV-029:** Recordatorio automático después de 5 días
+  - Pasos: 
+    1. Invitación pendiente sin respuesta
+    2. Esperar 5 días totales (o simular)
+  - Esperado: 
+    - Sistema envía recordatorio 2 (más insistente): "[Nombre], te invitamos hace 5 días. Por favor, confirma tu asistencia para poder organizar el plan."
+    - Email/push al invitado
+  - Estado: 🔄 (Pendiente implementación Cloud Function)
+
+- [ ] **INV-030:** Marcar invitación como expirada después de 7 días
+  - Pasos: 
+    1. Invitación pendiente sin respuesta
+    2. Esperar 7 días totales (o simular)
+  - Esperado: 
+    - Sistema marca automáticamente `status: 'expired'`
+    - Notificación al organizador: "[Nombre] no ha respondido a tu invitación. Puedes re-enviar la invitación o eliminarla."
+  - Estado: 🔄 (Pendiente implementación Cloud Function)
 
 ### 7.2 Registro de Participantes en Eventos (T117)
 
@@ -1601,6 +1947,16 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 - [ ] **CAL-INT-004:** Redimensionar evento (futuro)
   - Estado: 🔄 Pendiente implementación
 
+- [ ] **CAL-EMPTY-001:** W28 vacío sin planes
+  - Pasos: Entrar con usuario sin planes
+  - Esperado: W28 muestra contenedor vacío (sin spinner ni mensajes)
+  - Estado: 🔄
+
+- [ ] **CAL-EMPTY-002:** W31 mensaje sin planes
+  - Pasos: Entrar con usuario sin planes
+  - Esperado: W31 muestra mensaje "Aún no tienes planes • Crea tu primer plan con el botón +"
+  - Estado: 🔄
+
 ---
 
 ## 13. TIMEZONES
@@ -1760,6 +2116,18 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 - [ ] **SEC-ACC-002:** Solo participantes ven eventos privados
   - Pasos: Evento solo para participantes específicos
   - Esperado: No visible para otros
+  - Estado: 🔄
+
+### 14.4 Reglas Firestore (borrados especiales)
+
+- [ ] **SEC-RULES-001:** `plan_participations` delete por owner de plan
+  - Pasos: Owner elimina participaciones de otro usuario
+  - Esperado: Permitido
+  - Estado: 🔄
+
+- [ ] **SEC-RULES-002:** `plan_participations` delete huérfana por su propio usuario
+  - Pasos: Usuario elimina su propia participación cuyo `planId` ya no existe
+  - Esperado: Permitido
   - Estado: 🔄
 
 ---
@@ -1990,9 +2358,9 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ## 📊 RESUMEN DE ESTADO
 
-**Total de pruebas:** ~250+  
+**Total de pruebas:** ~280+  
 **Implementadas y probadas:** ~30  
-**Pendientes:** ~220  
+**Pendientes:** ~250  
 
 **Por sección:**
 - Autenticación: 🔄 Pendiente
@@ -2000,7 +2368,7 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 - CRUD Eventos: 🔄 Parcial (T47, T117, T120, T101 ✅)
 - CRUD Alojamientos: 🔄 Parcial (T101 ✅)
 - Participantes: 🔄 Parcial (T123 ✅)
-- Invitaciones: ✅ Base completada
+- Invitaciones: ✅ Base completada (30 casos detallados: email, aceptar/rechazar, cancelación, visualización; pendientes: username, grupos, recordatorios)
 - Estados: ✅ Base completada
 - Presupuesto: ✅ Base completada (T101)
 - Estadísticas: ✅ Base completada (T113)

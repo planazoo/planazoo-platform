@@ -191,7 +191,7 @@ Acciones:
     3. Eventos creados por el usuario (y sus `event_participants`)
     4. Participaciones en eventos (`event_participants`)
     5. Permisos del usuario (`plan_permissions`)
-    6. Invitaciones por email (`planInvitations`)
+    6. Invitaciones por email (`plan_invitations`)
     7. Pagos personales (`personal_payments`)
     8. Grupos de participantes (`participant_groups`)
     9. Preferencias del usuario (`userPreferences`)

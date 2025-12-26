@@ -193,7 +193,7 @@
 ### Otras colecciones relacionadas:
 
 1. **`participant_groups`** - Grupos de participantes (T123) ✅
-2. **`planInvitations`** - Invitaciones por email (T104) ✅
+2. **`plan_invitations`** - Invitaciones por email (T104) ✅
 3. **`personal_payments`** - Pagos personales (T102) ✅
 4. **`userPreferences`** - Preferencias de usuario ✅
 

@@ -588,31 +588,73 @@ service cloud.firestore {
     // REGLAS PARA INVITACIONES POR EMAIL (T104)
     // ============================================
     
-    match /planInvitations/{invitationId} {
-      // Crear: Solo usuarios autenticados pueden crear invitaciones
-      // Deben ser participantes del plan (se verifica en cliente)
-      allow create: if isAuthenticated() && 
-                       isValidPlanInvitationData() &&
-                       // El email debe estar normalizado (minúsculas)
-                       request.resource.data.email == request.resource.data.email.lower();
-      
-      // Leer: Cualquiera puede leer invitaciones (para procesar links sin autenticación)
-      // Pero solo con el token correcto (validación en cliente)
-      allow read: if true; // Permitir lectura para procesar links
-      
-      // Actualizar: Solo para aceptar/rechazar invitaciones
-      // Esto se hace típicamente cuando el usuario hace clic en el link
-      allow update: if isValidPlanInvitationData() &&
-                       // Solo se puede actualizar status y respondedAt
-                       request.resource.data.planId == resource.data.planId &&
-                       request.resource.data.email == resource.data.email &&
-                       request.resource.data.token == resource.data.token &&
-                       request.resource.data.createdAt == resource.data.createdAt &&
-                       request.resource.data.expiresAt == resource.data.expiresAt &&
-                       resource.data.status == 'pending'; // Solo se puede actualizar si está pendiente
-      
-      // Eliminar: Solo el owner del plan puede eliminar invitaciones
-      allow delete: if isAuthenticated();
+    match /plan_invitations/{invitationId} {
+      // Crear: solo el owner del plan (o admin) puede crear invitaciones por email
+      allow create: if (isAuthenticated() && isValidPlanInvitationData() && isPlanOwner(request.resource.data.planId)) || isAdmin(request.auth.uid);
+
+      // Leer:
+      //  - Owner del plan puede leer sus invitaciones
+      //  - Usuario autenticado cuyo email coincide con el de la invitación puede leer su propia invitación
+      //    (comparación case-insensitive, verifica token o documento de usuario en Firestore)
+      //  - Admin puede leer todas
+      allow read: if (isAuthenticated() && (
+                        isPlanOwner(resource.data.planId) ||
+                        (
+                          (request.auth.token.email != null && 
+                           request.auth.token.email.toLowerCase() == resource.data.email.toLowerCase()) ||
+                          // Fallback: verificar si el usuario en Firestore tiene el mismo email
+                          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email.toLowerCase() == resource.data.email.toLowerCase())
+                        )
+                     )) || isAdmin(request.auth.uid);
+
+      // Listar: 
+      //  - Permitir a autenticados para consultas con filtros where
+      //  - Los filtros where (planId, email) limitan los resultados
+      //  - Cada documento devuelto debe cumplir allow read
+      //  - IMPORTANTE: Las consultas deben usar where() para limitar resultados
+      allow list: if isAuthenticated();
+
+      // Actualizar:
+      //  - Owner del plan puede CANCELAR una invitación pendiente (solo cambia 'status' y opcionalmente 'respondedAt')
+      //  - El invitado (mismo email) puede ACEPTAR o RECHAZAR su invitación pendiente (solo cambia 'status' y opcionalmente 'respondedAt')
+      //  - IMPORTANTE: El usuario invitado DEBE poder actualizar su propia invitación para marcarla como aceptada
+      allow update: if isAuthenticated() && (
+        (
+          // Cancelar por owner
+          isPlanOwner(resource.data.planId) &&
+          resource.data.status == 'pending' &&
+          !('planId' in request.resource.data) &&
+          !('email' in request.resource.data) &&
+          !('token' in request.resource.data) &&
+          !('createdAt' in request.resource.data) &&
+          !('expiresAt' in request.resource.data) &&
+          (!('role' in request.resource.data) || request.resource.data.role == resource.data.role) &&
+          ('status' in request.resource.data) && request.resource.data.status == 'cancelled'
+        ) || (
+          // Aceptar / Rechazar por el invitado
+          // Verificar que el email del token coincide con el email de la invitación (case-insensitive)
+          // También permitir si el email del usuario en Firestore coincide (para casos donde el token no tiene email)
+          (
+            (request.auth.token.email != null &&
+             request.auth.token.email.toLowerCase() == resource.data.email.toLowerCase()) ||
+            // Fallback: verificar si el usuario en Firestore tiene el mismo email
+            (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email.toLowerCase() == resource.data.email.toLowerCase())
+          ) &&
+          resource.data.status == 'pending' &&
+          !('planId' in request.resource.data) &&
+          !('email' in request.resource.data) &&
+          !('token' in request.resource.data) &&
+          !('createdAt' in request.resource.data) &&
+          !('expiresAt' in request.resource.data) &&
+          (!('role' in request.resource.data) || request.resource.data.role == resource.data.role) &&
+          ('status' in request.resource.data) && request.resource.data.status in ['accepted', 'rejected']
+        )
+      ) || isAdmin(request.auth.uid);
+
+      // Eliminar: owner del plan o admin
+      allow delete: if (isAuthenticated() && isPlanOwner(resource.data.planId)) || isAdmin(request.auth.uid);
     }
     
     // ============================================

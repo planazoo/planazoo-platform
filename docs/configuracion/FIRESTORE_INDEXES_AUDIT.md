@@ -25,7 +25,7 @@
 - **Índice 4:** `planId` (ASC) + `role` (ASC) + `isActive` (ASC)
 - **Índice 5:** `planId` (ASC) + `role` (ASC) + `isActive` (ASC) + `joinedAt` (ASC)
 
-### **COLLECTION: `planInvitations`** (4 índices)
+### **COLLECTION: `plan_invitations`** (4 índices)
 - **Índice 1:** `planId` (ASC) + `status` (ASC) + `createdAt` (DESC)
 - **Índice 2:** `token` (ASC)
 - **Índice 3:** `planId` (ASC) + `email` (ASC) + `status` (ASC)
@@ -110,7 +110,7 @@
 
 ---
 
-### **COLLECTION: `planInvitations`**
+### **COLLECTION: `plan_invitations`**
 
 | Query | Archivo | Línea | Índice Necesario | Estado |
 |-------|---------|-------|------------------|--------|
@@ -120,8 +120,8 @@
 | `.where('status', isEqualTo: 'pending').where('expiresAt', isLessThan: Timestamp)` | `invitation_service.dart:304-305` | 304-305 | ✅ **Índice 4** | Implementado |
 
 **✅ Índices implementados:**
-- ✅ `planInvitations`: `planId` (ASC) + `email` (ASC) + `status` (ASC)
-- ✅ `planInvitations`: `status` (ASC) + `expiresAt` (ASC) - para limpieza de expiradas
+- ✅ `plan_invitations`: `planId` (ASC) + `email` (ASC) + `status` (ASC)
+- ✅ `plan_invitations`: `status` (ASC) + `expiresAt` (ASC) - para limpieza de expiradas
 
 ---
 
@@ -208,7 +208,7 @@
 - `plans`: 2/2 queries con índices ✅
 - `events`: 3/3 queries con índices ✅
 - `plan_participations`: 5/5 queries con índices ✅
-- `planInvitations`: 4/4 queries con índices ✅
+- `plan_invitations`: 4/4 queries con índices ✅
 - `event_participants`: 5/5 queries con índices ✅
 - `personal_payments`: 3/3 queries con índices ✅
 - `participant_groups`: 1/1 query con índice ✅
@@ -235,8 +235,8 @@ Todos los índices identificados como necesarios han sido añadidos al `firestor
 10. ✅ `event_participants`: `eventId` + `registeredAt` (ASC) - para queries sin status
 
 **✅ Baja Prioridad (implementados):**
-11. ✅ `planInvitations`: `planId` + `email` + `status` - para verificar invitaciones duplicadas
-12. ✅ `planInvitations`: `status` + `expiresAt` (ASC) - para limpieza de expiradas
+11. ✅ `plan_invitations`: `planId` + `email` + `status` - para verificar invitaciones duplicadas
+12. ✅ `plan_invitations`: `status` + `expiresAt` (ASC) - para limpieza de expiradas
 13. ✅ `users`: `displayName` + `isActive` - para búsqueda de usuarios
 
 ---
@@ -316,7 +316,7 @@ Firestore crea automáticamente índices para:
 3. `users` - Usuarios
 4. `plan_participations` - Participaciones en planes
 5. `event_participants` - Participantes por evento
-6. `planInvitations` - Invitaciones por email
+6. `plan_invitations` - Invitaciones por email
 7. `personal_payments` - Pagos individuales
 8. `participant_groups` - Grupos de participantes
 9. `exchange_rates` - Tipos de cambio
@@ -361,7 +361,7 @@ Firestore crea automáticamente índices para:
 | 4 | `planId` (ASC) + `role` (ASC) + `isActive` (ASC) | Organizadores/participantes de un plan | `plan_participation_service.dart:244-246` |
 | 5 | `planId` (ASC) + `role` (ASC) + `isActive` (ASC) + `joinedAt` (ASC) | Participantes ordenados por fecha | `plan_participation_service.dart:264-267` |
 
-#### **COLLECTION: `planInvitations`**
+#### **COLLECTION: `plan_invitations`**
 
 | Índice | Campos | Propósito | Query que lo usa |
 |--------|--------|-----------|------------------|

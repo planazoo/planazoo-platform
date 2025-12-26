@@ -569,9 +569,10 @@ Plan eliminado permanentemente e irreversiblemente
 
 **Para planes (`PlanService.deletePlan()`):**
 1. `event_participants` (participantes de eventos del plan) - eliminación física
-2. `plan_permissions` (permisos del plan) - eliminación física
-3. `plan_participations` (participaciones) - eliminación física
-4. `plan` (el plan mismo) - eliminación física
+2. `plan_invitations` (invitaciones del plan, cualquier estado) - eliminación física
+3. `plan_permissions` (permisos del plan) - eliminación física
+4. `plan_participations` (participaciones) - eliminación física
+5. `plan` (el plan mismo) - eliminación física
 
 **Para eventos (`EventService.deleteEvent()` y `deleteEventsByPlanId()`):**
 1. `event_participants` (participantes registrados en el evento) - eliminación física
@@ -580,6 +581,7 @@ Plan eliminado permanentemente e irreversiblemente
 
 **📋 Recordatorio para nuevas estructuras de datos:**
 - **Si se crea una nueva colección relacionada con un plan** (ej: `plan_comments`, `plan_attachments`, etc.), **DEBE** añadirse la lógica de eliminación en cascada en `PlanService.deletePlan()`.
+- Incluir también la limpieza de cualquier colección de invitaciones relacionada (p. ej. `plan_invitations`) por `planId`.
 - **Si se crea una nueva colección relacionada con un evento** (ej: `event_comments`, `event_attachments`, etc.), **DEBE** añadirse la lógica de eliminación en cascada en `EventService.deleteEvent()`.
 - Verificar también que las reglas de Firestore permitan la eliminación cuando el plan/evento ya no existe.
 

@@ -292,10 +292,11 @@ class PlanService {
   /// 
   /// Elimina un plan y todos sus datos relacionados en el siguiente orden:
   /// 1. event_participants (participantes de eventos del plan)
-  /// 2. events (eventos del plan - se eliminan desde event_service)
-  /// 3. plan_permissions (permisos del plan)
-  /// 4. plan_participations (participaciones - eliminación física)
-  /// 5. plan (el plan mismo)
+  /// 2. plan_invitations (todas las invitaciones del plan)
+  /// 3. events (eventos del plan - se eliminan desde event_service)
+  /// 4. plan_permissions (permisos del plan)
+  /// 5. plan_participations (participaciones - eliminación física)
+  /// 6. plan (el plan mismo)
   /// 
   /// NOTA: La eliminación de eventos e imagen del plan se hace desde wd_plan_data_screen.dart
   /// antes de llamar a este método.
@@ -304,13 +305,16 @@ class PlanService {
       // 1. Eliminar todos los event_participants del plan
       await _eventParticipantService.deleteAllEventParticipantsByPlanId(id);
       
-      // 2. Eliminar todos los permisos del plan
+      // 2. Eliminar todas las invitaciones del plan
+      await _invitationService.deleteInvitationsByPlanId(id);
+      
+      // 3. Eliminar todos los permisos del plan
       await _permissionService.deleteAllPlanPermissions(id);
       
-      // 3. Eliminar físicamente todas las participaciones del plan
+      // 4. Eliminar físicamente todas las participaciones del plan
       await _participationService.deleteAllPlanParticipations(id);
       
-      // 4. Eliminar el plan
+      // 5. Eliminar el plan
       await _firestore.collection(_collectionName).doc(id).delete();
       LoggerService.database('Plan deleted successfully: $id', operation: 'DELETE');
       return true;

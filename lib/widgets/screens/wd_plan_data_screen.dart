@@ -25,6 +25,7 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
+import 'package:unp_calendario/shared/services/logger_service.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -1370,104 +1371,194 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
   Future<void> _showDeleteConfirmation(BuildContext context) async {
     final loc = AppLocalizations.of(context)!;
-    final passwordController = TextEditingController();
-    bool isDeleting = false;
-    String? errorText;
 
-    bool? confirmed;
-    try {
-      confirmed = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                title: Text(loc.planDeleteDialogTitle),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      loc.planDeleteDialogMessage,
-                      style: AppTypography.bodyStyle.copyWith(
-                        color: Colors.grey.shade800,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      enabled: !isDeleting,
-                      decoration: InputDecoration(
-                        labelText: loc.planDeleteDialogPasswordLabel,
-                        errorText: errorText,
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: isDeleting ? null : () => Navigator.of(context).pop(false),
-                    child: Text(loc.cancelChanges),
-                  ),
-                  FilledButton(
-                    onPressed: isDeleting
-                        ? null
-                        : () async {
-                            final password = passwordController.text.trim();
-                            if (password.isEmpty) {
-                              setState(() {
-                                errorText = loc.planDeleteDialogPasswordRequired;
-                              });
-                              return;
-                            }
-                            setState(() {
-                              isDeleting = true;
-                              errorText = null;
-                            });
-                            final success = await _deletePlan(password);
-                            if (!context.mounted) return;
-                            if (success) {
-                              Navigator.of(context).pop(true);
-                            } else {
-                              setState(() {
-                                isDeleting = false;
-                                errorText = loc.planDeleteDialogAuthError;
-                              });
-                            }
-                          },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: isDeleting
-                        ? SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(loc.planDeleteDialogConfirm),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    } finally {
-      passwordController.dispose();
-    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _DeletePlanDialog(
+        loc: loc,
+        onDelete: _deletePlan,
+      ),
+    );
 
     if (confirmed == true) {
       widget.onPlanDeleted?.call();
     }
   }
 
+  Future<bool> _deletePlan(String password) async {
+    if (currentPlan.id == null) return false;
+
+    try {
+      final loc = AppLocalizations.of(context)!;
+      final authService = ref.read(authServiceProvider);
+      final planService = ref.read(planServiceProvider);
+      final eventService = ref.read(eventServiceProvider);
+
+      final planId = currentPlan.id!;
+
+      final success = await authService.deletePlan(
+        planId: planId,
+        reauthenticate: true,
+        password: password,
+      );
+
+      if (!success) {
+        return false;
+      }
+
+      if (currentPlan.imageUrl != null) {
+        await ImageService.deletePlanImage(currentPlan.imageUrl!);
+      }
+
+      await eventService.deleteEventsByPlanId(planId);
+
+      final deleted = await planService.deletePlan(planId);
+      if (!context.mounted) return deleted;
+
+      if (!deleted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.planDeleteError),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return false;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.planDeleteSuccess(currentPlan.name)),
+          backgroundColor: Colors.green,
+        ),
+      );
+      return true;
+    } catch (e) {
+      LoggerService.error('Error deleting plan', context: 'PLAN_DATA_SCREEN', error: e);
+      if (!context.mounted) return false;
+      final loc = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.planDeleteError),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+  }
+}
+
+// Widget separado para el diálogo de eliminación que maneja su propio controlador
+class _DeletePlanDialog extends StatefulWidget {
+  final AppLocalizations loc;
+  final Future<bool> Function(String password) onDelete;
+
+  const _DeletePlanDialog({
+    required this.loc,
+    required this.onDelete,
+  });
+
+  @override
+  State<_DeletePlanDialog> createState() => _DeletePlanDialogState();
+}
+
+class _DeletePlanDialogState extends State<_DeletePlanDialog> {
+  late TextEditingController _passwordController;
+  bool _isDeleting = false;
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.loc.planDeleteDialogTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.loc.planDeleteDialogMessage,
+            style: AppTypography.bodyStyle.copyWith(
+              color: Colors.grey.shade800,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _passwordController,
+            obscureText: true,
+            enabled: !_isDeleting,
+            decoration: InputDecoration(
+              labelText: widget.loc.planDeleteDialogPasswordLabel,
+              errorText: _errorText,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isDeleting ? null : () => Navigator.of(context).pop(false),
+          child: Text(widget.loc.cancelChanges),
+        ),
+        FilledButton(
+          onPressed: _isDeleting
+              ? null
+              : () async {
+                  final password = _passwordController.text.trim();
+                  if (password.isEmpty) {
+                    setState(() {
+                      _errorText = widget.loc.planDeleteDialogPasswordRequired;
+                    });
+                    return;
+                  }
+                  setState(() {
+                    _isDeleting = true;
+                    _errorText = null;
+                  });
+                  final success = await widget.onDelete(password);
+                  if (!mounted) return;
+                  if (success) {
+                    Navigator.of(context).pop(true);
+                  } else {
+                    setState(() {
+                      _isDeleting = false;
+                      _errorText = widget.loc.planDeleteDialogAuthError;
+                    });
+                  }
+                },
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+          ),
+          child: _isDeleting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(widget.loc.planDeleteDialogConfirm),
+        ),
+      ],
+    );
+  }
+}
+
+// Método _deletePlan debe estar en _PlanDataScreenState
+extension _PlanDataScreenStateExtension on _PlanDataScreenState {
   Future<bool> _deletePlan(String password) async {
     if (currentPlan.id == null) return false;
 

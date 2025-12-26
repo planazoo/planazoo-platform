@@ -2959,7 +2959,7 @@ Sistema completo de multi-moneda implementado. Cada plan tiene su moneda base (E
   - `plans`: 2 índices (createdAt, userId + createdAt)
   - `events`: 3 índices (planId + date + hour, planId + isDraft + date + hour, planId + typeFamily + checkIn)
   - `plan_participations`: 5 índices (múltiples combinaciones de planId, userId, role, isActive, joinedAt)
-  - `planInvitations`: 2 índices nuevos (planId + email + status, status + expiresAt)
+  - `plan_invitations`: 2 índices nuevos (planId + email + status, status + expiresAt)
   - `event_participants`: 3 índices nuevos (eventId + registeredAt, eventId + userId + status, eventId + userId)
   - `participant_groups`: 1 índice (userId + updatedAt)
   - `users`: 2 índices (isActive + createdAt, displayName + isActive)

@@ -173,7 +173,7 @@
       ]
     },
     {
-      "collectionGroup": "planInvitations",
+      "collectionGroup": "plan_invitations",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -191,7 +191,7 @@
       ]
     },
     {
-      "collectionGroup": "planInvitations",
+      "collectionGroup": "plan_invitations",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -201,7 +201,7 @@
       ]
     },
     {
-      "collectionGroup": "planInvitations",
+      "collectionGroup": "plan_invitations",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -219,7 +219,7 @@
       ]
     },
     {
-      "collectionGroup": "planInvitations",
+      "collectionGroup": "plan_invitations",
       "queryScope": "COLLECTION",
       "fields": [
         {
