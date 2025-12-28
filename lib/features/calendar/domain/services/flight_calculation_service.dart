@@ -1,4 +1,3 @@
-import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 
 /// Servicio para cálculos complejos de vuelos y eventos con timezones

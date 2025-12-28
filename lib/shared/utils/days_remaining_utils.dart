@@ -3,9 +3,8 @@ import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 /// T112: Utilidades para calcular días restantes hasta el inicio de un plan
 class DaysRemainingUtils {
   /// Calcula los días restantes hasta el inicio del plan
-  /// Retorna null si el plan ya inició o si no hay fecha de inicio
+  /// Retorna null si el plan ya inició
   static int? calculateDaysRemaining(Plan plan) {
-    if (plan.startDate == null) return null;
     
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -26,7 +25,6 @@ class DaysRemainingUtils {
   /// Calcula los días pasados desde el inicio del plan
   /// Retorna null si el plan no ha iniciado aún
   static int? calculateDaysPassed(Plan plan) {
-    if (plan.startDate == null) return null;
     
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -49,9 +47,6 @@ class DaysRemainingUtils {
   static bool shouldShowDaysRemaining(Plan plan) {
     // Solo mostrar si el estado es "confirmado"
     if (plan.state != 'confirmado') return false;
-    
-    // Solo mostrar si hay fecha de inicio
-    if (plan.startDate == null) return false;
     
     // Verificar que aún no haya empezado
     final daysRemaining = calculateDaysRemaining(plan);

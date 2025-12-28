@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/event.dart';
 
 /// Servicio para notificaciones de cambios en eventos
 class EventNotificationService {

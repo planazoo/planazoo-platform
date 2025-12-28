@@ -109,8 +109,8 @@ class ColorUtils {
     }
   }
   
-  /// T91: Calcula si un color es lo suficientemente oscuro para usar texto blanco
-  /// Utiliza el cálculo de luminosidad relativa según WCAG
+  // T91: Método privado para calcular si un color es oscuro (no usado actualmente)
+  // ignore: unused_element
   static bool _isDarkColor(Color color) {
     return color.computeLuminance() < 0.5;
   }

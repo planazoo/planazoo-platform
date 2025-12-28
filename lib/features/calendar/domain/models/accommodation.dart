@@ -139,8 +139,15 @@ class Accommodation {
     final normalizedCheckIn = DateTime(checkIn.year, checkIn.month, checkIn.day);
     final normalizedCheckOut = DateTime(checkOut.year, checkOut.month, checkOut.day);
     
-    return normalizedDate.isAfter(normalizedCheckIn.subtract(const Duration(days: 1))) &&
-           normalizedDate.isBefore(normalizedCheckOut.add(const Duration(days: 1)));
+    // Un alojamiento está activo en un día si:
+    // - El día es >= checkIn (inclusive, día de entrada)
+    // - El día es < checkOut (exclusive, día de salida no se cuenta)
+    // Ejemplo: checkIn = día 1, checkOut = día 3 → activo en días 1 y 2
+    final isOnOrAfterCheckIn = normalizedDate.isAtSameMomentAs(normalizedCheckIn) || 
+                                normalizedDate.isAfter(normalizedCheckIn);
+    final isBeforeCheckOut = normalizedDate.isBefore(normalizedCheckOut);
+    
+    return isOnOrAfterCheckIn && isBeforeCheckOut;
   }
   
   /// Verificar si las fechas del alojamiento son válidas para un plan

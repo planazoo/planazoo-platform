@@ -110,7 +110,7 @@ class ParticipantsListWidget extends ConsumerWidget {
                     trailing: showActions && isCurrentUser && isOrganizer && plan != null
                         ? PopupMenuButton<String>(
                             onSelected: (value) {
-                              _handleMenuAction(context, ref, participation, value, plan!);
+                              _handleMenuAction(context, ref, participation, value, plan);
                             },
                             itemBuilder: (context) => [
                               if (!isOrganizer)
@@ -119,7 +119,7 @@ class ParticipantsListWidget extends ConsumerWidget {
                                   child: Text('Hacer organizador'),
                                 ),
                               if (!isOrganizer &&
-                                  PlanStatePermissions.canRemoveParticipants(plan!))
+                                  PlanStatePermissions.canRemoveParticipants(plan))
                                 const PopupMenuItem(
                                   value: 'remove',
                                   child: Text('Remover'),

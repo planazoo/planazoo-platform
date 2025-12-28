@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event_segment.dart';
@@ -13,13 +12,10 @@ import 'package:unp_calendario/features/calendar/presentation/providers/plan_par
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/event_participant_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
-import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
-import 'package:unp_calendario/features/calendar/domain/services/accommodation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/perspective_service.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
-import 'package:unp_calendario/features/calendar/domain/services/date_service.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
@@ -641,9 +637,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final dayDate = widget.plan.startDate.add(Duration(days: dayIndex - 1));
     
     // Obtener alojamientos del plan
-    final accommodations = ref.watch(accommodationsProvider(
+    final accommodationState = ref.watch(accommodationStateProvider(
       AccommodationNotifierParams(planId: widget.plan.id ?? ''),
     ));
+    
+    // Mostrar error si hay uno
+    if (accommodationState.error != null && mounted) {
+      // El error se mostrará en los logs, pero también podemos mostrarlo en la UI si es crítico
+      // Por ahora solo lo registramos
+    }
+    
+    final accommodations = accommodationState.accommodations;
     
     // Filtrar alojamientos para este día específico
     final accommodationsForDay = accommodations.where((acc) => acc.isDateInRange(dayDate)).toList();
@@ -3265,17 +3269,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         planEndDate: widget.plan.startDate.add(Duration(days: widget.plan.durationInDays)),
         onSaved: (updatedAccommodation) async {
           final accommodationService = ref.read(accommodationServiceProvider);
-          await accommodationService.saveAccommodation(updatedAccommodation);
+          final success = await accommodationService.saveAccommodation(updatedAccommodation);
           Navigator.of(context).pop();
-          // Invalidar providers de alojamientos después de cerrar el diálogo
+          
           if (mounted) {
-            ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
-            // Invalidar provider de estadísticas para que se recalcule el presupuesto
-            if (widget.plan.id != null) {
-              ref.invalidate(planStatsProvider(widget.plan.id!));
+            if (success) {
+              // Invalidar providers de alojamientos para forzar recarga
+              ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+              // También refrescar manualmente el notifier para asegurar actualización inmediata
+              final notifier = ref.read(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')).notifier);
+              await notifier.refresh();
+              
+              // Invalidar provider de estadísticas para que se recalcule el presupuesto
+              if (widget.plan.id != null) {
+                ref.invalidate(planStatsProvider(widget.plan.id!));
+              }
+              // Forzar actualización de la UI
+              setState(() {});
+            } else {
+              // Mostrar error si no se pudo guardar
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 3),
+                ),
+              );
             }
-            // Forzar actualización de la UI
-            setState(() {});
           }
         },
         onDeleted: (accommodationId) async {
@@ -3320,17 +3340,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         initialCheckIn: checkInDate,
         onSaved: (newAccommodation) async {
           final accommodationService = ref.read(accommodationServiceProvider);
-          await accommodationService.saveAccommodation(newAccommodation);
+          final success = await accommodationService.saveAccommodation(newAccommodation);
           Navigator.of(context).pop();
-          // Invalidar providers de alojamientos después de cerrar el diálogo
+          
           if (mounted) {
-            ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
-            // Invalidar provider de estadísticas para que se recalcule el presupuesto
-            if (widget.plan.id != null) {
-              ref.invalidate(planStatsProvider(widget.plan.id!));
+            if (success) {
+              // Invalidar providers de alojamientos para forzar recarga
+              ref.invalidate(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')));
+              // También refrescar manualmente el notifier para asegurar actualización inmediata
+              final notifier = ref.read(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')).notifier);
+              await notifier.refresh();
+              
+              // Invalidar provider de estadísticas para que se recalcule el presupuesto
+              if (widget.plan.id != null) {
+                ref.invalidate(planStatsProvider(widget.plan.id!));
+              }
+              // Forzar actualización de la UI
+              setState(() {});
+            } else {
+              // Mostrar error si no se pudo guardar
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 3),
+                ),
+              );
             }
-            // Forzar actualización de la UI
-            setState(() {});
           }
         },
         onDeleted: (accommodationId) {

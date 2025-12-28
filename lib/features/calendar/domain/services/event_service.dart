@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../features/security/services/rate_limiter_service.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../models/event.dart';
-import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
 import 'event_participant_service.dart';
 import 'event_sync_service.dart';

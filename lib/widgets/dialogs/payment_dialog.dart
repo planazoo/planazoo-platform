@@ -11,7 +11,6 @@ import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 
 /// T102: Diálogo para registrar o editar un pago

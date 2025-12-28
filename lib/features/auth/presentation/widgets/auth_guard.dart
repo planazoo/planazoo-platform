@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/auth/domain/models/auth_state.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/login_page.dart';
+import 'package:unp_calendario/features/offline/presentation/widgets/connectivity_indicator.dart';
 
 class AuthGuard extends ConsumerWidget {
   final Widget child;
@@ -27,7 +28,12 @@ class AuthGuard extends ConsumerWidget {
     return switch (authState.status) {
       AuthStatus.initial => _buildLoading(context),
       AuthStatus.loading => _buildLoading(context),
-      AuthStatus.authenticated => child,
+      AuthStatus.authenticated => Column(
+          children: [
+            const ConnectivityIndicator(),
+            Expanded(child: child),
+          ],
+        ),
       AuthStatus.unauthenticated => const LoginPage(),
       AuthStatus.error => const LoginPage(), // Mostrar LoginPage en lugar de página de error
       AuthStatus.registrationSuccess => const LoginPage(), // Redirigir a login después del registro
@@ -62,6 +68,7 @@ class AuthGuard extends ConsumerWidget {
     );
   }
 
+  // ignore: unused_element
   Widget _buildError(BuildContext context, String errorMessage) {
     if (errorWidget != null) {
       return errorWidget!;

@@ -64,14 +64,12 @@ class PlanStatePermissions {
 
   /// Verifica si se puede añadir fotos
   static bool canAddPhotos(Plan plan) {
-    final state = plan.state ?? 'borrador';
     // Permitido en todos los estados
     return true;
   }
 
   /// Verifica si se puede exportar a PDF
   static bool canExportPdf(Plan plan) {
-    final state = plan.state ?? 'borrador';
     // Permitido en todos los estados
     return true;
   }

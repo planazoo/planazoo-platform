@@ -8,7 +8,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/plan_par
 import 'package:unp_calendario/features/calendar/presentation/notifiers/calendar_notifier.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
-import 'package:unp_calendario/features/testing/family_users_generator.dart';
+import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/shared/models/user_role.dart';
@@ -22,14 +22,12 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/widgets/event/event_participant_registration_widget.dart';
 import 'package:unp_calendario/shared/utils/plan_range_utils.dart';
 import 'package:unp_calendario/widgets/dialogs/expand_plan_dialog.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
-import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -1355,15 +1353,25 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   /// Obtiene el nombre de visualización de un usuario por su ID
   Future<String> _getUserDisplayName(String userId) async {
     try {
-      // Importar el generador de usuarios para obtener los nombres
-      final userInfo = FamilyUsersGenerator.getUserInfo(userId);
-      if (userInfo != null) {
-        return userInfo['displayName'] ?? userId;
+      // Obtener el usuario real desde Firestore usando UserService
+      final userService = UserService();
+      final user = await userService.getUser(userId);
+      
+      if (user != null) {
+        // Priorizar displayName, luego username, luego email
+        if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+          return user.displayName!;
+        }
+        if (user.username != null && user.username!.trim().isNotEmpty) {
+          return '@${user.username!}';
+        }
+        return user.email;
       }
       
-      // Si no está en la lista de usuarios generados, devolver el userId
+      // Si no se encuentra el usuario, devolver el userId como fallback
       return userId;
     } catch (e) {
+      // En caso de error, devolver el userId
       return userId;
     }
   }
@@ -1812,15 +1820,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     });
     
     try {
-      final convertedAmount = await exchangeRateService.convertAmount(
+      // El coste se guardará en la moneda del plan
+      // Solo mostramos la conversión, pero no actualizamos el campo
+      // El campo muestra el monto en la moneda local
+      await exchangeRateService.convertAmount(
         localAmount,
         _costCurrency!,
         _planCurrency!,
       );
-      
-      // El coste se guardará en la moneda del plan
-      // Solo mostramos la conversión, pero no actualizamos el campo
-      // El campo muestra el monto en la moneda local
     } catch (e) {
       // Error silencioso, se mostrará en el FutureBuilder
     } finally {

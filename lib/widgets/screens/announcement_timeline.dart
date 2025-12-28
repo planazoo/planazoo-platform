@@ -5,7 +5,6 @@ import 'package:unp_calendario/features/calendar/presentation/providers/announce
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
-import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -73,7 +72,7 @@ class AnnouncementTimeline extends ConsumerWidget {
     final participantsAsync = ref.watch(planParticipantsProvider(planId));
 
     // Obtener mapa de userId -> PlanParticipation para acceder a nombres de usuario
-    final participants = participantsAsync.when(
+    participantsAsync.when(
       data: (data) => data,
       loading: () => <PlanParticipation>[],
       error: (_, __) => <PlanParticipation>[],

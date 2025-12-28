@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -307,7 +306,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             label: AppLocalizations.of(context)!.close,
             textColor: Colors.white,
             onPressed: () {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              if (mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              }
             },
           ),
         ),
@@ -319,9 +320,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   Widget _buildEmailField() {
     final isEmail = _emailController.text.contains('@');
-    final isUsername = _emailController.text.isNotEmpty &&
-                       !_emailController.text.contains('@') &&
-                       _emailController.text.startsWith('@');
 
     return TextFormField(
       controller: _emailController,

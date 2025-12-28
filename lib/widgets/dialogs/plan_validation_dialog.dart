@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../shared/utils/plan_validation_utils.dart';
 import '../../app/theme/typography.dart';
 import '../../app/theme/color_scheme.dart';

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
-import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class AccommodationDialog extends ConsumerStatefulWidget {
@@ -51,6 +51,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   late DateTime _selectedCheckOut;
   late String _selectedColor;
   late List<String> _selectedParticipantTrackIds;
+  late bool _isForAllParticipants; // Checkbox principal "Para todos"
 
   // Colores predefinidos para alojamientos
   final List<String> _accommodationColors = [
@@ -101,8 +102,15 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     final typeFromDB = widget.accommodation?.typeSubtype ?? '';
     _selectedType = _normalizeType(typeFromDB);
     
-    // Inicializar participantes seleccionados
-    _selectedParticipantTrackIds = widget.accommodation?.participantTrackIds ?? [];
+    // Inicializar participantes seleccionados y checkbox "Para todos" (igual que eventos)
+    final existingParticipantTrackIds = widget.accommodation?.participantTrackIds ?? [];
+    // Si el alojamiento existente tiene participantTrackIds, no está "para todos"
+    _isForAllParticipants = existingParticipantTrackIds.isEmpty;
+    _selectedParticipantTrackIds = List.from(existingParticipantTrackIds);
+    
+    // Si es un alojamiento nuevo, por defecto está marcado "para todos" (no necesitamos seleccionar participantes)
+    // Si es un alojamiento existente y no está marcado "para todos" pero no hay participantes,
+    // asegurar que al menos haya uno seleccionado (se validará al guardar)
     
     // Cargar moneda del plan (T153)
     _loadPlanCurrency();
@@ -411,50 +419,109 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     return Consumer(
       builder: (context, ref, child) {
         final participationsAsync = ref.watch(planRealParticipantsProvider(widget.planId));
+        final currentUserId = ref.watch(currentUserProvider)?.id;
         
         return participationsAsync.when(
           data: (participations) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppLocalizations.of(context)!.participantsLabel,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                // Checkbox principal "Este alojamiento es para todos" (igual que eventos)
+                CheckboxListTile(
+                  title: const Text(
+                    'Este alojamiento es para todos los participantes del plan',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: _isForAllParticipants 
+                      ? const Text('Todos los participantes estarán incluidos automáticamente')
+                      : const Text('Selecciona participantes específicos abajo'),
+                  value: _isForAllParticipants,
+                  onChanged: (value) {
+                    setState(() {
+                      _isForAllParticipants = value ?? true;
+                      // Si se marca "para todos", limpiar selección individual
+                      if (_isForAllParticipants) {
+                        _selectedParticipantTrackIds.clear();
+                      } else {
+                        // Si se desmarca, asegurar que al menos el usuario actual esté seleccionado
+                        if (currentUserId != null && !_selectedParticipantTrackIds.contains(currentUserId)) {
+                          _selectedParticipantTrackIds.add(currentUserId);
+                        }
+                      }
+                    });
+                  },
+                  activeColor: Colors.blue,
+                  contentPadding: EdgeInsets.zero,
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: participations.map((participation) {
-                    final isSelected = _selectedParticipantTrackIds.contains(participation.userId);
-                    return FutureBuilder<String>(
-                      future: _getUserDisplayName(participation.userId),
-                      builder: (context, snapshot) {
-                        final displayName = snapshot.data ?? participation.userId;
-                        return FilterChip(
-                          label: Text(displayName),
-                          selected: isSelected,
-                          onSelected: (selected) {
-    setState(() {
-                              if (selected) {
-                                _selectedParticipantTrackIds.add(participation.userId);
-                              } else {
-                                _selectedParticipantTrackIds.remove(participation.userId);
-                              }
-                            });
-                          },
-                          selectedColor: Colors.blue.shade100,
-                          checkmarkColor: Colors.blue.shade800,
-                        );
-                      },
-                    );
-                  }).toList(),
-                ),
-                if (_selectedParticipantTrackIds.isEmpty)
-                  Text(
-                    AppLocalizations.of(context)!.noParticipantsSelected,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                
+                // Lista de participantes (solo visible si checkbox principal está desmarcado)
+                if (!_isForAllParticipants) ...[
+                  const Text(
+                    'Seleccionar participantes:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
+                  const SizedBox(height: 8),
+                  
+                  // Lista de FilterChips de participantes
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: participations.map((participation) {
+                      final isSelected = _selectedParticipantTrackIds.contains(participation.userId);
+                      return FutureBuilder<String>(
+                        future: _getUserDisplayName(participation.userId),
+                        builder: (context, snapshot) {
+                          final displayName = snapshot.data ?? participation.userId;
+                          return FilterChip(
+                            label: Text(displayName),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  if (!_selectedParticipantTrackIds.contains(participation.userId)) {
+                                    _selectedParticipantTrackIds.add(participation.userId);
+                                  }
+                                } else {
+                                  // No permitir deseleccionar si es el único seleccionado
+                                  if (_selectedParticipantTrackIds.length > 1) {
+                                    _selectedParticipantTrackIds.remove(participation.userId);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Debe haber al menos un participante seleccionado'),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                }
+                              });
+                            },
+                            selectedColor: Colors.blue.shade100,
+                            checkmarkColor: Colors.blue.shade800,
+                          );
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  
+                  // Mensaje de validación
+                  if (_selectedParticipantTrackIds.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'Debes seleccionar al menos un participante',
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                ],
               ],
             );
           },
@@ -682,18 +749,30 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     }
   }
 
-  /// Obtiene el nombre de visualización de un usuario
+  /// Obtiene el nombre de visualización de un usuario por su ID
   Future<String> _getUserDisplayName(String userId) async {
-    // Mapeo de user IDs a nombres reales para el plan Frankenstein
-    final userNames = {
-      'uJRMMGniO2bwfbdD3S11QMXQT912': 'Cristian Claraso',
-      'mar_batllori': 'Mar Batllori',
-      'emma_claraso': 'Emma Claraso',
-      'matilde_claraso': 'Matilde Claraso',
-      'jimena_claraso': 'Jimena Claraso',
-    };
-    
-    return userNames[userId] ?? userId;
+    try {
+      // Obtener el usuario real desde Firestore usando UserService
+      final userService = UserService();
+      final user = await userService.getUser(userId);
+      
+      if (user != null) {
+        // Priorizar displayName, luego username, luego email
+        if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+          return user.displayName!;
+        }
+        if (user.username != null && user.username!.trim().isNotEmpty) {
+          return '@${user.username!}';
+        }
+        return user.email;
+      }
+      
+      // Si no se encuentra el usuario, devolver el userId como fallback
+      return userId;
+    } catch (e) {
+      // En caso de error, devolver el userId
+      return userId;
+    }
   }
 
   Future<void> _confirmDelete() async {
@@ -780,6 +859,17 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       return;
     }
 
+    // Validar participantes (igual que eventos)
+    if (!_isForAllParticipants && _selectedParticipantTrackIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debes seleccionar al menos un participante'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Normalizar el tipo seleccionado antes de guardar
     final normalizedType = _normalizeType(_selectedType);
 
@@ -795,7 +885,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       color: _selectedColor,
       typeFamily: 'alojamiento',
       typeSubtype: normalizedType,
-      participantTrackIds: _selectedParticipantTrackIds,
+      // Si está marcado "para todos", participantTrackIds debe estar vacío
+      // Si no, debe contener los IDs seleccionados
+      participantTrackIds: _isForAllParticipants ? [] : _selectedParticipantTrackIds,
       cost: await _getConvertedCost(), // T153: Coste convertido a moneda del plan
       createdAt: widget.accommodation?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),

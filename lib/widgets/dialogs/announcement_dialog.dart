@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_announcement.dart';
-import 'package:unp_calendario/features/calendar/domain/services/announcement_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/announcement_providers.dart';
-import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import '../../../../shared/services/logger_service.dart';
 

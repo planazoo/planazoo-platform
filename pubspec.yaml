@@ -63,6 +63,16 @@ dependencies:
   
   # Crypto for token generation
   crypto: ^3.0.3
+  
+  # UUID generation
+  uuid: ^4.3.3
+  
+  # Local database for offline support (mobile only)
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  
+  # Connectivity detection for offline/online status
+  connectivity_plus: ^6.0.5
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +84,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  
+  # Code generation for Hive adapters
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

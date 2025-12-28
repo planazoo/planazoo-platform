@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/services/logger_service.dart';
-import '../../../../shared/utils/plan_validation_utils.dart' as val_utils;
 import '../models/plan.dart';
 import 'plan_service.dart';
 import 'event_service.dart';
@@ -20,7 +19,9 @@ class ValidationResult {
 /// los cambios de estado con sus validaciones correspondientes.
 class PlanStateService {
   final PlanService _planService;
+  // ignore: unused_field
   final EventService _eventService;
+  // ignore: unused_field
   final PlanParticipationService _participationService;
 
   PlanStateService({

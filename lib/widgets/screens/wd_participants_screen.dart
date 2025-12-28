@@ -4,7 +4,6 @@ import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
-import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
@@ -758,13 +757,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       );
     }
 
-    return ListView.builder(
+    return Padding(
       padding: const EdgeInsets.all(16),
-      itemCount: participations.length,
-      itemBuilder: (context, index) {
-        final participation = participations[index];
-        return _buildParticipantCard(participation);
-      },
+      child: Column(
+        children: participations.map((participation) {
+          return _buildParticipantCard(participation);
+        }).toList(),
+      ),
     );
   }
 
@@ -918,8 +917,6 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
   }
 
   Widget _buildRoleOption(PlanParticipation participation, String role, String label) {
-    final isSelected = participation.role == role;
-    
     return ListTile(
       leading: Radio<String>(
         value: role,
@@ -947,39 +944,47 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
               bottom: BorderSide(color: AppColorScheme.color2, width: 1),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Invitar usuarios',
-                    style: AppTypography.titleStyle.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Flexible(
+                    child: Text(
+                      'Invitar usuarios',
+                      style: AppTypography.titleStyle.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  Row(
-                    children: [
-                      TextButton.icon(
-                        onPressed: _inviteByEmailDialog,
-                        icon: const Icon(Icons.mail_outline),
-                        label: const Text('Invitar por email'),
-                      ),
-                      const SizedBox(width: 8),
-                      TextButton.icon(
-                        onPressed: _acceptRejectTokenDialog,
-                        icon: const Icon(Icons.vpn_key_outlined),
-                        label: const Text('Aceptar/Rechazar por token'),
-                      ),
-                      if (showCloseButton && widget.onBack != null)
-                        IconButton(
-                          onPressed: widget.onBack,
-                          icon: const Icon(Icons.close),
-                          tooltip: 'Cerrar',
+                  Flexible(
+                    child: Wrap(
+                      spacing: 8,
+                      children: [
+                        TextButton.icon(
+                          onPressed: _inviteByEmailDialog,
+                          icon: const Icon(Icons.mail_outline),
+                          label: const Text('Invitar por email'),
                         ),
-                    ],
+                        TextButton.icon(
+                          onPressed: _acceptRejectTokenDialog,
+                          icon: const Icon(Icons.vpn_key_outlined),
+                          label: const Text('Aceptar/Rechazar por token'),
+                        ),
+                        if (showCloseButton && widget.onBack != null)
+                          IconButton(
+                            onPressed: widget.onBack,
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Cerrar',
+                          ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -1008,49 +1013,52 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  return Container(
-                    height: 240,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: availableUsers.isEmpty
-                        ? Center(
-                            child: Text(
-                              _searchQuery.isEmpty
-                                  ? 'No hay usuarios disponibles'
-                                  : 'No se encontraron usuarios',
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: availableUsers.length,
-                            itemBuilder: (context, index) {
-                              final user = availableUsers[index];
-                              return ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: AppColorScheme.color2,
-                                  child: Text(
-                                    _computeInitials(user),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                  return ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 240),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: availableUsers.isEmpty
+                          ? Center(
+                              child: Text(
+                                _searchQuery.isEmpty
+                                    ? 'No hay usuarios disponibles'
+                                    : 'No se encontraron usuarios',
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: availableUsers.length,
+                              itemBuilder: (context, index) {
+                                final user = availableUsers[index];
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: AppColorScheme.color2,
+                                    child: Text(
+                                      _computeInitials(user),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                title: Text(_formatUserDisplay(user, user.email)),
-                                subtitle: Text(user.email),
-                                trailing: ElevatedButton(
-                                  onPressed: () => _inviteUser(user),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColorScheme.color2,
-                                    foregroundColor: Colors.white,
+                                  title: Text(_formatUserDisplay(user, user.email)),
+                                  subtitle: Text(user.email),
+                                  trailing: ElevatedButton(
+                                    onPressed: () => _inviteUser(user),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColorScheme.color2,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Invitar'),
                                   ),
-                                  child: const Text('Invitar'),
-                                ),
-                              );
-                            },
-                          ),
+                                );
+                              },
+                            ),
+                    ),
                   );
                 },
                 loading: () => const SizedBox(
@@ -1067,7 +1075,10 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                   ),
                 ),
               ),
-            ],
+                  ],
+                ),
+              );
+            },
           ),
         );
       },
@@ -1293,15 +1304,22 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     Widget content() {
       return Container(
         color: Colors.grey.shade50,
-        child: Column(
-          children: [
-            _buildInviteUsersSection(showCloseButton: !isCompact),
-            _buildPendingInvitationsSection(),
-            _buildMyInvitationsSection(),
-            Expanded(
-              child: _buildParticipantsList(),
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  children: [
+                    _buildInviteUsersSection(showCloseButton: !isCompact),
+                    _buildPendingInvitationsSection(),
+                    _buildMyInvitationsSection(),
+                    _buildParticipantsList(),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       );
     }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/features/auth/presentation/widgets/auth_guard.dart';
 import 'package:unp_calendario/features/language/presentation/providers/language_providers.dart';
+import 'package:unp_calendario/features/offline/presentation/providers/realtime_sync_providers.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_dashboard_page.dart';
 import 'package:unp_calendario/pages/pg_invitation_page.dart';
@@ -29,6 +30,9 @@ class _AppState extends ConsumerState<App> {
   @override
   Widget build(BuildContext context) {
     final currentLanguage = ref.watch(currentLanguageSyncProvider);
+    
+    // Inicializar servicios de sincronización en tiempo real (solo observa, no usa el valor)
+    ref.watch(realtimeSyncInitializerProvider);
     
     return MaterialApp(
       title: 'UNP Calendario',

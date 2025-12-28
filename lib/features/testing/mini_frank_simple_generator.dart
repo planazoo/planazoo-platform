@@ -4,7 +4,6 @@ import 'package:unp_calendario/features/calendar/domain/services/event_service.d
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/accommodation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
-import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
 
 /// Generador para el plan Mini Frank Londres

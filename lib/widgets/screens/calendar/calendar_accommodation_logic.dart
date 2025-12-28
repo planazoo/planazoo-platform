@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
 import 'package:unp_calendario/features/calendar/domain/models/participant_track.dart';
 import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mode.dart';
-import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 
 /// Clase que maneja la lógica específica de alojamientos

@@ -303,7 +303,6 @@ class CalendarTracks extends ConsumerWidget {
     final dayDate = plan.startDate.add(Duration(days: actualDayIndex - 1));
     final accommodationsForDay = accommodations.where((acc) => acc.isDateInRange(dayDate)).toList();
     
-    
     if (accommodationsForDay.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -514,9 +513,15 @@ class CalendarTracks extends ConsumerWidget {
     final groups = <List<int>>[];
     final currentGroup = <int>[];
     
+    // Si el alojamiento no tiene participantTrackIds asignados, mostrarlo en todos los tracks
+    final shouldShowInAllTracks = accommodation.participantTrackIds.isEmpty;
+    
     for (int i = 0; i < visibleTracks.length; i++) {
       final track = visibleTracks[i];
-      if (CalendarAccommodationLogic.shouldShowAccommodationInTrack(accommodation, track)) {
+      final shouldShow = shouldShowInAllTracks || 
+                        CalendarAccommodationLogic.shouldShowAccommodationInTrack(accommodation, track);
+      
+      if (shouldShow) {
         currentGroup.add(i);
       } else {
         if (currentGroup.isNotEmpty) {

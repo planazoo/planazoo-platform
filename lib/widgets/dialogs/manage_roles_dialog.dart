@@ -4,7 +4,6 @@ import 'package:unp_calendario/shared/models/user_role.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/models/plan_permissions.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
-import 'package:unp_calendario/features/testing/family_users_generator.dart';
 
 /// Diálogo para gestionar roles y permisos de usuarios en un plan
 class ManageRolesDialog extends ConsumerStatefulWidget {

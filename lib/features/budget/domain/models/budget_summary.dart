@@ -1,6 +1,3 @@
-import 'package:unp_calendario/features/calendar/domain/models/event.dart';
-import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
-
 /// T101: Resumen de presupuesto del plan
 class BudgetSummary {
   // Costes totales

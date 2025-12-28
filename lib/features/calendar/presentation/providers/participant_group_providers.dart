@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/participant_group.dart';
 import '../../domain/services/participant_group_service.dart';
-import 'calendar_providers.dart';
 
 /// T123: Providers Riverpod para grupos de participantes
 

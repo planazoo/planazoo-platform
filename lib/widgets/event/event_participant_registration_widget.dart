@@ -4,7 +4,6 @@ import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event_participant.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/event_participant_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
-import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';

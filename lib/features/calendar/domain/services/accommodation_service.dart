@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/accommodation.dart';
+import '../../../../shared/services/logger_service.dart';
 
 class AccommodationService {
   static const String _collectionName = 'events'; // Los alojamientos están en events
@@ -7,15 +8,37 @@ class AccommodationService {
 
   /// Obtener todos los alojamientos de un plan
   Stream<List<Accommodation>> getAccommodations(String planId) {
-    return _firestore
-        .collection(_collectionName)
-        .where('planId', isEqualTo: planId)
-        .where('typeFamily', isEqualTo: 'alojamiento')
-        .orderBy('checkIn')
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => Accommodation.fromFirestore(doc)).toList();
-    });
+    try {
+      return _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .where('typeFamily', isEqualTo: 'alojamiento')
+          .orderBy('checkIn')
+          .snapshots()
+          .map((snapshot) {
+        final accommodations = snapshot.docs.map((doc) {
+          try {
+            return Accommodation.fromFirestore(doc);
+          } catch (e) {
+            LoggerService.error('Error parseando alojamiento ${doc.id}', context: 'ACCOMMODATION_SERVICE', error: e);
+            return null;
+          }
+        }).where((acc) => acc != null).cast<Accommodation>().toList();
+        
+        LoggerService.database('Alojamientos cargados: ${accommodations.length} para plan $planId', operation: 'QUERY');
+        return accommodations;
+      }).handleError((error) {
+        LoggerService.error('Error en stream de alojamientos para plan $planId', context: 'ACCOMMODATION_SERVICE', error: error);
+        // Si falta el índice, devolver lista vacía en lugar de fallar completamente
+        if (error.toString().contains('index') || error.toString().contains('Index')) {
+          LoggerService.warning('Parece que falta un índice compuesto en Firestore. Verifica firestore.indexes.json', context: 'ACCOMMODATION_SERVICE');
+        }
+        return <Accommodation>[];
+      });
+    } catch (e) {
+      LoggerService.error('Error creando stream de alojamientos para plan $planId', context: 'ACCOMMODATION_SERVICE', error: e);
+      return Stream.value(<Accommodation>[]);
+    }
   }
 
   /// Obtener un alojamiento por ID
@@ -38,10 +61,13 @@ class AccommodationService {
   /// Crear un nuevo alojamiento
   Future<String?> createAccommodation(Accommodation accommodation) async {
     try {
-      final docRef = await _firestore.collection(_collectionName).add(accommodation.toFirestore());
+      final data = accommodation.toFirestore();
+      LoggerService.database('Creando alojamiento: ${accommodation.hotelName} para plan ${accommodation.planId}', operation: 'CREATE');
+      final docRef = await _firestore.collection(_collectionName).add(data);
+      LoggerService.database('Alojamiento creado con ID: ${docRef.id}', operation: 'CREATE');
       return docRef.id;
     } catch (e) {
-      // Error creating accommodation: $e
+      LoggerService.error('Error creando alojamiento', context: 'ACCOMMODATION_SERVICE', error: e);
       return null;
     }
   }
@@ -83,11 +109,24 @@ class AccommodationService {
         createdAt: now,
         updatedAt: now,
       );
+      LoggerService.database('Guardando nuevo alojamiento: ${newAccommodation.hotelName}', operation: 'SAVE');
       final id = await createAccommodation(newAccommodation);
+      if (id != null) {
+        LoggerService.database('Alojamiento guardado exitosamente con ID: $id', operation: 'SAVE');
+      } else {
+        LoggerService.error('No se pudo crear el alojamiento', context: 'ACCOMMODATION_SERVICE');
+      }
       return id != null;
     } else {
       // Actualizar alojamiento existente
-      return await updateAccommodation(accommodation);
+      LoggerService.database('Actualizando alojamiento: ${accommodation.id}', operation: 'UPDATE');
+      final success = await updateAccommodation(accommodation);
+      if (success) {
+        LoggerService.database('Alojamiento actualizado exitosamente: ${accommodation.id}', operation: 'UPDATE');
+      } else {
+        LoggerService.error('No se pudo actualizar el alojamiento: ${accommodation.id}', context: 'ACCOMMODATION_SERVICE');
+      }
+      return success;
     }
   }
 

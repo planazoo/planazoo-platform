@@ -1,5 +1,3 @@
-import 'package:unp_calendario/features/calendar/domain/models/event.dart';
-import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/budget/domain/models/budget_summary.dart';
 
 /// T113: Modelo de estadísticas del plan

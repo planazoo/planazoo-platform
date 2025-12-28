@@ -1,4 +1,3 @@
-import '../../../../shared/services/logger_service.dart';
 import '../models/personal_payment.dart';
 import '../models/payment_summary.dart';
 import '../../../../features/calendar/domain/models/event.dart';

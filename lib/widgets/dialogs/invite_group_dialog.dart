@@ -19,7 +19,6 @@ class InviteGroupDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupsAsync = ref.watch(userGroupsStreamProvider(userId));
-    final currentUser = ref.watch(currentUserProvider);
 
     return AlertDialog(
       title: const Text('Invitar Grupo'),

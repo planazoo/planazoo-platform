@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
@@ -46,7 +45,7 @@ class MiniFrankGenerator {
     
     
     // Crear participantes
-    final participants = await _createParticipants(planId, userId);
+    await _createParticipants(planId, userId);
     
     // Solo el evento del vuelo a Sídney (se crea en _createDay1Events)
     
@@ -180,7 +179,7 @@ class MiniFrankGenerator {
 
     
     // Calcular información del vuelo usando el servicio dedicado
-    final flightCalculation = FlightCalculationService.calculateFlightTimes(
+    FlightCalculationService.calculateFlightTimes(
       departureDate: day1,
       departureHour: 20,
       departureMinute: 0,

@@ -81,12 +81,19 @@ class AccommodationNotifier extends StateNotifier<AccommodationState> {
         accommodations: accommodations,
         isLoading: false,
         hasUnsavedChanges: false,
+        error: null, // Limpiar errores si hay datos
       );
-    }, onError: (error, _) {
+    }, onError: (error, stackTrace) {
       if (!mounted) return;
+      final errorMessage = error.toString();
+      // Si el error menciona índices, dar un mensaje más claro
+      String userMessage = 'Error al cargar alojamientos: $errorMessage';
+      if (errorMessage.contains('index') || errorMessage.contains('Index')) {
+        userMessage = 'Error: Falta un índice en Firestore. Verifica que el índice compuesto (planId + typeFamily + checkIn) esté desplegado.';
+      }
       state = state.copyWith(
         isLoading: false,
-        error: 'Error al cargar alojamientos: $error',
+        error: userMessage,
       );
     }, onDone: () {
       if (!mounted) return;

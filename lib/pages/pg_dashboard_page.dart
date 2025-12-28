@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
@@ -34,15 +33,11 @@ import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/plan_calendar_view.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
-import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
-import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:flutter/services.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
@@ -61,6 +56,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   bool isLoading = true;
   bool _isTimezoneBannerLoading = false;
   bool _isCalendarView = false;
+  // ignore: unused_field
   final PlanParticipationService _planParticipationService = PlanParticipationService();
   
   // NUEVO: Estado de navegación para W31
@@ -2616,8 +2612,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   Widget _buildFilterButton(String filterValue, String label, double columnWidth, double rowHeight) {
     final isSelected = selectedFilter == filterValue;
-    final buttonWidth = (columnWidth * 4 - 6) / 4; // Ancho total menos espacios dividido entre 4 botones
-    
     return Expanded(
       child: Container(
         height: rowHeight * 0.6, // Altura menor (60% de la altura de fila)
