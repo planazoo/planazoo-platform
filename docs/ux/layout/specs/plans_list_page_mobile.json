@@ -1,0 +1,171 @@
+{
+  "screen": "PlansListPage",
+  "platform": "mobile",
+  "version": "1.0",
+  "lastUpdated": "2024-12-XX",
+  "description": "Página de lista de planes para móvil (iOS/Android)",
+  
+  "layout": {
+    "topBar": {
+      "type": "appbar",
+      "height": 56,
+      "backgroundColor": "#1E1E1E",
+      "elements": [
+        {
+          "id": "app_title",
+          "type": "title",
+          "position": "left",
+          "text": "Planazoo",
+          "properties": {
+            "fontFamily": "Poppins",
+            "fontSize": 18,
+            "fontWeight": 600,
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "id": "create_plan_button",
+          "type": "button",
+          "position": "right",
+          "text": "+",
+          "properties": {
+            "shape": "circle",
+            "size": 40,
+            "backgroundColor": "#A24000",
+            "textColor": "#BCE1E7",
+            "fontSize": 24,
+            "fontWeight": "bold",
+            "margin": {"right": 16}
+          }
+        }
+      ]
+    },
+    
+    "content": {
+      "padding": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      
+      "rows": [
+        {
+          "id": "R1",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "search",
+                "id": "search_field",
+                "properties": {
+                  "placeholder": "Buscar planes...",
+                  "padding": {"all": 16},
+                  "height": 48
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "filters",
+                "id": "filter_buttons",
+                "properties": {
+                  "buttons": [
+                    {"id": "todos", "label": "Todos"},
+                    {"id": "estoy_in", "label": "Estoy in"},
+                    {"id": "pendientes", "label": "Pendientes"},
+                    {"id": "cerrados", "label": "Cerrados"}
+                  ],
+                  "padding": {"horizontal": 16, "bottom": 8},
+                  "gap": 8,
+                  "height": 36
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "height": "flex",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "list",
+                "id": "plans_list",
+                "properties": {
+                  "itemType": "plan_card",
+                  "scrollable": true,
+                  "padding": {"all": 16},
+                  "emptyState": {
+                    "icon": "calendar_today_outlined",
+                    "title": "No tienes planes aún",
+                    "subtitle": "Crea tu primer plan para comenzar"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      
+      "frames": []
+    },
+    
+    "bottomBar": {
+      "type": "navigation",
+      "height": 60,
+      "backgroundColor": "#1E1E1E",
+      "elements": [
+        {
+          "id": "profile_button",
+          "type": "icon",
+          "position": "center",
+          "icon": "person",
+          "properties": {
+            "size": 28,
+            "color": "#79A2A8"
+          }
+        }
+      ]
+    }
+  },
+  
+  "styles": {
+    "spacing": {
+      "rowGap": 8,
+      "columnGap": 8
+    },
+    "colors": {
+      "background": "#121212",
+      "cardBackground": "#1E1E1E",
+      "textPrimary": "#FFFFFF",
+      "textSecondary": "#B0B0B0",
+      "accent": "#79A2A8"
+    },
+    "typography": {
+      "title": {
+        "fontFamily": "Poppins",
+        "fontSize": 18,
+        "fontWeight": 600
+      },
+      "body": {
+        "fontFamily": "Poppins",
+        "fontSize": 14,
+        "fontWeight": 400
+      }
+    }
+  }
+}
+

@@ -56,56 +56,34 @@ class ParticipantsListWidget extends ConsumerWidget {
                 final displayName = user?.displayName ?? participation.userId;
                 final username = user?.username != null ? '@${user!.username}' : participation.userId;
 
+                final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+                final textColor = isDarkMode ? Colors.white : Colors.grey.shade900;
+                final secondaryTextColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
+                
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     leading: CircleAvatar(
                       backgroundColor: isOrganizer
-                          ? Colors.blue.shade100
-                          : Colors.green.shade100,
+                          ? (isDarkMode ? Colors.blue.shade800 : Colors.blue.shade100)
+                          : (isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200),
                       child: Icon(
                         isOrganizer ? Icons.admin_panel_settings : Icons.person,
                         color: isOrganizer
-                            ? Colors.blue.shade700
-                            : Colors.green.shade700,
+                            ? (isDarkMode ? Colors.blue.shade200 : Colors.blue.shade700)
+                            : (isDarkMode ? Colors.grey.shade300 : Colors.grey.shade700),
+                        size: 18,
                       ),
+                      radius: 18,
                     ),
-                    title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayName,
-                          style: TextStyle(
-                            fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          username,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isOrganizer ? 'Organizador' : 'Participante',
-                          style: TextStyle(
-                            color: isOrganizer ? Colors.blue.shade700 : Colors.green.shade700,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          'Se unió: ${_formatDate(participation.joinedAt)}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
+                    title: Text(
+                      '$displayName $username',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textColor,
+                        fontWeight: isCurrentUser ? FontWeight.w600 : FontWeight.w500,
+                      ),
                     ),
                     trailing: showActions && isCurrentUser && isOrganizer && plan != null
                         ? PopupMenuButton<String>(

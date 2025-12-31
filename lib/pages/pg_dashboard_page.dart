@@ -18,6 +18,8 @@ import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
+import 'package:unp_calendario/app/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
@@ -33,6 +35,7 @@ import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/plan_calendar_view.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
+import 'package:unp_calendario/pages/pg_ui_showcase_page.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
@@ -107,16 +110,33 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+            spreadRadius: -4,
           ),
         ],
-        border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,9 +147,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               const SizedBox(width: 8),
               Text(
                 loc.timezoneBannerTitle,
-                style: AppTypography.largeTitle.copyWith(
+                style: GoogleFonts.poppins(
                   fontSize: 18,
-                  color: AppColorScheme.color2,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  letterSpacing: 0.1,
                 ),
               ),
             ],
@@ -137,9 +159,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           const SizedBox(height: 12),
           Text(
             loc.timezoneBannerMessage(deviceDisplay, userDisplay),
-            style: AppTypography.bodyStyle.copyWith(
+            style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.grey.shade700,
+              color: Colors.grey.shade400,
+              fontWeight: FontWeight.w500,
             ),
           ),
           if (!shouldShowDifference)
@@ -147,62 +170,102 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               padding: const EdgeInsets.only(top: 6.0),
               child: Text(
                 loc.profileTimezoneDialogDeviceHint,
-                style: AppTypography.caption.copyWith(
-                  color: Colors.grey.shade600,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
                 ),
               ),
             ),
           const SizedBox(height: 16),
           Row(
             children: [
-              ElevatedButton(
-                onPressed: _isTimezoneBannerLoading
-                    ? null
-                    : () async {
-                        setState(() {
-                          _isTimezoneBannerLoading = true;
-                        });
-                        try {
-                          await ref.read(authNotifierProvider.notifier).updateDefaultTimezone(deviceTimezone);
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(loc.timezoneBannerUpdateSuccess),
-                              backgroundColor: Colors.green.shade600,
-                            ),
-                          );
-                          if (mounted) {
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColorScheme.color2,
+                      AppColorScheme.color2.withOpacity(0.85),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColorScheme.color2.withOpacity(0.4),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                      spreadRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                      spreadRadius: -2,
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: _isTimezoneBannerLoading
+                      ? null
+                      : () async {
+                          setState(() {
+                            _isTimezoneBannerLoading = true;
+                          });
+                          try {
+                            await ref.read(authNotifierProvider.notifier).updateDefaultTimezone(deviceTimezone);
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(loc.timezoneBannerUpdateSuccess),
+                                backgroundColor: Colors.green.shade600,
+                              ),
+                            );
+                            if (mounted) {
+                              setState(() {
+                                _isTimezoneBannerLoading = false;
+                              });
+                            }
+                          } catch (e) {
+                            if (!mounted) return;
                             setState(() {
                               _isTimezoneBannerLoading = false;
                             });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(loc.timezoneBannerUpdateError),
+                                backgroundColor: Colors.red.shade600,
+                              ),
+                            );
                           }
-                        } catch (e) {
-                          if (!mounted) return;
-                          setState(() {
-                            _isTimezoneBannerLoading = false;
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(loc.timezoneBannerUpdateError),
-                              backgroundColor: Colors.red.shade600,
-                            ),
-                          );
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColorScheme.color2,
-                  foregroundColor: Colors.white,
-                ),
-                child: _isTimezoneBannerLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _isTimezoneBannerLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          loc.timezoneBannerUpdateButton(deviceDisplay),
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                          ),
                         ),
-                      )
-                    : Text(loc.timezoneBannerUpdateButton(deviceDisplay)),
+                ),
               ),
               const SizedBox(width: 12),
               TextButton(
@@ -218,11 +281,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     _isTimezoneBannerLoading = false;
                   });
                 },
+                style: TextButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
                 child: Text(
                   loc.timezoneBannerKeepButton(userDisplay),
-                  style: AppTypography.bodyStyle.copyWith(
-                    color: AppColorScheme.color4,
-                    fontWeight: FontWeight.w600,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.grey.shade400,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -649,29 +718,33 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       });
     }
     
-    return Scaffold(
-      body: Stack(
-        children: [
-          _buildGrid(),
-          if (timezoneSuggestion != null && deviceTimezoneSuggestion != null)
-            Positioned(
-              top: 24,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: _buildTimezoneBanner(
-                    context,
-                    configuredTimezone: configuredTimezone,
-                    deviceTimezone: deviceTimezoneSuggestion,
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade900,
+        body: Stack(
+          children: [
+            _buildGrid(),
+            if (timezoneSuggestion != null && deviceTimezoneSuggestion != null)
+              Positioned(
+                top: 24,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: _buildTimezoneBanner(
+                      context,
+                      configuredTimezone: configuredTimezone,
+                      deviceTimezone: deviceTimezoneSuggestion,
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
+        floatingActionButton: null,
       ),
-      floatingActionButton: null,
     );
   }
 
@@ -1452,7 +1525,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return Container(
           width: double.infinity,
           height: double.infinity,
-          color: AppColorScheme.color0,
+          color: Colors.grey.shade900,
           child: Stack(
             children: [
               // Grid de fondo
@@ -1626,16 +1699,34 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w2Width,
         height: w2Height,
         decoration: BoxDecoration(
-          color: Colors.white, // Fondo blanco
-          border: Border.all(color: Colors.white, width: 2), // Borde blanco
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.grey.shade700.withOpacity(0.5),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Center(
           child: Text(
             'planazoo',
-            style: AppTypography.mediumTitle.copyWith(
-              color: AppColorScheme.color1, // Color 1
+            style: GoogleFonts.poppins(
+              color: Colors.white,
               fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
             ),
           ),
         ),
@@ -1657,8 +1748,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w3Width,
         height: w3Height,
         decoration: BoxDecoration(
-          color: Colors.white, // Fondo blanco
-          border: Border.all(color: Colors.white, width: 2), // Borde blanco
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.grey.shade700.withOpacity(0.5),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Center(
           child: GestureDetector(
@@ -1667,12 +1775,24 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColorScheme.color3, // Fondo del botón color3
-                borderRadius: BorderRadius.circular(20), // Redondo
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColorScheme.color3,
+                    AppColorScheme.color3.withOpacity(0.85),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
+                    color: AppColorScheme.color3.withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
                 ],
@@ -1680,10 +1800,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               child: Center(
                 child: Text(
                   '+',
-                  style: TextStyle(
-                    color: AppColorScheme.color1, // "+" color1
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
                     fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -1695,7 +1815,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildW4(double columnWidth, double rowHeight) {
-    // W4: C5 (R1) - Por definir
+    // W4: C5 (R1) - Botón temporal para UI Showcase
     final w4X = columnWidth * 4; // Empieza en la columna C5 (índice 4)
     final w4Y = 0.0; // Empieza en la fila R1 (índice 0)
     final w4Width = columnWidth; // Ancho de 1 columna (C5)
@@ -1708,10 +1828,39 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w4Width,
         height: w4Height,
         decoration: BoxDecoration(
-          color: Colors.white, // Fondo blanco
-          border: Border.all(color: Colors.white, width: 2), // Borde blanco
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.grey.shade700.withOpacity(0.5),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        // Sin contenido por el momento
+        child: Center(
+          child: IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const UIShowcasePage(),
+                ),
+              );
+            },
+            icon: Icon(Icons.palette, color: AppColorScheme.color2),
+            tooltip: 'UI Showcase',
+          ),
+        ),
       ),
     );
   }
@@ -1802,8 +1951,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w6Width,
         height: w6Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2, // Fondo color2
-          // Sin borde - mismo color que el fondo
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColorScheme.color2,
+              AppColorScheme.color2.withOpacity(0.85),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColorScheme.color2.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: selectedPlan != null 
           ? _buildPlanInfoContent()
@@ -1828,10 +1990,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         children: [
           Text(
             selectedPlan!.name,
-            style: TextStyle(
+            style: GoogleFonts.poppins(
               fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: AppColorScheme.color1,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              letterSpacing: 0.1,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1842,9 +2005,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               Expanded(
                 child: Text(
                   '${_formatDate(selectedPlan!.startDate)} - ${_formatDate(selectedPlan!.endDate)}',
-                  style: TextStyle(
+                  style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: AppColorScheme.color1,
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w500,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1858,9 +2022,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               if (handle.isNotEmpty) handle,
               if (roleLabel != null) loc.planRoleLabel(roleLabel),
             ].where((segment) => segment.isNotEmpty).join(' • '),
-            style: TextStyle(
+            style: GoogleFonts.poppins(
               fontSize: 11,
-              color: AppColorScheme.color1.withOpacity(0.85),
+              color: Colors.white.withOpacity(0.75),
+              fontWeight: FontWeight.w500,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1875,9 +2040,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return Center(
       child: Text(
         'Selecciona un plan',
-        style: TextStyle(
-          fontSize: 10, // Reducido de 12 a 10
-          color: AppColorScheme.color1.withOpacity(0.6), // Texto color1 con opacidad
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          color: Colors.white.withOpacity(0.6),
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -1955,8 +2121,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w7Width,
         height: w7Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2, // Fondo color2
-          // Sin borde
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColorScheme.color2,
+              AppColorScheme.color2.withOpacity(0.85),
+            ],
+          ),
         ),
         // Sin contenido
       ),
@@ -1977,8 +2149,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w8Width,
         height: w8Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2, // Fondo color2
-          // Sin borde
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColorScheme.color2,
+              AppColorScheme.color2.withOpacity(0.85),
+            ],
+          ),
         ),
         // Sin contenido
       ),
@@ -1999,8 +2177,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w9Width,
         height: w9Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2, // Fondo color2
-          // Sin borde
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColorScheme.color2,
+              AppColorScheme.color2.withOpacity(0.85),
+            ],
+          ),
         ),
         // Sin contenido
       ),
@@ -2021,8 +2205,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w10Width,
         height: w10Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2, // Fondo color2
-          // Sin borde
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColorScheme.color2,
+              AppColorScheme.color2.withOpacity(0.85),
+            ],
+          ),
         ),
         // Sin contenido
       ),
@@ -2043,7 +2233,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w11Width,
         height: w11Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2, // Fondo color2
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColorScheme.color2,
+              AppColorScheme.color2.withOpacity(0.85),
+            ],
+          ),
           // Sin borde
         ),
         // Sin contenido
@@ -2065,8 +2262,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w12Width,
         height: w12Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2, // Fondo color2
-          // Sin borde
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColorScheme.color2,
+              AppColorScheme.color2.withOpacity(0.85),
+            ],
+          ),
         ),
         // Sin contenido
       ),
@@ -2082,9 +2285,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W14';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     final iconColor = AppColorScheme.color2;
-    final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
+    final textColor = isSelected ? Colors.white : Colors.grey.shade400;
     
     return Positioned(
       left: w14X,
@@ -2093,9 +2295,34 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w14Width,
         height: w14Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColorScheme.color2.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.3),
+              blurRadius: isSelected ? 12 : 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: InkWell(
           onTap: () {
@@ -2117,7 +2344,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 // Texto "planazoo" debajo del icono
                 Text(
                   'planazoo',
-                  style: AppTypography.caption.copyWith(
+                  style: GoogleFonts.poppins(
                     color: textColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -2140,9 +2367,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W15';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     final iconColor = AppColorScheme.color2;
-    final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
+    final textColor = isSelected ? Colors.white : Colors.grey.shade400;
     
     return Positioned(
       left: w15X,
@@ -2151,9 +2377,34 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w15Width,
         height: w15Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColorScheme.color2.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.3),
+              blurRadius: isSelected ? 12 : 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: InkWell(
           onTap: () {
@@ -2175,7 +2426,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 // Texto "calendario" debajo del icono
                 Text(
                   'calendario',
-                  style: AppTypography.caption.copyWith(
+                  style: GoogleFonts.poppins(
                     color: textColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -2198,9 +2449,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W16';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     final iconColor = AppColorScheme.color2;
-    final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
+    final textColor = isSelected ? Colors.white : Colors.grey.shade400;
     
     return Positioned(
       left: w16X,
@@ -2209,9 +2459,34 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w16Width,
         height: w16Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColorScheme.color2.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.3),
+              blurRadius: isSelected ? 12 : 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: InkWell(
           onTap: () {
@@ -2233,7 +2508,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 // Texto "in" debajo del icono
                 Text(
                   'in',
-                  style: AppTypography.caption.copyWith(
+                  style: GoogleFonts.poppins(
                     color: textColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -2256,9 +2531,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W17';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     final iconColor = AppColorScheme.color2;
-    final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
+    final textColor = isSelected ? Colors.white : Colors.grey.shade400;
     
     return Positioned(
       left: w17X,
@@ -2267,9 +2541,34 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w17Width,
         height: w17Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColorScheme.color2.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.3),
+              blurRadius: isSelected ? 12 : 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: InkWell(
           onTap: () {
@@ -2291,7 +2590,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 // Texto "stats" debajo del icono
                 Text(
                   'stats',
-                  style: AppTypography.caption.copyWith(
+                  style: GoogleFonts.poppins(
                     color: textColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -2314,9 +2613,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W18';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     final iconColor = AppColorScheme.color2;
-    final textColor = isSelected ? AppColorScheme.color2 : AppColorScheme.color1;
+    final textColor = isSelected ? Colors.white : Colors.grey.shade400;
     
     return Positioned(
       left: w18X,
@@ -2325,9 +2623,34 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w18Width,
         height: w18Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColorScheme.color2.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.3),
+              blurRadius: isSelected ? 12 : 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: InkWell(
           onTap: () {
@@ -2349,7 +2672,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 // Texto "pagos" debajo del icono
                 Text(
                   'pagos',
-                  style: AppTypography.caption.copyWith(
+                  style: GoogleFonts.poppins(
                     color: textColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -2372,7 +2695,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W19';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w19X,
@@ -2381,9 +2703,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w19Width,
         height: w19Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
         ),
         // Sin contenido
       ),
@@ -2399,7 +2737,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W20';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w20X,
@@ -2408,9 +2745,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w20Width,
         height: w20Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
         ),
         // Sin contenido
       ),
@@ -2426,7 +2779,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W21';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w21X,
@@ -2435,9 +2787,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w21Width,
         height: w21Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
         ),
         // Sin contenido
       ),
@@ -2453,7 +2821,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W22';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w22X,
@@ -2462,9 +2829,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w22Width,
         height: w22Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
         ),
         // Sin contenido
       ),
@@ -2480,7 +2863,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W23';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w23X,
@@ -2489,9 +2871,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w23Width,
         height: w23Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
         ),
         // Sin contenido
       ),
@@ -2507,7 +2905,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W24';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w24X,
@@ -2516,9 +2913,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w24Width,
         height: w24Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
         ),
         // Sin contenido
       ),
@@ -2534,7 +2947,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W25';
-    final backgroundColor = isSelected ? AppColorScheme.color1 : AppColorScheme.color0;
     
     return Positioned(
       left: w25X,
@@ -2543,9 +2955,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w25Width,
         height: w25Height,
         decoration: BoxDecoration(
-          color: backgroundColor,
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isSelected
+                ? [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ]
+                : [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+          ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
         ),
         // Sin contenido
       ),
@@ -2566,9 +2994,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w13Width,
         height: w13Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color0, // Fondo color0
-          // Sin borde adicional (el TextField ya tiene sus propios bordes)
-          // Sin borderRadius (el TextField maneja sus propios bordes redondeados)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.grey.shade700.withOpacity(0.5),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(8), // Padding para el TextField
         child: PlanSearchWidget(onSearchChanged: _filterPlanazoos),
@@ -2590,9 +3034,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w26Width,
         height: w26Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color0, // Fondo color0
-          // Sin borde adicional
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.grey.shade700.withOpacity(0.5),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         padding: const EdgeInsets.all(4), // Padding para los botones
         child: Row(
@@ -2617,12 +3077,33 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         height: rowHeight * 0.6, // Altura menor (60% de la altura de fila)
         margin: EdgeInsets.symmetric(vertical: rowHeight * 0.2), // Centrado vertical
         decoration: BoxDecoration(
-          color: isSelected ? AppColorScheme.color2 : AppColorScheme.color0, // Fondo color2 si seleccionado, color0 si no
+          gradient: isSelected
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ],
+                )
+              : null,
+          color: isSelected ? null : Colors.grey.shade800,
           border: Border.all(
-            color: AppColorScheme.color2, // Borde color2
-            width: 1,
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(12), // Esquinas más redondeadas
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColorScheme.color2.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: InkWell(
           onTap: () {
@@ -2631,14 +3112,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             });
             // De momento no hacen nada (sin funcionalidad)
           },
-          borderRadius: BorderRadius.circular(12), // Esquinas más redondeadas
+          borderRadius: BorderRadius.circular(12),
           child: Center(
             child: Text(
               label,
-              style: TextStyle(
-                color: AppColorScheme.color1, // Texto color1
-                fontSize: 10, // Texto más grande
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              style: GoogleFonts.poppins(
+                color: isSelected ? Colors.white : Colors.grey.shade400,
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
               textAlign: TextAlign.center,
             ),
@@ -2663,20 +3144,50 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w27Width,
         height: w27Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color0, // Fondo color0
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.grey.shade700.withOpacity(0.5),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20),
         alignment: Alignment.centerRight,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.white,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.grey.shade800,
+                const Color(0xFF2C2C2C),
+              ],
+            ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: AppColorScheme.color2.withOpacity(0.3),
+              color: Colors.grey.shade700.withOpacity(0.5),
               width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: ToggleButtons(
             isSelected: [
@@ -2690,6 +3201,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             },
             borderRadius: BorderRadius.circular(24),
             renderBorder: false,
+            fillColor: AppColorScheme.color2,
+            selectedColor: Colors.white,
+            color: Colors.grey.shade400,
             constraints: const BoxConstraints(minHeight: 36, minWidth: 48),
             children: [
               Padding(
@@ -2699,14 +3213,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   children: [
                     Icon(
                       Icons.view_list_outlined,
-                      color: !_isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                      color: !_isCalendarView ? Colors.white : Colors.grey.shade400,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       loc.planViewModeList,
-                      style: AppTypography.bodyStyle.copyWith(
+                      style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: !_isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                        color: !_isCalendarView ? Colors.white : Colors.grey.shade400,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -2720,14 +3234,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   children: [
                     Icon(
                       Icons.calendar_month_outlined,
-                      color: _isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                      color: _isCalendarView ? Colors.white : Colors.grey.shade400,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       loc.planViewModeCalendar,
-                      style: AppTypography.bodyStyle.copyWith(
+                      style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: _isCalendarView ? AppColorScheme.color2 : Colors.grey.shade600,
+                        color: _isCalendarView ? Colors.white : Colors.grey.shade400,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -2755,9 +3269,26 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w28Width,
         height: w28Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color0, // Fondo blanco
-          border: Border.all(color: AppColorScheme.color0, width: 1), // Bordes blancos
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.grey.shade700.withOpacity(0.5),
+            width: 1,
+          ),
           borderRadius: BorderRadius.circular(4),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
@@ -2801,9 +3332,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w30Width,
         height: w30Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2, // Fondo color2
-          // Sin borde
-          // Sin borderRadius (esquinas en ángulo recto)
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColorScheme.color2,
+              AppColorScheme.color2.withOpacity(0.85),
+            ],
+          ),
         ),
         // Sin contenido
       ),
@@ -2854,9 +3390,31 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w31Width,
         height: w31Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color0.withValues(alpha: 0.7),
-          border: Border.all(color: AppColorScheme.color2, width: 3),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
+          border: Border.all(
+            color: AppColorScheme.color2.withOpacity(0.5),
+            width: 2,
+          ),
           borderRadius: BorderRadius.circular(4),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: noPlans
             ? _buildNoPlansYet()
@@ -2889,15 +3447,20 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           const SizedBox(height: 16),
           Text(
             'Aún no tienes planes',
-            style: AppTypography.titleStyle.copyWith(
-              color: AppColorScheme.color4,
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              letterSpacing: 0.1,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Crea tu primer plan con el botón +',
-            style: AppTypography.bodyStyle.copyWith(
-              color: AppColorScheme.color4,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.grey.shade400,
+              fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
           ),

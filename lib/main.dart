@@ -9,10 +9,20 @@ import 'features/offline/domain/services/hive_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Inicializar Firebase
-  await Firebase.initializeApp(
-    options: firebaseOptions,
-  );
+  // Inicializar Firebase (solo si no está ya inicializado)
+  // En iOS, Firebase se inicializa automáticamente si existe GoogleService-Info.plist
+  try {
+    await Firebase.initializeApp(
+      options: firebaseOptions,
+    );
+  } catch (e) {
+    // Si Firebase ya está inicializado (error duplicate-app), usar la instancia existente
+    if (e.toString().contains('duplicate-app')) {
+      Firebase.app(); // Obtener la instancia existente
+    } else {
+      rethrow; // Re-lanzar otros errores
+    }
+  }
   
   // Inicializar base de datos de timezones
   TimezoneService.initialize();

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
+import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/features/auth/domain/models/auth_state.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifier.dart';
@@ -121,219 +123,193 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       }
     });
 
-    return Scaffold(
-      backgroundColor: AppColorScheme.color0,
-      body: Column(
-        children: [
-          // Barra superior
-          Container(
-            width: double.infinity,
-            height: 60,
-            color: AppColorScheme.color2,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  Text(
-                    AppLocalizations.of(context)!.appTitle,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  const LanguageSelector(),
-                ],
-              ),
-            ),
-          ),
-          
-          // Contenido principal
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Center(
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 480),
-                  child: Card(
-                    elevation: 8,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Logo centrado
-                            Center(
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          AppColorScheme.color2,
-                                          AppColorScheme.color2.withOpacity(0.8),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColorScheme.color2.withOpacity(0.3),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.person_add_rounded,
-                                      color: Colors.white,
-                                      size: 40,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    AppLocalizations.of(context)!.registerTitle,
-                                    style: AppTypography.titleStyle.copyWith(
-                                      fontSize: 28,
-                                      color: AppColorScheme.color4,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    AppLocalizations.of(context)!.registerSubtitle,
-                                    style: AppTypography.bodyStyle.copyWith(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade900,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Título "Planazoo" centrado
+                          Center(
+                            child: Text(
+                              AppLocalizations.of(context)!.appTitle,
+                              style: GoogleFonts.poppins(
+                                fontSize: 32,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.1,
                               ),
                             ),
-                            
-                            const SizedBox(height: 40),
-                
-                // Campo de nombre
-                _buildNameField(),
-                
-                const SizedBox(height: 20),
-                
-                // Campo de email
-                _buildEmailField(),
-                
-                const SizedBox(height: 20),
-                
-                // Campo de username
-                _buildUsernameField(),
-                
-                const SizedBox(height: 20),
-                
-                // Campo de contraseña
-                _buildPasswordField(),
-                PasswordRulesChecklist(
-                  password: _passwordController.text,
-                ),
-                
-                const SizedBox(height: 20),
-                
-                // Campo de confirmar contraseña
-                _buildConfirmPasswordField(),
-                
-                const SizedBox(height: 20),
-                
-                // Checkbox de términos y condiciones
-                _buildTermsCheckbox(),
-                
-                const SizedBox(height: 32),
-                
-                // Botón de registro
-                _buildRegisterButton(authNotifier, authState.isLoading),
-                
-                const SizedBox(height: 24),
-                
-                // Divider
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'o',
-                        style: AppTypography.bodyStyle.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: Colors.grey.shade300)),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Enlace de inicio de sesión
-                _buildLoginLink(),
-                
-                            const SizedBox(height: 32),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 40),
+                          // Campo de nombre
+                          _buildNameField(),
+                          const SizedBox(height: 20),
+                          // Campo de email
+                          _buildEmailField(),
+                          const SizedBox(height: 20),
+                          // Campo de username
+                          _buildUsernameField(),
+                          const SizedBox(height: 20),
+                          // Campo de contraseña
+                          _buildPasswordField(),
+                          PasswordRulesChecklist(
+                            password: _passwordController.text,
+                          ),
+                          const SizedBox(height: 20),
+                          // Campo de confirmar contraseña
+                          _buildConfirmPasswordField(),
+                          const SizedBox(height: 20),
+                          // Checkbox de términos y condiciones
+                          _buildTermsCheckbox(),
+                          const SizedBox(height: 32),
+                          // Botón de registro
+                          _buildRegisterButton(authNotifier, authState.isLoading),
+                          const SizedBox(height: 24),
+                          // Divider
+                          Row(
+                            children: [
+                              Expanded(child: Divider(color: Colors.grey.shade700)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  'o',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade400,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              Expanded(child: Divider(color: Colors.grey.shade700)),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          // Enlace de inicio de sesión
+                          _buildLoginLink(),
+                          const SizedBox(height: 32),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
+              // Selector de idioma en la esquina superior derecha
+              Positioned(
+                top: 16,
+                right: 16,
+                child: const LanguageSelector(),
+              ),
+              // Botón de retroceso en la esquina superior izquierda
+              Positioned(
+                top: 16,
+                left: 16,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildNameField() {
-    return TextFormField(
-      controller: _nameController,
-      textInputAction: TextInputAction.next,
-      onChanged: (value) {
-        // Forzar rebuild para actualizar estado del botón
-        setState(() {});
-      },
-      decoration: InputDecoration(
-        labelText: '${AppLocalizations.of(context)!.nameLabel} *',
-        hintText: AppLocalizations.of(context)!.nameHint,
-        prefixIcon: const Icon(Icons.person_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ],
       ),
+      child: TextFormField(
+        controller: _nameController,
+        textInputAction: TextInputAction.next,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+        onChanged: (value) {
+          // Forzar rebuild para actualizar estado del botón
+          setState(() {});
+        },
+        decoration: InputDecoration(
+          labelText: '${AppLocalizations.of(context)!.nameLabel} *',
+          labelStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.w500,
+          ),
+          hintText: AppLocalizations.of(context)!.nameHint,
+          hintStyle: GoogleFonts.poppins(
+            fontSize: 14,
+            color: Colors.grey.shade500,
+          ),
+          prefixIcon: Icon(Icons.person_outlined, color: Colors.grey.shade400),
+          filled: true,
+          fillColor: Colors.transparent,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppColorScheme.color2,
+              width: 2.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 2.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        ),
       validator: (value) {
         // Solo mostrar errores si se ha intentado enviar el formulario
         if (!_hasAttemptedSubmit) return null;
@@ -345,48 +321,100 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         }
         return null;
       },
+      ),
     );
   }
 
   Widget _buildEmailField() {
-    return TextFormField(
-      controller: _emailController,
-      keyboardType: TextInputType.text, // Cambiado de emailAddress a text para permitir + y otros caracteres
-      textInputAction: TextInputAction.next,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      onChanged: (value) {
-        // Forzar rebuild para actualizar estado del botón
-        setState(() {});
-      },
-      onFieldSubmitted: (value) {
-        // Validar al presionar Enter o salir del campo
-        _formKey.currentState?.validate();
-      },
-      decoration: InputDecoration(
-        labelText: '${AppLocalizations.of(context)!.emailLabel} *',
-        hintText: AppLocalizations.of(context)!.emailHint,
-        prefixIcon: const Icon(Icons.email_outlined),
-        errorMaxLines: 2,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ],
       ),
+      child: TextFormField(
+        controller: _emailController,
+        keyboardType: TextInputType.emailAddress,
+        textInputAction: TextInputAction.next,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+        onChanged: (value) {
+          // Forzar rebuild para actualizar estado del botón
+          setState(() {});
+        },
+        onFieldSubmitted: (value) {
+          // Validar al presionar Enter o salir del campo
+          _formKey.currentState?.validate();
+        },
+        decoration: InputDecoration(
+          labelText: '${AppLocalizations.of(context)!.emailLabel} *',
+          labelStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.w500,
+          ),
+          hintText: AppLocalizations.of(context)!.emailHint,
+          hintStyle: GoogleFonts.poppins(
+            fontSize: 14,
+            color: Colors.grey.shade500,
+          ),
+          prefixIcon: Icon(Icons.email_outlined, color: Colors.grey.shade400),
+          errorMaxLines: 2,
+          filled: true,
+          fillColor: Colors.transparent,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppColorScheme.color2,
+              width: 2.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 2.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        ),
       validator: (value) {
         if (value == null || value.isEmpty) {
           // Solo mostrar error de campo vacío si se ha intentado enviar
@@ -399,6 +427,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         }
         return null;
       },
+      ),
     );
   }
 
@@ -406,38 +435,89 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextFormField(
-          controller: _usernameController,
-          textInputAction: TextInputAction.next,
-          textCapitalization: TextCapitalization.none,
-          autocorrect: false,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          decoration: InputDecoration(
-            labelText: '${AppLocalizations.of(context)!.usernameLabel} *',
-            hintText: AppLocalizations.of(context)!.usernameHint,
-            prefixIcon: const Icon(Icons.alternate_email),
-            errorText: _usernameError,
-            errorMaxLines: 3,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.grey.shade800,
+                const Color(0xFF2C2C2C),
+              ],
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: Colors.grey.shade700.withOpacity(0.5),
+              width: 1,
             ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+                spreadRadius: 0,
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 6,
+                offset: const Offset(0, 1),
+                spreadRadius: -2,
+              ),
+            ],
           ),
+          child: TextFormField(
+            controller: _usernameController,
+            textInputAction: TextInputAction.next,
+            textCapitalization: TextCapitalization.none,
+            autocorrect: false,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              labelText: '${AppLocalizations.of(context)!.usernameLabel} *',
+              labelStyle: GoogleFonts.poppins(
+                fontSize: 13,
+                color: Colors.grey.shade400,
+                fontWeight: FontWeight.w500,
+              ),
+              hintText: AppLocalizations.of(context)!.usernameHint,
+              hintStyle: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.grey.shade500,
+              ),
+              prefixIcon: Icon(Icons.alternate_email, color: Colors.grey.shade400),
+              errorText: _usernameError,
+              errorMaxLines: 3,
+              filled: true,
+              fillColor: Colors.transparent,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: AppColorScheme.color2,
+                  width: 2.5,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: Colors.red.shade400, width: 2.5),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            ),
           onChanged: (value) {
             // Limpiar error cuando el usuario escribe
             if (_usernameError != null) {
@@ -496,6 +576,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             }
             return null;
           },
+          ),
         ),
         // Mostrar sugerencias si hay
         if (_usernameSuggestions.isNotEmpty) ...[
@@ -507,9 +588,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               children: [
                 Text(
                   AppLocalizations.of(context)!.usernameSuggestion(_usernameSuggestions.join(', ')),
-                  style: TextStyle(
+                  style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: Colors.orange.shade700,
+                    color: Colors.orange.shade400,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -517,7 +598,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   spacing: 8,
                   children: _usernameSuggestions.map((suggestion) {
                     return ActionChip(
-                      label: Text('@$suggestion'),
+                      label: Text(
+                        '@$suggestion',
+                        style: GoogleFonts.poppins(fontSize: 12),
+                      ),
                       onPressed: () {
                         setState(() {
                           _usernameController.text = suggestion;
@@ -527,9 +611,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         // Forzar validación del formulario para limpiar el error visual
                         _formKey.currentState?.validate();
                       },
-                      backgroundColor: Colors.orange.shade50,
-                      labelStyle: TextStyle(
-                        color: Colors.orange.shade900,
+                      backgroundColor: Colors.orange.shade900.withOpacity(0.3),
+                      labelStyle: GoogleFonts.poppins(
+                        color: Colors.orange.shade300,
                         fontSize: 12,
                       ),
                     );
@@ -544,55 +628,107 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Widget _buildPasswordField() {
-    return TextFormField(
-      controller: _passwordController,
-      obscureText: _obscurePassword,
-      textInputAction: TextInputAction.next,
-      autofillHints: const [AutofillHints.newPassword],
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      onChanged: (value) {
-        // Forzar rebuild para actualizar estado del botón
-        setState(() {});
-      },
-      onFieldSubmitted: (value) {
-        // Validar al presionar Enter o salir del campo
-        _formKey.currentState?.validate();
-      },
-      decoration: InputDecoration(
-        labelText: '${AppLocalizations.of(context)!.passwordLabel} *',
-        hintText: AppLocalizations.of(context)!.passwordHint,
-        prefixIcon: const Icon(Icons.lock_outlined),
-        errorMaxLines: 2,
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
           ),
-          onPressed: () {
-            setState(() {
-              _obscurePassword = !_obscurePassword;
-            });
-          },
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ],
       ),
+      child: TextFormField(
+        controller: _passwordController,
+        obscureText: _obscurePassword,
+        textInputAction: TextInputAction.next,
+        autofillHints: const [AutofillHints.newPassword],
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+        onChanged: (value) {
+          // Forzar rebuild para actualizar estado del botón
+          setState(() {});
+        },
+        onFieldSubmitted: (value) {
+          // Validar al presionar Enter o salir del campo
+          _formKey.currentState?.validate();
+        },
+        decoration: InputDecoration(
+          labelText: '${AppLocalizations.of(context)!.passwordLabel} *',
+          labelStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.w500,
+          ),
+          hintText: AppLocalizations.of(context)!.passwordHint,
+          hintStyle: GoogleFonts.poppins(
+            fontSize: 14,
+            color: Colors.grey.shade500,
+          ),
+          prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey.shade400),
+          errorMaxLines: 2,
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+              color: Colors.grey.shade400,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppColorScheme.color2,
+              width: 2.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 2.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        ),
       validator: (value) {
         final validationResult = Validator.validatePassword(value);
         
@@ -623,63 +759,116 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         
         return null;
       },
+      ),
     );
   }
 
   Widget _buildConfirmPasswordField() {
-    return TextFormField(
-      controller: _confirmPasswordController,
-      obscureText: _obscureConfirmPassword,
-      textInputAction: TextInputAction.done,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      onChanged: (value) {
-        // Forzar rebuild para actualizar estado del botón
-        setState(() {});
-      },
-      onFieldSubmitted: (value) {
-        // Validar antes de intentar registrar
-        if (_formKey.currentState?.validate() ?? false) {
-          // Ejecutar registro al presionar Enter si todo es válido
-          final authNotifier = ref.read(authNotifierProvider.notifier);
-          _handleRegister(authNotifier);
-        }
-      },
-      autofillHints: const [AutofillHints.newPassword],
-      decoration: InputDecoration(
-        labelText: '${AppLocalizations.of(context)!.confirmPasswordLabel} *',
-        hintText: AppLocalizations.of(context)!.confirmPasswordHint,
-        prefixIcon: const Icon(Icons.lock_outlined),
-        errorMaxLines: 2,
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
           ),
-          onPressed: () {
-            setState(() {
-              _obscureConfirmPassword = !_obscureConfirmPassword;
-            });
-          },
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ],
       ),
+      child: TextFormField(
+        controller: _confirmPasswordController,
+        obscureText: _obscureConfirmPassword,
+        textInputAction: TextInputAction.done,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
+        onChanged: (value) {
+          // Forzar rebuild para actualizar estado del botón
+          setState(() {});
+        },
+        onFieldSubmitted: (value) {
+          // Validar antes de intentar registrar
+          if (_formKey.currentState?.validate() ?? false) {
+            // Ejecutar registro al presionar Enter si todo es válido
+            final authNotifier = ref.read(authNotifierProvider.notifier);
+            _handleRegister(authNotifier);
+          }
+        },
+        autofillHints: const [AutofillHints.newPassword],
+        decoration: InputDecoration(
+          labelText: '${AppLocalizations.of(context)!.confirmPasswordLabel} *',
+          labelStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.w500,
+          ),
+          hintText: AppLocalizations.of(context)!.confirmPasswordHint,
+          hintStyle: GoogleFonts.poppins(
+            fontSize: 14,
+            color: Colors.grey.shade500,
+          ),
+          prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey.shade400),
+          errorMaxLines: 2,
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+              color: Colors.grey.shade400,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscureConfirmPassword = !_obscureConfirmPassword;
+              });
+            },
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppColorScheme.color2,
+              width: 2.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 2.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        ),
       validator: (value) {
         if (value == null || value.isEmpty) {
           // Solo mostrar error de campo vacío si se ha intentado enviar
@@ -692,6 +881,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         }
         return null;
       },
+      ),
     );
   }
 
@@ -775,32 +965,59 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   Widget _buildRegisterButton(AuthNotifier authNotifier, bool isLoading) {
     final isFormValid = _isFormValid();
-    return SizedBox(
-      height: 50,
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColorScheme.color2,
+            AppColorScheme.color2.withOpacity(0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColorScheme.color2.withOpacity(0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
       child: ElevatedButton(
         onPressed: isLoading || !_acceptTerms || !isFormValid ? null : () => _handleRegister(authNotifier),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColorScheme.color2,
+          backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
+          shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           elevation: 0,
         ),
         child: isLoading
             ? const SizedBox(
-                width: 20,
-                height: 20,
+                width: 24,
+                height: 24,
                 child: CircularProgressIndicator(
                   color: Colors.white,
-                  strokeWidth: 2,
+                  strokeWidth: 2.5,
                 ),
               )
               : Text(
                 AppLocalizations.of(context)!.registerButton,
-                style: AppTypography.interactiveStyle.copyWith(
-                  fontSize: 16,
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
                 ),
               ),
       ),
@@ -808,16 +1025,42 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Widget _buildLoginLink() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          AppLocalizations.of(context)!.loginLink,
-          style: AppTypography.bodyStyle.copyWith(
-            color: Colors.grey.shade600,
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
         ),
-      ],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            AppLocalizations.of(context)!.loginLink,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.grey.shade400,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

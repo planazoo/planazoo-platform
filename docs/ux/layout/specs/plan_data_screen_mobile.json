@@ -1,0 +1,538 @@
+{
+  "screen": "PlanDataScreen",
+  "platform": "mobile",
+  "version": "1.0",
+  "lastUpdated": "2024-12-XX",
+  "description": "Pantalla de datos del plan para móvil (iOS/Android)",
+  
+  "layout": {
+    "topBar": {
+      "type": "appbar",
+      "height": 56,
+      "backgroundColor": "#1E1E1E",
+      "elements": [
+        {
+          "id": "plan_name",
+          "type": "title",
+          "position": "left",
+          "text": "[Nombre del Plan]",
+          "properties": {
+            "fontFamily": "Poppins",
+            "fontSize": 14,
+            "fontWeight": 600,
+            "color": "#BCE1E7"
+          }
+        }
+      ]
+    },
+    
+    "content": {
+      "padding": {
+        "top": 16,
+        "bottom": 16,
+        "left": 16,
+        "right": 16
+      },
+      
+      "rows": [
+        {
+          "id": "R1",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "card",
+                "id": "plan_summary",
+                "title": "Resumen del Plan",
+                "properties": {
+                  "padding": {"all": 20},
+                  "margin": {"bottom": 24},
+                  "decoration": {
+                    "borderRadius": 18,
+                    "gradient": {
+                      "start": "#1E1E1E",
+                      "end": "#2C2C2C"
+                    },
+                    "border": {
+                      "width": 1,
+                      "color": "#333333",
+                      "opacity": 0.5
+                    },
+                    "shadow": {
+                      "blur": 10,
+                      "offset": {"x": 0, "y": 2},
+                      "color": "rgba(0,0,0,0.3)"
+                    }
+                  },
+                  "content": [
+                    {
+                      "type": "avatar",
+                      "size": 80,
+                      "borderRadius": 16
+                    },
+                    {
+                      "type": "input",
+                      "id": "plan_name_input",
+                      "label": "Nombre del Plan",
+                      "properties": {
+                        "fontSize": 18,
+                        "fontWeight": 600
+                      }
+                    },
+                    {
+                      "type": "input",
+                      "id": "plan_description_input",
+                      "label": "Descripción",
+                      "multiline": true
+                    },
+                    {
+                      "type": "image_picker",
+                      "id": "plan_image"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "card",
+                "id": "state_management",
+                "title": "Estado del Plan",
+                "properties": {
+                  "padding": {"all": 20},
+                  "margin": {"bottom": 24},
+                  "decoration": {
+                    "borderRadius": 18,
+                    "gradient": {
+                      "start": "#1E1E1E",
+                      "end": "#2C2C2C"
+                    },
+                    "border": {
+                      "width": 1,
+                      "color": "#333333",
+                      "opacity": 0.5
+                    },
+                    "shadow": {
+                      "blur": 10,
+                      "offset": {"x": 0, "y": 2},
+                      "color": "rgba(0,0,0,0.3)"
+                    }
+                  },
+                  "content": [
+                    {
+                      "type": "state_badge",
+                      "id": "current_state"
+                    },
+                    {
+                      "type": "buttons",
+                      "id": "state_buttons",
+                      "properties": {
+                        "layout": "vertical",
+                        "gap": 12
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "card",
+                "id": "info_base",
+                "title": "Información detallada",
+                "properties": {
+                  "padding": {"all": 20},
+                  "margin": {"bottom": 24},
+                  "decoration": {
+                    "borderRadius": 18,
+                    "gradient": {
+                      "start": "#1E1E1E",
+                      "end": "#2C2C2C"
+                    },
+                    "border": {
+                      "width": 1,
+                      "color": "#333333",
+                      "opacity": 0.5
+                    },
+                    "shadow": {
+                      "blur": 10,
+                      "offset": {"x": 0, "y": 2},
+                      "color": "rgba(0,0,0,0.3)"
+                    }
+                  },
+                  "content": {
+                    "layout": "column",
+                    "fullWidth": true,
+                    "gap": 16,
+                    "items": [
+                      {
+                        "type": "row",
+                        "id": "R1",
+                        "columns": [
+                          {
+                            "id": "C1",
+                            "width": "50%",
+                            "element": {
+                              "type": "date_picker",
+                              "id": "start_date",
+                              "label": "Fecha de inicio",
+                              "width": "100%"
+                            }
+                          },
+                          {
+                            "id": "C2",
+                            "width": "50%",
+                            "element": {
+                              "type": "date_picker",
+                              "id": "end_date",
+                              "label": "Fecha de fin",
+                              "width": "100%"
+                            }
+                          }
+                        ],
+                        "gap": 12
+                      },
+                      {
+                        "type": "dropdown",
+                        "id": "currency",
+                        "label": "Moneda",
+                        "width": "100%"
+                      },
+                      {
+                        "type": "input",
+                        "id": "budget",
+                        "label": "Presupuesto",
+                        "inputType": "number",
+                        "width": "100%"
+                      },
+                      {
+                        "type": "dropdown",
+                        "id": "visibility",
+                        "label": "Visibilidad",
+                        "width": "100%"
+                      },
+                      {
+                        "type": "dropdown",
+                        "id": "timezone",
+                        "label": "Zona horaria",
+                        "width": "100%"
+                      }
+                    ]
+                  }
+                }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R4",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "card",
+                "id": "info_meta",
+                "title": "Información Meta",
+                "properties": {
+                  "padding": {"all": 20},
+                  "margin": {"bottom": 24},
+                  "decoration": {
+                    "borderRadius": 18,
+                    "gradient": {
+                      "start": "#1E1E1E",
+                      "end": "#2C2C2C"
+                    },
+                    "border": {
+                      "width": 1,
+                      "color": "#333333",
+                      "opacity": 0.5
+                    },
+                    "shadow": {
+                      "blur": 10,
+                      "offset": {"x": 0, "y": 2},
+                      "color": "rgba(0,0,0,0.3)"
+                    }
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "id": "unp_id",
+                      "label": "UNP ID",
+                      "readOnly": true
+                    },
+                    {
+                      "type": "text",
+                      "id": "internal_id",
+                      "label": "ID Interno",
+                      "readOnly": true
+                    },
+                    {
+                      "type": "text",
+                      "id": "created_at",
+                      "label": "Fecha de creación",
+                      "readOnly": true
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R5",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "card",
+                "id": "participants",
+                "title": "Participantes",
+                "properties": {
+                  "padding": {"all": 20},
+                  "margin": {"bottom": 24},
+                  "decoration": {
+                    "borderRadius": 18,
+                    "gradient": {
+                      "start": "#1E1E1E",
+                      "end": "#2C2C2C"
+                    },
+                    "border": {
+                      "width": 1,
+                      "color": "#333333",
+                      "opacity": 0.5
+                    },
+                    "shadow": {
+                      "blur": 10,
+                      "offset": {"x": 0, "y": 2},
+                      "color": "rgba(0,0,0,0.3)"
+                    }
+                  },
+                  "content": [
+                    {
+                      "type": "checkbox",
+                      "id": "for_all_participants",
+                      "label": "Para todos los participantes"
+                    },
+                    {
+                      "type": "list",
+                      "id": "participants_list",
+                      "itemType": "participant_checkbox",
+                      "scrollable": true
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R6",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "card",
+                "id": "announcements",
+                "title": "Anuncios",
+                "properties": {
+                  "padding": {"all": 20},
+                  "margin": {"bottom": 24},
+                  "minHeight": 300,
+                  "decoration": {
+                    "borderRadius": 18,
+                    "gradient": {
+                      "start": "#1E1E1E",
+                      "end": "#2C2C2C"
+                    },
+                    "border": {
+                      "width": 1,
+                      "color": "#333333",
+                      "opacity": 0.5
+                    },
+                    "shadow": {
+                      "blur": 10,
+                      "offset": {"x": 0, "y": 2},
+                      "color": "rgba(0,0,0,0.3)"
+                    }
+                  },
+                  "content": [
+                    {
+                      "type": "timeline",
+                      "id": "announcements_timeline",
+                      "scrollable": true
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R7",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "button",
+                "id": "delete_button",
+                "text": "Eliminar Plan",
+                "properties": {
+                  "type": "danger",
+                  "margin": {"bottom": 24},
+                  "visible": "if_admin"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      
+      "frames": [
+        {
+          "id": "F1",
+          "title": "Resumen del Plan",
+          "cells": ["R1:C1"],
+          "properties": {
+            "padding": {"all": 20},
+            "margin": {"bottom": 24}
+          }
+        },
+        {
+          "id": "F2",
+          "title": "Estado del Plan",
+          "cells": ["R2:C1"],
+          "properties": {
+            "padding": {"all": 20},
+            "margin": {"bottom": 24}
+          }
+        },
+        {
+          "id": "F3",
+          "title": "Información detallada",
+          "cells": ["R3:C1"],
+          "properties": {
+            "padding": {"all": 20},
+            "margin": {"bottom": 24},
+            "note": "R1: Fechas de inicio y fin en dos columnas (50% cada una, 12px de espaciado). Resto de campos ocupan el 100% del ancho del recuadro"
+          }
+        },
+        {
+          "id": "F4",
+          "title": "Información Meta",
+          "cells": ["R4:C1"],
+          "properties": {
+            "padding": {"all": 20},
+            "margin": {"bottom": 24}
+          }
+        },
+        {
+          "id": "F5",
+          "title": "Participantes",
+          "cells": ["R5:C1"],
+          "properties": {
+            "padding": {"all": 20},
+            "margin": {"bottom": 24}
+          }
+        },
+        {
+          "id": "F6",
+          "title": "Anuncios",
+          "cells": ["R6:C1"],
+          "properties": {
+            "padding": {"all": 20},
+            "margin": {"bottom": 24},
+            "minHeight": 300
+          }
+        }
+      ]
+    },
+    
+    "bottomBar": {
+      "type": "none",
+      "height": 0
+    }
+  },
+  
+  "styles": {
+    "spacing": {
+      "rowGap": 24,
+      "columnGap": 16,
+      "cardSpacing": 24
+    },
+    "colors": {
+      "background": "#121212",
+      "cardBackgroundStart": "#1E1E1E",
+      "cardBackgroundEnd": "#2C2C2C",
+      "cardBorder": "#333333",
+      "textPrimary": "#FFFFFF",
+      "textSecondary": "#B0B0B0",
+      "accent": "#79A2A8"
+    },
+    "typography": {
+      "title": {
+        "fontFamily": "Poppins",
+        "fontSize": 16,
+        "fontWeight": 600
+      },
+      "body": {
+        "fontFamily": "Poppins",
+        "fontSize": 13,
+        "fontWeight": 400
+      },
+      "label": {
+        "fontFamily": "Poppins",
+        "fontSize": 12,
+        "fontWeight": 500
+      }
+    },
+    "decoration": {
+      "card": {
+        "borderRadius": 18,
+        "borderWidth": 1,
+        "shadow": {
+          "blur": 10,
+          "offset": {"x": 0, "y": 2},
+          "color": "rgba(0,0,0,0.3)"
+        }
+      },
+      "input": {
+        "borderRadius": 14,
+        "padding": {"vertical": 16, "horizontal": 20}
+      }
+    }
+  },
+  
+  "notes": {
+    "layout": "En móvil, todas las secciones están en una sola columna (C1) apiladas verticalmente",
+    "responsive": "Los cards se adaptan al ancho completo disponible menos padding lateral (16px cada lado)",
+    "scroll": "El contenido es scrollable verticalmente si excede la altura de la pantalla"
+  }
+}
+

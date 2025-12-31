@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
@@ -8,6 +9,8 @@ import 'package:unp_calendario/features/offline/presentation/providers/realtime_
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_dashboard_page.dart';
 import 'package:unp_calendario/pages/pg_invitation_page.dart';
+import 'package:unp_calendario/pages/pg_plans_list_page.dart';
+import 'dart:io' show Platform;
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -17,6 +20,13 @@ class App extends ConsumerStatefulWidget {
 }
 
 class _AppState extends ConsumerState<App> {
+  // Detectar si estamos en una plataforma móvil (iOS o Android)
+  // En web, kIsWeb será true, así que _isMobilePlatform será false
+  bool get _isMobilePlatform {
+    if (kIsWeb) return false;
+    return Platform.isIOS || Platform.isAndroid;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -49,8 +59,11 @@ class _AppState extends ConsumerState<App> {
         Locale('en'), // Inglés
       ],
       // Rutas (T104)
-      home: const AuthGuard(
-        child: DashboardPage(),
+      // En iOS/móviles, mostrar lista simple de planes. En web/desktop, mostrar Dashboard completo
+      home: AuthGuard(
+        child: _isMobilePlatform
+            ? const PlansListPage()
+            : const DashboardPage(),
       ),
       onGenerateRoute: (settings) {
         // Manejar URLs como /invitation/{token} (T104)
@@ -65,8 +78,10 @@ class _AppState extends ConsumerState<App> {
         }
         // Ruta por defecto
         return MaterialPageRoute(
-          builder: (context) => const AuthGuard(
-            child: DashboardPage(),
+          builder: (context) => AuthGuard(
+            child: _isMobilePlatform
+                ? const PlansListPage()
+                : const DashboardPage(),
           ),
         );
       },

@@ -11,14 +11,23 @@ class EventLocalService extends LocalStorageService<Event> {
   Map<String, dynamic> toMap(Event event) {
     // Usamos toFirestore() pero convertimos Timestamps a ISO strings para Hive
     final firestoreMap = event.toFirestore();
-    final hiveMap = <String, dynamic>{};
     
-    for (var entry in firestoreMap.entries) {
-      if (entry.value is Timestamp) {
-        hiveMap[entry.key] = (entry.value as Timestamp).toDate().toIso8601String();
+    // Función recursiva para convertir Timestamps a strings ISO
+    dynamic _convertTimestamp(dynamic value) {
+      if (value is Timestamp) {
+        return value.toDate().toIso8601String();
+      } else if (value is Map) {
+        return value.map((key, val) => MapEntry(key, _convertTimestamp(val)));
+      } else if (value is List) {
+        return value.map((item) => _convertTimestamp(item)).toList();
       } else {
-        hiveMap[entry.key] = entry.value;
+        return value;
       }
+    }
+    
+    final hiveMap = <String, dynamic>{};
+    for (var entry in firestoreMap.entries) {
+      hiveMap[entry.key] = _convertTimestamp(entry.value);
     }
     
     // Añadimos el ID si existe
@@ -56,17 +65,19 @@ class EventLocalService extends LocalStorageService<Event> {
       final cp = Map<String, dynamic>.from(data['commonPart'] as Map);
       // EventCommonPart.fromMap maneja Timestamps, pero nosotros tenemos String
       // Necesitamos convertir la fecha a Timestamp antes de llamar a fromMap
-      if (cp['date'] is String) {
-        final dateStr = cp['date'] as String;
-        cp['date'] = Timestamp.fromDate(DateTime.parse(dateStr));
-      } else if (cp['date'] is! Timestamp) {
-        // Si no es String ni Timestamp, intentar parsear como DateTime
-        try {
-          final date = cp['date'] as DateTime;
-          cp['date'] = Timestamp.fromDate(date);
-        } catch (e) {
-          // Si falla, usar fecha actual como fallback
-          cp['date'] = Timestamp.now();
+      if (cp['date'] != null) {
+        if (cp['date'] is String) {
+          final dateStr = cp['date'] as String;
+          cp['date'] = Timestamp.fromDate(DateTime.parse(dateStr));
+        } else if (cp['date'] is! Timestamp) {
+          // Si no es String ni Timestamp, intentar parsear como DateTime
+          try {
+            final date = cp['date'] as DateTime;
+            cp['date'] = Timestamp.fromDate(date);
+          } catch (e) {
+            // Si falla, usar fecha actual como fallback
+            cp['date'] = Timestamp.now();
+          }
         }
       }
       commonPart = EventCommonPart.fromMap(cp);

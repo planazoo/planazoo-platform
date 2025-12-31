@@ -1,0 +1,92 @@
+{
+  "screen": "DashboardPage",
+  "platform": "web",
+  "version": "1.0",
+  "lastUpdated": "2024-12-XX",
+  "description": "Dashboard principal para web con grid 17x13",
+  
+  "layout": {
+    "topBar": {
+      "type": "none",
+      "height": 0,
+      "note": "El dashboard web no tiene barra superior tradicional, usa el grid directamente"
+    },
+    
+    "content": {
+      "type": "grid",
+      "gridDimensions": {
+        "columns": 17,
+        "rows": 13
+      },
+      "note": "Sistema de grid 17x13 con widgets posicionados en celdas específicas",
+      
+      "widgets": [
+        {
+          "id": "W1",
+          "position": "C1 (R1-R13)",
+          "type": "sidebar",
+          "description": "Barra lateral con lista de planes y acceso a perfil"
+        },
+        {
+          "id": "W2",
+          "position": "C2-C3 (R1)",
+          "type": "logo",
+          "description": "Logo de la app"
+        },
+        {
+          "id": "W3",
+          "position": "C4 (R1)",
+          "type": "button",
+          "description": "Botón crear nuevo plan"
+        },
+        {
+          "id": "W13",
+          "position": "C2-C5 (R2)",
+          "type": "search",
+          "description": "Campo de búsqueda de planes"
+        },
+        {
+          "id": "W26",
+          "position": "C2-C5 (R3)",
+          "type": "filters",
+          "description": "Botones de filtro de planes"
+        },
+        {
+          "id": "W28",
+          "position": "C2-C5 (R5-R12)",
+          "type": "list",
+          "description": "Lista de planes"
+        },
+        {
+          "id": "W31",
+          "position": "C6-C17 (R3-R12)",
+          "type": "screen_content",
+          "description": "Área principal donde se muestran las pantallas (calendario, datos del plan, etc.)"
+        }
+      ],
+      
+      "note": "Ver assets/ux_specification.json para especificación completa de todos los widgets W1-W31"
+    },
+    
+    "bottomBar": {
+      "type": "footer",
+      "position": "C2-C17 (R13)",
+      "height": "auto",
+      "description": "Footer con información de la app"
+    }
+  },
+  
+  "styles": {
+    "grid": {
+      "columnWidth": "calculated",
+      "rowHeight": "calculated",
+      "note": "Se calculan dinámicamente: columnWidth = gridWidth / 17, rowHeight = gridHeight / 13"
+    }
+  },
+  
+  "reference": {
+    "specFile": "assets/ux_specification.json",
+    "documentation": "docs/guias/GUIA_UI.md"
+  }
+}
+

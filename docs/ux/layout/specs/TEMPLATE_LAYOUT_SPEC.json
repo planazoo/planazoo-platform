@@ -1,0 +1,201 @@
+{
+  "screen": "NombrePantalla",
+  "platform": "web|mobile|both",
+  "version": "1.0",
+  "lastUpdated": "2024-12-XX",
+  "description": "Descripción breve de la pantalla",
+  
+  "layout": {
+    "topBar": {
+      "type": "appbar",
+      "height": "auto",
+      "backgroundColor": "#FFFFFF",
+      "elements": [
+        {
+          "id": "screen_title",
+          "type": "title",
+          "position": "left",
+          "text": "Título de la Pantalla",
+          "properties": {
+            "fontSize": 18,
+            "fontWeight": 600
+          }
+        },
+        {
+          "id": "action_button",
+          "type": "button",
+          "position": "right",
+          "text": "+",
+          "properties": {
+            "shape": "circle",
+            "size": 40
+          }
+        }
+      ]
+    },
+    
+    "content": {
+      "padding": {
+        "top": 16,
+        "bottom": 16,
+        "left": 16,
+        "right": 16
+      },
+      
+      "rows": [
+        {
+          "id": "R1",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "search",
+                "id": "search_field",
+                "properties": {
+                  "placeholder": "Buscar...",
+                  "height": 48
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "filters",
+                "id": "filter_buttons",
+                "properties": {
+                  "buttons": ["Todos", "Estoy in", "Pendientes", "Cerrados"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "height": "flex",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "list",
+                "id": "items_list",
+                "properties": {
+                  "itemType": "card",
+                  "scrollable": true
+                }
+              }
+            }
+          ]
+        }
+      ],
+      
+      "frames": [
+        {
+          "id": "F1",
+          "title": "Recuadro de Ejemplo",
+          "cells": ["R3:C1"],
+          "properties": {
+            "padding": {
+              "top": 20,
+              "bottom": 20,
+              "left": 20,
+              "right": 20
+            },
+            "margin": {
+              "bottom": 16
+            },
+            "decoration": {
+              "borderRadius": 18,
+              "backgroundColor": "#FFFFFF",
+              "border": {
+                "width": 1,
+                "color": "#E0E0E0"
+              },
+              "shadow": {
+                "blur": 10,
+                "offset": {"x": 0, "y": 2},
+                "color": "rgba(0,0,0,0.05)"
+              }
+            }
+          }
+        }
+      ]
+    },
+    
+    "bottomBar": {
+      "type": "navigation",
+      "height": 60,
+      "backgroundColor": "#FFFFFF",
+      "elements": [
+        {
+          "id": "profile_button",
+          "type": "icon",
+          "position": "center",
+          "icon": "person",
+          "properties": {
+            "size": 28
+          }
+        }
+      ]
+    }
+  },
+  
+  "styles": {
+    "spacing": {
+      "rowGap": 16,
+      "columnGap": 16,
+      "sectionPadding": {
+        "top": 16,
+        "bottom": 16,
+        "left": 16,
+        "right": 16
+      }
+    },
+    "colors": {
+      "background": "#F5F5F5",
+      "cardBackground": "#FFFFFF",
+      "textPrimary": "#212121",
+      "textSecondary": "#757575",
+      "accent": "#79A2A8"
+    },
+    "typography": {
+      "title": {
+        "fontFamily": "Poppins",
+        "fontSize": 18,
+        "fontWeight": 600
+      },
+      "body": {
+        "fontFamily": "Poppins",
+        "fontSize": 14,
+        "fontWeight": 400
+      }
+    }
+  },
+  
+  "responsive": {
+    "mobile": {
+      "maxWidth": 600,
+      "singleColumn": true,
+      "notes": "En móvil, las filas con 2 columnas se apilan verticalmente"
+    },
+    "tablet": {
+      "minWidth": 601,
+      "maxWidth": 1024,
+      "notes": "Puede mantener 2 columnas en algunas filas"
+    },
+    "desktop": {
+      "minWidth": 1025,
+      "notes": "Layout completo con todas las columnas"
+    }
+  }
+}
+

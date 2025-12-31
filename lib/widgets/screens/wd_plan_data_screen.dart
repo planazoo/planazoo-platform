@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
@@ -26,6 +27,7 @@ import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/app/theme/app_theme.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -59,6 +61,20 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   double? _budget;
   bool _hasUnsavedChanges = false;
   bool _isSavingPlan = false;
+
+  // Helper para detectar modo oscuro
+  bool get _isDarkMode {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  // Colores del estilo Sofisticado (siempre modo oscuro)
+  Color get _cardBackgroundStart => Colors.grey.shade800;
+  Color get _cardBackgroundEnd => const Color(0xFF2C2C2C);
+  Color get _cardBorder => Colors.grey.shade700.withOpacity(0.5);
+  Color get _textPrimary => Colors.white;
+  Color get _textSecondary => Colors.grey.shade400;
+  Color get _inputBackground => Colors.grey.shade800;
+  Color get _inputText => Colors.white;
 
   @override
   void initState() {
@@ -246,11 +262,35 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       data: (participants) {
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                _cardBackgroundStart,
+                _cardBackgroundEnd,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: _cardBorder,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 6),
+                spreadRadius: 0,
+              ),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+                spreadRadius: -4,
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,13 +300,15 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.group_outlined, color: AppColorScheme.color4),
+                      Icon(Icons.group_outlined, color: Colors.white),
                       const SizedBox(width: 8),
                       Text(
                         loc.planDetailsParticipantsTitle,
-                        style: AppTypography.mediumTitle.copyWith(
-                          color: AppColorScheme.color4,
-                          fontWeight: FontWeight.bold,
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.1,
                         ),
                       ),
                     ],
@@ -275,6 +317,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     label: Text(
                       '${participants.length}',
                       style: AppTypography.bodyStyle.copyWith(
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: AppColorScheme.color2,
                       ),
@@ -296,8 +339,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     label: Text(loc.planDetailsParticipantsManageLink),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColorScheme.color2,
-                      textStyle: AppTypography.bodyStyle.copyWith(
+                      textStyle: GoogleFonts.poppins(
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
@@ -307,8 +352,9 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               if (participants.isEmpty)
                 Text(
                   loc.planDetailsNoParticipants,
-                  style: AppTypography.bodyStyle.copyWith(
-                    color: Colors.grey.shade600,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: _textSecondary,
                   ),
                 )
               else
@@ -322,11 +368,35 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       },
       loading: () => Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              _cardBackgroundStart,
+              _cardBackgroundEnd,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: _cardBorder,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 6),
+              spreadRadius: 0,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
+              spreadRadius: -4,
+            ),
+          ],
         ),
         child: const Center(child: CircularProgressIndicator()),
       ),
@@ -340,7 +410,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         ),
         child: Text(
           'Error al cargar participantes: $error',
-          style: AppTypography.bodyStyle.copyWith(color: Colors.red),
+          style: AppTypography.bodyStyle.copyWith(
+            fontSize: 13,
+            color: Colors.red,
+          ),
         ),
       ),
     );
@@ -374,12 +447,19 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -388,9 +468,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           children: [
             Text(
               currentPlan.name,
-              style: AppTypography.mediumTitle.copyWith(
-                color: AppColorScheme.color1,
-                fontWeight: FontWeight.bold,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.1,
               ),
             ),
             const SizedBox(),
@@ -404,7 +486,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       final verticalPadding = isCompact ? 16.0 : 20.0;
 
       return Container(
-        color: Colors.grey.shade50,
+        color: Colors.grey.shade900,
         child: Column(
           children: [
             if (!isCompact) buildHeader(),
@@ -418,89 +500,9 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                 ),
                 child: Form(
                   key: _planFormKey,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth >= 960;
+                  child: Builder(
+                    builder: (context) {
                       const double cardSpacing = 24;
-                      const double sideCardWidth = 320;
-
-                      Widget buildTopSection() {
-                        if (isWide) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: _buildPlanSummarySection(loc, participantsCount, currentRoleLabel, currentUserHandle),
-                              ),
-                              const SizedBox(width: cardSpacing),
-                              SizedBox(
-                                width: sideCardWidth,
-                                child: _buildStateManagementSection(loc),
-                              ),
-                            ],
-                          );
-                        }
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildPlanSummarySection(loc, participantsCount, currentRoleLabel, currentUserHandle),
-                            const SizedBox(height: cardSpacing),
-                            _buildStateManagementSection(loc),
-                          ],
-                        );
-                      }
-
-                      Widget buildInfoBlocks() {
-                        if (isWide) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: _buildInfoSection(loc, showBaseInfo: true),
-                              ),
-                              const SizedBox(width: cardSpacing),
-                              SizedBox(
-                                width: sideCardWidth,
-                                child: _buildInfoSection(loc, showBaseInfo: false),
-                              ),
-                            ],
-                          );
-                        }
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildInfoSection(loc, showBaseInfo: true),
-                            const SizedBox(height: cardSpacing),
-                            _buildInfoSection(loc, showBaseInfo: false),
-                          ],
-                        );
-                      }
-
-                      Widget buildParticipantsAndAnnouncements() {
-                        if (isWide) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: _buildParticipantsSection(loc, participantsAsync),
-                              ),
-                              const SizedBox(width: cardSpacing),
-                              Expanded(
-                                child: _buildAnnouncementsSection(),
-                              ),
-                            ],
-                          );
-                        }
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildParticipantsSection(loc, participantsAsync),
-                            const SizedBox(height: cardSpacing),
-                            _buildAnnouncementsSection(),
-                          ],
-                        );
-                      }
-
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -526,6 +528,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                                     child: Text(
                                       loc.planDetailsUnsavedChanges,
                                       style: AppTypography.bodyStyle.copyWith(
+                                        fontSize: 13,
                                         color: Colors.orange.shade900,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -585,13 +588,19 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                             ),
                             const SizedBox(height: cardSpacing),
                           ],
-                          buildTopSection(),
+                          _buildPlanSummarySection(loc, participantsCount, currentRoleLabel, currentUserHandle),
                           const SizedBox(height: cardSpacing),
-                          buildInfoBlocks(),
+                          _buildStateManagementSection(loc),
                           const SizedBox(height: cardSpacing),
-                          buildParticipantsAndAnnouncements(),
+                          _buildInfoSection(loc, showBaseInfo: true),
+                          const SizedBox(height: cardSpacing),
+                          _buildParticipantsSection(loc, participantsAsync),
+                          const SizedBox(height: cardSpacing),
+                          _buildAnnouncementsSection(),
                           const SizedBox(height: cardSpacing),
                           _buildDeleteButton(),
+                          const SizedBox(height: cardSpacing),
+                          _buildInfoSection(loc, showBaseInfo: false),
                         ],
                       );
                     },
@@ -608,26 +617,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     if (isCompact) {
       final canPop = Navigator.of(context).canPop();
-      final headerMeta = [
-        if (currentUserHandle.isNotEmpty) currentUserHandle,
-        if (currentRoleLabel != null) loc.planRoleLabel(currentRoleLabel),
-      ].join(' • ');
-      return Scaffold(
+      return Theme(
+        data: AppTheme.darkTheme,
+        child: Scaffold(
         appBar: AppBar(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(currentPlan.name),
-              if (headerMeta.isNotEmpty)
-                Text(
-                  headerMeta,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white70,
-                      ),
-                ),
-            ],
-          ),
+          title: Text(currentPlan.name),
           leading: canPop
               ? IconButton(
                   icon: const Icon(Icons.arrow_back),
@@ -643,12 +637,16 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               ),
           ],
         ),
-        backgroundColor: Colors.grey.shade50,
+        backgroundColor: Colors.grey.shade900,
         body: body,
+        ),
       );
     }
 
-    return body;
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: body,
+    );
   }
 
   Widget _buildInfoSection(AppLocalizations loc, {required bool showBaseInfo}) {
@@ -656,11 +654,35 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _cardBackgroundStart,
+            _cardBackgroundEnd,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _cardBorder,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+            spreadRadius: -4,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -668,26 +690,37 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           if (showBaseInfo) ...[
             Text(
               loc.planDetailsInfoTitle,
-              style: AppTypography.mediumTitle.copyWith(
-                color: AppColorScheme.color4,
-                fontWeight: FontWeight.bold,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.1,
               ),
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildDateTile(
-                  label: loc.createPlanStartDateLabel(_formatDate(_startDate)),
-                  value: _startDate,
-                  onTap: _pickStartDate,
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDateTile(
+                        label: 'Inicio',
+                        value: _startDate,
+                        onTap: _pickStartDate,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildDateTile(
+                        label: 'Fin',
+                        value: _endDate,
+                        onTap: _pickEndDate,
+                      ),
+                    ),
+                  ],
                 ),
-                _buildDateTile(
-                  label: loc.createPlanEndDateLabel(_formatDate(_endDate)),
-                  value: _endDate,
-                  onTap: _pickEndDate,
-                ),
+                const SizedBox(height: 16),
                 _buildDropdownTile(
                   label: loc.createPlanCurrencyLabel,
                   value: _selectedCurrency,
@@ -698,7 +731,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                           child: Text(
                             '${currency.code} - ${currency.symbol} ${currency.name}',
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       )
@@ -709,7 +746,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             currency.code,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       )
@@ -721,7 +762,9 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     });
                   },
                 ),
+                const SizedBox(height: 16),
                 _buildBudgetField(loc),
+                const SizedBox(height: 16),
                 _buildDropdownTile(
                   label: loc.createPlanVisibilityLabel,
                   value: _selectedVisibility,
@@ -733,16 +776,19 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         children: [
                           Text(
                             loc.createPlanVisibilityPrivateShort,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             loc.createPlanVisibilityPrivate,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey.shade600,
-                                ),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.grey.shade400,
+                            ),
                           ),
                         ],
                       ),
@@ -754,16 +800,19 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         children: [
                           Text(
                             loc.createPlanVisibilityPublicShort,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             loc.createPlanVisibilityPublic,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey.shade600,
-                                ),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.grey.shade400,
+                            ),
                           ),
                         ],
                       ),
@@ -778,7 +827,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             short,
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       )
@@ -790,15 +843,18 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     });
                   },
                 ),
+                const SizedBox(height: 16),
                 _buildTimezoneTile(loc),
               ],
             ),
           ] else ...[
             Text(
               loc.planDetailsMetaTitle,
-              style: AppTypography.mediumTitle.copyWith(
-                color: AppColorScheme.color4,
-                fontWeight: FontWeight.bold,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.1,
               ),
             ),
             const SizedBox(height: 16),
@@ -844,6 +900,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           Text(
             label,
             style: AppTypography.bodyStyle.copyWith(
+              fontSize: 13,
               color: Colors.grey.shade600,
               fontWeight: FontWeight.w600,
             ),
@@ -852,6 +909,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           SelectableText(
             value,
             style: AppTypography.bodyStyle.copyWith(
+              fontSize: 13,
               color: AppColorScheme.color4,
             ),
           ),
@@ -868,22 +926,77 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     final selected = _selectedTimezone ?? currentPlan.timezone ?? fallbackTimezone;
     final safeSelectedTimezone = availableTimezones.contains(selected) ? selected : availableTimezones.first;
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
       child: DropdownButtonFormField<String>(
         value: safeSelectedTimezone,
         isExpanded: true,
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           labelText: loc.planTimezoneLabel,
-          labelStyle: textTheme.bodySmall,
+          labelStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.w500,
+          ),
           helperText: loc.planTimezoneHelper,
           helperMaxLines: 2,
-          helperStyle: textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+          helperStyle: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.grey.shade400,
           ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppColorScheme.color2,
+              width: 2.5,
+            ),
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
         ),
+        dropdownColor: Colors.grey.shade800,
         items: availableTimezones
             .map(
               (tz) => DropdownMenuItem<String>(
@@ -894,13 +1007,20 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                       child: Text(
                         TimezoneService.getTimezoneDisplayName(tz),
                         overflow: TextOverflow.ellipsis,
-                        style: textTheme.bodyMedium,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       TimezoneService.getUtcOffsetFormatted(tz),
-                      style: textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.grey.shade400,
+                      ),
                     ),
                   ],
                 ),
@@ -914,7 +1034,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                 child: Text(
                   TimezoneService.getTimezoneDisplayName(tz),
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodyMedium,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             )
@@ -937,21 +1061,71 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     required ValueChanged<String> onChanged,
     DropdownButtonBuilder? selectedItemBuilder,
   }) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
       child: DropdownButtonFormField<String>(
         value: value,
         isExpanded: true,
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: textTheme.bodySmall,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+          labelStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.w500,
           ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppColorScheme.color2,
+              width: 2.5,
+            ),
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
         ),
+        dropdownColor: Colors.grey.shade800,
         items: items,
         selectedItemBuilder: selectedItemBuilder,
         onChanged: (selected) {
@@ -964,20 +1138,69 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   Widget _buildBudgetField(AppLocalizations loc) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
       child: TextFormField(
         controller: _budgetController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           labelText: loc.planDetailsBudgetLabel,
-          labelStyle: textTheme.bodySmall,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+          labelStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.w500,
           ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppColorScheme.color2,
+              width: 2.5,
+            ),
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
           suffixText: _selectedCurrency,
         ),
         validator: (value) {
@@ -1007,20 +1230,75 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     required DateTime value,
     required VoidCallback onTap,
   }) {
-    return SizedBox(
-      width: 220,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: InputDecorator(
           decoration: InputDecoration(
             labelText: label,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+            labelStyle: GoogleFonts.poppins(
+              fontSize: 13,
+              color: Colors.grey.shade400,
+              fontWeight: FontWeight.w500,
             ),
-            suffixIcon: const Icon(Icons.edit_calendar),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(
+                color: AppColorScheme.color2,
+                width: 2.5,
+              ),
+            ),
+            filled: true,
+            fillColor: Colors.transparent,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            suffixIcon: Icon(Icons.edit_calendar, color: Colors.grey.shade400),
           ),
-          child: Text(_formatDate(value)),
+          child: Text(
+            _formatDate(value),
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.white,
+              letterSpacing: 0.1,
+            ),
+          ),
         ),
       ),
     );
@@ -1048,8 +1326,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               PlanStatePermissions.getBlockedReason('view', currentPlan) ?? 
                   'Este plan tiene restricciones de edición según su estado.',
               style: AppTypography.bodyStyle.copyWith(
+                fontSize: 13,
                 color: Colors.orange.shade900,
-                fontSize: 14,
               ),
             ),
           ),
@@ -1122,24 +1400,50 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _cardBackgroundStart,
+            _cardBackgroundEnd,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _cardBorder,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+            spreadRadius: -4,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.sync_alt, color: AppColorScheme.color3),
+              Icon(Icons.sync_alt, color: AppColorScheme.color2),
               const SizedBox(width: 8),
               Text(
                 loc.planDetailsStateTitle,
-                style: AppTypography.mediumTitle.copyWith(
-                  color: AppColorScheme.color4,
-                  fontWeight: FontWeight.bold,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.1,
                 ),
               ),
             ],
@@ -1147,9 +1451,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           const SizedBox(height: 12),
           Text(
             'Estado actual: ${PlanStateService.getStateDisplayInfo(currentState)['label']}',
-            style: AppTypography.bodyStyle.copyWith(
-              color: Colors.grey.shade600,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: _textSecondary,
               fontWeight: FontWeight.w500,
+              letterSpacing: 0.1,
             ),
           ),
           const SizedBox(height: 16),
@@ -1158,18 +1464,30 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             runSpacing: 12,
             children: availableTransitions
                 .map(
-                  (transition) => SizedBox(
-                    height: 44,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _changePlanState(transition['state'] as String),
-                      icon: Icon(transition['icon'] as IconData, size: 18),
-                      label: Text(transition['label'] as String),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                  (transition) => OutlinedButton.icon(
+                    onPressed: () => _changePlanState(transition['state'] as String),
+                    icon: Icon(transition['icon'] as IconData, size: 16),
+                    label: Text(
+                      transition['label'] as String,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      minimumSize: const Size(0, 40),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      side: BorderSide(
+                        color: AppColorScheme.color2.withOpacity(0.7),
+                        width: 2,
+                      ),
+                      foregroundColor: AppColorScheme.color2,
                     ),
                   ),
                 )
@@ -1305,17 +1623,17 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           Text(
             'Zona de Peligro',
             style: AppTypography.bodyStyle.copyWith(
+              fontSize: 13,
               color: Colors.red,
               fontWeight: FontWeight.bold,
-              fontSize: 16,
             ),
           ),
           const SizedBox(height: 12),
           Text(
             'Eliminar este plan eliminará todos los eventos asociados y no se puede deshacer.',
             style: AppTypography.bodyStyle.copyWith(
+              fontSize: 12,
               color: Colors.grey.shade600,
-              fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1490,6 +1808,7 @@ class _DeletePlanDialogState extends State<_DeletePlanDialog> {
           Text(
             widget.loc.planDeleteDialogMessage,
             style: AppTypography.bodyStyle.copyWith(
+              fontSize: 13,
               color: Colors.grey.shade800,
             ),
           ),
@@ -1681,11 +2000,35 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     const double avatarSize = 110;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _cardBackgroundStart,
+            _cardBackgroundEnd,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _cardBorder,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+            spreadRadius: -4,
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1696,35 +2039,147 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: loc.createPlanNameLabel,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.grey.shade800,
+                        const Color(0xFF2C2C2C),
+                      ],
                     ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.grey.shade700.withOpacity(0.5),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 6,
+                        offset: const Offset(0, 1),
+                        spreadRadius: -2,
+                      ),
+                    ],
                   ),
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
-                  onChanged: (_) => _markDirty(),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return loc.createPlanNameRequiredError;
-                    }
-                    return null;
-                  },
+                  child: TextFormField(
+                    controller: _nameController,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      color: Colors.white,
+                      letterSpacing: 0.1,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: loc.createPlanNameLabel,
+                      labelStyle: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: AppColorScheme.color2,
+                          width: 2.5,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                    ),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    onChanged: (_) => _markDirty(),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return loc.createPlanNameRequiredError;
+                      }
+                      return null;
+                    },
+                  ),
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: InputDecoration(
-                    labelText: loc.createPlanDescriptionLabel,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.grey.shade800,
+                        const Color(0xFF2C2C2C),
+                      ],
                     ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.grey.shade700.withOpacity(0.5),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 6,
+                        offset: const Offset(0, 1),
+                        spreadRadius: -2,
+                      ),
+                    ],
                   ),
-                  minLines: 2,
-                  maxLines: 4,
-                  onChanged: (_) => _markDirty(),
+                  child: TextFormField(
+                    controller: _descriptionController,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      color: Colors.white,
+                      letterSpacing: 0.1,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: loc.createPlanDescriptionLabel,
+                      labelStyle: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: AppColorScheme.color2,
+                          width: 2.5,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                    ),
+                    minLines: 2,
+                    maxLines: 4,
+                    onChanged: (_) => _markDirty(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -1732,10 +2187,12 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                     if (userHandle.isNotEmpty) userHandle,
                     if (roleLabel != null) loc.planRoleLabel(roleLabel),
                   ].where((segment) => segment.isNotEmpty).join(' • '),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColorScheme.color2,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: AppColorScheme.color2,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.1,
+                  ),
                 ),
               ],
             ),
@@ -1852,11 +2309,35 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
 
     return Container(
       width: double.infinity,
-      height: 400, // Altura fija para la sección de avisos
+      constraints: const BoxConstraints(minHeight: 400),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _cardBackgroundStart,
+            _cardBackgroundEnd,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _cardBorder,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+            spreadRadius: -4,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1865,37 +2346,84 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+              border: Border(
+                bottom: BorderSide(
+                  color: _isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
+                ),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Avisos',
-                  style: AppTypography.mediumTitle.copyWith(
-                    color: AppColorScheme.color4,
-                    fontWeight: FontWeight.bold,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.1,
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AnnouncementDialog(planId: currentPlan.id!),
-                    );
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Publicar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColorScheme.color3,
-                    foregroundColor: Colors.white,
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColorScheme.color3,
+                        AppColorScheme.color3.withOpacity(0.85),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColorScheme.color3.withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                        spreadRadius: -2,
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AnnouncementDialog(planId: currentPlan.id!),
+                      );
+                    },
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(
+                      'Publicar',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           // Timeline de avisos
-          Expanded(
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 300),
             child: AnnouncementTimeline(
               planId: currentPlan.id!,
             ),

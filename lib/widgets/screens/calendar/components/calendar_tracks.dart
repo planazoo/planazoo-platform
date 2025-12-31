@@ -10,6 +10,7 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart'
 import 'package:unp_calendario/widgets/screens/calendar/calendar_accommodation_logic.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
+import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 
 /// Componente que representa los headers y estructura de tracks (participantes)
 /// 
@@ -180,90 +181,130 @@ class CalendarTracks extends ConsumerWidget {
         final isLastTrack = index == participants.length - 1;
         final isActiveTrack = activeUserId != null && participant.participantId == activeUserId;
         
-        // Generar iniciales del nombre y apellido
-        final initial = _getParticipantInitials(participant.participantName, participant.position);
+        // Obtener iniciales usando FutureBuilder para cargar el nombre real del usuario
+        return FutureBuilder<String>(
+          future: _getParticipantDisplayName(participant.participantId),
+          builder: (context, snapshot) {
+            final displayName = snapshot.data ?? participant.participantName;
+            final initial = _getParticipantInitials(displayName, participant.position);
             
-        // Obtener timezone del participante
-        final participantTimezone = getParticipantTimezone(participant.participantId);
-        final timezoneColor = participantTimezone != null 
-            ? TimezoneService.getTimezoneBarColor(participantTimezone)
-            : null;
-        
-        return Expanded(
-          child: GestureDetector(
-            onTap: onShowParticipantManagementDialog,
-            child: Tooltip(
-              message: participantTimezone != null
-                  ? TimezoneService.getTimezoneDisplayName(participantTimezone)
-                  : 'Timezone no configurada',
-              child: Stack(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-                    decoration: BoxDecoration(
-                      // Fondo diferenciado para track activo
-                      color: isActiveTrack 
-                          ? AppColorScheme.color1.withOpacity(0.2)
-                          : Colors.transparent,
-                      // Borde más grueso para track activo, normal para otros (excepto último)
-                      border: isLastTrack 
-                          ? null 
-                          : (isActiveTrack
-                              ? Border(
-                                  right: BorderSide(
-                                    color: AppColorScheme.gridLineColor.withOpacity(gridLineOpacity),
-                                    width: 1.5, // Borde más grueso para track activo
-                                  ),
-                                )
-                              : createGridBorder()),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          initial,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: isActiveTrack ? FontWeight.w900 : FontWeight.bold, // Más negrita si es activo
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Barra lateral de color para timezone (T100)
-                  if (timezoneColor != null)
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 3,
-                      child: Container(
+            // Obtener timezone del participante
+            final participantTimezone = getParticipantTimezone(participant.participantId);
+            final timezoneColor = participantTimezone != null 
+                ? TimezoneService.getTimezoneBarColor(participantTimezone)
+                : null;
+            
+            return Expanded(
+              child: GestureDetector(
+                onTap: onShowParticipantManagementDialog,
+                child: Tooltip(
+                  message: participantTimezone != null
+                      ? TimezoneService.getTimezoneDisplayName(participantTimezone)
+                      : 'Timezone no configurada',
+                  child: Stack(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
                         decoration: BoxDecoration(
-                          color: timezoneColor,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(2),
-                            bottomLeft: Radius.circular(2),
-                          ),
+                          // Fondo diferenciado para track activo
+                          color: isActiveTrack 
+                              ? AppColorScheme.color1.withOpacity(0.2)
+                              : Colors.transparent,
+                          // Borde más grueso para track activo, normal para otros (excepto último)
+                          border: isLastTrack 
+                              ? null 
+                              : (isActiveTrack
+                                  ? Border(
+                                      right: BorderSide(
+                                        color: AppColorScheme.gridLineColor.withOpacity(gridLineOpacity),
+                                        width: 1.5, // Borde más grueso para track activo
+                                      ),
+                                    )
+                                  : createGridBorder()),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              initial,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: isActiveTrack ? FontWeight.w900 : FontWeight.bold, // Más negrita si es activo
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                ],
+                      // Barra lateral de color para timezone (T100)
+                      if (timezoneColor != null)
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: 3,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: timezoneColor,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(2),
+                                bottomLeft: Radius.circular(2),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       }).toList(),
     );
+  }
+
+  /// Obtiene el nombre de visualización de un participante por su ID
+  Future<String> _getParticipantDisplayName(String userId) async {
+    try {
+      // Obtener el usuario real desde Firestore usando UserService
+      final userService = UserService();
+      final user = await userService.getUser(userId);
+      
+      if (user != null) {
+        // Priorizar displayName, luego username, luego email
+        if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+          return user.displayName!;
+        }
+        if (user.username != null && user.username!.trim().isNotEmpty) {
+          return '@${user.username!}';
+        }
+        return user.email;
+      }
+      
+      // Si no se encuentra el usuario, devolver el userId como fallback
+      return userId;
+    } catch (e) {
+      // En caso de error, devolver el userId
+      return userId;
+    }
   }
 
   /// Genera las iniciales del nombre y apellido de un participante
   String _getParticipantInitials(String participantName, int position) {
     if (participantName.isEmpty) {
       return 'P${position + 1}';
+    }
+    
+    // Si el nombre empieza con @, es un username, usar solo la primera letra después del @
+    if (participantName.startsWith('@')) {
+      final username = participantName.substring(1);
+      if (username.isNotEmpty) {
+        return username[0].toUpperCase();
+      }
     }
     
     // Dividir el nombre por espacios

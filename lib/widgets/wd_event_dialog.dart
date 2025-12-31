@@ -188,13 +188,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _selectedParticipantIds = List.from(existingCommonPart?.participantIds ?? []);
     
     // Si es un evento existente y no está marcado "para todos" pero no hay participantes,
-    // asegurar que al menos el creador esté seleccionado
-    if (widget.event != null && !_isForAllParticipants && _selectedParticipantIds.isEmpty) {
-      final eventCreatorId = widget.event?.userId;
-      if (eventCreatorId != null) {
-        _selectedParticipantIds.add(eventCreatorId);
-      }
-    }
+    // no forzar ninguna selección. El usuario puede crear eventos sin incluirse a sí mismo.
     
     // Si es un evento nuevo, por defecto está marcado "para todos" (no necesitamos seleccionar participantes)
     
@@ -1462,12 +1456,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   // Si se marca "para todos", limpiar selección individual
                   if (_isForAllParticipants) {
                     _selectedParticipantIds.clear();
-                  } else {
-                    // Si se desmarca, asegurar que al menos el creador esté seleccionado
-                    if (currentUserId != null && !_selectedParticipantIds.contains(currentUserId)) {
-                      _selectedParticipantIds.add(currentUserId);
-                    }
                   }
+                  // Si se desmarca "para todos", no forzar ninguna selección
+                  // El usuario puede seleccionar los participantes que desee
                 });
               },
               activeColor: Colors.blue,
@@ -1493,19 +1484,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                                   (widget.event == null || widget.event?.userId == currentUserId);
                 final isEventCreator = widget.event?.userId == participation.userId;
                 
-                // El creador del evento debe estar siempre seleccionado y deshabilitado
-                if (isEventCreator && !isSelected) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) {
-                      setState(() {
-                        if (!_selectedParticipantIds.contains(participation.userId)) {
-                          _selectedParticipantIds.add(participation.userId);
-                        }
-                      });
-                    }
-                  });
-                }
-                
                 return FutureBuilder<String>(
                   future: _getUserDisplayName(participation.userId),
                   builder: (context, snapshot) {
@@ -1520,36 +1498,34 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     return CheckboxListTile(
                       title: Text(participantName),
                       value: isSelected,
-                      onChanged: (isEventCreator) 
-                          ? null // Deshabilitado si es el creador del evento
-                          : (value) {
-                              setState(() {
-                                if (value == true) {
-                                  if (!_selectedParticipantIds.contains(participation.userId)) {
-                                    _selectedParticipantIds.add(participation.userId);
-                                  }
-                                } else {
-                                  // No permitir deseleccionar si es el único seleccionado
-                                  if (_selectedParticipantIds.length > 1) {
-                                    _selectedParticipantIds.remove(participation.userId);
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Debe haber al menos un participante seleccionado'),
-                                        duration: Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                }
-                              });
-                            },
+                      onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              if (!_selectedParticipantIds.contains(participation.userId)) {
+                                _selectedParticipantIds.add(participation.userId);
+                              }
+                            } else {
+                              // No permitir deseleccionar si es el único seleccionado
+                              if (_selectedParticipantIds.length > 1) {
+                                _selectedParticipantIds.remove(participation.userId);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Debe haber al menos un participante seleccionado'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            }
+                          });
+                        },
                       activeColor: Colors.blue,
                       secondary: isEventCreator 
                           ? const Icon(Icons.person, color: Colors.orange)
                           : null,
                       subtitle: isEventCreator 
                           ? const Text(
-                              'Creador del evento (siempre incluido)',
+                              'Creador del evento',
                               style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic),
                             )
                           : null,

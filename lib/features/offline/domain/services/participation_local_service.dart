@@ -11,14 +11,23 @@ class ParticipationLocalService extends LocalStorageService<PlanParticipation> {
   Map<String, dynamic> toMap(PlanParticipation participation) {
     // Usamos toFirestore() pero convertimos Timestamps a ISO strings para Hive
     final firestoreMap = participation.toFirestore();
-    final hiveMap = <String, dynamic>{};
     
-    for (var entry in firestoreMap.entries) {
-      if (entry.value is Timestamp) {
-        hiveMap[entry.key] = (entry.value as Timestamp).toDate().toIso8601String();
+    // Función recursiva para convertir Timestamps a strings ISO
+    dynamic _convertTimestamp(dynamic value) {
+      if (value is Timestamp) {
+        return value.toDate().toIso8601String();
+      } else if (value is Map) {
+        return value.map((key, val) => MapEntry(key, _convertTimestamp(val)));
+      } else if (value is List) {
+        return value.map((item) => _convertTimestamp(item)).toList();
       } else {
-        hiveMap[entry.key] = entry.value;
+        return value;
       }
+    }
+    
+    final hiveMap = <String, dynamic>{};
+    for (var entry in firestoreMap.entries) {
+      hiveMap[entry.key] = _convertTimestamp(entry.value);
     }
     
     // Añadimos el ID si existe

@@ -4,6 +4,7 @@ import 'package:unp_calendario/shared/models/user_role.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/models/plan_permissions.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
+import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 
 /// Diálogo para gestionar roles y permisos de usuarios en un plan
 class ManageRolesDialog extends ConsumerStatefulWidget {
@@ -195,40 +196,57 @@ class _ManageRolesDialogState extends ConsumerState<ManageRolesDialog> {
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: _getRoleColor(user.role).withOpacity(0.2),
-              child: Icon(
-                _getRoleIcon(user.role),
-                color: _getRoleColor(user.role),
-              ),
-            ),
-            title: Row(
-              children: [
-                Expanded(
+            leading: FutureBuilder<String>(
+              future: _getUserDisplayName(user.userId),
+              builder: (context, snapshot) {
+                final displayName = snapshot.data ?? user.userId;
+                final initials = _getInitials(displayName);
+                return CircleAvatar(
+                  backgroundColor: _getRoleColor(user.role).withOpacity(0.2),
                   child: Text(
-                    _getUserDisplayName(user.userId),
+                    initials,
                     style: TextStyle(
-                      fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
+                      color: _getRoleColor(user.role),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                   ),
-                ),
-                if (isCurrentUser)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'TÚ',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
+                );
+              },
+            ),
+            title: FutureBuilder<String>(
+              future: _getUserDisplayName(user.userId),
+              builder: (context, snapshot) {
+                final displayName = snapshot.data ?? user.userId;
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        displayName,
+                        style: TextStyle(
+                          fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                    if (isCurrentUser)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'TÚ',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,20 +396,57 @@ class _ManageRolesDialogState extends ConsumerState<ManageRolesDialog> {
     );
   }
 
-  String _getUserDisplayName(String userId) {
+  Future<String> _getUserDisplayName(String userId) async {
     try {
-      // Mapeo simple de IDs a nombres para testing
-      final nameMap = {
-        'cristian_claraso': 'Cristian Claraso',
-        'maria_del_mar': 'María del Mar',
-        'emma': 'Emma',
-        'matilde': 'Matilde',
-        'jimena': 'Jimena',
-      };
-      return nameMap[userId] ?? 'Usuario $userId';
+      // Obtener el usuario real desde Firestore usando UserService
+      final userService = UserService();
+      final user = await userService.getUser(userId);
+      
+      if (user != null) {
+        // Priorizar displayName, luego username, luego email
+        if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+          return user.displayName!;
+        }
+        if (user.username != null && user.username!.trim().isNotEmpty) {
+          return '@${user.username!}';
+        }
+        return user.email;
+      }
+      
+      // Si no se encuentra el usuario, devolver el userId como fallback
+      return userId;
     } catch (e) {
-      return 'Usuario $userId';
+      // En caso de error, devolver el userId
+      return userId;
     }
+  }
+
+  /// Obtiene las iniciales de un nombre
+  String _getInitials(String name) {
+    if (name.isEmpty) return '?';
+    
+    // Si el nombre empieza con @, es un username, usar solo la primera letra después del @
+    if (name.startsWith('@')) {
+      final username = name.substring(1);
+      if (username.isNotEmpty) {
+        return username[0].toUpperCase();
+      }
+    }
+    
+    // Dividir el nombre por espacios
+    final nameParts = name.trim().split(' ');
+    
+    if (nameParts.length == 1) {
+      // Solo un nombre, tomar la primera letra
+      return nameParts[0].substring(0, 1).toUpperCase();
+    } else if (nameParts.length >= 2) {
+      // Nombre y apellido, tomar la primera letra de cada uno
+      final firstName = nameParts[0].substring(0, 1).toUpperCase();
+      final lastName = nameParts[1].substring(0, 1).toUpperCase();
+      return '$firstName$lastName';
+    }
+    
+    return '?';
   }
 
   String _formatDate(DateTime date) {
