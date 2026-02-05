@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
 
@@ -6,28 +7,28 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart'
 class CalendarStyles {
   /// Obtiene el estilo del header de días
   static TextStyle getDayHeaderStyle({bool isToday = false}) {
-    return TextStyle(
-      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-      color: isToday ? AppColorScheme.color1 : Colors.black87,
+    return GoogleFonts.poppins(
+      fontWeight: isToday ? FontWeight.w600 : FontWeight.w500,
+      color: isToday ? AppColorScheme.color2 : Colors.white,
       fontSize: CalendarConstants.headerFontSize,
     );
   }
 
   /// Obtiene el estilo del header de participantes
   static TextStyle getParticipantHeaderStyle() {
-    return const TextStyle(
+    return GoogleFonts.poppins(
       fontSize: CalendarConstants.participantFontSize,
       fontWeight: FontWeight.w500,
-      color: Colors.black87,
+      color: Colors.white,
     );
   }
 
   /// Obtiene el estilo del header mini de participantes
   static TextStyle getMiniParticipantHeaderStyle() {
-    return const TextStyle(
+    return GoogleFonts.poppins(
       fontSize: CalendarConstants.miniParticipantFontSize,
       fontWeight: FontWeight.w600,
-      color: Colors.black54,
+      color: Colors.grey.shade400,
     );
   }
 
@@ -51,7 +52,11 @@ class CalendarStyles {
 
   /// Obtiene el estilo del texto de horas
   static TextStyle getHourTextStyle() {
-    return const TextStyle(fontSize: 12);
+    return GoogleFonts.poppins(
+      fontSize: 12,
+      color: Colors.grey.shade400,
+      fontWeight: FontWeight.w500,
+    );
   }
 
   /// Obtiene el estilo del texto de alojamiento en la columna fija
@@ -65,9 +70,12 @@ class CalendarStyles {
   /// Obtiene la decoración del header de días
   static BoxDecoration getDayHeaderDecoration() {
     return BoxDecoration(
-      color: AppColorScheme.color1.withOpacity(CalendarConstants.todayHighlightOpacity),
+      color: Colors.grey.shade800, // Color sólido, sin gradiente
       border: Border(
-        bottom: BorderSide(color: AppColorScheme.color1.withOpacity(CalendarConstants.gridLineOpacity)),
+        bottom: BorderSide(
+          color: Colors.grey.shade700.withOpacity(CalendarConstants.gridLineOpacity),
+          width: 0.5,
+        ),
       ),
     );
   }
@@ -75,9 +83,12 @@ class CalendarStyles {
   /// Obtiene la decoración del header de participantes
   static BoxDecoration getParticipantHeaderDecoration() {
     return BoxDecoration(
-      color: AppColorScheme.color1.withOpacity(CalendarConstants.trackHighlightOpacity),
+      color: Colors.grey.shade800, // Color sólido, sin gradiente
       border: Border(
-        bottom: BorderSide(color: AppColorScheme.color1.withOpacity(0.2)),
+        bottom: BorderSide(
+          color: Colors.grey.shade700.withOpacity(0.3),
+          width: 0.5,
+        ),
       ),
     );
   }
@@ -85,9 +96,12 @@ class CalendarStyles {
   /// Obtiene la decoración del header mini de participantes
   static BoxDecoration getMiniParticipantHeaderDecoration() {
     return BoxDecoration(
-      color: AppColorScheme.color1.withOpacity(0.02),
+      color: Colors.grey.shade800.withOpacity(0.5), // Color sólido, sin gradiente
       border: Border(
-        bottom: BorderSide(color: AppColorScheme.color1.withOpacity(0.1)),
+        bottom: BorderSide(
+          color: Colors.grey.shade700.withOpacity(0.2),
+          width: 0.5,
+        ),
       ),
     );
   }
@@ -97,10 +111,7 @@ class CalendarStyles {
     return BoxDecoration(
       color: eventColor,
       borderRadius: BorderRadius.circular(CalendarConstants.borderRadius),
-      border: Border.all(
-        color: Colors.white.withOpacity(CalendarConstants.gridLineOpacity),
-        width: 1,
-      ),
+      // Sin borde (estilo base)
     );
   }
 
@@ -119,24 +130,33 @@ class CalendarStyles {
   /// Obtiene la decoración de la columna fija de horas
   static BoxDecoration getFixedHoursColumnDecoration() {
     return BoxDecoration(
-      border: Border.all(color: AppColorScheme.gridLineColor),
-      color: AppColorScheme.color1,
+      color: Colors.grey.shade800, // Color sólido, sin gradiente
+      border: Border.all(
+        color: Colors.grey.shade700.withOpacity(0.3),
+        width: 0.5,
+      ),
     );
   }
 
   /// Obtiene la decoración de una celda de hora
   static BoxDecoration getHourCellDecoration() {
     return BoxDecoration(
-      border: Border.all(color: AppColorScheme.gridLineColor),
-      color: AppColorScheme.color0,
+      border: Border.all(
+        color: Colors.grey.shade700.withOpacity(0.3),
+        width: 0.5,
+      ),
+      color: Colors.grey.shade800.withOpacity(0.3),
     );
   }
 
   /// Obtiene la decoración de la fila fija de alojamientos
   static BoxDecoration getFixedAccommodationRowDecoration() {
     return BoxDecoration(
-      color: AppColorScheme.color1.withOpacity(CalendarConstants.gridLineOpacity),
-      border: Border.all(color: AppColorScheme.gridLineColor),
+      color: Colors.grey.shade800, // Color sólido, sin gradiente
+      border: Border.all(
+        color: Colors.grey.shade700.withOpacity(0.3),
+        width: 0.5,
+      ),
     );
   }
 
@@ -157,7 +177,7 @@ class CalendarStyles {
 
   /// Obtiene el color de fondo del AppBar
   static Color getAppBarBackgroundColor() {
-    return AppColorScheme.color1;
+    return Colors.grey.shade800;
   }
 
   /// Obtiene el color de texto del AppBar

@@ -67,9 +67,33 @@ Widget _buildW28(double columnWidth, double rowHeight) {
       width: w28Width,
       height: w28Height,
       decoration: BoxDecoration(
-        color: AppColorScheme.color0, // Fondo blanco
-        border: Border.all(color: AppColorScheme.color0, width: 1), // Bordes blancos
-        borderRadius: BorderRadius.circular(4),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.grey.shade800,
+            const Color(0xFF2C2C2C),
+          ],
+        ),
+        border: Border.all(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+            spreadRadius: -4,
+          ),
+        ],
       ),
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 250),
@@ -106,12 +130,40 @@ Widget build(BuildContext context) {
   return Container(
     margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
     decoration: BoxDecoration(
-      color: isSelected ? AppColorScheme.color1 : AppColorScheme.color0,
-      borderRadius: BorderRadius.circular(4),
-      border: Border.all(
-        color: isSelected ? AppColorScheme.color1 : AppColorScheme.color0,
-        width: 1,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isSelected
+            ? [
+                AppColorScheme.color2,
+                AppColorScheme.color2.withOpacity(0.85),
+              ]
+            : [
+                Colors.grey.shade800,
+                const Color(0xFF2C2C2C),
+              ],
       ),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(
+        color: isSelected
+            ? AppColorScheme.color2
+            : Colors.grey.shade700.withOpacity(0.5),
+        width: isSelected ? 2.5 : 1,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.4),
+          blurRadius: 12,
+          offset: const Offset(0, 3),
+          spreadRadius: 0,
+        ),
+        BoxShadow(
+          color: Colors.black.withOpacity(0.2),
+          blurRadius: 6,
+          offset: const Offset(0, 1),
+          spreadRadius: -2,
+        ),
+      ],
     ),
     child: InkWell(
       onTap: onTap,
@@ -193,6 +245,16 @@ return Padding(
 - Modal de selección cuando hay varios planes en la misma fecha
 - Mensaje vacío cuando no existen planes en el rango mostrado
 
+### Diciembre 2025 - Actualización a Estilo Base
+- **Cambios**:
+  - Contenedor W28: Gradiente del Estilo Base, borderRadius 18px, sombras de 2 capas
+  - PlanCardWidget: Aplicado Estilo Base completo
+    - Gradiente para fondo (seleccionado: color2, no seleccionado: estilo base)
+    - Textos con GoogleFonts.poppins y colores del estilo base (blanco/gris claro)
+    - BorderRadius 14px para cards
+    - Sombras de 2 capas
+    - Borde destacado (2.5px) cuando está seleccionado
+
 ### T14 - Actualización según especificaciones
 - **Fecha**: Diciembre 2024
 - **Cambios**:
@@ -203,7 +265,6 @@ return Padding(
   - Añadido placeholder para participantes
   - Eliminados iconos a la derecha según especificación
   - Reducido tamaño de imagen para mejor proporción
-  - **Actualización de contenedor**: Fondo blanco (color0) y bordes blancos
 
 ## Consideraciones de UX
 

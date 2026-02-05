@@ -567,7 +567,7 @@ Los eventos ahora tienen una paleta de colores más accesible y legible, cumplie
 
 **Pendiente (mejoras futuras):**
 - ⚠️ Testing de accesibilidad con usuarios reales con diferentes tipos de visión
-- ⚠️ Posible añadir modo oscuro con paleta de colores adaptada
+- ✅ UI oscura implementada como Estilo Base (no es un modo oscuro opcional, sino el diseño estándar de la app)
 
 ---
 

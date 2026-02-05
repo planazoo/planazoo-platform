@@ -11,8 +11,9 @@ Widget de pie de página dedicado a mostrar informaciones publicitarias. Ubicado
 ## Diseño Visual
 
 ### Colores
-- **Fondo**: `AppColorScheme.color0` (color base)
-- **Borde superior**: `AppColorScheme.color1` (color de acento)
+- **Fondo**: Gradiente igual que W1/W2 (Estilo Base)
+  - `LinearGradient` de `Colors.grey.shade800` → `Color(0xFF2C2C2C)`
+- **Borde**: Sin borde
 - **Esquinas**: Ángulo recto (sin borderRadius)
 
 ### Contenido
@@ -41,16 +42,18 @@ Widget _buildW29(double columnWidth, double rowHeight) {
     child: Container(
       width: w29Width,
       height: w29Height,
-      decoration: BoxDecoration(
-        color: AppColorScheme.color0, // Fondo color0
-        border: Border(
-          top: BorderSide(
-            color: AppColorScheme.color1, // Borde superior color1
-            width: 1,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
           ),
+          // Sin borderRadius (esquinas en ángulo recto)
+          // Sin borde
         ),
-        // Sin borderRadius (esquinas en ángulo recto)
-      ),
       // Sin contenido
     ),
   );
@@ -73,6 +76,12 @@ Widget _buildW29(double columnWidth, double rowHeight) {
   - Eliminado contenido de prueba
   - Eliminado borderRadius
   - Simplificado a contenedor básico
+
+### Diciembre 2025 - Actualización a Estilo Base
+- **Cambios**:
+  - Fondo cambiado a `AppColorScheme.color2` (mismo que W1)
+  - Borde cambiado a blanco de 2px (mismo que W1)
+  - Alineado con el Estilo Base de la aplicación
 
 ## Consideraciones de UX
 

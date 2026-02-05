@@ -1,18 +1,40 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 
 admin.initializeApp();
 
-// Configurar SendGrid (se debe configurar en Firebase Functions config)
-// firebase functions:config:set sendgrid.key="YOUR_SENDGRID_API_KEY"
-// firebase functions:config:set sendgrid.from="noreply@planazoo.app"
+// Configuración: Prioridad Gmail SMTP > SendGrid
+// Gmail SMTP (recomendado - solo Google)
+const GMAIL_USER = functions.config().gmail?.user || process.env.GMAIL_USER;
+const GMAIL_PASSWORD = functions.config().gmail?.password || process.env.GMAIL_PASSWORD;
+const GMAIL_FROM = functions.config().gmail?.from || process.env.GMAIL_FROM || GMAIL_USER;
+
+// SendGrid (alternativa externa)
 const SENDGRID_API_KEY = functions.config().sendgrid?.key || process.env.SENDGRID_API_KEY;
-const FROM_EMAIL = functions.config().sendgrid?.from || process.env.FROM_EMAIL || 'noreply@planazoo.app';
+const SENDGRID_FROM = functions.config().sendgrid?.from || process.env.SENDGRID_FROM;
+
+// Email remitente (prioridad: Gmail > SendGrid > default)
+const FROM_EMAIL = GMAIL_FROM || SENDGRID_FROM || 'noreply@planazoo.app';
 const APP_BASE_URL = functions.config().app?.base_url || process.env.APP_BASE_URL || 'https://planazoo.app';
 
+// Configurar SendGrid (si está disponible)
 if (SENDGRID_API_KEY) {
   sgMail.setApiKey(SENDGRID_API_KEY);
+}
+
+// Configurar Nodemailer con Gmail SMTP (si está disponible)
+let gmailTransporter = null;
+if (GMAIL_USER && GMAIL_PASSWORD) {
+  gmailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: GMAIL_USER,
+      pass: GMAIL_PASSWORD, // App Password de Gmail (16 caracteres)
+    },
+  });
+  console.log('Gmail SMTP configurado correctamente');
 }
 
 // Template HTML para email de invitación (T104)
@@ -191,9 +213,12 @@ exports.sendInvitationEmail = functions.firestore
       return null;
     }
 
-    // Verificar que tenemos SendGrid configurado
-    if (!SENDGRID_API_KEY) {
-      console.warn('SendGrid API key not configured. Email will not be sent.');
+    // Verificar que tenemos algún servicio de email configurado
+    const useGmail = GMAIL_USER && GMAIL_PASSWORD && gmailTransporter;
+    const useSendGrid = SENDGRID_API_KEY;
+    
+    if (!useGmail && !useSendGrid) {
+      console.warn('No hay servicio de email configurado. Configura Gmail SMTP o SendGrid.');
       return null;
     }
 
@@ -234,25 +259,40 @@ exports.sendInvitationEmail = functions.firestore
       // Generar HTML del email
       const htmlContent = getInvitationEmailTemplate(emailData);
 
-      // Configurar email
-      const msg = {
-        to: invitation.email,
-        from: FROM_EMAIL,
-        subject: `Invitación a "${planName}" en Planazoo`,
-        text: `${inviterName} te ha invitado a unirte al plan "${planName}" en Planazoo. 
+      // Preparar contenido del email
+      const emailSubject = `Invitación a "${planName}" en Planazoo`;
+      const emailText = `${inviterName} te ha invitado a unirte al plan "${planName}" en Planazoo. 
         
 Haz clic en este enlace para aceptar o rechazar la invitación:
 ${APP_BASE_URL}/invitation/${invitation.token}
 
 Esta invitación expira el ${emailData.expiresAt}.
 
-Este es un email automático. Por favor, no respondas a este mensaje.`,
-        html: htmlContent,
-      };
+Este es un email automático. Por favor, no respondas a este mensaje.`;
 
-      // Enviar email
-      await sgMail.send(msg);
-      console.log(`Invitation email sent successfully to ${invitation.email} for invitation ${invitationId}`);
+      // Enviar email usando Gmail SMTP (prioridad) o SendGrid
+      if (useGmail) {
+        // Usar Gmail SMTP (solo Google)
+        await gmailTransporter.sendMail({
+          from: FROM_EMAIL,
+          to: invitation.email,
+          subject: emailSubject,
+          text: emailText,
+          html: htmlContent,
+        });
+        console.log(`Invitation email sent via Gmail SMTP to ${invitation.email} for invitation ${invitationId}`);
+      } else if (useSendGrid) {
+        // Usar SendGrid (alternativa externa)
+        const msg = {
+          to: invitation.email,
+          from: FROM_EMAIL,
+          subject: emailSubject,
+          text: emailText,
+          html: htmlContent,
+        };
+        await sgMail.send(msg);
+        console.log(`Invitation email sent via SendGrid to ${invitation.email} for invitation ${invitationId}`);
+      }
 
       return null;
     } catch (error) {
@@ -267,5 +307,103 @@ Este es un email automático. Por favor, no respondas a este mensaje.`,
       return null;
     }
   });
+
+// Cloud Function: Enviar notificación push (Fase 1 - FCM Básico)
+// 
+// Uso: Llamar desde otra función o desde el cliente (con permisos admin)
+// Parámetros:
+//   - userId: ID del usuario que recibirá la notificación
+//   - title: Título de la notificación
+//   - body: Cuerpo del mensaje
+//   - data: (opcional) Datos adicionales para la app
+exports.sendPushNotification = functions.https.onCall(async (data, context) => {
+  // Verificar autenticación
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Debes estar autenticado para enviar notificaciones'
+    );
+  }
+
+  const { userId, title, body, data: notificationData } = data;
+
+  // Validar parámetros requeridos
+  if (!userId || !title || !body) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'userId, title y body son requeridos'
+    );
+  }
+
+  try {
+    // Obtener tokens FCM del usuario
+    const tokensSnapshot = await admin.firestore()
+      .collection('users')
+      .doc(userId)
+      .collection('fcmTokens')
+      .get();
+
+    if (tokensSnapshot.empty) {
+      console.log(`No se encontraron tokens FCM para el usuario ${userId}`);
+      return { success: false, message: 'Usuario no tiene tokens FCM registrados' };
+    }
+
+    // Extraer todos los tokens
+    const tokens = tokensSnapshot.docs.map(doc => doc.data().token);
+
+    // Preparar mensaje
+    const message = {
+      notification: {
+        title: title,
+        body: body,
+      },
+      data: notificationData || {},
+      tokens: tokens, // Enviar a todos los dispositivos del usuario
+    };
+
+    // Enviar notificación usando Firebase Admin SDK
+    const response = await admin.messaging().sendEachForMulticast(message);
+
+    console.log(`Notificación enviada a ${response.successCount} de ${tokens.length} dispositivos`);
+
+    if (response.failureCount > 0) {
+      const failedTokens = [];
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          failedTokens.push(tokens[idx]);
+          console.error(`Error enviando a token ${tokens[idx]}: ${resp.error}`);
+        }
+      });
+
+      // Eliminar tokens inválidos de Firestore
+      if (failedTokens.length > 0) {
+        const batch = admin.firestore().batch();
+        failedTokens.forEach(token => {
+          const tokenRef = admin.firestore()
+            .collection('users')
+            .doc(userId)
+            .collection('fcmTokens')
+            .doc(token);
+          batch.delete(tokenRef);
+        });
+        await batch.commit();
+        console.log(`Eliminados ${failedTokens.length} tokens inválidos`);
+      }
+    }
+
+    return {
+      success: true,
+      sent: response.successCount,
+      failed: response.failureCount,
+      total: tokens.length,
+    };
+  } catch (error) {
+    console.error(`Error enviando notificación push a ${userId}:`, error);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error enviando notificación: ${error.message}`
+    );
+  }
+});
 
 

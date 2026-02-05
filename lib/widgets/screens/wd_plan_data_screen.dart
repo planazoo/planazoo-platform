@@ -33,12 +33,14 @@ class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
   final VoidCallback? onPlanDeleted;
   final VoidCallback? onManageParticipants;
+  final bool showAppBar;
 
   const PlanDataScreen({
     super.key,
     required this.plan,
     this.onPlanDeleted,
     this.onManageParticipants,
+    this.showAppBar = true,
   });
 
   @override
@@ -447,14 +449,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.4),
@@ -467,7 +462,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              currentPlan.name,
+              'Info del plan',
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 color: Colors.white,
@@ -489,7 +484,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         color: Colors.grey.shade900,
         child: Column(
           children: [
-            if (!isCompact) buildHeader(),
+            buildHeader(),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
@@ -588,6 +583,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                             ),
                             const SizedBox(height: cardSpacing),
                           ],
+                          _buildPlanImageSection(),
+                          const SizedBox(height: cardSpacing),
                           _buildPlanSummarySection(loc, participantsCount, currentRoleLabel, currentUserHandle),
                           const SizedBox(height: cardSpacing),
                           _buildStateManagementSection(loc),
@@ -615,7 +612,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     final body = buildBody();
 
-    if (isCompact) {
+    if (isCompact && widget.showAppBar) {
       final canPop = Navigator.of(context).canPop();
       return Theme(
         data: AppTheme.darkTheme,
@@ -928,14 +925,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),
@@ -1063,14 +1053,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),
@@ -1140,14 +1123,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   Widget _buildBudgetField(AppLocalizations loc) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),
@@ -1232,14 +1208,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),
@@ -1996,8 +1965,8 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     }
   }
 
-  Widget _buildPlanSummarySection(AppLocalizations loc, int participantsCount, String? roleLabel, String userHandle) {
-    const double avatarSize = 110;
+  Widget _buildPlanImageSection() {
+    const double imageHeight = 200;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -2030,174 +1999,279 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
           ),
         ],
       ),
-      child: Row(
+      child: _buildPlanImage(imageHeight),
+    );
+  }
+
+  Widget _buildPlanSummarySection(AppLocalizations loc, int participantsCount, String? roleLabel, String userHandle) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _cardBackgroundStart,
+            _cardBackgroundEnd,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _cardBorder,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildPlanAvatar(avatarSize),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.grey.shade800,
-                        const Color(0xFF2C2C2C),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.grey.shade700.withOpacity(0.5),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                        spreadRadius: 0,
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 6,
-                        offset: const Offset(0, 1),
-                        spreadRadius: -2,
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: _nameController,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      color: Colors.white,
-                      letterSpacing: 0.1,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: loc.createPlanNameLabel,
-                      labelStyle: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.grey.shade400,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(
-                          color: AppColorScheme.color2,
-                          width: 2.5,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.transparent,
-                    ),
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    onChanged: (_) => _markDirty(),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return loc.createPlanNameRequiredError;
-                      }
-                      return null;
-                    },
-                  ),
+          // R1: Campo nombre del plan
+          Container(
+            decoration: BoxDecoration(
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.grey.shade700.withOpacity(0.5),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                  spreadRadius: 0,
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.grey.shade800,
-                        const Color(0xFF2C2C2C),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.grey.shade700.withOpacity(0.5),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                        spreadRadius: 0,
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 6,
-                        offset: const Offset(0, 1),
-                        spreadRadius: -2,
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: _descriptionController,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      color: Colors.white,
-                      letterSpacing: 0.1,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: loc.createPlanDescriptionLabel,
-                      labelStyle: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.grey.shade400,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(
-                          color: AppColorScheme.color2,
-                          width: 2.5,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.transparent,
-                    ),
-                    minLines: 2,
-                    maxLines: 4,
-                    onChanged: (_) => _markDirty(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  [
-                    if (userHandle.isNotEmpty) userHandle,
-                    if (roleLabel != null) loc.planRoleLabel(roleLabel),
-                  ].where((segment) => segment.isNotEmpty).join(' • '),
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: AppColorScheme.color2,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.1,
-                  ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 1),
+                  spreadRadius: -2,
                 ),
               ],
             ),
+            child: TextFormField(
+              controller: _nameController,
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                color: Colors.white,
+                letterSpacing: 0.1,
+              ),
+              decoration: InputDecoration(
+                labelText: loc.createPlanNameLabel,
+                labelStyle: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: Colors.grey.shade400,
+                  fontWeight: FontWeight.w500,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: AppColorScheme.color2,
+                    width: 2.5,
+                  ),
+                ),
+                filled: true,
+                fillColor: Colors.transparent,
+              ),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              onChanged: (_) => _markDirty(),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return loc.createPlanNameRequiredError;
+                }
+                return null;
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          // R2: Campo descripción
+          Container(
+            decoration: BoxDecoration(
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.grey.shade700.withOpacity(0.5),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 1),
+                  spreadRadius: -2,
+                ),
+              ],
+            ),
+            child: TextFormField(
+              controller: _descriptionController,
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                color: Colors.white,
+                letterSpacing: 0.1,
+              ),
+              decoration: InputDecoration(
+                labelText: loc.createPlanDescriptionLabel,
+                labelStyle: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: Colors.grey.shade400,
+                  fontWeight: FontWeight.w500,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: AppColorScheme.color2,
+                    width: 2.5,
+                  ),
+                ),
+                filled: true,
+                fillColor: Colors.transparent,
+              ),
+              minLines: 2,
+              maxLines: 4,
+              onChanged: (_) => _markDirty(),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlanImage(double height) {
+    final imageUrl = currentPlan.imageUrl;
+
+    Widget buildImage() {
+      if (_selectedImage != null) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Image.file(
+            File(_selectedImage!.path),
+            width: double.infinity,
+            height: height,
+            fit: BoxFit.cover,
+          ),
+        );
+      }
+      if (imageUrl != null && ImageService.isValidImageUrl(imageUrl)) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: double.infinity,
+            height: height,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              width: double.infinity,
+              height: height,
+              decoration: BoxDecoration(
+                color: AppColorScheme.color2.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+            errorWidget: (context, url, error) => _buildImageFallback(height),
+          ),
+        );
+      }
+      return _buildImageFallback(height);
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: double.infinity,
+          height: height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            // Sin bordes
+          ),
+          child: buildImage(),
+        ),
+        Positioned(
+          bottom: 8,
+          right: 8,
+          child: GestureDetector(
+            onTap: _isUploadingImage ? null : _pickImage,
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColorScheme.color2,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: _isUploadingImage
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.photo_camera, color: Colors.white, size: 18),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageFallback(double height) {
+    return Container(
+      width: double.infinity,
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColorScheme.color2.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(
+        Icons.image_outlined,
+        color: AppColorScheme.color2.withOpacity(0.5),
+        size: 48,
       ),
     );
   }

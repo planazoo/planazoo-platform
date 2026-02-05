@@ -1,29 +1,31 @@
-# 🎨 Estilo "Sofisticado" - Guía de Diseño
+# 🎨 Estilo Base - Guía de Diseño
 
 **Estado:** ✅ Aplicado  
-**Versión:** 1.0  
-**Fecha:** Diciembre 2024  
-**Look Principal:** Sí
+**Versión:** 2.0  
+**Fecha:** Diciembre 2025  
+**UI Principal:** Sí
 
 ---
 
 ## 🎯 Objetivo
 
-El estilo "Sofisticado" es el look principal de la aplicación Planazoo. Proporciona una experiencia visual premium con un diseño oscuro elegante, gradientes sutiles y tipografía refinada.
+El **Estilo Base** es la interfaz de usuario principal de la aplicación Planazoo. La app utiliza un diseño oscuro por defecto (no es un "modo oscuro" opcional, sino la UI estándar de la aplicación). Proporciona una experiencia visual premium con fondos oscuros elegantes y tipografía refinada.
+
+**⚠️ IMPORTANTE:** Este no es un tema oscuro opcional. La aplicación Planazoo tiene una UI oscura por defecto. Todos los componentes deben seguir este estilo base.
 
 ---
 
 ## 🎨 Paleta de Colores
 
 ### Fondos
-- **Fondo principal de pantalla:** `Colors.grey.shade900`
-- **Fondo de cards/containers (inicio):** `Colors.grey.shade800`
-- **Fondo de cards/containers (fin):** `Color(0xFF2C2C2C)`
-- **Gradiente de cards:** `LinearGradient` de `Colors.grey.shade800` → `Color(0xFF2C2C2C)`
+- **Fondo principal de pantalla (Estilo Base):** Color sólido `Colors.grey.shade800`
+  - Sombra: `BoxShadow` con `color: Colors.black.withOpacity(0.3)`, `blurRadius: 8`, `offset: (0, 2)`
+- **Fondo de cards/containers:** `Colors.grey.shade800` (color sólido, sin gradiente)
+- **Sin bordes:** Los widgets no deben tener bordes
 
 ### Bordes
-- **Borde de cards:** `Colors.grey.shade700.withOpacity(0.5)`, width: `1`
-- **Borde de inputs (focused):** `AppColorScheme.color2`, width: `2.5`
+- **Sin bordes en widgets:** Los widgets del estilo base no tienen bordes
+- **Borde de inputs (focused):** `AppColorScheme.color2`, width: `2.5` (solo cuando está enfocado)
 - **Border radius:** `14px` para inputs, `18px` para cards
 
 ### Textos
@@ -60,37 +62,16 @@ El estilo "Sofisticado" es el look principal de la aplicación Planazoo. Proporc
 ```dart
 Container(
   decoration: BoxDecoration(
-    gradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Colors.grey.shade800,
-        const Color(0xFF2C2C2C),
-      ],
-    ),
-    borderRadius: BorderRadius.circular(18),
-    border: Border.all(
-      color: Colors.grey.shade700.withOpacity(0.5),
-      width: 1,
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.4),
-        blurRadius: 24,
-        offset: const Offset(0, 6),
-        spreadRadius: 0,
-      ),
-      BoxShadow(
-        color: Colors.black.withOpacity(0.2),
-        blurRadius: 12,
-        offset: const Offset(0, 2),
-        spreadRadius: -4,
-      ),
-    ],
+    color: Colors.grey.shade800, // Color sólido, sin gradiente
+    borderRadius: BorderRadius.circular(18), // Opcional según el widget
+    // Sin bordes
+    // Sin sombras (boxShadow) - estilo minimalista
   ),
   child: // contenido
 )
 ```
+
+**Nota:** Los widgets básicos del dashboard (W1, W2, W3, W4, W29, W30, etc.) no tienen sombras para mantener un estilo limpio y minimalista. Las sombras solo se usan en elementos específicos como cards con contenido importante o botones interactivos.
 
 ---
 
@@ -102,19 +83,9 @@ Los inputs se envuelven en un Container con el gradiente y decoración, y el Tex
 ```dart
 Container(
   decoration: BoxDecoration(
-    gradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Colors.grey.shade800,
-        const Color(0xFF2C2C2C),
-      ],
-    ),
+    color: Colors.grey.shade800, // Color sólido, sin gradiente
     borderRadius: BorderRadius.circular(14),
-    border: Border.all(
-      color: Colors.grey.shade700.withOpacity(0.5),
-      width: 1,
-    ),
+    // Sin bordes
     boxShadow: [
       BoxShadow(
         color: Colors.black.withOpacity(0.4),
@@ -180,18 +151,11 @@ Container(
 
 ## 🔘 Botones
 
-### Botón Principal (ElevatedButton con gradiente)
+### Botón Principal (ElevatedButton con color sólido)
 ```dart
 Container(
   decoration: BoxDecoration(
-    gradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        AppColorScheme.color2,
-        AppColorScheme.color2.withOpacity(0.85),
-      ],
-    ),
+    color: AppColorScheme.color2, // Color sólido, sin gradiente
     borderRadius: BorderRadius.circular(14),
     boxShadow: [
       BoxShadow(
@@ -259,34 +223,39 @@ OutlinedButton(
 ## 🎭 Scaffold y AppBar
 
 ### Scaffold
+El fondo principal debe usar color sólido:
+
 ```dart
 Theme(
   data: AppTheme.darkTheme,
   child: Scaffold(
-    backgroundColor: Colors.grey.shade900,
-    // ...
+    body: Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        // Sin bordes
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: // contenido
+    ),
   ),
 )
 ```
 
+**Nota:** Si el Scaffold contiene un Stack o layout complejo, aplicar el gradiente al Container más externo.
+
 ### AppBar (si se usa)
 ```dart
 AppBar(
-  backgroundColor: Colors.grey.shade800,
+  backgroundColor: Colors.grey.shade800, // Color sólido, sin gradiente
   foregroundColor: Colors.white,
   elevation: 0,
-  flexibleSpace: Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Colors.grey.shade800,
-          const Color(0xFF2C2C2C),
-        ],
-      ),
-    ),
-  ),
+  // Sin flexibleSpace con gradiente
   title: Text(
     'Título',
     style: GoogleFonts.poppins(
@@ -340,18 +309,20 @@ body: SafeArea(
 
 ## ✅ Checklist de Aplicación
 
-Al aplicar el estilo "Sofisticado" a una página, verificar:
+Al aplicar el **Estilo Base** a una página, verificar:
 
-- [ ] Fondo de Scaffold: `Colors.grey.shade900`
+- [ ] Fondo de Scaffold: Color sólido `Colors.grey.shade800` (sin gradiente)
 - [ ] Theme: `AppTheme.darkTheme`
 - [ ] SafeArea aplicado si es necesario
-- [ ] Cards con gradiente y sombras correctas
-- [ ] Inputs envueltos en Container con gradiente
+- [ ] Widgets básicos: Color sólido, sin gradiente, sin bordes, sin sombras
+- [ ] Cards con contenido: Color sólido, sin gradiente, sin bordes (sombras opcionales según necesidad)
+- [ ] Inputs envueltos en Container con color sólido (sin gradiente, sin bordes)
 - [ ] Textos usando `GoogleFonts.poppins`
 - [ ] Colores de texto: blanco/gris claro
-- [ ] Botones con gradiente y sombras
-- [ ] Border radius consistente (14px inputs, 18px cards)
-- [ ] Sombras de 2 capas aplicadas
+- [ ] Botones con color sólido (sin gradiente, sombras opcionales)
+- [ ] Border radius consistente (14px inputs, 18px cards, o según diseño)
+- [ ] Sin bordes en widgets básicos (excepto inputs cuando están enfocados)
+- [ ] Sin sombras en widgets básicos del dashboard (estilo minimalista)
 
 ---
 
@@ -366,5 +337,11 @@ Al aplicar el estilo "Sofisticado" a una página, verificar:
 
 ---
 
-**Última actualización:** Diciembre 2024
+**Última actualización:** Diciembre 2025
+
+---
+
+## 📝 Notas sobre AppColorScheme
+
+Los colores definidos en `AppColorScheme` (color0, color1, color2, etc.) se utilizan en el contexto de la UI oscura base. Estos colores proporcionan acentos y elementos interactivos que contrastan adecuadamente con los fondos oscuros de la aplicación.
 

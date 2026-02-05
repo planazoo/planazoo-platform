@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_announcement.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/announcement_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
+import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import '../../../../shared/services/logger_service.dart';
 
@@ -29,6 +31,37 @@ class _AnnouncementDialogState extends ConsumerState<AnnouncementDialog> {
   void dispose() {
     _messageController.dispose();
     super.dispose();
+  }
+
+  /// Crear notificaciones para los participantes cuando se publica un aviso
+  Future<void> _createNotificationsForAnnouncement(
+    String planId,
+    String announcementUserId,
+    String announcementMessage,
+    String announcementType,
+  ) async {
+    try {
+      // Obtener nombre del plan
+      final planService = PlanService();
+      final plan = await planService.getPlanById(planId);
+      final planName = plan?.name;
+
+      // Crear notificaciones usando el helper
+      final notificationHelper = NotificationHelper();
+      await notificationHelper.notifyAnnouncementCreated(
+        planId: planId,
+        announcementUserId: announcementUserId,
+        announcementMessage: announcementMessage,
+        announcementType: announcementType,
+        planName: planName,
+      );
+    } catch (e) {
+      LoggerService.error(
+        'Error creating notifications for announcement',
+        context: 'ANNOUNCEMENT_DIALOG',
+        error: e,
+      );
+    }
   }
 
   Future<void> _publishAnnouncement() async {
@@ -70,6 +103,20 @@ class _AnnouncementDialogState extends ConsumerState<AnnouncementDialog> {
 
       if (mounted) {
         if (announcementId != null) {
+          // Crear notificaciones para los participantes (en background, no bloquea UI)
+          _createNotificationsForAnnouncement(
+            widget.planId,
+            currentUser.id,
+            _messageController.text.trim(),
+            _selectedType,
+          ).catchError((e) {
+            LoggerService.error(
+              'Error creating notifications for announcement',
+              context: 'ANNOUNCEMENT_DIALOG',
+              error: e,
+            );
+          });
+
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 
@@ -31,79 +33,141 @@ class PlanCardWidget extends ConsumerWidget {
             )
         : plan.participants ?? 0;
 
+    // Verificar si hay invitación pendiente para este plan
+    final pendingInvitationsAsync = ref.watch(userPendingInvitationsProvider);
+    final hasPendingInvitation = pendingInvitationsAsync.maybeWhen(
+      data: (invitations) => plan.id != null && invitations.any((inv) => inv.planId == plan.id),
+      orElse: () => false,
+    );
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       decoration: BoxDecoration(
-        color: isSelected ? AppColorScheme.color1 : AppColorScheme.color0,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: isSelected ? AppColorScheme.color1 : AppColorScheme.color0,
-          width: 1,
-        ),
+        color: isSelected
+            ? AppColorScheme.color2 // Color sólido, sin gradiente
+            : Colors.grey.shade800, // Color sólido, sin gradiente
+        borderRadius: BorderRadius.circular(14),
+        // Borde naranja si hay invitación pendiente
+        border: hasPendingInvitation
+            ? Border.all(
+                color: Colors.orange.shade400,
+                width: 2,
+              )
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ],
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
               _buildPlanImage(),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      plan.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColorScheme.color2,
-                        fontSize: 12,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            plan.name,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              fontSize: 13,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (hasPendingInvitation)
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade400,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.mail_outline,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Invitación',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       _formatPlanDates(),
-                      style: TextStyle(
-                        color: AppColorScheme.color2,
-                        fontSize: 10,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade400,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${plan.columnCount} días',
-                      style: TextStyle(
-                        color: AppColorScheme.color2,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade400,
                         fontSize: 10,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     PlanStateBadgeCompact(
                       plan: plan,
-                      fontSize: 8,
+                      fontSize: 9,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     DaysRemainingIndicator(
                       plan: plan,
-                      fontSize: 8,
+                      fontSize: 9,
                       compact: true,
                       showIcon: false,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       'Participantes: $participantsCount',
-                      style: TextStyle(
-                        color: AppColorScheme.color2,
-                        fontSize: 8,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade400,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
             ],
           ),
         ),

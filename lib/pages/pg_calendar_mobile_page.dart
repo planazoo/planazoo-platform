@@ -586,7 +586,25 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
       context: context,
       builder: (context) => EventDialog(
         event: event,
-        planId: widget.plan.id,
+        planId: widget.plan.id ?? '',
+        onSaved: (updatedEvent) async {
+          // Guardar el evento actualizado
+          final eventService = ref.read(eventServiceProvider);
+          await eventService.updateEvent(updatedEvent);
+          
+          // Cerrar el diálogo
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          
+          // Esperar un poco para que se actualicen los providers
+          await Future.delayed(const Duration(milliseconds: 100));
+          
+          // Forzar actualización del estado
+          if (mounted) {
+            setState(() {});
+          }
+        },
       ),
     );
   }
@@ -595,9 +613,27 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     showDialog(
       context: context,
       builder: (context) => EventDialog(
-        planId: widget.plan.id,
+        planId: widget.plan.id ?? '',
         initialDate: date,
         initialHour: hour,
+        onSaved: (newEvent) async {
+          // Guardar el evento
+          final eventService = ref.read(eventServiceProvider);
+          await eventService.createEvent(newEvent);
+          
+          // Cerrar el diálogo
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          
+          // Esperar un poco para que se actualicen los providers
+          await Future.delayed(const Duration(milliseconds: 100));
+          
+          // Forzar actualización del estado
+          if (mounted) {
+            setState(() {});
+          }
+        },
       ),
     );
   }
@@ -802,14 +838,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.grey.shade800,
-                const Color(0xFF2C2C2C),
-              ],
-            ),
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
             border: Border(
               bottom: BorderSide(
                 color: Colors.grey.shade700.withOpacity(0.5),

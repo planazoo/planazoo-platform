@@ -1,6 +1,15 @@
-# 📱 Guía: Configurar iOS Simulator para Probar Offline First
+# 📱 Guía: Probar la App en iOS Simulator
 
-## ✅ Pasos a Seguir (en orden)
+**✅ No se requiere cuenta de desarrollador de Apple** - El iOS Simulator es completamente gratuito.
+
+## 🎯 Resumen Rápido
+
+1. Abrir iOS Simulator
+2. Ejecutar: `flutter run -d ios`
+
+---
+
+## ✅ Pasos Detallados (en orden)
 
 ### 1. Instalar Xcode
 - ✅ Descargar desde App Store (en proceso)
@@ -48,7 +57,7 @@ open -a Simulator
 ### 6. Verificar que Flutter detecta el simulador
 
 ```bash
-~/development/flutter/bin/flutter devices
+flutter devices
 ```
 
 Deberías ver algo como:
@@ -56,12 +65,20 @@ Deberías ver algo como:
 iPhone 15 Pro (mobile) • 12345678-1234-1234-1234-123456789ABC • ios • com.apple.CoreSimulator.SimRuntime.iOS-17-0 (simulator)
 ```
 
+**Si no aparece ningún dispositivo iOS:**
+- Asegúrate de que el Simulator esté abierto: `open -a Simulator`
+- Espera unos segundos y vuelve a ejecutar `flutter devices`
+
 ### 7. Ejecutar la app en el simulador
+
+Desde la raíz del proyecto:
 
 ```bash
 cd /Users/emmclaraso/development/unp_calendario
-~/development/flutter/bin/flutter run -d ios
+flutter run -d ios
 ```
+
+**Nota:** La primera vez puede tardar varios minutos (compilación inicial). Las siguientes veces será más rápido.
 
 ### 8. Probar el sistema offline
 
@@ -109,16 +126,27 @@ xcrun simctl status_bar booted override --dataNetwork wifi
 
 ### "No devices found"
 - Abrir Simulator: `open -a Simulator`
-- Verificar: `~/development/flutter/bin/flutter devices`
+- Esperar a que el simulador termine de iniciar
+- Verificar: `flutter devices`
 
 ### Errores de compilación en iOS
-- Limpiar build: `~/development/flutter/bin/flutter clean`
+- Limpiar build: `flutter clean`
 - Reinstalar pods: `cd ios && pod install && cd ..`
-- Rebuild: `~/development/flutter/bin/flutter run -d ios`
+- Rebuild: `flutter run -d ios`
 
-## 📝 Notas
+## 📝 Notas Importantes
 
-- La primera vez que ejecutes en iOS puede tardar más (compilación inicial)
-- El simulador puede tardar en iniciar la primera vez
-- Si cambias de dispositivo en el simulador, puede que necesites recompilar
+- **✅ No se requiere cuenta de desarrollador** - El iOS Simulator funciona sin cuenta de Apple Developer
+- **⏱️ Primera ejecución:** Puede tardar 5-10 minutos (compilación inicial)
+- **📱 Dispositivo físico:** Para probar en un iPhone real necesitarías cuenta de desarrollador ($99/año)
+- **🔄 Cambios de dispositivo:** Si cambias el modelo de iPhone en el simulador, puede que necesites recompilar
+- **🌐 Conexión:** El simulador usa la conexión de red de tu Mac automáticamente
+
+## 🚫 Limitaciones del Simulador (sin cuenta de desarrollador)
+
+- ✅ Puedes probar toda la funcionalidad de la app
+- ✅ Puedes probar login, eventos, calendario, etc.
+- ❌ No puedes instalar en un iPhone físico
+- ❌ No puedes publicar en App Store
+- ❌ Algunas funciones del dispositivo (cámara, GPS real) son simuladas
 

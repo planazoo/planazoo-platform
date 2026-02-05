@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/plan_invitation.dart';
 import '../../domain/services/invitation_service.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 
 /// Provider para InvitationService
 final invitationServiceProvider = Provider<InvitationService>((ref) {
@@ -31,6 +32,34 @@ final pendingInvitationsProvider = FutureProvider.family<List<PlanInvitation>, S
   } catch (e) {
     LoggerService.error(
       'Error getting pending invitations for plan: $planId',
+      context: 'INVITATION_PROVIDERS',
+      error: e,
+    );
+    return [];
+  }
+});
+
+/// Provider para obtener todas las invitaciones pendientes del usuario actual
+/// 
+/// Prioriza búsqueda por userId (participaciones pendientes).
+/// Solo busca por email si no hay participaciones (primera vez después del registro).
+final userPendingInvitationsProvider = FutureProvider<List<PlanInvitation>>((ref) async {
+  final invitationService = ref.read(invitationServiceProvider);
+  final currentUser = ref.watch(currentUserProvider);
+  
+  if (currentUser == null) {
+    return [];
+  }
+  
+  try {
+    // Usar el nuevo método que prioriza userId sobre email
+    return await invitationService.getPendingInvitationsByUserId(
+      currentUser.id,
+      currentUser.email,
+    );
+  } catch (e) {
+    LoggerService.error(
+      'Error getting pending invitations for user: ${currentUser.id}',
       context: 'INVITATION_PROVIDERS',
       error: e,
     );

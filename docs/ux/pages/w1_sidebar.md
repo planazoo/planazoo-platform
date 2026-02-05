@@ -14,10 +14,11 @@
 ## 🎨 Diseño Visual (v2.0)
 
 ### **Contenedor Principal**
-- **Color de fondo**: `AppColorScheme.color2`
+- **Color de fondo**: Gradiente igual que W2 (Estilo Base)
+  - `LinearGradient` de `Colors.grey.shade800` → `Color(0xFF2C2C2C)`
 - **Esquinas**: Cuadradas (sin borderRadius)
 - **Sombras**: Ninguna
-- **Borde**: Blanco de 2px para definición visual
+- **Borde**: Sin borde
 
 ### **Icono de Perfil**
 - **Posición**: Inferior centrado con padding de 16px

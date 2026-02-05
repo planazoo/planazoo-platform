@@ -32,6 +32,11 @@ class PlanNavigationBar extends StatelessWidget {
       label: 'Participantes',
     ),
     NavigationOption(
+      id: 'chat',
+      icon: Icons.chat_bubble_outline,
+      label: 'Chat',
+    ),
+    NavigationOption(
       id: 'stats',
       icon: Icons.bar_chart,
       label: 'Stats',

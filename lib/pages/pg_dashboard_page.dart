@@ -39,6 +39,8 @@ import 'package:unp_calendario/pages/pg_ui_showcase_page.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
+import 'package:unp_calendario/widgets/notifications/wd_notification_badge.dart';
+import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -110,19 +112,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+        color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
-          width: 1,
-        ),
+        // Sin bordes
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.4),
@@ -721,27 +713,31 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade900,
-        body: Stack(
-          children: [
-            _buildGrid(),
-            if (timezoneSuggestion != null && deviceTimezoneSuggestion != null)
-              Positioned(
-                top: 24,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: _buildTimezoneBanner(
-                      context,
-                      configuredTimezone: configuredTimezone,
-                      deviceTimezone: deviceTimezoneSuggestion,
+        body: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
+          ),
+          child: Stack(
+            children: [
+              _buildGrid(),
+              if (timezoneSuggestion != null && deviceTimezoneSuggestion != null)
+                Positioned(
+                  top: 24,
+                  left: 0,
+                  right: 0,
+                  child: SafeArea(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: _buildTimezoneBanner(
+                        context,
+                        configuredTimezone: configuredTimezone,
+                        deviceTimezone: deviceTimezoneSuggestion,
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
         floatingActionButton: null,
       ),
@@ -1525,17 +1521,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return Container(
           width: double.infinity,
           height: double.infinity,
-          color: Colors.grey.shade900,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
+          ),
           child: Stack(
             children: [
-              // Grid de fondo
-              CustomPaint(
-                painter: GridPainter(
-                  cellWidth: columnWidth,
-                  cellHeight: rowHeight,
-                  daysPerWeek: 17, // Total de columnas en el dashboard
-                ),
-              ),
+              // Grid de fondo (oculto - solo para referencia de desarrollo)
+              // CustomPaint(
+              //   painter: GridPainter(
+              //     cellWidth: columnWidth,
+              //     cellHeight: rowHeight,
+              //     daysPerWeek: 17, // Total de columnas en el dashboard
+              //   ),
+              // ),
               // W1: Barra lateral (C1, R1-R13)
               _buildW1(columnWidth, rowHeight, gridHeight),
               // W2: Logo de la app (C2-C3, R1)
@@ -1620,41 +1618,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w1Width,
         height: w1Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2, // Color de elementos interactivos de la app
+          color: AppColorScheme.color2, // Mismo color de fondo que W5
           // Sin borderRadius - esquinas cuadradas
+          // Sin borde
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // Parte superior: Badge de notificaciones
             Padding(
-              padding: const EdgeInsets.only(top: 24.0),
-              child: Tooltip(
-                message: loc.adminInsightsTooltip,
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      currentScreen = 'adminInsights';
-                      selectedPlanId = null;
-                      selectedPlan = null;
-                      selectedWidgetId = null;
-                    });
-                  },
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.table_chart_outlined,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Consumer(
+                builder: (context, ref, child) {
+                  return NotificationBadge();
+                },
               ),
             ),
-            const Spacer(),
+            // Parte inferior: Perfil
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Tooltip(
@@ -1668,12 +1648,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     height: 48,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(24), // Icono redondo
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
                     ),
                     alignment: Alignment.center,
                     child: const Icon(
-                      Icons.person_outline,
+                      Icons.person,
                       color: Colors.white,
+                      size: 24,
                     ),
                   ),
                 ),
@@ -1699,25 +1684,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w2Width,
         height: w2Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.grey.shade700.withOpacity(0.5),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes
+          // Sin sombras
         ),
         child: Center(
           child: Text(
@@ -1748,25 +1717,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w3Width,
         height: w3Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.grey.shade700.withOpacity(0.5),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes
+          // Sin sombras
         ),
         child: Center(
           child: GestureDetector(
@@ -1775,14 +1728,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColorScheme.color3,
-                    AppColorScheme.color3.withOpacity(0.85),
-                  ],
-                ),
+                color: AppColorScheme.color3, // Color sólido, sin gradiente
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
@@ -1828,25 +1774,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w4Width,
         height: w4Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.grey.shade700.withOpacity(0.5),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes
+          // Sin sombras
         ),
         child: Center(
           child: IconButton(
@@ -1882,7 +1812,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w5Width,
         height: w5Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color2,
+          color: Colors.grey.shade800, // Mismo color de fondo que W3
           // Sin borde - mismo color que el fondo
         ),
         child: Center(
@@ -1951,21 +1881,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w6Width,
         height: w6Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColorScheme.color2,
-              AppColorScheme.color2.withOpacity(0.85),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColorScheme.color2.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: Colors.grey.shade800, // Mismo color de fondo que W3
+          // Sin sombras
         ),
         child: selectedPlan != null 
           ? _buildPlanInfoContent()
@@ -2121,14 +2038,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w7Width,
         height: w7Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColorScheme.color2,
-              AppColorScheme.color2.withOpacity(0.85),
-            ],
-          ),
+          color: Colors.grey.shade800, // Mismo color de fondo que W3
         ),
         // Sin contenido
       ),
@@ -2149,14 +2059,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w8Width,
         height: w8Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColorScheme.color2,
-              AppColorScheme.color2.withOpacity(0.85),
-            ],
-          ),
+          color: Colors.grey.shade800, // Mismo color de fondo que W3
         ),
         // Sin contenido
       ),
@@ -2177,14 +2080,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w9Width,
         height: w9Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColorScheme.color2,
-              AppColorScheme.color2.withOpacity(0.85),
-            ],
-          ),
+          color: Colors.grey.shade800, // Mismo color de fondo que W3
         ),
         // Sin contenido
       ),
@@ -2205,14 +2101,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w10Width,
         height: w10Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColorScheme.color2,
-              AppColorScheme.color2.withOpacity(0.85),
-            ],
-          ),
+          color: Colors.grey.shade800, // Mismo color de fondo que W3
         ),
         // Sin contenido
       ),
@@ -2233,14 +2122,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w11Width,
         height: w11Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColorScheme.color2,
-              AppColorScheme.color2.withOpacity(0.85),
-            ],
-          ),
+          color: Colors.grey.shade800, // Mismo color de fondo que W3
           // Sin borde
         ),
         // Sin contenido
@@ -2262,14 +2144,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w12Width,
         height: w12Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColorScheme.color2,
-              AppColorScheme.color2.withOpacity(0.85),
-            ],
-          ),
+          color: Colors.grey.shade800, // Mismo color de fondo que W3
         ),
         // Sin contenido
       ),
@@ -2295,34 +2170,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w14Width,
         height: w14Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColorScheme.color2.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.3),
-              blurRadius: isSelected ? 12 : 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
+          // Sin sombras
         ),
         child: InkWell(
           onTap: () {
@@ -2377,34 +2233,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w15Width,
         height: w15Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColorScheme.color2.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.3),
-              blurRadius: isSelected ? 12 : 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
+          // Sin sombras
         ),
         child: InkWell(
           onTap: () {
@@ -2459,34 +2296,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w16Width,
         height: w16Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColorScheme.color2.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.3),
-              blurRadius: isSelected ? 12 : 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
+          // Sin sombras
         ),
         child: InkWell(
           onTap: () {
@@ -2541,34 +2359,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w17Width,
         height: w17Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColorScheme.color2.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.3),
-              blurRadius: isSelected ? 12 : 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
+          // Sin sombras
         ),
         child: InkWell(
           onTap: () {
@@ -2623,34 +2422,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w18Width,
         height: w18Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColorScheme.color2.withOpacity(0.3)
-                  : Colors.black.withOpacity(0.3),
-              blurRadius: isSelected ? 12 : 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
+          // Sin sombras
         ),
         child: InkWell(
           onTap: () {
@@ -2687,7 +2467,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildW19(double columnWidth, double rowHeight) {
-    // W19: C11 (R2) - Widget básico
+    // W19: C11 (R2) - Acceso chat del plan
     final w19X = columnWidth * 10; // Empieza en la columna C11 (índice 10)
     final w19Y = rowHeight; // Empieza en la fila R2 (índice 1)
     final w19Width = columnWidth; // Ancho de 1 columna (C11)
@@ -2695,6 +2475,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Determinar colores según el estado de selección
     final isSelected = selectedWidgetId == 'W19';
+    final iconColor = AppColorScheme.color2;
+    final textColor = isSelected ? Colors.white : Colors.grey.shade400;
     
     return Positioned(
       left: w19X,
@@ -2703,27 +2485,46 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w19Width,
         height: w19Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
+          // Sin sombras
+        ),
+        child: InkWell(
+          onTap: () {
+            _selectWidget('W19');
+            _changeScreen('chat');
+          },
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icono chat color2
+                Icon(
+                  Icons.chat_bubble_outline,
+                  color: iconColor,
+                  size: 20,
+                ),
+                const SizedBox(height: 4),
+                // Texto "chat" debajo del icono
+                Text(
+                  'chat',
+                  style: GoogleFonts.poppins(
+                    color: textColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        // Sin contenido
       ),
     );
   }
@@ -2745,25 +2546,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w20Width,
         height: w20Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
         ),
         // Sin contenido
       ),
@@ -2787,25 +2577,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w21Width,
         height: w21Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
         ),
         // Sin contenido
       ),
@@ -2829,25 +2608,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w22Width,
         height: w22Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
         ),
         // Sin contenido
       ),
@@ -2871,25 +2639,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w23Width,
         height: w23Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
         ),
         // Sin contenido
       ),
@@ -2913,25 +2670,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w24Width,
         height: w24Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
         ),
         // Sin contenido
       ),
@@ -2955,25 +2701,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w25Width,
         height: w25Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isSelected
-                ? [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ]
-                : [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-          ),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
+          color: isSelected
+              ? AppColorScheme.color2 // Color sólido, sin gradiente
+              : Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
         ),
         // Sin contenido
       ),
@@ -2994,25 +2729,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w13Width,
         height: w13Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.grey.shade700.withOpacity(0.5),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes
+          // Sin sombras
         ),
         padding: const EdgeInsets.all(8), // Padding para el TextField
         child: PlanSearchWidget(onSearchChanged: _filterPlanazoos),
@@ -3034,25 +2753,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w26Width,
         height: w26Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.grey.shade700.withOpacity(0.5),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes
+          // Sin sombras
         ),
         padding: const EdgeInsets.all(4), // Padding para los botones
         child: Row(
@@ -3088,12 +2791,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 )
               : null,
           color: isSelected ? null : Colors.grey.shade800,
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
+          // Sin bordes (excepto cuando está seleccionado)
+          border: isSelected ? Border.all(
+            color: AppColorScheme.color2,
+            width: 2,
+          ) : null,
           borderRadius: BorderRadius.circular(12),
           boxShadow: isSelected
               ? [
@@ -3144,50 +2846,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w27Width,
         height: w27Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.grey.shade700.withOpacity(0.5),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes
+          // Sin sombras
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20),
         alignment: Alignment.centerRight,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.grey.shade800,
-                const Color(0xFF2C2C2C),
-              ],
-            ),
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.grey.shade700.withOpacity(0.5),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            // Sin bordes
+            // Sin sombras
           ),
           child: ToggleButtons(
             isSelected: [
@@ -3269,26 +2939,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w28Width,
         height: w28Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.grey.shade700.withOpacity(0.5),
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          color: Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin bordes
+          borderRadius: BorderRadius.circular(18), // Mantener borderRadius para el contenedor de la lista
+          // Sin sombras
         ),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
@@ -3323,7 +2977,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final w30X = columnWidth * 5; // Empieza en la columna C6 (índice 5)
     final w30Y = rowHeight * 12; // Empieza en la fila R13 (índice 12)
     final w30Width = columnWidth * 12; // Ancho de 12 columnas (C6-C17)
-    final w30Height = rowHeight * 0.75; // Alto de 0.75 filas (R13)
+    final w30Height = rowHeight; // Alto de 1 fila (R13)
     
     return Positioned(
       left: w30X,
@@ -3332,14 +2986,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w30Width,
         height: w30Height,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColorScheme.color2,
-              AppColorScheme.color2.withOpacity(0.85),
-            ],
-          ),
+          color: Colors.grey.shade800, // Color sólido, sin gradiente
+          // Sin borderRadius (esquinas en ángulo recto)
+          // Sin borde
+          // Sin sombras
         ),
         // Sin contenido
       ),
@@ -3474,7 +3124,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (user == null) return const SizedBox.shrink();
     
     return FutureBuilder<List<PlanInvitation>>(
-      future: _invitationService.getPendingInvitationsByEmail(user.email),
+      future: _invitationService.getPendingInvitationsByUserId(user.id, user.email),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const SizedBox.shrink();
@@ -3761,6 +3411,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       case 'participants':
         content = _buildParticipantsScreen();
         break;
+      case 'chat':
+        content = _buildChatScreen();
+        break;
       case 'adminInsights':
         content = AdminInsightsScreen(
           onClose: () {
@@ -3928,7 +3581,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final w29X = columnWidth; // Empieza en la columna C2 (índice 1)
     final w29Y = rowHeight * 12; // Empieza en la fila R13 (índice 12)
     final w29Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
-    final w29Height = rowHeight * 0.75; // Alto de 0.75 filas (R13)
+    final w29Height = rowHeight; // Alto de 1 fila (R13)
     
     return Positioned(
       left: w29X,
@@ -3937,14 +3590,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w29Width,
         height: w29Height,
         decoration: BoxDecoration(
-          color: AppColorScheme.color0, // Fondo color0
-          border: Border(
-            top: BorderSide(
-              color: AppColorScheme.color1, // Borde superior color1
-              width: 1,
-            ),
-          ),
+          color: Colors.grey.shade800, // Color sólido, sin gradiente
           // Sin borderRadius (esquinas en ángulo recto)
+          // Sin borde
+          // Sin sombras
         ),
         // Sin contenido
       ),
@@ -3970,6 +3619,24 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           currentScreen = 'calendar';
         });
       },
+    );
+  }
+
+  // T190: Pantalla de chat del plan
+  Widget _buildChatScreen() {
+    if (selectedPlan == null || selectedPlan!.id == null) {
+      return const Center(
+        child: Text(
+          'Selecciona un plan para ver el chat',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18, color: Colors.white),
+        ),
+      );
+    }
+
+    return PlanChatScreen(
+      planId: selectedPlan!.id!,
+      planName: selectedPlan!.name,
     );
   }
 

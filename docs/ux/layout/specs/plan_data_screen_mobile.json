@@ -7,23 +7,24 @@
   
   "layout": {
     "topBar": {
-      "type": "appbar",
-      "height": 56,
-      "backgroundColor": "#1E1E1E",
+      "type": "header",
+      "height": "auto",
+      "backgroundColor": "gradient",
       "elements": [
         {
-          "id": "plan_name",
+          "id": "info_title",
           "type": "title",
           "position": "left",
-          "text": "[Nombre del Plan]",
+          "text": "Info del plan",
           "properties": {
             "fontFamily": "Poppins",
             "fontSize": 14,
             "fontWeight": 600,
-            "color": "#BCE1E7"
+            "color": "#FFFFFF"
           }
         }
-      ]
+      ],
+      "note": "Barra superior sin icono de volver (ya está en AppBar de PlanDetailPage)"
     },
     
     "content": {
@@ -43,55 +44,15 @@
               "id": "C1",
               "width": "flex",
               "element": {
-                "type": "card",
-                "id": "plan_summary",
-                "title": "Resumen del Plan",
+                "type": "image",
+                "id": "plan_image",
                 "properties": {
-                  "padding": {"all": 20},
-                  "margin": {"bottom": 24},
-                  "decoration": {
-                    "borderRadius": 18,
-                    "gradient": {
-                      "start": "#1E1E1E",
-                      "end": "#2C2C2C"
-                    },
-                    "border": {
-                      "width": 1,
-                      "color": "#333333",
-                      "opacity": 0.5
-                    },
-                    "shadow": {
-                      "blur": 10,
-                      "offset": {"x": 0, "y": 2},
-                      "color": "rgba(0,0,0,0.3)"
-                    }
-                  },
-                  "content": [
-                    {
-                      "type": "avatar",
-                      "size": 80,
-                      "borderRadius": 16
-                    },
-                    {
-                      "type": "input",
-                      "id": "plan_name_input",
-                      "label": "Nombre del Plan",
-                      "properties": {
-                        "fontSize": 18,
-                        "fontWeight": 600
-                      }
-                    },
-                    {
-                      "type": "input",
-                      "id": "plan_description_input",
-                      "label": "Descripción",
-                      "multiline": true
-                    },
-                    {
-                      "type": "image_picker",
-                      "id": "plan_image"
-                    }
-                  ]
+                  "height": 200,
+                  "borderRadius": 14,
+                  "maintainAspectRatio": true,
+                  "imagePicker": true,
+                  "rectangular": true,
+                  "fullWidth": true
                 }
               }
             }
@@ -99,6 +60,43 @@
         },
         {
           "id": "R2",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "input",
+                "id": "plan_name_input",
+                "label": "Nombre del Plan",
+                "properties": {
+                  "fontSize": 15,
+                  "fontWeight": 400
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "input",
+                "id": "plan_description_input",
+                "label": "Descripción",
+                "multiline": true,
+                "minLines": 2,
+                "maxLines": 4
+              }
+            }
+          ]
+        },
+        {
+          "id": "R4",
           "height": "auto",
           "columns": [
             {
@@ -148,7 +146,7 @@
           ]
         },
         {
-          "id": "R3",
+          "id": "R5",
           "height": "auto",
           "columns": [
             {
@@ -244,7 +242,7 @@
           ]
         },
         {
-          "id": "R4",
+          "id": "R6",
           "height": "auto",
           "columns": [
             {
@@ -300,7 +298,7 @@
           ]
         },
         {
-          "id": "R5",
+          "id": "R7",
           "height": "auto",
           "columns": [
             {
@@ -349,7 +347,7 @@
           ]
         },
         {
-          "id": "R6",
+          "id": "R8",
           "height": "auto",
           "columns": [
             {
@@ -393,7 +391,7 @@
           ]
         },
         {
-          "id": "R7",
+          "id": "R9",
           "height": "auto",
           "columns": [
             {
@@ -416,18 +414,29 @@
       
       "frames": [
         {
-          "id": "F1",
-          "title": "Resumen del Plan",
+          "id": "F0",
+          "title": "Imagen del Plan",
           "cells": ["R1:C1"],
           "properties": {
-            "padding": {"all": 20},
-            "margin": {"bottom": 24}
+            "padding": {"all": 24},
+            "margin": {"bottom": 24},
+            "note": "F0 contiene solo la imagen del plan. Ancho completo, altura fija 200px, mantiene aspect ratio, rectangular."
+          }
+        },
+        {
+          "id": "F1",
+          "title": "Resumen del Plan",
+          "cells": ["R2:C1", "R3:C1"],
+          "properties": {
+            "padding": {"all": 24},
+            "margin": {"bottom": 24},
+            "note": "F1 tiene dos filas: R2 (campo nombre del plan, ancho completo) y R3 (campo descripción, ancho completo). Gap de 12px entre R2 y R3. Usuario y rol eliminados."
           }
         },
         {
           "id": "F2",
           "title": "Estado del Plan",
-          "cells": ["R2:C1"],
+          "cells": ["R4:C1"],
           "properties": {
             "padding": {"all": 20},
             "margin": {"bottom": 24}
@@ -436,17 +445,17 @@
         {
           "id": "F3",
           "title": "Información detallada",
-          "cells": ["R3:C1"],
+          "cells": ["R5:C1"],
           "properties": {
             "padding": {"all": 20},
             "margin": {"bottom": 24},
-            "note": "R1: Fechas de inicio y fin en dos columnas (50% cada una, 12px de espaciado). Resto de campos ocupan el 100% del ancho del recuadro"
+            "note": "R1 interno: Fechas de inicio y fin en dos columnas (50% cada una, 12px de espaciado). Resto de campos ocupan el 100% del ancho del recuadro"
           }
         },
         {
           "id": "F4",
           "title": "Información Meta",
-          "cells": ["R4:C1"],
+          "cells": ["R6:C1"],
           "properties": {
             "padding": {"all": 20},
             "margin": {"bottom": 24}
@@ -455,7 +464,7 @@
         {
           "id": "F5",
           "title": "Participantes",
-          "cells": ["R5:C1"],
+          "cells": ["R7:C1"],
           "properties": {
             "padding": {"all": 20},
             "margin": {"bottom": 24}
@@ -464,7 +473,7 @@
         {
           "id": "F6",
           "title": "Anuncios",
-          "cells": ["R6:C1"],
+          "cells": ["R8:C1"],
           "properties": {
             "padding": {"all": 20},
             "margin": {"bottom": 24},

@@ -2,7 +2,7 @@
 
 Este documento centraliza todos los nombres de páginas, pantallas, menús y modales de la aplicación para facilitar la referencia en conversaciones y documentación.
 
-**Última actualización:** Diciembre 2024
+**Última actualización:** Diciembre 2025
 
 ---
 
@@ -38,22 +38,32 @@ Las páginas existentes se renombrarán progresivamente cuando se trabajen en el
 
 ### Autenticación
 - **`LoginPage`** (`lib/features/auth/presentation/pages/login_page.dart`)
-  - Página de inicio de sesión
+  - Página de inicio de sesión - **Shared**
   - Referencia en chat: "página de login" o "LoginPage"
 
 - **`RegisterPage`** (`lib/features/auth/presentation/pages/register_page.dart`)
-  - Página de registro de nuevos usuarios
+  - Página de registro de nuevos usuarios - **Shared**
   - Referencia en chat: "página de registro" o "RegisterPage"
 
 - **`EditProfilePage`** (`lib/features/auth/presentation/pages/edit_profile_page.dart`)
-  - Página de edición de perfil de usuario
+  - Página de edición de perfil de usuario - **Shared**
   - Referencia en chat: "página de editar perfil" o "EditProfilePage"
 
 ### Dashboard y Navegación Principal
 - **`DashboardPage`** (`lib/pages/pg_dashboard_page.dart`)
-  - Página principal de la aplicación (dashboard)
+  - Página principal de la aplicación (dashboard) - **Web/Desktop**
   - Contiene la lista de planes y navegación entre pantallas
   - Referencia en chat: "dashboard" o "DashboardPage"
+
+- **`PlansListPage`** (`lib/pages/pg_plans_list_page.dart`)
+  - Página principal de la aplicación para móviles - **Mobile (iOS/Android)**
+  - Lista de planes con búsqueda, filtros y navegación
+  - Referencia en chat: "lista de planes mobile" o "PlansListPage"
+
+- **`PlanDetailPage`** (`lib/pages/pg_plan_detail_page.dart`)
+  - Página de detalle de plan para móviles - **Mobile (iOS/Android)**
+  - Contiene barra de navegación y diferentes vistas del plan (datos, calendario, participantes, estadísticas)
+  - Referencia en chat: "página de detalle de plan" o "PlanDetailPage"
 
 ### Planes
 - **`InvitationPage`** (`lib/pages/pg_invitation_page.dart`)
@@ -70,7 +80,7 @@ Las páginas existentes se renombrarán progresivamente cuando se trabajen en el
 
 ### Perfil
 - **`ProfilePage`** (`lib/pages/pg_profile_page.dart`)
-  - Página de perfil de usuario
+  - Página de perfil de usuario - **Shared**
   - Referencia en chat: "página de perfil" o "ProfilePage"
 
 ### Estadísticas y Pagos
@@ -108,8 +118,14 @@ Las pantallas son componentes que se muestran dentro del `DashboardPage` según 
   - Referencia en chat: "pantalla de insights" o "AdminInsightsScreen" o "Vista administrativa"
 
 - **`FullScreenCalendarPage`** (`lib/widgets/screens/fullscreen_calendar_page.dart`)
-  - Página de calendario en pantalla completa
+  - Página de calendario en pantalla completa - **Web**
   - Referencia en chat: "calendario pantalla completa" o "FullScreenCalendarPage"
+
+- **`CalendarMobilePage`** (`lib/pages/pg_calendar_mobile_page.dart`)
+  - Página de calendario para móviles - **Mobile (iOS/Android)**
+  - Funcionalidad completa del calendario adaptada para 1-3 días visibles
+  - Grid con horas, tracks de participantes, eventos y alojamientos
+  - Referencia en chat: "calendario mobile" o "CalendarMobilePage"
 
 ---
 
@@ -197,15 +213,28 @@ Las pantallas son componentes que se muestran dentro del `DashboardPage` según 
   - Selector para cambiar la perspectiva de usuario en el calendario
   - Referencia en chat: "selector de perspectiva" o "UserPerspectiveSelector"
 
+### Navegación Mobile
+- **`PlanNavigationBar`** (`lib/widgets/plan/wd_plan_navigation_bar.dart`)
+  - Barra de navegación horizontal para opciones del plan en móviles - **Mobile (iOS/Android)**
+  - Muestra iconos para acceder a diferentes secciones del plan (datos, calendario, participantes, estadísticas, pagos)
+  - Referencia en chat: "barra de navegación del plan" o "PlanNavigationBar"
+
 ### Anuncios
 - **`AnnouncementTimeline`** (`lib/widgets/screens/announcement_timeline.dart`)
   - Timeline de anuncios de un plan
   - Referencia en chat: "timeline de anuncios" o "AnnouncementTimeline"
 
+### Desarrollo y Testing
+- **`UIShowcasePage`** (`lib/pages/pg_ui_showcase_page.dart`)
+  - Página de demostración de diferentes estilos UI - **Desarrollo/Testing**
+  - Muestra diferentes estilos visuales (Minimalista, Estilo Base, Clásico, Moderno) para comparación
+  - Referencia en chat: "página de showcase UI" o "UIShowcasePage"
+
 ---
 
-## 📱 Navegación Interna del Dashboard
+## 📱 Navegación Interna
 
+### Dashboard Web
 El `DashboardPage` gestiona la navegación entre pantallas usando el estado `currentScreen`:
 
 - `'calendar'` → Muestra `CalendarScreen`
@@ -214,6 +243,21 @@ El `DashboardPage` gestiona la navegación entre pantallas usando el estado `cur
 - `'profile'` → Muestra `ProfilePage`
 - `'payments'` → Muestra `PaymentSummaryPage`
 - `'stats'` → Muestra `PlanStatsPage`
+
+### Navegación Mobile
+En móviles, la navegación funciona de forma diferente:
+
+- **`PlansListPage`** → Primera pantalla después del login (lista de planes)
+  - Al seleccionar un plan → Navega a `PlanDetailPage`
+  
+- **`PlanDetailPage`** → Página principal de un plan seleccionado
+  - Contiene `PlanNavigationBar` para cambiar entre vistas
+  - Vistas disponibles:
+    - `'planData'` → Muestra `PlanDataScreen`
+    - `'calendar'` → Muestra `CalendarMobilePage`
+    - `'participants'` → Muestra `PlanParticipantsPage`
+    - `'stats'` → Muestra `PlanStatsPage`
+    - `'payments'` → Muestra `PaymentSummaryPage` (placeholder)
 
 ---
 
@@ -247,5 +291,5 @@ El `DashboardPage` gestiona la navegación entre pantallas usando el estado `cur
 ---
 
 **Mantenedor:** Equipo de Desarrollo UNP Calendario  
-**Versión:** 1.0
+**Versión:** 1.1
 

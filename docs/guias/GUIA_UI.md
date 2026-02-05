@@ -739,13 +739,13 @@ Container(
 
 ---
 
-## 🎨 TEMAS Y MODO OSCURO
+## 🎨 Estilo Base (UI Oscura)
 
 ### Estado Actual
 
-✅ **IMPLEMENTADO** - El tema light está configurado.
+✅ **IMPLEMENTADO** - La aplicación Planazoo utiliza una UI oscura por defecto.
 
-⚠️ **POR IMPLEMENTAR** - El tema oscuro aún no existe.
+**⚠️ IMPORTANTE:** La UI oscura no es un "modo oscuro" opcional. Es el diseño estándar de la aplicación. Todos los componentes deben seguir el Estilo Base documentado en `docs/ux/estilos/ESTILO_SOFISTICADO.md`.
 
 ### Implementación Actual
 

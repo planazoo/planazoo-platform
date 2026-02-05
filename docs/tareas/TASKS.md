@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
 
-**Siguiente código de tarea: T190**
+**Siguiente código de tarea: T191**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -1773,6 +1773,72 @@ Se implementó una **combinación de opciones 1, 3 y 4** para maximizar la clari
 - `lib/widgets/screens/wd_plan_data_screen.dart` - Integración de sección de avisos
 
 **Nota:** La funcionalidad de notificaciones push está pendiente para una tarea futura específica de FCM.
+
+---
+
+### T190 - Sistema de Chat Bidireccional del Plan (Tipo WhatsApp)
+**Estado:** 🔄 En progreso  
+**Complejidad:** ⚠️ Media-Alta  
+**Prioridad:** 🟡 Media  
+**Descripción:** Sistema de chat bidireccional tipo WhatsApp para comunicación entre participantes del plan. Permite conversación en tiempo real con mensajes, respuestas, y notificaciones.
+
+**Funcionalidades:**
+1. Modelo `PlanMessage` con usuario, mensaje, timestamp, estado (enviado, entregado, leído)
+2. Chat bidireccional: todos los participantes pueden enviar y recibir mensajes
+3. Mensajes en tiempo real usando Firestore listeners
+4. UI tipo WhatsApp con burbujas de mensajes (propios a la derecha, otros a la izquierda)
+5. Indicadores de estado (enviado ✓, entregado ✓✓, leído ✓✓ azul)
+6. Notificaciones in-app cuando hay nuevos mensajes
+7. Contador de mensajes no leídos por plan
+8. Soporte para editar/eliminar mensajes propios (opcional, fase 2)
+
+**Concepto:**
+- Chat bidireccional (conversación entre participantes)
+- Similar a WhatsApp: burbujas de mensajes, timestamps, estados de lectura
+- Tiempo real: mensajes aparecen instantáneamente
+- Solo participantes del plan pueden ver/enviar mensajes
+- Historial completo de conversación
+
+**Criterios de aceptación:**
+- ✅ Modelo PlanMessage con validación y estados
+- ✅ Servicio ChatService para CRUD de mensajes
+- ✅ Providers Riverpod para estado y streams
+- ✅ UI de chat tipo WhatsApp (burbujas, timestamps, estados)
+- ✅ Sincronización en tiempo real con Firestore
+- ✅ Notificaciones in-app para nuevos mensajes
+- ✅ Contador de mensajes no leídos
+- ✅ Persistencia en Firestore con reglas de seguridad
+- ✅ Sanitización de mensajes
+- ✅ Integración en pantalla de datos del plan o pantalla dedicada
+
+**Estructura Firestore:**
+```
+plans/{planId}/messages/{messageId}
+  - userId: string
+  - message: string (max 5000 caracteres)
+  - createdAt: timestamp
+  - updatedAt: timestamp
+  - editedAt: timestamp? (opcional)
+  - deletedAt: timestamp? (opcional)
+  - readBy: array<string> (userIds que han leído)
+  - replyTo: string? (messageId si es respuesta)
+```
+
+**Archivos a crear:**
+- `lib/features/chat/domain/models/plan_message.dart`
+- `lib/features/chat/domain/services/chat_service.dart`
+- `lib/features/chat/presentation/providers/chat_providers.dart`
+- `lib/widgets/screens/wd_plan_chat_screen.dart`
+- `lib/widgets/chat/wd_chat_message_bubble.dart`
+- `lib/widgets/chat/wd_chat_input.dart`
+
+**Archivos a modificar:**
+- `firestore.rules` - Reglas de seguridad para messages
+- `lib/widgets/screens/wd_plan_data_screen.dart` - Integración de acceso al chat
+- `lib/features/notifications/domain/services/notification_helper.dart` - Notificaciones de nuevos mensajes
+- `lib/pages/pg_plan_detail_page.dart` - Acceso al chat desde el plan
+
+**Relacionado con:** T105 (Avisos), T141 (Ubicación de acceso), Sistema de notificaciones
 
 ---
 

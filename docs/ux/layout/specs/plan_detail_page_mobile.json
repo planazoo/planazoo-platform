@@ -1,0 +1,211 @@
+{
+  "screen": "PlanDetailPage",
+  "platform": "mobile",
+  "version": "1.0",
+  "lastUpdated": "2024-12-31",
+  "description": "Página de detalle del plan para móvil con barra de navegación horizontal y contenido dinámico",
+  
+  "layout": {
+    "topBar": {
+      "type": "appbar",
+      "height": 56,
+      "backgroundColor": "#171717",
+      "elements": [
+        {
+          "id": "back_button",
+          "type": "icon_button",
+          "position": "left",
+          "icon": "arrow_back",
+          "properties": {
+            "color": "#FFFFFF",
+            "size": 24,
+            "onPressed": "navigate_back"
+          }
+        },
+        {
+          "id": "plan_title",
+          "type": "title",
+          "position": "center",
+          "text": "{{plan.name}}",
+          "properties": {
+            "fontFamily": "Poppins",
+            "fontSize": 18,
+            "fontWeight": 600,
+            "color": "#FFFFFF",
+            "maxLines": 1,
+            "overflow": "ellipsis"
+          }
+        }
+      ]
+    },
+    
+    "content": {
+      "padding": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      },
+      
+      "rows": [
+        {
+          "id": "R1",
+          "height": "auto",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "navigation_bar",
+                "id": "plan_navigation_bar",
+                "properties": {
+                  "type": "horizontal_scrollable",
+                  "options": [
+                    {
+                      "id": "planData",
+                      "icon": "info",
+                      "label": "Datos"
+                    },
+                    {
+                      "id": "calendar",
+                      "icon": "calendar_month",
+                      "label": "Calendario"
+                    },
+                    {
+                      "id": "participants",
+                      "icon": "people",
+                      "label": "Participantes"
+                    },
+                    {
+                      "id": "stats",
+                      "icon": "bar_chart",
+                      "label": "Estadísticas"
+                    },
+                    {
+                      "id": "payments",
+                      "icon": "payment",
+                      "label": "Pagos"
+                    }
+                  ],
+                  "selectedOption": "planData",
+                  "height": 56
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "height": "flex",
+          "columns": [
+            {
+              "id": "C1",
+              "width": "flex",
+              "element": {
+                "type": "dynamic_content",
+                "id": "content_area",
+                "properties": {
+                  "switch": "_selectedOption",
+                  "cases": [
+                    {
+                      "value": "planData",
+                      "component": "PlanDataScreen",
+                      "properties": {
+                        "plan": "{{plan}}",
+                        "onPlanDeleted": "navigate_back"
+                      }
+                    },
+                    {
+                      "value": "calendar",
+                      "component": "CalendarMobilePage",
+                      "properties": {
+                        "plan": "{{plan}}"
+                      }
+                    },
+                    {
+                      "value": "participants",
+                      "component": "PlanParticipantsPage",
+                      "properties": {
+                        "plan": "{{plan}}"
+                      }
+                    },
+                    {
+                      "value": "stats",
+                      "component": "PlanStatsPage",
+                      "properties": {
+                        "plan": "{{plan}}"
+                      }
+                    },
+                    {
+                      "value": "payments",
+                      "component": "placeholder",
+                      "properties": {
+                        "icon": "payment",
+                        "title": "Pagos",
+                        "subtitle": "Próximamente"
+                      }
+                    },
+                    {
+                      "value": "default",
+                      "component": "PlanDataScreen",
+                      "properties": {
+                        "plan": "{{plan}}"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      
+      "frames": []
+    },
+    
+    "bottomBar": {
+      "type": "none",
+      "height": 0
+    }
+  },
+  
+  "styles": {
+    "spacing": {
+      "rowGap": 0,
+      "columnGap": 0
+    },
+    "colors": {
+      "background": "#171717",
+      "appBarBackground": "#171717",
+      "textPrimary": "#FFFFFF",
+      "textSecondary": "#B0B0B0",
+      "accent": "#A24000"
+    },
+    "typography": {
+      "title": {
+        "fontFamily": "Poppins",
+        "fontSize": 18,
+        "fontWeight": 600
+      },
+      "body": {
+        "fontFamily": "Poppins",
+        "fontSize": 14,
+        "fontWeight": 400
+      }
+    }
+  },
+  
+  "state": {
+    "_selectedOption": {
+      "type": "String",
+      "default": "planData",
+      "description": "Opción seleccionada en la barra de navegación"
+    }
+  },
+  
+  "navigation": {
+    "onBack": "Navigator.pop()",
+    "onOptionSelected": "setState(() { _selectedOption = option; })"
+  }
+}
+

@@ -108,7 +108,8 @@ class CalendarTracks extends ConsumerWidget {
                         height: CalendarConstants.accommodationRowHeight,
                         decoration: BoxDecoration(
                           border: Border.all(color: AppColorScheme.gridLineColor),
-                          color: AppColorScheme.color1.withOpacity(0.3),
+                          // Estilo base: fondo oscuro, sin verde
+                          color: Colors.grey.shade800,
                         ),
                         child: Center(
                           child: _buildAccommodationTracks(ref, column, constraints.maxWidth),
@@ -129,7 +130,8 @@ class CalendarTracks extends ConsumerWidget {
   Color _getHeaderColor(dynamic column) {
     final dayData = column as Map<String, dynamic>;
     final isEmpty = dayData['isEmpty'] as bool;
-    return isEmpty ? Colors.grey.shade200 : AppColorScheme.color1;
+    // Estilo base: fondo oscuro, sin verde
+    return isEmpty ? Colors.grey.shade800.withOpacity(0.3) : Colors.grey.shade800;
   }
 
   /// Construye el contenido del header

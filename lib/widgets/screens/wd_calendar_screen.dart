@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event_segment.dart';
@@ -16,6 +17,7 @@ import 'package:unp_calendario/features/calendar/domain/services/timezone_servic
 import 'package:unp_calendario/features/calendar/domain/services/perspective_service.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
@@ -279,8 +281,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final currentUser = ref.watch(currentUserProvider);
 
     if (currentUser == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Theme(
+        data: AppTheme.darkTheme,
+        child: Scaffold(
+          backgroundColor: Colors.grey.shade900,
+          body: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade800, // Color sólido, sin gradiente
+            ),
+            child: const Center(child: CircularProgressIndicator(color: AppColorScheme.color2)),
+          ),
+        ),
       );
     }
 
@@ -298,9 +309,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       _checkPendingInvitation(context);
     });
     
-    return Scaffold(
-      appBar: _buildAppBar(),
-      body: _buildCalendarBody(),
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade900,
+        appBar: _buildAppBar(),
+        body: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
+          ),
+          child: _buildCalendarBody(),
+        ),
+      ),
     );
   }
 
@@ -428,7 +448,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Border _createGridBorder({bool includeRight = true}) {
     return Border(
       right: includeRight 
-          ? BorderSide(color: AppColorScheme.gridLineColor.withOpacity(_gridLineOpacity), width: 0.5)
+          ? BorderSide(color: Colors.grey.shade700.withOpacity(_gridLineOpacity), width: 0.5)
           : BorderSide.none,
     );
   }
@@ -436,7 +456,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Crea un BoxDecoration común para contenedores con borde
   BoxDecoration _createBorderedDecoration({Color? color}) {
     return BoxDecoration(
-      border: Border.all(color: AppColorScheme.gridLineColor),
+      border: Border.all(color: Colors.grey.shade700.withOpacity(0.3)),
       color: color,
     );
   }
@@ -526,7 +546,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               return Container(
                 height: AppConstants.cellHeight,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColorScheme.gridLineColor),
+                  border: Border.all(
+                    color: Colors.grey.shade700.withOpacity(0.3),
+                    width: 0.5,
+                  ),
                   color: _getDataCellColor(column),
                 ),
                 child: _buildEventCellWithSubColumns(hourIndex, column, participants),
@@ -543,11 +566,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Color _getDataCellColor(dynamic column) {
     final dayData = column as Map<String, dynamic>;
     final isEmpty = dayData['isEmpty'] as bool;
-    if (isEmpty) return Colors.grey.shade100;
+    if (isEmpty) return Colors.grey.shade800.withOpacity(0.3);
     
     // Nota: El resaltado de track activo se aplica en las subcolumnas individuales
     // Este método solo afecta el fondo general de la celda del día
-    return AppColorScheme.color0;
+    // Estilo base: fondo oscuro
+    return Colors.grey.shade800;
   }
   
   /// Determina si un track es el track activo (usuario actual o seleccionado)
@@ -663,8 +687,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(blockedReason ?? 'No se pueden crear alojamientos en el estado actual del plan.'),
-                backgroundColor: Colors.orange,
+                content: Text(
+                  blockedReason ?? 'No se pueden crear alojamientos en el estado actual del plan.',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+                backgroundColor: Colors.orange.shade600,
                 duration: const Duration(seconds: 3),
               ),
             );
@@ -691,8 +718,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(blockedReason ?? 'No se pueden modificar alojamientos en el estado actual del plan.'),
-              backgroundColor: Colors.orange,
+                content: Text(
+                  blockedReason ?? 'No se pueden modificar alojamientos en el estado actual del plan.',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+                backgroundColor: Colors.orange.shade600,
               duration: const Duration(seconds: 3),
             ),
           );
@@ -2720,8 +2750,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(blockedReason ?? 'No se pueden modificar eventos en el estado actual del plan.'),
-            backgroundColor: Colors.orange,
+                content: Text(
+                  blockedReason ?? 'No se pueden modificar eventos en el estado actual del plan.',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+                backgroundColor: Colors.orange.shade600,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -2811,11 +2844,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // Mostrar mensaje y cancelar el drag
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  '⚠️ No se puede mover: un participante ya tiene un evento confirmado en ese horario',
-                ),
-                backgroundColor: Colors.red,
+                SnackBar(
+                  content: Text(
+                    '⚠️ No se puede mover: un participante ya tiene un evento confirmado en ese horario',
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.red.shade600,
                 duration: Duration(seconds: 4),
               ),
             );
@@ -2839,11 +2873,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // Mostrar mensaje y cancelar el drag
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  '⚠️ No se puede mover: ya hay 3 eventos en ese horario',
-                ),
-                backgroundColor: Colors.orange,
+                SnackBar(
+                  content: Text(
+                    '⚠️ No se puede mover: ya hay 3 eventos en ese horario',
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.orange.shade600,
                 duration: Duration(seconds: 3),
               ),
             );
@@ -2974,8 +3009,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(blockedReason ?? 'No se pueden crear eventos en el estado actual del plan.'),
-              backgroundColor: Colors.orange,
+                content: Text(
+                  blockedReason ?? 'No se pueden crear eventos en el estado actual del plan.',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+                backgroundColor: Colors.orange.shade600,
               duration: const Duration(seconds: 3),
             ),
           );
@@ -3041,12 +3079,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           )) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(
                     '⚠️ No se puede guardar: un participante ya tiene un evento confirmado en ese horario.\n'
                     'Por favor, elige otra hora, reduce la duración o cambia los participantes.',
+                    style: GoogleFonts.poppins(color: Colors.white),
                   ),
-                  backgroundColor: Colors.red,
+                  backgroundColor: Colors.red.shade600,
                   duration: Duration(seconds: 5),
                 ),
               );
@@ -3062,12 +3101,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           )) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(
                     '⚠️ No se puede guardar: ya hay 3 eventos en ese horario.\n'
                     'Por favor, elige otra hora o reduce la duración.',
+                    style: GoogleFonts.poppins(color: Colors.white),
                   ),
-                  backgroundColor: Colors.orange,
+                  backgroundColor: Colors.orange.shade600,
                   duration: Duration(seconds: 4),
                 ),
               );
@@ -3104,8 +3144,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       final blockedReason = PlanStatePermissions.getBlockedReason('create_event', widget.plan);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(blockedReason ?? 'No se pueden crear eventos en el estado actual del plan.'),
-          backgroundColor: Colors.orange,
+                content: Text(
+                  blockedReason ?? 'No se pueden crear eventos en el estado actual del plan.',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+                backgroundColor: Colors.orange.shade600,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -3128,12 +3171,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           )) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(
                     '⚠️ No se puede crear: un participante ya tiene un evento confirmado en ese horario.\n'
                     'Por favor, elige otra hora, reduce la duración o cambia los participantes.',
+                    style: GoogleFonts.poppins(color: Colors.white),
                   ),
-                  backgroundColor: Colors.red,
+                  backgroundColor: Colors.red.shade600,
                   duration: Duration(seconds: 5),
                 ),
               );
@@ -3149,12 +3193,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           )) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(
                     '⚠️ No se puede crear: ya hay 3 eventos en ese horario.\n'
                     'Por favor, elige otra hora o reduce la duración.',
+                    style: GoogleFonts.poppins(color: Colors.white),
                   ),
-                  backgroundColor: Colors.orange,
+                  backgroundColor: Colors.orange.shade600,
                   duration: Duration(seconds: 4),
                 ),
               );
@@ -3252,8 +3297,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       final blockedReason = PlanStatePermissions.getBlockedReason('modify_event', widget.plan);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(blockedReason ?? 'No se pueden modificar alojamientos en el estado actual del plan.'),
-          backgroundColor: Colors.orange,
+                content: Text(
+                  blockedReason ?? 'No se pueden modificar alojamientos en el estado actual del plan.',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+                backgroundColor: Colors.orange.shade600,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -3289,9 +3337,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             } else {
               // Mostrar error si no se pudo guardar
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
-                  backgroundColor: Colors.red,
+                SnackBar(
+                  content: Text(
+                    'Error al guardar el alojamiento. Por favor, inténtalo de nuevo.',
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.red.shade600,
                   duration: Duration(seconds: 3),
                 ),
               );
@@ -3360,9 +3411,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             } else {
               // Mostrar error si no se pudo guardar
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
-                  backgroundColor: Colors.red,
+                SnackBar(
+                  content: Text(
+                    'Error al guardar el alojamiento. Por favor, inténtalo de nuevo.',
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.red.shade600,
                   duration: Duration(seconds: 3),
                 ),
               );

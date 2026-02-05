@@ -6,6 +6,9 @@ import '../../domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import '../../domain/services/event_service.dart';
 import '../../domain/services/plan_service.dart';
+import '../../domain/services/invitation_service.dart';
+import 'invitation_providers.dart';
+import 'plan_participation_providers.dart';
 import '../notifiers/calendar_notifier.dart';
 
 /// Provider para EventService
@@ -19,15 +22,89 @@ final planServiceProvider = Provider<PlanService>((ref) {
 });
 
 /// StreamProvider para todos los planes (actualización automática)
-final plansStreamProvider = StreamProvider<List<Plan>>((ref) {
+/// Incluye planes donde el usuario es participante Y planes con invitaciones pendientes
+final plansStreamProvider = StreamProvider<List<Plan>>((ref) async* {
   final authState = ref.watch(authNotifierProvider);
   final planService = ref.watch(planServiceProvider);
+  final invitationService = ref.watch(invitationServiceProvider);
 
   if (!authState.isAuthenticated || authState.user == null) {
-    return Stream.value(const <Plan>[]);
+    yield const <Plan>[];
+    return;
   }
 
-  return planService.getPlansForUser(authState.user!.id);
+  // Obtener planes donde el usuario es participante
+  await for (final userPlans in planService.getPlansForUser(authState.user!.id)) {
+    // Obtener planes con participaciones pendientes (userId) - método principal
+    final participationService = ref.read(planParticipationServiceProvider);
+    final participations = await participationService.getUserParticipations(authState.user!.id).first;
+    final pendingParticipations = participations.where((p) => p.status == 'pending').toList();
+    
+    // Obtener planes de participaciones pendientes
+    final pendingPlanIdsFromParticipations = pendingParticipations.map((p) => p.planId).toSet();
+    final pendingPlans = <Plan>[];
+    
+    for (final planId in pendingPlanIdsFromParticipations) {
+      try {
+        final plan = await planService.getPlanById(planId);
+        if (plan != null) {
+          pendingPlans.add(plan);
+        }
+      } catch (e) {
+        LoggerService.error(
+          'Error getting plan for pending participation: $planId',
+          context: 'PLANS_STREAM_PROVIDER',
+          error: e,
+        );
+      }
+    }
+    
+    // Si no hay participaciones pendientes, buscar invitaciones por email (primera vez)
+    if (pendingPlans.isEmpty) {
+      final pendingInvitations = await invitationService.getPendingInvitationsByUserId(
+        authState.user!.id,
+        authState.user!.email,
+      );
+
+      // Obtener planes de las invitaciones pendientes
+      final pendingPlanIdsFromInvitations = pendingInvitations.map((inv) => inv.planId).toSet();
+      
+      for (final planId in pendingPlanIdsFromInvitations) {
+        try {
+          final plan = await planService.getPlanById(planId);
+          if (plan != null && !pendingPlans.any((p) => p.id == planId)) {
+            pendingPlans.add(plan);
+          }
+        } catch (e) {
+          LoggerService.error(
+            'Error getting plan for pending invitation: $planId',
+            context: 'PLANS_STREAM_PROVIDER',
+            error: e,
+          );
+        }
+      }
+    }
+
+    // Combinar planes del usuario y planes con invitaciones pendientes
+    // Usar un Map para evitar duplicados (si un plan tiene invitación pendiente pero ya es participante)
+    final allPlansMap = <String, Plan>{};
+    
+    // Añadir planes del usuario
+    for (final plan in userPlans) {
+      if (plan.id != null) {
+        allPlansMap[plan.id!] = plan;
+      }
+    }
+    
+    // Añadir planes con invitaciones pendientes (no sobrescribir si ya existe)
+    for (final plan in pendingPlans) {
+      if (plan.id != null && !allPlansMap.containsKey(plan.id!)) {
+        allPlansMap[plan.id!] = plan;
+      }
+    }
+
+    yield allPlansMap.values.toList();
+  }
 });
 
 /// StreamProvider para un plan específico por ID (T107: actualización automática cuando se expande)

@@ -8,6 +8,7 @@ import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/pages/pg_calendar_mobile_page.dart';
 import 'package:unp_calendario/pages/pg_plan_participants_page.dart';
 import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
+import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 
@@ -87,6 +88,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       case 'planData':
         return PlanDataScreen(
           plan: widget.plan,
+          showAppBar: false,
           onPlanDeleted: () {
             Navigator.of(context).pop();
           },
@@ -100,6 +102,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       case 'participants':
         return PlanParticipantsPage(
           plan: widget.plan,
+        );
+      
+      case 'chat':
+        return PlanChatScreen(
+          planId: widget.plan.id!,
+          planName: widget.plan.name,
         );
       
       case 'stats':
@@ -142,6 +150,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       default:
         return PlanDataScreen(
           plan: widget.plan,
+          showAppBar: false,
         );
     }
   }

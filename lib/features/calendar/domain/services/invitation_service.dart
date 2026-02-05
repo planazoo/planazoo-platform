@@ -186,6 +186,9 @@ class InvitationService {
   }
 
   /// Listar invitaciones pendientes para un email (todas los planes)
+  /// 
+  /// NOTA: Este método se usa principalmente para la primera vez (recién registrado).
+  /// Después del primer acceso, usar getPendingInvitationsByUserId.
   Future<List<PlanInvitation>> getPendingInvitationsByEmail(String email) async {
     try {
       final normalizedEmail = email.toLowerCase().trim();
@@ -201,6 +204,129 @@ class InvitationService {
     } catch (e) {
       LoggerService.error('Error getting pending invitations by email: $email', context: 'INVITATION_SERVICE', error: e);
       return [];
+    }
+  }
+
+  /// Obtener invitaciones pendientes por userId (prioritario)
+  /// 
+  /// Estrategia:
+  /// 1. Si hay participaciones pendientes (userId) → NO buscar invitaciones
+  ///    (la invitación ya fue procesada, la participación pendiente es suficiente)
+  /// 2. Si NO hay participaciones pendientes → buscar invitaciones por email (primera vez)
+  /// 
+  /// Esto asegura que después del primer acceso, todo se relacione por userId
+  /// a través de participaciones, no por email.
+  Future<List<PlanInvitation>> getPendingInvitationsByUserId(String userId, String? email) async {
+    try {
+      // 1. PRIMERO: Verificar si hay participaciones pendientes (userId)
+      // Si hay, significa que la invitación ya fue procesada y tenemos una participación pendiente
+      // En este caso, NO necesitamos buscar invitaciones - el sistema de participaciones
+      // ya maneja el estado pendiente
+      final participations = await _participationService.getUserParticipations(userId).first;
+      final pendingParticipations = participations.where((p) => p.status == 'pending').toList();
+      
+      if (pendingParticipations.isNotEmpty) {
+        // Hay participaciones pendientes - esto significa que ya pasamos la fase de invitación
+        // El sistema ahora funciona por userId a través de participaciones
+        // No necesitamos buscar invitaciones, retornar lista vacía
+        // (el sistema de participaciones ya maneja el estado pendiente)
+        return [];
+      }
+      
+      // 2. SEGUNDO: Si NO hay participaciones pendientes, buscar invitaciones por email (primera vez)
+      // Esto solo ocurre cuando el usuario se acaba de registrar y aún no tiene participaciones
+      // Después de aceptar la primera invitación, se creará una participación y este código
+      // no se ejecutará más (se usará el sistema de participaciones)
+      if (email != null) {
+        return await getPendingInvitationsByEmail(email);
+      }
+      
+      return [];
+    } catch (e) {
+      LoggerService.error(
+        'Error getting pending invitations by userId: $userId',
+        context: 'INVITATION_SERVICE',
+        error: e,
+      );
+      return [];
+    }
+  }
+
+  /// Aceptar invitación directamente por planId y userId (sin token)
+  /// 
+  /// Útil cuando el usuario está autenticado y el email coincide con la invitación.
+  /// Actualiza tanto la participación como el estado de la invitación.
+  Future<bool> acceptInvitationByPlanId(String planId, String userId) async {
+    try {
+      // Obtener el email del usuario
+      final user = await _userService.getUser(userId);
+      if (user == null || user.email == null) {
+        LoggerService.warning('User not found or has no email: $userId');
+        return false;
+      }
+
+      // Buscar la invitación pendiente para este plan y email
+      final normalizedEmail = user.email!.toLowerCase().trim();
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .where('email', isEqualTo: normalizedEmail)
+          .where('status', isEqualTo: 'pending')
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        LoggerService.warning('No pending invitation found for plan: $planId, email: $normalizedEmail');
+        return false;
+      }
+
+      final invitationDoc = querySnapshot.docs.first;
+      final invitation = PlanInvitation.fromFirestore(invitationDoc);
+
+      // Crear o actualizar la participación
+      final participationId = await _participationService.createParticipation(
+        planId: planId,
+        userId: userId,
+        role: invitation.role ?? 'participant',
+        invitedBy: invitation.invitedBy,
+        autoAccept: true, // Aceptar directamente
+      );
+
+      if (participationId == null) {
+        LoggerService.warning('Failed to create participation for plan: $planId, userId: $userId');
+        return false;
+      }
+
+      // Actualizar el estado de la invitación
+      try {
+        await invitationDoc.reference.update({
+          'status': 'accepted',
+          'respondedAt': Timestamp.fromDate(DateTime.now()),
+        });
+
+        LoggerService.database(
+          'Invitation accepted by planId: ${invitation.id}, participation: $participationId',
+          operation: 'UPDATE',
+        );
+      } catch (updateError) {
+        // Si falla la actualización de la invitación, registrar pero continuar
+        // La participación ya se creó, que es lo más importante
+        LoggerService.error(
+          'Error updating invitation status to accepted: ${invitation.id}. '
+          'Participation was created successfully: $participationId',
+          context: 'INVITATION_SERVICE',
+          error: updateError,
+        );
+      }
+
+      return true;
+    } catch (e) {
+      LoggerService.error(
+        'Error accepting invitation by planId: $planId, userId: $userId',
+        context: 'INVITATION_SERVICE',
+        error: e,
+      );
+      return false;
     }
   }
 
@@ -390,7 +516,8 @@ class InvitationService {
   /// Genera el link de invitación
   String generateInvitationLink(String token) {
     // TODO: Configurar URL base desde configuración
-    const baseUrl = 'https://planazoo.app'; // O desde configuración
+    // Para desarrollo local, usar localhost
+    const baseUrl = 'http://localhost:8080'; // Cambiar a 'https://planazoo.app' en producción
     return '$baseUrl/invitation/$token';
   }
 

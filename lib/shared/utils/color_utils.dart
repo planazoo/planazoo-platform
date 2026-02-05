@@ -1,28 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:unp_calendario/app/theme/color_scheme.dart';
 
 class ColorUtils {
   // T91: Paleta de colores mejorada para eventos confirmados
   // Colores optimizados para contraste WCAG AA (mínimo 4.5:1 con texto blanco)
-  static const Map<String, Color> confirmedColors = {
+  // Color por defecto: mismo color que W1 (AppColorScheme.color2)
+  static final Color _defaultEventColor = AppColorScheme.color2;
+  
+  static final Map<String, Color> confirmedColors = {
     'desplazamiento': Color(0xFF1976D2), // Azul medio oscuro (mejor contraste)
     'transporte': Color(0xFF1976D2), // Alias para compatibilidad
     'alojamiento': Color(0xFF388E3C), // Verde medio oscuro
     'actividad': Color(0xFFF57C00), // Naranja oscuro vibrante
     'restauracion': Color(0xFFD32F2F), // Rojo medio oscuro
     'otro': Color(0xFF7B1FA2), // Púrpura medio oscuro
-    'default': Color(0xFF7B1FA2), // Púrpura por defecto
+    'default': _defaultEventColor, // Mismo color que W1 (AppColorScheme.color2)
   };
 
   // T91: Colores para eventos en borrador mejorados
   // Mantienen matiz del color original pero más apagados y distinguibles
-  static const Map<String, Color> draftColors = {
+  // Color por defecto para borradores: versión más clara del color2
+  static final Color _defaultDraftColor = Color.lerp(
+    _defaultEventColor,
+    Colors.white,
+    0.4, // 40% más claro que el color por defecto
+  ) ?? const Color(0xFFB8D4D9); // Fallback si lerp falla
+  
+  static final Map<String, Color> draftColors = {
     'desplazamiento': Color(0xFF90CAF9), // Azul claro apagado
     'transporte': Color(0xFF90CAF9), // Alias para compatibilidad
     'alojamiento': Color(0xFF81C784), // Verde claro apagado
     'actividad': Color(0xFFFFB74D), // Naranja claro apagado
     'restauracion': Color(0xFFE57373), // Rojo claro apagado
     'otro': Color(0xFFBA68C8), // Púrpura claro apagado
-    'default': Color(0xFFBA68C8), // Púrpura claro por defecto
+    'default': _defaultDraftColor, // Versión más clara de color2 para borradores
   };
 
   /// T91: Obtiene el color para un evento basado en su color personalizado, tipo y estado
@@ -38,13 +49,12 @@ class ColorUtils {
       return color;
     }
     
-    // Prioridad 2: Color por tipo de familia
-    final type = typeFamily?.toLowerCase() ?? 'default';
-    
+    // Prioridad 2: Siempre usar color2 por defecto (mismo que W1)
+    // Los tipos específicos ya no determinan el color, solo el color personalizado
     if (isDraft) {
-      return draftColors[type] ?? draftColors['default']!;
+      return _defaultDraftColor;
     } else {
-      return confirmedColors[type] ?? confirmedColors['default']!;
+      return _defaultEventColor; // AppColorScheme.color2
     }
   }
   
@@ -57,6 +67,7 @@ class ColorUtils {
   /// Colores personalizados mejorados con mejor contraste
   static Color colorFromName(String colorName) {
     switch (colorName.toLowerCase()) {
+      case 'color2': return AppColorScheme.color2; // Color por defecto (mismo que W1)
       case 'blue': return const Color(0xFF1976D2); // Azul mejorado
       case 'green': return const Color(0xFF388E3C); // Verde mejorado
       case 'orange': return const Color(0xFFF57C00); // Naranja mejorado
@@ -70,7 +81,7 @@ class ColorUtils {
       case 'cyan': return const Color(0xFF0097A7); // Cian mejorado
       case 'lime': return const Color(0xFF827717); // Lima mejorado
       case 'amber': return const Color(0xFFF57F17); // Ámbar mejorado
-      default: return const Color(0xFF7B1FA2); // Púrpura por defecto mejorado
+      default: return _defaultEventColor; // Color2 por defecto
     }
   }
 

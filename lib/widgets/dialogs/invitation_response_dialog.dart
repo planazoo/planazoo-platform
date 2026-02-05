@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
@@ -42,29 +43,62 @@ class _InvitationResponseDialogState extends ConsumerState<InvitationResponseDia
         return;
       }
 
-      final participationService = ref.read(planParticipationServiceProvider);
-      final success = accept
-          ? await participationService.acceptInvitation(widget.plan.id!, currentUser.id)
-          : await participationService.rejectInvitation(widget.plan.id!, currentUser.id);
-
-      if (mounted) {
-        Navigator.of(context).pop(); // Cerrar diálogo
+      if (accept) {
+        // Aceptar invitación directamente (sin token) - actualiza tanto participación como invitación
+        final invitationService = ref.read(invitationServiceProvider);
+        final success = await invitationService.acceptInvitationByPlanId(
+          widget.plan.id!,
+          currentUser.id,
+        );
         
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(accept ? '✅ Has aceptado la invitación' : 'Has rechazado la invitación'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ Error al responder a la invitación'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        if (mounted) {
+          Navigator.of(context).pop(); // Cerrar diálogo
+          
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('✅ Has aceptado la invitación'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('❌ Error al aceptar la invitación'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
+        return;
+      } else {
+        // Rechazar invitación (solo actualiza participación)
+        final participationService = ref.read(planParticipationServiceProvider);
+        final success = await participationService.rejectInvitation(
+          widget.plan.id!,
+          currentUser.id,
+        );
+        
+        if (mounted) {
+          Navigator.of(context).pop(); // Cerrar diálogo
+          
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Has rechazado la invitación'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('❌ Error al rechazar la invitación'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+        return;
       }
     } catch (e) {
       LoggerService.error('Error responding to invitation', context: 'INVITATION_RESPONSE_DIALOG', error: e);

@@ -36,7 +36,8 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - Identificadores estables (p. ej., `participantId`) para persistir orden/configuración; evitar IDs efímeros.
 
 ### 5) UI/UX y Calidad
-- Mantener UI consistente: tamaños, tipografías, colores según `AppColorScheme`.
+- **⚠️ Estilo Base:** La aplicación Planazoo utiliza una UI oscura por defecto. No es un "modo oscuro" opcional, sino el diseño estándar de la app. Consultar `docs/ux/estilos/ESTILO_SOFISTICADO.md` (renombrado a "Estilo Base") para detalles.
+- Mantener UI consistente: tamaños, tipografías, colores según `AppColorScheme` y el Estilo Base.
 - Evitar regresiones de interacción (tap, drag&drop, dobles clics).
 - Revisar lints tras cada cambio en archivos modificados.
 - Al cerrar una tarea: eliminar `print()`, debugs y código temporal que ya no sea necesario.

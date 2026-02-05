@@ -52,6 +52,7 @@ Gestión de tareas del proyecto:
 Configuración y contexto del proyecto:
 - [Contexto del Proyecto](./configuracion/CONTEXT.md) - Normas y reglas de colaboración
 - [Índice del Sistema de Planes](./configuracion/INDICE_SISTEMA_PLANES.md) - Visión general del sistema
+- [Despliegue Web en Firebase Hosting](./configuracion/DEPLOY_WEB_FIREBASE_HOSTING.md) - Guía completa de despliegue
 
 ---
 

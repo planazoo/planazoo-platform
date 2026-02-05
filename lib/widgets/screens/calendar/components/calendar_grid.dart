@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_styles.dart';
 
 /// Componente que representa la estructura base del grid del calendario
 /// 
@@ -44,7 +47,7 @@ class CalendarGrid extends StatelessWidget {
         Row(
           children: [
             // Columna FIJO (horas) - fija
-            _buildFixedHoursColumn(),
+            _buildFixedHoursColumn(context),
             
             // Columnas de datos - 7 días fijos
             Expanded(
@@ -57,7 +60,7 @@ class CalendarGrid extends StatelessWidget {
   }
 
   /// Construye la columna fija de horas
-  Widget _buildFixedHoursColumn() {
+  Widget _buildFixedHoursColumn(BuildContext context) {
     return Container(
       width: 80.0, // Ancho fijo para mostrar "00:00"
       child: Column(
@@ -65,10 +68,7 @@ class CalendarGrid extends StatelessWidget {
           // Encabezado (primera celda)
           Container(
             height: CalendarConstants.headerHeight,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColorScheme.gridLineColor),
-              color: AppColorScheme.color1,
-            ),
+            decoration: CalendarStyles.getFixedHoursColumnDecoration(),
             child: const Center(
               child: SizedBox.shrink(), // Celda vacía
             ),
@@ -77,42 +77,50 @@ class CalendarGrid extends StatelessWidget {
           // Fila de alojamientos FIJA
           Container(
             height: CalendarConstants.accommodationRowHeight,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColorScheme.gridLineColor),
-              color: AppColorScheme.color1.withOpacity(0.3),
-            ),
-            child: const Center(
+            decoration: CalendarStyles.getFixedAccommodationRowDecoration(),
+            child: Center(
               child: Text(
                 'Alojamiento',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
           
           // Filas de horas con scroll vertical
           Expanded(
-            child: SingleChildScrollView(
-              controller: hoursScrollController,
-              child: Column(
-                children: List.generate(AppConstants.defaultRowCount, (index) {
-                  return Container(
-                    height: AppConstants.cellHeight,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColorScheme.gridLineColor),
-                      color: AppColorScheme.color0,
-                    ),
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '${index.toString().padLeft(2, '0')}:00',
-                          style: const TextStyle(fontSize: 12),
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                },
+              ),
+              child: SingleChildScrollView(
+                controller: hoursScrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: List.generate(AppConstants.defaultRowCount, (index) {
+                    return Container(
+                      height: AppConstants.cellHeight,
+                      decoration: CalendarStyles.getHourCellDecoration(),
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '${index.toString().padLeft(2, '0')}:00',
+                            style: CalendarStyles.getHourTextStyle(),
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
             ),
           ),
@@ -135,16 +143,26 @@ class CalendarGrid extends StatelessWidget {
               return Stack(
                 children: [
                   // Capa 1: Datos de la tabla
-                  SingleChildScrollView(
-                    controller: dataScrollController,
-                    child: Stack(
-                      children: [
-                        buildDataRows(),
-                        // Capa 2: Eventos (Positioned) - Ahora dentro del SingleChildScrollView
-                        ...buildEventsLayer(constraints.maxWidth),
-                        // Capa 3: Detector invisible para doble clicks en celdas vacías (deshabilitado temporalmente)
-                        // _buildDoubleClickDetector(constraints.maxWidth),
-                      ],
+                  ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(context).copyWith(
+                      dragDevices: {
+                        PointerDeviceKind.touch,
+                        PointerDeviceKind.mouse,
+                        PointerDeviceKind.trackpad,
+                      },
+                    ),
+                    child: SingleChildScrollView(
+                      controller: dataScrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Stack(
+                        children: [
+                          buildDataRows(),
+                          // Capa 2: Eventos (Positioned) - Ahora dentro del SingleChildScrollView
+                          ...buildEventsLayer(constraints.maxWidth),
+                          // Capa 3: Detector invisible para doble clicks en celdas vacías (deshabilitado temporalmente)
+                          // _buildDoubleClickDetector(constraints.maxWidth),
+                        ],
+                      ),
                     ),
                   ),
                 ],

@@ -230,14 +230,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _buildNameField() {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+        color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),
@@ -328,14 +321,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _buildEmailField() {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+        color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),
@@ -437,14 +423,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       children: [
         Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.grey.shade800,
-                const Color(0xFF2C2C2C),
-              ],
-            ),
+            color: Colors.grey.shade800, // Color sólido, sin gradiente
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: Colors.grey.shade700.withOpacity(0.5),
@@ -630,14 +609,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _buildPasswordField() {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+        color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),
@@ -766,14 +738,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _buildConfirmPasswordField() {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+        color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),
@@ -968,14 +933,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColorScheme.color2,
-            AppColorScheme.color2.withOpacity(0.85),
-          ],
-        ),
+        color: AppColorScheme.color2, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -1028,14 +986,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+        color: Colors.grey.shade800, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),

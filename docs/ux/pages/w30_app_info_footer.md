@@ -11,7 +11,8 @@ Widget de pie de página dedicado a mostrar informaciones de la aplicación. Ubi
 ## Diseño Visual
 
 ### Colores
-- **Fondo**: `AppColorScheme.color2` (color de acento)
+- **Fondo**: Gradiente igual que W1/W2 (Estilo Base)
+  - `LinearGradient` de `Colors.grey.shade800` → `Color(0xFF2C2C2C)`
 - **Borde**: Sin borde
 - **Esquinas**: Ángulo recto (sin borderRadius)
 
@@ -41,11 +42,18 @@ Widget _buildW30(double columnWidth, double rowHeight) {
     child: Container(
       width: w30Width,
       height: w30Height,
-      decoration: BoxDecoration(
-        color: AppColorScheme.color2, // Fondo color2
-        // Sin borde
-        // Sin borderRadius (esquinas en ángulo recto)
-      ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade800,
+              const Color(0xFF2C2C2C),
+            ],
+          ),
+          // Sin borderRadius (esquinas en ángulo recto)
+          // Sin borde
+        ),
       // Sin contenido
     ),
   );
@@ -67,6 +75,11 @@ Widget _buildW30(double columnWidth, double rowHeight) {
   - Eliminado contenido de prueba
   - Eliminado borde y borderRadius
   - Simplificado a contenedor básico
+
+### Diciembre 2025 - Actualización a Estilo Base
+- **Cambios**:
+  - Añadido borde blanco de 2px (mismo que W1)
+  - Alineado con el Estilo Base de la aplicación
 
 ## Consideraciones de UX
 

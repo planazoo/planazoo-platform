@@ -18,6 +18,7 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_service.da
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
+import 'package:unp_calendario/widgets/notifications/wd_notification_badge.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
 
 /// Página de lista de planes para móviles (iOS/Android)
@@ -164,14 +165,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
           elevation: 0,
           flexibleSpace: Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.grey.shade800,
-                  const Color(0xFF2C2C2C),
-                ],
-              ),
+              color: Colors.grey.shade800, // Color sólido, sin gradiente
             ),
           ),
           actions: [
@@ -184,14 +178,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColorScheme.color2,
-                        AppColorScheme.color2.withOpacity(0.85),
-                      ],
-                    ),
+            color: AppColorScheme.color2, // Color sólido, sin gradiente
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -391,6 +378,14 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Badge de notificaciones
+                  NotificationBadge(
+                    iconColor: Colors.white,
+                    badgeColor: Colors.red,
+                    iconSize: 28,
+                  ),
+                  const SizedBox(width: 8),
+                  // Icono de perfil
                   IconButton(
                     icon: Icon(
                       Icons.person,
@@ -716,14 +711,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.grey.shade800,
-                        const Color(0xFF2C2C2C),
-                      ],
-                    ),
+                    color: Colors.grey.shade800, // Color sólido, sin gradiente
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: Colors.grey.shade700.withOpacity(0.5),
@@ -838,14 +826,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
           ),
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColorScheme.color2,
-                  AppColorScheme.color2.withOpacity(0.85),
-                ],
-              ),
+            color: AppColorScheme.color2, // Color sólido, sin gradiente
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(

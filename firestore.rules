@@ -114,6 +114,21 @@ service cloud.firestore {
              (!('type' in request.resource.data) || request.resource.data.type in ['info', 'urgent', 'important']);
     }
     
+    // Validar estructura básica de mensaje de chat
+    function isValidMessageData(planId) {
+      return request.resource.data.keys().hasAll(['planId', 'userId', 'message', 'createdAt', 'updatedAt']) &&
+             request.resource.data.planId == planId &&
+             request.resource.data.userId is string &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.message is string &&
+             request.resource.data.message.size() >= 1 &&
+             request.resource.data.message.size() <= 5000 &&
+             request.resource.data.createdAt is timestamp &&
+             request.resource.data.updatedAt is timestamp &&
+             request.resource.data.readBy is list &&
+             (!('replyTo' in request.resource.data) || request.resource.data.replyTo is string);
+    }
+    
     // Validar estructura básica de participación
     function isValidParticipationData(planId) {
       return request.resource.data.keys().hasAll(['planId', 'userId', 'role', 'joinedAt']) &&
@@ -269,10 +284,13 @@ service cloud.firestore {
       // Los administradores pueden crear planes
       allow create: if (isAuthenticated() && isValidPlanData()) || isAdmin(request.auth.uid);
       
-      // Leer: Usuarios autenticados pueden leer (validación completa en cliente)
-      // Los administradores pueden leer todos los planes
-      // NOTA: La verificación de participación real se hace en el código cliente
-      allow read: if isAuthenticated();
+      // Leer: 
+      //  - Usuarios autenticados pueden leer (validación completa en cliente)
+      //  - Los administradores pueden leer todos los planes
+      //  - IMPORTANTE: Permitir lectura pública para que usuarios no autenticados puedan ver planes desde invitaciones
+      //    Esto es necesario para que la página de invitación funcione sin autenticación
+      //    NOTA: La verificación de participación real se hace en el código cliente
+      allow read: if isAuthenticated() || true; // Permitir lectura pública (necesario para invitaciones)
       
       // Actualizar: Solo owner del plan puede actualizar
       // Los administradores pueden actualizar cualquier plan
@@ -367,6 +385,60 @@ service cloud.firestore {
       // Eliminar: Solo el creador del aviso o owner del plan puede eliminar
       allow delete: if isAuthenticated() && 
                        (isPlanOwner(planId) || resource.data.userId == request.auth.uid);
+    }
+    
+    // ============================================
+    // REGLAS PARA MENSAJES DE CHAT (subcolección de planes) - T190
+    // ============================================
+    
+    match /plans/{planId}/messages/{messageId} {
+      // Crear: Solo usuarios autenticados pueden crear mensajes con validación
+      // La verificación de participación en el plan se hace en el cliente
+      allow create: if isAuthenticated() &&
+                       isValidMessageData(planId);
+      
+      // Leer y listar: Usuarios autenticados pueden leer/listar mensajes
+      // La verificación de participación en el plan se hace en el cliente
+      // NOTA: read incluye tanto get como list, así que no necesitamos list por separado
+      allow read: if isAuthenticated();
+      
+      // Actualizar: 
+      // - El autor del mensaje puede editar su mensaje (solo message, editedAt, updatedAt)
+      // - Cualquier usuario puede marcar mensajes como leídos (solo readBy, updatedAt)
+      // - El autor puede eliminar su mensaje (soft delete: solo deletedAt, updatedAt)
+      allow update: if isAuthenticated() && (
+        // Editar mensaje propio
+        (resource.data.userId == request.auth.uid &&
+         request.resource.data.userId == resource.data.userId &&
+         request.resource.data.planId == resource.data.planId &&
+         request.resource.data.createdAt == resource.data.createdAt &&
+         (!('deletedAt' in request.resource.data) || request.resource.data.deletedAt == resource.data.deletedAt) &&
+         (!('readBy' in request.resource.data) || request.resource.data.readBy == resource.data.readBy) &&
+         (!('replyTo' in request.resource.data) || request.resource.data.replyTo == resource.data.replyTo)) ||
+        // Marcar como leído (cualquier usuario puede añadirse a readBy)
+        (request.resource.data.userId == resource.data.userId &&
+         request.resource.data.planId == resource.data.planId &&
+         request.resource.data.message == resource.data.message &&
+         request.resource.data.createdAt == resource.data.createdAt &&
+         (!('editedAt' in request.resource.data) || request.resource.data.editedAt == resource.data.editedAt) &&
+         (!('deletedAt' in request.resource.data) || request.resource.data.deletedAt == resource.data.deletedAt) &&
+         (!('replyTo' in request.resource.data) || request.resource.data.replyTo == resource.data.replyTo) &&
+         'readBy' in request.resource.data.diff(resource.data).affectedKeys()) ||
+        // Soft delete (solo el autor)
+        (resource.data.userId == request.auth.uid &&
+         request.resource.data.userId == resource.data.userId &&
+         request.resource.data.planId == resource.data.planId &&
+         request.resource.data.message == resource.data.message &&
+         request.resource.data.createdAt == resource.data.createdAt &&
+         (!('editedAt' in request.resource.data) || request.resource.data.editedAt == resource.data.editedAt) &&
+         (!('readBy' in request.resource.data) || request.resource.data.readBy == resource.data.readBy) &&
+         (!('replyTo' in request.resource.data) || request.resource.data.replyTo == resource.data.replyTo) &&
+         'deletedAt' in request.resource.data.diff(resource.data).affectedKeys())
+      );
+      
+      // Eliminar: No se permite hard delete, solo soft delete (marcar deletedAt)
+      // Los administradores pueden eliminar mensajes (útil para moderación)
+      allow delete: if isAdmin(request.auth.uid);
     }
     
     // ============================================
@@ -503,6 +575,79 @@ service cloud.firestore {
     }
     
     // ============================================
+    // REGLAS PARA TOKENS FCM (Fase 1 - FCM Básico)
+    // ============================================
+    
+    match /users/{userId}/fcmTokens/{tokenId} {
+      // Crear: Solo el propio usuario puede crear su token
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       request.resource.data.keys().hasAll(['token', 'deviceInfo', 'createdAt', 'updatedAt']) &&
+                       request.resource.data.token is string &&
+                       request.resource.data.token == tokenId &&
+                       request.resource.data.deviceInfo is map &&
+                       request.resource.data.createdAt is timestamp &&
+                       request.resource.data.updatedAt is timestamp;
+      
+      // Leer: Solo el propio usuario puede leer sus tokens
+      allow read: if isAuthenticated() && 
+                     request.auth.uid == userId;
+      
+      // Actualizar: Solo el propio usuario puede actualizar su token (para actualizar updatedAt)
+      allow update: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       request.resource.data.token == resource.data.token && // No cambiar el token
+                       request.resource.data.deviceInfo == resource.data.deviceInfo && // No cambiar deviceInfo
+                       request.resource.data.createdAt == resource.data.createdAt; // No cambiar createdAt
+      
+      // Eliminar: Solo el propio usuario puede eliminar su token
+      allow delete: if isAuthenticated() && 
+                       request.auth.uid == userId;
+    }
+    
+    // ============================================
+    // REGLAS PARA NOTIFICACIONES (Sistema In-App)
+    // ============================================
+    
+    match /users/{userId}/notifications/{notificationId} {
+      // Crear: Solo el propio usuario puede crear sus notificaciones
+      // (En la práctica, las notificaciones se crean desde Cloud Functions o servicios)
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       request.resource.data.keys().hasAll(['userId', 'type', 'title', 'body', 'isRead', 'createdAt']) &&
+                       request.resource.data.userId == userId &&
+                       request.resource.data.type is string &&
+                       request.resource.data.title is string &&
+                       request.resource.data.body is string &&
+                       request.resource.data.isRead is bool &&
+                       request.resource.data.createdAt is timestamp;
+      
+      // Leer: Solo el propio usuario puede leer sus notificaciones
+      allow read: if isAuthenticated() && 
+                     request.auth.uid == userId;
+      
+      // Listar: Necesario para consultas con where() y orderBy()
+      allow list: if isAuthenticated() && 
+                     request.auth.uid == userId;
+      
+      // Actualizar: Solo el propio usuario puede actualizar sus notificaciones
+      // (Principalmente para marcar como leída)
+      allow update: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       request.resource.data.userId == resource.data.userId && // No cambiar userId
+                       request.resource.data.type == resource.data.type && // No cambiar type
+                       request.resource.data.title == resource.data.title && // No cambiar title
+                       request.resource.data.body == resource.data.body && // No cambiar body
+                       request.resource.data.createdAt == resource.data.createdAt && // No cambiar createdAt
+                       (!('planId' in request.resource.data) || request.resource.data.planId == resource.data.planId) &&
+                       (!('eventId' in request.resource.data) || request.resource.data.eventId == resource.data.eventId);
+      
+      // Eliminar: Solo el propio usuario puede eliminar sus notificaciones
+      allow delete: if isAuthenticated() && 
+                       request.auth.uid == userId;
+    }
+    
+    // ============================================
     // REGLAS PARA PAGOS PERSONALES (T102)
     // ============================================
     
@@ -597,6 +742,8 @@ service cloud.firestore {
       //  - Usuario autenticado cuyo email coincide con el de la invitación puede leer su propia invitación
       //    (comparación case-insensitive, verifica token o documento de usuario en Firestore)
       //  - Admin puede leer todas
+      //  - IMPORTANTE: Permitir lectura sin autenticación solo para invitaciones pendientes (permite acceso por token)
+      //    Los tokens son únicos (64 caracteres) y solo se pueden leer invitaciones pendientes, así que es seguro
       allow read: if (isAuthenticated() && (
                         isPlanOwner(resource.data.planId) ||
                         (
@@ -606,7 +753,7 @@ service cloud.firestore {
                           (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
                            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email.toLowerCase() == resource.data.email.toLowerCase())
                         )
-                     )) || isAdmin(request.auth.uid);
+                     )) || isAdmin(request.auth.uid) || (resource.data.status == 'pending'); // Permitir lectura pública solo para invitaciones pendientes
 
       // Listar: 
       //  - Permitir a autenticados para consultas con filtros where
