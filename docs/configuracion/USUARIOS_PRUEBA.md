@@ -2,7 +2,7 @@
 
 > Documento completo para testing y desarrollo. Usa Gmail con alias para crear múltiples usuarios desde una sola cuenta.
 
-**Última actualización:** Enero 2025
+**Última actualización:** Febrero 2026
 
 ---
 

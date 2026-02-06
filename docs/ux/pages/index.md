@@ -8,7 +8,8 @@ Este directorio contiene la documentación técnica y funcional de todas las pá
 ## 📄 Páginas Documentadas
 
 ### 🔐 **login_page.md** - Página de Inicio de Sesión
-**Versión:** 2.2 | **Última actualización:** Diciembre 2024
+**Versión:** 2.2 | **Última actualización:** Febrero 2026  
+**Código:** `lib/features/auth/presentation/pages/login_page.dart` → `LoginPage`
 
 **Descripción:** Primera página que ve el usuario al entrar en la aplicación. Permite la autenticación con credenciales de email y contraseña, incluyendo verificación obligatoria de email y funcionalidades de recuperación de contraseña.
 
@@ -26,7 +27,8 @@ Este directorio contiene la documentación técnica y funcional de todas las pá
 ---
 
 ### 📝 **register_page.md** - Página de Registro de Usuario
-**Versión:** 1.0 | **Última actualización:** Diciembre 2024
+**Versión:** 1.0 | **Última actualización:** Febrero 2026  
+**Código:** `lib/features/auth/presentation/pages/register_page.dart` → `RegisterPage`
 
 **Descripción:** Página para crear una nueva cuenta de usuario. Incluye formulario completo con validaciones, verificación automática de email y redirección al login tras el registro exitoso.
 
@@ -44,7 +46,8 @@ Este directorio contiene la documentación técnica y funcional de todas las pá
 ---
 
 ### 👤 **profile_page.md** - Página de Perfil de Usuario
-**Versión:** 2.0 | **Última actualización:** Diciembre 2024
+**Versión:** 2.0 | **Última actualización:** Febrero 2026  
+**Código:** `lib/pages/pg_profile_page.dart` → `ProfilePage`
 
 **Descripción:** Página para visualizar y gestionar el perfil del usuario autenticado. Muestra información del usuario, foto de perfil, y acceso a opciones de configuración.
 
@@ -60,6 +63,8 @@ Este directorio contiene la documentación técnica y funcional de todas las pá
 ---
 
 ### 🎨 **Widgets del Dashboard (Web)**
+
+**Código:** Todos los widgets W1–W30 viven en `lib/pages/pg_dashboard_page.dart` (clase `DashboardPage`), métodos `_buildW1` … `_buildW30`.
 
 #### **w1_sidebar.md** - Barra Lateral Izquierda
 **Descripción:** Barra lateral izquierda del dashboard web con navegación y acceso a funcionalidades principales.
@@ -172,21 +177,103 @@ Cada documento de página sigue un formato estándar que incluye:
 
 ---
 
-## 🔄 **Próximas Páginas a Documentar**
+## 📂 **Páginas / Pantallas en Código (sin doc detallado en este directorio)**
 
-### **Páginas Pendientes:**
-- [ ] **main_page.md** - Página principal de la aplicación
-- [ ] **edit_profile_page.md** - Página de edición de perfil
-- [ ] ~~**account_settings_page.md**~~ - No existe; configuración integrada en perfil/preferencias
-- [ ] **calendar_page.md** - Página del calendario principal
-- [ ] **create_plan_page.md** - Página de creación de planes
-- [ ] **plan_details_page.md** - Página de detalles de plan
-- [ ] **event_dialog.md** - Diálogo de creación/edición de eventos
+Listado alineado con el código actual. Las que tienen ficha en este directorio están arriba (login, register, profile, w1–w30).
 
-### **Criterios de Prioridad:**
-1. **Alta**: Páginas principales de funcionalidad
-2. **Media**: Páginas de configuración y perfil
-3. **Baja**: Diálogos y componentes auxiliares
+| Página / Pantalla   | Archivo | Notas |
+|--------------------|---------|--------|
+| **PlansListPage**  | `lib/pages/pg_plans_list_page.dart` | Lista de planes; post-login en app (equiv. “main”). |
+| **DashboardPage**  | `lib/pages/pg_dashboard_page.dart` | Dashboard web; contiene W1–W30 y `PlanDataScreen` embebido. |
+| **PlanDetailPage** | `lib/pages/pg_plan_detail_page.dart` | Contenedor que muestra `PlanDataScreen` (datos del plan). |
+| **PlanDataScreen** | `lib/widgets/screens/wd_plan_data_screen.dart` | Formulario/detalle del plan (info, estado, participantes, etc.). |
+| **CalendarMobilePage** | `lib/pages/pg_calendar_mobile_page.dart` | Vista calendario móvil. |
+| **CalendarScreen** | `lib/widgets/screens/wd_calendar_screen.dart` | Vista calendario (widget). |
+| **FullScreenCalendarPage** | `lib/widgets/screens/fullscreen_calendar_page.dart` | Calendario a pantalla completa. |
+| **InvitationPage** | `lib/pages/pg_invitation_page.dart` | Aceptar invitación por token (link de email). |
+| **PlanParticipantsPage** | `lib/pages/pg_plan_participants_page.dart` | Página de participantes del plan. |
+| **ParticipantsScreen** | `lib/widgets/screens/wd_participants_screen.dart` | Pantalla de gestión de participantes. |
+| **ParticipantGroupsPage** | `lib/pages/pg_participant_groups_page.dart` | Grupos de participantes. |
+| **PlanStatsPage** | `lib/features/stats/presentation/pages/plan_stats_page.dart` | Estadísticas del plan. |
+| **PaymentSummaryPage** | `lib/features/payments/presentation/pages/payment_summary_page.dart` | Resumen de pagos. |
+| **PlanChatScreen** | `lib/widgets/screens/wd_plan_chat_screen.dart` | Chat del plan. |
+| **AdminInsightsScreen** | `lib/widgets/screens/wd_admin_insights_screen.dart` | Panel admin (insights). |
+| **EditProfilePage** | `lib/features/auth/presentation/pages/edit_profile_page.dart` | Edición de perfil (modal/diálogo). |
+| **UIShowcasePage** | `lib/pages/pg_ui_showcase_page.dart` | Showcase de componentes UI (desarrollo). |
+
+**No existen como página:** `AccountSettingsPage` (eliminado; opciones en perfil). Creación de planes: modal/diálogo desde dashboard, no página dedicada.
+
+---
+
+## 🗺️ **Visualización: Páginas y conexiones**
+
+Flujo de navegación según el código actual. Las flechas indican “desde → hacia” (push, cambio de pantalla o contenido).
+
+### Entrada de la app y auth
+
+```mermaid
+flowchart LR
+  subgraph Entrada
+    RUTA["/"] --> AUTH[AuthGuard]
+    INV["/invitation/:token"] --> IP[InvitationPage]
+  end
+  AUTH -->|no autenticado| LOGIN[LoginPage]
+  AUTH -->|autenticado + móvil| PLP[PlansListPage]
+  AUTH -->|autenticado + desktop| DASH[DashboardPage]
+  LOGIN -->|Registrarse| REG[RegisterPage]
+  REG -->|tras registro| LOGIN
+  IP -->|aceptar invitación| RUTA
+```
+
+### Desde PlansListPage (móvil)
+
+```mermaid
+flowchart LR
+  PLP[PlansListPage] -->|tap plan| PDP[PlanDetailPage]
+  PLP -->|botón perfil| PROF[ProfilePage]
+  PLP -->|crear plan (modal)| PDP
+  PROF -->|Editar perfil (modal)| EP[EditProfilePage]
+```
+
+### PlanDetailPage (móvil): pestañas internas
+
+```mermaid
+flowchart LR
+  PDP[PlanDetailPage] --> PDATA[PlanDataScreen]
+  PDP --> CAL[CalendarMobilePage]
+  PDP --> PART[PlanParticipantsPage]
+  PDP --> CHAT[PlanChatScreen]
+  PDP --> STATS[PlanStatsPage]
+  PDP -->|pagos| PRÓX["Placeholder Próximamente"]
+  CAL -->|pantalla completa| FSC[FullScreenCalendarPage]
+```
+
+### Dashboard (web): pantallas en W31
+
+```mermaid
+flowchart LR
+  DASH[DashboardPage] --> W31["Área W31"]
+  W31 -->|currentScreen| CALW[CalendarScreen]
+  W31 -->|planData| PDATA[PlanDataScreen]
+  W31 -->|participants| PSCR[ParticipantsScreen]
+  W31 -->|profile| PROF[ProfilePage]
+  W31 -->|stats| STATS[PlanStatsPage]
+  W31 -->|payments| PAY[PaymentSummaryPage]
+  W31 -->|admin| ADMIN[AdminInsightsScreen]
+  W31 -->|Gestionar participantes| PSCR
+  CALW -->|fullscreen| FSC[FullScreenCalendarPage]
+  PROF -->|modal| EP[EditProfilePage]
+```
+
+### Leyenda
+
+| Símbolo | Significado |
+|--------|-------------|
+| `→` / flecha | Navegación (push, cambio de pantalla o de `currentScreen`) |
+| modal | Diálogo o overlay sobre la misma pantalla |
+| W31 | Zona principal del dashboard donde se muestran calendario, datos del plan, participantes, etc. |
+
+*Generado a partir del código (app.dart, AuthGuard, PlansListPage, DashboardPage, PlanDetailPage). Febrero 2026.*
 
 ---
 

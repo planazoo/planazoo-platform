@@ -2,9 +2,18 @@
 
 > Documento vivo que debe actualizarse cada vez que se completa una tarea o se añade nueva funcionalidad.
 
-**Versión:** 1.3  
-**Última actualización:** Enero 2025 (Actualizado - T163 username obligatorio, login con username, T164 Google login, validación de contraseñas mejorada)  
+**Versión:** 1.4  
+**Última actualización:** Febrero 2026  
 **Mantenedor:** Equipo de desarrollo
+
+---
+
+## 🚀 ANTES DE EMPEZAR ESTA SERIE DE PRUEBAS
+
+1. **Normas y entorno:** Lee `docs/configuracion/CONTEXT.md` (idioma, estilo, no push sin confirmación).
+2. **Usuarios:** Ten a mano `docs/configuracion/USUARIOS_PRUEBA.md` (emails con alias, roles, contraseñas). Opción: botón "⚙️ Init Firestore" en dashboard para crear usuarios de prueba.
+3. **Ámbito:** Usa la tabla de contenidos de abajo y marca cada bloque (✅/❌/⚠️) según vayas probando.
+4. **Comportamiento esperado:** Los flujos en `docs/flujos/` (CRUD planes, eventos, participantes, etc.) describen el comportamiento esperado; úsalos como referencia si un caso falla o es ambiguo.
 
 ---
 
@@ -103,12 +112,13 @@ Cada caso de prueba debe incluir:
 
 - [x] **REG-001:** Registrar nuevo usuario con email válido y username válido
   - Pasos: 
-    1. Abrir perfil → tarjeta "Seguridad y acceso" → "Cambiar contraseña"
+    1. En la pantalla de login, pulsar "Registrarse" (o enlace equivalente)
     2. Completar campo de nombre
-    3. Completar campo de **username** (ej: `usuario_prueba1`)
-    4. Contraseña segura (mínimo 8 caracteres con mayúsculas, minúsculas, números y caracteres especiales)
-    5. Confirmar contraseña
-    6. Aceptar términos y condiciones
+    3. Completar campo de email (ej: `unplanazoo+temp1@gmail.com`)
+    4. Completar campo de **username** (ej: `usuario_prueba1`)
+    5. Contraseña segura (mínimo 8 caracteres con mayúsculas, minúsculas, números y caracteres especiales)
+    6. Confirmar contraseña
+    7. Aceptar términos y condiciones y enviar
   - Esperado: 
     - Usuario creado exitosamente
     - Username guardado en Firestore con `usernameLower`

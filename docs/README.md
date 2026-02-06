@@ -89,6 +89,12 @@ Configuración y contexto del proyecto:
 2. Revisa [Estado de Tareas](./tareas/TASKS.md)
 3. Consulta los flujos en [Flujos de Proceso](./flujos/)
 
+### Para quien ejecuta pruebas
+1. Abre [Testing Checklist](./configuracion/TESTING_CHECKLIST.md) (incluye sección "Antes de empezar esta serie de pruebas")
+2. Ten a mano [Usuarios de prueba](./configuracion/USUARIOS_PRUEBA.md) (emails, roles, contraseñas)
+3. Usa el [Checklist](./configuracion/TESTING_CHECKLIST.md) por área y marca estado (✅/❌/⚠️)
+4. Si pruebas offline: [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md)
+
 ---
 
 ## 📊 Estado del Proyecto

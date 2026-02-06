@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../models/plan_invitation.dart';
@@ -521,7 +522,7 @@ class InvitationService {
     // En desarrollo web, detectar localhost automáticamente
     // En producción, usar la URL configurada en Firebase Functions
     // Por ahora, usar localhost para desarrollo y planazoo.app para producción
-    const baseUrl = kDebugMode 
+    final baseUrl = kDebugMode
         ? 'http://localhost:8080'  // Desarrollo local
         : 'https://planazoo.app';   // Producción
     
