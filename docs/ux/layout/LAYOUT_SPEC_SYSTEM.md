@@ -2,7 +2,7 @@
 
 > Sistema para definir la estructura de layout de pantallas para web y móvil
 
-**Última actualización:** Diciembre 2024
+**Última actualización:** Febrero 2026
 
 ---
 

@@ -3,8 +3,8 @@
 > Define qué elementos son configurables por el usuario y por plan
 
 **Relacionado con:** T50, T105, T124  
-**Versión:** 1.0  
-**Fecha:** Enero 2025
+**Versión:** 1.1  
+**Fecha:** Enero 2025. Revisión Febrero 2026: alineado con implementación actual (idioma, timezone, perfil).
 
 ---
 
@@ -24,10 +24,10 @@ Documentar todos los elementos configurables de la app, organizados por categor�
 - Foto de perfil
 - Nombre completo
 - Username
-- Biografía
-- Zona horaria
+- ~~Biografía~~ *(no implementado en `UserModel`)*
+- Zona horaria (`UserModel.defaultTimezone`)
 
-**Persistencia:** Firestore (`users/{userId}`)
+**Persistencia:** Firestore (`users/{userId}`). Implementado: `EditProfilePage`, `UserService.updateUserProfile`, "Configurar zona horaria" en perfil (Seguridad).
 
 #### 1.2 - Notificaciones
 
@@ -103,12 +103,12 @@ class QuietHours {
 - Idioma de la interfaz
 - Idioma de fechas (dd/mm/yyyy o mm/dd/yyyy)
 
-**Persistencia:** LocalStorage + Firestore (`users/{userId}/preferences`)
+**Persistencia:** Implementación actual: **SharedPreferences** (solo local). Diseño: LocalStorage + Firestore (`users/{userId}/preferences`).
 
-**Implementación:**
-- Usar archivos `.arb` en `lib/l10n/`
-- Cambio dinámico de idioma sin restart
-- Persistir preferencia en Firestore
+**Implementación actual:**
+- ✅ Archivos `.arb` en `lib/l10n/` (app_es.arb, app_en.arb)
+- ✅ Cambio dinámico de idioma sin restart (`LanguageNotifier.changeLanguage`, `currentLanguageSyncProvider`)
+- ✅ Persistencia: **SharedPreferences** (`LanguageStorageService`), no Firestore. Rutas: `lib/features/language/` (language_storage_service, language_providers, language_selector)
 
 #### 2.2 - Fecha y Hora
 
@@ -286,7 +286,21 @@ graph TD
 
 ---
 
-## ✅ IMPLEMENTACIÓN SUGERIDA
+## ✅ IMPLEMENTACIÓN ACTUAL (revisión Febrero 2026)
+
+**Lo implementado:**
+- ✅ **Idioma:** `LanguageStorageService` (SharedPreferences), `language_providers.dart`, `LanguageSelector`; persistencia solo local (no Firestore).
+- ✅ **Zona horaria de usuario:** `UserModel.defaultTimezone` en `users/{userId}`; opción "Configurar zona horaria" en perfil (tarjeta Seguridad); banner de sugerencia si dispositivo ≠ preferencia (`AuthState.timezoneSuggestion`, `deviceTimezone`).
+- ✅ **Perfil:** foto, displayName, username en `UserModel`; `EditProfilePage`, `ProfilePage`; sin campo biografía.
+- ✅ **Cuenta:** cambiar contraseña y eliminar cuenta desde perfil vía `AuthNotifier` (modales).
+- ✅ Las colecciones `userPreferences` y `plans/{planId}/userPreferences/{userId}` existen para limpieza en `UserService.deleteAllUserData`; no hay aún UI ni modelos de preferencias.
+
+**Pendiente (diseño del doc):**
+- UserPreferences / PlanUserPreferences / NotificationPreferences (modelos y servicios)
+- Preferencias de notificaciones, privacidad granular, tema claro/oscuro/sistema, accesibilidad
+- `lib/features/preferences/` (no existe aún)
+
+## 📌 IMPLEMENTACIÓN SUGERIDA (archivos a crear)
 
 **Archivos a crear:**
 - `lib/features/preferences/domain/models/user_preferences.dart`
@@ -297,12 +311,12 @@ graph TD
 - `lib/features/preferences/presentation/widgets/preferences_section.dart`
 
 **Prioridad:**
-- **Alta:** Notificaciones, Idioma, Tema
-- **Media:** Privacidad, Apariencia, Zona horaria
+- **Alta:** Notificaciones, Idioma (ya en SharedPreferences; opcional migrar a Firestore), Tema
+- **Media:** Privacidad, Apariencia, Zona horaria (parcialmente en UserModel)
 - **Baja:** Accesibilidad avanzada
 
 ---
 
 *Documento de flujo de configuración de la app*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026 (revisión sincronizada con código: idioma SharedPreferences, defaultTimezone, perfil, sin preferences feature)*
 

@@ -1,7 +1,7 @@
 # 🔍 Auditoría de Colecciones de Firestore
 
 > Documento creado: Enero 2025  
-> Última actualización: Enero 2025
+> Última actualización: Febrero 2026
 
 ---
 

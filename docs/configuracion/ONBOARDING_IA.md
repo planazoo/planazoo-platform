@@ -4,7 +4,7 @@
 
 **Fecha de creación:** Noviembre 2025  
 **Proyecto:** Planazoo (unp_calendario)  
-**Última actualización:** Noviembre 2025
+**Última actualización:** Febrero 2026
 
 ---
 
@@ -54,6 +54,7 @@
 
 ### 2. Documentos de Arquitectura
 - **`docs/arquitectura/ARCHITECTURE_DECISIONS.md`** - Decisiones arquitectónicas fundamentales
+- **`docs/arquitectura/PLATFORM_STRATEGY.md`** - Estrategia multi-plataforma (iOS, Android, Web)
 - **`docs/especificaciones/CALENDAR_CAPABILITIES.md`** - Capacidades y reglas del calendario
 
 ### 3. Documentos de Flujos

@@ -3,9 +3,11 @@
 > Documento para T121: Revisión y enriquecimiento de formularios
 
 **Estado:** Borrador  
-**Última actualización:** Enero 2025
+**Última actualización:** Febrero 2026
 
 > **Nota:** Los alojamientos se gestionan por separado. Ver `ACCOMMODATION_FORM_FIELDS.md` para detalles.
+
+**Implementación actual (Feb 2026):** Modelo `Event` y `EventCommonPart`/`EventPersonalPart` en `lib/features/calendar/domain/models/event.dart`. Campos: description, date, hour, startMinute, durationMinutes, color, typeFamily, typeSubtype, details, participantTrackIds, isDraft, commonPart, personalParts, timezone, arrivalTimezone, maxParticipants (T117), requiresConfirmation (T120), cost (T101). Formulario: `wd_event_dialog.dart` con validaciones.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Sistema para definir y documentar la estructura de layout de pantallas
 
-**Última actualización:** Diciembre 2024
+**Última actualización:** Febrero 2026
 
 ---
 

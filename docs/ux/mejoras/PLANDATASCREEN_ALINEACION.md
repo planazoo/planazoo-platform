@@ -91,6 +91,9 @@ Mejorar la alineación visual y la consistencia del layout en la pantalla de dat
 
 ---
 
-**Fecha de creación**: Enero 2025  
-**Estado**: Pendiente de implementación
+**Fecha de creación:** Enero 2025  
+**Última actualización:** Febrero 2026  
+**Estado:** Pendiente de implementación  
+
+**Implementación actual:** En `wd_plan_data_screen.dart` no está aplicado el layout 2/3–1/3 con `Flexible(flex: 2)`/`Flexible(flex: 1)` ni `crossAxisAlignment: CrossAxisAlignment.stretch` en filas anchas; la mejora sigue pendiente.
 

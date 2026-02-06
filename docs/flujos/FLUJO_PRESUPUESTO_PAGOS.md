@@ -576,5 +576,5 @@ graph TD
 ---
 
 *Documento de flujo de presupuesto y pagos*  
-*Última actualización: Enero 2025 (T102 y T153 completados)*
+*Última actualización: Febrero 2026*
 

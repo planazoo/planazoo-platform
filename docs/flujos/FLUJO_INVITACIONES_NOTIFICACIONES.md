@@ -276,10 +276,9 @@ Listo (no se puede responder)
 **Campos del aviso:**
 - Autor (usuario que publica)
 - Mensaje (texto)
-- Foto adjunta (opcional)
-- Ubicación (opcional)
 - Timestamp
-- Tipo: "Información" / "Urgente" / "Importante"
+- Tipo: "Información" / "Urgente" / "Importante" (`PlanAnnouncement.type`: info, urgent, important)
+- *(Pendiente en código: foto adjunta, ubicación)*
 
 **Historial de avisos:**
 ```
@@ -413,7 +412,7 @@ Evento creado con "requiere confirmación"
   ↓
 Participantes asignados reciben notificación:
 "Invitación a evento: [Nombre evento]
-Fecha: [Fecha]
+Fecha: [Fecha del evento]
 Ubicación: [Ubicación]
 Límite: 10 personas (7 confirmadas)"
 
@@ -523,7 +522,7 @@ graph TD
 - Configuración de preferencias de notificación por usuario
 
 **Completas ✅:**
-- Ninguna (todo pendiente)
+- Invitaciones por email con token (T104), avisos del plan (T105 base), confirmación de asistencia a eventos (T120 Fase 2 base). Véase sección "Implementación actual" más abajo.
 
 ---
 
@@ -547,7 +546,7 @@ graph TD
   - ✅ Búsqueda de usuario por email (si existe, requiere aceptación explícita)
   - ✅ Generación de links únicos con token
   - ✅ Página InvitationPage para procesar links (/invitation/{token})
-  - ✅ Email HTML con botones "Aceptar" / "Rechazar" (Firebase Functions + SendGrid)
+  - ✅ Email HTML con botones "Aceptar" / "Rechazar" (Firebase Functions + Gmail SMTP)
   - ✅ Template HTML responsive con información del plan
   - ✅ Firestore rules para plan_invitations con verificación de email mejorada (token + fallback a documento usuario)
   - ✅ Campo status en PlanParticipation (pending, accepted, rejected, expired)
@@ -563,7 +562,7 @@ graph TD
   - ✅ Manejo de errores cuando la actualización del estado falla pero la participación se crea correctamente
   - ⚠️ Pendiente: Invitaciones por username/nickname (T104 - parte opcional)
   - ⚠️ Pendiente: Cloud Function para actualizar automáticamente el estado de la invitación cuando se crea una participación
-- ❌ Notificaciones push (Firebase Cloud Messaging) - Pendiente FCM
+- ⚠️ Notificaciones push: FCM Fase 1 completada (tokens, guardado en Firestore); envío de notificaciones push desde backend pendiente
 - ❌ Historial de notificaciones
 - ✅ Sistema de confirmación de asistencia a eventos - Base (T120 Fase 2):
   - ✅ Campo requiresConfirmation en Event
@@ -582,7 +581,7 @@ graph TD
 ---
 
 *Documento de flujo de invitaciones y notificaciones*  
-*Última actualización: Noviembre 2025*
+*Última actualización: Febrero 2026 (revisión sincronizada con código: Gmail SMTP, FCM Fase 1, campos aviso)*
 
 **Cambios recientes (v1.1):**
 - ✅ Aclarado que solo el usuario invitado puede aceptar/rechazar su propia invitación

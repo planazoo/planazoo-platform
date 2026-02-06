@@ -289,6 +289,12 @@ return Padding(
 - ✅ **Documentado**: Especificaciones actualizadas
 - ⏳ **Pendiente**: Resumen de participantes en calendario (futuro)
 
+## Implementación actual
+- **Ubicación:** `lib/pages/pg_dashboard_page.dart`, método `_buildW28`. Modo lista: `PlanListWidget` con items `PlanCardWidget` (`lib/widgets/plan/wd_plan_card_widget.dart`). Modo calendario: `PlanCalendarView`.
+- **W31:** En el código actual no existe W31; la apertura del calendario principal se hace desde W15 u otras rutas (p. ej. `PlanDetailPage` / `PlanDataScreen`).
+
+**Última actualización:** Febrero 2026
+
 ## Notas de Desarrollo
 - El widget está completamente funcional según las especificaciones
 - Mantiene consistencia visual con el resto del dashboard

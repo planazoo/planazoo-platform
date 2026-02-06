@@ -128,4 +128,4 @@ Si alguna funcionalidad da error "missing index", revisa que el índice correspo
 
 ---
 
-*Última actualización: 2025-01-XX*
+*Última actualización: Febrero 2026*

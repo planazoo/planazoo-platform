@@ -171,3 +171,5 @@ Widget _buildW27(double columnWidth, double rowHeight) {
 - Mantener sincronía con nuevas vistas posibles en W28 (p.ej. timeline)
 - Evaluar accesos rápidos (shortcuts) si se añaden más modos
 - Verificar contraste del estado activo al actualizar el esquema de colores
+
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW27`. **Última actualización:** Febrero 2026

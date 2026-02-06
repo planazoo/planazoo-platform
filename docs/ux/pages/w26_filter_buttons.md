@@ -168,3 +168,5 @@ String selectedFilter = 'todos'; // 'todos', 'estoy_in', 'pendientes', 'cerrados
 - Mantiene consistencia visual con el resto del dashboard
 - Sigue las especificaciones de la T12
 - La estructura permite fácil implementación de filtrado real en el futuro
+
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW26`. **Última actualización:** Febrero 2026

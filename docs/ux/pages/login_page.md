@@ -58,9 +58,11 @@ Primera página que ve el usuario al entrar en la aplicación. Permite al usuari
     - TextButton con padding mejorado
 
 ## Flujo de Navegación
-- **Login exitoso** → HomePage (página principal)
-- **Registrarse** → user_registration
-- **Recuperar contraseña** → (por definir)
+- **Login exitoso** → `PlansListPage` (página principal; ver `lib/app/app.dart`)
+- **Registrarse** → `RegisterPage`
+- **Recuperar contraseña** → Diálogo modal en la misma página
+
+**Implementación actual:** `lib/features/auth/presentation/pages/login_page.dart`. Usa `AppTheme.darkTheme`, `Scaffold` con `backgroundColor: Colors.grey.shade900`, `SafeArea`, `GoogleFonts.poppins`.
 
 ## Estados de la Página
 - **Estado inicial**: Campos vacíos, botón habilitado
@@ -320,5 +322,5 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 ```
 
 ---
-*Última actualización: [Fecha actual]*
+*Última actualización: Febrero 2026*
 *Versión: 2.2 - Actualizada con verificación de email obligatoria y funcionalidad de reenvío*

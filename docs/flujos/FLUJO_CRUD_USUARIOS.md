@@ -1,8 +1,8 @@
 # 👤 FLUJO_CRUD_USUARIOS
 
 Estado: ✅ Alineado  
-Versión: 1.3  
-Fecha: Noviembre 2025 (Actualizado - Validaciones reforzadas, flujo completo de autenticación y recuperación)
+Versión: 1.4  
+Fecha: Noviembre 2025 (Actualizado - Validaciones reforzadas, flujo completo). Revisión Febrero 2026: UserModel.isAdmin (T188), AccountSettingsPage eliminado.
 
 ---
 
@@ -16,7 +16,7 @@ Relacionado con: `lib/features/auth/presentation/notifiers/auth_notifier.dart`, 
 ## 🔐 Modelo de Datos
 
 - Clase: `UserModel`
-  - Campos: `id`, `email`, `username?`, `displayName?`, `photoURL?`, `createdAt`, `lastLoginAt?`, `isActive`, `defaultTimezone?`
+  - Campos: `id`, `email`, `username?`, `displayName?`, `photoURL?`, `createdAt`, `lastLoginAt?`, `isActive`, `defaultTimezone?`, `isAdmin` (T188, administradores de la plataforma)
   - `AuthState`: añade `deviceTimezone` y `timezoneSuggestion?` para mostrar banners contextuales
   - Serialización: `toFirestore()` usa `Timestamp` para fechas
   - Creación desde Auth: `UserModel.fromFirebaseAuth()`
@@ -175,7 +175,7 @@ Acciones:
 - [Hecho] Top bar con flecha de retorno a la izquierda y `@username` alineado a la derecha
 - [Hecho] Modal de edición centrado (480px máx) sin flecha redundante
 - [Hecho] Botones “Migrar eventos” y “Participar en todos los planes” eliminados (solo quedan acciones relevantes)
-- [Hecho] Se sustituyó `AccountSettingsPage` por modales específicos (cambiar contraseña, privacidad, idioma)
+- [Hecho] `AccountSettingsPage` eliminado; sustituido por modales específicos desde perfil (cambiar contraseña, privacidad, idioma). `deleteAccount` y `changePassword` se usan vía `AuthNotifier`.
 - [Hecho] Opción “Configurar zona horaria” en tarjeta de Seguridad: selector de timezone con búsqueda, preferencia guardada en `defaultTimezone`
 - [Hecho] Banner de recomendación de timezone si `deviceTimezone` ≠ `defaultTimezone`, con acciones “Actualizar zona” / “Mantener”
 
@@ -275,7 +275,8 @@ Ref: ver `firestore.rules` sección `REGLAS PARA USUARIOS`.
 - ✅ Validar `photoURL` segura antes de guardar (Validator.isSafeUrl)
 - ✅ Username único con validación y normalización (T137 - implementado, pendiente pruebas)
 - ✅ UI actualizada para usar `displayIdentifier` en W6 (no mostrar email directamente)
-- ✅ Corregido `account_settings_page.dart` para usar `AuthNotifier` en lugar de `UserNotifier` para `deleteAccount` y `changePassword`
+- ✅ Eliminado `account_settings_page.dart`; `deleteAccount` y `changePassword` se invocan desde `ProfilePage` vía `AuthNotifier` (modales dedicados)
 
+*Última actualización: Febrero 2026*
 
 

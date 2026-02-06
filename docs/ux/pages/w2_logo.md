@@ -137,8 +137,10 @@ Widget _buildW2(double columnWidth, double rowHeight) {
 - **Tasa de identificación**: 100%
 - **Accesibilidad**: Cumple estándares WCAG 2.1
 
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW2`. **Última actualización:** Febrero 2026
+
 ## 🔗 Referencias
 
-- [App Color Scheme](../theme/color_scheme.dart)
-- [App Typography](../theme/typography.dart)
-- [Dashboard Page](../../pages/pg_dashboard_page.dart)
+- [App Color Scheme](../../../lib/app/theme/color_scheme.dart)
+- [App Typography](../../../lib/app/theme/typography.dart)
+- [Dashboard Page](../../../lib/pages/pg_dashboard_page.dart)

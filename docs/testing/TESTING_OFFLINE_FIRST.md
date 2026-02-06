@@ -145,3 +145,5 @@ Buscar en la consola:
 - Los cambios offline se guardan en Hive y se sincronizan cuando hay conexión
 - La resolución de conflictos usa "último cambio gana" basado en `updatedAt`
 
+**Última actualización:** Febrero 2026
+

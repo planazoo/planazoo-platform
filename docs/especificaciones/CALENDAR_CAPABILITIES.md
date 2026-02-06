@@ -41,21 +41,16 @@ Notas de interacción entre capas:
 - Cualquier overlay adicional debe respetar el z-order: los eventos deben poder recibir sus gestos cuando estén bajo el puntero.
 
 ### Guía visual (UX / estilo)
+- **Tema:** La app usa Estilo Base (tema oscuro); ver `docs/ux/estilos/ESTILO_SOFISTICADO.md`. Los colores de referencia que siguen pueden variar en pantalla.
 - **Colores** (aprox.):
-  - Fondo encabezado de días: azul claro (`#BBDEFB`).
-  - Líneas de la rejilla: gris claro (`#E0E0E0`).
-  - Columna de horas: gris muy claro (`#FAFAFA`).
-  - Eventos: paleta por tipo (blue/green/orange/purple/red/teal/indigo/pink); borde 1px más oscuro.
-  - Texto sobre eventos: contraste automático según color de evento.
-- **Tipografía**: `Roboto`.
-  - Encabezados: 10–12 px, bold.
-  - Horas: 12 px.
-  - Texto de evento: 6–10 px adaptativo según altura del evento (ver más abajo).
-- **Medidas**:
-  - Altura por hora: 60 px.
-  - Encabezado: 50 px.
-  - Alojamientos: 40 px.
-  - Columna de horas: 80 px.
+  - Líneas de la rejilla: `AppColorScheme.gridLineColor` con opacidad (`CalendarConstants.gridLineOpacity`).
+  - Eventos: paleta por tipo; borde más oscuro. Texto: contraste automático.
+- **Tipografía:** `GoogleFonts.poppins` (calendar_styles.dart). Tamaños: `CalendarConstants.headerFontSize` (14), `participantFontSize` (10), `eventFontSize` (10), `accommodationFontSize` (8). Horas: 12 px.
+- **Medidas** (CalendarConstants):
+  - Altura por hora: 60 px (`eventRowHeight`).
+  - Encabezado: 40 px (`headerHeight`).
+  - Alojamientos: 30 px (`accommodationRowHeight`).
+  - Columna de horas: 80 px (`hoursColumnWidth`).
 
 ---
 
@@ -298,32 +293,11 @@ Estado: Funciona (T63 completada).
 ### Reordenación de Tracks (Drag & Drop en diálogo)
 - Accesos: botón en AppBar o doble click en iniciales del encabezado.
 - Diálogo con ReorderableListView; arrastrar para reordenar.
-- Persistencia global por plan en Firestore (`plans/{planId}.trackOrderParticipantIds`).
+- Persistencia global por plan en Firestore (`plans/{planId}.trackOrderParticipantIds`); ver `TrackService` (`lib/features/calendar/domain/services/track_service.dart`).
 - Aplicación del orden: al iniciar pantalla y tras sincronizar participantes.
 Estado: Funciona.
 
 ---
 
-## 🔐 Sistema de Permisos Granulares
-
-### Roles de Usuario
-- **Administrador**: Acceso completo al plan, puede gestionar participantes, eventos, alojamientos y configuración.
-- **Participante**: Puede crear y editar eventos propios, gestionar su información personal.
-- **Observador**: Solo lectura, puede ver eventos pero no modificarlos.
-
-### Permisos por Categoría
-- **Plan**: Ver, editar, eliminar, gestionar participantes y administradores.
-- **Eventos**: Ver, crear, editar propios/cualquiera, eliminar propios/cualquiera, ver/editar información personal de otros.
-- **Alojamientos**: Ver, crear, editar propios/cualquiera, eliminar propios/cualquiera.
-- **Tracks**: Ver, reordenar, gestionar visibilidad.
-- **Filtros**: Usar filtros, guardar filtros personalizados.
-
-### Implementación en UI
-- **EventDialog**: Campos editables/readonly según permisos, badges de rol en título, indicadores visuales.
-- **Validación**: Verificación de permisos antes de operaciones críticas.
-- **Cache**: Permisos cacheados localmente para optimización de rendimiento.
-- **Persistencia**: Permisos almacenados en Firestore con soporte para expiración temporal.
-
-Estado: Funciona (T63 completada).
-
+*Documento de capacidades del calendario. Última actualización: Febrero 2026 (medidas y tipografía alineadas con CalendarConstants y calendar_styles; tema Estilo Base; sección duplicada de permisos eliminada).*
 

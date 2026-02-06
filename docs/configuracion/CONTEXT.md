@@ -54,7 +54,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
   - **Al crear nueva funcionalidad:** Añadir las traducciones necesarias ANTES de implementar la UI
   - **Excepciones:** Solo se permite hardcodear textos técnicos/debug que nunca se muestran al usuario
   - **Ver T158:** Sistema multi-idioma en progreso (~65% completado). Consultar `docs/tareas/TASKS.md` para estado actual
-- **Multi-plataforma:** App soporta Web + iOS + Android. Verificar compatibilidad de plugins/APIs en las 3 plataformas antes de usar. Priorizar soluciones cross-platform.
+- **Multi-plataforma:** App soporta Web + iOS + Android. Verificar compatibilidad de plugins/APIs en las 3 plataformas antes de usar. Priorizar soluciones cross-platform. Consultar `docs/arquitectura/PLATFORM_STRATEGY.md` para estrategia de desarrollo multi-plataforma.
 - **Offline-First:** Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
 - **UI/UX:** Consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar siempre `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons` para mantener consistencia. Documentar componentes nuevos en la guía.
 - **Seguridad:** Consultar `docs/guias/GUIA_SEGURIDAD.md` antes de implementar funcionalidades y verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
@@ -99,7 +99,8 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - No exponer acciones no permitidas en UI.
 
 ### 10) Configuración del Entorno de Desarrollo
-- **Ruta de Flutter**: `C:\Users\cclaraso\Downloads\flutter`
+- **Ruta de Flutter (Windows)**: `C:\Users\cclaraso\Downloads\flutter`
+- **Ruta de Flutter (macOS)**: `/Users/emmclaraso/development/flutter`
 - Usar esta ruta para ejecutar comandos `flutter` cuando sea necesario.
 - Añadir al PATH del sistema si es necesario para desarrollo futuro.
 
@@ -107,4 +108,5 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 
 Mantenemos este documento corto y de alto impacto. Cualquier nueva norma estable se añade aquí.
 
+*Última actualización: Febrero 2026*
 

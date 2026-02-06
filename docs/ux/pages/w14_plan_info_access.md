@@ -138,3 +138,5 @@ Widget _buildW14(double columnWidth, double rowHeight) {
 - **Contador**: Número de eventos o participantes del plan
 - **Acceso rápido**: Atajos de teclado para acceder a la información
 - **Notificaciones**: Alertas visuales si hay cambios en el plan
+
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW14`. **Última actualización:** Febrero 2026

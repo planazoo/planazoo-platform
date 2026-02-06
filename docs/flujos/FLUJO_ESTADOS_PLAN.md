@@ -502,5 +502,5 @@ stateDiagram-v2
 ---
 
 *Documento de flujo de estados del plan*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026*
 

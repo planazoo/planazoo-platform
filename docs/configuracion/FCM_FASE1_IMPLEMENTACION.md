@@ -1,6 +1,7 @@
 # 🔔 FCM Fase 1: Implementación Básica
 
 > **Fecha:** Enero 2025  
+> **Última actualización:** Febrero 2026  
 > **Estado:** ✅ Completado  
 > **Objetivo:** Configurar infraestructura base de Firebase Cloud Messaging (FCM) para recibir notificaciones push
 

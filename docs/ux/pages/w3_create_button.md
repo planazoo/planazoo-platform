@@ -163,8 +163,10 @@ Widget _buildW3(double columnWidth, double rowHeight) {
 - **Tasa de éxito**: 100% (elemento único)
 - **Accesibilidad**: Cumple estándares WCAG 2.1
 
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW3`. **Última actualización:** Febrero 2026
+
 ## 🔗 Referencias
 
-- [App Color Scheme](../theme/color_scheme.dart)
-- [Dashboard Page](../../pages/pg_dashboard_page.dart)
-- [Create Plan Dialog](../../features/calendar/presentation/widgets/create_plan_dialog.dart)
+- [App Color Scheme](../../../lib/app/theme/color_scheme.dart)
+- [Dashboard Page](../../../lib/pages/pg_dashboard_page.dart)
+- [Create Plan Dialog](../../../lib/features/calendar/presentation/widgets/create_plan_dialog.dart)

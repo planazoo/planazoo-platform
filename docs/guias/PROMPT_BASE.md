@@ -3,7 +3,7 @@
 **⚠️ RECORDATORIO OBLIGATORIO: Si no estás aplicando este PROMPT_BASE correctamente, el usuario te recordará escribiendo: "Aplica el PROMPT_BASE"**
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
-- `docs/CONTEXT.md` - Normas específicas del proyecto (Plan Frankenstein, Firestore, tests manuales)
+- `docs/configuracion/CONTEXT.md` - Normas específicas del proyecto (Plan Frankenstein, Firestore, tests manuales)
 - `docs/guias/GUIA_UI.md` - Sistema de diseño, componentes y patrones de UI
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones
 - `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice del sistema de planes
@@ -80,6 +80,6 @@
 
 ---
 
-**Última actualización**: Enero 2025  
+**Última actualización**: Febrero 2026  
 **Versión**: 1.1  
 **Autor**: UNP Calendario Team

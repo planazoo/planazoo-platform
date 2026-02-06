@@ -36,4 +36,4 @@ Las reglas actuales incluyen:
 
 ---
 
-*Última actualización: 2025-01-XX*
+*Última actualización: Febrero 2026*

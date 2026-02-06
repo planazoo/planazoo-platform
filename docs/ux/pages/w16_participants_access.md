@@ -184,3 +184,5 @@ Widget _buildParticipantsScreen() {
 - **Información de contacto**: Datos de contacto de los participantes
 - **Estados de participación**: Confirmado, pendiente, rechazado
 - **Notificaciones**: Alertas cuando se añaden nuevos participantes
+
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW16`. **Última actualización:** Febrero 2026

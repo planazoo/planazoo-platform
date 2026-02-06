@@ -227,8 +227,10 @@ String _formatUserHandle(UserModel? user) {
 - **Tasa de éxito**: 100% (información clara)
 - **Accesibilidad**: Cumple estándares WCAG 2.1
 
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW6`. **Última actualización:** Febrero 2026
+
 ## 🔗 Referencias
 
-- [App Color Scheme](../theme/color_scheme.dart)
-- [Plan Model](../features/calendar/domain/models/plan.dart)
-- [User Provider](../features/auth/presentation/providers/auth_providers.dart)
+- [App Color Scheme](../../../lib/app/theme/color_scheme.dart)
+- [Plan Model](../../../lib/features/calendar/domain/models/plan.dart)
+- [User Provider](../../../lib/features/auth/presentation/providers/auth_providers.dart)

@@ -3,7 +3,7 @@
 Este documento describe el proceso completo para desplegar la aplicación Flutter web en Firebase Hosting.
 
 **Fecha de creación:** Enero 2025  
-**Última actualización:** Enero 2025  
+**Última actualización:** Febrero 2026  
 **URL de producción:** `https://planazoo.web.app`
 
 ---

@@ -808,5 +808,5 @@ Valoración disponible para:
 ---
 
 *Documento de flujo CRUD completo de alojamientos*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026*
 

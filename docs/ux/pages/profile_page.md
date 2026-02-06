@@ -291,13 +291,19 @@ Widget _buildSectionCard({
 - **Tasa de éxito**: 100% en todas las acciones
 - **Accesibilidad**: Cumple estándares WCAG 2.1
 
+## Implementación actual
+
+- **Ubicación:** `lib/pages/pg_profile_page.dart` (clase `ProfilePage`). Se muestra desde el dashboard (`pg_dashboard_page.dart`) cuando `currentScreen == 'profile'`.
+- **Nota:** La página de configuración de cuenta independiente (`AccountSettingsPage`) ya no existe; las opciones están integradas en esta pantalla.
+
+**Última actualización:** Febrero 2026
+
 ## 🔗 Referencias
 
-- [App Color Scheme](../../app/theme/color_scheme.dart)
-- [App Typography](../../app/theme/typography.dart)
-- [Edit Profile Page](../../features/auth/presentation/pages/edit_profile_page.dart)
-- [Account Settings Page](../../features/auth/presentation/pages/account_settings_page.dart)
-- [Profile Page](../../pages/pg_profile_page.dart)
+- [App Color Scheme](../../../lib/app/theme/color_scheme.dart)
+- [App Typography](../../../lib/app/theme/typography.dart)
+- [Edit Profile](../../../lib/features/auth/presentation/pages/edit_profile_page.dart)
+- [Profile Page](../../../lib/pages/pg_profile_page.dart)
 
 
 

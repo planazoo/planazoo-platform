@@ -837,5 +837,5 @@ Eventos aparecen en el calendario del plan
 ---
 
 *Documento de flujo CRUD completo de planes*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026*
 

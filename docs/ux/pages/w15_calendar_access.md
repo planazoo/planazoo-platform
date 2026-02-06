@@ -138,3 +138,5 @@ Widget _buildW15(double columnWidth, double rowHeight) {
 - **Vista previa**: Miniatura del calendario en el botón
 - **Atajos de teclado**: Acceso rápido con teclas de función
 - **Notificaciones**: Alertas visuales si hay eventos próximos
+
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW15`. **Última actualización:** Febrero 2026

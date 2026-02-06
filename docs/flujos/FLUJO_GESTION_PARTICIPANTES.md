@@ -405,7 +405,7 @@ Guardar grupo
 ```
 
 **Almacenamiento:**
-- Base de datos: `contact_groups`
+- Base de datos: `participant_groups`
 - Vinculado al usuario propietario
 - Lista de `memberUserIds` y `memberEmails`
 
@@ -601,18 +601,18 @@ graph TD
   - ✅ Validación de email y rate limiting implementados
   - ✅ Búsqueda de usuario por email para obtener ID real
   - ✅ Generación de link único con token
-  - ✅ Email HTML con botones "Aceptar" / "Rechazar" (Firebase Functions + SendGrid)
+  - ✅ Email HTML con botones "Aceptar" / "Rechazar" (Firebase Functions + Gmail SMTP)
   - ✅ Expiración de link (7 días)
   - ✅ Página InvitationPage para procesar links
-  - ⚠️ Pendiente: Configurar SendGrid API key y desplegar Functions
+  - ✅ Gmail SMTP configurado y Cloud Functions desplegadas (ver docs/configuracion/EMAILS_CON_GMAIL_SMTP.md)
 - ❌ Invitaciones por username/nickname (T104)
 - ✅ Grupos de participantes (T123) - **COMPLETADA**
 - ✅ Sistema de confirmación de asistencia - Base (T120 Fase 1):
   - ✅ Campo status en PlanParticipation (pending, accepted, rejected, expired)
   - ✅ Métodos acceptInvitation y rejectInvitation
   - ✅ UI diálogo para aceptar/rechazar invitaciones
+  - ✅ Links de invitación por email con token (InvitationPage, acceptInvitationByToken, rejectInvitationByToken)
   - ❌ Notificaciones push de invitaciones
-  - ❌ Links de invitación por email con token
 - ❌ Sistema de confirmación de asistencia a eventos (T120 Fase 2)
 - ❌ Historial de cambios de participantes
 - ❌ Notificaciones automáticas de invitaciones (T105)
@@ -620,5 +620,5 @@ graph TD
 ---
 
 *Documento de flujo de gestión de participantes*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026 (revisión sincronizada con código: participant_groups, Gmail SMTP, links por token)*
 

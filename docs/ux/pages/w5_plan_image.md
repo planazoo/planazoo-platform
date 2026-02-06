@@ -44,6 +44,8 @@ El widget **W5** es un contenedor circular que muestra la imagen del plan selecc
 
 ## 🔧 Implementación Técnica
 
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW5`. Imagen vía `ImageService.isValidImageUrl` y `CachedNetworkImage`; fallback a icono. **Última actualización:** Febrero 2026
+
 El widget `_buildW5` se implementa en `lib/pages/pg_dashboard_page.dart`:
 
 ```dart

@@ -259,6 +259,8 @@ service firebase.storage {
 
 ---
 
-**Última actualización**: Diciembre 2024  
-**Versión**: 1.0  
-**Estado**: Implementación completa funcional
+**Última actualización:** Febrero 2026  
+**Versión:** 1.0  
+**Estado:** Implementación completa funcional
+
+**Implementación actual:** `ImageService` en `lib/features/calendar/domain/services/image_service.dart`. Modelo `Plan` con `imageUrl` en `lib/features/calendar/domain/models/plan.dart`. Uso en `pg_dashboard_page.dart` (W5), `wd_plan_card_widget.dart` (lista), `wd_plan_data_screen.dart` (info del plan, subida/edición/borrado).

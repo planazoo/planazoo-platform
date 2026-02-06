@@ -509,16 +509,17 @@ Asegúrate de tener tiempo suficiente para el traslado."
 ## 📋 TAREAS RELACIONADAS
 
 **Pendientes:**
-- T107: Auto-expansión de rango del plan
-- T113: Sistema completo de estadísticas
 - T114: Mapa del plan con rutas
-- Validación de solapamientos (parcialmente implementada)
-- Validación de días vacíos
-- Validación de participantes sin eventos
+- Validación check-in/check-out automatizada
+- Sugerencias de optimización automáticas
 - Integración con Google Maps (coste vs beneficio)
 
 **Completas ✅:**
-- Detección básica de solapamientos
+- T107: Auto-expansión de rango del plan (`PlanService.expandPlan`, `ExpandPlanDialog`, `plan_range_utils`)
+- T113: Sistema de estadísticas (`PlanStatsService`, `PlanStatsPage`)
+- Detección de solapamientos (con timezones, límite de 3; `OverlappingSegmentGroup`, `calendar_validations`)
+- Validación de días vacíos (`PlanValidationService.detectEmptyDays`, `PlanValidationDialog`)
+- Validación de participantes sin eventos (`PlanValidationService.detectParticipantsWithoutEvents`)
 - Sistema de tracks (eventos por participante)
 
 ---
@@ -542,17 +543,17 @@ Asegúrate de tener tiempo suficiente para el traslado."
 - ✅ Sanitización de inputs (T127)
 - ✅ Manejo de borradores (pueden solaparse)
 
-**Lo que falta:**
-- ✅ Detección automática de días vacíos al confirmar
-- ✅ Detección automática de participantes sin eventos
+**Estado por funcionalidad (✅ implementado, ❌ pendiente):**
+- ✅ Detección automática de días vacíos al confirmar (`PlanValidationService.detectEmptyDays`, usado en `PlanValidationDialog`)
+- ✅ Detección automática de participantes sin eventos (`PlanValidationService.detectParticipantsWithoutEvents`)
 - ❌ Validación check-in/check-out automatizada
-- ✅ Sistema de estadísticas y análisis (T113)
+- ✅ Sistema de estadísticas y análisis (T113: `PlanStatsService`, `PlanStatsPage`)
 - ❌ Mapa del plan con visualización (T114)
-- ✅ Auto-expansión de rango (T107)
+- ✅ Auto-expansión de rango (T107: `expandPlan`, `ExpandPlanDialog`, validación en `wd_event_dialog`)
 - ❌ Sugerencias de optimización automáticas
 
 ---
 
 *Documento de flujo de validación y verificación*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026 (revisión sincronizada con código: T107, T113, PlanValidationService, CalendarValidations)*
 

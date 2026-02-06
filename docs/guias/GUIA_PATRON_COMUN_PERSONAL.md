@@ -282,5 +282,5 @@ Al implementar funcionalidad con parte común/personal:
 ---
 
 *Guía del patrón arquitectónico Parte Común/Parte Personal*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026*
 

@@ -14,8 +14,7 @@
 ## 🎨 Diseño Visual (v2.0)
 
 ### **Contenedor Principal**
-- **Color de fondo**: Gradiente igual que W2 (Estilo Base)
-  - `LinearGradient` de `Colors.grey.shade800` → `Color(0xFF2C2C2C)`
+- **Color de fondo**: En código actual puede ser color sólido `AppColorScheme.color2` (ver nota de implementación). La guía de estilo base prefiere color sólido sin gradiente.
 - **Esquinas**: Cuadradas (sin borderRadius)
 - **Sombras**: Ninguna
 - **Borde**: Sin borde
@@ -165,9 +164,16 @@ Widget _buildW1(double columnWidth, double rowHeight, double gridHeight) {
 - **Tasa de éxito**: 100% (elemento único)
 - **Accesibilidad**: Cumple estándares WCAG 2.1
 
+## Implementación actual
+
+- **Ubicación:** `lib/pages/pg_dashboard_page.dart`, método `_buildW1(columnWidth, rowHeight, gridHeight)`.
+- **Navegación:** `setState(() => currentScreen = 'profile')` muestra `ProfilePage`.
+
+**Última actualización:** Febrero 2026
+
 ## 🔗 Referencias
 
 - [Material Design Icons](https://fonts.google.com/icons)
 - [Flutter Tooltip Documentation](https://api.flutter.dev/flutter/material/Tooltip-class.html)
-- [App Color Scheme](../theme/color_scheme.dart)
-- [Localization System](../l10n/app_localizations.dart)
+- [App Color Scheme](../../../lib/app/theme/color_scheme.dart)
+- [Localization System](../../../lib/l10n/)

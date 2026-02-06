@@ -2,7 +2,8 @@
 
 > Guía para trabajar con iOS, Android y Web en la app
 
-**Fecha:** Diciembre 2024
+**Fecha:** Diciembre 2024  
+**Última actualización:** Febrero 2026
 
 ---
 

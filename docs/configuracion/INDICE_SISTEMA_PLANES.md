@@ -5,7 +5,7 @@
 **Estado:** Índice  
 **Versión:** 2.0  
 **Fecha:** Enero 2025  
-**Última actualización:** División en flujos específicos
+**Última actualización:** Febrero 2026 (referencias a flujos y guías corregidas)
 
 ---
 
@@ -17,20 +17,20 @@ Este documento ha sido dividido en **10 flujos específicos** más **guías de r
 
 | Documento | Descripción | Tareas Relacionadas |
 |-----------|-------------|---------------------|
-| **[FLUJO_CRUD_PLANES.md](./flujos/FLUJO_CRUD_PLANES.md)** | 🆕 Ciclo de vida completo CRUD de planes | T109 ✅, T107 ✅, T118, T122, T101 ✅, T102 ✅ |
-| **[FLUJO_ESTADOS_PLAN.md](./flujos/FLUJO_ESTADOS_PLAN.md)** | Transiciones entre estados | T109 ✅ |
-| **[FLUJO_GESTION_PARTICIPANTES.md](./flujos/FLUJO_GESTION_PARTICIPANTES.md)** | Invitaciones, confirmaciones, grupos | T104, T117, T120, T123 ✅ |
-| **[FLUJO_CRUD_EVENTOS.md](./flujos/FLUJO_CRUD_EVENTOS.md)** | Ciclo de vida completo de eventos | T121, T105 ✅, T110, T101 ✅, T102 ✅, T153 ✅, T100 ✅ |
-| **[FLUJO_CRUD_ALOJAMIENTOS.md](./flujos/FLUJO_CRUD_ALOJAMIENTOS.md)** | 🆕 Ciclo de vida completo de alojamientos | T121, T105 ✅, T110, T101 ✅, T102 ✅, T153 ✅ |
-| **[FLUJO_PRESUPUESTO_PAGOS.md](./flujos/FLUJO_PRESUPUESTO_PAGOS.md)** | Presupuesto y sistema de pagos | T101 ✅, T102 ✅, T153 ✅ |
-| **[FLUJO_INVITACIONES_NOTIFICACIONES.md](./flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md)** | Invitaciones y notificaciones | T104, T105, T110, T120 |
-| **[FLUJO_VALIDACION.md](./flujos/FLUJO_VALIDACION.md)** | Validación y verificación | T113 ✅, T114, T107 ✅ |
-| **[FLUJO_CRUD_USUARIOS.md](./flujos/FLUJO_CRUD_USUARIOS.md)** | Registro, login y gestión de usuarios | T47, T49, T50, T124 |
-| **[FLUJO_CONFIGURACION_APP.md](./flujos/FLUJO_CONFIGURACION_APP.md)** | Configuración de usuario, app y planes | T50, T105, T124 |
+| **[FLUJO_CRUD_PLANES.md](../flujos/FLUJO_CRUD_PLANES.md)** | 🆕 Ciclo de vida completo CRUD de planes | T109 ✅, T107 ✅, T118, T122, T101 ✅, T102 ✅ |
+| **[FLUJO_ESTADOS_PLAN.md](../flujos/FLUJO_ESTADOS_PLAN.md)** | Transiciones entre estados | T109 ✅ |
+| **[FLUJO_GESTION_PARTICIPANTES.md](../flujos/FLUJO_GESTION_PARTICIPANTES.md)** | Invitaciones, confirmaciones, grupos | T104, T117, T120, T123 ✅ |
+| **[FLUJO_CRUD_EVENTOS.md](../flujos/FLUJO_CRUD_EVENTOS.md)** | Ciclo de vida completo de eventos | T121, T105 ✅, T110, T101 ✅, T102 ✅, T153 ✅, T100 ✅ |
+| **[FLUJO_CRUD_ALOJAMIENTOS.md](../flujos/FLUJO_CRUD_ALOJAMIENTOS.md)** | 🆕 Ciclo de vida completo de alojamientos | T121, T105 ✅, T110, T101 ✅, T102 ✅, T153 ✅ |
+| **[FLUJO_PRESUPUESTO_PAGOS.md](../flujos/FLUJO_PRESUPUESTO_PAGOS.md)** | Presupuesto y sistema de pagos | T101 ✅, T102 ✅, T153 ✅ |
+| **[FLUJO_INVITACIONES_NOTIFICACIONES.md](../flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md)** | Invitaciones y notificaciones | T104, T105, T110, T120 |
+| **[FLUJO_VALIDACION.md](../flujos/FLUJO_VALIDACION.md)** | Validación y verificación | T113 ✅, T114, T107 ✅ |
+| **[FLUJO_CRUD_USUARIOS.md](../flujos/FLUJO_CRUD_USUARIOS.md)** | Registro, login y gestión de usuarios | T47, T49, T50, T124 |
+| **[FLUJO_CONFIGURACION_APP.md](../flujos/FLUJO_CONFIGURACION_APP.md)** | Configuración de usuario, app y planes | T50, T105, T124 |
 
 **📚 Guías de Referencia:**
-| **[GUIA_SEGURIDAD.md](./GUIA_SEGURIDAD.md)** | Seguridad, autenticación y protección de datos | T51, T52, T53, T65-T67, T125-T129 |
-| **[GUIA_ASPECTOS_LEGALES.md](./GUIA_ASPECTOS_LEGALES.md)** | Términos, privacidad, cookies y cumplimiento legal | T50, T129, GDPR, COPPA |
+| **[GUIA_SEGURIDAD.md](../guias/GUIA_SEGURIDAD.md)** | Seguridad, autenticación y protección de datos | T51, T52, T53, T65-T67, T125-T129 |
+| **[GUIA_ASPECTOS_LEGALES.md](../guias/GUIA_ASPECTOS_LEGALES.md)** | Términos, privacidad, cookies y cumplimiento legal | T50, T129, GDPR, COPPA |
 
 ---
 

@@ -19,7 +19,7 @@ Firestore: plan_invitations/{id} creado
   ↓
 Cloud Function: sendInvitationEmail (trigger onCreate)
   ↓
-SendGrid API → Email enviado
+Gmail SMTP → Email enviado
   ↓
 Usuario recibe email con botones "Aceptar" / "Rechazar"
 ```

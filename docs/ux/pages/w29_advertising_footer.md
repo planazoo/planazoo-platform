@@ -106,3 +106,5 @@ Widget _buildW29(double columnWidth, double rowHeight) {
 - Mantiene consistencia visual con el resto del dashboard
 - Sigue las especificaciones de la T10
 - El borde superior proporciona separación visual del contenido principal
+
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW29`. **Última actualización:** Febrero 2026

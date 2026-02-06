@@ -3,7 +3,10 @@
 **Estado:** ✅ Aplicado  
 **Versión:** 2.0  
 **Fecha:** Diciembre 2025  
+**Última actualización:** Febrero 2026  
 **UI Principal:** Sí
+
+**Implementación actual:** `AppTheme.darkTheme` y `AppColorScheme` en `lib/` (p. ej. `pg_dashboard_page.dart`, `pg_calendar_mobile_page.dart`, `pg_plan_detail_page.dart`, `wd_admin_insights_screen.dart`). Fondos `Colors.grey.shade800` y Poppins usados en dashboard y calendario.
 
 ---
 
@@ -337,7 +340,7 @@ Al aplicar el **Estilo Base** a una página, verificar:
 
 ---
 
-**Última actualización:** Diciembre 2025
+**Última actualización:** Febrero 2026
 
 ---
 

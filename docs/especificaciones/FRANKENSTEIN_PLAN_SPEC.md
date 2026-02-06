@@ -2,8 +2,10 @@
 
 **Fecha de creación:** 8 de octubre de 2025  
 **Versión:** 2.0  
-**Última actualización:** 9 de octubre de 2025
+**Última actualización:** Febrero 2026  
 **Propósito:** Plan de prueba completo que contiene todos los tipos de eventos, casos edge y complejidades implementadas en Planazoo.
+
+**Implementación actual (Feb 2026):** Generador en `lib/features/testing/demo_data_generator.dart`: `DemoDataGenerator.generateFrankensteinPlan(userId)`, `deleteFrankensteinPlan()`. Nombre del plan: `demoPlanName = '🧟 Frankenstein'`. Solo en `kDebugMode`. Roles y permisos asignados vía plan_permissions para testing.
 
 ---
 

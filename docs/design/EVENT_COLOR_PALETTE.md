@@ -2,7 +2,7 @@
 
 > Documentación de la paleta de colores mejorada para eventos (T91)
 
-**Última actualización:** Enero 2025
+**Última actualización:** Febrero 2026
 
 ---
 

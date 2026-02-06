@@ -37,6 +37,7 @@ Especificaciones técnicas detalladas:
 ### 🏗️ [Arquitectura](./arquitectura/)
 Decisiones arquitectónicas y documentación técnica:
 - [Decisiones Arquitectónicas](./arquitectura/ARCHITECTURE_DECISIONS.md)
+- [Estrategia Multi-Plataforma](./arquitectura/PLATFORM_STRATEGY.md)
 
 ### 🎨 [UX](./ux/)
 Documentación detallada de experiencia de usuario:
@@ -48,11 +49,25 @@ Gestión de tareas del proyecto:
 - [Tareas Activas](./tareas/TASKS.md)
 - [Tareas Completadas](./tareas/COMPLETED_TASKS.md)
 
+### 🔧 [Admin](./admin/)
+- [Lista blanca de administradores](./admin/ADMINS_WHITELIST.md)
+
+### 🎨 [Design](./design/)
+- [Paleta de colores de eventos](./design/EVENT_COLOR_PALETTE.md)
+
+### 🧪 [Testing](./testing/)
+- [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md)
+
 ### ⚙️ [Configuración](./configuracion/)
 Configuración y contexto del proyecto:
 - [Contexto del Proyecto](./configuracion/CONTEXT.md) - Normas y reglas de colaboración
 - [Índice del Sistema de Planes](./configuracion/INDICE_SISTEMA_PLANES.md) - Visión general del sistema
 - [Despliegue Web en Firebase Hosting](./configuracion/DEPLOY_WEB_FIREBASE_HOSTING.md) - Guía completa de despliegue
+- [Testing Checklist](./configuracion/TESTING_CHECKLIST.md) - Checklist de pruebas (actualizar tras cada tarea)
+- [FCM Fase 1](./configuracion/FCM_FASE1_IMPLEMENTACION.md) - Notificaciones push
+- [Onboarding IA](./configuracion/ONBOARDING_IA.md) - Contexto para asistentes IA
+- [Usuarios de prueba](./configuracion/USUARIOS_PRUEBA.md) - Datos semilla y pruebas
+- [Auditoría de docs](./configuracion/DOCS_AUDIT.md) - Revisión mantener/actualizar/eliminar y referencias
 
 ---
 
@@ -78,32 +93,88 @@ Configuración y contexto del proyecto:
 
 ## 📊 Estado del Proyecto
 
-**Última actualización:** Enero 2025
+**Última actualización:** Febrero 2026
 
 ### Completado ✅
-- Sistema de tracks
-- Gestión básica de eventos
-- Timezone dinámica
-- Sistema de solapamientos básico
-- Estados del plan
+
+**Sistema Core:**
+- ✅ CRUD completo de planes, eventos y alojamientos
+- ✅ Sistema de tracks (multi-participante)
+- ✅ Eventos multi-día (hasta 24h) con EventSegment
+- ✅ Drag & Drop con magnetismo
+- ✅ Parte común + parte personal por participante
+- ✅ Detección de eventos solapados (máximo 3 simultáneos)
+- ✅ Estados del plan con bloqueos funcionales (T109)
+- ✅ Actualización dinámica de duración del plan (T107)
+
+**Sistema de Participantes:**
+- ✅ Gestión de participantes con roles (organizer, coorganizer, participant, observer)
+- ✅ Sistema de permisos granulares
+- ✅ Grupos de participantes (T123)
+- ✅ Sistema de invitaciones por email con tokens (T104)
+- ✅ Aceptación/rechazo de invitaciones
+- ✅ Validación de permisos y prevención de duplicados
+
+**Sistema de Comunicación:**
+- ✅ Sistema de avisos del plan (T105)
+- ✅ Sistema de chat bidireccional tipo WhatsApp (T190)
+- ✅ Notificaciones in-app
+- ✅ Cloud Function para envío de emails de invitación (Gmail SMTP)
+
+**Sistema Financiero:**
+- ✅ Sistema de presupuesto (T101)
+- ✅ Sistema de pagos personales (T102)
+- ✅ Sistema multi-moneda (EUR, USD, GBP, JPY) (T153)
+
+**Sistema de Análisis:**
+- ✅ Estadísticas del plan (T113)
+- ✅ Visualización de timezones (T100)
+- ✅ Indicador de días restantes (T112)
+
+**Sistema de Usuarios:**
+- ✅ Registro y login (email/password y Google Sign-In)
+- ✅ Username obligatorio y único (T163)
+- ✅ Gestión de perfil
+- ✅ Sistema de administradores (`isAdmin`)
+- ✅ Validación unificada de contraseñas (T175)
+
+**Seguridad:**
+- ✅ Firestore Security Rules completas (T125)
+- ✅ Rate Limiting y protección contra ataques (T126)
+- ✅ Sanitización y validación de input (T127)
+- ✅ Validación de formularios (T51-T53)
+
+**Timezones:**
+- ✅ Soporte de timezones por plan
+- ✅ Conversión automática por participante
+- ✅ Visualización de timezones en calendario
+- ✅ Preferencia de timezone del usuario (T177)
+- ✅ Aviso de cambio de timezone del dispositivo (T178)
+
+**UI/UX:**
+- ✅ Sistema de diseño consistente
+- ✅ Multi-idioma (Español/Inglés) - ~65% completado
+- ✅ Responsive design
+- ✅ Gestión de imágenes de planes (Firebase Storage)
+
+**Infraestructura:**
+- ✅ Optimización de índices de Firestore (T152)
+- ✅ Sistema de logging estructurado
+- ✅ Gestión de imágenes con Firebase Storage
 
 ### En Progreso ⚠️
-- Sistema de validación
-- Formularios enriquecidos
+- Sistema Offline First (T56-T62) - Infraestructura base pendiente
+- Formularios enriquecidos - Mejoras incrementales
+- Notificaciones push (FCM) - Fase 1 completada, push pendiente
 
 ### Pendiente ❌
-- Invitaciones y notificaciones (Base completada, pendiente push)
-- Validación avanzada
-- Sistema de alarmas
-
-### Completado Recientemente ✅
-- Sistema de presupuesto (T101)
-- Sistema de pagos (T102)
-- Sistema multi-moneda (T153)
-- Visualización de timezones (T100)
-- Estadísticas del plan (T113)
-- Grupos de participantes (T123)
-- Estados del plan con bloqueos funcionales (T109)
+- Sistema de alarmas y recordatorios
+- Validación avanzada (algunas reglas específicas)
+- Exportación profesional de planes (PDF/Email)
+- Importación desde email
+- Sincronización con calendarios externos
+- Sistema de agencias de viajes
+- Documentos legales (Términos, Privacidad, GDPR completo)
 
 ---
 

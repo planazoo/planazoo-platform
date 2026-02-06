@@ -389,5 +389,5 @@ Esta guía es una **referencia de desarrollo**. Para aspectos legales reales y c
 ---
 
 *Documento de guía de aspectos legales*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026*
 

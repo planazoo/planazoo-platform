@@ -177,7 +177,7 @@ Cada documento de página sigue un formato estándar que incluye:
 ### **Páginas Pendientes:**
 - [ ] **main_page.md** - Página principal de la aplicación
 - [ ] **edit_profile_page.md** - Página de edición de perfil
-- [ ] **account_settings_page.md** - Página de configuración de cuenta
+- [ ] ~~**account_settings_page.md**~~ - No existe; configuración integrada en perfil/preferencias
 - [ ] **calendar_page.md** - Página del calendario principal
 - [ ] **create_plan_page.md** - Página de creación de planes
 - [ ] **plan_details_page.md** - Página de detalles de plan
@@ -195,7 +195,7 @@ Cada documento de página sigue un formato estándar que incluye:
 Para sugerencias, correcciones o nuevas páginas a documentar, contactar con el equipo de desarrollo.
 
 **Mantenedor:** Equipo de Desarrollo UNP Calendario  
-**Última actualización del índice:** Enero 2025
+**Última actualización del índice:** Febrero 2026
 
 ---
 

@@ -3,9 +3,11 @@
 > Documento para T121: Revisión y enriquecimiento de formularios de planes
 
 **Estado:** Borrador  
-**Última actualización:** Enero 2025
+**Última actualización:** Febrero 2026
 
 > **Nota:** Los planes son la entidad principal que contiene eventos y alojamientos. Ver `docs/flujos/FLUJO_CRUD_PLANES.md` para el flujo completo.
+
+**Implementación actual (Feb 2026):** Modelo `Plan` en `lib/features/calendar/domain/models/plan.dart`. En Firestore se persisten `baseDate` y `columnCount`; `startDate` y `endDate` se derivan en el modelo. Campos presentes: name, description, imageUrl, baseDate/startDate/endDate, columnCount, state, visibility, timezone, currency (T153), budget, participants, accommodation, unpId, userId, createdAt, updatedAt, savedAt.
 
 ---
 

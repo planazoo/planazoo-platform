@@ -6,6 +6,8 @@
 **Versión:** 1.0  
 **Fecha:** Enero 2025
 
+**⚠️ Tema por defecto:** La aplicación Planazoo utiliza por defecto el **Estilo Base** (UI oscura). Ver [Estilo Base](../ux/estilos/ESTILO_SOFISTICADO.md). Esta guía documenta además la paleta y componentes de referencia (AppColorScheme, etc.).
+
 ---
 
 ## 🎯 Objetivo
@@ -926,5 +928,5 @@ Es una guía **práctica** que evita sobre-ingeniería.
 ---
 
 *Guía de UI para mantener consistencia visual*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026*
 

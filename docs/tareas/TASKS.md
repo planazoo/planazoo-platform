@@ -1,8 +1,8 @@
 # 📋 Lista de Tareas - Planazoo
 
-> Consulta las normas y flujo de trabajo en `docs/CONTEXT.md`.
+> Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.
 
-**Siguiente código de tarea: T191**
+**Siguiente código de tarea: T192**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -12,7 +12,7 @@
 - **GRUPO 5:** T40-T45: Timezones (6 completadas, 0 pendientes) - T81, T82: No existen
 - **GRUPO 6:** T77-T79, T83-T90: Funcionalidades Avanzadas (4 completadas, 11 pendientes)
 - **Seguridad:** T51-T53: Validación (3 completadas, 0 pendientes), T166-T172: Seguridad avanzada (6 pendientes)
-- **Administración:** T165: Usuarios de administración (1 pendiente), T188: Sistema de gestión administrativa (1 en progreso)
+- **Administración:** T165: Usuarios de administración (1 pendiente), T188: Sistema de gestión administrativa (1 en progreso), T191: Completar UserId del administrador (1 pendiente)
 - **Participantes:** T47, T49-T50: Sistema básico (3 pendientes)
 - **Permisos:** T65-T67: Gestión de permisos (1 completada, 2 pendientes)
 - **Mejoras Visuales:** T91-T92: Colores y tipografía (2 pendientes)
@@ -49,7 +49,7 @@
 7. **Estados de tarea**: Pendiente → En progreso → Completada
 8. **Criterios claros**: Cada tarea debe tener criterios de aceptación definidos
 9. **Aprobación requerida**: Antes de marcar una tarea como completada, se debe pedir aprobación explícita del usuario. Solo se marca como completada después de recibir confirmación.
-10. **Archivo de completadas**: Las tareas completadas se mueven a `docs/COMPLETED_TASKS.md` para mantener este archivo limpio
+10. **Archivo de completadas**: Las tareas completadas se mueven a `docs/tareas/COMPLETED_TASKS.md` para mantener este archivo limpio
 11. **Limpieza al cerrar**: Al completar una tarea, eliminar `print()`, debugs y código temporal que ya no sea necesario
 
 ### **📦 Metodología de Grupos**
@@ -60,6 +60,8 @@
 ### **🏗️ Arquitectura del Proyecto**
 14. **Arquitectura Offline First**: Todas las nuevas funcionalidades deben implementarse siguiendo el principio "Offline First" - la app debe funcionar completamente sin conexión y sincronizar cuando sea posible.
 15. **Plan Frankenstein**: Al completar una tarea que añade nueva funcionalidad al calendario (eventos, alojamientos, etc.), revisar si es necesario añadir casos de prueba al Plan Frankenstein (`lib/features/testing/demo_data_generator.dart`) para que la nueva funcionalidad esté cubierta en testing
+
+**Referencias a documentación:** Algunas tareas citan documentos que aún no existen (p. ej. `docs/legal/`, `docs/estrategia/`, `docs/riesgos/`, `docs/roadmap/`, `docs/flujos/FLUJO_SEGURIDAD.md`, `docs/TESTING_PLAN.md`). Lista completa en `docs/configuracion/DOCS_AUDIT.md`. Donde el doc no exista, usar la alternativa indicada (p. ej. `docs/guias/GUIA_SEGURIDAD.md` para seguridad) o crear el documento cuando corresponda a la tarea.
 
 ---
 
@@ -305,6 +307,21 @@ Para optimizar el tiempo de testing y desarrollo, las tareas se organizan en gru
     - Actualizar servicios para poblar `_adminCreatedBy` automáticamente
     - Crear scripts administrativos
     - Documentar procedimientos
+
+- **T191 - Completar UserId del administrador en ADMINS_WHITELIST.md**
+  - **Prioridad:** Baja
+  - **Estado:** Pendiente
+  - **Responsable:** Equipo app/backend
+  - **Descripción:** Completar el campo `UserId (Firebase Auth)` en la tabla de administradores del documento `docs/admin/ADMINS_WHITELIST.md`. Actualmente el usuario `user_admin` (email: `unplanazoo+admin@gmail.com`) tiene el UserId marcado como "*Se completará al crear el usuario*". Una vez creado el usuario admin en Firebase Auth, actualizar el documento con el UserId real.
+  
+  **Criterios de aceptación:**
+  - ⏳ Usuario admin creado en Firebase Auth
+  - ⏳ UserId obtenido del usuario admin
+  - ⏳ Documento `docs/admin/ADMINS_WHITELIST.md` actualizado con el UserId real
+  - ⏳ Campo `isAdmin: true` verificado en Firestore para el usuario
+  
+  **Archivos a modificar:**
+  - ⏳ `docs/admin/ADMINS_WHITELIST.md` - Actualizar tabla con UserId real
 
 ---
 
@@ -1651,7 +1668,7 @@ CalendarScreen (orchestrator)
 - Establecer métricas de performance
 
 **Archivos a crear:**
-- `docs/TESTING_PLAN.md` - Plan detallado de pruebas
+- `docs/configuracion/TESTING_CHECKLIST.md` (plan detallado: pendiente crear `docs/TESTING_PLAN.md`)
 - `test/manual_testing_guide.md` - Guía de testing manual
 - `test/performance_benchmarks.md` - Benchmarks de performance
 
@@ -2914,7 +2931,7 @@ class PlatformStats {
 - Verificación completa de participación requiere checks en cliente (limitación de Firestore rules)
 - Validación de estructura asegura integridad de datos
 
-**Relacionado con:** T51, T52, T53, docs/flujos/FLUJO_SEGURIDAD.md, docs/guias/GUIA_SEGURIDAD.md
+**Relacionado con:** T51, T52, T53, docs/guias/GUIA_SEGURIDAD.md *(flujo FLUJO_SEGURIDAD.md pendiente de crear)*
 
 ---
 
@@ -2953,7 +2970,7 @@ class PlatformStats {
 - ✅ `lib/pages/pg_dashboard_page.dart` - Manejo de errores en UI
 - ✅ `lib/pages/pg_plan_participants_page.dart` - Manejo de errores en UI
 
-**Relacionado con:** T51, docs/flujos/FLUJO_SEGURIDAD.md, docs/guias/GUIA_SEGURIDAD.md
+**Relacionado con:** T51, docs/guias/GUIA_SEGURIDAD.md *(flujo FLUJO_SEGURIDAD.md pendiente de crear)*
 
 ---
 
@@ -2996,7 +3013,7 @@ class PlatformStats {
 - La sanitización HTML está disponible para uso futuro cuando se implementen avisos/biografías con formato
 - Flutter Text widget escapa HTML automáticamente, proporcionando protección adicional
 
-**Relacionado con:** T51, T105, docs/flujos/FLUJO_SEGURIDAD.md, docs/guias/GUIA_SEGURIDAD.md
+**Relacionado con:** T51, T105, docs/guias/GUIA_SEGURIDAD.md *(flujo FLUJO_SEGURIDAD.md pendiente de crear)*
 
 ---
 
@@ -3024,7 +3041,7 @@ class PlatformStats {
 - `lib/features/security/services/audit_log_service.dart`
 - Actualizar `lib/shared/services/logger_service.dart`
 
-**Relacionado con:** T109, T124, docs/flujos/FLUJO_SEGURIDAD.md
+**Relacionado con:** T109, T124, docs/guias/GUIA_SEGURIDAD.md *(flujo FLUJO_SEGURIDAD.md pendiente de crear)*
 
 ---
 
@@ -3056,7 +3073,7 @@ class PlatformStats {
 - `lib/features/security/services/data_export_service.dart`
 - UI para solicitar export
 
-**Relacionado con:** T50, docs/flujos/FLUJO_SEGURIDAD.md, GDPR compliance
+**Relacionado con:** T50, docs/guias/GUIA_SEGURIDAD.md, GDPR compliance *(flujo FLUJO_SEGURIDAD.md pendiente de crear)*
 
 ---
 

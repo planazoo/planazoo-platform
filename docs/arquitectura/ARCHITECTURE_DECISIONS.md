@@ -666,12 +666,12 @@ Usuario en avión sin conexión a internet
 ---
 
 **Documento creado:** Diciembre 2024  
-**Última actualización:** 9 de octubre de 2025  
+**Última actualización:** 6 de febrero de 2026  
 **Próxima revisión:** Al completar implementación de T56-T67
 
 ---
 
-## 🆕 **Actualizaciones Recientes (Octubre 2025)**
+## 🆕 **Actualizaciones Recientes (Febrero 2026)**
 
 ### **T93-T95: Mejoras de Alojamientos y Optimización**
 - **T93:** Iconos visuales de check-in/check-out en alojamientos multi-día

@@ -103,3 +103,5 @@ Widget _buildW30(double columnWidth, double rowHeight) {
 - El widget está preparado para recibir contenido futuro
 - Mantiene consistencia visual con el resto del dashboard
 - Sigue las especificaciones de la T9
+
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW30`. **Última actualización:** Febrero 2026

@@ -487,5 +487,5 @@ flutter pub audit
 ---
 
 *Documento de flujo de seguridad*  
-*Última actualización: Enero 2025*
+*Última actualización: Febrero 2026*
 

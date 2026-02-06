@@ -340,5 +340,8 @@ Future<void> registerWithEmailAndPassword(String email, String password, {String
 ```
 
 ---
-*Última actualización: [Fecha actual]*
+
+**Implementación actual:** `lib/features/auth/presentation/pages/register_page.dart`. Tras registro exitoso se cierra sesión y se redirige al login (estado `AuthStatus.registrationSuccess`).
+
+*Última actualización: Febrero 2026*  
 *Versión: 1.0 - Documentación inicial completa*

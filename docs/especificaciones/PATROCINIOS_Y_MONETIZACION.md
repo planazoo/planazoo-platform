@@ -3,7 +3,10 @@
 **Estado:** Definición  
 **Versión:** 1.0  
 **Fecha:** Enero 2025  
-**Relacionado con:** T143
+**Última actualización:** Febrero 2026  
+**Relacionado con:** T143  
+
+*(Documento de definición de producto; no hay implementación en código aún.)*
 
 ---
 

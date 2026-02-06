@@ -134,3 +134,5 @@ class PlanSearchWidget extends StatelessWidget {
 - Mantiene consistencia visual con el resto del dashboard
 - Sigue las especificaciones de la T11
 - Preparado para futuras mejoras de funcionalidad de búsqueda
+
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW13`. **Última actualización:** Febrero 2026

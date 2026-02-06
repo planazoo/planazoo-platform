@@ -481,6 +481,6 @@ Para garantizar que la arquitectura funciona en escenarios reales, cubrir al men
 
 ---
 
-**Última actualización**: Diciembre 2024  
+**Última actualización**: Febrero 2026  
 **Versión**: 2.0 - Perspectivas Adaptativas  
 **Autor**: UNP Calendario Team
