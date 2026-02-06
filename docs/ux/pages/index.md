@@ -246,8 +246,8 @@ flowchart LR
 flowchart LR
   PLP[PlansListPage] -->|tap plan| PDP[PlanDetailPage]
   PLP -->|botón perfil| PROF[ProfilePage]
-  PLP -->|crear plan (modal)| PDP
-  PROF -->|Editar perfil (modal)| EP[EditProfilePage]
+  PLP -->|crear plan modal| PDP
+  PROF -->|Editar perfil modal| EP[EditProfilePage]
 ```
 
 ### PlanDetailPage (móvil): pestañas internas
@@ -259,7 +259,7 @@ flowchart LR
   PDP --> PART[PlanParticipantsPage]
   PDP --> CHAT[PlanChatScreen]
   PDP --> STATS[PlanStatsPage]
-  PDP -->|pagos| PRÓX["Placeholder Próximamente"]
+  PDP -->|pagos| PROX[Placeholder Próximamente]
   CAL -->|pantalla completa| FSC[FullScreenCalendarPage]
 ```
 
