@@ -514,10 +514,17 @@ class InvitationService {
   }
 
   /// Genera el link de invitación
+  /// 
+  /// En desarrollo web, usa localhost. En producción, usa la URL de producción.
+  /// La URL base se puede configurar desde Firebase Functions config (app.base_url).
   String generateInvitationLink(String token) {
-    // TODO: Configurar URL base desde configuración
-    // Para desarrollo local, usar localhost
-    const baseUrl = 'http://localhost:8080'; // Cambiar a 'https://planazoo.app' en producción
+    // En desarrollo web, detectar localhost automáticamente
+    // En producción, usar la URL configurada en Firebase Functions
+    // Por ahora, usar localhost para desarrollo y planazoo.app para producción
+    const baseUrl = kDebugMode 
+        ? 'http://localhost:8080'  // Desarrollo local
+        : 'https://planazoo.app';   // Producción
+    
     return '$baseUrl/invitation/$token';
   }
 

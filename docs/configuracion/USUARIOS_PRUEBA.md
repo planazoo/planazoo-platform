@@ -1,8 +1,20 @@
 # 👥 Usuarios de Prueba - Planazoo
 
-> Documento para testing y desarrollo. Usa Gmail con alias para crear múltiples usuarios desde una sola cuenta.
+> Documento completo para testing y desarrollo. Usa Gmail con alias para crear múltiples usuarios desde una sola cuenta.
 
 **Última actualización:** Enero 2025
+
+---
+
+## 📚 Tabla de Contenidos
+
+1. [Configuración Base](#-configuración-base)
+2. [Usuarios Recomendados por Rol](#-usuarios-recomendados-por-rol)
+3. [Matriz de Usuarios por Caso de Prueba](#-matriz-de-usuarios-por-caso-de-prueba)
+4. [Crear Usuarios de Prueba](#-crear-usuarios-de-prueba)
+5. [Estrategia de Usuarios para Pruebas](#-estrategia-de-usuarios-para-pruebas)
+6. [Flujo de Testing Recomendado](#-flujo-de-testing-recomendado)
+7. [Datos Semilla Formales](#-datos-semilla-formales)
 
 ---
 
@@ -237,36 +249,92 @@ unplanazoo@gmail.com
 
 ---
 
-## 📝 Notas de Uso
+## 📝 Crear Usuarios de Prueba
 
-### Crear Usuarios en Firebase
+### Método 1: Crear en Firebase Console (Recomendado)
 
-**Opción A: Crear Manualmente en Firebase Console (Recomendado para Testing)**
+**Paso 1: Abrir Firebase Console**
 
-1. Ir a Firebase Console → Authentication → Users
-2. Click en "Add user"
-3. Usar email con alias: `unplanazoo+admin@gmail.com`
-4. Contraseña: `test123456` (o la que prefieras)
-5. Click en "Add user"
-6. Repetir para cada usuario:
-   - `unplanazoo+admin@gmail.com`
-   - `unplanazoo+coorg@gmail.com`
-   - `unplanazoo+part1@gmail.com`
-   - `unplanazoo+part2@gmail.com`
-   - `unplanazoo+part3@gmail.com`
-   - `unplanazoo+obs@gmail.com`
-   - etc.
+1. Ve a https://console.firebase.google.com
+2. Selecciona tu proyecto "Planazoo"
+3. En el menú lateral, ve a **Authentication**
+4. Click en la pestaña **Users**
 
-**Opción B: Registrarse desde la App**
+**Paso 2: Crear Usuario Admin**
 
-1. Abre la app en modo incógnito o navegador diferente
-2. Ve a la página de registro
-3. Usa email: `unplanazoo+admin@gmail.com`
-4. Contraseña: `test123456`
-5. Completa el registro
-6. Repite para cada usuario
+1. Click en el botón **"Add user"** (o "Añadir usuario")
+2. En el campo **Email**, escribe: `unplanazoo+admin@gmail.com`
+3. En el campo **Password**, escribe: `test123456` (o la contraseña que prefieras)
+4. **Deselecciona** "Send email verification" (no es necesario para testing)
+5. Click en **"Add user"**
 
-**Nota:** No necesitas verificar emails para usuarios de prueba.
+✅ Usuario creado: `unplanazoo+admin@gmail.com`
+
+**Paso 3: Crear Resto de Usuarios**
+
+Repite el proceso para cada usuario de la lista de arriba.
+
+**Paso 4: Verificar Usuarios Creados**
+
+En Firebase Console → Authentication → Users, deberías ver todos los usuarios creados.
+
+### Método 2: Registrarse desde la App
+
+**Paso 1: Abrir App en Modo Incógnito**
+
+1. Abre Chrome/Edge en modo incógnito (Ctrl+Shift+N / Cmd+Shift+N)
+2. Ve a tu app (localhost o URL de producción)
+3. Ve a la página de registro
+
+**Paso 2: Registrar Usuario**
+
+1. En el campo **Email**, escribe: `unplanazoo+admin@gmail.com`
+2. En el campo **Password**, escribe: `test123456`
+3. Completa el formulario de registro
+4. Click en **"Registrar"** o **"Crear cuenta"**
+
+✅ Usuario creado y autenticado
+
+**Paso 3: Cerrar Sesión y Repetir**
+
+1. Cierra sesión del usuario actual
+2. Repite el proceso para cada usuario
+
+**Tip:** Puedes usar múltiples ventanas incógnito o navegadores diferentes para registrar varios usuarios rápidamente.
+
+### Verificar que Funciona
+
+**En Firebase Console:**
+1. Firebase Console → Authentication → Users
+2. Verifica que todos los usuarios aparecen con sus emails
+
+**En Gmail:**
+1. Abre tu Gmail: `unplanazoo@gmail.com`
+2. Si recibes algún email de la app (invitaciones, etc.):
+   - Verás que llegan a tu bandeja principal
+   - En el "Para:" verás el alias: `unplanazoo+part1@gmail.com`
+   - Puedes buscar por alias para filtrar
+
+**En la App:**
+1. Abre la app
+2. Intenta hacer login con: `unplanazoo+admin@gmail.com` / `test123456`
+3. Debería funcionar correctamente
+
+### 🔍 Troubleshooting
+
+**"Email already exists"**
+- Si ya existe en Firebase, simplemente úsalo para login
+- Si quieres recrearlo, elimínalo primero desde Firebase Console
+
+**"Invalid email format"**
+- Verifica que estás escribiendo correctamente: `unplanazoo+admin@gmail.com`
+- Asegúrate de que no hay espacios antes o después
+- El formato debe ser exactamente: `usuario+alias@gmail.com`
+
+**"Email verification required"**
+- En Firebase Console → Authentication → Settings → Email/Password
+- Desactiva "Email verification" temporalmente para testing
+- O verifica manualmente desde Firebase Console (marcar usuario como verificado)
 
 ### Verificar Emails de Invitación
 
@@ -392,6 +460,65 @@ Con estos 3 usuarios puedes probar la mayoría de funcionalidades básicas.
 - [ ] Verificar que todos los emails llegan a bandeja principal
 - [ ] Probar login con cada usuario
 - [ ] Documentar contraseña de prueba (no commitear)
+
+---
+
+## 📊 Datos Semilla Formales
+
+> **Nota:** Las contraseñas propuestas (`Test1234!` o `test123456`) cumplen las reglas vigentes: mínimo 8 caracteres con mayúsculas, minúsculas, números y carácter especial (si aplica).
+
+### Administradores de la Plataforma
+
+| Username sugerido | Email | Contraseña testing | Rol | isAdmin | Notas |
+|-------------------|-------|--------------------|-----|---------|-------|
+| `user_admin` | `unplanazoo+admin@gmail.com` | `Test1234!` o `test123456` | Organizador principal (admin plataforma) | ✅ `true` | Cuenta base para crear planes, gestionar roles, ejecutar pruebas completas. **Usuario administrador de la plataforma.** |
+
+### Usuarios por Rol
+
+| Username sugerido | Email | Contraseña | Rol en pruebas | isAdmin | Notas |
+|-------------------|-------|------------|----------------|---------|-------|
+| `user_admin` | `unplanazoo+admin@gmail.com` | `Test1234!` o `test123456` | Organizador dueño | ✅ `true` | Crea/gestiona planes; referencia principal. |
+| `user_coorg` | `unplanazoo+coorg@gmail.com` | `Test1234!` o `test123456` | Coorganizador | ❌ `false` | Valida permisos de coorganizador, creación de eventos, invitaciones. |
+| `user_part1` | `unplanazoo+part1@gmail.com` | `Test1234!` o `test123456` | Participante activo | ❌ `false` | Para eventos personales, pagos, confirmaciones. |
+| `user_part2` | `unplanazoo+part2@gmail.com` | `Test1234!` o `test123456` | Participante ocasional | ❌ `false` | Pruebas de usuarios con pocos eventos. |
+| `user_part3` | `unplanazoo+part3@gmail.com` | `Test1234!` o `test123456` | Participante en grupos | ❌ `false` | Invitaciones masivas, pruebas de grupos. |
+| `user_obs` | `unplanazoo+obs@gmail.com` | `Test1234!` o `test123456` | Observador | ❌ `false` | Valida UI/permiso solo lectura. |
+
+### Usuarios para Flujos Especiales
+
+| Username sugerido | Email | Contraseña | Caso de uso | isAdmin | Notas |
+|-------------------|-------|------------|-------------|---------|-------|
+| `user_reject` | `unplanazoo+reject@gmail.com` | `Test1234!` o `test123456` | Rechazar invitaciones | ❌ `false` | Pruebas INV-003, estados de invitaciones rechazadas. |
+| `user_expired` | `unplanazoo+expired@gmail.com` | `Test1234!` o `test123456` | Invitación caducada | ❌ `false` | Pruebas INV-004. |
+| `user_valid` | `unplanazoo+valid@gmail.com` | `Test1234!` o `test123456` | Validaciones y edge cases | ❌ `false` | Emails inválidos, validaciones de datos. |
+| `user_temp1` | `unplanazoo+temp1@gmail.com` | `Test1234!` o `test123456` | Registro nuevo | ❌ `false` | Usar en REG-001. Eliminar tras prueba. |
+| `user_temp2` | `unplanazoo+temp2@gmail.com` | `Test1234!` o `test123456` | Registro nuevo | ❌ `false` | Uso alternativo para REG-001. |
+| `user_invite1` | `unplanazoo+invite1@gmail.com` | `Test1234!` o `test123456` | Invitaciones nuevas | ❌ `false` | Pruebas INV-001, INV-002. |
+| `user_newuser` | `unplanazoo+newuser@gmail.com` | `Test1234!` o `test123456` | Usuario inexistente | ❌ `false` | Para flujos que requieren usuario libre. |
+
+### Usuarios Especiales para Escenarios Ampliados
+
+| Username sugerido | Email | Contraseña | Caso | isAdmin | Notas |
+|-------------------|-------|------------|------|---------|-------|
+| `user_argentina` | `unplanazoo+tzargentina@gmail.com` | `Test1234!` o `test123456` | Usuario con timezone América/Argentina | ❌ `false` | Configurar `defaultTimezone`: `America/Argentina/Buenos_Aires`. |
+| `user_japan` | `unplanazoo+tzjapan@gmail.com` | `Test1234!` o `test123456` | Usuario con timezone Asia/Tokyo | ❌ `false` | Configurar `defaultTimezone`: `Asia/Tokyo`. |
+| `user_aiassistant` | `unplanazoo+aiassistant@gmail.com` | `Test1234!` o `test123456` | Usuario IA / integraciones | ❌ `false` | Cuenta dummy para pruebas de IA (asignar permisos según necesidad). |
+
+### Procedimiento de Recreación
+
+**Firebase Auth:**
+- Seguir sección [Crear Usuarios de Prueba](#-crear-usuarios-de-prueba) arriba
+
+**Firestore:**
+- Al crear usuario, confirmar documento en colección `users` con campos básicos (`displayName`, `email`, `username`, `defaultTimezone`, etc.)
+- Usar los usernames sugeridos (o variantes únicas) para cumplir la regla T163
+
+**Checklist tras recrear:**
+1. Visualizar usuario en Firebase Auth
+2. Confirmar documento en Firestore (`users/{id}`)
+3. Asignar `username` (en minúsculas, único) y `defaultTimezone` si aplica
+4. **Asignar `isAdmin: true` o `isAdmin: false` según la columna `isAdmin` de las tablas arriba**
+5. Registrar fecha de recreación si es necesario
 
 ---
 

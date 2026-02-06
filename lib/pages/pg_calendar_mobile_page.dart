@@ -165,8 +165,13 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     }
   }
 
+  /// Scroll automático al primer evento del día visible
+  /// 
+  /// TODO: Implementar scroll a primer evento (Mejora UX - baja prioridad)
+  /// Esto mejoraría la experiencia al abrir el calendario mostrando
+  /// automáticamente el primer evento del día en lugar del inicio del día.
   void _scrollToFirstEvent() {
-    // TODO: Implementar scroll a primer evento
+    // Implementación futura: calcular posición del primer evento y hacer scroll
   }
 
   List<dynamic> _getColumnsToShow() {

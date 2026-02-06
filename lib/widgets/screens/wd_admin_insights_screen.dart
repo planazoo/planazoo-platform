@@ -42,7 +42,9 @@ class _AdminInsightsScreenState extends ConsumerState<AdminInsightsScreen> {
     final userService = UserService();
     final firestore = FirebaseFirestore.instance;
 
-    final plansSnapshot = await planService.getPlans().first;
+    // ⚠️ Usa getPlans() (deprecado) porque esta es una pantalla de administración
+    // que necesita TODOS los planes activos, no solo los del usuario actual.
+    final plansSnapshot = await planService.getPlans().first; // Uso válido: pantalla admin
     final activePlans = plansSnapshot.where((plan) => _isPlanActive(plan.state)).toList();
 
     final users = await userService.getAllUsers();

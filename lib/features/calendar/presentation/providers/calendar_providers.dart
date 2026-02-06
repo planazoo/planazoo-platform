@@ -107,18 +107,23 @@ final plansStreamProvider = StreamProvider<List<Plan>>((ref) async* {
   }
 });
 
-/// StreamProvider para un plan específico por ID (T107: actualización automática cuando se expande)
-final planByIdStreamProvider = StreamProvider.family<Plan?, String>((ref, planId) async* {
+/// FutureProvider para un plan específico por ID
+/// 
+/// Usa getPlanById directamente en lugar de iterar todos los planes (más eficiente).
+/// Nota: Si necesitas actualización en tiempo real, considera crear un StreamProvider
+/// que escuche cambios en el documento específico de Firestore.
+final planByIdStreamProvider = FutureProvider.family<Plan?, String>((ref, planId) async {
   final planService = ref.watch(planServiceProvider);
-  // Escuchar cambios en todos los planes y filtrar por ID
-  await for (final plans in planService.getPlans()) {
-    try {
-      final plan = plans.firstWhere((p) => p.id == planId);
-      yield plan;
-    } catch (e) {
-      // Plan no encontrado
-      yield null;
-    }
+  try {
+    return await planService.getPlanById(planId);
+  } catch (e) {
+    // Plan no encontrado o error
+    LoggerService.error(
+      'Error getting plan by ID: $planId',
+      context: 'PLAN_BY_ID_PROVIDER',
+      error: e,
+    );
+    return null;
   }
 });
 

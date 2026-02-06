@@ -316,7 +316,34 @@ Este documento debe actualizarse cuando:
 - Cambie el estado del proyecto significativamente
 - Se migre a Mac (actualizar configuración técnica)
 
-**Última actualización:** Noviembre 2025  
+---
+
+## 🔄 Actualización Exhaustiva de Documentación
+
+Cuando el usuario solicite una actualización exhaustiva de la documentación, sigue este proceso:
+
+### Orden de Prioridad para Actualización:
+
+1. **`docs/configuracion/ONBOARDING_IA.md`** (si el estado del proyecto cambió significativamente)
+2. **`docs/configuracion/TESTING_CHECKLIST.md`**
+3. **`docs/tareas/`** (TASKS y COMPLETED_TASKS)
+4. **`docs/ux/`** (pantallas involucradas)
+5. **`docs/flujos/`** relacionados con la funcionalidad modificada
+6. Otros docs técnicos o guías relevantes
+
+### Tareas Esperadas en Actualización Exhaustiva:
+
+1. Revisar y alinear documentación en `docs/` (UX, flujos, configuración, tareas, checklists)
+2. Actualizar changelogs internos, estados de tareas y checklist de pruebas cuando apliquen
+3. Verificar que los cambios de código estén reflejados en guías técnicas y UX
+4. Ejecutar ajustes menores de estilo o lint si quedan pendientes tras las modificaciones
+5. Comprobar que los documentos de flujo (`docs/flujos/`) describen fielmente el comportamiento actual y actualizarlos si no
+6. Actualizar `docs/configuracion/ONBOARDING_IA.md` si el estado del proyecto ha cambiado significativamente
+7. Informar al finalizar qué se actualizó y qué queda pendiente
+
+---
+
+**Última actualización:** Enero 2025  
 **Próxima revisión:** Después de migración a Mac
 
 ---

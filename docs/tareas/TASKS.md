@@ -234,7 +234,7 @@ Para optimizar el tiempo de testing y desarrollo, las tareas se organizan en gru
   - **Prioridad:** Media
   - **Estado:** Pendiente
   - **Responsable:** Equipo app/backend
-  - **Descripción:** Crear script de seed que lea `docs/configuracion/DATOS_SEMILLA.md`, cree/actualice los usuarios definidos (Firebase Auth + colección `users`) y elimine los que no estén en la lista, usando `username` como identificador. Documentar ejecución y precauciones.
+  - **Descripción:** Crear script de seed que lea `docs/configuracion/USUARIOS_PRUEBA.md` (sección "Datos Semilla Formales"), cree/actualice los usuarios definidos (Firebase Auth + colección `users`) y elimine los que no estén en la lista, usando `username` como identificador. Documentar ejecución y precauciones.
 
 - **T186 - Limpieza/cierre módulo legacy de permisos**
   - **Prioridad:** Media
@@ -270,7 +270,7 @@ Para optimizar el tiempo de testing y desarrollo, las tareas se organizan en gru
   - ⏳ Scripts administrativos básicos creados (limpiar huérfanos, eliminar datos de usuario)
   - ⏳ Documentación de scripts administrativos en `docs/admin/SCRIPTS_ADMINISTRATIVOS.md`
   - ✅ Lista blanca de admins documentada (`docs/admin/ADMINS_WHITELIST.md`)
-  - ✅ `DATOS_SEMILLA.md` actualizado con columna `isAdmin` para todos los usuarios
+  - ✅ `USUARIOS_PRUEBA.md` actualizado con columna `isAdmin` para todos los usuarios (sección "Datos Semilla Formales")
   - ⏳ Logs de acciones administrativas (futuro)
   
   **Archivos creados:**
@@ -287,7 +287,7 @@ Para optimizar el tiempo de testing y desarrollo, las tareas se organizan en gru
   - ✅ `lib/features/auth/domain/models/user_model.dart` - Añadido `isAdmin`
   - ✅ `lib/features/calendar/domain/models/plan_participation.dart` - Añadido `_adminCreatedBy`
   - ✅ `firestore.rules` - Añadida función `isAdmin()` y reglas para admins
-  - ✅ `docs/configuracion/DATOS_SEMILLA.md` - Añadida columna `isAdmin`
+  - ✅ `docs/configuracion/USUARIOS_PRUEBA.md` - Añadida columna `isAdmin` en sección "Datos Semilla Formales"
   - ⏳ `lib/features/calendar/domain/models/event_participant.dart` - Añadir `_adminCreatedBy` (si existe)
   - ⏳ Servicios que crean registros - Añadir `_adminCreatedBy` al crear:
     - `PlanParticipationService.createParticipation()`
@@ -1444,7 +1444,7 @@ CalendarScreen (orchestrator)
 - ✅ `lib/widgets/screens/wd_calendar_screen.dart` (refactorizado parcialmente)
 
 **Documentación:**
-- ✅ `docs/configuracion/T96_REFACTORING_PLAN.md` - Plan detallado del refactoring
+- ✅ `docs/tareas/T96_REFACTORING_PLAN.md` - Plan detallado del refactoring
 
 ---
 
@@ -6358,7 +6358,7 @@ Organizador quiere invitar a alguien a unirse al plan
 - T156 (Actualización de índices de Firestore)
 - T152 (Revisión y Optimización de Índices de Firestore)
 - docs/configuracion/MIGRACION_MAC_PLAYBOOK.md
-- docs/configuracion/DEPLOY_INDICES_FIREBASE_CONSOLE.md
+- docs/configuracion/DEPLOY_INDICES_FIRESTORE.md
 - docs/configuracion/INDICES_ANALISIS_COMPARACION.md
 
 ---
@@ -6434,8 +6434,7 @@ firebase projects:list
 
 **Documentación relacionada:**
 - [Firebase CLI Documentation](https://firebase.google.com/docs/cli)
-- docs/configuracion/DEPLOY_INDICES_INSTRUCCIONES.md
-- docs/configuracion/DEPLOY_INDICES_FIREBASE_CONSOLE.md
+- docs/configuracion/DEPLOY_INDICES_FIRESTORE.md
 
 **Relacionado con:**
 - T154 (Migración del Proyecto a Mac/iOS)
@@ -6531,7 +6530,7 @@ firebase deploy --only firestore:indexes
 - docs/configuracion/FIRESTORE_INDEXES_AUDIT.md
 - docs/configuracion/INDICES_ANALISIS_COMPARACION.md
 - docs/configuracion/INDICES_OBSOLETOS_VERIFICACION.md
-- docs/configuracion/DEPLOY_INDICES_INSTRUCCIONES.md
+- docs/configuracion/DEPLOY_INDICES_FIRESTORE.md
 - docs/configuracion/ESTRATEGIA_INDICES_ELIMINAR_TODOS.md
 - firestore.indexes.json
 **Relacionado con:**

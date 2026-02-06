@@ -23,9 +23,13 @@ final accommodationServiceProvider = Provider<AccommodationService>((ref) {
 });
 
 /// Provider para obtener todos los planes
+/// 
+/// ⚠️ Usa `getPlans()` (deprecado) porque esta es una vista de administración
+/// que necesita TODOS los planes de la base de datos, no solo los del usuario actual.
+/// Para vistas de usuario normal, usar `plansStreamProvider` en su lugar.
 final allPlansProvider = StreamProvider<List<Plan>>((ref) {
   final planService = ref.read(planServiceProvider);
-  return planService.getPlans();
+  return planService.getPlans(); // Uso válido: vista de administración
 });
 
 /// Provider para obtener todos los eventos de todos los planes

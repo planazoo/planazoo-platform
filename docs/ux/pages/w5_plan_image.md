@@ -136,6 +136,10 @@ Widget _buildDefaultIcon() {
 - **v1.3**: Cambio de fondo de blanco a color1 para mejor integración visual
 - **v1.4**: Cambio de fondo de color1 a color2 para consistencia con el esquema de colores
 - **v1.5**: Eliminación del borde del contenedor (mismo color que el fondo)
+- **v1.6**: Selección automática del primer plan al cargar la página y mejora del icono por defecto
+  - **Problema resuelto**: W5 no mostraba imagen por defecto porque no había plan seleccionado automáticamente
+  - **Solución**: Selección automática del primer plan si no hay ninguno seleccionado
+  - **Mejora**: Icono por defecto más visible y apropiado (`Icons.image_outlined`, tamaño 28, mejor contraste)
 
 ## 🎨 Consideraciones de UX
 

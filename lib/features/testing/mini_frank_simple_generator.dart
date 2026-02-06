@@ -57,7 +57,9 @@ class MiniFrankSimpleGenerator {
   /// Elimina el plan Mini Frank existente si existe
   static Future<void> _deleteMiniFrankPlan() async {
     try {
-      final allPlans = await _planService.getPlans().first;
+      // ⚠️ Usa getPlans() (deprecado) porque este generador de datos de prueba
+      // necesita buscar planes por nombre en toda la base de datos, no por usuario.
+      final allPlans = await _planService.getPlans().first; // Uso válido: generador de prueba
       final miniFrankPlans = allPlans.where((p) => p.name.contains('Mini Frank')).toList();
 
       for (final plan in miniFrankPlans) {

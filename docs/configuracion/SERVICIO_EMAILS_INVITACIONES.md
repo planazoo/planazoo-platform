@@ -2,7 +2,11 @@
 
 ## 📋 Resumen
 
-Sistema de envío automático de emails cuando se crea una invitación a un plan. Implementado con Firebase Cloud Functions y SendGrid.
+Sistema de envío automático de emails cuando se crea una invitación a un plan. Implementado con Firebase Cloud Functions.
+
+**⚠️ IMPORTANTE:** Este servicio ahora usa **Gmail SMTP** (solo Google). Para configuración detallada, ver **[EMAILS_CON_GMAIL_SMTP.md](./EMAILS_CON_GMAIL_SMTP.md)**.
+
+**Nota histórica:** Anteriormente se usaba SendGrid, pero se migró a Gmail SMTP para mantener todo en el ecosistema Google. El código mantiene compatibilidad con SendGrid como fallback.
 
 ## 🏗️ Arquitectura
 
@@ -28,24 +32,13 @@ Usuario recibe email con botones "Aceptar" / "Rechazar"
 
 ## 🔧 Configuración
 
-### 1. SendGrid Setup
+**👉 Ver guía completa:** [EMAILS_CON_GMAIL_SMTP.md](./EMAILS_CON_GMAIL_SMTP.md)
 
-1. Crear cuenta en [SendGrid](https://sendgrid.com)
-2. Generar API Key con permisos de envío
-3. Verificar dominio (opcional pero recomendado)
+### Resumen Rápido
 
-### 2. Configurar Firebase Functions
-
-```bash
-# Configurar API key
-firebase functions:config:set sendgrid.key="SG.xxxxx"
-
-# Configurar email remitente
-firebase functions:config:set sendgrid.from="noreply@planazoo.app"
-
-# Configurar URL base de la app
-firebase functions:config:set app.base_url="https://planazoo.app"
-```
+1. **Crear App Password de Gmail** (requiere verificación en 2 pasos)
+2. **Configurar Firebase Functions** con credenciales de Gmail
+3. **Desplegar Cloud Function**
 
 ### 3. Desplegar
 
@@ -77,7 +70,7 @@ El email incluye:
    - Detecta creación en `plan_invitations/{id}`
    - Obtiene datos del plan y organizador
    - Genera HTML del email
-   - Envía email vía SendGrid
+   - Envía email vía Gmail SMTP (o SendGrid como fallback si Gmail no está configurado)
 
 3. **Usuario recibe email**
    - Ve botones de acción
@@ -87,21 +80,22 @@ El email incluye:
 
 ## ⚠️ Manejo de Errores
 
-- Si SendGrid no está configurado: warning en logs, no falla
+- Si Gmail SMTP no está configurado: intenta usar SendGrid como fallback
+- Si SendGrid tampoco está configurado: warning en logs, no falla
 - Si el plan no existe: error en logs, no envía email
-- Si SendGrid falla: error en logs, no falla la función (invitación ya está creada)
+- Si el servicio de email falla: error en logs, no falla la función (invitación ya está creada)
 
 ## 🔐 Seguridad
 
-- API Key almacenada en Firebase Functions config (encriptado)
-- Emails validados por SendGrid (dominio verificado)
+- App Password de Gmail almacenada en Firebase Functions config (encriptado)
 - Links con tokens únicos y expiración (7 días)
+- Verificación de email del usuario antes de aceptar invitación
 
 ## 📊 Monitoreo
 
 ```bash
 # Ver logs en tiempo real
-firebase functions:log --only sendInvitationEmail
+npx firebase-tools functions:log --only sendInvitationEmail
 
 # Ver métricas en Firebase Console
 # Functions → sendInvitationEmail → Monitoring
@@ -109,33 +103,27 @@ firebase functions:log --only sendInvitationEmail
 
 ## 🧪 Testing
 
-### Testing Local con Emulator
-
-```bash
-# Terminal 1: Iniciar emulador
-firebase emulators:start --only functions,firestore
-
-# Terminal 2: Crear invitación de prueba en Firestore emulator
-# La función se ejecutará automáticamente
-```
-
-### Testing Manual
-
 1. Crear invitación desde la app
 2. Verificar que el documento se crea en Firestore
-3. Verificar logs de Firebase Functions
-4. Revisar email en SendGrid Activity (si está configurado)
+3. Verificar logs de Firebase Functions (debería mostrar "Gmail SMTP" o "SendGrid")
+4. Revisar bandeja de entrada del email destino
 
 ## 🔄 Próximos Pasos (Opcional)
 
-- [ ] Añadir tracking de aperturas/clics (SendGrid)
 - [ ] Añadir recordatorios automáticos (después de 2 días sin respuesta)
 - [ ] Soporte para múltiples idiomas en emails
-- [ ] A/B testing de templates de email
 - [ ] Estadísticas de tasa de aceptación
 
 ---
 
-*Implementado en T104 - Sistema de Invitaciones a Planes*
+## 📚 Documentación Relacionada
+
+- **[EMAILS_CON_GMAIL_SMTP.md](./EMAILS_CON_GMAIL_SMTP.md)** - Guía completa de configuración de Gmail SMTP
+- **[GUIA_PASO_A_PASO_GMAIL_EN.md](./GUIA_PASO_A_PASO_GMAIL_EN.md)** - Guía en inglés
+
+---
+
+*Implementado en T104 - Sistema de Invitaciones a Planes*  
+*Migrado a Gmail SMTP para mantener todo en el ecosistema Google*
 
 

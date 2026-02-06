@@ -17,7 +17,18 @@ class PlanService {
   final EventParticipantService _eventParticipantService = EventParticipantService();
   final PermissionService _permissionService = PermissionService();
 
-  // TODO: deprecate cuando todos los consumidores usen getPlansForUser
+  /// Obtener todos los planes (sin filtrar por usuario)
+  /// 
+  /// ⚠️ DEPRECATED: Usar `getPlansForUser(userId)` en su lugar para obtener
+  /// solo los planes visibles para un usuario específico.
+  /// 
+  /// Este método se mantiene para:
+  /// - Generadores de datos de prueba
+  /// - Pantallas de administración
+  /// - Providers que necesitan todos los planes
+  /// 
+  /// TODO: Migrar todos los consumidores a `getPlansForUser` cuando sea posible.
+  @Deprecated('Usar getPlansForUser(userId) en su lugar. Este método retorna todos los planes sin filtrar.')
   Stream<List<Plan>> getPlans() {
     return _firestore
         .collection(_collectionName)

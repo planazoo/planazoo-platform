@@ -1718,8 +1718,8 @@ Clase `EventSegment` que divide eventos multi-día en segmentos (uno por día):
 - Identificado problema: No había plan seleccionado automáticamente al cargar la página
 - Implementada selección automática del primer plan en `_loadPlanazoos()`
 - Mejorado icono por defecto con color1 para mejor visibilidad
-- Creada documentación completa en `w5_image_display_fix.md`
-**Archivos relacionados:** `lib/pages/pg_dashboard_page.dart`, `docs/pages/w5_image_display_fix.md`
+- Creada documentación completa (consolidada en `docs/ux/pages/w5_plan_image.md`)
+**Archivos relacionados:** `lib/pages/pg_dashboard_page.dart`, `docs/ux/pages/w5_plan_image.md`
 
 ---
 

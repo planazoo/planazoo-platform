@@ -9,6 +9,16 @@
 
 ---
 
+## 📋 Resumen Rápido (Guía Básica)
+
+Si prefieres una guía rápida y resumida, consulta: **[MIGRACION_MAC_INSTRUCCIONES_BASICAS.md](./MIGRACION_MAC_INSTRUCCIONES_BASICAS.md)**
+
+Este playbook es la versión completa y detallada con todos los pasos, verificaciones y troubleshooting.
+
+---
+
+---
+
 ## 📋 INSTRUCCIONES PARA LA IA
 
 **Cuando el usuario comparta este documento en la nueva instalación de Mac:**

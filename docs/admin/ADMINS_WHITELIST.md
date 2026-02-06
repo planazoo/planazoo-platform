@@ -88,7 +88,7 @@ Los usuarios con `isAdmin: true` pueden:
 
 ## 🔗 Referencias
 
-- `docs/configuracion/DATOS_SEMILLA.md` - Usuarios de prueba y sus roles
+- `docs/configuracion/USUARIOS_PRUEBA.md` - Usuarios de prueba y sus roles (incluye sección "Datos Semilla Formales")
 - `docs/tareas/TASKS.md` - T188: Sistema de gestión administrativa
 - `firestore.rules` - Reglas de seguridad con función `isAdmin()`
 

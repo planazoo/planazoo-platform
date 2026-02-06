@@ -92,8 +92,9 @@ class DemoDataGenerator {
   /// Elimina el plan Frankenstein existente si existe
   static Future<void> deleteFrankensteinPlan() async {
     try {
-      // Buscar planes con nombre Frankenstein
-      final allPlans = await _planService.getPlans().first;
+      // ⚠️ Usa getPlans() (deprecado) porque este generador de datos de prueba
+      // necesita buscar planes por nombre en toda la base de datos, no por usuario.
+      final allPlans = await _planService.getPlans().first; // Uso válido: generador de prueba
       final frankensteinPlans = allPlans.where((p) => p.name.contains('Frankenstein')).toList();
 
       for (final plan in frankensteinPlans) {
@@ -148,8 +149,9 @@ class DemoDataGenerator {
     final success = await _planService.savePlanByUnpId(plan);
     if (!success) return null;
 
-    // Obtener el plan guardado con su ID
-    final allPlans = await _planService.getPlans().first;
+    // ⚠️ Usa getPlans() (deprecado) porque este generador de datos de prueba
+    // necesita buscar planes por unpId en toda la base de datos, no por usuario.
+    final allPlans = await _planService.getPlans().first; // Uso válido: generador de prueba
     return allPlans.firstWhere((p) => p.unpId == demoPlanId);
   }
 

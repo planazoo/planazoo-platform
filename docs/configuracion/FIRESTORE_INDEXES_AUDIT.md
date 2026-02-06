@@ -263,7 +263,7 @@ Todos los índices identificados como necesarios han sido añadidos al `firestor
 2. ⚠️ **Identificar y eliminar índices obsoletos en Firebase:**
    - Comparar índices en Firebase Console con los 25 definidos aquí
    - Eliminar índices que no estén en la lista de arriba
-   - Ver instrucciones detalladas en `DEPLOY_INDICES_INSTRUCCIONES.md`
+   - Ver instrucciones detalladas en `DEPLOY_INDICES_FIRESTORE.md`
 
 3. ⚠️ **Validar** que todas las queries funcionan correctamente después del despliegue
 4. ⚠️ **Corregir discrepancia** de nombres de colecciones en Firestore Rules

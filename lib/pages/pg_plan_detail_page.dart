@@ -116,7 +116,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         );
       
       case 'payments':
-        // TODO: Implementar página de pagos
+        // TODO: Implementar página de pagos (Tarea futura - Sistema de pagos)
+        // Ver: docs/tareas/TASKS.md para más detalles sobre funcionalidades pendientes
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

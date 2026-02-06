@@ -1,20 +1,39 @@
 # 🔧 Desplegar Reglas de Firestore
 
-## Cambio realizado
+## 📋 Comando
 
-Se actualizaron las reglas de `plan_invitations` para permitir lectura pública de invitaciones pendientes, permitiendo que usuarios no autenticados puedan ver su invitación usando el token del email.
-
-## Desplegar
-
-Ejecuta este comando:
+Para desplegar las reglas de Firestore, ejecuta:
 
 ```bash
 npx firebase-tools deploy --only firestore:rules
 ```
 
-## Verificar
+## ✅ Verificar
 
-Después de desplegar, prueba de nuevo:
-1. Copia el token del link del email
-2. Navega a: `http://localhost:TU_PUERTO/invitation/TOKEN`
-3. Deberías poder ver la invitación
+Después de desplegar:
+
+1. Ve a [Firebase Console](https://console.firebase.google.com/)
+2. Selecciona tu proyecto
+3. Ve a **Firestore Database** → **Rules**
+4. Verifica que las reglas desplegadas coinciden con `firestore.rules`
+
+## 📝 Notas
+
+- Las reglas se validan automáticamente antes de desplegar
+- Si hay errores de sintaxis, el despliegue fallará
+- Los cambios se aplican inmediatamente después del despliegue
+
+## 🔄 Reglas Importantes
+
+Las reglas actuales incluyen:
+
+- **Autenticación:** Usuarios autenticados pueden leer/escribir sus datos
+- **Invitaciones:** Lectura pública de invitaciones pendientes (para links de email)
+- **Planes:** Lectura pública de planes asociados a invitaciones pendientes
+- **Mensajes:** Usuarios autenticados pueden leer/escribir mensajes del plan
+- **Notificaciones:** Usuarios solo pueden acceder a sus propias notificaciones
+- **Administradores:** Permisos especiales para usuarios con `isAdmin: true`
+
+---
+
+*Última actualización: 2025-01-XX*

@@ -43,6 +43,68 @@ Este directorio contiene la documentación técnica y funcional de todas las pá
 
 ---
 
+### 👤 **profile_page.md** - Página de Perfil de Usuario
+**Versión:** 2.0 | **Última actualización:** Diciembre 2024
+
+**Descripción:** Página para visualizar y gestionar el perfil del usuario autenticado. Muestra información del usuario, foto de perfil, y acceso a opciones de configuración.
+
+**Características principales:**
+- Top bar con flecha de retroceso y @username
+- Header con foto de perfil (80x80px) y datos del usuario
+- Secciones de opciones organizadas en cards
+- Acceso a configuración de cuenta y preferencias
+- Diseño consistente con login/registro
+
+**Tecnologías:** Firebase Auth, Firestore, Riverpod, Flutter
+
+---
+
+### 🎨 **Widgets del Dashboard (Web)**
+
+#### **w1_sidebar.md** - Barra Lateral Izquierda
+**Descripción:** Barra lateral izquierda del dashboard web con navegación y acceso a funcionalidades principales.
+
+#### **w2_logo.md** - Logo de la Aplicación
+**Descripción:** Widget del logo de Planazoo en el dashboard.
+
+#### **w3_create_button.md** - Botón de Crear Plan
+**Descripción:** Botón para crear nuevos planes desde el dashboard.
+
+#### **w5_plan_image.md** - Imagen del Plan Seleccionado
+**Descripción:** Widget circular que muestra la imagen del plan seleccionado (v1.6).
+
+#### **w6_plan_info.md** - Información del Plan
+**Descripción:** Widget que muestra información detallada del plan seleccionado.
+
+#### **w13_plan_search.md** - Búsqueda de Planes
+**Descripción:** Campo de búsqueda para filtrar planes en el dashboard.
+
+#### **w14_plan_info_access.md** - Acceso a Información del Plan
+**Descripción:** Widget de acceso rápido a la información del plan.
+
+#### **w15_calendar_access.md** - Acceso al Calendario
+**Descripción:** Widget de acceso rápido al calendario del plan.
+
+#### **w16_participants_access.md** - Acceso a Participantes
+**Descripción:** Widget de acceso rápido a la gestión de participantes.
+
+#### **w26_filter_buttons.md** - Botones de Filtro
+**Descripción:** Botones para filtrar planes por diferentes criterios.
+
+#### **w27_auxiliary_widget.md** - Widget Auxiliar
+**Descripción:** Widget auxiliar del dashboard con funcionalidades adicionales.
+
+#### **w28_plan_list.md** - Lista de Planes
+**Descripción:** Lista de planes del usuario con cards interactivas.
+
+#### **w29_advertising_footer.md** - Pie de Publicidad
+**Descripción:** Footer con publicidad o información promocional.
+
+#### **w30_app_info_footer.md** - Pie de Información de la App
+**Descripción:** Footer con información sobre la aplicación.
+
+---
+
 ## 🏗️ **Estructura de Documentación**
 
 Cada documento de página sigue un formato estándar que incluye:
@@ -114,7 +176,6 @@ Cada documento de página sigue un formato estándar que incluye:
 
 ### **Páginas Pendientes:**
 - [ ] **main_page.md** - Página principal de la aplicación
-- [ ] **profile_page.md** - Página de perfil de usuario
 - [ ] **edit_profile_page.md** - Página de edición de perfil
 - [ ] **account_settings_page.md** - Página de configuración de cuenta
 - [ ] **calendar_page.md** - Página del calendario principal
@@ -134,7 +195,7 @@ Cada documento de página sigue un formato estándar que incluye:
 Para sugerencias, correcciones o nuevas páginas a documentar, contactar con el equipo de desarrollo.
 
 **Mantenedor:** Equipo de Desarrollo UNP Calendario  
-**Última actualización del índice:** Diciembre 2024
+**Última actualización del índice:** Enero 2025
 
 ---
 
