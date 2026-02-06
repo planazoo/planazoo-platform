@@ -62,6 +62,21 @@ Este directorio contiene la documentación técnica y funcional de todas las pá
 
 ---
 
+### 💬 **plan_chat_screen.md** - Chat del plan
+**Última actualización:** Febrero 2026  
+**Código:** `lib/widgets/screens/wd_plan_chat_screen.dart` → `PlanChatScreen`
+
+**Descripción:** Pantalla de chat del plan tipo WhatsApp (T190). Mensajería en tiempo real entre participantes del plan.
+
+**Características principales:**
+- Acceso en **móvil** desde PlanDetailPage (pestaña Chat) y en **web** desde Dashboard (botón W19)
+- Lista de mensajes con burbujas (propios/otros), campo de envío y scroll al final
+- Mensajes persistidos en Firestore; resolución de nombres de usuario vía `UserService`
+
+**Tecnologías:** Firestore, Riverpod, Flutter (chat feature)
+
+---
+
 ### 🎨 **Widgets del Dashboard (Web)**
 
 **Código:** Todos los widgets W1–W30 viven en `lib/pages/pg_dashboard_page.dart` (clase `DashboardPage`), métodos `_buildW1` … `_buildW30`.
@@ -196,7 +211,7 @@ Listado alineado con el código actual. Las que tienen ficha en este directorio 
 | **ParticipantGroupsPage** | `lib/pages/pg_participant_groups_page.dart` | Grupos de participantes. |
 | **PlanStatsPage** | `lib/features/stats/presentation/pages/plan_stats_page.dart` | Estadísticas del plan. |
 | **PaymentSummaryPage** | `lib/features/payments/presentation/pages/payment_summary_page.dart` | Resumen de pagos. |
-| **PlanChatScreen** | `lib/widgets/screens/wd_plan_chat_screen.dart` | Chat del plan. |
+| **PlanChatScreen** | `lib/widgets/screens/wd_plan_chat_screen.dart` | Chat del plan. Ver **plan_chat_screen.md**. |
 | **AdminInsightsScreen** | `lib/widgets/screens/wd_admin_insights_screen.dart` | Panel admin (insights). |
 | **EditProfilePage** | `lib/features/auth/presentation/pages/edit_profile_page.dart` | Edición de perfil (modal/diálogo). |
 | **UIShowcasePage** | `lib/pages/pg_ui_showcase_page.dart` | Showcase de componentes UI (desarrollo). |
@@ -256,6 +271,7 @@ flowchart LR
   W31 -->|currentScreen| CALW[CalendarScreen]
   W31 -->|planData| PDATA[PlanDataScreen]
   W31 -->|participants| PSCR[ParticipantsScreen]
+  W31 -->|chat| CHAT[PlanChatScreen]
   W31 -->|profile| PROF[ProfilePage]
   W31 -->|stats| STATS[PlanStatsPage]
   W31 -->|payments| PAY[PaymentSummaryPage]
@@ -264,6 +280,8 @@ flowchart LR
   CALW -->|fullscreen| FSC[FullScreenCalendarPage]
   PROF -->|modal| EP[EditProfilePage]
 ```
+
+*Chat:* en web se accede desde W19 (botón "Chat"); en móvil desde la barra de pestañas de **PlanDetailPage** (pestaña Chat).
 
 ### Leyenda
 
