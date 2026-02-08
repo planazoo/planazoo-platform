@@ -668,12 +668,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
+      builder: (context) => AlertDialog(
         content: Row(
           children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 20),
-            Text('Inicializando Firestore...'),
+            const CircularProgressIndicator(),
+            const SizedBox(width: 20),
+            Text(AppLocalizations.of(context)!.dashboardFirestoreInitializing),
           ],
         ),
       ),
@@ -827,10 +827,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       
       // Mostrar diálogo con información completa
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('✅ Firestore Inicializado'),
+            title: Text(l10n.dashboardFirestoreInitialized),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -845,25 +846,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                   )),
                   const SizedBox(height: 16),
-                  const Text(
-                    '👥 Usuarios de Prueba:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.dashboardTestUsersLabel,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Todos los usuarios usan la contraseña: test123456',
-                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                  Text(
+                    l10n.dashboardTestUsersPasswordNote,
+                    style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Todos los emails llegan a: unplanazoo@gmail.com',
-                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                  Text(
+                    l10n.dashboardTestUsersEmailNote,
+                    style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                   ),
                   if (needsReLogin) ...[
                     const SizedBox(height: 12),
-                    const Text(
-                      '⚠️ Nota: Tu sesión actual puede haber cambiado. Si es necesario, vuelve a hacer login.',
-                      style: TextStyle(
+                    Text(
+                      l10n.dashboardFirestoreSessionNote,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
                         color: Colors.orange,
@@ -871,55 +872,51 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  const Text(
-                    '📊 Índices de Firestore:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.dashboardFirestoreIndexes,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '⚠️ IMPORTANTE: Los índices NO se despliegan automáticamente desde la app.',
-                    style: TextStyle(
+                  Text(
+                    l10n.dashboardFirestoreIndexesWarning,
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.orange,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Debes desplegarlos manualmente usando:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.dashboardFirestoreIndexesDeployHint,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'firebase deploy --only firestore:indexes',
-                    style: TextStyle(
+                  Text(
+                    l10n.dashboardFirestoreIndexesDeployCommand,
+                    style: const TextStyle(
                       fontFamily: 'monospace',
                       backgroundColor: Colors.black12,
                       fontSize: 12,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'O desde Firebase Console:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.dashboardFirestoreConsoleHint,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '1. Ve a Firebase Console\n'
-                    '2. Firestore Database → Indexes\n'
-                    '3. Verifica que hay 25 índices definidos\n'
-                    '4. Los índices se crearán automáticamente',
-                    style: TextStyle(fontSize: 12),
+                  Text(
+                    l10n.dashboardFirestoreConsoleSteps,
+                    style: const TextStyle(fontSize: 12),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    '📝 Ver documentación completa:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.dashboardFirestoreDocs,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'docs/configuracion/FIRESTORE_INDEXES_AUDIT.md\n'
-                    'docs/configuracion/USUARIOS_PRUEBA.md',
-                    style: TextStyle(
+                  Text(
+                    l10n.dashboardFirestoreDocsPaths,
+                    style: const TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 11,
                       color: Colors.blue,
@@ -931,7 +928,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Entendido'),
+                child: Text(l10n.understood),
               ),
             ],
           ),
@@ -942,7 +939,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         Navigator.of(context).pop(); // Cerrar diálogo de carga
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error al inicializar Firestore: $e'),
+            content: Text(AppLocalizations.of(context)!.dashboardFirestoreInitError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -972,11 +969,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     final selectedUsers = <String>{};
 
+    final l10n = AppLocalizations.of(context)!;
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('🗑️ Eliminar Usuarios de Prueba'),
+          title: Text(l10n.dashboardDeleteTestUsersTitle),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
@@ -984,14 +982,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Selecciona los usuarios que deseas eliminar:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    l10n.dashboardDeleteTestUsersSelect,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    '⚠️ ADVERTENCIA: Esta acción eliminará los usuarios de Firebase Auth y Firestore. No se puede deshacer.',
-                    style: TextStyle(
+                  Text(
+                    l10n.dashboardDeleteTestUsersWarning,
+                    style: const TextStyle(
                       fontSize: 12,
                       color: Colors.orange,
                       fontStyle: FontStyle.italic,
@@ -1030,8 +1028,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                         },
                         child: Text(
                           selectedUsers.length == testUsers.length
-                              ? 'Deseleccionar todos'
-                              : 'Seleccionar todos',
+                              ? l10n.dashboardDeselectAll
+                              : l10n.dashboardSelectAll,
                         ),
                       ),
                     ],
@@ -1043,7 +1041,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text(AppLocalizations.of(context)!.cancel),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: selectedUsers.isEmpty
@@ -1053,7 +1051,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
               ),
-              child: Text('${AppLocalizations.of(context)!.delete} (${selectedUsers.length})'),
+              child: Text('${l10n.delete} (${selectedUsers.length})'),
             ),
           ],
         ),
@@ -1079,7 +1077,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 20),
-            Text('Eliminando ${userEmails.length} usuario(s)...'),
+            Text(AppLocalizations.of(context)!.dashboardDeletingUsersCount(userEmails.length)),
           ],
         ),
       ),
@@ -1167,26 +1165,27 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
       // Mostrar resultados
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('✅ Eliminación Completada'),
+            title: Text(l10n.dashboardDeletionCompleted),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Eliminados de Firestore: $deletedFirestoreCount',
+                    l10n.dashboardDeletedFromFirestore(deletedFirestoreCount),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    'No encontrados: $notFoundCount',
+                    l10n.dashboardNotFoundCount(notFoundCount),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   if (errorCount > 0)
                     Text(
-                      'Errores: $errorCount',
+                      l10n.dashboardErrorsCount(errorCount),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.red,
@@ -1194,9 +1193,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                   if (errors.isNotEmpty) ...[
                     const SizedBox(height: 12),
-                    const Text(
-                      'Errores detallados:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    Text(
+                      l10n.dashboardErrorsDetail,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     ...errors.map((error) => Padding(
@@ -1208,9 +1207,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     )),
                   ],
                   const SizedBox(height: 12),
-                  const Text(
-                    '⚠️ NOTA: Los usuarios también deben eliminarse manualmente de Firebase Auth Console si existen ahí.',
-                    style: TextStyle(
+                  Text(
+                    l10n.dashboardDeleteAuthNote,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
                       color: Colors.orange,
@@ -1222,7 +1221,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Entendido'),
+                child: Text(l10n.understood),
               ),
             ],
           ),
@@ -1233,7 +1232,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         Navigator.of(context).pop(); // Cerrar diálogo de carga
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Error al eliminar usuarios: $e'),
+            content: Text(AppLocalizations.of(context)!.dashboardDeleteUsersError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -1255,15 +1254,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     // Mostrar loading
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Row(
           children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(width: 16),
-            Text('🧟 Generando plan Frankenstein...'),
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(width: 16),
+            Text(AppLocalizations.of(context)!.dashboardGeneratingFrankenstein),
           ],
         ),
-        duration: Duration(seconds: 10),
+        duration: const Duration(seconds: 10),
       ),
     );
     
@@ -1277,7 +1276,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('🎉 Plan Frankenstein generado exitosamente!'),
+            content: Text(AppLocalizations.of(context)!.dashboardFrankensteinSuccess),
             backgroundColor: Colors.green,
             action: SnackBarAction(
               label: AppLocalizations.of(context)!.view,
@@ -1302,8 +1301,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Error al generar plan Frankenstein'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.dashboardFrankensteinError),
             backgroundColor: Colors.red,
           ),
         );
@@ -1361,7 +1360,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               WdDashboardNavTabs(
                 columnWidth: columnWidth,
                 rowHeight: rowHeight,
-                tabs: WdDashboardNavTabs.defaultTabs,
+                tabs: WdDashboardNavTabs.tabs(context),
                 selectedId: selectedWidgetId,
                 onTabTap: (id, screen) {
                   _selectWidget(id);

@@ -729,6 +729,102 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardTabChat => 'chat';
 
   @override
+  String get understood => 'Understood';
+
+  @override
+  String get dashboardFirestoreInitializing => 'Initializing Firestore...';
+
+  @override
+  String get dashboardFirestoreInitialized => '✅ Firestore Initialized';
+
+  @override
+  String get dashboardTestUsersLabel => '👥 Test Users:';
+
+  @override
+  String get dashboardTestUsersPasswordNote => 'All users use password: test123456';
+
+  @override
+  String get dashboardTestUsersEmailNote => 'All emails go to: unplanazoo@gmail.com';
+
+  @override
+  String get dashboardFirestoreSessionNote => '⚠️ Note: Your current session may have changed. If needed, sign in again.';
+
+  @override
+  String get dashboardFirestoreIndexes => '📊 Firestore Indexes:';
+
+  @override
+  String get dashboardFirestoreIndexesWarning => '⚠️ IMPORTANT: Indexes are NOT deployed automatically from the app.';
+
+  @override
+  String get dashboardFirestoreIndexesDeployHint => 'You must deploy them manually using:';
+
+  @override
+  String get dashboardFirestoreIndexesDeployCommand => 'firebase deploy --only firestore:indexes';
+
+  @override
+  String get dashboardFirestoreConsoleHint => 'Or from Firebase Console:';
+
+  @override
+  String get dashboardFirestoreConsoleSteps => '1. Go to Firebase Console\n2. Firestore Database → Indexes\n3. Verify there are 25 indexes defined\n4. Indexes will be created automatically';
+
+  @override
+  String get dashboardFirestoreDocs => '📝 See full documentation:';
+
+  @override
+  String get dashboardFirestoreDocsPaths => 'docs/configuracion/FIRESTORE_INDEXES_AUDIT.md\ndocs/configuracion/USUARIOS_PRUEBA.md';
+
+  @override
+  String dashboardFirestoreInitError(String error) => '❌ Error initializing Firestore: $error';
+
+  @override
+  String get dashboardDeleteTestUsersTitle => '🗑️ Delete Test Users';
+
+  @override
+  String get dashboardDeleteTestUsersSelect => 'Select the users you want to delete:';
+
+  @override
+  String get dashboardDeleteTestUsersWarning => '⚠️ WARNING: This will delete users from Firebase Auth and Firestore. This cannot be undone.';
+
+  @override
+  String get dashboardSelectAll => 'Select all';
+
+  @override
+  String get dashboardDeselectAll => 'Deselect all';
+
+  @override
+  String dashboardDeletingUsersCount(int count) => 'Deleting $count user(s)...';
+
+  @override
+  String get dashboardDeletionCompleted => '✅ Deletion Completed';
+
+  @override
+  String dashboardDeletedFromFirestore(int count) => 'Deleted from Firestore: $count';
+
+  @override
+  String dashboardNotFoundCount(int count) => 'Not found: $count';
+
+  @override
+  String dashboardErrorsCount(int count) => 'Errors: $count';
+
+  @override
+  String get dashboardErrorsDetail => 'Error details:';
+
+  @override
+  String get dashboardDeleteAuthNote => '⚠️ NOTE: Users must also be deleted manually from Firebase Auth Console if they exist there.';
+
+  @override
+  String dashboardDeleteUsersError(String error) => '❌ Error deleting users: $error';
+
+  @override
+  String get dashboardGeneratingFrankenstein => '🧟 Generating Frankenstein plan...';
+
+  @override
+  String get dashboardFrankensteinSuccess => '🎉 Frankenstein plan generated successfully!';
+
+  @override
+  String get dashboardFrankensteinError => '❌ Error generating Frankenstein plan';
+
+  @override
   String get planCalendarEmpty => 'No plans scheduled in these months.';
 
   @override

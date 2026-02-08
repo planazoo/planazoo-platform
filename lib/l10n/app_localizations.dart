@@ -1365,6 +1365,38 @@ abstract class AppLocalizations {
   String get dashboardTabStats;
   String get dashboardTabPayments;
   String get dashboardTabChat;
+  String get understood;
+  String get dashboardFirestoreInitializing;
+  String get dashboardFirestoreInitialized;
+  String get dashboardTestUsersLabel;
+  String get dashboardTestUsersPasswordNote;
+  String get dashboardTestUsersEmailNote;
+  String get dashboardFirestoreSessionNote;
+  String get dashboardFirestoreIndexes;
+  String get dashboardFirestoreIndexesWarning;
+  String get dashboardFirestoreIndexesDeployHint;
+  String get dashboardFirestoreIndexesDeployCommand;
+  String get dashboardFirestoreConsoleHint;
+  String get dashboardFirestoreConsoleSteps;
+  String get dashboardFirestoreDocs;
+  String get dashboardFirestoreDocsPaths;
+  String dashboardFirestoreInitError(String error);
+  String get dashboardDeleteTestUsersTitle;
+  String get dashboardDeleteTestUsersSelect;
+  String get dashboardDeleteTestUsersWarning;
+  String get dashboardSelectAll;
+  String get dashboardDeselectAll;
+  String dashboardDeletingUsersCount(int count);
+  String get dashboardDeletionCompleted;
+  String dashboardDeletedFromFirestore(int count);
+  String dashboardNotFoundCount(int count);
+  String dashboardErrorsCount(int count);
+  String get dashboardErrorsDetail;
+  String get dashboardDeleteAuthNote;
+  String dashboardDeleteUsersError(String error);
+  String get dashboardGeneratingFrankenstein;
+  String get dashboardFrankensteinSuccess;
+  String get dashboardFrankensteinError;
 
   /// No description provided for @planCalendarEmpty.
   ///
