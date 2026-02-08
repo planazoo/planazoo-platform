@@ -1352,6 +1352,20 @@ abstract class AppLocalizations {
   /// **'Calendario'**
   String get planViewModeCalendar;
 
+  String get dashboardFilterAll;
+  String get dashboardFilterEstoyIn;
+  String get dashboardFilterPending;
+  String get dashboardFilterClosed;
+  String get dashboardSelectPlan;
+  String get dashboardUiShowcaseTooltip;
+  String get dashboardLogo;
+  String get dashboardTabPlanazoo;
+  String get dashboardTabCalendar;
+  String get dashboardTabIn;
+  String get dashboardTabStats;
+  String get dashboardTabPayments;
+  String get dashboardTabChat;
+
   /// No description provided for @planCalendarEmpty.
   ///
   /// In es, this message translates to:

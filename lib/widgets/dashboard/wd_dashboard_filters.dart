@@ -27,13 +27,14 @@ class WdDashboardFilters extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        _buildW26(columnWidth, rowHeight),
+        _buildW26(context, columnWidth, rowHeight),
         _buildW27(context, columnWidth, rowHeight),
       ],
     );
   }
 
-  Widget _buildW26(double columnWidth, double rowHeight) {
+  Widget _buildW26(BuildContext context, double columnWidth, double rowHeight) {
+    final loc = AppLocalizations.of(context)!;
     return Positioned(
       left: columnWidth,
       top: rowHeight * 2,
@@ -44,13 +45,13 @@ class WdDashboardFilters extends StatelessWidget {
         padding: const EdgeInsets.all(4),
         child: Row(
           children: [
-            _buildFilterButton('todos', 'Todos', columnWidth, rowHeight),
+            _buildFilterButton('todos', loc.dashboardFilterAll, columnWidth, rowHeight),
             const SizedBox(width: 2),
-            _buildFilterButton('estoy_in', 'Estoy in', columnWidth, rowHeight),
+            _buildFilterButton('estoy_in', loc.dashboardFilterEstoyIn, columnWidth, rowHeight),
             const SizedBox(width: 2),
-            _buildFilterButton('pendientes', 'Pendientes', columnWidth, rowHeight),
+            _buildFilterButton('pendientes', loc.dashboardFilterPending, columnWidth, rowHeight),
             const SizedBox(width: 2),
-            _buildFilterButton('cerrados', 'Cerrados', columnWidth, rowHeight),
+            _buildFilterButton('cerrados', loc.dashboardFilterClosed, columnWidth, rowHeight),
           ],
         ),
       ),

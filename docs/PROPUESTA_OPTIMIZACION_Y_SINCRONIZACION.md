@@ -274,6 +274,10 @@ CONTEXT.md y T158 exigen usar `AppLocalizations` para todos los textos visibles.
 - Claves en `app_es.arb` y `app_en.arb`: planSummaryTitle, planSummaryCopiedToClipboard, planSummaryCopy, planSummaryCopied, planSummaryClose, planSummaryError, planSummaryGenerating, planSummaryButtonTooltip, planSummaryButtonLabel.
 - `plan_summary_dialog.dart` y `plan_summary_button.dart` usan `AppLocalizations.of(context)!` para todos los textos visibles.
 
+**Implementado (Feb 2026) – 2.2 Textos dashboard (widgets extraídos) a AppLocalizations:**
+- Claves añadidas: dashboardFilterAll, dashboardFilterEstoyIn, dashboardFilterPending, dashboardFilterClosed, dashboardSelectPlan, dashboardUiShowcaseTooltip, dashboardLogo, dashboardTabPlanazoo, dashboardTabCalendar, dashboardTabIn, dashboardTabStats, dashboardTabPayments, dashboardTabChat.
+- `wd_dashboard_filters.dart`, `wd_dashboard_header_bar.dart` y `wd_dashboard_nav_tabs.dart` usan `AppLocalizations` para filtros, logo, tooltip showcase, placeholder "Selecciona un plan" y etiquetas de pestañas. `WdDashboardNavTabs.tabs(context)` devuelve la lista de pestañas con etiquetas localizadas.
+
 **Implementado (Feb 2026) – 2.4 Rendimiento (revisión parcial):**
 - Eliminados `print()` de depuración en `lib/app/app.dart` (onGenerateRoute) para cumplir con CONTEXT (no dejar prints en producción).
 - Comprobado que las suscripciones se cancelan en `dispose`: `PlanParticipationNotifier`, `CalendarNotifier`, `AccommodationNotifier` y `pg_dashboard_page` (_participantSubscriptions) cancelan correctamente. `LoggerService` sigue usando `print` de forma intencionada como backend de logging.

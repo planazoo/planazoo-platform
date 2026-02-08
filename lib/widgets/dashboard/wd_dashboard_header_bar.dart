@@ -31,7 +31,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
       children: [
-        _buildW2(columnWidth, rowHeight),
+        _buildW2(context, columnWidth, rowHeight),
         _buildW3(columnWidth, rowHeight),
         _buildW4(context, columnWidth, rowHeight),
         _buildW5(columnWidth, rowHeight),
@@ -40,7 +40,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildW2(double columnWidth, double rowHeight) {
+  Widget _buildW2(BuildContext context, double columnWidth, double rowHeight) {
     return Positioned(
       left: columnWidth,
       top: 0,
@@ -50,7 +50,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
         decoration: BoxDecoration(color: Colors.grey.shade800),
         child: Center(
           child: Text(
-            'planazoo',
+            AppLocalizations.of(context)!.dashboardLogo,
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontSize: 18,
@@ -128,7 +128,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
               );
             },
             icon: Icon(Icons.palette, color: AppColorScheme.color2),
-            tooltip: 'UI Showcase',
+            tooltip: AppLocalizations.of(context)!.dashboardUiShowcaseTooltip,
           ),
         ),
       ),
@@ -283,7 +283,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
   Widget _buildNoPlanSelectedInfo(BuildContext context) {
     return Center(
       child: Text(
-        'Selecciona un plan',
+        AppLocalizations.of(context)!.dashboardSelectPlan,
         style: GoogleFonts.poppins(
           fontSize: 10,
           color: Colors.white.withOpacity(0.6),

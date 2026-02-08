@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// Definición de una pestaña de navegación del dashboard (W14–W19).
 class DashboardNavTabItem {
@@ -35,15 +36,18 @@ class WdDashboardNavTabs extends StatelessWidget {
     required this.onTabTap,
   });
 
-  /// Lista por defecto de pestañas (W14–W19): planazoo, calendario, in, stats, pagos, chat.
-  static List<DashboardNavTabItem> get defaultTabs => const [
-        DashboardNavTabItem(id: 'W14', icon: Icons.info, label: 'planazoo', screen: 'planData'),
-        DashboardNavTabItem(id: 'W15', icon: Icons.calendar_today, label: 'calendario', screen: 'calendar'),
-        DashboardNavTabItem(id: 'W16', icon: Icons.group, label: 'in', screen: 'participants'),
-        DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: 'stats', screen: 'stats'),
-        DashboardNavTabItem(id: 'W18', icon: Icons.payment, label: 'pagos', screen: 'payments'),
-        DashboardNavTabItem(id: 'W19', icon: Icons.chat_bubble_outline, label: 'chat', screen: 'chat'),
-      ];
+  /// Lista de pestañas (W14–W19) con etiquetas localizadas.
+  static List<DashboardNavTabItem> tabs(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    return [
+      DashboardNavTabItem(id: 'W14', icon: Icons.info, label: loc.dashboardTabPlanazoo, screen: 'planData'),
+      DashboardNavTabItem(id: 'W15', icon: Icons.calendar_today, label: loc.dashboardTabCalendar, screen: 'calendar'),
+      DashboardNavTabItem(id: 'W16', icon: Icons.group, label: loc.dashboardTabIn, screen: 'participants'),
+      DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: loc.dashboardTabStats, screen: 'stats'),
+      DashboardNavTabItem(id: 'W18', icon: Icons.payment, label: loc.dashboardTabPayments, screen: 'payments'),
+      DashboardNavTabItem(id: 'W19', icon: Icons.chat_bubble_outline, label: loc.dashboardTabChat, screen: 'chat'),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {

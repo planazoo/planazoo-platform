@@ -702,6 +702,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planViewModeCalendar => 'Calendar';
 
   @override
+  String get dashboardFilterAll => 'All';
+  @override
+  String get dashboardFilterEstoyIn => "I'm in";
+  @override
+  String get dashboardFilterPending => 'Pending';
+  @override
+  String get dashboardFilterClosed => 'Closed';
+  @override
+  String get dashboardSelectPlan => 'Select a plan';
+  @override
+  String get dashboardUiShowcaseTooltip => 'UI Showcase';
+  @override
+  String get dashboardLogo => 'planazoo';
+  @override
+  String get dashboardTabPlanazoo => 'planazoo';
+  @override
+  String get dashboardTabCalendar => 'calendar';
+  @override
+  String get dashboardTabIn => 'in';
+  @override
+  String get dashboardTabStats => 'stats';
+  @override
+  String get dashboardTabPayments => 'payments';
+  @override
+  String get dashboardTabChat => 'chat';
+
+  @override
   String get planCalendarEmpty => 'No plans scheduled in these months.';
 
   @override
