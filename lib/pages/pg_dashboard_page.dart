@@ -1360,7 +1360,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               WdDashboardNavTabs(
                 columnWidth: columnWidth,
                 rowHeight: rowHeight,
-                tabs: WdDashboardNavTabs.tabs(context),
+                tabs: WdDashboardNavTabs.tabItems(context),
                 selectedId: selectedWidgetId,
                 onTabTap: (id, screen) {
                   _selectWidget(id);
@@ -1587,7 +1587,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Aún no tienes planes',
+            AppLocalizations.of(context)!.dashboardNoPlansYet,
             style: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -1597,7 +1597,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Crea tu primer plan con el botón +',
+            AppLocalizations.of(context)!.dashboardCreateFirstPlanHint,
             style: GoogleFonts.poppins(
               fontSize: 14,
               color: Colors.grey.shade400,
@@ -1635,7 +1635,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Tienes ${invitations.length} invitación(es) pendiente(s)',
+                      AppLocalizations.of(context)!.dashboardInvitationsPendingCount(invitations.length),
                       style: AppTypography.titleStyle.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -1649,14 +1649,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               ...invitations.map((inv) => _buildInvitationCard(inv)),
               const SizedBox(height: 12),
               Text(
-                'Si no ves tus invitaciones arriba, puedes usar el link del correo o pegar el token:',
+                AppLocalizations.of(context)!.dashboardInvitationTokenHint,
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
               ),
               const SizedBox(height: 6),
               TextButton.icon(
                 onPressed: () => _showAcceptRejectDialog(),
                 icon: const Icon(Icons.vpn_key_outlined, size: 18),
-                label: const Text('Aceptar/Rechazar por token'),
+                label: Text(AppLocalizations.of(context)!.dashboardAcceptRejectByToken),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.orange.shade800,
                 ),
@@ -1683,11 +1683,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Text(
-                  'Plan: ${invitation.planId}',
+                  AppLocalizations.of(context)!.invitationPlanLabel(invitation.planId),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -1695,7 +1695,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 ),
                 if (invitation.role != null)
                   Text(
-                    'Rol: ${invitation.role}',
+                    AppLocalizations.of(context)!.invitationRoleLabel(invitation.role!),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey.shade600,
@@ -1717,23 +1717,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                               if (ok) {
                                 ref.invalidate(userPendingInvitationsProvider);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Invitación aceptada. Ya eres participante del plan.'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.invitationAcceptedParticipant),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
                                 setState(() {});
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('No se pudo aceptar. Prueba con el link del correo.'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.invitationAcceptFailed),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
                               }
                             },
                       icon: const Icon(Icons.check_circle_outline, size: 18),
-                      label: const Text('Aceptar'),
+                      label: Text(AppLocalizations.of(context)!.accept),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green.shade700,
                         foregroundColor: Colors.white,
@@ -1753,23 +1753,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                               if (ok) {
                                 ref.invalidate(userPendingInvitationsProvider);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Invitación rechazada'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.invitationRejected),
                                     backgroundColor: Colors.orange,
                                   ),
                                 );
                                 setState(() {});
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('No se pudo rechazar.'),
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.invitationRejectFailed),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
                               }
                             },
                       icon: const Icon(Icons.cancel_outlined, size: 18),
-                      label: const Text('Rechazar'),
+                      label: Text(AppLocalizations.of(context)!.reject),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.orange.shade800,
                         side: BorderSide(color: Colors.orange.shade300),
@@ -1784,12 +1784,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                           await Clipboard.setData(ClipboardData(text: link));
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Link copiado al portapapeles')),
+                              SnackBar(content: Text(AppLocalizations.of(context)!.linkCopiedToClipboard)),
                             );
                           }
                         },
                         icon: const Icon(Icons.link, size: 16),
-                        label: const Text('Copiar link'),
+                        label: Text(AppLocalizations.of(context)!.copyLink),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           minimumSize: Size.zero,
@@ -1815,19 +1815,20 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('❌ Debes iniciar sesión para aceptar invitaciones'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.mustSignInToAcceptInvitations),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
+    final l10n = AppLocalizations.of(context)!;
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
-          title: const Text('Gestionar invitación por token'),
+          title: Text(l10n.dashboardManageInvitationByToken),
           content: Form(
             key: formKey,
             child: Column(
@@ -1835,14 +1836,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               children: [
                 TextFormField(
                   controller: tokenController,
-                  decoration: const InputDecoration(
-                    labelText: 'Link o token de invitación',
-                    hintText: 'Pega el link completo o solo el token',
-                    helperText: 'Ejemplo: https://planazoo.app/invitation/abc123... o solo abc123...',
+                  decoration: InputDecoration(
+                    labelText: l10n.dashboardInvitationLinkOrTokenLabel,
+                    hintText: l10n.dashboardInvitationLinkOrTokenHint,
+                    helperText: l10n.dashboardInvitationLinkOrTokenHelper,
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return 'Introduce el link o token';
+                      return l10n.dashboardInvitationLinkOrTokenRequired;
                     }
                     return null;
                   },
@@ -1852,7 +1853,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   children: [
                     Expanded(
                       child: RadioListTile<bool>(
-                        title: const Text('Aceptar'),
+                        title: Text(l10n.accept),
                         value: true,
                         groupValue: isAccept,
                         onChanged: (v) => setDialogState(() => isAccept = v ?? true),
@@ -1860,7 +1861,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     ),
                     Expanded(
                       child: RadioListTile<bool>(
-                        title: const Text('Rechazar'),
+                        title: Text(l10n.reject),
                         value: false,
                         groupValue: isAccept,
                         onChanged: (v) => setDialogState(() => isAccept = v ?? false),
@@ -1874,14 +1875,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancelar'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () async {
                 if (!formKey.currentState!.validate()) return;
                 Navigator.of(context).pop(true);
               },
-              child: const Text('Continuar'),
+              child: Text(l10n.continueButton),
             ),
           ],
         ),
@@ -1901,8 +1902,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       if (token.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ Token inválido'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.invalidToken),
               backgroundColor: Colors.red,
             ),
           );
@@ -1916,16 +1917,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         if (ok && mounted) {
           ref.invalidate(userPendingInvitationsProvider);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Invitación aceptada. Has sido añadido al plan.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.invitationAcceptedAddedToPlan),
               backgroundColor: Colors.green,
             ),
           );
           setState(() {}); // Refrescar para mostrar cambios
         } else if (!ok && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ No se pudo procesar el token. Verifica que sea válido y no haya expirado.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.tokenProcessingFailed),
               backgroundColor: Colors.red,
             ),
           );
@@ -1935,16 +1936,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         if (ok && mounted) {
           ref.invalidate(userPendingInvitationsProvider);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Invitación rechazada'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.invitationRejectedSuccess),
               backgroundColor: Colors.orange,
             ),
           );
           setState(() {}); // Refrescar para mostrar cambios
         } else if (!ok && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ No se pudo procesar el token. Verifica que sea válido y no haya expirado.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.tokenProcessingFailed),
               backgroundColor: Colors.red,
             ),
           );
@@ -2047,7 +2048,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               height: 38,
               alignment: Alignment.centerLeft,
               child: Text(
-                'email',
+                AppLocalizations.of(context)!.dashboardEmailLabel,
                 style: AppTypography.bodyStyle.copyWith(
                   fontSize: 16,
                   color: AppColorScheme.color4,
@@ -2071,7 +2072,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               ),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Introduce el mail',
+                  hintText: AppLocalizations.of(context)!.dashboardIntroduceEmail,
                   hintStyle: AppTypography.interactiveStyle.copyWith(
                     fontSize: 14,
                     color: Colors.grey.shade500,
@@ -2107,14 +2108,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Selecciona un Planazoo',
+            AppLocalizations.of(context)!.dashboardSelectPlanazoo,
             style: AppTypography.titleStyle.copyWith(
               color: AppColorScheme.color4,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Haz clic en un planazoo de la lista\nderecha para ver su calendario',
+            AppLocalizations.of(context)!.dashboardClickPlanToSeeCalendar,
             style: AppTypography.bodyStyle.copyWith(
               color: AppColorScheme.color4,
             ),
@@ -2167,11 +2168,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // NUEVO: Pantalla de participantes del plan
   Widget _buildParticipantsScreen() {
     if (selectedPlan == null) {
-      return const Center(
+      return Center(
         child: Text(
-          'Selecciona un plan para ver los participantes',
+          AppLocalizations.of(context)!.dashboardSelectPlanToSeeParticipants,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
+          style: const TextStyle(fontSize: 18),
         ),
       );
     }
@@ -2189,11 +2190,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // T190: Pantalla de chat del plan
   Widget _buildChatScreen() {
     if (selectedPlan == null || selectedPlan!.id == null) {
-      return const Center(
+      return Center(
         child: Text(
-          'Selecciona un plan para ver el chat',
+          AppLocalizations.of(context)!.dashboardSelectPlanToSeeChat,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18, color: Colors.white),
+          style: const TextStyle(fontSize: 18, color: Colors.white),
         ),
       );
     }
@@ -2207,9 +2208,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // T113: Pantalla de estadísticas del plan
   Widget _buildPaymentsScreen() {
     if (selectedPlan == null) {
-      return const Center(
+      return Center(
         child: Text(
-          'Selecciona un plan para ver el resumen de pagos',
+          AppLocalizations.of(context)!.dashboardSelectPlanToSeePayments,
           textAlign: TextAlign.center,
         ),
       );
@@ -2219,11 +2220,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   Widget _buildStatsScreen() {
     if (selectedPlan == null) {
-      return const Center(
+      return Center(
         child: Text(
-          'Selecciona un plan para ver las estadísticas',
+          AppLocalizations.of(context)!.dashboardSelectPlanToSeeStats,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
+          style: const TextStyle(fontSize: 18),
         ),
       );
     }

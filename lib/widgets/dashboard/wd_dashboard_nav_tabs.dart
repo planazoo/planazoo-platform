@@ -37,7 +37,7 @@ class WdDashboardNavTabs extends StatelessWidget {
   });
 
   /// Lista de pestañas (W14–W19) con etiquetas localizadas.
-  static List<DashboardNavTabItem> tabs(BuildContext context) {
+  static List<DashboardNavTabItem> tabItems(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return [
       DashboardNavTabItem(id: 'W14', icon: Icons.info, label: loc.dashboardTabPlanazoo, screen: 'planData'),
