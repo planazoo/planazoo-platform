@@ -271,7 +271,7 @@ Para optimizar el tiempo de testing y desarrollo, las tareas se organizan en gru
   - ⚠️ Campo `_adminCreatedBy` añadido a modelos críticos (`PlanParticipation` ✅, `EventParticipant` ⏳, `plan_permissions` ⏳, `personal_payments` ⏳)
   - ⏳ Servicios actualizados para añadir `_adminCreatedBy` automáticamente al crear registros
   - ⏳ Scripts administrativos básicos creados (limpiar huérfanos, eliminar datos de usuario)
-  - ⏳ Documentación de scripts administrativos en `docs/admin/SCRIPTS_ADMINISTRATIVOS.md`
+  - ⏳ Documentación de scripts administrativos en `docs/admin/SCRIPTS_ADMINISTRATIVOS.md` (doc pendiente)
   - ✅ Lista blanca de admins documentada (`docs/admin/ADMINS_WHITELIST.md`)
   - ✅ `USUARIOS_PRUEBA.md` actualizado con columna `isAdmin` para todos los usuarios (sección "Datos Semilla Formales")
   - ⏳ Logs de acciones administrativas (futuro)
@@ -280,8 +280,8 @@ Para optimizar el tiempo de testing y desarrollo, las tareas se organizan en gru
   - ✅ `docs/admin/ADMINS_WHITELIST.md`
   
   **Archivos pendientes:**
-  - ⏳ `docs/admin/SCRIPTS_ADMINISTRATIVOS.md`
-  - ⏳ `docs/admin/PROCEDIMIENTOS_EMERGENCIA.md`
+  - ⏳ `docs/admin/SCRIPTS_ADMINISTRATIVOS.md` (doc pendiente)
+  - ⏳ `docs/admin/PROCEDIMIENTOS_EMERGENCIA.md` (doc pendiente)
   - ⏳ `scripts/admin/cleanup_orphans.dart` (futuro)
   - ⏳ `scripts/admin/delete_user_data.dart` (futuro)
   - ⏳ `scripts/admin/audit_database.dart` (futuro)
@@ -3187,7 +3187,7 @@ class PlatformStats {
 - Vista de resultados con barras/tabla
 - Avisos/notificaciones opcionales (T105) y enlaces compartibles
 
-**Relacionado con:** T104 (invitaciones), T105 (notificaciones), `FLUJO_CRUD_PLANES.md`, `FLUJO_GESTION_PARTICIPANTES.md`
+**Relacionado con:** T104 (invitaciones), T105 (notificaciones), `docs/flujos/FLUJO_CRUD_PLANES.md`, `docs/flujos/FLUJO_GESTION_PARTICIPANTES.md`
 
 ---
 
@@ -3247,7 +3247,7 @@ Los desplazamientos largos (vuelos, trenes, autobuses) pueden ser momentos de es
 - `lib/features/games/presentation/` - UI de juegos
 - `lib/features/games/domain/services/` - Lógica de sincronización y reglas
 
-**Relacionado con:** `FLUJO_CRUD_PLANES.md`, Eventos tipo desplazamiento, Participantes, T105 (notificaciones para turnos)
+**Relacionado con:** `docs/flujos/FLUJO_CRUD_PLANES.md`, Eventos tipo desplazamiento, Participantes, T105 (notificaciones para turnos)
 
 **Nota:** Esta tarea está documentada para referencia futura. No está planificada para implementación a corto/medio plazo.
 
@@ -3325,7 +3325,7 @@ Los desplazamientos largos (vuelos, trenes, autobuses) pueden ser momentos de es
 - App: AppBar de vista de detalle del plan
 - Componentes compartidos de badges/contadores (si se reutilizan)
 
-**Relacionado con:** T105 (Notificaciones), Chat/Mensajería (futuro), `docs/guias/GUIA_UI.md` (Grid 17×13, W28), `FLUJO_INVITACIONES_NOTIFICACIONES.md`
+**Relacionado con:** T105 (Notificaciones), Chat/Mensajería (futuro), `docs/guias/GUIA_UI.md` (Grid 17×13, W28), `docs/flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md`
 
 **Nota:** Esta tarea requiere decisión de diseño antes de implementación. Validar propuesta con usuario y ajustar según feedback antes de codificar.
 
@@ -3393,7 +3393,7 @@ Icono cuadrado formado por 9 círculos iguales (3×3 grid) con espacio entre ell
 - `lib/widgets/plan/launcher_panel.dart` - Panel expandido 5×5
 - Configuración de acciones/iconos disponibles
 
-**Relacionado con:** `docs/guias/GUIA_UI.md`, `FLUJO_CRUD_PLANES.md`, T139 (Encuestas Doodle), T133 (Exportar Plan), Creación de eventos/alojamientos
+**Relacionado con:** `docs/guias/GUIA_UI.md`, `docs/flujos/FLUJO_CRUD_PLANES.md`, T139 (Encuestas Doodle), T133 (Exportar Plan), Creación de eventos/alojamientos
 
 **Nota:** Esta es una feature de UX avanzada planificada para el futuro. Requiere validación visual con mockups/imágenes antes de implementación. El diseño puede ajustarse según feedback del usuario y pruebas de usabilidad.
 
@@ -3490,7 +3490,7 @@ Incluye patrocinadores para:
 - `lib/features/sponsors/domain/services/` - Lógica de selección y tracking
 - Panel admin para gestión
 
-**Relacionado con:** `FLUJO_CRUD_PLANES.md`, `FLUJO_CRUD_EVENTOS.md`, `FLUJO_CRUD_ALOJAMIENTOS.md`, T135 (GDPR/Cookies), Monetización
+**Relacionado con:** `docs/flujos/FLUJO_CRUD_PLANES.md`, `docs/flujos/FLUJO_CRUD_EVENTOS.md`, `docs/flujos/FLUJO_CRUD_ALOJAMIENTOS.md`, T135 (GDPR/Cookies), Monetización
 
 **Nota:** Esta es una feature de monetización planificada para el futuro. Requiere definición detallada de contratos con patrocinadores, sistema de afiliados, y cumplimiento legal de privacidad antes de implementación.
 
@@ -3596,7 +3596,7 @@ Los planes finalizados ocupan espacio en el servidor (Firestore) generando coste
 - Lógica de reducción/eliminación de datos en servidor
 - Sistema de backup local automático
 
-**Relacionado con:** T133 (Exportación profesional), T129 (Export GDPR), `FLUJO_CRUD_PLANES.md`, Estados del plan (T109), Monetización
+**Relacionado con:** T133 (Exportación profesional), T129 (Export GDPR), `docs/flujos/FLUJO_CRUD_PLANES.md`, Estados del plan (T109), Monetización
 
 **Nota:** Esta tarea requiere definición detallada de estrategia de costes y monetización antes de implementación. Validar con usuario las preferencias de gestión de datos históricos.
 
@@ -3701,7 +3701,7 @@ Al finalizar un plan, los usuarios quieren conservar los recuerdos. Un álbum di
 - Componentes de diseño de páginas del álbum
 - UI: Flujo de generación y preview
 
-**Relacionado con:** T133 (Exportación profesional PDF/Email), T144 (Ciclo de vida al finalizar plan), T115 (Sistema de fotos), `FLUJO_CRUD_PLANES.md`
+**Relacionado con:** T133 (Exportación profesional PDF/Email), T144 (Ciclo de vida al finalizar plan), T115 (Sistema de fotos), `docs/flujos/FLUJO_CRUD_PLANES.md`
 
 **Nota:** Esta feature está planificada para el futuro. Requiere definir prioridad de Fase 1 (PDF) vs Fase 2 (Integración externa) y posibles proveedores de álbumes físicos. La generación PDF puede integrarse con T133 para reutilizar infraestructura.
 
@@ -3861,7 +3861,7 @@ El "Oráculo de Delfos" es un diferenciador clave que hace la app moderna e inte
 - Datos anónimos agregados valiosos para análisis de tendencias
 - Opcional: Feature premium con recomendaciones más avanzadas
 
-**Relacionado con:** T143 (Patrocinios), T133 (Exportación), T147 (Sistema de Valoraciones), `FLUJO_CRUD_EVENTOS.md`, `FLUJO_CRUD_PLANES.md`, Datos agregados para monetización
+**Relacionado con:** T143 (Patrocinios), T133 (Exportación), T147 (Sistema de Valoraciones), `docs/flujos/FLUJO_CRUD_EVENTOS.md`, `docs/flujos/FLUJO_CRUD_PLANES.md`, Datos agregados para monetización
 
 **Dependencia:** **MUST IMPLEMENTAR T147 (Sistema de Valoraciones) ANTES de T146** según los flujos definidos. El Oráculo de Delfos necesita datos de valoraciones como input principal para generar recomendaciones relevantes.
 
@@ -4061,11 +4061,11 @@ Rating {
 - Integración con Oráculo de Delfos (T146)
 - Análisis avanzados de tendencias
 
-**Relacionado con:** T146 (Oráculo de Delfos), T143 (Patrocinios), `FLUJO_CRUD_PLANES.md`, `FLUJO_CRUD_EVENTOS.md`, `FLUJO_CRUD_ALOJAMIENTOS.md`, `FLUJO_ESTADOS_PLAN.md`, Monetización (datos agregados)
+**Relacionado con:** T146 (Oráculo de Delfos), T143 (Patrocinios), `docs/flujos/FLUJO_CRUD_PLANES.md`, `docs/flujos/FLUJO_CRUD_EVENTOS.md`, `docs/flujos/FLUJO_CRUD_ALOJAMIENTOS.md`, `docs/flujos/FLUJO_ESTADOS_PLAN.md`, Monetización (datos agregados)
 
 **Integración en flujos:**
 - **FLUJO_ESTADOS_PLAN.md:** Valoración al finalizar plan (EN CURSO → FINALIZADO)
-- **FLUJO_CRUD_PLANES.md:** Prompt de valoración al archivar plan finalizado
+- **docs/flujos/FLUJO_CRUD_PLANES.md:** Prompt de valoración al archivar plan finalizado
 - **FLUJO_CRUD_EVENTOS.md:** Valoración después de completar evento (sección 4.5)
 - **FLUJO_CRUD_ALOJAMIENTOS.md:** Valoración después de check-out (sección 4.5)
 
@@ -5409,7 +5409,7 @@ Una vez completado el MVP y lanzada la v1.0, es el momento adecuado para documen
 - **Riesgos:** Posible reducción de frecuencia de uso de la app si todo está en calendario externo
 - **Recomendación:** Implementar exportación .ics primero (bajo riesgo, alto valor). Evaluar sincronización bidireccional según feedback de usuarios y métricas de uso
 
-**Nota:** Al implementar, actualizar los flujos necesarios (`FLUJO_CRUD_EVENTOS.md`, `FLUJO_CRUD_PLANES.md`) para incluir pasos de exportación/importación de calendarios externos.
+**Nota:** Al implementar, actualizar los flujos necesarios (`docs/flujos/FLUJO_CRUD_EVENTOS.md`, `docs/flujos/FLUJO_CRUD_PLANES.md`) para incluir pasos de exportación/importación de calendarios externos.
 
 ---
 

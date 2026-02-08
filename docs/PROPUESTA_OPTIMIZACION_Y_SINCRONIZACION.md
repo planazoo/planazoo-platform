@@ -287,6 +287,10 @@ CONTEXT.md y T158 exigen usar `AppLocalizations` para todos los textos visibles.
 - `WdDashboardFilters`: `lib/widgets/dashboard/wd_dashboard_filters.dart` (W26–W27: filtros Todos/Estoy in/Pendientes/Cerrados + toggle Lista/Calendario).
 - `WdDashboardHeaderPlaceholders`: `lib/widgets/dashboard/wd_dashboard_header_placeholders.dart` (W7–W12: celdas vacías del header C12–C17).
 
+**Implementado (Feb 2026) – 4.1 Referencias TASKS.md:**
+- Añadido "(doc pendiente)" a referencias de docs no creados: `docs/admin/SCRIPTS_ADMINISTRATIVOS.md`, `docs/admin/PROCEDIMIENTOS_EMERGENCIA.md`.
+- Normalizadas rutas en "Relacionado con": uso de `docs/flujos/FLUJO_*.md` en lugar de solo el nombre del archivo (FLUJO_CRUD_PLANES.md, FLUJO_INVITACIONES_NOTIFICACIONES.md, etc.). Registro en DOCS_AUDIT.
+
 **Pendiente (entre otros):** más extracciones en 2.1 (contenido W31 o otros archivos grandes); valorar providers `autoDispose`/`family` en futuras revisiones.
 
 *Documento vivo. Última actualización: Febrero 2026.*

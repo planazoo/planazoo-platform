@@ -112,7 +112,8 @@ Ubicaciones previstas para documentos legales: `docs/legal/terms_of_service.md`,
 - [x] TASKS.md: convención de referencias reforzada; añadido "(doc pendiente)" a todas las rutas de documentos/carpetas no existentes (API_DOCUMENTATION, CONTRIBUTING, SERVICE_EXAMPLES, TESTING_PLAN, legal/, estrategia/, riesgos/, roadmap/, FLUJO_*, GUIA_MODELO_NEGOCIO_AGENCIAS, INDICES_*, USUARIOS_ADMINISTRACION)
 - [x] **Siguiente revisión (Feb 2026):** Se usó el documento `docs/PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md` para aplicar sincronización doc↔código (ARCHITECTURE_DECISIONS, FIRESTORE_COLLECTIONS_AUDIT, PLATFORM_STRATEGY, NOMENCLATURA_UI, FLUJO_INVITACIONES, TESTING_CHECKLIST, README, ux/pages, ONBOARDING_IA, CONTEXT, TASKS referencias, índice README).
 - [x] **Refactor 2.1 pg_dashboard_page (Feb 2026):** Extraídos a `lib/widgets/dashboard/` y `lib/widgets/dialogs/wd_create_plan_modal.dart`: WdTimezoneBanner, WdCreatePlanModal, WdDashboardNavTabs, WdDashboardSidebar, WdDashboardHeaderBar, WdDashboardFilters, WdDashboardHeaderPlaceholders. Estado y siguientes pasos en PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md (sección 2.1 y Estado de la propuesta).
-- **Próxima revisión:** Seguir ítems pendientes de la propuesta (contenido W31, otros archivos grandes, referencias TASKS, etc.); el documento de la propuesta es la referencia única de seguimiento.
+- [x] **Referencias TASKS.md (Feb 2026):** Añadido "(doc pendiente)" a `docs/admin/SCRIPTS_ADMINISTRATIVOS.md` y `docs/admin/PROCEDIMIENTOS_EMERGENCIA.md`; normalizadas rutas en "Relacionado con" a `docs/flujos/FLUJO_*.md` donde solo se citaba el nombre del archivo.
+- **Próxima revisión:** Seguir ítems pendientes de la propuesta (contenido W31, otros archivos grandes, etc.); el documento de la propuesta es la referencia única de seguimiento.
 
 ---
 
