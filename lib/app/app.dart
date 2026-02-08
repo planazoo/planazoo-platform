@@ -63,19 +63,15 @@ class _AppState extends ConsumerState<App> {
       // En iOS/móviles o web móvil, mostrar lista de planes. En web desktop, mostrar Dashboard completo
       // No usar 'home:' cuando hay rutas dinámicas, usar onGenerateRoute para todas las rutas
       onGenerateRoute: (settings) {
-        // Debug: ver qué ruta se está generando
-        print('🔍 onGenerateRoute called with: ${settings.name}');
-        
         // Manejar URLs como /invitation/{token} (T104)
         // Esta ruta NO requiere autenticación (puede ser accedida sin login)
         final routeName = settings.name ?? '/';
-        print('🔍 Route name: $routeName');
-        
+
         if (routeName.startsWith('/invitation/')) {
-          final token = routeName.split('/invitation/').last;
-          print('🔍 Token extracted: $token');
+          // Extraer solo el token (sin query string: ?action=accept, etc.)
+          final raw = routeName.split('/invitation/').last;
+          final token = raw.split('?').first.trim();
           if (token.isNotEmpty) {
-            print('✅ Returning InvitationPage with token: $token');
             return MaterialPageRoute(
               builder: (context) => InvitationPage(token: token),
               settings: settings,
@@ -83,7 +79,6 @@ class _AppState extends ConsumerState<App> {
           }
         }
         // Ruta por defecto (requiere autenticación)
-        print('🔍 Returning default route (Dashboard/PlansList)');
         return MaterialPageRoute(
           builder: (context) => AuthGuard(
             child: Builder(

@@ -11,6 +11,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
+import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/shared/models/user_role.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
@@ -874,7 +875,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                            DateFormatter.formatDate(_selectedDate),
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,

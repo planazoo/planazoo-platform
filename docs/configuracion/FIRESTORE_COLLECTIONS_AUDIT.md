@@ -49,11 +49,11 @@
 - `match /plans/{planId}` (línea 144)
 - ✅ Configuradas correctamente
 
-**Subcolecciones:**
-- `events` - Eventos del plan
-- `accommodations` - Alojamientos del plan
-- `payments` - Pagos del plan
-- `announcements` - Avisos del plan
+**Subcolecciones (solo las que existen en código):**
+- `announcements` - Avisos del plan (`plans/{planId}/announcements`) — ver AnnouncementService
+- `messages` - Mensajes del chat del plan (`plans/{planId}/messages`) — ChatService
+
+**Nota:** Los eventos y alojamientos **no** son subcolecciones de `plans`. Están en la colección raíz `events` (eventos con `planId`; alojamientos con `typeFamily: 'alojamiento'`). Los pagos personales están en la colección raíz `personal_payments`.
 
 **Campos principales:**
 - `name`, `unpId`, `userId`, `baseDate`, `startDate`, `endDate`
@@ -62,21 +62,26 @@
 
 ---
 
-### 3. `events`
+### 3. `events` (colección raíz)
 
 **Estado:** ✅ En uso y con reglas
 
 **Uso en código:**
-- `EventService` (`lib/features/calendar/domain/services/event_service.dart`)
-- Subcolección de `plans`: `plans/{planId}/events/{eventId}`
+- `EventService` (`lib/features/calendar/domain/services/event_service.dart`) — colección raíz `events`
+- `AccommodationService` — misma colección `events`, documentos con `typeFamily == 'alojamiento'`
+- `PlanService.getAccommodation` — consulta `events` con `planId` + `typeFamily: 'alojamiento'`
+- Sync y realtime: `sync_service.dart`, `realtime_sync_service.dart` — colección `events`
+
+**Estructura:** Colección **raíz** `events` (no subcolección de `plans`). Cada documento tiene `planId`. Los alojamientos son documentos en esta misma colección con `typeFamily: 'alojamiento'`.
 
 **Reglas Firestore:**
-- `match /plans/{planId}/events/{eventId}` (línea 165)
+- `match /events/{eventId}` (línea 312)
 - ✅ Configuradas correctamente
 
 **Campos principales:**
 - `planId`, `userId`, `date`, `hour`, `description`
-- `typeFamily`, `typeSub`, `duration`, `cost`
+- `typeFamily` (ej. `'alojamiento'` para alojamientos), `typeSubtype`, `duration`, `durationMinutes`, `cost`
+- `commonPart`, `personalParts`, `participantTrackIds`
 - `createdAt`, `updatedAt`
 
 ---
@@ -183,14 +188,17 @@
 
 ## 📊 Colecciones Adicionales (Subcolecciones y otras)
 
+### Colecciones raíz (no subcolecciones de plans):
+
+1. **`events`** - Eventos y alojamientos del plan. Todos los documentos tienen `planId`. Los alojamientos se identifican por `typeFamily: 'alojamiento'`. ✅
+2. **`personal_payments`** - Pagos personales (PaymentService). ✅
+
 ### Subcolecciones de `plans`:
 
-1. **`plans/{planId}/events`** - Eventos del plan ✅
-2. **`plans/{planId}/accommodations`** - Alojamientos del plan ✅
-3. **`plans/{planId}/payments`** - Pagos del plan ✅
-4. **`plans/{planId}/announcements`** - Avisos del plan ✅
+1. **`plans/{planId}/announcements`** - Avisos del plan (AnnouncementService). ✅
+2. **`plans/{planId}/messages`** - Mensajes del chat del plan (ChatService). ✅
 
-### Otras colecciones relacionadas:
+### Otras colecciones raíz relacionadas:
 
 1. **`participant_groups`** - Grupos de participantes (T123) ✅
 2. **`plan_invitations`** - Invitaciones por email (T104) ✅
@@ -258,6 +266,6 @@
 
 ---
 
-**Última auditoría:** Enero 2025  
+**Última auditoría:** Febrero 2026 (sincronización con código: `events` como colección raíz, alojamientos en `events` con `typeFamily: 'alojamiento'`, subcolecciones reales de `plans`: `announcements`, `messages`)  
 **Próxima revisión:** Después de cambios significativos en colecciones
 

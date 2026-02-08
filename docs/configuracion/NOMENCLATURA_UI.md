@@ -10,17 +10,16 @@ Este documento centraliza todos los nombres de páginas, pantallas, menús y mod
 
 ### Regla de Nomenclatura
 
-A partir de Diciembre 2024, todas las páginas nuevas deben identificar su plataforma objetivo usando sufijos:
+A partir de Diciembre 2024, las páginas principales usan el sufijo **`_page.dart`**. La separación web vs móvil (Dashboard vs Lista de Planes) se decide en el router según la plataforma, no por el nombre del archivo.
 
-- **`_web.dart`** - Solo para web/desktop
-- **`_mobile.dart`** - Solo para iOS/Android
-- **`_shared.dart`** - Compartida (todas las plataformas)
+- **`_page.dart`** - Página (contenido web o móvil según uso en el router)
+- **`_shared.dart`** - Compartida (todas las plataformas), cuando se use explícitamente
 
-### Ejemplos:
+### Ejemplos (nombres reales en el código):
 ```
-pg_dashboard_web.dart          # Dashboard complejo solo para web
-pg_plans_list_mobile.dart     # Lista simple solo para móvil
-pg_invitation_shared.dart     # Invitaciones (todas las plataformas)
+pg_dashboard_page.dart        # Dashboard complejo (Web/Desktop)
+pg_plans_list_page.dart       # Lista simple (iOS/Android)
+pg_invitation_page.dart       # Invitaciones (todas las plataformas)
 ```
 
 ### Proceso:

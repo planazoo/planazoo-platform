@@ -10,7 +10,9 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
 import 'package:unp_calendario/features/security/utils/validator.dart';
@@ -36,8 +38,6 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
   List<UserModel> _filteredUsers = [];
   bool _isLoadingUsers = true;
   String _searchQuery = '';
-  
-  final InvitationService _invitationService = InvitationService();
 
   @override
   void initState() {
@@ -178,9 +178,9 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
 
   Future<void> _showInvitationLink(String invitationId) async {
     try {
-      final inv = await _invitationService.getInvitationById(invitationId);
+      final inv = await ref.read(invitationServiceProvider).getInvitationById(invitationId);
       if (inv == null || inv.token == null) return;
-      final link = _invitationService.generateInvitationLink(inv.token!);
+      final link = ref.read(invitationServiceProvider).generateInvitationLink(inv.token!);
       if (!mounted) return;
       await showDialog<void>(
         context: context,
@@ -617,7 +617,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       }
       
       // Verificar si ya existe una invitación pendiente para este email
-      final existingInvitation = await _invitationService.getPendingInvitationByEmail(
+      final existingInvitation = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(
         widget.plan.id!,
         email,
       );
@@ -656,7 +656,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
           
           if (action == 'cancel_invitation') {
             // Cancelar la invitación anterior
-            final cancelled = await _invitationService.cancelInvitation(existingInvitation.id!);
+            final cancelled = await ref.read(invitationServiceProvider).cancelInvitation(existingInvitation.id!);
             if (cancelled && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -689,7 +689,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         }
       }
       
-      final invitationId = await _invitationService.createInvitation(
+      final invitationId = await ref.read(invitationServiceProvider).createInvitation(
         planId: widget.plan.id!,
         email: email,
         invitedBy: currentUser?.id,
@@ -700,7 +700,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       if (invitationId == null) {
         // No se pudo crear la invitación (usuario ya participa, ya existe invitación pendiente, u otro error)
         // Verificar el motivo específico
-        final existingInvitationCheck = await _invitationService.getPendingInvitationByEmail(
+        final existingInvitationCheck = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(
           widget.plan.id!,
           email,
         );
@@ -733,7 +733,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
 
       // Verificar si realmente se creó una invitación (no una participación existente)
       // Las invitaciones tienen IDs que empiezan con ciertos caracteres o podemos verificar en la BD
-      final invitation = await _invitationService.getInvitationById(invitationId);
+      final invitation = await ref.read(invitationServiceProvider).getInvitationById(invitationId);
       
       if (invitation != null && mounted) {
         // Es una invitación real, crear notificación si el usuario existe en la app
@@ -1025,7 +1025,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
           }
           return;
         }
-        ok = await _invitationService.acceptInvitationByToken(token, user.id);
+        ok = await ref.read(invitationServiceProvider).acceptInvitationByToken(token, user.id);
         if (ok) {
           await ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
           ref
@@ -1053,7 +1053,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
           );
         }
       } else {
-        ok = await _invitationService.rejectInvitationByToken(token);
+        ok = await ref.read(invitationServiceProvider).rejectInvitationByToken(token);
         if (ok && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -2010,15 +2010,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     return '?';
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  String _formatDate(DateTime date) => DateFormatter.formatDate(date);
 
   Widget _buildPendingInvitationsSection() {
     final currentUser = ref.watch(currentUserProvider);
     final isOwner = currentUser?.id == widget.plan.userId;
     return FutureBuilder<List<PlanInvitation>>(
-      future: _invitationService.getPendingInvitations(widget.plan.id!),
+      future: ref.read(invitationServiceProvider).getPendingInvitations(widget.plan.id!),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Padding(
@@ -2101,7 +2099,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                           icon: Icon(Icons.link, color: Colors.grey.shade400),
                           onPressed: () async {
                             if (inv.token != null) {
-                              final link = _invitationService.generateInvitationLink(inv.token!);
+                              final link = ref.read(invitationServiceProvider).generateInvitationLink(inv.token!);
                               await Clipboard.setData(ClipboardData(text: link));
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -2122,7 +2120,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             tooltip: 'Cancelar',
                             icon: Icon(Icons.cancel, color: Colors.red.shade400),
                             onPressed: () async {
-                              final ok = await _invitationService.cancelInvitation(inv.id!);
+                              final ok = await ref.read(invitationServiceProvider).cancelInvitation(inv.id!);
                               if (ok) {
                                 if (mounted) setState(() {});
                                 if (mounted) {
@@ -2167,7 +2165,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     final user = ref.watch(currentUserProvider);
     if (user == null) return const SizedBox.shrink();
     return FutureBuilder<List<PlanInvitation>>(
-      future: _invitationService.getPendingInvitationsByEmail(user.email),
+      future: ref.read(invitationServiceProvider).getPendingInvitationsByEmail(user.email),
       builder: (context, snapshot) {
         final items = snapshot.data ?? [];
         final hasPendingInvitations = items.isNotEmpty;

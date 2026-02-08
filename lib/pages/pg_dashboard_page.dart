@@ -39,6 +39,7 @@ import 'package:unp_calendario/pages/pg_ui_showcase_page.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/widgets/notifications/wd_notification_badge.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -78,7 +79,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   final Map<String, List<String>> _planParticipantNames = {};
   final Map<String, StreamSubscription<List<PlanParticipation>>> _participantSubscriptions = {};
   final Map<String, String> _userNameCache = {};
-  final InvitationService _invitationService = InvitationService();
   
   @override
   void initState() {
@@ -1967,9 +1967,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   /// Formatea una fecha para mostrar
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  String _formatDate(DateTime date) => DateFormatter.formatDate(date);
 
   String? _currentPlanRoleLabel(AppLocalizations loc) {
     final plan = selectedPlan;
@@ -3120,21 +3118,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildPendingInvitationsBanner() {
-    final user = ref.watch(currentUserProvider);
-    if (user == null) return const SizedBox.shrink();
-    
-    return FutureBuilder<List<PlanInvitation>>(
-      future: _invitationService.getPendingInvitationsByUserId(user.id, user.email),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const SizedBox.shrink();
-        }
-        
-        final invitations = snapshot.data ?? [];
-        if (invitations.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        
+    final invitationsAsync = ref.watch(userPendingInvitationsProvider);
+    return invitationsAsync.when(
+      data: (invitations) {
+        if (invitations.isEmpty) return const SizedBox.shrink();
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
@@ -3168,27 +3155,30 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               const SizedBox(height: 12),
               ...invitations.map((inv) => _buildInvitationCard(inv)),
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showAcceptRejectDialog(),
-                  icon: const Icon(Icons.vpn_key_outlined),
-                  label: const Text('Aceptar/Rechazar por token'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
+              Text(
+                'Si no ves tus invitaciones arriba, puedes usar el link del correo o pegar el token:',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              ),
+              const SizedBox(height: 6),
+              TextButton.icon(
+                onPressed: () => _showAcceptRejectDialog(),
+                icon: const Icon(Icons.vpn_key_outlined, size: 18),
+                label: const Text('Aceptar/Rechazar por token'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.orange.shade800,
                 ),
               ),
             ],
           ),
         );
       },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 
   Widget _buildInvitationCard(PlanInvitation invitation) {
+    final user = ref.read(currentUserProvider);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -3218,25 +3208,104 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       color: Colors.grey.shade600,
                     ),
                   ),
-                if (invitation.token != null)
-                  TextButton.icon(
-                    onPressed: () async {
-                      final link = _invitationService.generateInvitationLink(invitation.token!);
-                      await Clipboard.setData(ClipboardData(text: link));
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Link copiado al portapapeles')),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.link, size: 16),
-                    label: const Text('Copiar link'),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: user == null
+                          ? null
+                          : () async {
+                              final ok = await ref.read(invitationServiceProvider).acceptInvitationByPlanId(
+                                invitation.planId,
+                                user.id,
+                              );
+                              if (!mounted) return;
+                              if (ok) {
+                                ref.invalidate(userPendingInvitationsProvider);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Invitación aceptada. Ya eres participante del plan.'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                setState(() {});
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No se pudo aceptar. Prueba con el link del correo.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                      icon: const Icon(Icons.check_circle_outline, size: 18),
+                      label: const Text('Aceptar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: user == null
+                          ? null
+                          : () async {
+                              final ok = await ref.read(invitationServiceProvider).rejectInvitationByPlanId(
+                                invitation.planId,
+                                user.id,
+                              );
+                              if (!mounted) return;
+                              if (ok) {
+                                ref.invalidate(userPendingInvitationsProvider);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Invitación rechazada'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                                setState(() {});
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('No se pudo rechazar.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                      icon: const Icon(Icons.cancel_outlined, size: 18),
+                      label: const Text('Rechazar'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.orange.shade800,
+                        side: BorderSide(color: Colors.orange.shade300),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                    if (invitation.token != null) ...[
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final link = ref.read(invitationServiceProvider).generateInvitationLink(invitation.token!);
+                          await Clipboard.setData(ClipboardData(text: link));
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Link copiado al portapapeles')),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.link, size: 16),
+                        label: const Text('Copiar link'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -3350,8 +3419,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       
       bool ok = false;
       if (isAccept) {
-        ok = await _invitationService.acceptInvitationByToken(token, user.id);
+        ok = await ref.read(invitationServiceProvider).acceptInvitationByToken(token, user.id);
         if (ok && mounted) {
+          ref.invalidate(userPendingInvitationsProvider);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('✅ Invitación aceptada. Has sido añadido al plan.'),
@@ -3368,8 +3438,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           );
         }
       } else {
-        ok = await _invitationService.rejectInvitationByToken(token);
+        ok = await ref.read(invitationServiceProvider).rejectInvitationByToken(token);
         if (ok && mounted) {
+          ref.invalidate(userPendingInvitationsProvider);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('✅ Invitación rechazada'),

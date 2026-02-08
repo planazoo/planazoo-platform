@@ -29,16 +29,17 @@
 ## 🏗️ Estructura de Archivos
 
 ### Convención de Nombres
-- **`_web.dart`** - Solo web/desktop
-- **`_mobile.dart`** - Solo iOS/Android  
-- **`_shared.dart`** - Compartida (todas las plataformas)
+- **`_page.dart`** - Página principal (la separación web/móvil es por contenido, no por sufijo)
+- **`_shared.dart`** - Compartida (todas las plataformas), cuando se use explícitamente
+
+**Nota:** En el código actual, Dashboard y Lista de Planes usan `pg_dashboard_page.dart` y `pg_plans_list_page.dart`; la distinción web vs móvil se hace en el router según plataforma, no por el nombre del archivo.
 
 ```
 lib/
 ├── pages/
-│   ├── pg_dashboard_web.dart           # Web/Desktop (complejo)
-│   ├── pg_plans_list_mobile.dart       # iOS/Android (simple)
-│   └── pg_invitation_shared.dart       # Compartida (todas las plataformas)
+│   ├── pg_dashboard_page.dart          # Web/Desktop (dashboard complejo)
+│   ├── pg_plans_list_page.dart         # iOS/Android (lista simple)
+│   └── pg_invitation_page.dart         # Compartida (todas las plataformas)
 │
 ├── widgets/
 │   ├── screens/
@@ -168,8 +169,8 @@ Widget build(BuildContext context) {
 
 | Componente | Web | iOS | Android | Estrategia | Nombre Archivo |
 |------------|-----|-----|---------|-----------|---------------|
-| Dashboard | ✅ Complejo | ❌ | ❌ | **Página Separada** | `pg_dashboard_web.dart` |
-| Lista de Planes | ✅ En Dashboard | ✅ Simple | ✅ Simple | **Página Separada** | `pg_plans_list_mobile.dart` |
+| Dashboard | ✅ Complejo | ❌ | ❌ | **Página Separada** | `pg_dashboard_page.dart` |
+| Lista de Planes | ✅ En Dashboard | ✅ Simple | ✅ Simple | **Página Separada** | `pg_plans_list_page.dart` |
 | Detalles Plan | ✅ | ✅ | ✅ | **Widget Compartido** | `wd_plan_data_screen.dart` (sin sufijo) |
 | Calendario | ✅ | ✅ | ✅ | **Widget Compartido** (adaptativo) | `wd_calendar_screen.dart` (sin sufijo) |
 | Formularios | ✅ | ✅ | ✅ | **Widget Compartido** | `wd_*.dart` (sin sufijo) |
@@ -253,9 +254,7 @@ Widget build(BuildContext context) {
 - 🔄 **Adaptación condicional** para diferencias menores (tamaños, espaciados)
 
 **Convención de Nombres:**
-- `_web.dart` - Solo web/desktop
-- `_mobile.dart` - Solo iOS/Android
-- `_shared.dart` - Compartida (todas las plataformas)
+- `_page.dart` - Páginas (Dashboard, PlansList, Invitation, etc.); la distinción web/móvil es por contenido en el router
 - Sin sufijo - Widgets/screens compartidos (por defecto)
 
 **Resultado:**

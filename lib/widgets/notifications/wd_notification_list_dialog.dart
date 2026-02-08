@@ -6,6 +6,7 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/notifications/domain/models/notification_model.dart';
 import '../../features/notifications/presentation/providers/notification_providers.dart';
 import '../../features/calendar/domain/services/invitation_service.dart';
+import '../../features/calendar/presentation/providers/invitation_providers.dart';
 import '../../features/calendar/presentation/providers/plan_participation_providers.dart';
 import '../../shared/utils/date_formatter.dart';
 import '../../shared/services/logger_service.dart';
@@ -229,8 +230,7 @@ class NotificationListDialog extends ConsumerWidget {
           return;
         }
 
-        final invitationService = InvitationService();
-        
+        final invitationService = ref.read(invitationServiceProvider);
         if (action == 'accept') {
           final success = await invitationService.acceptInvitationByToken(
             token,

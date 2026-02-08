@@ -84,6 +84,7 @@
 **Sistema de Planes:**
 - ✅ CRUD completo de planes
 - ✅ Estados de planes (borrador, planificando, confirmado, etc.)
+- ✅ Resumen del plan en texto (T193) — botón en card y en detalle del plan, diálogo con copiar al portapapeles
 - ✅ Gestión de participantes con roles
 - ✅ Sistema de permisos granulares
 - ✅ Eliminación en cascada de datos relacionados
@@ -102,7 +103,7 @@
 
 **Sistema de Participantes:**
 - ✅ Gestión de participantes con roles (organizer, participant, observer)
-- ✅ Sistema de invitaciones por email
+- ✅ Sistema de invitaciones por email (token, link con `?action=accept`, Cloud Function markInvitationAccepted)
 - ✅ Aceptación/rechazo de invitaciones
 - ✅ Validación de permisos
 
@@ -136,10 +137,10 @@
 - ⏳ Pantalla administrativa en app (pendiente)
 
 **Sistema de Invitaciones:**
-- ✅ Invitaciones por email con token
-- ✅ Aceptación/rechazo de invitaciones
+- ✅ Invitaciones por email con token (link puede incluir `?action=accept`)
+- ✅ Aceptación/rechazo de invitaciones (aceptación vía Cloud Function **markInvitationAccepted** además de cliente)
+- ✅ Cloud Function para envío de emails de invitación (Gmail SMTP)
 - ✅ Validación y prevención de duplicados
-- ⚠️ Cloud Function para envío de emails (pendiente)
 - ⏳ Invitaciones por username (pendiente)
 - ⏳ Invitaciones a grupos (pendiente)
 

@@ -6,10 +6,11 @@ import '../../domain/models/accommodation.dart';
 import '../../domain/services/plan_service.dart';
 import '../../domain/services/event_service.dart';
 import '../../domain/services/accommodation_service.dart';
+import 'invitation_providers.dart';
 
-/// Provider para PlanService
+/// Provider para PlanService (reutiliza InvitationService del provider)
 final planServiceProvider = Provider<PlanService>((ref) {
-  return PlanService();
+  return PlanService(invitationService: ref.read(invitationServiceProvider));
 });
 
 /// Provider para EventService

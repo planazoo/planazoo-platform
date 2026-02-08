@@ -10,10 +10,13 @@ import 'invitation_service.dart';
 import 'event_participant_service.dart';
 
 class PlanService {
+  PlanService({InvitationService? invitationService})
+      : _invitationService = invitationService ?? InvitationService();
+
   static const String _collectionName = 'plans';
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PlanParticipationService _participationService = PlanParticipationService();
-  final InvitationService _invitationService = InvitationService();
+  final InvitationService _invitationService;
   final EventParticipantService _eventParticipantService = EventParticipantService();
   final PermissionService _permissionService = PermissionService();
 

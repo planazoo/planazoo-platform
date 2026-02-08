@@ -2,7 +2,7 @@
 
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.
 
-**Siguiente código de tarea: T192**
+**Siguiente código de tarea: T194**
 
 **📊 Resumen de tareas por grupos:**
 - **GRUPO 1:** T68, T69, T70, T72: Fundamentos de Tracks (4 completadas)
@@ -19,18 +19,19 @@
 - **Testing y Mantenimiento:** T96-T99, T152: Refactoring (en progreso), testing, documentación y optimización Firestore (5 pendientes)
 - **Mejoras Funcionales:** T153: Sistema multi-moneda (1 completada)
 - **UX:** T100: Visualización de Timezones (1 completada)
+- **Accesibilidad:** T192: Adaptar la app a personas con discapacidad (1 pendiente)
 - **Ayuda y Documentación:** T157: Sistema de Ayuda Contextual (1 pendiente)
 - **Multi-idioma:** T158: Completar Sistema Multi-idioma (1 pendiente)
 - **Integración:** T131: Sincronización con Calendarios Externos (1 pendiente)
 - **Agencias:** T132: Definición Sistema Agencias de Viajes (1 pendiente)
-- **Exportación:** T133: Exportación Profesional de Planes PDF/Email (1 pendiente)
+- **Exportación:** T133: Exportación Profesional de Planes PDF/Email (1 pendiente), T193: Resumen de plan en texto (1 completada)
 - **Importación:** T134: Importar desde Email (1 pendiente)
 - **Privacidad:** T135-T136: Gestión de Cookies y App Tracking Transparency (2 pendientes)
 - **Legal:** T171: Documentos Legales (Términos, Privacidad, etc.) (1 pendiente)
 
 **Migración:** T154-T156: Migración a Mac/iOS (3 pendientes)
 
-**Total: 146 tareas documentadas (70 completadas, 76 pendientes)**
+**Total: 148 tareas documentadas (71 completadas, 77 pendientes)**
 
 ## 📋 Reglas del Sistema de Tareas
 
@@ -61,7 +62,7 @@
 14. **Arquitectura Offline First**: Todas las nuevas funcionalidades deben implementarse siguiendo el principio "Offline First" - la app debe funcionar completamente sin conexión y sincronizar cuando sea posible.
 15. **Plan Frankenstein**: Al completar una tarea que añade nueva funcionalidad al calendario (eventos, alojamientos, etc.), revisar si es necesario añadir casos de prueba al Plan Frankenstein (`lib/features/testing/demo_data_generator.dart`) para que la nueva funcionalidad esté cubierta en testing
 
-**Referencias a documentación:** Algunas tareas citan documentos que aún no existen (p. ej. `docs/legal/`, `docs/estrategia/`, `docs/riesgos/`, `docs/roadmap/`, `docs/flujos/FLUJO_SEGURIDAD.md`, `docs/TESTING_PLAN.md`). Lista completa en `docs/configuracion/DOCS_AUDIT.md`. Donde el doc no exista, usar la alternativa indicada (p. ej. `docs/guias/GUIA_SEGURIDAD.md` para seguridad) o crear el documento cuando corresponda a la tarea.
+**Referencias a documentación:** Algunas tareas citan documentos o carpetas que aún no existen. Lista completa en `docs/configuracion/DOCS_AUDIT.md`. En este archivo, las rutas a docs no creados van seguidas de **(doc pendiente)**. Donde exista alternativa (p. ej. seguridad → `docs/guias/GUIA_SEGURIDAD.md` en lugar de `docs/flujos/FLUJO_SEGURIDAD.md`), se usa la alternativa; el resto se crea cuando corresponda a la tarea.
 
 ---
 
@@ -1668,7 +1669,7 @@ CalendarScreen (orchestrator)
 - Establecer métricas de performance
 
 **Archivos a crear:**
-- `docs/configuracion/TESTING_CHECKLIST.md` (plan detallado: pendiente crear `docs/TESTING_PLAN.md`)
+- `docs/configuracion/TESTING_CHECKLIST.md` (plan detallado; opcional: `docs/TESTING_PLAN.md` como resumen ejecutivo — doc pendiente)
 - `test/manual_testing_guide.md` - Guía de testing manual
 - `test/performance_benchmarks.md` - Benchmarks de performance
 
@@ -1697,10 +1698,10 @@ CalendarScreen (orchestrator)
 - Crear diagramas de arquitectura
 - Guía de contribución clara
 **Archivos a crear:**
-- `docs/API_DOCUMENTATION.md`
+- `docs/API_DOCUMENTATION.md` (doc pendiente)
 - `docs/arquitectura/ARCHITECTURE_DECISIONS.md`
-- `docs/CONTRIBUTING.md`
-- `docs/SERVICE_EXAMPLES.md`
+- `docs/CONTRIBUTING.md` (doc pendiente)
+- `docs/SERVICE_EXAMPLES.md` (doc pendiente)
 ---
 ### T100 - Visualización de Timezones en el Calendario
 **Estado:** ✅ Completada  
@@ -4320,9 +4321,9 @@ Una app en sí misma es fácil de copiar. Necesitamos identificar y desarrollar 
 - Usuarios pueden crear plan completo en <5 minutos (incluyendo importaciones)
 
 **Archivos a crear (futuro):**
-- `docs/estrategia/DIFERENCIACION_COMPETITIVA.md` - Documento estratégico detallado
-- `docs/estrategia/INTEGRACIONES_PROVEEDORES.md` - Roadmap de integraciones
-- `docs/estrategia/BARRERAS_ENTRADA.md` - Análisis de barreras
+- `docs/estrategia/DIFERENCIACION_COMPETITIVA.md` (doc pendiente) - Documento estratégico detallado
+- `docs/estrategia/INTEGRACIONES_PROVEEDORES.md` (doc pendiente) - Roadmap de integraciones
+- `docs/estrategia/BARRERAS_ENTRADA.md` (doc pendiente) - Análisis de barreras
 
 **Relacionado con:** T134 (Importación desde Email), T146 (Oráculo de Delfos), T147 (Valoraciones), T131 (Calendarios externos), T101 (Presupuesto), T102 (Pagos), Estrategia de monetización
 
@@ -4862,10 +4863,10 @@ Es crítico anticipar estos riesgos y tener planes de mitigación listos antes d
 - Sistema de escalado definido para cada umbral de crecimiento
 
 **Archivos a crear (futuro):**
-- `docs/riesgos/ANALISIS_RIESGOS.md` - Documento detallado de riesgos
-- `docs/riesgos/PLAN_RESPUESTA_INCIDENTES.md` - Procedimientos de emergencia
-- `docs/riesgos/MONITOREO_ALERTAS.md` - Configuración de alertas
-- `docs/riesgos/BACKUP_RECOVERY.md` - Plan de backups y recuperación
+- `docs/riesgos/ANALISIS_RIESGOS.md` (doc pendiente) - Documento detallado de riesgos
+- `docs/riesgos/PLAN_RESPUESTA_INCIDENTES.md` (doc pendiente) - Procedimientos de emergencia
+- `docs/riesgos/MONITOREO_ALERTAS.md` (doc pendiente) - Configuración de alertas
+- `docs/riesgos/BACKUP_RECOVERY.md` (doc pendiente) - Plan de backups y recuperación
 
 **Relacionado con:** T125 (Security Rules), T126 (Rate Limiting), T127 (Sanitization), T135 (Cookies/GDPR), T136 (ATT iOS), T129 (Export GDPR), T148 (Diferenciación), T134 (Importación Email), T144 (Ciclo de vida planes)
 
@@ -5307,10 +5308,10 @@ Una vez completado el MVP y lanzada la v1.0, es el momento adecuado para documen
 - ⚠️ Documentación básica disponible
 
 **Archivos a crear (futuro):**
-- `docs/roadmap/MVP_DEFINITION.md` - Definición detallada del MVP
-- `docs/roadmap/ROADMAP_v1.0.md` - Roadmap de v1.0
-- `docs/roadmap/ROADMAP_v1.1.md` - Roadmap de v1.1
-- `docs/roadmap/ROADMAP_v2.0.md` - Roadmap de v2.0
+- `docs/roadmap/MVP_DEFINITION.md` (doc pendiente) - Definición detallada del MVP
+- `docs/roadmap/ROADMAP_v1.0.md` (doc pendiente) - Roadmap de v1.0
+- `docs/roadmap/ROADMAP_v1.1.md` (doc pendiente) - Roadmap de v1.1
+- `docs/roadmap/ROADMAP_v2.0.md` (doc pendiente) - Roadmap de v2.0
 
 **Relacionado con:** Todas las tareas del proyecto, T148 (Diferenciación), T149 (Riesgos), Estrategia de lanzamiento
 
@@ -5490,9 +5491,9 @@ Una vez completado el MVP y lanzada la v1.0, es el momento adecuado para documen
 8. **¿Los clientes pueden "compartir" el plan con familiares sin ser parte oficial?**
 
 **Documentación a Crear:**
-- `docs/flujos/FLUJO_GESTION_AGENCIAS.md` - Proceso completo de agencias
-- `docs/flujos/FLUJO_CRUD_TEMPLATES_PLANES.md` - Gestión de plantillas
-- `docs/guias/GUIA_MODELO_NEGOCIO_AGENCIAS.md` - Modelo de negocio
+- `docs/flujos/FLUJO_GESTION_AGENCIAS.md` (doc pendiente) - Proceso completo de agencias
+- `docs/flujos/FLUJO_CRUD_TEMPLATES_PLANES.md` (doc pendiente) - Gestión de plantillas
+- `docs/guias/GUIA_MODELO_NEGOCIO_AGENCIAS.md` (doc pendiente) - Modelo de negocio
 - Actualizar `lib/shared/models/user_role.dart` con nuevos roles
 - Actualizar `lib/features/calendar/domain/models/plan.dart` con campos de agencia
 
@@ -5580,7 +5581,7 @@ Crear Evento/Alojamiento en el plan
 - `lib/features/import/services/email_parse_service.dart`
 - `lib/features/import/providers/email_import_provider.dart`
 - `lib/widgets/import/wd_email_import_dialog.dart`
-- `docs/flujos/FLUJO_IMPORTACION_DESDE_EMAIL.md`
+- `docs/flujos/FLUJO_IMPORTACION_DESDE_EMAIL.md` (doc pendiente)
 
 **Notas Técnicas:**
 - Parsers deterministas por patrones (regex/plantillas) en MVP; evaluar NLP más adelante
@@ -5633,7 +5634,7 @@ Crear Evento/Alojamiento en el plan
 - `lib/features/consent/services/cookie_consent_service.dart`
 - `lib/features/consent/widgets/wd_cookie_consent_modal.dart`
 - `lib/features/consent/widgets/wd_cookie_settings_panel.dart`
-- `docs/legal/cookie_policy.md` (contenido completo)
+- `docs/legal/cookie_policy.md` (doc pendiente; contenido completo a crear)
 
 **Cookies a gestionar:**
 - **Necesarias (siempre activas):**
@@ -6376,7 +6377,7 @@ Organizador quiere invitar a alguien a unirse al plan
 - T152 (Revisión y Optimización de Índices de Firestore)
 - docs/configuracion/MIGRACION_MAC_PLAYBOOK.md
 - docs/configuracion/DEPLOY_INDICES_FIRESTORE.md
-- docs/configuracion/INDICES_ANALISIS_COMPARACION.md
+- docs/configuracion/INDICES_ANALISIS_COMPARACION.md (doc pendiente)
 
 ---
 
@@ -6496,7 +6497,7 @@ firebase projects:list
 - [ ] Desplegar índices: `firebase deploy --only firestore:indexes`
 - [ ] Esperar a que todos los índices estén "Enabled" (puede tardar 5-30 minutos)
 - [ ] Verificar en Firebase Console que hay 25 índices
-- [ ] Identificar y eliminar índices obsoletos (ver `INDICES_ANALISIS_COMPARACION.md`):
+- [ ] Identificar y eliminar índices obsoletos (ver `docs/configuracion/INDICES_ANALISIS_COMPARACION.md` — doc pendiente):
   - [ ] Eliminar `Hours` - `horaFecha` + `horaNum` (colección obsoleta)
   - [ ] Eliminar `users` - `email` + `isActive` (no se usa)
   - [ ] Eliminar `users` - `planId` + `date` + `hour` (índice incorrecto)
@@ -6541,14 +6542,14 @@ firebase deploy --only firestore:indexes
 - Esta tarea se completa DESPUÉS de T154 y T155
 - El despliegue de índices puede tardar varios minutos (Firebase los crea en background)
 - No eliminar índices obsoletos hasta que los nuevos estén "Enabled"
-- Si hay errores, revisar `INDICES_ANALISIS_COMPARACION.md` para detalles
+- Si hay errores, revisar `docs/configuracion/INDICES_ANALISIS_COMPARACION.md` (doc pendiente) para detalles
 - Los índices con problemas de nomenclatura pueden funcionar (Firebase puede ser flexible), verificar antes de eliminar
 **Documentación relacionada:**
 - docs/configuracion/FIRESTORE_INDEXES_AUDIT.md
-- docs/configuracion/INDICES_ANALISIS_COMPARACION.md
-- docs/configuracion/INDICES_OBSOLETOS_VERIFICACION.md
+- docs/configuracion/INDICES_ANALISIS_COMPARACION.md (doc pendiente)
+- docs/configuracion/INDICES_OBSOLETOS_VERIFICACION.md (doc pendiente)
 - docs/configuracion/DEPLOY_INDICES_FIRESTORE.md
-- docs/configuracion/ESTRATEGIA_INDICES_ELIMINAR_TODOS.md
+- docs/configuracion/ESTRATEGIA_INDICES_ELIMINAR_TODOS.md (doc pendiente)
 - firestore.indexes.json
 **Relacionado con:**
 - T154 (Migración del Proyecto a Mac/iOS)
@@ -6869,6 +6870,7 @@ SnackBar(content: Text(AppLocalizations.of(context)!.planCreatedSuccessfully))
 **Fase 2 (Migración):**
 - Migrar textos de páginas principales (Dashboard, Calendar, etc.)
 - Migrar diálogos y mensajes
+- Migrar textos de T193 (resumen del plan): `plan_summary_dialog.dart`, `plan_summary_button.dart` (claves en app_es.arb / app_en.arb)
 - Actualizar archivos .arb
 
 **Fase 3 (Finalización):**
@@ -7243,13 +7245,13 @@ final List<String>? adminRoles; // ['super_admin', 'moderator', 'support']
 ### Archivos Afectados
 - `lib/features/auth/domain/models/user_model.dart` - Añadir campo `isAppAdmin` o similar
 - `firestore.rules` - Añadir función `isAppAdmin()` y reglas especiales
-- `docs/configuracion/USUARIOS_ADMINISTRACION.md` - **NUEVO** - Documentación completa
+- `docs/configuracion/USUARIOS_ADMINISTRACION.md` (doc pendiente) - **NUEVO** - Documentación completa
 - `docs/guias/GUIA_SEGURIDAD.md` - Actualizar con información de administradores
 - `lib/features/auth/domain/services/user_service.dart` - Métodos para verificar rol admin (si aplica)
 
 ### Documentación a Crear
 
-#### `docs/configuracion/USUARIOS_ADMINISTRACION.md`
+#### `docs/configuracion/USUARIOS_ADMINISTRACION.md` (doc pendiente)
 Debe incluir:
 1. **Qué son los usuarios administradores**
    - Diferencia entre admin de plan vs admin de app
@@ -7661,7 +7663,7 @@ Crear los documentos legales completos (Términos y Condiciones, Política de Pr
 
 ### Documentos a Crear
 
-#### 1. Términos y Condiciones (`docs/legal/terms_of_service.md`)
+#### 1. Términos y Condiciones (`docs/legal/terms_of_service.md` — doc pendiente)
 **Contenido requerido:**
 - Descripción del servicio
 - Edad mínima (13+ recomendado por COPPA)
@@ -7674,7 +7676,7 @@ Crear los documentos legales completos (Términos y Condiciones, Política de Pr
 - Versión del documento (1.0)
 - Fecha de última actualización
 
-#### 2. Política de Privacidad (`docs/legal/privacy_policy.md`)
+#### 2. Política de Privacidad (`docs/legal/privacy_policy.md` — doc pendiente)
 **Contenido requerido:**
 - Datos recopilados (email, nombre, foto, planes, eventos, etc.)
 - Cómo se usan los datos
@@ -7687,7 +7689,7 @@ Crear los documentos legales completos (Términos y Condiciones, Política de Pr
 - Versión del documento (1.0)
 - Fecha de última actualización
 
-#### 3. Política de Seguridad (`docs/legal/security_policy.md`)
+#### 3. Política de Seguridad (`docs/legal/security_policy.md` — doc pendiente)
 **Contenido requerido:**
 - Medidas de seguridad implementadas
 - Encriptación de datos
@@ -7697,7 +7699,7 @@ Crear los documentos legales completos (Términos y Condiciones, Política de Pr
 - Versión del documento (1.0)
 - Fecha de última actualización
 
-#### 4. Política de Cookies (`docs/legal/cookie_policy.md`)
+#### 4. Política de Cookies (`docs/legal/cookie_policy.md` — doc pendiente)
 **Contenido requerido:**
 - Qué son las cookies
 - Tipos de cookies usadas
@@ -7746,10 +7748,10 @@ Crear los documentos legales completos (Términos y Condiciones, Política de Pr
 ### Archivos a Crear/Modificar
 
 #### Documentos:
-- `docs/legal/terms_of_service.md` - **NUEVO**
-- `docs/legal/privacy_policy.md` - **NUEVO**
-- `docs/legal/security_policy.md` - **NUEVO**
-- `docs/legal/cookie_policy.md` - **NUEVO**
+- `docs/legal/terms_of_service.md` (doc pendiente) - **NUEVO**
+- `docs/legal/privacy_policy.md` (doc pendiente) - **NUEVO**
+- `docs/legal/security_policy.md` (doc pendiente) - **NUEVO**
+- `docs/legal/cookie_policy.md` (doc pendiente) - **NUEVO**
 
 #### Código:
 - `lib/features/legal/presentation/pages/terms_page.dart` - **NUEVO**
@@ -7761,7 +7763,7 @@ Crear los documentos legales completos (Términos y Condiciones, Política de Pr
 - `lib/features/auth/presentation/notifiers/auth_notifier.dart` - Guardar aceptación de términos
 
 ### Criterios de Aceptación
-- ✅ Documentos legales creados en `docs/legal/`
+- ✅ Documentos legales creados en `docs/legal/` (carpeta pendiente de crear con la tarea)
 - ✅ Páginas legales implementadas en la app
 - ✅ Links en checkbox de registro funcionan y abren las páginas correspondientes
 - ✅ Contenido de documentos se muestra correctamente (formato, scroll, etc.)
@@ -7827,5 +7829,75 @@ Diseñar e implementar una página propia que sustituya la plantilla genérica d
 - LOGIN-015 (Testing de recuperación de contraseña)
 - T170 - Logging sin datos sensibles
 - `docs/guias/GUIA_SEGURIDAD.md`
+
+---
+
+### T192 - Adaptar la app a personas con discapacidad (Accesibilidad / a11y)
+**Estado:** Pendiente  
+**Complejidad:** 🟡 Media-Alta  
+**Prioridad:** 🟢 Futuro  
+
+**Descripción:** Hacer la aplicación usable por personas con discapacidad (accesibilidad), cubriendo al menos:
+
+- **Visual:** soporte para lectores de pantalla (TalkBack/VoiceOver), semántica y etiquetas en widgets, contraste de color suficiente, posibilidad de escalar tamaño de texto.
+- **Motora:** áreas táctiles mínimas (44×44 dp recomendado), navegación por teclado en web, tiempo suficiente para acciones.
+- **Auditiva:** alternativas visuales a información solo sonora (si aplica).
+- **Cognitiva:** lenguaje claro, navegación coherente, evitar dependencia de tiempos cortos.
+
+**Contexto:**
+- Flutter ofrece Semantics, SemanticsProperties, y soporte para lectores de pantalla.
+- En web: atributos ARIA, foco visible, orden de tabulación.
+- Cumplir buenas prácticas WCAG (nivel AA como objetivo) donde aplique.
+
+**Criterios de Aceptación (orientativos):**
+- Revisar pantallas principales con TalkBack (Android) y/o VoiceOver (iOS) y corregir flujos críticos.
+- Añadir/ajustar Semantics en botones, enlaces, campos de formulario y elementos interactivos clave.
+- Comprobar contraste de textos y botones (mínimo 4.5:1 para texto normal).
+- Asegurar que los objetivos táctiles cumplan tamaño mínimo recomendado.
+- Documentar en `docs/ux/` o similar las decisiones y alcance de accesibilidad (qué se cubre y qué queda para fases posteriores).
+
+**Relacionado con:**
+- T100 (UX), T157 (Ayuda Contextual), T158 (Multi-idioma)
+- Guías: [Flutter accessibility](https://docs.flutter.dev/development/accessibility-and-localization/accessibility), WCAG
+
+---
+
+### T193 - Resumen de plan en texto (informe dinámico)
+**Estado:** ✅ Completada (Feb 2026 → ver `docs/tareas/COMPLETED_TASKS.md`).
+
+**Descripción (referencia):** Permitir al usuario generar un resumen del plan en texto (informe) de forma dinámica al pulsar un botón. El contenido es un listado cronológico: cabecera (nombre, fechas, participantes) y luego cada día del plan con sus eventos y alojamientos. Se muestra en un diálogo o bottom sheet con opción de copiar.
+
+**Ubicación del botón:**
+- **Card del plan:** en dashboard y en lista de planes → **solo icono** (ej. documento/listado).
+- **Página de información del plan:** **icono + texto** “Resumen”.
+  - Mobile: `PlanDetailPage` (`lib/pages/pg_plan_detail_page.dart`).
+  - Desktop: panel de información del plan en dashboard (`PlanDataScreen` / `wd_plan_data_screen.dart`).
+
+**Estructura del informe (texto):**
+1. **Cabecera:** nombre del plan, fechas inicio y fin, lista de participantes (todos: aceptados y pendientes). Cada participante: nombre (displayName) y usuario (username o email).
+2. **Listado cronológico:** por cada día del plan:
+   - Día (fecha).
+   - Eventos de ese día (listados).
+   - Alojamientos de ese día (listados).
+   - Si un día no tiene eventos ni alojamientos: indicar “Sin eventos, sin alojamiento”.
+
+**Comportamiento:**
+- Al pulsar el botón se genera el texto en el momento (sin guardar en backend).
+- Diálogo o bottom sheet con el texto generado.
+- Botón “Copiar”: copia el texto al portapapeles y muestra **SnackBar** “Resumen copiado al portapapeles” (o equivalente localizado).
+- Opcional en web: botón “Compartir” (Web Share API).
+
+**Segunda fase (futuro):** Posibilidad de compartir el resumen por correo, WhatsApp, etc. (compartir como texto o archivo según canal).
+
+**Criterios de Aceptación:**
+- Botón en la card del plan (dashboard y lista): solo icono.
+- Botón en la página de detalle del plan (PlanDetailPage y zona de info en dashboard): icono + texto “Resumen”.
+- Informe con cabecera (nombre, fechas, participantes con nombre y usuario) y listado cronológico día a día (eventos y alojamientos por día; “Sin eventos, sin alojamiento” si aplica).
+- Copiar al portapapeles con feedback SnackBar.
+- Informe siempre dinámico (datos actuales).
+
+**Relacionado con:**
+- T133 (Exportación PDF/Email): base para futura exportación.
+- T158 (Multi-idioma): etiquetas del informe en el idioma de la app.
 
 ---

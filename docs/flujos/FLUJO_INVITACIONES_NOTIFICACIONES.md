@@ -44,7 +44,7 @@ Formulario:
 - Rol: Participante / Observador
 - Mensaje personalizado: (opcional)
   ↓
-Sistema genera link único con token
+Sistema genera link único con token (el link puede incluir el query param `?action=accept`; la app hace strip del param tras usarlo)
   ↓
 Email enviado:
 ┌──────────────────────────────┐
@@ -209,8 +209,7 @@ Usuario acepta o rechaza
   ↓
 Si ACEPTA:
 - Sistema crea `PlanParticipation` con estado "accepted"
-- Sistema actualiza `plan_invitations.status` → "accepted"
-- Sistema estampa `plan_invitations.respondedAt`
+- Sistema actualiza `plan_invitations.status` → "accepted" y `respondedAt` (en cliente y/o vía **Cloud Function `markInvitationAccepted`** para garantizar permisos en Firestore)
 - Usuario es añadido al plan
 - Notificar al organizador
   ↓
@@ -233,7 +232,7 @@ Si RECHAZA:
 
 **Notas importantes:**
 - Si la actualización del estado de la invitación falla por permisos, pero la participación se crea correctamente, el sistema continúa funcionando (la participación es lo más importante).
-- El estado de la invitación puede actualizarse manualmente por el organizador o mediante una Cloud Function si es necesario.
+- El estado de la invitación a "accepted" se actualiza desde el cliente y/o mediante la **Cloud Function `markInvitationAccepted`** para evitar problemas de permisos en Firestore. El link de invitación puede llevar `?action=accept`; la app puede eliminar este param de la URL tras procesarlo para evitar reenvíos.
 
 ---
 
@@ -560,8 +559,9 @@ graph TD
   - ✅ Verificación de permisos: solo el usuario invitado puede aceptar/rechazar su propia invitación
   - ✅ Verificación de permisos: solo el organizador puede eliminar invitaciones
   - ✅ Manejo de errores cuando la actualización del estado falla pero la participación se crea correctamente
+  - ✅ Cloud Function **markInvitationAccepted** para actualizar el estado de la invitación a "accepted" (evita problemas de permisos en Firestore)
+  - ✅ Link de invitación puede incluir `?action=accept`; la app hace strip del param tras usarlo
   - ⚠️ Pendiente: Invitaciones por username/nickname (T104 - parte opcional)
-  - ⚠️ Pendiente: Cloud Function para actualizar automáticamente el estado de la invitación cuando se crea una participación
 - ⚠️ Notificaciones push: FCM Fase 1 completada (tokens, guardado en Firestore); envío de notificaciones push desde backend pendiente
 - ❌ Historial de notificaciones
 - ✅ Sistema de confirmación de asistencia a eventos - Base (T120 Fase 2):
@@ -589,4 +589,5 @@ graph TD
 - ✅ Documentada la verificación de email mejorada (token + fallback a documento usuario)
 - ✅ Documentado el manejo de errores cuando la actualización del estado falla pero la participación se crea correctamente
 - ✅ Actualizada la sección de implementación con todos los detalles completados
+- ✅ Documentada Cloud Function **markInvitationAccepted** y link con `?action=accept` (Feb 2026)
 

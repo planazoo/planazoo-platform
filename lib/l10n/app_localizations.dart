@@ -2197,6 +2197,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin respuesta'**
   String get adminInsightsEventConfirmationMissing;
+
+  /// T193: Título del diálogo de resumen del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen del plan'**
+  String get planSummaryTitle;
+
+  /// T193: SnackBar al copiar resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen copiado al portapapeles'**
+  String get planSummaryCopiedToClipboard;
+
+  /// T193: Botón copiar
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar'**
+  String get planSummaryCopy;
+
+  /// T193: Estado copiado
+  ///
+  /// In es, this message translates to:
+  /// **'Copiado'**
+  String get planSummaryCopied;
+
+  /// T193: Botón cerrar
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar'**
+  String get planSummaryClose;
+
+  /// T193: Error al generar resumen
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo generar el resumen.'**
+  String get planSummaryError;
+
+  /// T193: Cargando resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Generando resumen...'**
+  String get planSummaryGenerating;
+
+  /// T193: Tooltip del botón resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Ver resumen'**
+  String get planSummaryButtonTooltip;
+
+  /// T193: Etiqueta del botón resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen'**
+  String get planSummaryButtonLabel;
 }
 
 class _AppLocalizationsDelegate

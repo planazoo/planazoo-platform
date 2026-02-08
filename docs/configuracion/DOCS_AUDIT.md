@@ -109,6 +109,8 @@ Ubicaciones previstas para documentos legales: `docs/legal/terms_of_service.md`,
 - [x] Corrección de rutas en TASKS.md y PROMPT_BASE.md (ya aplicada: usan docs/configuracion/CONTEXT.md y docs/tareas/COMPLETED_TASKS.md)
 - [x] Actualización de docs/README.md (índice ampliado con Configuración, admin, design, testing, PLATFORM_STRATEGY)
 - [x] Flujos y guías: fechas "Última actualización" actualizadas a Febrero 2026
+- [x] TASKS.md: convención de referencias reforzada; añadido "(doc pendiente)" a todas las rutas de documentos/carpetas no existentes (API_DOCUMENTATION, CONTRIBUTING, SERVICE_EXAMPLES, TESTING_PLAN, legal/, estrategia/, riesgos/, roadmap/, FLUJO_*, GUIA_MODELO_NEGOCIO_AGENCIAS, INDICES_*, USUARIOS_ADMINISTRACION)
+- [x] **Siguiente revisión (Feb 2026):** Se usó el documento `docs/PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md` para aplicar sincronización doc↔código (ARCHITECTURE_DECISIONS, FIRESTORE_COLLECTIONS_AUDIT, PLATFORM_STRATEGY, NOMENCLATURA_UI, FLUJO_INVITACIONES, TESTING_CHECKLIST, README, ux/pages, ONBOARDING_IA, CONTEXT, TASKS referencias, índice README). Pendiente de esa propuesta: optimizaciones de código (textos T193 a AppLocalizations, refactor archivos grandes, duplicación/rendimiento).
 
 ---
 

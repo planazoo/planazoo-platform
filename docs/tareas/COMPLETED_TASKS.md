@@ -4,6 +4,30 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T193 - Resumen de plan en texto (informe dinámico)
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** El usuario puede generar un resumen del plan en texto (informe) de forma dinámica al pulsar un botón. Contenido: cabecera (nombre, fechas, participantes) y listado cronológico por día con eventos y alojamientos. Diálogo con opción de copiar al portapapeles.
+
+**Criterios de aceptación cumplidos:**
+- ✅ Botón en la card del plan (dashboard y lista): solo icono
+- ✅ Botón en la página de detalle del plan (PlanDataScreen): icono + texto "Resumen"
+- ✅ Informe con cabecera y listado cronológico día a día (eventos y alojamientos)
+- ✅ Copiar al portapapeles con feedback SnackBar
+- ✅ Informe dinámico (datos actuales)
+- ✅ Textos localizados (AppLocalizations, app_es.arb / app_en.arb)
+
+**Archivos principales:**
+- `lib/widgets/dialogs/plan_summary_dialog.dart` - Diálogo y textos localizados
+- `lib/widgets/plan/plan_summary_button.dart` - Botón reutilizable (card y detalle)
+- `lib/features/calendar/domain/services/plan_summary_service.dart` - Generación del texto
+- `lib/l10n/app_es.arb`, `lib/l10n/app_en.arb` - Claves planSummary*
+
+**Relacionado con:** T133 (Exportación PDF/Email), T158 (Multi-idioma)
+
+---
+
 ## T101 - Sistema de Presupuesto del Plan
 **Estado:** ✅ Base completada  
 **Fecha de finalización:** Enero 2025  

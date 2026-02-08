@@ -1169,4 +1169,31 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get adminInsightsEventConfirmationMissing => 'Sin respuesta';
+
+  @override
+  String get planSummaryTitle => 'Resumen del plan';
+
+  @override
+  String get planSummaryCopiedToClipboard => 'Resumen copiado al portapapeles';
+
+  @override
+  String get planSummaryCopy => 'Copiar';
+
+  @override
+  String get planSummaryCopied => 'Copiado';
+
+  @override
+  String get planSummaryClose => 'Cerrar';
+
+  @override
+  String get planSummaryError => 'No se pudo generar el resumen.';
+
+  @override
+  String get planSummaryGenerating => 'Generando resumen...';
+
+  @override
+  String get planSummaryButtonTooltip => 'Ver resumen';
+
+  @override
+  String get planSummaryButtonLabel => 'Resumen';
 }

@@ -83,6 +83,7 @@ Cada caso de prueba debe incluir:
 1. [Autenticación y Registro](#1-autenticación-y-registro)
 2. [Gestión de Usuarios](#2-gestión-de-usuarios)
 3. [CRUD de Planes](#3-crud-de-planes)
+   - 3.6 [Resumen del plan (T193)](#36-resumen-del-plan-t193)
 4. [CRUD de Eventos](#4-crud-de-eventos)
 5. [CRUD de Alojamientos](#5-crud-de-alojamientos)
 6. [Gestión de Participantes](#6-gestión-de-participantes)
@@ -730,6 +731,59 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: No quedan invitaciones asociadas al email ni al `invitedBy` del usuario eliminado.
   - Estado: 🔄
 
+### 3.6 Resumen del plan (T193)
+
+**Contexto:** La funcionalidad "Resumen del plan" genera un texto resumido del plan (eventos, alojamientos, fechas) y permite copiarlo al portapapeles. Está disponible desde la card del plan en el dashboard y desde la pantalla de detalle del plan.
+
+- [ ] **PLAN-SUM-001:** Ver botón "Resumen" / "Ver resumen" en la card del plan (dashboard)
+  - Pasos: 
+    1. Iniciar sesión y abrir el dashboard
+    2. Localizar una card de plan que tenga eventos o alojamientos
+  - Esperado: Se muestra el botón/link "Ver resumen" (o equivalente) en la card del plan
+  - Estado: 🔄
+
+- [ ] **PLAN-SUM-002:** Abrir diálogo de resumen desde la card del plan
+  - Pasos: 
+    1. En el dashboard, en una card de plan, hacer clic en "Ver resumen"
+  - Esperado: 
+    - Se abre un diálogo/modal con el resumen del plan
+    - Mientras se genera: indicador de carga ("Generando resumen..." o similar)
+    - Al cargar: se muestra texto con eventos, alojamientos y fechas (formato legible)
+  - Estado: 🔄
+
+- [ ] **PLAN-SUM-003:** Abrir diálogo de resumen desde la pantalla de detalle del plan
+  - Pasos: 
+    1. Abrir un plan (detalle / PlanDataScreen)
+    2. Localizar y hacer clic en el botón "Ver resumen" / "Resumen"
+  - Esperado: Mismo comportamiento que PLAN-SUM-002 (diálogo con resumen generado)
+  - Estado: 🔄
+
+- [ ] **PLAN-SUM-004:** Copiar resumen al portapapeles
+  - Pasos: 
+    1. Abrir el diálogo de resumen (desde card o desde detalle)
+    2. Cuando el resumen esté cargado, hacer clic en "Copiar" (o botón equivalente)
+  - Esperado: 
+    - El texto del resumen se copia al portapapeles
+    - Se muestra SnackBar o mensaje de confirmación ("Resumen copiado al portapapeles" o similar)
+  - Estado: 🔄
+
+- [ ] **PLAN-SUM-005:** Cerrar diálogo de resumen
+  - Pasos: En el diálogo de resumen, hacer clic en "Cerrar" o fuera del diálogo
+  - Esperado: El diálogo se cierra sin errores
+  - Estado: 🔄
+
+- [ ] **PLAN-SUM-006:** Resumen cuando el plan no tiene eventos ni alojamientos
+  - Pasos: Abrir resumen de un plan recién creado sin eventos ni alojamientos
+  - Esperado: 
+    - Se muestra un resumen mínimo (nombre del plan, fechas si existen) o mensaje tipo "Aún no hay eventos ni alojamientos"
+    - No se muestra error; el diálogo se comporta correctamente
+  - Estado: 🔄
+
+- [ ] **PLAN-SUM-007:** Error al generar resumen (simulado)
+  - Pasos: Simular fallo de red o de servicio al abrir el resumen (opcional: desactivar red o mock)
+  - Esperado: Mensaje de error claro ("No se pudo generar el resumen" o similar), sin crash
+  - Estado: 🔄
+
 ---
 
 ## 4. CRUD DE EVENTOS
@@ -1136,6 +1190,29 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ### 7.1 Invitaciones a Planes (T104)
 
+#### 7.1.0 Flujo E2E: Organizador crea plan e invita a usuario no registrado
+
+- [ ] **INV-E2E-001:** Usuario registrado crea un plan e invita a un usuario no registrado; el invitado recibe el link y acepta
+  - Pasos:
+    1. **Organizador (registrado):** Login con un usuario existente (ej. `unplanazoo+admin@gmail.com`).
+    2. Crear un plan nuevo (nombre, fechas; ver PLAN-C-001). Guardar/abrir el plan.
+    3. Ir a **Participantes** → "Invitar por email".
+    4. Completar:
+       - Email: uno que **no** esté registrado (ej. `unplanazoo+invite1@gmail.com`).
+       - Rol: Participante (u otro).
+       - Mensaje opcional.
+    5. Enviar invitación. Anotar o copiar el link de invitación si se muestra.
+    6. **Invitado (no registrado):** Abrir el link de invitación (en otro navegador/incógnito o dispositivo).
+    7. En la página de invitación: ver detalles del plan, luego "Aceptar" (o "Aceptar y registrarme" si aplica).
+    8. Si el sistema pide registro: completar registro con ese email; luego confirmar aceptación.
+  - Esperado:
+    - Invitación creada en `plan_invitations` con `status: 'pending'` (paso 5).
+    - Invitado ve la página de invitación y puede aceptar (pasos 6–7).
+    - Tras aceptar: `plan_invitations.status` → `'accepted'`, se crea `plan_participations` para el invitado, y si no tenía cuenta se crea usuario y participación.
+    - Organizador puede ver al nuevo participante en el plan.
+  - Casos relacionados: **INV-001** (enviar invitación a no registrado), **INV-008** (aceptar desde link como no registrado). **PLAN-C-001** (crear plan).
+  - Estado: 🔄
+
 #### 7.1.1 Invitar por Email
 
 - [x] **INV-001:** Enviar invitación por email (usuario no registrado)
@@ -1218,6 +1295,8 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 #### 7.1.2 Aceptar/Rechazar Invitaciones
 
+**Nota técnica:** La actualización del estado de la invitación a `accepted` se realiza mediante la **Cloud Function `markInvitationAccepted`** (además de la lógica en cliente) para garantizar permisos y consistencia en Firestore. El link de invitación puede incluir el query param **`?action=accept`**; la app puede hacer strip de este param tras usarlo para evitar reenvíos.
+
 - [ ] **INV-008:** Aceptar invitación desde link (usuario no registrado)
   - Pasos: 
     1. Usuario no registrado hace clic en link de invitación
@@ -1234,6 +1313,17 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
     - Notificación al organizador (email/push): "[Nombre] ha aceptado tu invitación"
   - **⚠️ IMPORTANTE:** Para probar flujo completo, usar invitación a usuario que NO existe para probar registro desde invitación.
   - Estado: ✅
+
+- [ ] **INV-008b:** Aceptar invitación desde link con `?action=accept` y comprobar que el banner desaparece
+  - Pasos: 
+    1. Organizador envía invitación y copia el link (puede incluir `?action=accept` o añadirse manualmente)
+    2. Invitado (registrado o no) abre el link en la app/web
+    3. Si hace falta, iniciar sesión; luego hacer clic en "Aceptar"
+  - Esperado: 
+    - La invitación pasa a `status: 'accepted'` (vía Cloud Function o cliente)
+    - Se crea `plan_participations` y el usuario puede acceder al plan
+    - Si la página de invitación mostraba un banner de "Tienes una invitación pendiente", tras aceptar el banner desaparece o se actualiza la vista
+  - Estado: 🔄
 
 - [ ] **INV-009:** Aceptar invitación desde link (usuario ya registrado)
   - Pasos: 

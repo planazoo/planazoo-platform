@@ -68,30 +68,29 @@ Todos los eventos duplicados por participante en el MVP, con optimización autom
 - **Flexibilidad:** Cada participante puede personalizar su información
 - **Optimización futura:** Conversión automática a referencias cuando sea beneficioso
 
-#### **Implementación**
-```dart
-// Cada participante tiene su copia completa del evento
-Event vueloPadre = Event(
-  id: "vuelo_123_padre",
-  participantId: "padre",
-  description: "Vuelo Barcelona-Londres",
-  hour: 7,
-  asiento: "12A",
-  gate: "B15",
-);
+#### **Implementación (alineado con el código actual)**
+En el código se usa un único evento por plan con **parte común** y **partes personales** por participante (no copias por participante). Ver decisión 4 y `docs/.../GUIA_PATRON_COMUN_PERSONAL.md` si existe.
 
-Event vueloMadre = Event(
-  id: "vuelo_123_madre",
-  participantId: "madre", 
+```dart
+// Un solo evento con parte común + mapa de partes personales por participantId
+Event vuelo = Event(
+  id: "vuelo_123",
+  planId: "plan_abc",
+  userId: "padre",           // creador / quien edita la parte común
   description: "Vuelo Barcelona-Londres",
   hour: 7,
-  asiento: "12B",
-  gate: "B15",
+  commonPart: EventCommonPart(...),  // datos compartidos
+  personalParts: {
+    "padre": EventPersonalPart(asiento: "12A", gate: "B15"),
+    "madre": EventPersonalPart(asiento: "12B", gate: "B15"),
+  },
+  participantTrackIds: ["track_padre", "track_madre"],
+  // ...
 );
 ```
 
 #### **Optimización Futura**
-Al cerrar el plan, eventos idénticos se convierten automáticamente a referencias para ahorrar espacio.
+Al cerrar el plan, eventos idénticos podrían convertirse a referencias para ahorrar espacio (no implementado aún).
 
 ---
 
@@ -128,28 +127,32 @@ Todos los eventos se guardan en timezone base del plan, con conversión automát
 - **Consistencia:** Todos los eventos en la misma "moneda temporal"
 - **Escalabilidad:** Funciona automáticamente para cualquier timezone
 
-#### **Implementación**
+#### **Implementación (alineado con el código actual)**
 ```dart
 class Plan {
   String id;
   String name;
-  String baseTimezone; // ← Nuestro "UTC" del plan
-  List<Participant> participants;
+  String? timezone;     // IANA, ej: "Europe/Madrid" — "UTC" del plan
+  DateTime baseDate;   // primer día del plan
+  int columnCount;     // número de días (startDate/endDate se derivan)
+  // ...
 }
 
 class Event {
   String id;
+  String planId;
   String description;
-  DateTime date; // ← En timezone base del plan
-  int hour;      // ← En timezone base del plan
-  // Sin campo timezone específico
+  DateTime date;       // en timezone del plan (o del evento si se especifica)
+  int hour;
+  String? timezone;         // opcional: IANA de salida (ej. vuelos)
+  String? arrivalTimezone; // opcional: IANA de llegada (ej. vuelos)
+  // ...
 }
 
-// Conversión automática al mostrar
+// Conversión automática al mostrar: usar timezone del evento o del plan
 String formatTimeForParticipant(Event event, Participant participant) {
-  final utcTime = DateTime.utc(event.date.year, event.date.month, event.date.day, event.hour);
-  final localTime = utcTime.toLocal(participant.timezone);
-  return '${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')}';
+  final tz = event.timezone ?? plan.timezone ?? participant.timezone;
+  // ... formatear en tz
 }
 ```
 
@@ -165,30 +168,32 @@ Separación clara entre información compartida (parte común) e información in
 - **Flexibilidad total:** Cualquier nivel de personalización
 - **Colaboración natural:** Admins pueden gestionar información de otros cuando es necesario
 
-#### **Estructura**
+#### **Estructura (alineada con el código: `Event`, `EventCommonPart`, `EventPersonalPart`)**
 ```dart
 class Event {
   String id;
-  String createdBy; // ← Quién puede editar parte común
+  String planId;
+  String userId;  // creador — quien puede editar parte común
   
-  // Parte común (editada por creador)
+  // Campos de nivel evento (compatibilidad / parte común implícita)
   String description;
   DateTime date;
   int hour;
   int startMinute;
   int durationMinutes;
-  String location;
-  String notes;
-  List<String> participantIds;
+  List<String> participantTrackIds;  // tracks que participan
   
-  // Parte personal (editada por participante + admins)
-  Map<String, Map<String, dynamic>> personalDetails;
-  // Estructura: {"padre": {"asiento": "12A", "gate": "B15"}}
+  // Parte común explícita (editada por creador)
+  EventCommonPart? commonPart;
+  
+  // Partes personales por participantId (editada por participante + admins)
+  Map<String, EventPersonalPart>? personalParts;
+  // Ejemplo: {"participantId1": EventPersonalPart(asiento: "12A", ...)}
 }
 ```
 
 #### **Permisos**
-- **Creador:** Edita parte común + su parte personal
+- **Creador (userId):** Edita parte común + su parte personal
 - **Participante:** Edita solo su parte personal
 - **Admin:** Edita parte común + cualquier parte personal
 
@@ -235,15 +240,13 @@ Firestore real-time listeners + Riverpod state management para actualizaciones a
 - **Reactivo:** UI se actualiza automáticamente
 - **Eficiente:** Solo escucha cambios relevantes
 
-#### **Implementación**
+#### **Implementación (estructura real: colección raíz `events` con `planId`)**
 ```dart
 class EventSyncService {
   void startListening(String planId, String userId) {
     FirebaseFirestore.instance
-        .collection('plans')
-        .doc(planId)
-        .collection('events')
-        .where('participantIds', arrayContains: userId)
+        .collection('events')  // colección raíz, no subcolección de plans
+        .where('planId', isEqualTo: planId)
         .snapshots()
         .listen((snapshot) {
           _handleEventChanges(snapshot);
@@ -254,10 +257,10 @@ class EventSyncService {
     for (final change in snapshot.docChanges) {
       switch (change.type) {
         case DocumentChangeType.added:
-          eventNotifier.addEvent(Event.fromMap(change.doc.data()));
+          eventNotifier.addEvent(Event.fromFirestore(change.doc));
           break;
         case DocumentChangeType.modified:
-          eventNotifier.updateEvent(Event.fromMap(change.doc.data()));
+          eventNotifier.updateEvent(Event.fromFirestore(change.doc));
           break;
         case DocumentChangeType.removed:
           eventNotifier.removeEvent(change.doc.id);
@@ -368,7 +371,7 @@ class PermissionService {
     if (userRole == UserRole.admin) return true;
     
     // Creador puede editar su evento
-    if (event.createdBy == userId) return true;
+    if (event.userId == userId) return true;
     
     return false;
   }
@@ -662,6 +665,7 @@ Usuario en avión sin conexión a internet
 | Fecha | Versión | Cambios |
 |-------|---------|---------|
 | Dic 2024 | 1.0 | Documento inicial con todas las decisiones arquitectónicas |
+| Feb 2026 | 1.1 | Sincronización con código: Event (commonPart, personalParts, userId, timezone/arrivalTimezone), Plan (timezone, baseDate, columnCount), Firestore colección raíz `events` con planId |
 
 ---
 

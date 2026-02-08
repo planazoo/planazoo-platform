@@ -63,11 +63,18 @@ Configuración y contexto del proyecto:
 - [Contexto del Proyecto](./configuracion/CONTEXT.md) - Normas y reglas de colaboración
 - [Índice del Sistema de Planes](./configuracion/INDICE_SISTEMA_PLANES.md) - Visión general del sistema
 - [Despliegue Web en Firebase Hosting](./configuracion/DEPLOY_WEB_FIREBASE_HOSTING.md) - Guía completa de despliegue
+- [Desplegar índices Firestore](./configuracion/DEPLOY_INDICES_FIRESTORE.md) - Índices compuestos
+- [Desplegar reglas Firestore](./configuracion/DESPLEGAR_REGLAS_FIRESTORE.md) - Reglas de seguridad
 - [Testing Checklist](./configuracion/TESTING_CHECKLIST.md) - Checklist de pruebas (actualizar tras cada tarea)
 - [FCM Fase 1](./configuracion/FCM_FASE1_IMPLEMENTACION.md) - Notificaciones push
 - [Onboarding IA](./configuracion/ONBOARDING_IA.md) - Contexto para asistentes IA
 - [Usuarios de prueba](./configuracion/USUARIOS_PRUEBA.md) - Datos semilla y pruebas
+- [Nomenclatura UI](./configuracion/NOMENCLATURA_UI.md) - Páginas, menús y modales
+- [Auditoría colecciones Firestore](./configuracion/FIRESTORE_COLLECTIONS_AUDIT.md) - Colecciones en uso y reglas
 - [Auditoría de docs](./configuracion/DOCS_AUDIT.md) - Revisión mantener/actualizar/eliminar y referencias
+- [Propuesta optimización y sincronización](./PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md) - Código y documentación (ítems a implementar)
+- [Configurar Google Sign-In](./configuracion/CONFIGURAR_GOOGLE_SIGNIN.md) - Login con Google
+- [Migración Mac / iOS](./configuracion/MIGRACION_MAC_PLAYBOOK.md) - Playbook para desarrollo en Mac
 
 ---
 
@@ -105,6 +112,7 @@ Configuración y contexto del proyecto:
 
 **Sistema Core:**
 - ✅ CRUD completo de planes, eventos y alojamientos
+- ✅ Resumen del plan en texto (T193) — botón en card y en detalle del plan, diálogo con copiar al portapapeles
 - ✅ Sistema de tracks (multi-participante)
 - ✅ Eventos multi-día (hasta 24h) con EventSegment
 - ✅ Drag & Drop con magnetismo
@@ -118,7 +126,7 @@ Configuración y contexto del proyecto:
 - ✅ Sistema de permisos granulares
 - ✅ Grupos de participantes (T123)
 - ✅ Sistema de invitaciones por email con tokens (T104)
-- ✅ Aceptación/rechazo de invitaciones
+- ✅ Aceptación/rechazo de invitaciones (incl. aceptación vía Cloud Function `markInvitationAccepted` y link con token / `?action=accept`)
 - ✅ Validación de permisos y prevención de duplicados
 
 **Sistema de Comunicación:**

@@ -8,7 +8,9 @@ import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
+import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
 
 class PlanCardWidget extends ConsumerWidget {
   final Plan plan;
@@ -124,6 +126,8 @@ class PlanCardWidget extends ConsumerWidget {
                               ],
                             ),
                           ),
+                        if (plan.id != null)
+                          PlanSummaryButton(plan: plan, iconOnly: true, foregroundColor: Colors.white70),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -181,9 +185,7 @@ class PlanCardWidget extends ConsumerWidget {
     return '${_formatDate(start)} - ${_formatDate(end)}';
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  String _formatDate(DateTime date) => DateFormatter.formatDate(date);
 
   Widget _buildPlanImage() {
     const double imageSize = 40.0;

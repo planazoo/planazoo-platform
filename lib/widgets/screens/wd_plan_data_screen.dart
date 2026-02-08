@@ -24,9 +24,11 @@ import 'package:unp_calendario/widgets/dialogs/plan_validation_dialog.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
+import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
@@ -685,14 +687,26 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showBaseInfo) ...[
-            Text(
-              loc.planDetailsInfoTitle,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.1,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    loc.planDetailsInfoTitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                ),
+                if (currentPlan.id != null)
+                  PlanSummaryButton(
+                    plan: currentPlan,
+                    iconOnly: false,
+                    foregroundColor: _textSecondary,
+                  ),
+              ],
             ),
             const SizedBox(height: 16),
             Column(
@@ -1645,9 +1659,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     return '';
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  String _formatDate(DateTime date) => DateFormatter.formatDate(date);
 
   String _formatBudgetForInput(double value) {
     if (value % 1 == 0) {

@@ -1278,5 +1278,24 @@
   "adminInsightsEventConfirmationPending": "Pending",
   "adminInsightsEventConfirmationAccepted": "Accepted",
   "adminInsightsEventConfirmationDeclined": "Declined",
-  "adminInsightsEventConfirmationMissing": "No response"
+  "adminInsightsEventConfirmationMissing": "No response",
+
+  "planSummaryTitle": "Plan summary",
+  "@planSummaryTitle": { "description": "T193: Plan summary dialog title" },
+  "planSummaryCopiedToClipboard": "Summary copied to clipboard",
+  "@planSummaryCopiedToClipboard": { "description": "T193: SnackBar when copying summary" },
+  "planSummaryCopy": "Copy",
+  "@planSummaryCopy": { "description": "T193: Copy button" },
+  "planSummaryCopied": "Copied",
+  "@planSummaryCopied": { "description": "T193: Copied state" },
+  "planSummaryClose": "Close",
+  "@planSummaryClose": { "description": "T193: Close button" },
+  "planSummaryError": "Could not generate the summary.",
+  "@planSummaryError": { "description": "T193: Error generating summary" },
+  "planSummaryGenerating": "Generating summary...",
+  "@planSummaryGenerating": { "description": "T193: Loading summary" },
+  "planSummaryButtonTooltip": "View summary",
+  "@planSummaryButtonTooltip": { "description": "T193: Summary button tooltip" },
+  "planSummaryButtonLabel": "Summary",
+  "@planSummaryButtonLabel": { "description": "T193: Summary button label" }
 }

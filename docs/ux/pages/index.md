@@ -77,6 +77,38 @@ Este directorio contiene la documentación técnica y funcional de todas las pá
 
 ---
 
+### 📩 **Página de Invitación (InvitationPage)**
+**Última actualización:** Febrero 2026  
+**Código:** `lib/pages/pg_invitation_page.dart` → `InvitationPage`
+
+**Descripción:** Página para aceptar o rechazar una invitación a un plan. Se accede mediante un link que incluye un token único (ej. `/invitation/:token`). El link puede incluir el query param `?action=accept`. La actualización del estado de la invitación a "accepted" se realiza mediante la Cloud Function `markInvitationAccepted`.
+
+**Características principales:**
+- Visualización de detalles del plan (nombre, organizador, fechas)
+- Botones "Aceptar" y "Rechazar"
+- Si el usuario no está autenticado: login o registro antes de confirmar
+- Tras aceptar: creación de participación y acceso al plan; banner de invitación pendiente desaparece
+
+**Tecnologías:** Firestore, Firebase Auth, Cloud Functions, Riverpod, Flutter
+
+---
+
+### 📋 **Resumen del plan (T193)**
+**Última actualización:** Febrero 2026  
+**Código:** Botón/diálogo en `lib/widgets/plan/plan_summary_button.dart`, `lib/widgets/dialogs/plan_summary_dialog.dart`; uso en card del plan (dashboard) y en pantalla de detalle (PlanDataScreen).
+
+**Descripción:** Funcionalidad que genera un resumen en texto del plan (eventos, alojamientos, fechas) y permite copiarlo al portapapeles.
+
+**Características principales:**
+- Botón "Ver resumen" / "Resumen" en la card del plan (dashboard) y en la pantalla de detalle del plan
+- Diálogo con indicador de carga ("Generando resumen...") y texto formateado
+- Botón "Copiar" que copia el resumen al portapapeles y muestra SnackBar de confirmación
+- Botón "Cerrar" para cerrar el diálogo
+
+**Tecnologías:** Riverpod, servicios de plan/eventos, Flutter
+
+---
+
 ### 🎨 **Widgets del Dashboard (Web)**
 
 **Código:** Todos los widgets W1–W30 viven en `lib/pages/pg_dashboard_page.dart` (clase `DashboardPage`), métodos `_buildW1` … `_buildW30`.

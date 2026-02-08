@@ -1278,5 +1278,24 @@
   "adminInsightsEventConfirmationPending": "Pendiente",
   "adminInsightsEventConfirmationAccepted": "Aceptado",
   "adminInsightsEventConfirmationDeclined": "Rechazado",
-  "adminInsightsEventConfirmationMissing": "Sin respuesta"
+  "adminInsightsEventConfirmationMissing": "Sin respuesta",
+
+  "planSummaryTitle": "Resumen del plan",
+  "@planSummaryTitle": { "description": "T193: Título del diálogo de resumen del plan" },
+  "planSummaryCopiedToClipboard": "Resumen copiado al portapapeles",
+  "@planSummaryCopiedToClipboard": { "description": "T193: SnackBar al copiar resumen" },
+  "planSummaryCopy": "Copiar",
+  "@planSummaryCopy": { "description": "T193: Botón copiar" },
+  "planSummaryCopied": "Copiado",
+  "@planSummaryCopied": { "description": "T193: Estado copiado" },
+  "planSummaryClose": "Cerrar",
+  "@planSummaryClose": { "description": "T193: Botón cerrar" },
+  "planSummaryError": "No se pudo generar el resumen.",
+  "@planSummaryError": { "description": "T193: Error al generar resumen" },
+  "planSummaryGenerating": "Generando resumen...",
+  "@planSummaryGenerating": { "description": "T193: Cargando resumen" },
+  "planSummaryButtonTooltip": "Ver resumen",
+  "@planSummaryButtonTooltip": { "description": "T193: Tooltip del botón resumen" },
+  "planSummaryButtonLabel": "Resumen",
+  "@planSummaryButtonLabel": { "description": "T193: Etiqueta del botón resumen" }
 }

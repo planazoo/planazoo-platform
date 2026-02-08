@@ -1155,4 +1155,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminInsightsEventConfirmationMissing => 'No response';
+
+  @override
+  String get planSummaryTitle => 'Plan summary';
+
+  @override
+  String get planSummaryCopiedToClipboard => 'Summary copied to clipboard';
+
+  @override
+  String get planSummaryCopy => 'Copy';
+
+  @override
+  String get planSummaryCopied => 'Copied';
+
+  @override
+  String get planSummaryClose => 'Close';
+
+  @override
+  String get planSummaryError => 'Could not generate the summary.';
+
+  @override
+  String get planSummaryGenerating => 'Generating summary...';
+
+  @override
+  String get planSummaryButtonTooltip => 'View summary';
+
+  @override
+  String get planSummaryButtonLabel => 'Summary';
 }

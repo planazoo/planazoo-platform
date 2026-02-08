@@ -20,6 +20,7 @@ import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/widgets/notifications/wd_notification_badge.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
 
 /// Página de lista de planes para móviles (iOS/Android)
 /// Incluye: barra superior con botón crear plan, búsqueda, filtros, lista y navegación inferior
@@ -467,7 +468,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
   Widget _buildPlanCard(BuildContext context, Plan plan, bool isDarkMode) {
     final startDate = plan.startDate;
     final endDate = plan.endDate;
-    final dateRange = '${startDate.day}/${startDate.month}/${startDate.year} - ${endDate.day}/${endDate.month}/${endDate.year}';
+    final dateRange = '${DateFormatter.formatDate(startDate)} - ${DateFormatter.formatDate(endDate)}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -529,6 +530,12 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                         ),
                       ),
                     ),
+                    if (plan.id != null)
+                      PlanSummaryButton(
+                        plan: plan,
+                        iconOnly: true,
+                        foregroundColor: Colors.grey.shade400,
+                      ),
                     Icon(
                       Icons.chevron_right,
                       color: Colors.grey.shade400,

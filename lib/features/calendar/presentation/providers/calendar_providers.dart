@@ -16,9 +16,9 @@ final eventServiceProvider = Provider<EventService>((ref) {
   return EventService();
 });
 
-/// Provider para PlanService
+/// Provider para PlanService (reutiliza InvitationService del provider)
 final planServiceProvider = Provider<PlanService>((ref) {
-  return PlanService();
+  return PlanService(invitationService: ref.read(invitationServiceProvider));
 });
 
 /// StreamProvider para todos los planes (actualización automática)
