@@ -49,6 +49,13 @@
 
 **Acción:** No es obligatorio hacerlo todo; priorizar los archivos en los que se trabaje más (p. ej. `wd_calendar_screen`, `pg_dashboard_page`) y alinear con T96.
 
+**Refactor 2.1 – pg_dashboard_page (Feb 2026):**
+- **Extraído:** Banner de zona horaria → `wd_timezone_banner.dart` (`WdTimezoneBanner`). Modal crear plan → `wd_create_plan_modal.dart` (`WdCreatePlanModal`). Pestañas W14–W25 → `wd_dashboard_nav_tabs.dart` (`WdDashboardNavTabs`). Barra lateral W1 → `wd_dashboard_sidebar.dart` (`WdDashboardSidebar`). Barra superior W2–W6 → `wd_dashboard_header_bar.dart` (`WdDashboardHeaderBar`: logo, +, showcase, imagen e info del plan).
+- **Resultado:** ~740 líneas (timezone + modal + nav tabs) + ~430 líneas (W1 + W2–W6 y helpers) ≈ **~1 170 líneas menos** en `pg_dashboard_page.dart`.
+- **Extraído (segunda tanda):** Filtros W26–W27 → `wd_dashboard_filters.dart` (`WdDashboardFilters`: botones Todos/Estoy in/Pendientes/Cerrados + toggle Lista/Calendario).
+- **Extraído (tercera tanda):** Celdas vacías W7–W12 → `wd_dashboard_header_placeholders.dart` (`WdDashboardHeaderPlaceholders`: una fila de 6 celdas C12–C17 R1).
+- **Siguientes bloques candidatos:** contenido W31 (pantallas según `currentScreen`), o pausar refactor del dashboard y priorizar otros archivos (wd_event_dialog, wd_calendar_screen).
+
 ---
 
 ### 2.2 Textos hardcodeados (multi-idioma)
@@ -271,6 +278,15 @@ CONTEXT.md y T158 exigen usar `AppLocalizations` para todos los textos visibles.
 - Eliminados `print()` de depuración en `lib/app/app.dart` (onGenerateRoute) para cumplir con CONTEXT (no dejar prints en producción).
 - Comprobado que las suscripciones se cancelan en `dispose`: `PlanParticipationNotifier`, `CalendarNotifier`, `AccommodationNotifier` y `pg_dashboard_page` (_participantSubscriptions) cancelan correctamente. `LoggerService` sigue usando `print` de forma intencionada como backend de logging.
 
-**Pendiente (entre otros):** 2.1 refactor archivos grandes; valorar providers `autoDispose`/`family` en futuras revisiones.
+**Implementado (Feb 2026) – 2.1 Refactor pg_dashboard_page (primera tanda):**
+- `WdTimezoneBanner`: `lib/widgets/dashboard/wd_timezone_banner.dart` (sugerencia de timezone; estado de carga interno).
+- `WdCreatePlanModal`: `lib/widgets/dialogs/wd_create_plan_modal.dart` (crear plan; reemplaza `_CreatePlanModal`).
+- `WdDashboardNavTabs`: `lib/widgets/dashboard/wd_dashboard_nav_tabs.dart` (pestañas W14–W25: planazoo, calendario, in, stats, pagos, chat + celdas vacías W20–W25).
+- `WdDashboardSidebar`: `lib/widgets/dashboard/wd_dashboard_sidebar.dart` (W1: notificaciones + perfil).
+- `WdDashboardHeaderBar`: `lib/widgets/dashboard/wd_dashboard_header_bar.dart` (W2–W6: logo, botón crear plan, UI Showcase, imagen e info del plan seleccionado).
+- `WdDashboardFilters`: `lib/widgets/dashboard/wd_dashboard_filters.dart` (W26–W27: filtros Todos/Estoy in/Pendientes/Cerrados + toggle Lista/Calendario).
+- `WdDashboardHeaderPlaceholders`: `lib/widgets/dashboard/wd_dashboard_header_placeholders.dart` (W7–W12: celdas vacías del header C12–C17).
+
+**Pendiente (entre otros):** más extracciones en 2.1 (contenido W31 o otros archivos grandes); valorar providers `autoDispose`/`family` en futuras revisiones.
 
 *Documento vivo. Última actualización: Febrero 2026.*
