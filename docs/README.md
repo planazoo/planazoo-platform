@@ -56,6 +56,7 @@ Gestión de tareas del proyecto:
 - [Paleta de colores de eventos](./design/EVENT_COLOR_PALETTE.md)
 
 ### 🧪 [Testing](./testing/)
+- [Sistema de pruebas lógicas (JSON + reportes)](./testing/SISTEMA_PRUEBAS_LOGICAS.md) - Casos por datos, evaluadores, reportes para IA
 - [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md)
 
 ### ⚙️ [Configuración](./configuracion/)

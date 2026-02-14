@@ -2,8 +2,15 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const sgMail = require('@sendgrid/mail');
 const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
 
 admin.initializeApp();
+
+// --- Constantes para eventos desde correo (T134) ---
+const RATE_LIMIT_EMAILS_PER_DAY = 50;
+const PENDING_EMAIL_EVENTS_COLLECTION = 'pending_email_events';
+const USERS_COLLECTION = 'users';
+const EMAIL_TEMPLATES_COLLECTION = 'email_templates';
 
 // Configuración: Prioridad Gmail SMTP > SendGrid
 // Gmail SMTP (recomendado - solo Google)
@@ -308,6 +315,58 @@ Este es un email automático. Por favor, no respondas a este mensaje.`;
     }
   });
 
+// Cloud Function: Marcar invitación como aceptada (Admin SDK, evita reglas de cliente)
+// El cliente crea la participación y luego llama a esta función para actualizar plan_invitations.
+exports.markInvitationAccepted = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+  const token = data?.token;
+  if (!token || typeof token !== 'string' || token.length < 10) {
+    throw new functions.https.HttpsError('invalid-argument', 'Se requiere token de invitación.');
+  }
+
+  const db = admin.firestore();
+  const uid = context.auth.uid;
+  const authEmail = (context.auth.token.email || '').toLowerCase().trim();
+
+  const invitationsSnap = await db.collection('plan_invitations')
+    .where('token', '==', token)
+    .where('status', '==', 'pending')
+    .limit(1)
+    .get();
+
+  if (invitationsSnap.empty) {
+    throw new functions.https.HttpsError('not-found', 'Invitación no encontrada o ya procesada.');
+  }
+
+  const invDoc = invitationsSnap.docs[0];
+  const inv = invDoc.data();
+  const invEmail = (inv.email || '').toLowerCase().trim();
+
+  let emailMatches = authEmail === invEmail;
+  if (!emailMatches) {
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      const userEmail = (userDoc.data().email || '').toLowerCase().trim();
+      emailMatches = userEmail === invEmail;
+    }
+  }
+  if (!emailMatches) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'El email del usuario no coincide con el de la invitación.'
+    );
+  }
+
+  await invDoc.ref.update({
+    status: 'accepted',
+    respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  console.log(`Invitation ${invDoc.id} marked accepted by ${uid}`);
+  return { success: true, invitationId: invDoc.id };
+});
+
 // Cloud Function: Enviar notificación push (Fase 1 - FCM Básico)
 // 
 // Uso: Llamar desde otra función o desde el cliente (con permisos admin)
@@ -404,6 +463,451 @@ exports.sendPushNotification = functions.https.onCall(async (data, context) => {
       `Error enviando notificación: ${error.message}`
     );
   }
+});
+
+// ============================================
+// Eventos desde correo (T134): recepción y validación
+// POST body: { from: string, subject: string, text?: string, html?: string }
+// - Valida From = usuario registrado (email o alias)
+// - Rate limit 50/día por usuario
+// - Crea documento en users/{userId}/pending_email_events como "sin parsear"
+// ============================================
+
+function parseJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      try {
+        if (!body.trim()) return resolve({});
+        resolve(JSON.parse(body));
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+/** Normaliza email a minúsculas. Para Gmail alias (user+alias@gmail.com) devuelve también la "base" user@gmail.com. */
+function normalizeEmailAndBase(email) {
+  const normalized = (email || '').toLowerCase().trim();
+  const at = normalized.indexOf('@');
+  if (at <= 0) return { normalized, base: normalized };
+  const local = normalized.substring(0, at);
+  const domain = normalized.substring(at);
+  const plus = local.indexOf('+');
+  const base = plus > 0 ? local.substring(0, plus) + domain : normalized;
+  return { normalized, base };
+}
+
+/** Busca userId por email (coincidencia exacta o base para alias Gmail). */
+async function findUserIdByEmail(db, fromEmail) {
+  const { normalized, base } = normalizeEmailAndBase(fromEmail);
+  const usersRef = db.collection(USERS_COLLECTION);
+  let snap = await usersRef.where('email', '==', normalized).limit(1).get();
+  if (!snap.empty) return snap.docs[0].id;
+  if (base !== normalized) {
+    snap = await usersRef.where('email', '==', base).limit(1).get();
+    if (!snap.empty) return snap.docs[0].id;
+  }
+  return null;
+}
+
+/** Cuenta cuántos pending_email_events ha creado el usuario desde medianoche UTC (hoy). */
+async function countPendingEmailsToday(db, userId) {
+  const now = new Date();
+  const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+  const ref = db.collection(USERS_COLLECTION).doc(userId).collection(PENDING_EMAIL_EVENTS_COLLECTION);
+  const snap = await ref.where('createdAt', '>=', admin.firestore.Timestamp.fromDate(startOfDay)).get();
+  return snap.size;
+}
+
+/** Obtiene cuerpo en texto plano: prefiere text, si no hay usa html (sin convertir por ahora). */
+function getBodyPlain(data) {
+  const text = (data.text || '').trim();
+  if (text.length > 0) return text;
+  const html = (data.html || '').trim();
+  if (html.length > 0) return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return '';
+}
+
+// ============================================
+// Motor de plantillas (email_templates): match por triggers y extracción de campos
+// ============================================
+
+function templateTriggersMatch(template, subject, bodyPlain) {
+  const triggers = template.triggers || [];
+  const sub = (subject || '').toLowerCase();
+  const body = (bodyPlain || '').toLowerCase();
+  for (const t of triggers) {
+    const type = (t.type || '').toLowerCase();
+    const value = (t.value || '').toLowerCase();
+    if (!value) continue;
+    if (type === 'subject_contains' && !sub.includes(value)) return false;
+    if (type === 'body_contains' && !body.includes(value)) return false;
+  }
+  return triggers.length > 0;
+}
+
+function extractFieldRegex(field, subject, bodyPlain) {
+  const source = ((field.source || 'body').toLowerCase() === 'subject') ? subject : bodyPlain;
+  const pattern = field.pattern;
+  if (!pattern) return null;
+  try {
+    const re = new RegExp(pattern, 'i');
+    const m = re.exec(source);
+    if (!m) return null;
+    const group = field.group != null ? field.group : 1;
+    const val = m[group];
+    return val != null ? String(val).trim() : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function extractFieldAfterLabel(field, bodyPlain) {
+  const body = bodyPlain || '';
+  const label = (field.label || '').trim();
+  const stopAt = (field.stop_at || '').trim();
+  const maxLines = field.max_lines != null ? Math.max(1, parseInt(field.max_lines, 10)) : 10;
+  if (!label) return null;
+  const labelIdx = body.toLowerCase().indexOf(label.toLowerCase());
+  if (labelIdx < 0) return null;
+  let start = body.indexOf('\n', labelIdx);
+  if (start < 0) start = labelIdx + label.length;
+  else start += 1;
+  let block = body.slice(start);
+  if (stopAt) {
+    const stopIdx = block.toLowerCase().indexOf(stopAt.toLowerCase());
+    if (stopIdx >= 0) block = block.slice(0, stopIdx);
+  }
+  const lines = block.split(/\r?\n/).map(l => l.trim()).filter(Boolean).slice(0, maxLines);
+  return lines.length > 0 ? lines.join(' ').trim() : null;
+}
+
+function extractFieldComposite(field, extracted) {
+  const template = field.template;
+  const deps = field.dependencies || [];
+  if (!template || typeof template !== 'string') return null;
+  let out = template;
+  for (const dep of deps) {
+    const val = extracted[dep] != null ? String(extracted[dep]).trim() : '';
+    out = out.replace(new RegExp(`\\{${dep}\\}`, 'gi'), val);
+  }
+  return out.trim() || null;
+}
+
+function extractFieldsWithTemplate(template, subject, bodyPlain) {
+  const fields = template.fields || {};
+  const fieldOrder = template.field_order || Object.keys(fields);
+  const extracted = {};
+  for (const key of fieldOrder) {
+    const field = fields[key];
+    if (!field || typeof field !== 'object') continue;
+    const type = (field.type || '').toLowerCase();
+    let value = null;
+    if (type === 'regex') value = extractFieldRegex(field, subject, bodyPlain);
+    else if (type === 'after_label') value = extractFieldAfterLabel(field, bodyPlain);
+    else if (type === 'composite') value = extractFieldComposite(field, extracted);
+    if (value != null && value !== '') extracted[key] = value;
+  }
+  if (template.event_type) extracted.event_type = template.event_type;
+  return extracted;
+}
+
+/**
+ * Carga plantillas activas, matchea la primera por triggers y extrae campos.
+ * @returns {{ templateId: string, parsed: object } | { templateId: null, parsed: null }}
+ */
+async function runTemplateEngine(db, subject, bodyPlain) {
+  try {
+    const snap = await db.collection(EMAIL_TEMPLATES_COLLECTION).where('active', '==', true).get();
+    if (snap.empty) return { templateId: null, parsed: null };
+    const templates = snap.docs.sort((a, b) => {
+      const pA = a.data().priority != null ? a.data().priority : 10;
+      const pB = b.data().priority != null ? b.data().priority : 10;
+      return pA - pB;
+    });
+    for (const doc of templates) {
+      const data = doc.data();
+      if (!templateTriggersMatch(data, subject, bodyPlain)) continue;
+      const parsed = extractFieldsWithTemplate(data, subject, bodyPlain);
+      return { templateId: doc.id, parsed: Object.keys(parsed).length ? parsed : null };
+    }
+    return { templateId: null, parsed: null };
+  } catch (e) {
+    console.warn('runTemplateEngine error', e);
+    return { templateId: null, parsed: null };
+  }
+}
+
+/**
+ * Lógica compartida: valida From + rate limit y crea evento pendiente.
+ * Usado por inboundEmail (HTTP) y processInboundGmail (Gmail API).
+ * @returns {{ success: true, pendingEventId: string, userId: string }} | {{ success: false, error: string, code: string }}
+ */
+async function processInboundEmail(db, { from, subject, bodyPlain }) {
+  const fromTrimmed = (from || '').trim();
+  const subjectTrimmed = (subject || '').trim();
+  if (!fromTrimmed || !subjectTrimmed) {
+    return { success: false, error: 'from and subject required', code: 'invalid_argument' };
+  }
+  const plain = (bodyPlain !== undefined && bodyPlain !== null) ? String(bodyPlain) : '';
+
+  const userId = await findUserIdByEmail(db, fromTrimmed);
+  if (!userId) {
+    console.warn(`processInboundEmail: From not registered: ${fromTrimmed}`);
+    return { success: false, error: 'Sender email is not a registered user', code: 'from_not_registered' };
+  }
+
+  const countToday = await countPendingEmailsToday(db, userId);
+  if (countToday >= RATE_LIMIT_EMAILS_PER_DAY) {
+    console.warn(`processInboundEmail: Rate limit exceeded for user ${userId}`);
+    return { success: false, error: 'Daily limit reached', code: 'rate_limit_exceeded' };
+  }
+
+  const { templateId, parsed } = await runTemplateEngine(db, subjectTrimmed, plain);
+
+  const ref = db.collection(USERS_COLLECTION).doc(userId).collection(PENDING_EMAIL_EVENTS_COLLECTION).doc();
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  await ref.set({
+    subject: subjectTrimmed,
+    bodyPlain: plain,
+    fromEmail: fromTrimmed,
+    parsed: parsed || null,
+    templateId: templateId || null,
+    status: 'pending',
+    createdAt: now,
+    updatedAt: now,
+  });
+  if (templateId) console.log(`processInboundEmail: Created pending_email_event ${ref.id} for user ${userId} (template ${templateId})`);
+  else console.log(`processInboundEmail: Created pending_email_event ${ref.id} for user ${userId}`);
+  return { success: true, pendingEventId: ref.id, userId };
+}
+
+exports.inboundEmail = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, X-Email-Inbound-Secret');
+    res.status(204).end();
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'method_not_allowed' });
+    return;
+  }
+
+  const secret = process.env.EMAIL_INBOUND_SECRET || functions.config().email_inbound?.secret;
+  if (secret && req.get('X-Email-Inbound-Secret') !== secret) {
+    res.status(403).json({ error: 'forbidden', message: 'Invalid or missing secret' });
+    return;
+  }
+
+  let data;
+  try {
+    data = await parseJsonBody(req);
+  } catch (e) {
+    res.status(400).json({ error: 'invalid_body', message: 'Invalid JSON' });
+    return;
+  }
+
+  const from = (data.from || '').trim();
+  const subject = (data.subject || '').trim();
+  if (!from || !subject) {
+    res.status(400).json({ error: 'invalid_argument', message: 'from and subject required' });
+    return;
+  }
+
+  const bodyPlain = getBodyPlain(data);
+  const db = admin.firestore();
+  const result = await processInboundEmail(db, { from, subject, bodyPlain });
+
+  if (result.success) {
+    res.status(200).json({ success: true, pendingEventId: result.pendingEventId, userId: result.userId });
+    return;
+  }
+  if (result.code === 'from_not_registered') res.status(403).json({ error: result.code, message: result.error });
+  else if (result.code === 'rate_limit_exceeded') res.status(429).json({ error: result.code, message: result.error });
+  else if (result.code === 'invalid_argument') res.status(400).json({ error: result.code, message: result.error });
+  else res.status(500).json({ error: result.code || 'internal', message: result.error });
+});
+
+// ============================================
+// Eventos desde correo (T134): lectura del buzón con Gmail API (100% Google)
+// Cloud Scheduler llama a processInboundGmail cada X minutos.
+// ============================================
+
+const GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.modify'];
+
+/** Devuelve la lista de buzones a procesar. Soporta uno (string) o varios (coma-separados o JSON array). */
+function getMailboxList() {
+  const single = process.env.GMAIL_INBOUND_MAILBOX || functions.config().gmail_inbound?.mailbox;
+  const listRaw = process.env.GMAIL_INBOUND_MAILBOX_LIST || functions.config().gmail_inbound?.mailbox_list;
+  if (listRaw) {
+    if (typeof listRaw === 'string' && listRaw.trim().startsWith('[')) {
+      try {
+        const arr = JSON.parse(listRaw);
+        return Array.isArray(arr) ? arr.map(m => (m || '').trim()).filter(Boolean) : [];
+      } catch (e) {
+        return listRaw.split(',').map(m => m.trim()).filter(Boolean);
+      }
+    }
+    return listRaw.split(',').map(m => m.trim()).filter(Boolean);
+  }
+  if (single) return [single.trim()];
+  return [];
+}
+
+function getGmailClientForMailbox(mailbox) {
+  if (!mailbox) return null;
+  let clientEmail;
+  let privateKey;
+  const saJson = process.env.GMAIL_INBOUND_SA_JSON || functions.config().gmail_inbound?.service_account_json;
+  if (saJson) {
+    try {
+      const key = typeof saJson === 'string' ? JSON.parse(saJson) : saJson;
+      clientEmail = key.client_email;
+      privateKey = key.private_key;
+    } catch (e) {
+      console.error('processInboundGmail: Invalid GMAIL_INBOUND_SA_JSON', e);
+      return null;
+    }
+  } else {
+    clientEmail = process.env.GMAIL_INBOUND_SA_CLIENT_EMAIL || functions.config().gmail_inbound?.client_email;
+    privateKey = process.env.GMAIL_INBOUND_SA_PRIVATE_KEY || functions.config().gmail_inbound?.private_key;
+    if (privateKey && typeof privateKey === 'string') privateKey = privateKey.replace(/\\n/g, '\n');
+  }
+  if (!clientEmail || !privateKey) return null;
+  const auth = new google.auth.JWT({
+    email: clientEmail,
+    key: privateKey,
+    subject: mailbox,
+    scopes: GMAIL_SCOPES,
+  });
+  return google.gmail({ version: 'v1', auth });
+}
+
+function getHeader(payload, name) {
+  const header = (payload.headers || []).find(h => (h.name || '').toLowerCase() === name.toLowerCase());
+  return header ? header.value : '';
+}
+
+/** Extrae la dirección de email del valor de la cabecera From (p. ej. "Name <user@domain.com>" -> "user@domain.com"). */
+function extractEmailFromHeader(fromHeader) {
+  const s = (fromHeader || '').trim();
+  const match = s.match(/<([^>]+)>/);
+  if (match) return match[1].trim();
+  return s;
+}
+
+function decodeBase64url(str) {
+  if (!str) return '';
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  try {
+    return Buffer.from(base64, 'base64').toString('utf8');
+  } catch (e) {
+    return '';
+  }
+}
+
+function getBodyFromPayload(payload) {
+  let textPlain = '';
+  let html = '';
+  if (payload.body && payload.body.data) {
+    const decoded = decodeBase64url(payload.body.data);
+    if ((payload.mimeType || '').toLowerCase() === 'text/plain') textPlain = decoded;
+    else if ((payload.mimeType || '').toLowerCase() === 'text/html') html = decoded;
+    else textPlain = decoded;
+  }
+  (payload.parts || []).forEach(part => {
+    const mime = (part.mimeType || '').toLowerCase();
+    const decoded = part.body && part.body.data ? decodeBase64url(part.body.data) : '';
+    if (mime === 'text/plain') textPlain = decoded;
+    else if (mime === 'text/html') html = decoded;
+  });
+  if (textPlain.trim()) return textPlain.trim();
+  if (html.trim()) return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return '';
+}
+
+/**
+ * Procesa un solo buzón: lista no leídos, crea eventos pendientes, marca como leído.
+ * Si el buzón falla (cuenta deshabilitada, auth, etc.) lanza; el caller puede seguir con el siguiente.
+ */
+async function processOneMailbox(gmail, mailboxLabel, db) {
+  let processed = 0;
+  let errors = 0;
+  const listRes = await gmail.users.messages.list({ userId: 'me', q: 'is:unread', maxResults: 50 });
+  const messages = listRes.data.messages || [];
+  for (const item of messages) {
+    try {
+      const msgRes = await gmail.users.messages.get({ userId: 'me', id: item.id, format: 'full' });
+      const payload = msgRes.data.payload || {};
+      const fromHeader = getHeader(payload, 'From');
+      const from = extractEmailFromHeader(fromHeader);
+      const subject = getHeader(payload, 'Subject');
+      const bodyPlain = getBodyFromPayload(payload);
+      const result = await processInboundEmail(db, { from, subject, bodyPlain });
+      if (result.success) processed++;
+      else errors++;
+      await gmail.users.messages.modify({ userId: 'me', id: item.id, requestBody: { removeLabelIds: ['UNREAD'] } });
+    } catch (err) {
+      console.error(`processInboundGmail [${mailboxLabel}]: Error processing message ${item.id}`, err);
+      errors++;
+    }
+  }
+  return { processed, errors, total: messages.length };
+}
+
+/**
+ * Job invocado por Cloud Scheduler: lee uno o varios buzones Gmail, procesa cada correo no leído
+ * y crea eventos pendientes. Soporta varios buzones (fallback/resiliencia): si uno falla, sigue con el siguiente.
+ */
+exports.processInboundGmail = functions.https.onRequest(async (req, res) => {
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.status(405).json({ error: 'method_not_allowed' });
+    return;
+  }
+  const secret = process.env.GMAIL_POLL_SECRET || functions.config().gmail_inbound?.poll_secret;
+  if (secret && req.get('X-Gmail-Poll-Secret') !== secret) {
+    res.status(403).json({ error: 'forbidden', message: 'Invalid or missing poll secret' });
+    return;
+  }
+
+  const mailboxes = getMailboxList();
+  if (mailboxes.length === 0) {
+    console.warn('processInboundGmail: No mailboxes configured (GMAIL_INBOUND_MAILBOX or GMAIL_INBOUND_MAILBOX_LIST)');
+    res.status(503).json({ error: 'not_configured', message: 'Gmail inbound not configured' });
+    return;
+  }
+
+  const db = admin.firestore();
+  let totalProcessed = 0;
+  let totalErrors = 0;
+  const byMailbox = [];
+
+  for (const mailbox of mailboxes) {
+    const gmail = getGmailClientForMailbox(mailbox);
+    if (!gmail) {
+      console.warn(`processInboundGmail: No credentials for mailbox ${mailbox}, skipping`);
+      byMailbox.push({ mailbox, error: 'no_credentials', processed: 0, errors: 0, total: 0 });
+      continue;
+    }
+    try {
+      const result = await processOneMailbox(gmail, mailbox, db);
+      totalProcessed += result.processed;
+      totalErrors += result.errors;
+      byMailbox.push({ mailbox, ...result });
+    } catch (err) {
+      console.error(`processInboundGmail: Mailbox ${mailbox} failed (auth/quota/disabled?)`, err);
+      byMailbox.push({ mailbox, error: err.message, processed: 0, errors: 0, total: 0 });
+    }
+  }
+
+  res.status(200).json({ success: true, processed: totalProcessed, errors: totalErrors, byMailbox });
 });
 
 

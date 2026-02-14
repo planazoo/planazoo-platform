@@ -14,6 +14,7 @@
 2. **Usuarios:** Ten a mano `docs/configuracion/USUARIOS_PRUEBA.md` (emails con alias, roles, contraseñas). Opción: botón "⚙️ Init Firestore" en dashboard para crear usuarios de prueba.
 3. **Ámbito:** Usa la tabla de contenidos de abajo y marca cada bloque (✅/❌/⚠️) según vayas probando.
 4. **Comportamiento esperado:** Los flujos en `docs/flujos/` (CRUD planes, eventos, participantes, etc.) describen el comportamiento esperado; úsalos como referencia si un caso falla o es ambiguo.
+5. **Pruebas lógicas (JSON):** Para casos automatizados por datos (login, contraseñas, eventos, etc.) y reportes para IA, ver [docs/testing/SISTEMA_PRUEBAS_LOGICAS.md](../testing/SISTEMA_PRUEBAS_LOGICAS.md).
 
 ---
 
@@ -52,16 +53,19 @@ Para testing, consulta `docs/configuracion/USUARIOS_PRUEBA.md` para:
    - ✅ Marcar como probada la funcionalidad nueva
    - ✅ Añadir nuevos casos de prueba si aplica
    - ✅ Actualizar casos relacionados que puedan afectarse
+   - ✅ **Pruebas lógicas:** Si la tarea incluye lógica probable por datos (validaciones, auth, reglas), actualizar el [sistema de pruebas lógicas](../testing/SISTEMA_PRUEBAS_LOGICAS.md): casos JSON, evaluador y test Dart.
 
 2. **Cuando se añade nueva funcionalidad:**
    - ✅ Crear nueva sección de pruebas
    - ✅ Documentar casos normales y edge cases
    - ✅ Actualizar tabla de contenidos
+   - ✅ **Pruebas lógicas:** Valorar si añadir/actualizar casos en `tests/*_cases.json` y evaluadores en `lib/testing/*_logic.dart` (ver [SISTEMA_PRUEBAS_LOGICAS.md](../testing/SISTEMA_PRUEBAS_LOGICAS.md)).
 
 3. **Cuando se corrige un bug:**
    - ✅ Añadir el bug como caso de prueba
    - ✅ Verificar que no se reproduce
    - ✅ Documentar solución si es relevante
+   - ✅ Si el bug es de lógica (validación, mensajes de error, reglas): añadir caso en el JSON correspondiente y en el evaluador de [pruebas lógicas](../testing/SISTEMA_PRUEBAS_LOGICAS.md) para que no regrese.
 
 4. **Antes de cada release:**
    - ✅ Ejecutar checklist completo

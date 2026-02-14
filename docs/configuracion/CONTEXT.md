@@ -78,6 +78,7 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
   - Marcar como probadas las funcionalidades nuevas
   - Añadir nuevos casos de prueba si aplica
   - Actualizar casos relacionados que puedan afectarse
+- **Pruebas lógicas (JSON):** Al implementar o cambiar lógica probable por datos (validaciones, auth, reglas de eventos, etc.), actualizar el sistema de pruebas lógicas: ver `docs/testing/SISTEMA_PRUEBAS_LOGICAS.md` (casos en `tests/*_cases.json`, evaluadores en `lib/testing/*_logic.dart`, tests en `test/features/...`).
   - Ver sección "INSTRUCCIONES DE MANTENIMIENTO" del checklist para detalles
 
 ### 7) Plan Frankenstein (revisión tras cambios)

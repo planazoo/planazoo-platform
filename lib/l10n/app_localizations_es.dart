@@ -712,30 +712,89 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dashboardFilterAll => 'Todos';
+
   @override
   String get dashboardFilterEstoyIn => 'Estoy in';
+
   @override
   String get dashboardFilterPending => 'Pendientes';
+
   @override
   String get dashboardFilterClosed => 'Cerrados';
+
   @override
   String get dashboardSelectPlan => 'Selecciona un plan';
+
   @override
   String get dashboardUiShowcaseTooltip => 'UI Showcase';
+
   @override
   String get dashboardLogo => 'planazoo';
+
   @override
   String get dashboardTabPlanazoo => 'planazoo';
+
   @override
   String get dashboardTabCalendar => 'calendario';
+
   @override
   String get dashboardTabIn => 'in';
+
   @override
   String get dashboardTabStats => 'stats';
+
   @override
   String get dashboardTabPayments => 'pagos';
+
   @override
   String get dashboardTabChat => 'chat';
+
+  @override
+  String get dashboardTabPendingEvents => 'Buzón';
+
+  @override
+  String get dashboardTabNotifications => 'Notificaciones';
+
+  @override
+  String get notificationsTitle => 'Notificaciones';
+
+  @override
+  String get notificationsSectionInvitations => 'Invitaciones a planes';
+
+  @override
+  String get notificationsSectionEmailEvents => 'Eventos desde correo';
+
+  @override
+  String get pendingEventsTitle => 'Eventos desde correo';
+
+  @override
+  String get pendingEventsEmpty =>
+      'No tienes eventos pendientes. Reenvía confirmaciones a la dirección de la plataforma.';
+
+  @override
+  String get pendingEventsAssignToPlan => 'Asignar a plan';
+
+  @override
+  String get pendingEventsDiscard => 'Descartar';
+
+  @override
+  String get pendingEventUnparsed => 'Sin parsear';
+
+  @override
+  String get pendingEventAssignTitle => 'Elegir plan';
+
+  @override
+  String get pendingEventAssigned => 'Evento asignado al plan';
+
+  @override
+  String get pendingEventDiscarded => 'Evento descartado';
+
+  @override
+  String get pendingEventDiscardConfirm => '¿Descartar este evento pendiente?';
+
+  @override
+  String get pendingEventsNoPlans =>
+      'No tienes planes. Crea uno antes de asignar.';
 
   @override
   String get understood => 'Entendido';
@@ -750,49 +809,61 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dashboardTestUsersLabel => '👥 Usuarios de Prueba:';
 
   @override
-  String get dashboardTestUsersPasswordNote => 'Todos los usuarios usan la contraseña: test123456';
+  String get dashboardTestUsersPasswordNote =>
+      'Todos los usuarios usan la contraseña: test123456';
 
   @override
-  String get dashboardTestUsersEmailNote => 'Todos los emails llegan a: unplanazoo@gmail.com';
+  String get dashboardTestUsersEmailNote =>
+      'Todos los emails llegan a: unplanazoo@gmail.com';
 
   @override
-  String get dashboardFirestoreSessionNote => '⚠️ Nota: Tu sesión actual puede haber cambiado. Si es necesario, vuelve a hacer login.';
+  String get dashboardFirestoreSessionNote =>
+      '⚠️ Nota: Tu sesión actual puede haber cambiado. Si es necesario, vuelve a hacer login.';
 
   @override
   String get dashboardFirestoreIndexes => '📊 Índices de Firestore:';
 
   @override
-  String get dashboardFirestoreIndexesWarning => '⚠️ IMPORTANTE: Los índices NO se despliegan automáticamente desde la app.';
+  String get dashboardFirestoreIndexesWarning =>
+      '⚠️ IMPORTANTE: Los índices NO se despliegan automáticamente desde la app.';
 
   @override
-  String get dashboardFirestoreIndexesDeployHint => 'Debes desplegarlos manualmente usando:';
+  String get dashboardFirestoreIndexesDeployHint =>
+      'Debes desplegarlos manualmente usando:';
 
   @override
-  String get dashboardFirestoreIndexesDeployCommand => 'firebase deploy --only firestore:indexes';
+  String get dashboardFirestoreIndexesDeployCommand =>
+      'firebase deploy --only firestore:indexes';
 
   @override
   String get dashboardFirestoreConsoleHint => 'O desde Firebase Console:';
 
   @override
-  String get dashboardFirestoreConsoleSteps => '1. Ve a Firebase Console\n2. Firestore Database → Indexes\n3. Verifica que hay 25 índices definidos\n4. Los índices se crearán automáticamente';
+  String get dashboardFirestoreConsoleSteps =>
+      '1. Ve a Firebase Console\n2. Firestore Database → Indexes\n3. Verifica que hay 25 índices definidos\n4. Los índices se crearán automáticamente';
 
   @override
   String get dashboardFirestoreDocs => '📝 Ver documentación completa:';
 
   @override
-  String get dashboardFirestoreDocsPaths => 'docs/configuracion/FIRESTORE_INDEXES_AUDIT.md\ndocs/configuracion/USUARIOS_PRUEBA.md';
+  String get dashboardFirestoreDocsPaths =>
+      'docs/configuracion/FIRESTORE_INDEXES_AUDIT.md\ndocs/configuracion/USUARIOS_PRUEBA.md';
 
   @override
-  String dashboardFirestoreInitError(String error) => '❌ Error al inicializar Firestore: $error';
+  String dashboardFirestoreInitError(String error) {
+    return '❌ Error al inicializar Firestore: $error';
+  }
 
   @override
   String get dashboardDeleteTestUsersTitle => '🗑️ Eliminar Usuarios de Prueba';
 
   @override
-  String get dashboardDeleteTestUsersSelect => 'Selecciona los usuarios que deseas eliminar:';
+  String get dashboardDeleteTestUsersSelect =>
+      'Selecciona los usuarios que deseas eliminar:';
 
   @override
-  String get dashboardDeleteTestUsersWarning => '⚠️ ADVERTENCIA: Esta acción eliminará los usuarios de Firebase Auth y Firestore. No se puede deshacer.';
+  String get dashboardDeleteTestUsersWarning =>
+      '⚠️ ADVERTENCIA: Esta acción eliminará los usuarios de Firebase Auth y Firestore. No se puede deshacer.';
 
   @override
   String get dashboardSelectAll => 'Seleccionar todos';
@@ -801,37 +872,173 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dashboardDeselectAll => 'Deseleccionar todos';
 
   @override
-  String dashboardDeletingUsersCount(int count) => 'Eliminando $count usuario(s)...';
+  String dashboardDeletingUsersCount(int count) {
+    return 'Eliminando $count usuario(s)...';
+  }
 
   @override
   String get dashboardDeletionCompleted => '✅ Eliminación Completada';
 
   @override
-  String dashboardDeletedFromFirestore(int count) => 'Eliminados de Firestore: $count';
+  String dashboardDeletedFromFirestore(int count) {
+    return 'Eliminados de Firestore: $count';
+  }
 
   @override
-  String dashboardNotFoundCount(int count) => 'No encontrados: $count';
+  String dashboardNotFoundCount(int count) {
+    return 'No encontrados: $count';
+  }
 
   @override
-  String dashboardErrorsCount(int count) => 'Errores: $count';
+  String dashboardErrorsCount(int count) {
+    return 'Errores: $count';
+  }
 
   @override
   String get dashboardErrorsDetail => 'Errores detallados:';
 
   @override
-  String get dashboardDeleteAuthNote => '⚠️ NOTA: Los usuarios también deben eliminarse manualmente de Firebase Auth Console si existen ahí.';
+  String get dashboardDeleteAuthNote =>
+      '⚠️ NOTA: Los usuarios también deben eliminarse manualmente de Firebase Auth Console si existen ahí.';
 
   @override
-  String dashboardDeleteUsersError(String error) => '❌ Error al eliminar usuarios: $error';
+  String dashboardDeleteUsersError(String error) {
+    return '❌ Error al eliminar usuarios: $error';
+  }
 
   @override
-  String get dashboardGeneratingFrankenstein => '🧟 Generando plan Frankenstein...';
+  String get dashboardGeneratingFrankenstein =>
+      '🧟 Generando plan Frankenstein...';
 
   @override
-  String get dashboardFrankensteinSuccess => '🎉 Plan Frankenstein generado exitosamente!';
+  String get dashboardFrankensteinSuccess =>
+      '🎉 Plan Frankenstein generado exitosamente!';
 
   @override
-  String get dashboardFrankensteinError => '❌ Error al generar plan Frankenstein';
+  String get dashboardFrankensteinError =>
+      '❌ Error al generar plan Frankenstein';
+
+  @override
+  String get dashboardNoPlansYet => 'Aún no tienes planes';
+
+  @override
+  String get dashboardCreateFirstPlanHint =>
+      'Crea tu primer plan con el botón +';
+
+  @override
+  String dashboardInvitationsPendingCount(int count) {
+    return 'Tienes $count invitación(es) pendiente(s)';
+  }
+
+  @override
+  String get dashboardInvitationTokenHint =>
+      'Si no ves tus invitaciones arriba, puedes usar el link del correo o pegar el token:';
+
+  @override
+  String get dashboardAcceptRejectByToken => 'Aceptar/Rechazar por token';
+
+  @override
+  String invitationPlanLabel(String planId) {
+    return 'Plan: $planId';
+  }
+
+  @override
+  String invitationRoleLabel(String role) {
+    return 'Rol: $role';
+  }
+
+  @override
+  String get invitationAcceptedParticipant =>
+      'Invitación aceptada. Ya eres participante del plan.';
+
+  @override
+  String get invitationAcceptFailed =>
+      'No se pudo aceptar. Prueba con el link del correo.';
+
+  @override
+  String get reject => 'Rechazar';
+
+  @override
+  String get invitationRejected => 'Invitación rechazada';
+
+  @override
+  String get invitationRejectFailed => 'No se pudo rechazar.';
+
+  @override
+  String get linkCopiedToClipboard => 'Link copiado al portapapeles';
+
+  @override
+  String get copyLink => 'Copiar link';
+
+  @override
+  String get mustSignInToAcceptInvitations =>
+      '❌ Debes iniciar sesión para aceptar invitaciones';
+
+  @override
+  String get dashboardManageInvitationByToken =>
+      'Gestionar invitación por token';
+
+  @override
+  String get dashboardInvitationLinkOrTokenLabel =>
+      'Link o token de invitación';
+
+  @override
+  String get dashboardInvitationLinkOrTokenHint =>
+      'Pega el link completo o solo el token';
+
+  @override
+  String get dashboardInvitationLinkOrTokenHelper =>
+      'Ejemplo: https://planazoo.app/invitation/abc123... o solo abc123...';
+
+  @override
+  String get dashboardInvitationLinkOrTokenRequired =>
+      'Introduce el link o token';
+
+  @override
+  String get continueButton => 'Continuar';
+
+  @override
+  String get invalidToken => '❌ Token inválido';
+
+  @override
+  String get invitationAcceptedAddedToPlan =>
+      '✅ Invitación aceptada. Has sido añadido al plan.';
+
+  @override
+  String get tokenProcessingFailed =>
+      '❌ No se pudo procesar el token. Verifica que sea válido y no haya expirado.';
+
+  @override
+  String get invitationRejectedSuccess => '✅ Invitación rechazada';
+
+  @override
+  String get dashboardSelectPlanazoo => 'Selecciona un Planazoo';
+
+  @override
+  String get dashboardClickPlanToSeeCalendar =>
+      'Haz clic en un planazoo de la lista\nderecha para ver su calendario';
+
+  @override
+  String get dashboardEmailLabel => 'email';
+
+  @override
+  String get dashboardIntroduceEmail => 'Introduce el mail';
+
+  @override
+  String get dashboardSelectPlanToSeeParticipants =>
+      'Selecciona un plan para ver los participantes';
+
+  @override
+  String get dashboardSelectPlanToSeeChat =>
+      'Selecciona un plan para ver el chat';
+
+  @override
+  String get dashboardSelectPlanToSeePayments =>
+      'Selecciona un plan para ver el resumen de pagos';
+
+  @override
+  String get dashboardSelectPlanToSeeStats =>
+      'Selecciona un plan para ver las estadísticas';
 
   @override
   String get planCalendarEmpty => 'No hay planes en estos meses.';

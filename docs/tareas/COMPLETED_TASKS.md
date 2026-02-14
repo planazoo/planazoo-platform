@@ -3041,3 +3041,10 @@ Sistema completo de multi-moneda implementado. Cada plan tiene su moneda base (E
 
 ---
 
+## T164 - Login con Google (Social Authentication)
+**Estado:** ✅ Completado  
+**Descripción:** Login con Google vía Firebase Authentication: botón "Continuar con Google", creación automática de usuario en Firestore, generación de username si no existe, traducciones ES/EN y guía de configuración en Firebase Console.
+
+**Criterios cumplidos:** Google Sign-In en AuthService y AuthNotifier; botón en login_page; configuración Android/iOS/Web documentada; TESTING_CHECKLIST actualizado.
+
+---

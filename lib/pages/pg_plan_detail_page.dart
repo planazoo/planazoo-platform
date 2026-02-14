@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_navigation_bar.dart';
+import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/pages/pg_calendar_mobile_page.dart';
@@ -80,6 +81,14 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         overflow: TextOverflow.ellipsis,
       ),
       centerTitle: false,
+      actions: [
+        if (widget.plan.id != null)
+          PlanSummaryButton(
+            plan: widget.plan,
+            iconOnly: false,
+            foregroundColor: Colors.white,
+          ),
+      ],
     );
   }
 

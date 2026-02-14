@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import '../../../../shared/services/logger_service.dart';
@@ -190,6 +191,7 @@ class InvitationService {
   /// 
   /// NOTA: Este método se usa principalmente para la primera vez (recién registrado).
   /// Después del primer acceso, usar getPendingInvitationsByUserId.
+  /// Fuerza lectura desde servidor para evitar caché y filtra en cliente solo pending y no expiradas.
   Future<List<PlanInvitation>> getPendingInvitationsByEmail(String email) async {
     try {
       final normalizedEmail = email.toLowerCase().trim();
@@ -197,10 +199,12 @@ class InvitationService {
           .collection(_collectionName)
           .where('email', isEqualTo: normalizedEmail)
           .where('status', isEqualTo: 'pending')
-          .get();
-      final list = querySnapshot.docs.map((d) => PlanInvitation.fromFirestore(d)).toList();
-      list.sort((a, b) => (b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
-          .compareTo(a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)));
+          .get(const GetOptions(source: Source.server));
+      final list = querySnapshot.docs
+          .map((d) => PlanInvitation.fromFirestore(d))
+          .where((inv) => inv.isPending && !inv.isExpired)
+          .toList();
+      list.sort((a, b) => (b.createdAt).compareTo(a.createdAt));
       return list;
     } catch (e) {
       LoggerService.error('Error getting pending invitations by email: $email', context: 'INVITATION_SERVICE', error: e);
@@ -238,11 +242,10 @@ class InvitationService {
       // Esto solo ocurre cuando el usuario se acaba de registrar y aún no tiene participaciones
       // Después de aceptar la primera invitación, se creará una participación y este código
       // no se ejecutará más (se usará el sistema de participaciones)
-      if (email != null) {
-        return await getPendingInvitationsByEmail(email);
-      }
-      
-      return [];
+      if (email == null) return [];
+      final list = await getPendingInvitationsByEmail(email!);
+      // Solo mostrar invitaciones realmente pendientes y no expiradas
+      return list.where((inv) => inv.isPending && !inv.isExpired).toList();
     } catch (e) {
       LoggerService.error(
         'Error getting pending invitations by userId: $userId',
@@ -298,32 +301,72 @@ class InvitationService {
         return false;
       }
 
-      // Actualizar el estado de la invitación
-      try {
-        await invitationDoc.reference.update({
-          'status': 'accepted',
-          'respondedAt': Timestamp.fromDate(DateTime.now()),
-        });
-
-        LoggerService.database(
-          'Invitation accepted by planId: ${invitation.id}, participation: $participationId',
-          operation: 'UPDATE',
-        );
-      } catch (updateError) {
-        // Si falla la actualización de la invitación, registrar pero continuar
-        // La participación ya se creó, que es lo más importante
-        LoggerService.error(
-          'Error updating invitation status to accepted: ${invitation.id}. '
-          'Participation was created successfully: $participationId',
-          context: 'INVITATION_SERVICE',
-          error: updateError,
-        );
+      // Marcar invitación como aceptada vía Cloud Function (mismo flujo que por token)
+      final token = invitation.token;
+      if (token.isNotEmpty) {
+        if (kDebugMode) {
+          LoggerService.debug('Calling markInvitationAccepted Cloud Function (acceptByPlanId)', context: 'INVITATION_SERVICE');
+        }
+        try {
+          final result = await FirebaseFunctions.instance
+              .httpsCallable('markInvitationAccepted')
+              .call({'token': token});
+          final data = result.data as Map<String, dynamic>?;
+          if (data != null && data['success'] == true) {
+            LoggerService.database(
+              'Invitation accepted via Cloud Function (planId): ${invitation.id}, participation: $participationId',
+              operation: 'UPDATE',
+            );
+          }
+        } catch (cfError) {
+          LoggerService.error(
+            'Cloud Function markInvitationAccepted failed (planId flow): $planId. Invitation may stay pending.',
+            context: 'INVITATION_SERVICE',
+            error: cfError,
+          );
+        }
       }
 
       return true;
     } catch (e) {
       LoggerService.error(
         'Error accepting invitation by planId: $planId, userId: $userId',
+        context: 'INVITATION_SERVICE',
+        error: e,
+      );
+      return false;
+    }
+  }
+
+  /// Rechazar invitación directamente por planId y userId (sin token)
+  ///
+  /// El email del usuario debe coincidir con el de la invitación pendiente.
+  Future<bool> rejectInvitationByPlanId(String planId, String userId) async {
+    try {
+      final user = await _userService.getUser(userId);
+      if (user == null || user.email == null) return false;
+
+      final normalizedEmail = user.email!.toLowerCase().trim();
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .where('email', isEqualTo: normalizedEmail)
+          .where('status', isEqualTo: 'pending')
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) return false;
+
+      final doc = querySnapshot.docs.first;
+      await doc.reference.update({
+        'status': 'rejected',
+        'respondedAt': Timestamp.fromDate(DateTime.now()),
+      });
+      LoggerService.database('Invitation rejected by planId: ${doc.id}', operation: 'UPDATE');
+      return true;
+    } catch (e) {
+      LoggerService.error(
+        'Error rejecting invitation by planId: $planId, userId: $userId',
         context: 'INVITATION_SERVICE',
         error: e,
       );
@@ -372,86 +415,29 @@ class InvitationService {
       );
 
       if (participationId != null) {
-        // Marcar invitación como aceptada
-        // Primero intentar como el usuario invitado, si falla, el owner del plan puede actualizarla
-        bool updateSuccess = false;
-        try {
-          await _firestore
-              .collection(_collectionName)
-              .doc(invitation.id!)
-              .update({
-            'status': 'accepted',
-            'respondedAt': Timestamp.fromDate(DateTime.now()),
-          });
-
-          LoggerService.database(
-            'Invitation accepted: ${invitation.id}, participation created: $participationId',
-            operation: 'UPDATE',
-          );
-          updateSuccess = true;
-        } catch (updateError) {
-          // Si falla, puede ser un problema de permisos (email del token no coincide)
-          // En este caso, el owner del plan puede actualizar la invitación según las reglas
-          // Pero no podemos hacerlo desde aquí porque no tenemos el contexto del owner
-          // El error se registra para diagnóstico
-          LoggerService.error(
-            'Error updating invitation status to accepted: ${invitation.id}. '
-            'Invitation email: ${invitation.email}, User email: $userEmail, Error: $updateError. '
-            'The invitation status may need to be updated manually by the plan owner or via Cloud Function.',
-            context: 'INVITATION_SERVICE',
-            error: updateError,
-          );
-          // Continuar y retornar true porque la participación se creó correctamente
-          // El estado de la invitación se puede actualizar manualmente si es necesario
-          // O se puede actualizar desde una Cloud Function que tenga permisos de admin
+        // Marcar invitación como aceptada vía Cloud Function (Admin SDK evita reglas de Firestore)
+        if (kDebugMode) {
+          LoggerService.debug('Calling markInvitationAccepted Cloud Function for token (acceptByToken)', context: 'INVITATION_SERVICE');
         }
-        
-        // Si la actualización falló, intentar obtener el plan y verificar si el usuario actual es el owner
-        // Si es el owner, intentar actualizar de nuevo (las reglas permiten que el owner actualice)
-        if (!updateSuccess) {
-          try {
-            final planDoc = await _firestore.collection('plans').doc(invitation.planId).get();
-            if (planDoc.exists) {
-              final planData = planDoc.data();
-              final planOwnerId = planData?['userId'] as String?;
-              
-              // Si el usuario actual es el owner del plan, intentar actualizar de nuevo
-              // Nota: Esto solo funcionará si el usuario actual es el owner
-              // En la mayoría de los casos, el usuario que acepta NO es el owner
-              // Por lo tanto, esta actualización probablemente también fallará
-              // Pero lo intentamos por si acaso
-              if (planOwnerId == userId) {
-                try {
-                  await _firestore
-                      .collection(_collectionName)
-                      .doc(invitation.id!)
-                      .update({
-                    'status': 'accepted',
-                    'respondedAt': Timestamp.fromDate(DateTime.now()),
-                  });
-                  LoggerService.database(
-                    'Invitation accepted by plan owner: ${invitation.id}',
-                    operation: 'UPDATE',
-                  );
-                  updateSuccess = true;
-                } catch (ownerUpdateError) {
-                  LoggerService.error(
-                    'Error updating invitation status as plan owner: ${invitation.id}',
-                    context: 'INVITATION_SERVICE',
-                    error: ownerUpdateError,
-                  );
-                }
-              }
-            }
-          } catch (planError) {
-            LoggerService.error(
-              'Error getting plan to check owner: ${invitation.planId}',
-              context: 'INVITATION_SERVICE',
-              error: planError,
+        try {
+          final result = await FirebaseFunctions.instance
+              .httpsCallable('markInvitationAccepted')
+              .call({'token': token});
+          final data = result.data as Map<String, dynamic>?;
+          if (data != null && data['success'] == true) {
+            LoggerService.database(
+              'Invitation accepted via Cloud Function: ${invitation.id}, participation: $participationId',
+              operation: 'UPDATE',
             );
           }
+        } catch (cfError) {
+          LoggerService.error(
+            'Cloud Function markInvitationAccepted failed (participation already created): $token. '
+            'Invitation may stay pending in Firestore.',
+            context: 'INVITATION_SERVICE',
+            error: cfError,
+          );
         }
-        
         return true;
       }
 

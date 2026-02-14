@@ -1352,51 +1352,563 @@ abstract class AppLocalizations {
   /// **'Calendario'**
   String get planViewModeCalendar;
 
+  /// Filtro dashboard: todos los planes
+  ///
+  /// In es, this message translates to:
+  /// **'Todos'**
   String get dashboardFilterAll;
+
+  /// Filtro dashboard: estoy in
+  ///
+  /// In es, this message translates to:
+  /// **'Estoy in'**
   String get dashboardFilterEstoyIn;
+
+  /// Filtro dashboard: pendientes
+  ///
+  /// In es, this message translates to:
+  /// **'Pendientes'**
   String get dashboardFilterPending;
+
+  /// Filtro dashboard: cerrados
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrados'**
   String get dashboardFilterClosed;
+
+  /// Placeholder cuando no hay plan seleccionado
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un plan'**
   String get dashboardSelectPlan;
+
+  /// Tooltip botón UI Showcase
+  ///
+  /// In es, this message translates to:
+  /// **'UI Showcase'**
   String get dashboardUiShowcaseTooltip;
+
+  /// Logo/nombre app en header
+  ///
+  /// In es, this message translates to:
+  /// **'planazoo'**
   String get dashboardLogo;
+
+  /// Pestaña dashboard: info plan
+  ///
+  /// In es, this message translates to:
+  /// **'planazoo'**
   String get dashboardTabPlanazoo;
+
+  /// Pestaña dashboard: calendario
+  ///
+  /// In es, this message translates to:
+  /// **'calendario'**
   String get dashboardTabCalendar;
+
+  /// Pestaña dashboard: participantes
+  ///
+  /// In es, this message translates to:
+  /// **'in'**
   String get dashboardTabIn;
+
+  /// Pestaña dashboard: estadísticas
+  ///
+  /// In es, this message translates to:
+  /// **'stats'**
   String get dashboardTabStats;
+
+  /// Pestaña dashboard: pagos
+  ///
+  /// In es, this message translates to:
+  /// **'pagos'**
   String get dashboardTabPayments;
+
+  /// Pestaña dashboard: chat
+  ///
+  /// In es, this message translates to:
+  /// **'chat'**
   String get dashboardTabChat;
+
+  /// Pestaña dashboard: eventos pendientes desde correo
+  ///
+  /// In es, this message translates to:
+  /// **'Buzón'**
+  String get dashboardTabPendingEvents;
+
+  /// Pestaña dashboard: buzón unificado de notificaciones
+  ///
+  /// In es, this message translates to:
+  /// **'Notificaciones'**
+  String get dashboardTabNotifications;
+
+  /// Título pantalla notificaciones unificadas
+  ///
+  /// In es, this message translates to:
+  /// **'Notificaciones'**
+  String get notificationsTitle;
+
+  /// Sección invitaciones en notificaciones
+  ///
+  /// In es, this message translates to:
+  /// **'Invitaciones a planes'**
+  String get notificationsSectionInvitations;
+
+  /// Sección eventos desde correo en notificaciones
+  ///
+  /// In es, this message translates to:
+  /// **'Eventos desde correo'**
+  String get notificationsSectionEmailEvents;
+
+  /// Título pantalla buzón de eventos pendientes
+  ///
+  /// In es, this message translates to:
+  /// **'Eventos desde correo'**
+  String get pendingEventsTitle;
+
+  /// Mensaje cuando no hay eventos pendientes
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes eventos pendientes. Reenvía confirmaciones a la dirección de la plataforma.'**
+  String get pendingEventsEmpty;
+
+  /// Botón para asignar evento pendiente a un plan
+  ///
+  /// In es, this message translates to:
+  /// **'Asignar a plan'**
+  String get pendingEventsAssignToPlan;
+
+  /// Botón descartar evento pendiente
+  ///
+  /// In es, this message translates to:
+  /// **'Descartar'**
+  String get pendingEventsDiscard;
+
+  /// Etiqueta cuando el correo no coincidió con ninguna plantilla
+  ///
+  /// In es, this message translates to:
+  /// **'Sin parsear'**
+  String get pendingEventUnparsed;
+
+  /// Título del diálogo para elegir plan al asignar
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir plan'**
+  String get pendingEventAssignTitle;
+
+  /// Mensaje de éxito al asignar
+  ///
+  /// In es, this message translates to:
+  /// **'Evento asignado al plan'**
+  String get pendingEventAssigned;
+
+  /// Mensaje al descartar
+  ///
+  /// In es, this message translates to:
+  /// **'Evento descartado'**
+  String get pendingEventDiscarded;
+
+  /// Confirmación al descartar
+  ///
+  /// In es, this message translates to:
+  /// **'¿Descartar este evento pendiente?'**
+  String get pendingEventDiscardConfirm;
+
+  /// Cuando no hay planes para asignar
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes planes. Crea uno antes de asignar.'**
+  String get pendingEventsNoPlans;
+
+  /// Botón cerrar diálogo
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
   String get understood;
+
+  /// No description provided for @dashboardFirestoreInitializing.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicializando Firestore...'**
   String get dashboardFirestoreInitializing;
+
+  /// No description provided for @dashboardFirestoreInitialized.
+  ///
+  /// In es, this message translates to:
+  /// **'✅ Firestore Inicializado'**
   String get dashboardFirestoreInitialized;
+
+  /// No description provided for @dashboardTestUsersLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'👥 Usuarios de Prueba:'**
   String get dashboardTestUsersLabel;
+
+  /// No description provided for @dashboardTestUsersPasswordNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los usuarios usan la contraseña: test123456'**
   String get dashboardTestUsersPasswordNote;
+
+  /// No description provided for @dashboardTestUsersEmailNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los emails llegan a: unplanazoo@gmail.com'**
   String get dashboardTestUsersEmailNote;
+
+  /// No description provided for @dashboardFirestoreSessionNote.
+  ///
+  /// In es, this message translates to:
+  /// **'⚠️ Nota: Tu sesión actual puede haber cambiado. Si es necesario, vuelve a hacer login.'**
   String get dashboardFirestoreSessionNote;
+
+  /// No description provided for @dashboardFirestoreIndexes.
+  ///
+  /// In es, this message translates to:
+  /// **'📊 Índices de Firestore:'**
   String get dashboardFirestoreIndexes;
+
+  /// No description provided for @dashboardFirestoreIndexesWarning.
+  ///
+  /// In es, this message translates to:
+  /// **'⚠️ IMPORTANTE: Los índices NO se despliegan automáticamente desde la app.'**
   String get dashboardFirestoreIndexesWarning;
+
+  /// No description provided for @dashboardFirestoreIndexesDeployHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Debes desplegarlos manualmente usando:'**
   String get dashboardFirestoreIndexesDeployHint;
+
+  /// No description provided for @dashboardFirestoreIndexesDeployCommand.
+  ///
+  /// In es, this message translates to:
+  /// **'firebase deploy --only firestore:indexes'**
   String get dashboardFirestoreIndexesDeployCommand;
+
+  /// No description provided for @dashboardFirestoreConsoleHint.
+  ///
+  /// In es, this message translates to:
+  /// **'O desde Firebase Console:'**
   String get dashboardFirestoreConsoleHint;
+
+  /// No description provided for @dashboardFirestoreConsoleSteps.
+  ///
+  /// In es, this message translates to:
+  /// **'1. Ve a Firebase Console\n2. Firestore Database → Indexes\n3. Verifica que hay 25 índices definidos\n4. Los índices se crearán automáticamente'**
   String get dashboardFirestoreConsoleSteps;
+
+  /// No description provided for @dashboardFirestoreDocs.
+  ///
+  /// In es, this message translates to:
+  /// **'📝 Ver documentación completa:'**
   String get dashboardFirestoreDocs;
+
+  /// No description provided for @dashboardFirestoreDocsPaths.
+  ///
+  /// In es, this message translates to:
+  /// **'docs/configuracion/FIRESTORE_INDEXES_AUDIT.md\ndocs/configuracion/USUARIOS_PRUEBA.md'**
   String get dashboardFirestoreDocsPaths;
+
+  /// No description provided for @dashboardFirestoreInitError.
+  ///
+  /// In es, this message translates to:
+  /// **'❌ Error al inicializar Firestore: {error}'**
   String dashboardFirestoreInitError(String error);
+
+  /// No description provided for @dashboardDeleteTestUsersTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'🗑️ Eliminar Usuarios de Prueba'**
   String get dashboardDeleteTestUsersTitle;
+
+  /// No description provided for @dashboardDeleteTestUsersSelect.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona los usuarios que deseas eliminar:'**
   String get dashboardDeleteTestUsersSelect;
+
+  /// No description provided for @dashboardDeleteTestUsersWarning.
+  ///
+  /// In es, this message translates to:
+  /// **'⚠️ ADVERTENCIA: Esta acción eliminará los usuarios de Firebase Auth y Firestore. No se puede deshacer.'**
   String get dashboardDeleteTestUsersWarning;
+
+  /// No description provided for @dashboardSelectAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Seleccionar todos'**
   String get dashboardSelectAll;
+
+  /// No description provided for @dashboardDeselectAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Deseleccionar todos'**
   String get dashboardDeselectAll;
+
+  /// No description provided for @dashboardDeletingUsersCount.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminando {count} usuario(s)...'**
   String dashboardDeletingUsersCount(int count);
+
+  /// No description provided for @dashboardDeletionCompleted.
+  ///
+  /// In es, this message translates to:
+  /// **'✅ Eliminación Completada'**
   String get dashboardDeletionCompleted;
+
+  /// No description provided for @dashboardDeletedFromFirestore.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminados de Firestore: {count}'**
   String dashboardDeletedFromFirestore(int count);
+
+  /// No description provided for @dashboardNotFoundCount.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontrados: {count}'**
   String dashboardNotFoundCount(int count);
+
+  /// No description provided for @dashboardErrorsCount.
+  ///
+  /// In es, this message translates to:
+  /// **'Errores: {count}'**
   String dashboardErrorsCount(int count);
+
+  /// No description provided for @dashboardErrorsDetail.
+  ///
+  /// In es, this message translates to:
+  /// **'Errores detallados:'**
   String get dashboardErrorsDetail;
+
+  /// No description provided for @dashboardDeleteAuthNote.
+  ///
+  /// In es, this message translates to:
+  /// **'⚠️ NOTA: Los usuarios también deben eliminarse manualmente de Firebase Auth Console si existen ahí.'**
   String get dashboardDeleteAuthNote;
+
+  /// No description provided for @dashboardDeleteUsersError.
+  ///
+  /// In es, this message translates to:
+  /// **'❌ Error al eliminar usuarios: {error}'**
   String dashboardDeleteUsersError(String error);
+
+  /// No description provided for @dashboardGeneratingFrankenstein.
+  ///
+  /// In es, this message translates to:
+  /// **'🧟 Generando plan Frankenstein...'**
   String get dashboardGeneratingFrankenstein;
+
+  /// No description provided for @dashboardFrankensteinSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'🎉 Plan Frankenstein generado exitosamente!'**
   String get dashboardFrankensteinSuccess;
+
+  /// No description provided for @dashboardFrankensteinError.
+  ///
+  /// In es, this message translates to:
+  /// **'❌ Error al generar plan Frankenstein'**
   String get dashboardFrankensteinError;
+
+  /// No description provided for @dashboardNoPlansYet.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes planes'**
+  String get dashboardNoPlansYet;
+
+  /// No description provided for @dashboardCreateFirstPlanHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea tu primer plan con el botón +'**
+  String get dashboardCreateFirstPlanHint;
+
+  /// No description provided for @dashboardInvitationsPendingCount.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes {count} invitación(es) pendiente(s)'**
+  String dashboardInvitationsPendingCount(int count);
+
+  /// No description provided for @dashboardInvitationTokenHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Si no ves tus invitaciones arriba, puedes usar el link del correo o pegar el token:'**
+  String get dashboardInvitationTokenHint;
+
+  /// No description provided for @dashboardAcceptRejectByToken.
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptar/Rechazar por token'**
+  String get dashboardAcceptRejectByToken;
+
+  /// No description provided for @invitationPlanLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Plan: {planId}'**
+  String invitationPlanLabel(String planId);
+
+  /// No description provided for @invitationRoleLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Rol: {role}'**
+  String invitationRoleLabel(String role);
+
+  /// No description provided for @invitationAcceptedParticipant.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación aceptada. Ya eres participante del plan.'**
+  String get invitationAcceptedParticipant;
+
+  /// No description provided for @invitationAcceptFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo aceptar. Prueba con el link del correo.'**
+  String get invitationAcceptFailed;
+
+  /// No description provided for @reject.
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazar'**
+  String get reject;
+
+  /// No description provided for @invitationRejected.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación rechazada'**
+  String get invitationRejected;
+
+  /// No description provided for @invitationRejectFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo rechazar.'**
+  String get invitationRejectFailed;
+
+  /// No description provided for @linkCopiedToClipboard.
+  ///
+  /// In es, this message translates to:
+  /// **'Link copiado al portapapeles'**
+  String get linkCopiedToClipboard;
+
+  /// No description provided for @copyLink.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar link'**
+  String get copyLink;
+
+  /// No description provided for @mustSignInToAcceptInvitations.
+  ///
+  /// In es, this message translates to:
+  /// **'❌ Debes iniciar sesión para aceptar invitaciones'**
+  String get mustSignInToAcceptInvitations;
+
+  /// No description provided for @dashboardManageInvitationByToken.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestionar invitación por token'**
+  String get dashboardManageInvitationByToken;
+
+  /// No description provided for @dashboardInvitationLinkOrTokenLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Link o token de invitación'**
+  String get dashboardInvitationLinkOrTokenLabel;
+
+  /// No description provided for @dashboardInvitationLinkOrTokenHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Pega el link completo o solo el token'**
+  String get dashboardInvitationLinkOrTokenHint;
+
+  /// No description provided for @dashboardInvitationLinkOrTokenHelper.
+  ///
+  /// In es, this message translates to:
+  /// **'Ejemplo: https://planazoo.app/invitation/abc123... o solo abc123...'**
+  String get dashboardInvitationLinkOrTokenHelper;
+
+  /// No description provided for @dashboardInvitationLinkOrTokenRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce el link o token'**
+  String get dashboardInvitationLinkOrTokenRequired;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar'**
+  String get continueButton;
+
+  /// No description provided for @invalidToken.
+  ///
+  /// In es, this message translates to:
+  /// **'❌ Token inválido'**
+  String get invalidToken;
+
+  /// No description provided for @invitationAcceptedAddedToPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'✅ Invitación aceptada. Has sido añadido al plan.'**
+  String get invitationAcceptedAddedToPlan;
+
+  /// No description provided for @tokenProcessingFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'❌ No se pudo procesar el token. Verifica que sea válido y no haya expirado.'**
+  String get tokenProcessingFailed;
+
+  /// No description provided for @invitationRejectedSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'✅ Invitación rechazada'**
+  String get invitationRejectedSuccess;
+
+  /// No description provided for @dashboardSelectPlanazoo.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un Planazoo'**
+  String get dashboardSelectPlanazoo;
+
+  /// No description provided for @dashboardClickPlanToSeeCalendar.
+  ///
+  /// In es, this message translates to:
+  /// **'Haz clic en un planazoo de la lista\nderecha para ver su calendario'**
+  String get dashboardClickPlanToSeeCalendar;
+
+  /// No description provided for @dashboardEmailLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'email'**
+  String get dashboardEmailLabel;
+
+  /// No description provided for @dashboardIntroduceEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce el mail'**
+  String get dashboardIntroduceEmail;
+
+  /// No description provided for @dashboardSelectPlanToSeeParticipants.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un plan para ver los participantes'**
+  String get dashboardSelectPlanToSeeParticipants;
+
+  /// No description provided for @dashboardSelectPlanToSeeChat.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un plan para ver el chat'**
+  String get dashboardSelectPlanToSeeChat;
+
+  /// No description provided for @dashboardSelectPlanToSeePayments.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un plan para ver el resumen de pagos'**
+  String get dashboardSelectPlanToSeePayments;
+
+  /// No description provided for @dashboardSelectPlanToSeeStats.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un plan para ver las estadísticas'**
+  String get dashboardSelectPlanToSeeStats;
 
   /// No description provided for @planCalendarEmpty.
   ///

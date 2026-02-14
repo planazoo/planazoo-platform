@@ -38,6 +38,8 @@ import 'package:unp_calendario/features/calendar/domain/services/invitation_serv
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
+import 'package:unp_calendario/widgets/screens/wd_pending_email_events_screen.dart';
+import 'package:unp_calendario/widgets/screens/wd_unified_notifications_screen.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_timezone_banner.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_nav_tabs.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_sidebar.dart';
@@ -1978,6 +1980,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         break;
       case 'chat':
         content = _buildChatScreen();
+        break;
+      case 'pendingEvents':
+        content = const WdUnifiedNotificationsScreen();
+        break;
+      case 'unifiedNotifications':
+        content = const WdUnifiedNotificationsScreen();
         break;
       case 'adminInsights':
         content = AdminInsightsScreen(

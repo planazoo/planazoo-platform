@@ -765,43 +765,65 @@ service cloud.firestore {
       // Actualizar:
       //  - Owner del plan puede CANCELAR una invitación pendiente (solo cambia 'status' y opcionalmente 'respondedAt')
       //  - El invitado (mismo email) puede ACEPTAR o RECHAZAR su invitación pendiente (solo cambia 'status' y opcionalmente 'respondedAt')
-      //  - IMPORTANTE: El usuario invitado DEBE poder actualizar su propia invitación para marcarla como aceptada
+      //  - NOTA: En update(), request.resource.data es el documento COMPLETO tras la fusión, no solo los campos enviados.
+      //    Por eso comprobamos que los campos inmutables no cambien (== resource.data), no que estén ausentes.
       allow update: if isAuthenticated() && (
         (
           // Cancelar por owner
           isPlanOwner(resource.data.planId) &&
           resource.data.status == 'pending' &&
-          !('planId' in request.resource.data) &&
-          !('email' in request.resource.data) &&
-          !('token' in request.resource.data) &&
-          !('createdAt' in request.resource.data) &&
-          !('expiresAt' in request.resource.data) &&
-          (!('role' in request.resource.data) || request.resource.data.role == resource.data.role) &&
+          request.resource.data.planId == resource.data.planId &&
+          request.resource.data.email == resource.data.email &&
+          request.resource.data.token == resource.data.token &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.expiresAt == resource.data.expiresAt &&
+          (request.resource.data.get('role', 'participant') == resource.data.get('role', 'participant')) &&
           ('status' in request.resource.data) && request.resource.data.status == 'cancelled'
         ) || (
-          // Aceptar / Rechazar por el invitado
-          // Verificar que el email del token coincide con el email de la invitación (case-insensitive)
-          // También permitir si el email del usuario en Firestore coincide (para casos donde el token no tiene email)
+          // Aceptar / Rechazar por el invitado (email del usuario coincide con el de la invitación)
+          // No comparar createdAt/expiresAt (Timestamp == puede fallar tras merge en Rules)
           (
             (request.auth.token.email != null &&
-             request.auth.token.email.toLowerCase() == resource.data.email.toLowerCase()) ||
-            // Fallback: verificar si el usuario en Firestore tiene el mismo email
+             request.auth.token.email.toLowerCase() == resource.data.get('email', '').toLowerCase()) ||
             (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email.toLowerCase() == resource.data.email.toLowerCase())
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('email', '') != '' &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('email', '').toLowerCase() == resource.data.get('email', '').toLowerCase())
           ) &&
           resource.data.status == 'pending' &&
-          !('planId' in request.resource.data) &&
-          !('email' in request.resource.data) &&
-          !('token' in request.resource.data) &&
-          !('createdAt' in request.resource.data) &&
-          !('expiresAt' in request.resource.data) &&
-          (!('role' in request.resource.data) || request.resource.data.role == resource.data.role) &&
+          request.resource.data.planId == resource.data.planId &&
+          request.resource.data.email == resource.data.email &&
+          request.resource.data.token == resource.data.token &&
+          (request.resource.data.get('role', 'participant') == resource.data.get('role', 'participant')) &&
           ('status' in request.resource.data) && request.resource.data.status in ['accepted', 'rejected']
         )
       ) || isAdmin(request.auth.uid);
 
       // Eliminar: owner del plan o admin
       allow delete: if (isAuthenticated() && isPlanOwner(resource.data.planId)) || isAdmin(request.auth.uid);
+    }
+    
+    // ============================================
+    // REGLAS PARA PLANTILLAS DE CORREO (T134 - eventos desde correo)
+    // Catálogo de plantillas para parsear correos entrantes. Solo admins gestionan.
+    // Las Cloud Functions (Admin SDK) leen esta colección al procesar correos.
+    // ============================================
+    
+    match /email_templates/{templateId} {
+      // Leer: cualquier usuario autenticado (para admin panel o futuro uso en app)
+      allow read: if isAuthenticated();
+      // Crear/Actualizar/Eliminar: solo administradores de la plataforma
+      allow create, update, delete: if isAdmin(request.auth.uid);
+    }
+    
+    // ============================================
+    // REGLAS PARA EVENTOS PENDIENTES DE CORREO (buzón por usuario)
+    // Subcolección por usuario: solo el propio usuario accede a sus pendientes.
+    // Las Cloud Functions (Admin SDK) crean/actualizan aquí al procesar correos.
+    // ============================================
+    
+    match /users/{userId}/pending_email_events/{eventId} {
+      // Solo el propio usuario puede leer, crear, actualizar y eliminar sus eventos pendientes
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
     
     // ============================================

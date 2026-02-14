@@ -36,7 +36,7 @@ class WdDashboardNavTabs extends StatelessWidget {
     required this.onTabTap,
   });
 
-  /// Lista de pestañas (W14–W19) con etiquetas localizadas.
+  /// Lista de pestañas (W14–W20) con etiquetas localizadas.
   static List<DashboardNavTabItem> tabItems(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return [
@@ -46,6 +46,7 @@ class WdDashboardNavTabs extends StatelessWidget {
       DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: loc.dashboardTabStats, screen: 'stats'),
       DashboardNavTabItem(id: 'W18', icon: Icons.payment, label: loc.dashboardTabPayments, screen: 'payments'),
       DashboardNavTabItem(id: 'W19', icon: Icons.chat_bubble_outline, label: loc.dashboardTabChat, screen: 'chat'),
+      DashboardNavTabItem(id: 'W20', icon: Icons.notifications_outlined, label: loc.dashboardTabNotifications, screen: 'unifiedNotifications'),
     ];
   }
 

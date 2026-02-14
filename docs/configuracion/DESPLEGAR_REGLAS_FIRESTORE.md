@@ -32,6 +32,7 @@ Las reglas actuales incluyen:
 - **Planes:** Lectura pública de planes asociados a invitaciones pendientes
 - **Mensajes:** Usuarios autenticados pueden leer/escribir mensajes del plan
 - **Notificaciones:** Usuarios solo pueden acceder a sus propias notificaciones
+- **pending_email_events:** Solo el propio usuario (request.auth.uid == userId) puede leer/escribir en users/{userId}/pending_email_events
 - **Administradores:** Permisos especiales para usuarios con `isAdmin: true`
 
 ---
