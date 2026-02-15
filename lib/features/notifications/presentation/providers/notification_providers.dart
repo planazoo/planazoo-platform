@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/notification_model.dart';
+import '../../domain/models/unified_notification.dart';
 import '../../domain/services/notification_service.dart';
+import '../../domain/services/global_notifications_service.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../calendar/presentation/providers/invitation_providers.dart';
 
 /// Provider para NotificationService
 final notificationServiceProvider = Provider<NotificationService>((ref) {
@@ -36,7 +39,7 @@ final unreadNotificationsProvider = StreamProvider<List<NotificationModel>>((ref
   );
 });
 
-/// Provider para obtener el contador de notificaciones no leídas
+/// Provider para obtener el contador de notificaciones no leídas (solo users/.../notifications)
 final unreadCountProvider = StreamProvider<int>((ref) {
   final currentUser = ref.watch(currentUserProvider);
   
@@ -46,6 +49,58 @@ final unreadCountProvider = StreamProvider<int>((ref) {
 
   final notificationService = ref.watch(notificationServiceProvider);
   return notificationService.getUnreadCount(currentUser.id);
+});
+
+/// Lista global agregada: invitaciones + eventos desde correo + notificaciones (users/.../notifications).
+/// Orden cronológico descendente. Usado por la campana.
+final globalNotificationsListProvider = StreamProvider<List<UnifiedNotification>>((ref) {
+  final authUid = ref.watch(authServiceProvider).currentUser?.uid;
+  final user = ref.watch(currentUserProvider);
+  final invitationsAsync = ref.watch(userPendingInvitationsProvider);
+  if (authUid == null || user == null) return Stream.value([]);
+  final invitations = invitationsAsync.valueOrNull ?? [];
+  final service = GlobalNotificationsService();
+  return service.streamGlobalNotifications(
+    invitations: invitations,
+    authUid: authUid,
+    userId: user.id,
+  );
+});
+
+/// Contador global de "no leídas": pendientes de acción + notificaciones no leídas. Para badge de la campana.
+final globalUnreadCountProvider = StreamProvider<int>((ref) {
+  final authUid = ref.watch(authServiceProvider).currentUser?.uid;
+  final user = ref.watch(currentUserProvider);
+  final invitationsAsync = ref.watch(userPendingInvitationsProvider);
+  if (authUid == null || user == null) return Stream.value(0);
+  final invitations = invitationsAsync.valueOrNull ?? [];
+  final service = GlobalNotificationsService();
+  return service.streamUnreadCount(
+    invitations: invitations,
+    authUid: authUid,
+    userId: user.id,
+  );
+});
+
+/// Filtro de la lista global: 0 = Todas, 1 = Pendientes de acción, 2 = Solo informativas.
+final globalNotificationsFilterProvider = StateProvider<int>((ref) => 0);
+
+/// Número de notificaciones no leídas para un plan (para badge en W20).
+/// Si [planId] es null, retorna 0.
+final planUnreadCountProvider = Provider.family<AsyncValue<int>, String?>((ref, planId) {
+  final listAsync = ref.watch(globalNotificationsListProvider);
+  if (planId == null) return const AsyncValue.data(0);
+  return listAsync.when(
+    data: (list) {
+      final count = list
+          .where((n) =>
+              n.planId == planId && (n.requiresAction || !n.isRead))
+          .length;
+      return AsyncValue.data(count);
+    },
+    loading: () => const AsyncValue.data(0),
+    error: (e, _) => const AsyncValue.data(0),
+  );
 });
 
 /// Provider para crear una notificación

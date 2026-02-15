@@ -249,6 +249,10 @@
   "@registerSuccess": {
     "description": "Mensaje de registro exitoso"
   },
+  "registerSuccessSpamNote": "Si no lo ves, revisa la bandeja de spam o correo no deseado.",
+  "@registerSuccessSpamNote": {
+    "description": "Nota sobre bandeja de spam en mensaje de registro (T161)"
+  },
   "emailVerificationSent": "Email de verificación reenviado",
   "@emailVerificationSent": {
     "description": "Mensaje de email de verificación reenviado"
@@ -689,6 +693,10 @@
   "@createPlanUnpIdLoading": {},
   "createPlanQuickIntro": "Podrás completar el resto de la configuración del plan en la siguiente pantalla.",
   "@createPlanQuickIntro": {},
+  "createPlanDatesOptionalHint": "Las fechas (inicio y fin) se pueden rellenar más adelante en la información del plan.",
+  "@createPlanDatesOptionalHint": {
+    "description": "T201: texto en modal nuevo plan indicando que las fechas son optativas"
+  },
   "createPlanContinueButton": "Continuar",
   "@createPlanContinueButton": {},
   "createPlanAuthError": "Necesitas iniciar sesión para crear un plan.",
@@ -735,6 +743,14 @@
   "@planDetailsParticipantsTitle": {},
   "planDetailsParticipantsManageLink": "Gestionar participantes",
   "@planDetailsParticipantsManageLink": {},
+  "planDetailsAnnouncementsTitle": "Avisos",
+  "@planDetailsAnnouncementsTitle": {
+    "description": "Título de la sección Avisos en Info plan (T207)"
+  },
+  "planDetailsAnnouncementsHelp": "Mensajes del organizador y participantes visibles para todos en el plan. Aquí puedes publicar avisos y ver el historial.",
+  "@planDetailsAnnouncementsHelp": {
+    "description": "Texto de ayuda o tooltip para la sección Avisos (T207)"
+  },
   "planDetailsBudgetLabel": "Presupuesto estimado",
   "@planDetailsBudgetLabel": {},
   "planDetailsBudgetInvalid": "Introduce un número positivo válido (usa punto decimal)",
@@ -827,7 +843,7 @@
   "@dashboardTabChat": { "description": "Pestaña dashboard: chat" },
   "dashboardTabPendingEvents": "Buzón",
   "@dashboardTabPendingEvents": { "description": "Pestaña dashboard: eventos pendientes desde correo" },
-  "dashboardTabNotifications": "Notificaciones",
+  "dashboardTabNotifications": "notificaciones",
   "@dashboardTabNotifications": { "description": "Pestaña dashboard: buzón unificado de notificaciones" },
   "notificationsTitle": "Notificaciones",
   "@notificationsTitle": { "description": "Título pantalla notificaciones unificadas" },
@@ -835,6 +851,20 @@
   "@notificationsSectionInvitations": { "description": "Sección invitaciones en notificaciones" },
   "notificationsSectionEmailEvents": "Eventos desde correo",
   "@notificationsSectionEmailEvents": { "description": "Sección eventos desde correo en notificaciones" },
+  "notificationsFilterAll": "Todas",
+  "@notificationsFilterAll": { "description": "Filtro lista notificaciones: todas" },
+  "notificationsFilterAction": "Pendientes de acción",
+  "@notificationsFilterAction": { "description": "Filtro lista notificaciones: requieren acción" },
+  "notificationsFilterInfo": "Solo informativas",
+  "@notificationsFilterInfo": { "description": "Filtro lista notificaciones: solo informativas" },
+  "notificationsMarkAllAsRead": "Marcar todas como leídas",
+  "@notificationsMarkAllAsRead": { "description": "Botón en lista global notificaciones" },
+  "notificationsEmpty": "No hay notificaciones",
+  "@notificationsEmpty": { "description": "Lista global vacía" },
+  "notificationsGenerateTestData": "Generar notificaciones de prueba",
+  "@notificationsGenerateTestData": { "description": "Botón para crear datos de prueba de todos los tipos" },
+  "notificationsTestDataGenerated": "Creadas: {invitations} invitaciones, {pending} eventos correo, {app} notificaciones",
+  "@notificationsTestDataGenerated": { "placeholders": { "invitations": { "type": "int" }, "pending": { "type": "int" }, "app": { "type": "int" } } },
   "pendingEventsTitle": "Eventos desde correo",
   "@pendingEventsTitle": { "description": "Título pantalla buzón de eventos pendientes" },
   "pendingEventsEmpty": "No tienes eventos pendientes. Reenvía confirmaciones a la dirección de la plataforma.",
@@ -898,6 +928,8 @@
   "dashboardCreateFirstPlanHint": "Crea tu primer plan con el botón +",
   "dashboardInvitationsPendingCount": "Tienes {count} invitación(es) pendiente(s)",
   "@dashboardInvitationsPendingCount": { "placeholders": { "count": { "type": "int" } } },
+  "dashboardMessageCenterOpenNotifications": "Ver notificaciones",
+  "@dashboardMessageCenterOpenNotifications": { "description": "Enlace en W29 para abrir lista de notificaciones" },
   "dashboardInvitationTokenHint": "Si no ves tus invitaciones arriba, puedes usar el link del correo o pegar el token:",
   "dashboardAcceptRejectByToken": "Aceptar/Rechazar por token",
   "invitationPlanLabel": "Plan: {planId}",
@@ -930,6 +962,7 @@
   "dashboardSelectPlanToSeeChat": "Selecciona un plan para ver el chat",
   "dashboardSelectPlanToSeePayments": "Selecciona un plan para ver el resumen de pagos",
   "dashboardSelectPlanToSeeStats": "Selecciona un plan para ver las estadísticas",
+  "dashboardSelectPlanToSeeNotifications": "Selecciona un plan para ver sus notificaciones",
   "planCalendarEmpty": "No hay planes en estos meses.",
   "@planCalendarEmpty": {},
   "createPlanDatesSectionTitle": "Fechas del plan",

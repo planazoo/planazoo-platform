@@ -475,14 +475,17 @@ R13 └─────┴─────┴─────┴─────┴�
 - **W11**: Libre (C16, R1)
 - **W12**: Menú opciones (C17, R1)
 
-#### **Barra de Herramientas (R2)** - C2-C17
+#### **Barra de Herramientas (R2)** - C2-C17 (W14–W25: pestañas del plan seleccionado)
 - **W13**: Campo de búsqueda (C2-C5, R2)
 - **W14**: Acceso info plan (C6, R2)
 - **W15**: Acceso calendario (C7, R2)
-- **W16-W17**: Reservados (C8-C9, R2)
-- **W18-W21**: Reservados (C10-C13, R2)
-- **W22-W23**: Reservados (C14-C15, R2)
-- **W24**: Icono notificaciones (C16, R2)
+- **W16**: Participantes (C8, R2)
+- **W17**: Estadísticas (C9, R2)
+- **W18**: Pagos (C10, R2)
+- **W19**: Chat (C11, R2)
+- **W20**: Notificaciones **del plan seleccionado** (C12, R2) — invitaciones a este plan, avisos, cambios en eventos del plan + sección "Eventos desde correo pendientes". Ver `docs/producto/NOTIFICACIONES_ESPECIFICACION.md`.
+- **W21-W23**: Reservados (C13-C15, R2)
+- **W24**: Icono campana — abre **lista global** de notificaciones (todas las fuentes, filtro por acción, badge con total no leídas). (C16, R2)
 - **W25**: Icono mensajes (C17, R2)
 
 #### **Área de Contenido (R3-R12)**

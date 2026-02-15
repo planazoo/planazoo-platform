@@ -198,6 +198,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Account created! Check your email to verify your account.';
 
   @override
+  String get registerSuccessSpamNote =>
+      'If you don\'t see it, check your spam or junk folder.';
+
+  @override
   String get emailVerificationSent => 'Verification email resent';
 
   @override
@@ -551,6 +555,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'You can complete the rest of the plan configuration on the next screen.';
 
   @override
+  String get createPlanDatesOptionalHint =>
+      'Start and end dates can be filled in later in the plan info.';
+
+  @override
   String get createPlanContinueButton => 'Continue';
 
   @override
@@ -620,6 +628,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planDetailsParticipantsManageLink => 'Manage participants';
+
+  @override
+  String get planDetailsAnnouncementsTitle => 'Announcements';
+
+  @override
+  String get planDetailsAnnouncementsHelp =>
+      'Messages from the organizer and participants visible to everyone in the plan. You can post announcements and see the history here.';
 
   @override
   String get planDetailsBudgetLabel => 'Estimated budget';
@@ -744,7 +759,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardTabPendingEvents => 'Inbox';
 
   @override
-  String get dashboardTabNotifications => 'Notifications';
+  String get dashboardTabNotifications => 'notifications';
 
   @override
   String get notificationsTitle => 'Notifications';
@@ -754,6 +769,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsSectionEmailEvents => 'Events from email';
+
+  @override
+  String get notificationsFilterAll => 'All';
+
+  @override
+  String get notificationsFilterAction => 'Pending action';
+
+  @override
+  String get notificationsFilterInfo => 'Informational only';
+
+  @override
+  String get notificationsMarkAllAsRead => 'Mark all as read';
+
+  @override
+  String get notificationsEmpty => 'No notifications';
+
+  @override
+  String get notificationsGenerateTestData => 'Generate test notifications';
+
+  @override
+  String notificationsTestDataGenerated(int invitations, int pending, int app) {
+    return 'Created: $invitations invitations, $pending email events, $app notifications';
+  }
 
   @override
   String get pendingEventsTitle => 'Events from email';
@@ -922,6 +960,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get dashboardMessageCenterOpenNotifications => 'View notifications';
+
+  @override
   String get dashboardInvitationTokenHint =>
       'If you don\'t see your invitations above, you can use the link from the email or paste the token:';
 
@@ -1026,6 +1067,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dashboardSelectPlanToSeeStats => 'Select a plan to see statistics';
+
+  @override
+  String get dashboardSelectPlanToSeeNotifications =>
+      'Select a plan to see its notifications';
 
   @override
   String get planCalendarEmpty => 'No plans scheduled in these months.';

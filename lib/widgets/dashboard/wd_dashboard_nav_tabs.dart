@@ -3,19 +3,36 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
-/// Definición de una pestaña de navegación del dashboard (W14–W19).
+/// Definición de una pestaña de navegación del dashboard (W14–W20).
 class DashboardNavTabItem {
   final String id;
   final IconData icon;
   final String label;
   final String screen;
+  /// Badge de no leídas (p. ej. en W20).
+  final int? badgeCount;
+  /// Si true, el label usa fuente más pequeña (p. ej. "notificaciones").
+  final bool smallLabel;
 
   const DashboardNavTabItem({
     required this.id,
     required this.icon,
     required this.label,
     required this.screen,
+    this.badgeCount,
+    this.smallLabel = false,
   });
+
+  DashboardNavTabItem copyWith({int? badgeCount}) {
+    return DashboardNavTabItem(
+      id: id,
+      icon: icon,
+      label: label,
+      screen: screen,
+      badgeCount: badgeCount ?? this.badgeCount,
+      smallLabel: smallLabel,
+    );
+  }
 }
 
 /// Fila de pestañas de navegación del dashboard (W14–W25).
@@ -46,7 +63,7 @@ class WdDashboardNavTabs extends StatelessWidget {
       DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: loc.dashboardTabStats, screen: 'stats'),
       DashboardNavTabItem(id: 'W18', icon: Icons.payment, label: loc.dashboardTabPayments, screen: 'payments'),
       DashboardNavTabItem(id: 'W19', icon: Icons.chat_bubble_outline, label: loc.dashboardTabChat, screen: 'chat'),
-      DashboardNavTabItem(id: 'W20', icon: Icons.notifications_outlined, label: loc.dashboardTabNotifications, screen: 'unifiedNotifications'),
+      DashboardNavTabItem(id: 'W20', icon: Icons.notifications_outlined, label: loc.dashboardTabNotifications, screen: 'unifiedNotifications', smallLabel: true),
     ];
   }
 
@@ -105,6 +122,9 @@ class _NavTabCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = isSelected ? Colors.white : Colors.grey.shade400;
+    final fontSize = item.smallLabel ? 10.0 : 12.0;
+    final badgeCount = item.badgeCount ?? 0;
+    final showBadge = badgeCount > 0;
 
     return SizedBox(
       width: width,
@@ -112,34 +132,81 @@ class _NavTabCell extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: isSelected ? AppColorScheme.color2 : Colors.grey.shade800,
+          borderRadius: isSelected
+              ? const BorderRadius.only(
+                  topLeft: Radius.circular(10),
+                  topRight: Radius.circular(10),
+                )
+              : null,
           border: isSelected
               ? Border.all(color: AppColorScheme.color2, width: 2)
               : null,
         ),
-        child: InkWell(
+        child: Row(
+          children: [
+            Expanded(
+              child: InkWell(
           onTap: onTap,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  item.icon,
-                  color: AppColorScheme.color2,
-                  size: 20,
+          borderRadius: isSelected
+              ? const BorderRadius.only(
+                  topLeft: Radius.circular(10),
+                  topRight: Radius.circular(10),
+                )
+              : null,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      item.icon,
+                      color: textColor,
+                      size: 20,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.label,
+                      style: GoogleFonts.poppins(
+                        color: textColor,
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  item.label,
-                  style: GoogleFonts.poppins(
-                    color: textColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+              ),
+              if (showBadge)
+                Positioned(
+                  top: 2,
+                  right: 4,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                    child: Text(
+                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
+        ),
+      ),
+          ],
         ),
       ),
     );

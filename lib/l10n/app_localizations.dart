@@ -458,6 +458,12 @@ abstract class AppLocalizations {
   /// **'¡Cuenta creada! Revisa tu email para verificar tu cuenta.'**
   String get registerSuccess;
 
+  /// Nota sobre bandeja de spam en mensaje de registro (T161)
+  ///
+  /// In es, this message translates to:
+  /// **'Si no lo ves, revisa la bandeja de spam o correo no deseado.'**
+  String get registerSuccessSpamNote;
+
   /// Mensaje de email de verificación reenviado
   ///
   /// In es, this message translates to:
@@ -1076,6 +1082,12 @@ abstract class AppLocalizations {
   /// **'Podrás completar el resto de la configuración del plan en la siguiente pantalla.'**
   String get createPlanQuickIntro;
 
+  /// T201: texto en modal nuevo plan indicando que las fechas son optativas
+  ///
+  /// In es, this message translates to:
+  /// **'Las fechas (inicio y fin) se pueden rellenar más adelante en la información del plan.'**
+  String get createPlanDatesOptionalHint;
+
   /// No description provided for @createPlanContinueButton.
   ///
   /// In es, this message translates to:
@@ -1213,6 +1225,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Gestionar participantes'**
   String get planDetailsParticipantsManageLink;
+
+  /// Título de la sección Avisos en Info plan (T207)
+  ///
+  /// In es, this message translates to:
+  /// **'Avisos'**
+  String get planDetailsAnnouncementsTitle;
+
+  /// Texto de ayuda o tooltip para la sección Avisos (T207)
+  ///
+  /// In es, this message translates to:
+  /// **'Mensajes del organizador y participantes visibles para todos en el plan. Aquí puedes publicar avisos y ver el historial.'**
+  String get planDetailsAnnouncementsHelp;
 
   /// No description provided for @planDetailsBudgetLabel.
   ///
@@ -1439,7 +1463,7 @@ abstract class AppLocalizations {
   /// Pestaña dashboard: buzón unificado de notificaciones
   ///
   /// In es, this message translates to:
-  /// **'Notificaciones'**
+  /// **'notificaciones'**
   String get dashboardTabNotifications;
 
   /// Título pantalla notificaciones unificadas
@@ -1459,6 +1483,48 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Eventos desde correo'**
   String get notificationsSectionEmailEvents;
+
+  /// Filtro lista notificaciones: todas
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get notificationsFilterAll;
+
+  /// Filtro lista notificaciones: requieren acción
+  ///
+  /// In es, this message translates to:
+  /// **'Pendientes de acción'**
+  String get notificationsFilterAction;
+
+  /// Filtro lista notificaciones: solo informativas
+  ///
+  /// In es, this message translates to:
+  /// **'Solo informativas'**
+  String get notificationsFilterInfo;
+
+  /// Botón en lista global notificaciones
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar todas como leídas'**
+  String get notificationsMarkAllAsRead;
+
+  /// Lista global vacía
+  ///
+  /// In es, this message translates to:
+  /// **'No hay notificaciones'**
+  String get notificationsEmpty;
+
+  /// Botón para crear datos de prueba de todos los tipos
+  ///
+  /// In es, this message translates to:
+  /// **'Generar notificaciones de prueba'**
+  String get notificationsGenerateTestData;
+
+  /// No description provided for @notificationsTestDataGenerated.
+  ///
+  /// In es, this message translates to:
+  /// **'Creadas: {invitations} invitaciones, {pending} eventos correo, {app} notificaciones'**
+  String notificationsTestDataGenerated(int invitations, int pending, int app);
 
   /// Título pantalla buzón de eventos pendientes
   ///
@@ -1730,6 +1796,12 @@ abstract class AppLocalizations {
   /// **'Tienes {count} invitación(es) pendiente(s)'**
   String dashboardInvitationsPendingCount(int count);
 
+  /// Enlace en W29 para abrir lista de notificaciones
+  ///
+  /// In es, this message translates to:
+  /// **'Ver notificaciones'**
+  String get dashboardMessageCenterOpenNotifications;
+
   /// No description provided for @dashboardInvitationTokenHint.
   ///
   /// In es, this message translates to:
@@ -1909,6 +1981,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Selecciona un plan para ver las estadísticas'**
   String get dashboardSelectPlanToSeeStats;
+
+  /// No description provided for @dashboardSelectPlanToSeeNotifications.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un plan para ver sus notificaciones'**
+  String get dashboardSelectPlanToSeeNotifications;
 
   /// No description provided for @planCalendarEmpty.
   ///

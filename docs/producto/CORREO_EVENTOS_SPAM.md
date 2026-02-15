@@ -9,7 +9,7 @@
 
 - **Criterio:** Solo se aceptan y procesan correos cuyo **remitente (From)** coincida con un email de un **usuario registrado** en la plataforma (cuenta existente y verificada, según política actual).
 - **Objetivo:** Evitar spam y uso anónimo; solo el propio usuario puede crear eventos vía correo con su identidad.
-- **Decisión:** De momento se acepta **también alias** (ej. Gmail `usuario+alias@gmail.com`) para facilitar pruebas. En el futuro se eliminará esta opción y solo se aceptará el email principal del usuario (ver tarea T216).
+- **Decisión:** Solo se acepta el **email principal** del usuario registrado (T216 completada). No se aceptan alias (ej. Gmail `usuario+alias@gmail.com`).
   - Correos con `From` no registrado: no procesar; **no se envía respuesta** (para no revelar la dirección).
   - **Registro:** sí, se guardan datos de intentos rechazados para depuración (sección 5).
 
@@ -46,7 +46,7 @@
 
 | Tema | Decisión |
 |------|----------|
-| Verificación de From | De momento **email principal + alias** (para pruebas). Futuro: solo email principal (T216). |
+| Verificación de From | **Solo email principal** del usuario registrado (T216). No alias. |
 | Rate limit | **50 correos/día** por usuario. Al superar: rechazar y **avisar al usuario**. |
 | Lista blanca beta | **No.** Cualquier usuario registrado puede usar el reenvío (con rate limit). |
 | Respuesta a From no registrado | **No se responde** (no revelar dirección). |

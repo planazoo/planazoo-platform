@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
@@ -7,6 +8,7 @@ import 'package:unp_calendario/features/calendar/domain/models/participant_track
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_styles.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_accommodation_logic.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
@@ -130,8 +132,16 @@ class CalendarTracks extends ConsumerWidget {
   Color _getHeaderColor(dynamic column) {
     final dayData = column as Map<String, dynamic>;
     final isEmpty = dayData['isEmpty'] as bool;
-    // Estilo base: fondo oscuro, sin verde
-    return isEmpty ? Colors.grey.shade800.withOpacity(0.3) : Colors.grey.shade800;
+    final actualDayIndex = dayData['index'] as int;
+    final dayDate = plan.startDate.add(Duration(days: actualDayIndex - 1));
+    final now = DateTime.now();
+    final isToday = dayDate.year == now.year &&
+        dayDate.month == now.month &&
+        dayDate.day == now.day;
+    // Hoy: fondo un poco más claro para mejor contraste; vacío: más tenue
+    if (isEmpty) return Colors.grey.shade800.withOpacity(0.3);
+    if (isToday) return Colors.grey.shade700;
+    return Colors.grey.shade800;
   }
 
   /// Construye el contenido del header
@@ -142,34 +152,48 @@ class CalendarTracks extends ConsumerWidget {
     final participants = dayData['participants'] as List<ParticipantTrack>;
     
     if (isEmpty) {
-      return const Text(
+      return Text(
         'Vacío',
-        style: TextStyle(fontSize: 10, color: Colors.grey),
+        style: GoogleFonts.poppins(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey.shade400,
+        ),
       );
     }
     
     // Calcular la fecha de este día del plan
     final dayDate = plan.startDate.add(Duration(days: actualDayIndex - 1));
     final formattedDate = '${dayDate.day}/${dayDate.month}';
+    final now = DateTime.now();
+    final isToday = dayDate.year == now.year &&
+        dayDate.month == now.month &&
+        dayDate.day == now.day;
     
     // Obtener el nombre del día de la semana (traducible)
     final dayOfWeek = DateFormat.E().format(dayDate); // 'lun', 'mar', etc.
     
-    // Generar iniciales de participantes
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Día $actualDayIndex - $dayOfWeek $formattedDate',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 9,
+    final dayHeaderStyle = CalendarStyles.getDayHeaderStyle(isToday: isToday)
+        .copyWith(fontSize: 11, fontWeight: FontWeight.w600);
+    
+    // Generar iniciales de participantes (padding para legibilidad)
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Día $actualDayIndex - $dayOfWeek $formattedDate',
+            style: dayHeaderStyle,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        const SizedBox(height: 2),
-        // Mini headers de participantes
-        _buildMiniParticipantHeaders(participants),
-      ],
+          const SizedBox(height: 2),
+          // Mini headers de participantes
+          _buildMiniParticipantHeaders(participants),
+        ],
+      ),
     );
   }
 

@@ -3,22 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme/color_scheme.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
-import '../../features/notifications/domain/models/notification_model.dart';
+import '../../features/notifications/domain/models/unified_notification.dart';
 import '../../features/notifications/presentation/providers/notification_providers.dart';
-import '../../features/calendar/domain/services/invitation_service.dart';
 import '../../features/calendar/presentation/providers/invitation_providers.dart';
-import '../../features/calendar/presentation/providers/plan_participation_providers.dart';
-import '../../shared/utils/date_formatter.dart';
-import '../../shared/services/logger_service.dart';
+import '../../features/notifications/domain/services/test_notification_generator.dart';
+import 'wd_unified_notification_item.dart';
+import '../../l10n/app_localizations.dart';
 
-/// Diálogo que muestra la lista de notificaciones del usuario
+/// Diálogo que muestra la lista global de notificaciones (campana).
 class NotificationListDialog extends ConsumerWidget {
   const NotificationListDialog({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notificationsAsync = ref.watch(notificationsProvider);
+    final listAsync = ref.watch(globalNotificationsListProvider);
+    final filterIndex = ref.watch(globalNotificationsFilterProvider);
     final currentUser = ref.watch(currentUserProvider);
+    final loc = AppLocalizations.of(context)!;
 
     return Dialog(
       backgroundColor: Colors.grey.shade900,
@@ -44,7 +45,7 @@ class NotificationListDialog extends ConsumerWidget {
               child: Row(
                 children: [
                   Text(
-                    'Notificaciones',
+                    loc.notificationsTitle,
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -61,7 +62,7 @@ class NotificationListDialog extends ConsumerWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Todas las notificaciones marcadas como leídas',
+                                loc.notificationsMarkAllAsRead,
                                 style: GoogleFonts.poppins(),
                               ),
                               backgroundColor: Colors.grey.shade800,
@@ -70,7 +71,7 @@ class NotificationListDialog extends ConsumerWidget {
                         }
                       },
                       child: Text(
-                        'Marcar todas como leídas',
+                        loc.notificationsMarkAllAsRead,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: AppColorScheme.color2,
@@ -84,11 +85,37 @@ class NotificationListDialog extends ConsumerWidget {
                 ],
               ),
             ),
-            // Lista de notificaciones
+            // Filtros
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Row(
+                children: [
+                  _FilterChip(
+                    label: loc.notificationsFilterAll,
+                    selected: filterIndex == 0,
+                    onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 0,
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: loc.notificationsFilterAction,
+                    selected: filterIndex == 1,
+                    onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 1,
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterChip(
+                    label: loc.notificationsFilterInfo,
+                    selected: filterIndex == 2,
+                    onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 2,
+                  ),
+                ],
+              ),
+            ),
+            // Lista
             Flexible(
-              child: notificationsAsync.when(
-                data: (notifications) {
-                  if (notifications.isEmpty) {
+              child: listAsync.when(
+                data: (list) {
+                  final filtered = _filterList(list, filterIndex);
+                  if (filtered.isEmpty) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(32),
@@ -102,7 +129,7 @@ class NotificationListDialog extends ConsumerWidget {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'No hay notificaciones',
+                              loc.notificationsEmpty,
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 color: Colors.grey.shade400,
@@ -113,31 +140,21 @@ class NotificationListDialog extends ConsumerWidget {
                       ),
                     );
                   }
-
                   return ListView.builder(
                     shrinkWrap: true,
-                    itemCount: notifications.length,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filtered.length,
                     itemBuilder: (context, index) {
-                      final notification = notifications[index];
-                      return _NotificationItem(
-                        notification: notification,
-                        onTap: () {
-                          _handleNotificationTap(context, ref, notification);
+                      final n = filtered[index];
+                      return UnifiedNotificationItem(
+                        notification: n,
+                        userId: currentUser?.id,
+                        authUid: ref.read(authServiceProvider).currentUser?.uid,
+                        onInvitationResponded: () => ref.invalidate(userPendingInvitationsProvider),
+                        onPendingEventAction: () {
+                          ref.invalidate(globalNotificationsListProvider);
+                          ref.invalidate(globalUnreadCountProvider);
                         },
-                        onDelete: currentUser != null
-                            ? () async {
-                                final notificationService = ref.read(notificationServiceProvider);
-                                await notificationService.deleteNotification(
-                                  currentUser.id,
-                                  notification.id!,
-                                );
-                              }
-                            : null,
-                        onAction: currentUser != null
-                            ? (action) {
-                                _handleNotificationAction(context, ref, notification, action);
-                              }
-                            : null,
                       );
                     },
                   );
@@ -161,11 +178,12 @@ class NotificationListDialog extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Error cargando notificaciones',
+                          'Error: $error',
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             color: Colors.grey.shade400,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
@@ -173,372 +191,88 @@ class NotificationListDialog extends ConsumerWidget {
                 ),
               ),
             ),
+            // Botón generar datos de prueba
+            if (currentUser != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final authUid = ref.read(authServiceProvider).currentUser?.uid;
+                    if (authUid == null) return;
+                    final generator = TestNotificationGenerator();
+                    final result = await generator.generate(
+                      userId: currentUser!.id,
+                      authUid: authUid,
+                      userEmail: currentUser.email ?? '',
+                    );
+                    if (!context.mounted) return;
+                    ref.invalidate(userPendingInvitationsProvider);
+                    ref.invalidate(globalNotificationsListProvider);
+                    ref.invalidate(globalUnreadCountProvider);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          loc.notificationsTestDataGenerated(
+                            result.invitations,
+                            result.pendingEvents,
+                            result.appNotifications,
+                          ),
+                        ),
+                        backgroundColor: Colors.green.shade800,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_circle_outline, size: 18),
+                  label: Text(loc.notificationsGenerateTestData),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColorScheme.color2,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _handleNotificationTap(
-    BuildContext context,
-    WidgetRef ref,
-    NotificationModel notification,
-  ) async {
-    final currentUser = ref.read(currentUserProvider);
-    if (currentUser == null) return;
-
-    // Marcar como leída
-    if (!notification.isRead) {
-      final notificationService = ref.read(notificationServiceProvider);
-      await notificationService.markAsRead(
-        currentUser.id,
-        notification.id!,
-      );
-    }
-
-    // Navegar según el tipo de notificación
-    if (notification.planId != null) {
-      // TODO: Navegar al plan correspondiente
-      // Por ahora, solo cerramos el diálogo
-    }
-    
-    Navigator.of(context).pop();
+  static List<UnifiedNotification> _filterList(List<UnifiedNotification> list, int filterIndex) {
+    if (filterIndex == 1) return list.where((n) => n.requiresAction).toList();
+    if (filterIndex == 2) return list.where((n) => !n.requiresAction).toList();
+    return list;
   }
 
-  Future<void> _handleNotificationAction(
-    BuildContext context,
-    WidgetRef ref,
-    NotificationModel notification,
-    String action,
-  ) async {
-    final currentUser = ref.read(currentUserProvider);
-    if (currentUser == null) return;
-
-    try {
-      if (notification.type == NotificationType.invitation) {
-        final token = notification.data?['token'] as String?;
-        if (token == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error: Token de invitación no encontrado',
-                style: GoogleFonts.poppins(),
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-          return;
-        }
-
-        final invitationService = ref.read(invitationServiceProvider);
-        if (action == 'accept') {
-          final success = await invitationService.acceptInvitationByToken(
-            token,
-            currentUser.id,
-          );
-
-          if (context.mounted) {
-            if (success) {
-              // Marcar notificación como leída
-              final notificationService = ref.read(notificationServiceProvider);
-              await notificationService.markAsRead(
-                currentUser.id,
-                notification.id!,
-              );
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '✅ Invitación aceptada',
-                    style: GoogleFonts.poppins(),
-                  ),
-                  backgroundColor: Colors.green,
-                ),
-              );
-
-              Navigator.of(context).pop();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '❌ Error al aceptar la invitación',
-                    style: GoogleFonts.poppins(),
-                  ),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        } else if (action == 'reject') {
-          final success = await invitationService.rejectInvitationByToken(token);
-
-          if (context.mounted) {
-            if (success) {
-              // Marcar notificación como leída
-              final notificationService = ref.read(notificationServiceProvider);
-              await notificationService.markAsRead(
-                currentUser.id,
-                notification.id!,
-              );
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Invitación rechazada',
-                    style: GoogleFonts.poppins(),
-                  ),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-
-              Navigator.of(context).pop();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '❌ Error al rechazar la invitación',
-                    style: GoogleFonts.poppins(),
-                  ),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        }
-      }
-    } catch (e) {
-      LoggerService.error(
-        'Error handling notification action: $action',
-        context: 'NOTIFICATION_DIALOG',
-        error: e,
-      );
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error: $e',
-              style: GoogleFonts.poppins(),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
 }
 
-/// Widget para un item de notificación
-class _NotificationItem extends StatelessWidget {
-  final NotificationModel notification;
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
   final VoidCallback onTap;
-  final VoidCallback? onDelete;
-  final Function(String)? onAction;
 
-  const _NotificationItem({
-    required this.notification,
+  const _FilterChip({
+    required this.label,
+    required this.selected,
     required this.onTap,
-    this.onDelete,
-    this.onAction,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isUnread = !notification.isRead;
-    final typeIcon = _getTypeIcon(notification.type);
-    final typeColor = _getTypeColor(notification.type);
-
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isUnread ? Colors.grey.shade800.withOpacity(0.5) : Colors.transparent,
-          border: Border(
-            bottom: BorderSide(
-              color: Colors.grey.shade700,
-              width: 0.5,
-            ),
-          ),
+          color: selected ? AppColorScheme.color2 : Colors.grey.shade800,
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icono
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: typeColor.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                typeIcon,
-                color: typeColor,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Contenido
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          notification.title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: isUnread ? FontWeight.w600 : FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      if (isUnread)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: AppColorScheme.color2,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    notification.body,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.grey.shade400,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    DateFormatter.formatDateTime(notification.createdAt),
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                  // Botones de acción según el tipo
-                  if (_hasActions(notification.type) && onAction != null) ...[
-                    const SizedBox(height: 12),
-                    _buildActionButtons(),
-                  ],
-                ],
-              ),
-            ),
-            // Botón eliminar
-            if (onDelete != null)
-              IconButton(
-                icon: Icon(
-                  Icons.close,
-                  size: 18,
-                  color: Colors.grey.shade500,
-                ),
-                onPressed: onDelete,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-          ],
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: selected ? Colors.white : Colors.grey.shade400,
+          ),
         ),
       ),
     );
   }
-
-  bool _hasActions(NotificationType type) {
-    return type == NotificationType.invitation;
-  }
-
-  Widget _buildActionButtons() {
-    if (notification.type == NotificationType.invitation) {
-      return Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => onAction?.call('reject'),
-              icon: const Icon(Icons.close, size: 16),
-              label: Text(
-                'Rechazar',
-                style: GoogleFonts.poppins(fontSize: 12),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red.shade300,
-                side: BorderSide(color: Colors.red.shade300),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => onAction?.call('accept'),
-              icon: const Icon(Icons.check, size: 16),
-              label: Text(
-                'Aceptar',
-                style: GoogleFonts.poppins(fontSize: 12),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColorScheme.color2,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-    return const SizedBox.shrink();
-  }
-
-  IconData _getTypeIcon(NotificationType type) {
-    switch (type) {
-      case NotificationType.announcement:
-        return Icons.campaign;
-      case NotificationType.eventCreated:
-      case NotificationType.eventUpdated:
-      case NotificationType.eventDeleted:
-        return Icons.event;
-      case NotificationType.invitation:
-      case NotificationType.invitationAccepted:
-      case NotificationType.invitationRejected:
-        return Icons.mail;
-      case NotificationType.planStateChanged:
-        return Icons.flag;
-      case NotificationType.participantAdded:
-      case NotificationType.participantRemoved:
-        return Icons.person;
-      case NotificationType.alarm:
-        return Icons.alarm;
-    }
-  }
-
-  Color _getTypeColor(NotificationType type) {
-    switch (type) {
-      case NotificationType.announcement:
-        return AppColorScheme.color2;
-      case NotificationType.eventCreated:
-      case NotificationType.eventUpdated:
-        return Colors.blue;
-      case NotificationType.eventDeleted:
-        return Colors.red;
-      case NotificationType.invitation:
-      case NotificationType.invitationAccepted:
-        return Colors.green;
-      case NotificationType.invitationRejected:
-        return Colors.orange;
-      case NotificationType.planStateChanged:
-        return Colors.purple;
-      case NotificationType.participantAdded:
-        return Colors.teal;
-      case NotificationType.participantRemoved:
-        return Colors.red;
-      case NotificationType.alarm:
-        return Colors.orange;
-    }
-  }
 }
+

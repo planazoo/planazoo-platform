@@ -51,6 +51,7 @@
 - **`docs/configuracion/CONTEXT.md`** ⭐ **OBLIGATORIO** - Normas del proyecto, flujo de trabajo, reglas de código
 - **`docs/guias/PROMPT_BASE.md`** ⭐ **OBLIGATORIO** - Metodología de trabajo, patrones de comunicación
 - **`docs/configuracion/TESTING_CHECKLIST.md`** - Checklist exhaustivo de pruebas
+- **`docs/configuracion/IMAGENES_PLAN_FIREBASE.md`** - Imágenes de perfil de plan (Storage, bucket, CORS, código). Ver también `docs/configuracion/STORAGE_CORS.md` para CORS en web.
 
 ### 2. Documentos de Arquitectura
 - **`docs/arquitectura/ARCHITECTURE_DECISIONS.md`** - Decisiones arquitectónicas fundamentales
@@ -189,16 +190,36 @@
 lib/
 ├── features/          # Features principales
 │   ├── auth/         # Autenticación
-│   ├── calendar/     # Calendario, eventos, planes
-│   └── payments/     # Presupuesto y pagos
-├── shared/           # Código compartido
-│   ├── models/      # Modelos compartidos
-│   ├── services/     # Servicios compartidos
-│   └── widgets/     # Widgets compartidos
-├── pages/            # Páginas principales
-├── widgets/          # Widgets de UI
-└── l10n/             # Localización (español/inglés)
+│   ├── calendar/     # Calendario, eventos, planes, invitaciones
+│   ├── notifications/  # Notificaciones unificadas (campana, W20)
+│   ├── payments/     # Presupuesto y pagos
+│   ├── stats/        # Estadísticas de plan
+│   ├── chat/         # Mensajes de chat por plan
+│   ├── offline/      # Sincronización y offline (parcial)
+│   ├── language/     # Idioma y persistencia
+│   ├── security/     # Validación, sanitización, rate limiting
+│   └── testing/      # Generadores de datos de prueba
+├── shared/           # Código compartido (modelos, servicios, widgets)
+├── app/               # Tema, rutas, configuración app
+├── pages/             # Páginas principales (dashboard, perfil, etc.)
+├── widgets/           # Widgets de UI (dashboard, plan, eventos, notificaciones)
+└── l10n/              # Localización (español/inglés)
 ```
+
+### Mapa de módulos → documentación
+
+| Carpeta / módulo | Documentación principal |
+|------------------|-------------------------|
+| `lib/features/auth/` | [FLUJO_CRUD_USUARIOS](../flujos/FLUJO_CRUD_USUARIOS.md), [GUIA_SEGURIDAD](../guias/GUIA_SEGURIDAD.md) |
+| `lib/features/calendar/` | [FLUJO_CRUD_PLANES](../flujos/FLUJO_CRUD_PLANES.md), [FLUJO_CRUD_EVENTOS](../flujos/FLUJO_CRUD_EVENTOS.md), [FLUJO_CRUD_ALOJAMIENTOS](../flujos/FLUJO_CRUD_ALOJAMIENTOS.md), [FLUJO_GESTION_PARTICIPANTES](../flujos/FLUJO_GESTION_PARTICIPANTES.md), [IMAGENES_PLAN_FIREBASE.md](./IMAGENES_PLAN_FIREBASE.md) |
+| `lib/features/notifications/` | [NOTIFICACIONES_ESPECIFICACION](../producto/NOTIFICACIONES_ESPECIFICACION.md), [FLUJO_INVITACIONES_NOTIFICACIONES](../flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md) |
+| `lib/features/payments/` | [FLUJO_PRESUPUESTO_PAGOS](../flujos/FLUJO_PRESUPUESTO_PAGOS.md) |
+| `lib/features/offline/` | [ARCHITECTURE_DECISIONS](../arquitectura/ARCHITECTURE_DECISIONS.md) (Offline First), [TESTING_OFFLINE_FIRST](../testing/TESTING_OFFLINE_FIRST.md) |
+| `lib/shared/` | Modelos y servicios compartidos; ver flujos según dominio (permisos, roles, etc.) |
+| `lib/app/` | [GUIA_UI](../guias/GUIA_UI.md) (tema, colores, tipografía) |
+| `lib/pages/` | [NOMENCLATURA_UI](./NOMENCLATURA_UI.md), [Documentación de Widgets](../ux/pages/) (W1–W30) |
+| `lib/widgets/` | [GUIA_UI](../guias/GUIA_UI.md), [plan_image_management](../ux/plan_image_management.md), [ux/pages/](../ux/pages/) |
+| `lib/l10n/` | Claves en `app_es.arb` / `app_en.arb`; nunca hardcodear textos |
 
 ### Configuración de Desarrollo
 - **Ruta Flutter (Windows):** `C:\Users\cclaraso\Downloads\flutter`

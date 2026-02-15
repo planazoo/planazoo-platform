@@ -501,17 +501,12 @@ function normalizeEmailAndBase(email) {
   return { normalized, base };
 }
 
-/** Busca userId por email (coincidencia exacta o base para alias Gmail). */
+/** Busca userId por email. Solo acepta el email principal del usuario (T216: no se aceptan alias como user+alias@gmail.com). */
 async function findUserIdByEmail(db, fromEmail) {
-  const { normalized, base } = normalizeEmailAndBase(fromEmail);
-  const usersRef = db.collection(USERS_COLLECTION);
-  let snap = await usersRef.where('email', '==', normalized).limit(1).get();
-  if (!snap.empty) return snap.docs[0].id;
-  if (base !== normalized) {
-    snap = await usersRef.where('email', '==', base).limit(1).get();
-    if (!snap.empty) return snap.docs[0].id;
-  }
-  return null;
+  const normalized = (fromEmail || '').toLowerCase().trim();
+  if (!normalized) return null;
+  const snap = await db.collection(USERS_COLLECTION).where('email', '==', normalized).limit(1).get();
+  return snap.empty ? null : snap.docs[0].id;
 }
 
 /** Cuenta cuántos pending_email_events ha creado el usuario desde medianoche UTC (hoy). */

@@ -307,490 +307,467 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     final emailController = TextEditingController();
     final messageController = TextEditingController();
     String role = 'participant';
+    String? errorMessage;
+    bool isLoading = false;
+    bool showPendingOptions = false;
+    PlanInvitation? pendingInvitation;
+    final loc = AppLocalizations.of(context);
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return Theme(
           data: AppTheme.darkTheme,
-          child: AlertDialog(
-            backgroundColor: Colors.grey.shade800,
-            title: Text(
-              'Invitar por email',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade800, // Color sólido, sin gradiente
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.grey.shade700.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: TextField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        labelStyle: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.grey.shade400,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        hintText: 'usuario@correo.com',
-                        hintStyle: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.grey.shade500,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: AppColorScheme.color2,
-                            width: 2.5,
+          child: StatefulBuilder(
+            builder: (context, setInnerState) {
+              return AlertDialog(
+                backgroundColor: Colors.grey.shade800,
+                title: Text(
+                  'Invitar por email',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (showPendingOptions && pendingInvitation != null) ...[
+                        Text(
+                          'Ya existe una invitación pendiente para ${emailController.text.trim()}.\n\n¿Qué deseas hacer?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.white,
                           ),
                         ),
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade800, // Color sólido, sin gradiente
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.grey.shade700.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: DropdownButtonFormField<String>(
-                      value: role,
-                      dropdownColor: Colors.grey.shade800,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'participant',
-                          child: Text(
-                            'Participante',
+                      ] else ...[
+                        if (errorMessage != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade900.withOpacity(0.4),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.red.shade700),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline, size: 20, color: Colors.red.shade300),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    errorMessage!,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: Colors.red.shade200,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        if (isLoading) ...[
+                          const Center(child: CircularProgressIndicator()),
+                          const SizedBox(height: 12),
+                        ],
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade800,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.grey.shade700.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: TextField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            enabled: !isLoading,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              labelStyle: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.grey.shade400,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              hintText: 'usuario@correo.com',
+                              hintStyle: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: Colors.grey.shade500,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: AppColorScheme.color2,
+                                  width: 2.5,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade800,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.grey.shade700.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: DropdownButtonFormField<String>(
+                            value: role,
+                            dropdownColor: Colors.grey.shade800,
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
+                            items: [
+                              DropdownMenuItem(
+                                value: 'participant',
+                                child: Text(
+                                  'Participante',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'observer',
+                                child: Text(
+                                  'Observador',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: isLoading ? null : (v) => role = v ?? 'participant',
+                            decoration: InputDecoration(
+                              labelText: 'Rol',
+                              labelStyle: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.grey.shade400,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: AppColorScheme.color2,
+                                  width: 2.5,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                            ),
                           ),
                         ),
-                        DropdownMenuItem(
-                          value: 'observer',
-                          child: Text(
-                            'Observador',
+                        const SizedBox(height: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade800,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.grey.shade700.withOpacity(0.5),
+                              width: 1,
+                            ),
+                          ),
+                          child: TextField(
+                            controller: messageController,
+                            maxLines: 3,
+                            enabled: !isLoading,
                             style: GoogleFonts.poppins(
-                              fontSize: 13,
+                              fontSize: 14,
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
+                            ),
+                            decoration: InputDecoration(
+                              labelText: 'Mensaje (opcional)',
+                              labelStyle: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.grey.shade400,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                  color: AppColorScheme.color2,
+                                  width: 2.5,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
                             ),
                           ),
                         ),
                       ],
-                      onChanged: (v) {
-                        role = v ?? 'participant';
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Rol',
-                        labelStyle: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.grey.shade400,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: AppColorScheme.color2,
-                            width: 2.5,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade800, // Color sólido, sin gradiente
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.grey.shade700.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: TextField(
-                      controller: messageController,
-                      maxLines: 3,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Mensaje (opcional)',
-                        labelStyle: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.grey.shade400,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: AppColorScheme.color2,
-                            width: 2.5,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(
-                  'Cancelar',
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey.shade400,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColorScheme.color2,
-                      AppColorScheme.color2.withOpacity(0.85),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColorScheme.color2.withOpacity(0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                      spreadRadius: 0,
-                    ),
-                  ],
                 ),
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    'Enviar invitación',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
+                actions: showPendingOptions && pendingInvitation != null
+                    ? [
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(false),
+                          child: Text(
+                            'Cerrar',
+                            style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 14),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            final cancelled = await ref.read(invitationServiceProvider).cancelInvitation(pendingInvitation!.id!);
+                            if (!context.mounted) return;
+                            if (cancelled) {
+                              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                SnackBar(
+                                  content: Text('✅ Invitación anterior cancelada', style: GoogleFonts.poppins(color: Colors.white)),
+                                  backgroundColor: Colors.orange.shade600,
+                                ),
+                              );
+                            }
+                            setInnerState(() {
+                              showPendingOptions = false;
+                              pendingInvitation = null;
+                              errorMessage = null;
+                            });
+                          },
+                          child: Text(
+                            'Cancelar invitación anterior',
+                            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            ScaffoldMessenger.of(dialogContext).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '✅ Re-enviando invitación a ${emailController.text.trim()}',
+                                  style: GoogleFonts.poppins(color: Colors.white),
+                                ),
+                                backgroundColor: AppColorScheme.color2,
+                              ),
+                            );
+                            Navigator.of(dialogContext).pop(true);
+                            await _showInvitationLink(pendingInvitation!.id!);
+                            if (mounted) setState(() {});
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColorScheme.color2,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: Text('Re-enviar invitación', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                        ),
+                      ]
+                    : [
+                        TextButton(
+                          onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(false),
+                          child: Text(
+                            'Cancelar',
+                            style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 14),
+                          ),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                AppColorScheme.color2,
+                                AppColorScheme.color2.withOpacity(0.85),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColorScheme.color2.withOpacity(0.4),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                                spreadRadius: 0,
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: isLoading
+                                ? null
+                                : () async {
+                                    final email = emailController.text.trim();
+                                    if (email.isEmpty) {
+                                      setInnerState(() {
+                                        errorMessage = loc?.emailRequired ?? 'El email es obligatorio';
+                                      });
+                                      return;
+                                    }
+                                    if (!Validator.isValidEmail(email)) {
+                                      setInnerState(() {
+                                        errorMessage = loc?.emailInvalid ?? 'El formato del email no es válido';
+                                      });
+                                      return;
+                                    }
+                                    setInnerState(() {
+                                      errorMessage = null;
+                                      isLoading = true;
+                                    });
+                                    try {
+                                      final currentUser = ref.read(currentUserProvider);
+                                      final userService = ref.read(userServiceProvider);
+                                      final participationService = ref.read(planParticipationServiceProvider);
+                                      final normalizedEmail = email.toLowerCase().trim();
+                                      final existingUser = await userService.getUserByEmail(normalizedEmail);
+                                      if (existingUser != null) {
+                                        final isAlreadyParticipant = await participationService.isUserParticipant(widget.plan.id!, existingUser.id);
+                                        if (isAlreadyParticipant) {
+                                          setInnerState(() {
+                                            errorMessage = 'Este usuario ya es participante del plan';
+                                            isLoading = false;
+                                          });
+                                          return;
+                                        }
+                                      }
+                                      final existingInv = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(widget.plan.id!, email);
+                                      if (existingInv != null) {
+                                        setInnerState(() {
+                                          pendingInvitation = existingInv;
+                                          showPendingOptions = true;
+                                          isLoading = false;
+                                          errorMessage = null;
+                                        });
+                                        return;
+                                      }
+                                      final invitationId = await ref.read(invitationServiceProvider).createInvitation(
+                                        planId: widget.plan.id!,
+                                        email: email,
+                                        invitedBy: currentUser?.id,
+                                        role: role,
+                                        customMessage: messageController.text.trim().isEmpty ? null : messageController.text.trim(),
+                                      );
+                                      if (invitationId == null) {
+                                        final existingCheck = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(widget.plan.id!, email);
+                                        setInnerState(() {
+                                          errorMessage = existingCheck != null
+                                              ? 'Ya existe una invitación pendiente para este email'
+                                              : 'No se pudo crear la invitación';
+                                          isLoading = false;
+                                        });
+                                        return;
+                                      }
+                                      final invitation = await ref.read(invitationServiceProvider).getInvitationById(invitationId);
+                                      if (invitation != null) {
+                                        final existingUserForNotif = await userService.getUserByEmail(normalizedEmail);
+                                        if (existingUserForNotif != null) {
+                                          final notificationHelper = NotificationHelper();
+                                          await notificationHelper.notifyInvitationCreated(
+                                            planId: widget.plan.id!,
+                                            invitedUserId: existingUserForNotif.id,
+                                            invitedEmail: email,
+                                            inviterUserId: currentUser?.id ?? '',
+                                            invitationToken: invitation.token,
+                                            planName: widget.plan.name,
+                                            inviterName: currentUser?.displayName ?? currentUser?.email ?? 'Un usuario',
+                                          );
+                                        }
+                                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                          SnackBar(
+                                            content: Text('✅ Invitación creada para $email', style: GoogleFonts.poppins(color: Colors.white)),
+                                            backgroundColor: Colors.green.shade600,
+                                          ),
+                                        );
+                                        Navigator.of(dialogContext).pop(true);
+                                        await _showInvitationLink(invitationId);
+                                        if (mounted) setState(() {});
+                                      } else {
+                                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                                          SnackBar(
+                                            content: Text('✅ Usuario $email añadido al plan', style: GoogleFonts.poppins(color: Colors.white)),
+                                            backgroundColor: Colors.green.shade600,
+                                          ),
+                                        );
+                                        Navigator.of(dialogContext).pop(true);
+                                        if (mounted) setState(() {});
+                                      }
+                                    } catch (e) {
+                                      LoggerService.error('Error creating email invitation', context: 'ParticipantsScreen', error: e);
+                                      setInnerState(() {
+                                        errorMessage = 'Error al crear invitación: ${e.toString().replaceFirst(RegExp(r'^Exception:?\s*'), '')}';
+                                        isLoading = false;
+                                      });
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              shadowColor: Colors.transparent,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: isLoading
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    'Enviar invitación',
+                                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+                                  ),
+                          ),
+                        ),
+                      ],
+                );
+          },
+        )
+      );
       },
     );
 
-    if (result != true) return;
-
-    final email = emailController.text.trim();
-    if (email.isEmpty) {
-      final loc = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            loc?.emailRequired ?? 'El email es obligatorio',
-            style: GoogleFonts.poppins(color: Colors.white),
-          ),
-          backgroundColor: Colors.red.shade600,
-        ),
-      );
-      return;
-    }
-    
-    if (!Validator.isValidEmail(email)) {
-      final loc = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            loc?.emailInvalid ?? 'El formato del email no es válido',
-            style: GoogleFonts.poppins(color: Colors.white),
-          ),
-          backgroundColor: Colors.red.shade600,
-        ),
-      );
-      return;
-    }
-
-    try {
-      final currentUser = ref.read(currentUserProvider);
-      final userService = ref.read(userServiceProvider);
-      final participationService = ref.read(planParticipationServiceProvider);
-      
-      // Normalizar email para la búsqueda
-      final normalizedEmail = email.toLowerCase().trim();
-      
-      // Verificar si el usuario ya es participante del plan
-      final existingUser = await userService.getUserByEmail(normalizedEmail);
-      if (existingUser != null) {
-        final isAlreadyParticipant = await participationService.isUserParticipant(widget.plan.id!, existingUser.id);
-        if (isAlreadyParticipant) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Este usuario ya es participante del plan',
-                  style: GoogleFonts.poppins(color: Colors.white),
-                ),
-                backgroundColor: Colors.orange.shade600,
-              ),
-            );
-          }
-          return;
-        }
-      }
-      
-      // Verificar si ya existe una invitación pendiente para este email
-      final existingInvitation = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(
-        widget.plan.id!,
-        email,
-      );
-      
-      if (existingInvitation != null) {
-        // Ya existe una invitación pendiente, mostrar diálogo con opciones
-        if (mounted) {
-          final action = await showDialog<String>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Invitación pendiente'),
-              content: Text(
-                'Ya existe una invitación pendiente para $email.\n\n'
-                '¿Qué deseas hacer?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop('cancel'),
-                  child: const Text('Cancelar'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop('cancel_invitation'),
-                  child: const Text('Cancelar invitación anterior'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop('resend'),
-                  child: const Text('Re-enviar invitación'),
-                ),
-              ],
-            ),
-          );
-          
-          if (action == 'cancel') {
-            return; // Usuario canceló
-          }
-          
-          if (action == 'cancel_invitation') {
-            // Cancelar la invitación anterior
-            final cancelled = await ref.read(invitationServiceProvider).cancelInvitation(existingInvitation.id!);
-            if (cancelled && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '✅ Invitación anterior cancelada',
-                    style: GoogleFonts.poppins(color: Colors.white),
-                  ),
-                  backgroundColor: Colors.orange.shade600,
-                ),
-              );
-            }
-            // Continuar para crear una nueva invitación
-          } else if (action == 'resend') {
-            // Re-enviar: mostrar el link de la invitación existente
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '✅ Re-enviando invitación a $email',
-                    style: GoogleFonts.poppins(color: Colors.white),
-                  ),
-                  backgroundColor: AppColorScheme.color2,
-                ),
-              );
-              await _showInvitationLink(existingInvitation.id!);
-              setState(() {});
-            }
-            return; // No crear nueva invitación, solo re-enviar
-          }
-        }
-      }
-      
-      final invitationId = await ref.read(invitationServiceProvider).createInvitation(
-        planId: widget.plan.id!,
-        email: email,
-        invitedBy: currentUser?.id,
-        role: role,
-        customMessage: messageController.text.trim().isEmpty ? null : messageController.text.trim(),
-      );
-
-      if (invitationId == null) {
-        // No se pudo crear la invitación (usuario ya participa, ya existe invitación pendiente, u otro error)
-        // Verificar el motivo específico
-        final existingInvitationCheck = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(
-          widget.plan.id!,
-          email,
-        );
-        
-        if (existingInvitationCheck != null && mounted) {
-          // Ya existe una invitación pendiente (caso edge: se creó entre la verificación y la creación)
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '⚠️ Ya existe una invitación pendiente para este email',
-                style: GoogleFonts.poppins(color: Colors.white),
-              ),
-              backgroundColor: Colors.orange.shade600,
-            ),
-          );
-        } else if (mounted) {
-          // Otro error (probablemente usuario ya participa)
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '❌ No se pudo crear la invitación',
-                style: GoogleFonts.poppins(color: Colors.white),
-              ),
-              backgroundColor: Colors.red.shade600,
-            ),
-          );
-        }
-        return;
-      }
-
-      // Verificar si realmente se creó una invitación (no una participación existente)
-      // Las invitaciones tienen IDs que empiezan con ciertos caracteres o podemos verificar en la BD
-      final invitation = await ref.read(invitationServiceProvider).getInvitationById(invitationId);
-      
-      if (invitation != null && mounted) {
-        // Es una invitación real, crear notificación si el usuario existe en la app
-        final existingUser = await userService.getUserByEmail(email.toLowerCase().trim());
-        if (existingUser != null) {
-          // Crear notificación de invitación
-          final notificationHelper = NotificationHelper();
-          await notificationHelper.notifyInvitationCreated(
-            planId: widget.plan.id!,
-            invitedUserId: existingUser.id,
-            invitedEmail: email,
-            inviterUserId: currentUser?.id ?? '',
-            invitationToken: invitation.token,
-            planName: widget.plan.name,
-            inviterName: currentUser?.displayName ?? currentUser?.email ?? 'Un usuario',
-          );
-        }
-
-        // Mostrar mensaje de éxito y link
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✅ Invitación creada para $email',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.green.shade600,
-          ),
-        );
-        await _showInvitationLink(invitationId);
-        setState(() {}); // trigger UI refresh if needed
-      } else if (mounted) {
-        // Es una participación (usuario existente), mostrar mensaje diferente
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✅ Usuario $email añadido al plan',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.green.shade600,
-          ),
-        );
-        setState(() {}); // trigger UI refresh if needed
-      }
-    } catch (e) {
-      LoggerService.error('Error creating email invitation', context: 'ParticipantsScreen', error: e);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '❌ Error al crear invitación: $e',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
-      }
-    }
+    if (result == true && mounted) setState(() {});
   }
 
   Future<void> _acceptRejectTokenDialog() async {
@@ -2339,21 +2316,9 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         child: Scaffold(
           backgroundColor: Colors.grey.shade900,
           appBar: AppBar(
-            backgroundColor: Colors.grey.shade800,
+            backgroundColor: AppColorScheme.color2,
             foregroundColor: Colors.white,
             elevation: 0,
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-                ),
-              ),
-            ),
             title: Text(
               'Participantes • ${widget.plan.name}',
               style: GoogleFonts.poppins(

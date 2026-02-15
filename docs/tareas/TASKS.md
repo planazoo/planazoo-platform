@@ -47,26 +47,26 @@
 
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
-| **T194** | Layout W30/W31: ocultar W30 en UI, W31 hasta el final de pantalla, eliminar recuadro de color de W31. Dejar W30 en código por si se necesita. | Media |
-| **T195** | Widgets W14-W25: recuadro seleccionado con bordes superiores redondeados; icono mismo color que texto cuando seleccionado. | Media |
-| **T196** | Pantallas W14-W25: encabezado verde con título a la izquierda y espacio para más elementos (texto, botones). | Media |
-| **T197** | Barra lateral verde a todo lo alto en W4, W13, W16, W26, W27, W28, W29. | Media |
-| **T198** | Decidir estado de W29: desactivar o definir contenido. Documentar. | Baja |
-| **T199** | Vista calendario: mejorar encabezado de cada día (legibilidad, contraste). Relacionado con T182. | Media |
-| **T200** | Info plan: fecha de inicio y fin en un mismo modal. | Media |
-| **T201** | Modal nuevo plan: fechas optativas con texto "se puede rellenar más adelante". | Media |
-| **T202** | Barra de guardar cambios fija junto al título "Info plan". | Media |
-| **T203** | Corregir subida de imagen en Info plan (no funciona actualmente). | Alta |
+| ~~**T194**~~ | ~~Layout W30/W31: ocultar W30 en UI, W31 hasta el final de pantalla, eliminar recuadro de color de W31.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| ~~**T195**~~ | ~~Widgets W14-W25: recuadro seleccionado con bordes superiores redondeados; icono mismo color que texto cuando seleccionado.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| ~~**T196**~~ | ~~Pantallas W14-W25: encabezado verde con título a la izquierda y espacio para más elementos (texto, botones).~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| ~~**T197**~~ | ~~Barra lateral verde a la derecha en W4, W13, W26, W27, W28, W29.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| ~~**T198**~~ | ~~Decidir estado de W29: desactivar o definir contenido. Documentar.~~ ✅ Completada (W29 = centro de mensajes; ver COMPLETED_TASKS.md) | — |
+| ~~**T199**~~ | ~~Vista calendario: mejorar encabezado de cada día (legibilidad, contraste). Relacionado con T182.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| ~~**T200**~~ | ~~Info plan: fecha de inicio y fin en un mismo modal.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| ~~**T201**~~ | ~~Modal nuevo plan: fechas optativas con texto "se puede rellenar más adelante".~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| ~~**T202**~~ | ~~Barra de guardar cambios fija junto al título "Info plan".~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| ~~**T203**~~ | ~~Corregir subida de imagen en Info plan.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 | **T204** | Info plan: imagen a media pantalla; nombre y descripción en layout acordado. | Media |
 | **T205** | Modal cambio de estado del plan: estilo básico, restricciones en borrador, mensaje explicando implicación. | Media |
-| **T206** | Info plan: sección Información detallada en dos columnas. | Baja |
-| **T207** | Aclarar en UI qué hace la sección Avisos (tooltip o texto de ayuda). Relacionado con T105. | Baja |
+| ~~**T206**~~ | ~~Info plan: sección Información detallada en dos columnas.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| ~~**T207**~~ | ~~Aclarar en UI qué hace la sección Avisos (tooltip o texto de ayuda). Relacionado con T105.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 | **T208** | Modal evento: fecha fin por duración o manual; campo a la derecha de Duración. | Media |
-| **T209** | Botón aceptar en verde en modal evento y en selector de horas. | Media |
+| ~~**T209**~~ | ~~Botón aceptar en verde en modal evento y en selector de horas.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 | **T210** | Calendario: revisar drag and drop y desplazamiento móvil. | Media |
 | **T211** | Calendario: copiar/pegar con Ctrl+mouse; corregir colocación a la altura correcta. Complementa T35. | Media |
 | **T212** | Calendario en pantalla completa por defecto. | Media |
-| **T213** | Cards de planes: reducir tamaño y mejorar contraste en card seleccionada (texto e indicadores de estado). | Media |
+| ~~**T213**~~ | ~~Cards de planes: reducir tamaño y mejorar contraste en card seleccionada (texto e indicadores de estado).~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 
 *Nota: T214 se ha fusionado en T213 (tamaño + contraste).*
 
@@ -86,7 +86,7 @@
 | **T99** | Documentación de API del calendario. | Baja |
 | **T182** | Afinar UI de calendario en W28: celdas, tipografía, espaciado, tooltips. | Media |
 | **T215** | Mover un evento de un plan a otro: permitir cambiar el plan al que pertenece un evento (UI + lógica + permisos). Relacionado con buzón de eventos por email y asignación a plan. | Media |
-| **T216** | Eventos por correo: eliminar la opción de aceptar alias como From; solo aceptar el email principal del usuario registrado. Ver `docs/producto/CORREO_EVENTOS_SPAM.md` (de momento se aceptan alias para pruebas). | Baja |
+| ~~**T216**~~ | ~~Eventos por correo: eliminar la opción de aceptar alias como From; solo aceptar el email principal del usuario registrado.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 
 ---
 
@@ -110,7 +110,7 @@
 |--------|-------------|-----------|
 | **T159** | Corregir permisos Firestore para event_participants tras logout/login. | Alta |
 | **T160** | Mostrar "Reenviar verificación" solo cuando sea necesario. | Media |
-| **T161** | Añadir nota sobre bandeja de spam en mensaje de registro. | Baja |
+| ~~**T161**~~ | ~~Añadir nota sobre bandeja de spam en mensaje de registro.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 | **T162** | Traducir mensajes de error en auth_service (códigos en lugar de texto; UI traduce). | Media |
 | **T173** | Refinar UX de perfil: modal editar, cabecera nombre+email, foto de perfil, quitar botones obsoletos. | Media |
 | **T174** | Definir canal de soporte para cambios de email (landing/FAQ/formulario); actualizar modal perfil. | Baja |
@@ -176,7 +176,7 @@
 | **T120** | Sistema de invitaciones y confirmación de eventos (base implementada; faltan notificaciones push, etc.). | Alta |
 | **T121** | Revisión y enriquecimiento de formularios EventDialog y AccommodationDialog por tipo. | Media |
 | **T122** | Guardar plan como plantilla (local, editar, usar plantilla). | Baja |
-| **T189** | Mejorar UX del diálogo de invitaciones por email (errores dentro del modal). | Baja |
+| ~~**T189**~~ | ~~Mejorar UX del diálogo de invitaciones por email (errores dentro del modal).~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 
 ---
 

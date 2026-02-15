@@ -1633,14 +1633,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           ),
         ),
         
-        // Botón guardar (T109: Deshabilitado según estado del plan)
+        // Botón guardar / aceptar en verde (T209)
         Container(
           decoration: BoxDecoration(
-                color: AppColorScheme.color2, // Color sólido, sin gradiente
+                color: Colors.green.shade600,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: AppColorScheme.color2.withOpacity(0.4),
+                color: Colors.green.shade600.withOpacity(0.4),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
                 spreadRadius: 0,
@@ -2050,9 +2050,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   Future<void> _selectStartTime() async {
+    final greenTheme = Theme.of(context).copyWith(
+      colorScheme: Theme.of(context).colorScheme.copyWith(primary: Colors.green.shade600),
+    );
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: _selectedHour, minute: _selectedStartMinute),
+      builder: (context, child) => Theme(data: greenTheme, child: child!),
     );
     
     if (!mounted) return;

@@ -25,7 +25,6 @@ import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mod
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
-import 'package:unp_calendario/widgets/dialogs/invitation_response_dialog.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
@@ -104,9 +103,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // Variables para perspectiva de usuario
   String? _selectedPerspectiveUserId;
   String? _currentPerspectiveTimezone;
-
-  // Variable para controlar si ya se mostró el diálogo de invitación
-  bool _pendingInvitationChecked = false;
 
   @override
   void initState() {
@@ -304,11 +300,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     ref.watch(calendarNotifierProvider(calendarParams));
     
-    // Verificar si hay invitación pendiente
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkPendingInvitation(context);
-    });
-    
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
@@ -322,38 +313,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
       ),
     );
-  }
-
-  /// Verifica si hay una invitación pendiente y muestra el diálogo
-  void _checkPendingInvitation(BuildContext context) {
-    if (_pendingInvitationChecked) return; // Solo verificar una vez
-    if (widget.plan.id == null) return;
-    
-    final currentUser = ref.read(currentUserProvider);
-    if (currentUser == null) return;
-    
-    final participantsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
-    participantsAsync.whenData((participations) {
-      // Evitar verificar múltiples veces
-      _pendingInvitationChecked = true;
-      
-      try {
-        final currentUserParticipation = participations.firstWhere(
-          (p) => p.userId == currentUser.id,
-        );
-        
-        // Mostrar diálogo solo si la invitación está pendiente
-        if (currentUserParticipation.isPending) {
-          showDialog(
-            context: context,
-            barrierDismissible: false, // No cerrar con tap fuera
-            builder: (context) => InvitationResponseDialog(plan: widget.plan),
-          );
-        }
-      } catch (e) {
-        // No hay participación para el usuario actual, no hacer nada
-      }
-    });
   }
 
   /// Construye el AppBar con navegación de días

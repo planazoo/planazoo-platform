@@ -42,47 +42,45 @@ class PlanCardWidget extends ConsumerWidget {
       orElse: () => false,
     );
 
+    // T213: card más compacta; mayor contraste cuando está seleccionada
+    final textSecondary = isSelected ? Colors.white.withOpacity(0.95) : Colors.grey.shade400;
+    final textTertiary = isSelected ? Colors.white.withOpacity(0.85) : Colors.grey.shade500;
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
       decoration: BoxDecoration(
         color: isSelected
-            ? AppColorScheme.color2 // Color sólido, sin gradiente
-            : Colors.grey.shade800, // Color sólido, sin gradiente
-        borderRadius: BorderRadius.circular(14),
-        // Borde naranja si hay invitación pendiente
+            ? AppColorScheme.color2
+            : Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(12),
         border: hasPendingInvitation
-            ? Border.all(
-                color: Colors.orange.shade400,
-                width: 2,
-              )
-            : null,
+            ? Border.all(color: Colors.orange.shade400, width: 2)
+            : isSelected
+                ? Border.all(color: Colors.white.withOpacity(0.25), width: 1)
+                : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
+            color: Colors.black.withOpacity(isSelected ? 0.35 : 0.4),
+            blurRadius: isSelected ? 10 : 12,
+            offset: const Offset(0, 2),
             spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-            spreadRadius: -2,
           ),
         ],
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(8.0),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildPlanImage(),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       children: [
@@ -92,7 +90,7 @@ class PlanCardWidget extends ConsumerWidget {
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
-                              fontSize: 13,
+                              fontSize: 12,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -100,25 +98,21 @@ class PlanCardWidget extends ConsumerWidget {
                         ),
                         if (hasPendingInvitation)
                           Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            margin: const EdgeInsets.only(left: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                             decoration: BoxDecoration(
                               color: Colors.orange.shade400,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  Icons.mail_outline,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 4),
+                                Icon(Icons.mail_outline, size: 10, color: Colors.white),
+                                const SizedBox(width: 2),
                                 Text(
                                   'Invitación',
                                   style: GoogleFonts.poppins(
-                                    fontSize: 9,
+                                    fontSize: 8,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
                                   ),
@@ -127,45 +121,47 @@ class PlanCardWidget extends ConsumerWidget {
                             ),
                           ),
                         if (plan.id != null)
-                          PlanSummaryButton(plan: plan, iconOnly: true, foregroundColor: Colors.white70),
+                          PlanSummaryButton(
+                            plan: plan,
+                            iconOnly: true,
+                            foregroundColor: isSelected ? Colors.white : Colors.white70,
+                          ),
                       ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatPlanDates(),
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${plan.columnCount} días',
+                      _formatPlanDates(),
                       style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400,
+                        color: textSecondary,
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    PlanStateBadgeCompact(
-                      plan: plan,
-                      fontSize: 9,
+                    Text(
+                      '${plan.columnCount} días',
+                      style: GoogleFonts.poppins(
+                        color: textTertiary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 4),
+                    PlanStateBadgeCompact(
+                      plan: plan,
+                      fontSize: 8,
+                    ),
+                    const SizedBox(height: 2),
                     DaysRemainingIndicator(
                       plan: plan,
-                      fontSize: 9,
+                      fontSize: 8,
                       compact: true,
                       showIcon: false,
                     ),
-                    const SizedBox(height: 4),
                     Text(
                       'Participantes: $participantsCount',
                       style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400,
-                        fontSize: 9,
+                        color: textTertiary,
+                        fontSize: 8,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -188,7 +184,7 @@ class PlanCardWidget extends ConsumerWidget {
   String _formatDate(DateTime date) => DateFormatter.formatDate(date);
 
   Widget _buildPlanImage() {
-    const double imageSize = 40.0;
+    const double imageSize = 32.0;
 
     if (plan.imageUrl != null && ImageService.isValidImageUrl(plan.imageUrl)) {
       return Container(

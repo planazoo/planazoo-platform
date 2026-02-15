@@ -1,110 +1,32 @@
-# W29 - Pie de página publicitario
+# W29 - Centro de mensajes
 
 ## Descripción
-Widget de pie de página dedicado a mostrar informaciones publicitarias. Ubicado en la fila inferior del dashboard, proporciona espacio para contenido promocional o publicitario.
+Widget de la fila inferior del dashboard que actúa como **centro de mensajes**: si el usuario tiene invitaciones pendientes, muestra un mensaje y un enlace para abrir la lista de notificaciones y aceptar/rechazar. Si no hay invitaciones pendientes, el área permanece vacía (sin contenido visible).
+
+**Decisión (T198):** W29 no es pie publicitario; se define como centro de mensajes con contenido condicional (invitaciones pendientes → mensaje + enlace a notificaciones).
 
 ## Ubicación en el Grid
 - **Posición**: C2-C5, R13
 - **Dimensiones**: 4 columnas de ancho × 1 fila de alto
 - **Área**: Parte izquierda de la fila inferior del dashboard
 
-## Diseño Visual
-
-### Colores
-- **Fondo**: Gradiente igual que W1/W2 (Estilo Base)
-  - `LinearGradient` de `Colors.grey.shade800` → `Color(0xFF2C2C2C)`
-- **Borde**: Sin borde
-- **Esquinas**: Ángulo recto (sin borderRadius)
-
-### Contenido
-- **Estado actual**: Sin contenido visible
-- **Propósito**: Reservado para contenido publicitario
+## Diseño visual
+- **Fondo**: `Colors.grey.shade800` (contenedor base).
+- **Contenido**:
+  - Si **hay invitaciones pendientes**: texto tipo "Tienes X invitación(es) pendiente(s)" + botón/enlace "Ver notificaciones" que abre el diálogo de lista de notificaciones (mismo que la campana).
+  - Si **no hay invitaciones**: área vacía (sin texto ni botón).
 
 ## Funcionalidad
-- **Interacción**: Ninguna
-- **Estado**: Estático
-- **Propósito**: Área reservada para publicidad
+- **Datos**: `userPendingInvitationsProvider` (invitaciones pendientes del usuario).
+- **Acción**: "Ver notificaciones" abre `NotificationListDialog` (lista global con filtros y aceptar/rechazar invitaciones).
+- **Estado**: Condicional según existan o no invitaciones pendientes.
 
-## Implementación Técnica
+## Implementación técnica
+- **Archivo**: `lib/pages/pg_dashboard_page.dart`, método `_buildW29`.
+- **L10n**: `dashboardInvitationsPendingCount`, `dashboardMessageCenterOpenNotifications` (app_es.arb / app_en.arb).
 
-### Widget Principal
-```dart
-Widget _buildW29(double columnWidth, double rowHeight) {
-  // W29: C2-C5 (R13) - Pie de página publicitario
-  final w29X = columnWidth; // Empieza en la columna C2 (índice 1)
-  final w29Y = rowHeight * 12; // Empieza en la fila R13 (índice 12)
-  final w29Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
-  final w29Height = rowHeight; // Alto de 1 fila (R13)
-  
-  return Positioned(
-    left: w29X,
-    top: w29Y,
-    child: Container(
-      width: w29Width,
-      height: w29Height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-          // Sin borderRadius (esquinas en ángulo recto)
-          // Sin borde
-        ),
-      // Sin contenido
-    ),
-  );
-}
-```
+## Historial de decisiones
+- **T10 / inicial**: W29 como pie publicitario sin contenido.
+- **T198 / Febrero 2026**: Redefinido como centro de mensajes; contenido condicional (invitaciones pendientes + enlace a notificaciones). Documentado en este archivo.
 
-### Características Técnicas
-- **Tipo**: `Positioned` con `Container`
-- **Decoración**: Fondo color0 + borde superior color1
-- **Responsive**: Se adapta al tamaño de columnas y filas
-- **Sin interacción**: No tiene `InkWell` ni `GestureDetector`
-
-## Historial de Cambios
-
-### T10 - Implementación inicial
-- **Fecha**: Diciembre 2024
-- **Cambios**:
-  - Fondo cambiado a `AppColorScheme.color0`
-  - Añadido borde superior `AppColorScheme.color1`
-  - Eliminado contenido de prueba
-  - Eliminado borderRadius
-  - Simplificado a contenedor básico
-
-### Diciembre 2025 - Actualización a Estilo Base
-- **Cambios**:
-  - Fondo cambiado a `AppColorScheme.color2` (mismo que W1)
-  - Borde cambiado a blanco de 2px (mismo que W1)
-  - Alineado con el Estilo Base de la aplicación
-
-## Consideraciones de UX
-
-### Propósito Futuro
-- **Publicidad**: Banners, anuncios, promociones
-- **Enlaces externos**: Patrocinadores, partners
-- **Contenido promocional**: Ofertas, novedades
-
-### Diseño
-- **Consistencia**: Sigue el esquema de colores de la app
-- **Separación visual**: Borde superior para distinguir del contenido principal
-- **Preparado para contenido**: Estructura lista para futuras implementaciones
-
-## Estado Actual
-- ✅ **Implementado**: Widget básico con colores correctos
-- ✅ **Documentado**: Especificaciones completas
-- ⏳ **Pendiente**: Contenido publicitario específico (futuro)
-- ⏳ **Pendiente**: Funcionalidades publicitarias (futuro)
-
-## Notas de Desarrollo
-- El widget está preparado para recibir contenido publicitario futuro
-- Mantiene consistencia visual con el resto del dashboard
-- Sigue las especificaciones de la T10
-- El borde superior proporciona separación visual del contenido principal
-
-**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW29`. **Última actualización:** Febrero 2026
+**Implementación actual:** `lib/pages/pg_dashboard_page.dart`, método `_buildW29`.

@@ -23,6 +23,8 @@ El campo **`storageBucket`** debe coincidir con el bucket que aparece en Firebas
 
 Si el bucket en la app no coincide con el de la consola (y con el que tiene CORS), la subida en web puede quedarse colgada sin error claro.
 
+**Nota:** Si regeneras `firebase_options.dart` (p. ej. con `dart run flutterfire_cli:flutterfire configure`), comprueba que `storageBucket` siga siendo el bucket correcto; a veces la herramienta usa un valor por defecto distinto (ej. `planazoo.appspot.com`).
+
 ### 2.2 Reglas de Storage (`storage.rules`)
 
 Las reglas permiten:

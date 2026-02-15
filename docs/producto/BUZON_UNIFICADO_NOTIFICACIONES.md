@@ -1,53 +1,42 @@
 # Buzón unificado de notificaciones
 
-> Un solo lugar para invitaciones, eventos desde correo y (opcional) actividad reciente.
+> **Estado:** Sustituido por la [Especificación del sistema de notificaciones](NOTIFICACIONES_ESPECIFICACION.md).  
+> Este documento conserva el contexto histórico y enlaza la implementación actual con la especificación final.
 
-## Objetivo
+---
 
-Centralizar en **un único buzón** todo lo que requiere atención del usuario o proviene de “fuera” de la app:
+## Objetivo (histórico)
 
-- **Invitaciones a planes** (aceptar / rechazar)
-- **Eventos desde correo** (asignar a plan / descartar)
-- **Opcional:** notificaciones de actividad (evento creado, aviso, etc.) en la misma pantalla o en una pestaña
+Centralizar en un único buzón todo lo que requiere atención del usuario o proviene de "fuera" de la app: invitaciones, eventos desde correo y (opcional) actividad reciente.
 
-Así el usuario tiene un solo sitio donde mirar: “¿qué tengo pendiente?”.
+---
 
-## Estado actual
+## Decisión final (Febrero 2026)
 
-| Origen              | Dónde se muestra hoy                          |
-|---------------------|-----------------------------------------------|
-| Invitaciones        | Banner arriba del dashboard + en Participantes |
-| Eventos desde correo| Pestaña “Buzón” (W20)                         |
-| Notificaciones (app)| Diálogo “Notificaciones” (campana)            |
+La especificación cerrada está en **[NOTIFICACIONES_ESPECIFICACION.md](NOTIFICACIONES_ESPECIFICACION.md)**. Resumen:
 
-## Propuesta
+| Entrada | Contenido |
+|--------|-----------|
+| **Campana** | Lista **global**: todas las notificaciones (cronológica, filtro por acción, badge con total no leídas). |
+| **W20** | Notificaciones **del plan seleccionado** (planId = seleccionado) + sección "Eventos desde correo pendientes" para asignar a este plan. |
 
-1. **Una pantalla “Notificaciones” (buzón unificado)** con dos bloques:
-   - **Invitaciones a planes:** mismas cards que hoy (plan, inviter, aceptar/rechazar).
-   - **Eventos desde correo:** mismas cards que hoy (título, ubicación, asignar a plan / descartar).
+- W20 forma parte de W14–W25 (pestañas del plan seleccionado). Siempre hay un plan seleccionado en ese contexto.
+- Lista global: vista por defecto cronológica; opción de filtrar por "Pendientes de acción" / "Solo informativas".
 
-2. **Una sola entrada en el dashboard:**
-   - Sustituir la pestaña “Buzón” (W20) por **“Notificaciones”** que abre esta pantalla unificada.
-   - Opcional: badge en la pestaña (o en una campana) con el total: `invitaciones pendientes + eventos desde correo pendientes`.
+---
 
-3. **Banner de invitaciones:**
-   - Opción A: Quitar el banner y que todo se vea solo en el buzón unificado.
-   - Opción B: Dejar un banner breve (“Tienes X notificaciones”) que lleve a la pantalla Notificaciones.
+## Estado de implementación (pre-especificación)
 
-4. **Notificaciones de actividad** (NotificationModel: evento creado, aviso, etc.):
-   - Opción A: Tercer bloque en la misma pantalla (“Actividad reciente”).
-   - Opción B: Dejarlas solo en el diálogo de la campana por ahora.
+- **Hecho:** Pantalla unificada que mostraba invitaciones + eventos desde correo en una sola pantalla; pestaña W20 "Notificaciones" abría esa pantalla; campana abría `NotificationListDialog` (solo NotificationModel).
+- **Pendiente (según especificación):**  
+  - Campana → lista global agregada (todas las fuentes, cronológica, filtro por acción, badge total no leídas).  
+  - W20 → vista filtrada por plan seleccionado + sección eventos desde correo pendientes.  
+  - Ver [Plan de codificación – Notificaciones](NOTIFICACIONES_PLAN_CODIFICACION.md).
 
-## Implementación (resumen)
+---
 
-- Crear `WdUnifiedNotificationsScreen` que muestre:
-  - Sección “Invitaciones” usando `userPendingInvitationsProvider` y las cards actuales (o reutilizando el widget del banner).
-  - Sección “Eventos desde correo” usando `PendingEmailEventService` y las cards actuales de `WdPendingEmailEventsScreen`.
-- En el dashboard: cambiar la pestaña W20 de “Buzón” a “Notificaciones” y que apunte a esta pantalla.
-- Quitar o simplificar el banner de invitaciones según la opción elegida.
-- Traducciones: clave tipo “notificationsTab” o “inboxTab” para la pestaña.
+## Documentación relacionada
 
-## Decisiones a cerrar
-
-- ¿Quitar el banner de invitaciones y dejar solo el buzón unificado? (recomendado: sí para no duplicar.)
-- ¿Incluir en la misma pantalla las notificaciones de actividad (NotificationModel) o solo invitaciones + eventos correo? (recomendado: incluir un bloque “Actividad” si hay pocas, para tener todo en un sitio.)
+- [NOTIFICACIONES_ESPECIFICACION.md](NOTIFICACIONES_ESPECIFICACION.md) – Especificación y decisiones.
+- [NOTIFICACIONES_PLAN_CODIFICACION.md](NOTIFICACIONES_PLAN_CODIFICACION.md) – Plan de implementación.
+- [FLUJO_INVITACIONES_NOTIFICACIONES.md](../flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md) – Flujos de invitaciones y notificaciones.

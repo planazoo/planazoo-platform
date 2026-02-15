@@ -30,7 +30,6 @@ import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
-import 'package:unp_calendario/widgets/dialogs/invitation_response_dialog.dart';
 
 /// Página de calendario mobile completa
 /// Funciona como el calendario web pero adaptado para 1-3 días visibles
@@ -66,9 +65,6 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   
   // Variables para perspectiva de usuario
   String? _selectedPerspectiveUserId;
-  
-  // Flag para verificar invitación pendiente
-  bool _pendingInvitationChecked = false;
   
   // Variable para controlar sincronización durante auto-scroll
   bool _isAutoScrolling = false;
@@ -682,35 +678,6 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     );
   }
 
-  void _checkPendingInvitation(BuildContext context) {
-    if (_pendingInvitationChecked) return;
-    if (widget.plan.id == null) return;
-    
-    final currentUser = ref.read(currentUserProvider);
-    if (currentUser == null) return;
-    
-    final participantsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
-    participantsAsync.whenData((participations) {
-      _pendingInvitationChecked = true;
-      
-      try {
-        final currentUserParticipation = participations.firstWhere(
-          (p) => p.userId == currentUser.id,
-        );
-        
-        if (currentUserParticipation.isPending) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => InvitationResponseDialog(plan: widget.plan),
-          );
-        }
-      } catch (e) {
-        // No hay participación para el usuario actual
-      }
-    });
-  }
-
   void _previousDayGroup() {
     if (_currentDayGroup > 0) {
       setState(() {
@@ -768,10 +735,6 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     );
 
     ref.watch(calendarNotifierProvider(calendarParams));
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkPendingInvitation(context);
-    });
     
     final startDay = _currentDayGroup * _visibleDays + 1;
     final endDay = startDay + _visibleDays - 1;

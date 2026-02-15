@@ -4,6 +4,214 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T203 - Corregir subida de imagen en Info plan
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** La subida de imagen de perfil del plan en la pantalla Info plan (W14) no funcionaba. Se corrigió para que funcione en web y móvil.
+
+**Implementación:**
+- **ImageService** adaptado a web: uso de `putData(bytes)` en lugar de `putFile(File)`; validación por bytes; extensión y contentType desde XFile (compatible con selector de archivos en web).
+- **Pantalla del plan:** vista previa con `Image.memory(bytes)` en lugar de `Image.file()` (no soportado en web); estado `_selectedImageBytes`; bloque `finally` para no dejar el botón en estado de carga.
+- **Firebase:** bucket unificado en `firebase_options.dart` (`planazoo.firebasestorage.app`); reglas en `storage.rules`; CORS configurado en el bucket para subidas desde web.
+- **Documentación:** `docs/configuracion/IMAGENES_PLAN_FIREBASE.md`, `docs/configuracion/STORAGE_CORS.md`, referencias en README y ONBOARDING_IA.
+
+**Archivos principales:** `lib/features/calendar/domain/services/image_service.dart`, `lib/widgets/screens/wd_plan_data_screen.dart`, `lib/firebase_options.dart`, `storage.rules`, `storage.cors.json`.
+
+---
+
+## T198 - Decidir estado de W29: desactivar o definir contenido. Documentar.
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Decidir el estado y contenido del widget W29 (C2-C5, R13) y documentarlo.
+
+**Decisión:** W29 se define como **centro de mensajes** (no como pie publicitario). Si hay invitaciones pendientes, muestra un mensaje ("Tienes X invitación(es) pendiente(s)") y un enlace "Ver notificaciones" que abre el diálogo de lista de notificaciones. Si no hay invitaciones, el área queda vacía.
+
+**Documentación actualizada:** `docs/ux/pages/w29_advertising_footer.md` (renombrado conceptualmente a "W29 - Centro de mensajes"; contenido y decisión descritos).
+
+---
+
+## T161 - Añadir nota sobre bandeja de spam en mensaje de registro
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Añadir una nota en el mensaje que se muestra tras el registro exitoso para que el usuario revise la bandeja de spam si no recibe el email de verificación.
+
+**Implementación:** Nuevo texto de ayuda localizado (`registerSuccessSpamNote`) en ES/EN: "Si no lo ves, revisa la bandeja de spam o correo no deseado." El SnackBar de éxito de registro muestra en dos líneas el mensaje principal y esta nota (tamaño menor, estilo secundario).
+
+**Archivos:** `lib/l10n/app_es.arb`, `lib/l10n/app_en.arb`, `lib/features/auth/presentation/pages/register_page.dart`, getters en `app_localizations*.dart`.
+
+---
+
+## T207 - Aclarar en UI qué hace la sección Avisos (tooltip o texto de ayuda)
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Aclarar en la interfaz qué hace la sección Avisos en Info plan (relacionado con T105).
+
+**Implementación:** Título de la sección localizado (`planDetailsAnnouncementsTitle`: "Avisos" / "Announcements"). Icono de ayuda (`Icons.help_outline`) junto al título con **Tooltip** que muestra el texto `planDetailsAnnouncementsHelp`: explica que son mensajes del organizador y participantes visibles para todos, y que se puede publicar y ver el historial.
+
+**Archivos:** `lib/widgets/screens/wd_plan_data_screen.dart`, `lib/l10n/app_es.arb`, `lib/l10n/app_en.arb`, getters en `app_localizations*.dart`.
+
+---
+
+## T206 - Info plan: sección Información detallada en dos columnas
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Mostrar la sección "Información detallada" en Info plan en dos columnas para mejor uso del espacio.
+
+**Implementación:** En `_buildInfoSection` (showBaseInfo: true) se usa `LayoutBuilder`: si ancho ≥ 600px, el contenido se dispone en dos columnas (izquierda: fechas Inicio/Fin, moneda, presupuesto; derecha: visibilidad, zona horaria). En pantallas estrechas se mantiene una sola columna.
+
+**Archivo:** `lib/widgets/screens/wd_plan_data_screen.dart`.
+
+---
+
+## T216 - Eventos por correo: solo email principal (no alias)
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Eliminar la opción de aceptar alias como From en eventos por correo; solo aceptar el email principal del usuario registrado (ver `docs/producto/CORREO_EVENTOS_SPAM.md`).
+
+**Implementación:** En `functions/index.js`, `findUserIdByEmail` ahora solo busca por coincidencia exacta del email (normalizado a minúsculas). Se eliminó el fallback que buscaba por "base" Gmail (user@gmail.com cuando From era user+alias@gmail.com). Documento CORREO_EVENTOS_SPAM.md actualizado.
+
+**Archivos:** `functions/index.js`, `docs/producto/CORREO_EVENTOS_SPAM.md`.
+
+---
+
+## T189 - Mejorar UX del diálogo de invitaciones por email (errores dentro del modal)
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Mostrar errores y validaciones dentro del modal de "Invitar por email" en lugar de SnackBars fuera del diálogo.
+
+**Implementación:** El diálogo en `wd_participants_screen.dart` (_inviteByEmailDialog) se refactorizó con StatefulBuilder y estado interno: errorMessage, isLoading, showPendingOptions, pendingInvitation. Validación (email vacío, formato inválido), "ya participante", "invitación pendiente", "no se pudo crear" y excepciones se muestran como texto de error dentro del modal (bloque rojo con icono). La opción "invitación pendiente" se resuelve en el mismo diálogo (Re-enviar / Cancelar invitación anterior / Cerrar) sin abrir un segundo diálogo. Indicador de carga en botón y deshabilitación de campos mientras se procesa.
+
+**Archivo:** `lib/widgets/screens/wd_participants_screen.dart`.
+
+---
+
+## T200 - Info plan: fecha de inicio y fin en un mismo modal
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Mostrar fecha de inicio y de fin del plan en un único modal en Info plan.
+
+**Implementación:** Al pulsar en "Inicio" o "Fin" se abre un único diálogo "Fechas del plan" con ambos campos. Cada campo abre el date picker al tocarlo; StatefulBuilder actualiza el estado del diálogo. Botones Cancelar y Aplicar. Método _showDatesModal(); los dos tiles de fecha usan onTap: _showDatesModal.
+
+**Archivo:** `lib/widgets/screens/wd_plan_data_screen.dart`.
+
+---
+
+## T201 - Modal nuevo plan: fechas optativas con texto "se puede rellenar más adelante"
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** En el modal de crear plan, indicar que las fechas son optativas y se pueden rellenar más adelante.
+
+**Implementación:** Nueva clave L10n `createPlanDatesOptionalHint` (ES: "Las fechas (inicio y fin) se pueden rellenar más adelante en la información del plan." / EN: "Start and end dates can be filled in later in the plan info."). Se muestra debajo del texto rápido del modal, en estilo secundario y cursiva.
+
+**Archivos:** `lib/widgets/dialogs/wd_create_plan_modal.dart`, `lib/l10n/app_es.arb`, `lib/l10n/app_en.arb`, getters en `app_localizations*.dart`.
+
+---
+
+## T209 - Botón aceptar en verde en modal evento y en selector de horas
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Mostrar el botón de aceptar/guardar en verde en el modal de evento y en el selector de horas.
+
+**Implementación:** En `wd_event_dialog.dart`: (1) El botón principal de guardar/crear evento usa ahora `Colors.green.shade600` en lugar de `AppColorScheme.color2`. (2) El selector de horas (`showTimePicker`) se muestra con un tema con `primary: Colors.green.shade600` mediante el parámetro `builder`, de modo que el botón de aceptar del time picker sea verde.
+
+**Archivo:** `lib/widgets/wd_event_dialog.dart`.
+
+---
+
+## T213 - Cards de planes: reducir tamaño y mejorar contraste en card seleccionada
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Reducir el tamaño de las cards de planes y mejorar el contraste cuando la card está seleccionada (texto e indicadores de estado).
+
+**Implementación:** En `PlanCardWidget` (wd_plan_card_widget.dart): (1) Tamaño reducido: márgenes 2/6, padding 8, imagen 32px, fuentes 12/10/9/8, espaciados menores. (2) Contraste seleccionada: cuando `isSelected`, texto secundario y terciario en blanco con opacidad (0.95 / 0.85) en lugar de grey; borde sutil blanco; PlanSummaryButton en blanco; misma lógica para fechas, días, badge de estado e indicador de días restantes.
+
+**Archivo:** `lib/widgets/plan/wd_plan_card_widget.dart`.
+
+---
+
+## T202 - Barra de guardar cambios fija junto al título "Info plan"
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Mostrar la barra de guardar cambios fija junto al título "Info del plan", de modo que no se pierda al hacer scroll.
+
+**Implementación:** En `wd_plan_data_screen.dart` la barra de guardar se movió al header fijo (buildHeader): cuando hay cambios sin guardar (_hasUnsavedChanges) se muestra a la derecha del título el texto "Tienes cambios sin guardar", botón Cancelar cambios y botón Guardar. Se eliminó el bloque duplicado que estaba dentro del SingleChildScrollView. Header con padding vertical reducido (12) para acomodar la barra.
+
+**Archivo:** `lib/widgets/screens/wd_plan_data_screen.dart`.
+
+---
+
+## T194 - Layout W30/W31: ocultar W30, W31 hasta el final, sin recuadro W31
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Ocultar W30 en la UI, extender W31 hasta el final de pantalla y eliminar el recuadro de color de W31. Mantener W30 en código por si se necesita.
+
+**Implementación:** En `pg_dashboard_page.dart`: (1) Se dejó de añadir _buildW30 al Stack (comentario indicando que está oculto; el método _buildW30 se mantiene). (2) W31: altura de 10 a 11 filas (rowHeight * 11) para que llegue hasta R13. (3) Se eliminó la decoración del Container de W31 (gradiente, borde, borderRadius, boxShadow) para quitar el recuadro de color.
+
+**Archivo:** `lib/pages/pg_dashboard_page.dart`.
+
+---
+
+## T195 - Widgets W14-W25: recuadro seleccionado con bordes superiores redondeados; icono mismo color que texto cuando seleccionado
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** En las pestañas de navegación W14–W25 del dashboard: recuadro seleccionado con bordes superiores redondeados; icono del mismo color que el texto cuando la pestaña está seleccionada.
+
+**Implementación:** En `wd_dashboard_nav_tabs.dart`, _NavTabCell: (1) Cuando `isSelected` se aplica `borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10))` al Container y al InkWell. (2) El icono usa `color: textColor` en lugar de `AppColorScheme.color2`, de modo que seleccionado (texto blanco) el icono es blanco y no seleccionado (texto gris) el icono es gris.
+
+**Archivo:** `lib/widgets/dashboard/wd_dashboard_nav_tabs.dart`.
+
+---
+
+## T196 - Pantallas W14-W25: encabezado verde con título a la izquierda y espacio para más elementos
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Encabezado verde en las pantallas correspondientes a las pestañas W14–W25, con título a la izquierda y espacio para más elementos (texto, botones).
+
+**Implementación:** (1) PlanDataScreen (W14 – Info plan): el header fijo (buildHeader) usa `Colors.green.shade800`; título "Info del plan" a la izquierda y barra de guardar/acciones a la derecha. (2) ParticipantsScreen (W16): AppBar en modo compact con `backgroundColor: Colors.green.shade800`; título a la izquierda y acciones a la derecha. (3) Calendario (W15): CalendarAppBar con `backgroundColor: Colors.green.shade800`; título/navegación y acciones ya en la estructura actual.
+
+**Archivos:** `lib/widgets/screens/wd_plan_data_screen.dart`, `lib/widgets/screens/wd_participants_screen.dart`, `lib/widgets/screens/calendar/calendar_app_bar.dart`.
+
+---
+
+## T197 - Barra lateral verde a todo lo alto en W4, W13, W26, W27, W28, W29
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Añadir una barra lateral verde (color2) a todo lo alto **a la derecha** de los widgets W4, W13, W26, W27, W28 y W29.
+
+**Implementación:** Barra vertical de 4px con `AppColorScheme.color2` **a la derecha** del contenido en: (1) W4 (header bar, celda showcase) en `wd_dashboard_header_bar.dart`; (2) W13 (búsqueda), W28 (lista de planes) y W29 (centro de mensajes) en `pg_dashboard_page.dart`; (3) W26 y W27 (filtros y toggle lista/calendario) en `wd_dashboard_filters.dart`. En todos se usa un `Row` con `Expanded` para el contenido y `Container(width: 4, color: AppColorScheme.color2)` al final (derecha). W16 no lleva barra.
+
+**Archivos:** `lib/widgets/dashboard/wd_dashboard_header_bar.dart`, `lib/pages/pg_dashboard_page.dart`, `lib/widgets/dashboard/wd_dashboard_filters.dart`.
+
+---
+
+## T199 - Vista calendario: mejorar encabezado de cada día (legibilidad, contraste)
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Mejorar legibilidad y contraste del encabezado de cada día en la vista de calendario (relacionado con T182).
+
+**Implementación:** En `calendar_tracks.dart`: (1) Texto del día con estilo unificado vía `CalendarStyles.getDayHeaderStyle(isToday)` — blanco por defecto, verde color2 si es hoy; fuente Poppins 11px, w600. (2) Día actual resaltado también en fondo: header "hoy" con `Colors.grey.shade700` para mejor contraste. (3) Celda "Vacío" con texto en gris claro (`grey.shade400`) y Poppins 11px. (4) Padding horizontal 6px en el contenido del header y maxLines/overflow para columnas estrechas. Los mini headers de participantes ya usaban blanco; se mantienen.
+
+**Archivos:** `lib/widgets/screens/calendar/components/calendar_tracks.dart` (imports de `google_fonts`, `calendar_styles`; `_getHeaderColor`, `_buildHeaderContent`).
+
+---
+
 ## T193 - Resumen de plan en texto (informe dinámico)
 **Estado:** ✅ Completada  
 **Fecha de finalización:** Febrero 2026  

@@ -20,7 +20,7 @@ class NotificationBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unreadCountAsync = ref.watch(unreadCountProvider);
+    final unreadCountAsync = ref.watch(globalUnreadCountProvider);
 
     return unreadCountAsync.when(
       data: (count) {

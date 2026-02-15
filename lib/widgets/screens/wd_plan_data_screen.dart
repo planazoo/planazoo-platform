@@ -139,42 +139,101 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     }
   }
 
-  Future<void> _pickStartDate() async {
-    final picked = await showDatePicker(
+  Future<void> _showDatesModal() async {
+    DateTime tempStart = _startDate;
+    DateTime tempEnd = _endDate;
+    final applied = await showDialog<bool>(
       context: context,
-      initialDate: _startDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      builder: (context) {
+        return Theme(
+          data: AppTheme.darkTheme,
+          child: StatefulBuilder(
+            builder: (context, setInnerState) {
+              return AlertDialog(
+                backgroundColor: Colors.grey.shade800,
+                title: Text(
+                  'Fechas del plan',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildDateTile(
+                      label: 'Inicio',
+                      value: tempStart,
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: tempStart,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          final normalized = DateTime(picked.year, picked.month, picked.day);
+                          setInnerState(() {
+                            tempStart = normalized;
+                            if (tempEnd.isBefore(tempStart)) tempEnd = tempStart;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDateTile(
+                      label: 'Fin',
+                      value: tempEnd,
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: tempEnd,
+                          firstDate: tempStart,
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          setInnerState(() {
+                            tempEnd = DateTime(picked.year, picked.month, picked.day);
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(
+                      'Cancelar',
+                      style: GoogleFonts.poppins(color: Colors.grey.shade400),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColorScheme.color2,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(
+                      'Aplicar',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
-    if (picked != null) {
-      final normalized = DateTime(picked.year, picked.month, picked.day);
-      if (normalized != _startDate) {
-        setState(() {
-          _startDate = normalized;
-          if (_endDate.isBefore(_startDate)) {
-            _endDate = _startDate;
-          }
-          _markDirty();
-        });
-      }
-    }
-  }
-
-  Future<void> _pickEndDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _endDate,
-      firstDate: _startDate,
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      final normalized = DateTime(picked.year, picked.month, picked.day);
-      if (normalized != _endDate) {
-        setState(() {
-          _endDate = normalized;
-          _markDirty();
-        });
-      }
+    if (applied == true) {
+      setState(() {
+        _startDate = tempStart;
+        _endDate = tempEnd;
+        _markDirty();
+      });
     }
   }
 
@@ -450,9 +509,9 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     Widget buildHeader() {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
         decoration: BoxDecoration(
-            color: Colors.grey.shade800, // Color sólido, sin gradiente
+          color: AppColorScheme.color2,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.4),
@@ -463,6 +522,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               'Info del plan',
@@ -473,7 +533,57 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                 letterSpacing: 0.1,
               ),
             ),
-            const SizedBox(),
+            if (_hasUnsavedChanges) ...[
+              Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: Text(
+                  loc.planDetailsUnsavedChanges,
+                  style: AppTypography.bodyStyle.copyWith(
+                    fontSize: 12,
+                    color: Colors.orange.shade200,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: _isSavingPlan ? null : () {
+                  _nameController.text = currentPlan.name;
+                  _descriptionController.text = currentPlan.description ?? '';
+                  _budget = currentPlan.budget;
+                  _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
+                  _selectedVisibility = currentPlan.visibility ?? 'private';
+                  _selectedCurrency = currentPlan.currency;
+                  _startDate = currentPlan.startDate;
+                  _endDate = currentPlan.endDate;
+                  _selectedTimezone = currentPlan.timezone ?? TimezoneService.getSystemTimezone();
+                  setState(() => _hasUnsavedChanges = false);
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  side: BorderSide(color: Colors.orange.shade300),
+                  foregroundColor: Colors.orange.shade200,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text(loc.cancelChanges, style: const TextStyle(fontSize: 12)),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: _isSavingPlan || PlanStatePermissions.isReadOnly(currentPlan) ? null : _savePlanDetails,
+                icon: _isSavingPlan
+                    ? SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.save_outlined, size: 18),
+                label: Text(loc.saveChanges, style: const TextStyle(fontSize: 12)),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
           ],
         ),
       );
@@ -506,84 +616,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         children: [
                           if (PlanStatePermissions.isReadOnly(currentPlan)) ...[
                             _buildReadOnlyWarning(),
-                            const SizedBox(height: cardSpacing),
-                          ],
-                          if (_hasUnsavedChanges) ...[
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.shade50,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.orange.shade200),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.info_outline, color: Colors.orange.shade700),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      loc.planDetailsUnsavedChanges,
-                                      style: AppTypography.bodyStyle.copyWith(
-                                        fontSize: 13,
-                                        color: Colors.orange.shade900,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  OutlinedButton(
-                                    onPressed: _isSavingPlan ? null : () {
-                                      _nameController.text = currentPlan.name;
-                                      _descriptionController.text = currentPlan.description ?? '';
-                                      _budget = currentPlan.budget;
-                                      _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
-                                      _selectedVisibility = currentPlan.visibility ?? 'private';
-                                      _selectedCurrency = currentPlan.currency;
-                                      _startDate = currentPlan.startDate;
-                                      _endDate = currentPlan.endDate;
-                                      _selectedTimezone = currentPlan.timezone ?? TimezoneService.getSystemTimezone();
-                                      setState(() {
-                                        _hasUnsavedChanges = false;
-                                      });
-                                    },
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                                      side: BorderSide(color: Colors.orange.shade300),
-                                      foregroundColor: Colors.orange.shade800,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: Text(loc.cancelChanges),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  FilledButton.icon(
-                                    onPressed: _isSavingPlan || PlanStatePermissions.isReadOnly(currentPlan)
-                                        ? null
-                                        : _savePlanDetails,
-                                    icon: _isSavingPlan
-                                        ? SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : const Icon(Icons.save_outlined),
-                                    label: Text(loc.saveChanges),
-                                    style: FilledButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                             const SizedBox(height: cardSpacing),
                           ],
                           _buildPlanImageSection(),
@@ -710,154 +742,185 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final useTwoColumns = constraints.maxWidth >= 600;
+                final leftColumn = [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDateTile(
+                          label: 'Inicio',
+                          value: _startDate,
+                          onTap: _showDatesModal,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildDateTile(
+                          label: 'Fin',
+                          value: _endDate,
+                          onTap: _showDatesModal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDropdownTile(
+                    label: loc.createPlanCurrencyLabel,
+                    value: _selectedCurrency,
+                    items: Currency.supportedCurrencies
+                        .map(
+                          (currency) => DropdownMenuItem(
+                            value: currency.code,
+                            child: Text(
+                              '${currency.code} - ${currency.symbol} ${currency.name}',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    selectedItemBuilder: (context) => Currency.supportedCurrencies
+                        .map(
+                          (currency) => Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              currency.code,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCurrency = value;
+                        _markDirty();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBudgetField(loc),
+                ];
+                final rightColumn = [
+                  _buildDropdownTile(
+                    label: loc.createPlanVisibilityLabel,
+                    value: _selectedVisibility,
+                    items: [
+                      DropdownMenuItem(
+                        value: 'private',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              loc.createPlanVisibilityPrivateShort,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              loc.createPlanVisibilityPrivate,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'public',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              loc.createPlanVisibilityPublicShort,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              loc.createPlanVisibilityPublic,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    selectedItemBuilder: (context) => [
+                      loc.createPlanVisibilityPrivateShort,
+                      loc.createPlanVisibilityPublicShort,
+                    ]
+                        .map(
+                          (short) => Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              short,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedVisibility = value;
+                        _markDirty();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTimezoneTile(loc),
+                ];
+                if (useTwoColumns) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: leftColumn,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: rightColumn,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: _buildDateTile(
-                        label: 'Inicio',
-                        value: _startDate,
-                        onTap: _pickStartDate,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildDateTile(
-                        label: 'Fin',
-                        value: _endDate,
-                        onTap: _pickEndDate,
-                      ),
-                    ),
+                    ...leftColumn,
+                    const SizedBox(height: 16),
+                    ...rightColumn,
                   ],
-                ),
-                const SizedBox(height: 16),
-                _buildDropdownTile(
-                  label: loc.createPlanCurrencyLabel,
-                  value: _selectedCurrency,
-                  items: Currency.supportedCurrencies
-                      .map(
-                        (currency) => DropdownMenuItem(
-                          value: currency.code,
-                          child: Text(
-                            '${currency.code} - ${currency.symbol} ${currency.name}',
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  selectedItemBuilder: (context) => Currency.supportedCurrencies
-                      .map(
-                        (currency) => Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            currency.code,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCurrency = value;
-                      _markDirty();
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildBudgetField(loc),
-                const SizedBox(height: 16),
-                _buildDropdownTile(
-                  label: loc.createPlanVisibilityLabel,
-                  value: _selectedVisibility,
-                  items: [
-                    DropdownMenuItem(
-                      value: 'private',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            loc.createPlanVisibilityPrivateShort,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            loc.createPlanVisibilityPrivate,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.grey.shade400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    DropdownMenuItem(
-                      value: 'public',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            loc.createPlanVisibilityPublicShort,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            loc.createPlanVisibilityPublic,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.grey.shade400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  selectedItemBuilder: (context) => [
-                    loc.createPlanVisibilityPrivateShort,
-                    loc.createPlanVisibilityPublicShort,
-                  ]
-                      .map(
-                        (short) => Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            short,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedVisibility = value;
-                      _markDirty();
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildTimezoneTile(loc),
-              ],
+                );
+              },
             ),
           ] else ...[
             Text(
@@ -2442,14 +2505,28 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Avisos',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.1,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.planDetailsAnnouncementsTitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Tooltip(
+                      message: AppLocalizations.of(context)!.planDetailsAnnouncementsHelp,
+                      child: Icon(
+                        Icons.help_outline,
+                        size: 18,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
                 ),
                 Container(
                   decoration: BoxDecoration(

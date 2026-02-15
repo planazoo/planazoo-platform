@@ -89,17 +89,33 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           ),
         );
       } else if (next.isRegistrationSuccess) {
-        // Mostrar mensaje de éxito y redirigir
+        // Mostrar mensaje de éxito (con nota de bandeja de spam, T161) y redirigir
+        final loc = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(Icons.check_circle, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    AppLocalizations.of(context)!.registerSuccess,
-                    style: const TextStyle(fontSize: 14),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        loc.registerSuccess,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        loc.registerSuccessSpamNote,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

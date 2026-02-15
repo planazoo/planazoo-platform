@@ -510,6 +510,20 @@ graph TD
 
 ---
 
+## 📱 ACCESO A NOTIFICACIONES EN LA APP (CAMPANA VS W20)
+
+La especificación de producto está en **`docs/producto/NOTIFICACIONES_ESPECIFICACION.md`**. Resumen de acceso:
+
+| Entrada | Contenido |
+|--------|-----------|
+| **Campana** (icono notificaciones) | **Lista global:** todas las notificaciones (invitaciones, avisos, eventos desde correo, cambios en eventos, etc.), ordenadas por fecha (más reciente primero). Filtro por **acción:** "Pendientes de acción" / "Solo informativas". Badge con total de no leídas. |
+| **W20** (pestaña "Notificaciones" del dashboard) | **Notificaciones del plan seleccionado.** W20 forma parte de W14–W25 (siempre hay un plan seleccionado). Contenido: (1) notificaciones con `planId` = plan seleccionado (invitaciones a ese plan, avisos del plan, cambios en eventos del plan); (2) sección "Eventos desde correo pendientes" para asignar a este plan o descartar. |
+
+- La lista global agrega todas las fuentes (plan_invitations, pending_email_events, users/.../notifications, event_notifications si aplica).
+- W20 filtra por plan y añade la sección de eventos desde correo pendientes.
+
+---
+
 ## 📋 TAREAS RELACIONADAS
 
 **Pendientes:**
@@ -563,7 +577,7 @@ graph TD
   - ✅ Link de invitación puede incluir `?action=accept`; la app hace strip del param tras usarlo
   - ⚠️ Pendiente: Invitaciones por username/nickname (T104 - parte opcional)
 - ⚠️ Notificaciones push: FCM Fase 1 completada (tokens, guardado en Firestore); envío de notificaciones push desde backend pendiente
-- ❌ Historial de notificaciones
+- ✅ **Sistema unificado de notificaciones** (Feb 2026): Implementado según `docs/producto/NOTIFICACIONES_ESPECIFICACION.md`. Campana = lista global (GlobalNotificationsService + globalNotificationsListProvider, filtro por acción, badge con globalUnreadCountProvider). W20 = WdPlanNotificationsScreen(plan) con notificaciones del plan (planId) + sección eventos desde correo pendientes. Modelo UnifiedNotification; widget reutilizable UnifiedNotificationItem.
 - ✅ Sistema de confirmación de asistencia a eventos - Base (T120 Fase 2):
   - ✅ Campo requiresConfirmation en Event
   - ✅ Campo confirmationStatus en EventParticipant
@@ -582,6 +596,12 @@ graph TD
 
 *Documento de flujo de invitaciones y notificaciones*  
 *Última actualización: Febrero 2026 (revisión sincronizada con código: Gmail SMTP, FCM Fase 1, campos aviso)*
+
+**Cambios recientes (v1.3):**
+- ✅ Implementación del sistema unificado: campana con lista global + filtro + badge; W20 con notificaciones del plan + eventos desde correo.
+
+**Cambios recientes (v1.2):**
+- ✅ Añadida sección "Acceso a notificaciones en la app (campana vs W20)" y referencia a `NOTIFICACIONES_ESPECIFICACION.md`.
 
 **Cambios recientes (v1.1):**
 - ✅ Aclarado que solo el usuario invitado puede aceptar/rechazar su propia invitación

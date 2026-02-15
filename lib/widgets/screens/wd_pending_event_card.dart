@@ -16,6 +16,8 @@ class WdPendingEventCard extends StatelessWidget {
   final String userId;
   final VoidCallback onAssign;
   final VoidCallback onDiscard;
+  /// Si true, reduce padding y tamaños para lista de notificaciones general.
+  final bool compact;
 
   const WdPendingEventCard({
     super.key,
@@ -23,62 +25,73 @@ class WdPendingEventCard extends StatelessWidget {
     required this.userId,
     required this.onAssign,
     required this.onDiscard,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final margin = compact ? const EdgeInsets.only(bottom: 6) : const EdgeInsets.only(bottom: 12);
+    final padding = compact ? const EdgeInsets.symmetric(horizontal: 10, vertical: 8) : const EdgeInsets.all(16.0);
+    final titleStyle = compact
+        ? AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.w600, color: AppColorScheme.color1, fontSize: 12)
+        : AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.w600, color: AppColorScheme.color1);
+    final captionStyle = compact
+        ? AppTypography.caption.copyWith(color: AppColorScheme.color4, fontSize: 11)
+        : AppTypography.caption.copyWith(color: AppColorScheme.color4);
+    final spacing = compact ? 6.0 : 12.0;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: margin,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: padding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
                 Expanded(
                   child: Text(
                     pending.displayTitle,
-                    style: AppTypography.bodyStyle.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColorScheme.color1,
-                    ),
+                    style: titleStyle,
                   ),
                 ),
                 if (!pending.isParsed)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8, vertical: compact ? 2 : 4),
                     decoration: BoxDecoration(
                       color: AppColorScheme.color4.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(compact ? 4 : 8),
                     ),
                     child: Text(
                       loc.pendingEventUnparsed,
-                      style: AppTypography.caption.copyWith(color: AppColorScheme.color4),
+                      style: captionStyle,
                     ),
                   ),
               ],
             ),
             if (pending.location != null && pending.location!.isNotEmpty) ...[
-              const SizedBox(height: 4),
+              SizedBox(height: compact ? 2 : 4),
               Text(
                 pending.location!,
-                style: AppTypography.caption.copyWith(color: AppColorScheme.color4),
+                style: captionStyle,
               ),
             ],
-            const SizedBox(height: 12),
+            SizedBox(height: spacing),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
                   onPressed: onDiscard,
-                  child: Text(loc.pendingEventsDiscard),
+                  style: compact ? TextButton.styleFrom(minimumSize: Size.zero, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)) : null,
+                  child: Text(loc.pendingEventsDiscard, style: compact ? captionStyle : null),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: compact ? 6 : 8),
                 FilledButton(
                   onPressed: onAssign,
-                  child: Text(loc.pendingEventsAssignToPlan),
+                  style: compact ? FilledButton.styleFrom(minimumSize: Size.zero, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)) : null,
+                  child: Text(loc.pendingEventsAssignToPlan, style: compact ? captionStyle : null),
                 ),
               ],
             ),

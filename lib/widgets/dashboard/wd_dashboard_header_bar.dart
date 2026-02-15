@@ -118,8 +118,11 @@ class WdDashboardHeaderBar extends ConsumerWidget {
         width: columnWidth,
         height: rowHeight,
         decoration: BoxDecoration(color: Colors.grey.shade800),
-        child: Center(
-          child: IconButton(
+        child: Row(
+          children: [
+            Expanded(
+              child: Center(
+                child: IconButton(
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -128,8 +131,12 @@ class WdDashboardHeaderBar extends ConsumerWidget {
               );
             },
             icon: Icon(Icons.palette, color: AppColorScheme.color2),
-            tooltip: AppLocalizations.of(context)!.dashboardUiShowcaseTooltip,
-          ),
+                  tooltip: AppLocalizations.of(context)!.dashboardUiShowcaseTooltip,
+                ),
+              ),
+            ),
+            Container(width: 4, color: AppColorScheme.color2),
+          ],
         ),
       ),
     );

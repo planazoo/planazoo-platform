@@ -41,17 +41,26 @@ class WdDashboardFilters extends StatelessWidget {
       child: Container(
         width: columnWidth * 4,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade800),
-        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(color: Colors.grey.shade700),
         child: Row(
           children: [
-            _buildFilterButton('todos', loc.dashboardFilterAll, columnWidth, rowHeight),
-            const SizedBox(width: 2),
-            _buildFilterButton('estoy_in', loc.dashboardFilterEstoyIn, columnWidth, rowHeight),
-            const SizedBox(width: 2),
-            _buildFilterButton('pendientes', loc.dashboardFilterPending, columnWidth, rowHeight),
-            const SizedBox(width: 2),
-            _buildFilterButton('cerrados', loc.dashboardFilterClosed, columnWidth, rowHeight),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    _buildFilterButton('todos', loc.dashboardFilterAll, columnWidth, rowHeight),
+                    const SizedBox(width: 2),
+                    _buildFilterButton('estoy_in', loc.dashboardFilterEstoyIn, columnWidth, rowHeight),
+                    const SizedBox(width: 2),
+                    _buildFilterButton('pendientes', loc.dashboardFilterPending, columnWidth, rowHeight),
+                    const SizedBox(width: 2),
+                    _buildFilterButton('cerrados', loc.dashboardFilterClosed, columnWidth, rowHeight),
+                  ],
+                ),
+              ),
+            ),
+            Container(width: 4, color: AppColorScheme.color2),
           ],
         ),
       ),
@@ -80,7 +89,7 @@ class WdDashboardFilters extends StatelessWidget {
                   ],
                 )
               : null,
-          color: isSelected ? null : Colors.grey.shade800,
+          color: isSelected ? null : Colors.grey.shade700,
           border: isSelected
               ? Border.all(color: AppColorScheme.color2, width: 2)
               : null,
@@ -127,12 +136,17 @@ class WdDashboardFilters extends StatelessWidget {
       child: Container(
         width: columnWidth * 4,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade800),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        alignment: Alignment.centerRight,
-        child: DecoratedBox(
+        decoration: BoxDecoration(color: Colors.grey.shade700),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.grey.shade800,
+            color: Colors.grey.shade700,
             borderRadius: BorderRadius.circular(24),
           ),
           child: ToggleButtons(
@@ -194,7 +208,13 @@ class WdDashboardFilters extends StatelessWidget {
                 ),
               ),
             ],
+                  ),
+                ),
+              ),
+            ),
           ),
+            Container(width: 4, color: AppColorScheme.color2),
+        ],
         ),
       ),
     );

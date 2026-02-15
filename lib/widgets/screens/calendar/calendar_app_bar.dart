@@ -66,7 +66,7 @@ class CalendarAppBar {
         onFullscreen: onFullscreen,
         onUserSelected: onUserSelected,
       ),
-      backgroundColor: AppColorScheme.color1,
+      backgroundColor: AppColorScheme.color2,
       foregroundColor: Colors.white,
     );
   }

@@ -249,6 +249,10 @@
   "@registerSuccess": {
     "description": "Registration success message"
   },
+  "registerSuccessSpamNote": "If you don't see it, check your spam or junk folder.",
+  "@registerSuccessSpamNote": {
+    "description": "Note about spam folder in registration message (T161)"
+  },
   "emailVerificationSent": "Verification email resent",
   "@emailVerificationSent": {
     "description": "Email verification resent message"
@@ -689,6 +693,10 @@
   "@createPlanUnpIdLoading": {},
   "createPlanQuickIntro": "You can complete the rest of the plan configuration on the next screen.",
   "@createPlanQuickIntro": {},
+  "createPlanDatesOptionalHint": "Start and end dates can be filled in later in the plan info.",
+  "@createPlanDatesOptionalHint": {
+    "description": "T201: text in new plan modal indicating dates are optional"
+  },
   "createPlanContinueButton": "Continue",
   "@createPlanContinueButton": {},
   "createPlanAuthError": "You need to sign in to create a plan.",
@@ -735,6 +743,14 @@
   "@planDetailsParticipantsTitle": {},
   "planDetailsParticipantsManageLink": "Manage participants",
   "@planDetailsParticipantsManageLink": {},
+  "planDetailsAnnouncementsTitle": "Announcements",
+  "@planDetailsAnnouncementsTitle": {
+    "description": "Title of Announcements section in plan info (T207)"
+  },
+  "planDetailsAnnouncementsHelp": "Messages from the organizer and participants visible to everyone in the plan. You can post announcements and see the history here.",
+  "@planDetailsAnnouncementsHelp": {
+    "description": "Help text or tooltip for Announcements section (T207)"
+  },
   "planDetailsBudgetLabel": "Estimated budget",
   "@planDetailsBudgetLabel": {},
   "planDetailsBudgetInvalid": "Enter a valid positive number (use a decimal point)",
@@ -827,7 +843,7 @@
   "@dashboardTabChat": { "description": "Dashboard tab: chat" },
   "dashboardTabPendingEvents": "Inbox",
   "@dashboardTabPendingEvents": { "description": "Dashboard tab: pending events from email" },
-  "dashboardTabNotifications": "Notifications",
+  "dashboardTabNotifications": "notifications",
   "@dashboardTabNotifications": { "description": "Dashboard tab: unified notifications inbox" },
   "notificationsTitle": "Notifications",
   "@notificationsTitle": { "description": "Unified notifications screen title" },
@@ -835,6 +851,20 @@
   "@notificationsSectionInvitations": { "description": "Invitations section in notifications" },
   "notificationsSectionEmailEvents": "Events from email",
   "@notificationsSectionEmailEvents": { "description": "Events from email section in notifications" },
+  "notificationsFilterAll": "All",
+  "@notificationsFilterAll": { "description": "Notifications filter: all" },
+  "notificationsFilterAction": "Pending action",
+  "@notificationsFilterAction": { "description": "Notifications filter: requires action" },
+  "notificationsFilterInfo": "Informational only",
+  "@notificationsFilterInfo": { "description": "Notifications filter: informational only" },
+  "notificationsMarkAllAsRead": "Mark all as read",
+  "@notificationsMarkAllAsRead": { "description": "Button in global notifications list" },
+  "notificationsEmpty": "No notifications",
+  "@notificationsEmpty": { "description": "Empty global list" },
+  "notificationsGenerateTestData": "Generate test notifications",
+  "@notificationsGenerateTestData": { "description": "Button to create test data of all types" },
+  "notificationsTestDataGenerated": "Created: {invitations} invitations, {pending} email events, {app} notifications",
+  "@notificationsTestDataGenerated": { "placeholders": { "invitations": { "type": "int" }, "pending": { "type": "int" }, "app": { "type": "int" } } },
   "pendingEventsTitle": "Events from email",
   "@pendingEventsTitle": { "description": "Pending events inbox screen title" },
   "pendingEventsEmpty": "You have no pending events. Forward confirmations to the platform address.",
@@ -898,6 +928,8 @@
   "dashboardCreateFirstPlanHint": "Create your first plan with the + button",
   "dashboardInvitationsPendingCount": "You have {count} pending invitation(s)",
   "@dashboardInvitationsPendingCount": { "placeholders": { "count": { "type": "int" } } },
+  "dashboardMessageCenterOpenNotifications": "View notifications",
+  "@dashboardMessageCenterOpenNotifications": { "description": "W29 link to open notifications list" },
   "dashboardInvitationTokenHint": "If you don't see your invitations above, you can use the link from the email or paste the token:",
   "dashboardAcceptRejectByToken": "Accept/Reject by token",
   "invitationPlanLabel": "Plan: {planId}",
@@ -930,6 +962,7 @@
   "dashboardSelectPlanToSeeChat": "Select a plan to see the chat",
   "dashboardSelectPlanToSeePayments": "Select a plan to see the payment summary",
   "dashboardSelectPlanToSeeStats": "Select a plan to see statistics",
+  "dashboardSelectPlanToSeeNotifications": "Select a plan to see its notifications",
   "planCalendarEmpty": "No plans scheduled in these months.",
   "@planCalendarEmpty": {},
   "createPlanDatesSectionTitle": "Plan dates",

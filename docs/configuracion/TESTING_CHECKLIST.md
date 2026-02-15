@@ -92,6 +92,7 @@ Cada caso de prueba debe incluir:
 5. [CRUD de Alojamientos](#5-crud-de-alojamientos)
 6. [Gestión de Participantes](#6-gestión-de-participantes)
 7. [Invitaciones y Notificaciones](#7-invitaciones-y-notificaciones)
+   - 7.4 [Sistema de notificaciones (lista global y W20)](#74-sistema-de-notificaciones-lista-global-y-w20)
 8. [Estados del Plan](#8-estados-del-plan)
 9. [Presupuesto y Pagos](#9-presupuesto-y-pagos)
    - 9.1 [Gestión de Presupuesto (T101)](#91-gestión-de-presupuesto-t101)
@@ -1629,6 +1630,45 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Pasos: Cambiar de confirmado a rechazado o viceversa
   - Esperado: Estado actualizado
   - Estado: ✅
+
+### 7.4 Sistema de notificaciones (lista global y W20)
+
+**Referencia:** `docs/producto/NOTIFICACIONES_ESPECIFICACION.md`, `docs/flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md` (sección "Acceso a notificaciones en la app").
+
+- [ ] **NOTIF-001:** Campana abre lista global
+  - Pasos: Clic en icono campana (notificaciones) en header/sidebar.
+  - Esperado: Se abre pantalla/diálogo con **todas** las notificaciones (invitaciones, avisos, eventos desde correo, cambios en eventos, etc.) en una sola lista cronológica (más reciente primero).
+  - Estado: 🔄
+
+- [ ] **NOTIF-002:** Filtro por acción en lista global
+  - Pasos: En la lista global, activar filtro "Pendientes de acción" o "Solo informativas".
+  - Esperado: La lista se filtra: "Pendientes de acción" muestra invitaciones y eventos desde correo pendientes; "Solo informativas" muestra avisos, cambios en eventos, etc.
+  - Estado: 🔄
+
+- [ ] **NOTIF-003:** Badge en campana con total no leídas
+  - Pasos: Tener notificaciones no leídas; observar el icono de la campana.
+  - Esperado: Badge numérico con el total de notificaciones no leídas. Al marcar como leídas, el número disminuye o desaparece.
+  - Estado: 🔄
+
+- [ ] **NOTIF-004:** W20 muestra notificaciones del plan seleccionado
+  - Pasos: Seleccionar un plan en el dashboard; clic en pestaña W20 "Notificaciones".
+  - Esperado: Se muestran solo notificaciones con `planId` = plan seleccionado (invitaciones a ese plan, avisos del plan, cambios en eventos de ese plan). No se muestran notificaciones de otros planes.
+  - Estado: 🔄
+
+- [ ] **NOTIF-005:** W20 incluye sección "Eventos desde correo pendientes"
+  - Pasos: Con un plan seleccionado, abrir W20; tener al menos un evento pendiente desde correo (en `pending_email_events`).
+  - Esperado: Además de las notificaciones del plan, se muestra una sección "Eventos desde correo pendientes" con opciones "Asignar a plan" (a este plan) y "Descartar".
+  - Estado: 🔄
+
+- [ ] **NOTIF-006:** Marcar notificaciones como leídas (lista global)
+  - Pasos: En lista global, marcar una notificación como leída (o "Marcar todas como leídas").
+  - Esperado: El estado se actualiza en Firestore; el badge de la campana se actualiza; la notificación puede seguir visible pero indicada como leída.
+  - Estado: 🔄
+
+- [ ] **NOTIF-007:** Acciones desde lista global (aceptar/rechazar invitación, asignar evento)
+  - Pasos: Desde la lista global, aceptar una invitación, rechazar otra, asignar un evento desde correo a un plan.
+  - Esperado: Las acciones se ejecutan correctamente; la lista se actualiza; los contadores (badge, invitaciones pendientes) se actualizan.
+  - Estado: 🔄
 
 ---
 

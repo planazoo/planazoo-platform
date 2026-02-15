@@ -202,6 +202,14 @@ class _WdCreatePlanModalState extends ConsumerState<WdCreatePlanModal> {
                       color: Colors.grey.shade600,
                     ),
               ),
+              const SizedBox(height: 10),
+              Text(
+                loc.createPlanDatesOptionalHint,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade500,
+                      fontStyle: FontStyle.italic,
+                    ),
+              ),
             ],
           ),
         ),

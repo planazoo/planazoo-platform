@@ -40,13 +40,16 @@ import 'package:unp_calendario/features/calendar/presentation/providers/invitati
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_pending_email_events_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_unified_notifications_screen.dart';
+import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_timezone_banner.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_nav_tabs.dart';
+import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_sidebar.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_header_bar.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_filters.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_header_placeholders.dart';
 import 'package:unp_calendario/widgets/dialogs/wd_create_plan_modal.dart';
+import 'package:unp_calendario/widgets/notifications/wd_notification_list_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
@@ -351,6 +354,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     setState(() {
       selectedWidgetId = widgetId;
     });
+  }
+
+  List<DashboardNavTabItem> _dashboardTabItemsWithBadge(BuildContext context) {
+    final baseTabs = WdDashboardNavTabs.tabItems(context);
+    final planUnread = ref.watch(planUnreadCountProvider(selectedPlanId));
+    final count = planUnread.valueOrNull ?? 0;
+    return baseTabs
+        .map((t) => t.id == 'W20' ? t.copyWith(badgeCount: count) : t)
+        .toList();
   }
 
   void _selectPlanazoo(String planId) {
@@ -1362,7 +1374,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               WdDashboardNavTabs(
                 columnWidth: columnWidth,
                 rowHeight: rowHeight,
-                tabs: WdDashboardNavTabs.tabItems(context),
+                tabs: _dashboardTabItemsWithBadge(context),
                 selectedId: selectedWidgetId,
                 onTabTap: (id, screen) {
                   _selectWidget(id);
@@ -1383,9 +1395,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               _buildW28(columnWidth, rowHeight),
               // W29: Por definir (C2-C5, R13)
               _buildW29(columnWidth, rowHeight),
-              // W30: Por definir (C6-C17, R13)
-              _buildW30(columnWidth, rowHeight),
-              // W31: Pantalla principal (C6-C17, R3-R12)
+              // W30: oculto en UI (T194); ver _buildW30 en código por si se necesita
+              // W31: Pantalla principal (C6-C17, R3 hasta final); sin recuadro (T194)
               _buildW31(columnWidth, rowHeight),
             ],
           ),
@@ -1407,13 +1418,18 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         width: w13Width,
         height: w13Height,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade800, // Color sólido, sin gradiente
-          // Sin bordes
-          // Sin sombras
+        decoration: BoxDecoration(color: Colors.grey.shade700),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: PlanSearchWidget(onSearchChanged: _filterPlanazoos),
+              ),
+            ),
+            Container(width: 4, color: AppColorScheme.color2),
+          ],
         ),
-        padding: const EdgeInsets.all(8), // Padding para el TextField
-        child: PlanSearchWidget(onSearchChanged: _filterPlanazoos),
       ),
     );
   }
@@ -1431,13 +1447,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         width: w28Width,
         height: w28Height,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade800, // Color sólido, sin gradiente
-          // Sin bordes
-          borderRadius: BorderRadius.circular(18), // Mantener borderRadius para el contenedor de la lista
-          // Sin sombras
-        ),
-        child: AnimatedSwitcher(
+        decoration: BoxDecoration(color: Colors.grey.shade700),
+        child: Row(
+          children: [
+            Expanded(
+              child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
           switchInCurve: Curves.easeOut,
           switchOutCurve: Curves.easeIn,
@@ -1460,6 +1474,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   onPlanSelected: _selectPlanazoo,
                   onPlanDeleted: _deletePlanazoo,
                 ),
+              ),
+            ),
+            Container(width: 4, color: AppColorScheme.color2),
+          ],
         ),
       ),
     );
@@ -1490,11 +1508,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
     Widget _buildW31(double columnWidth, double rowHeight) {
-    // W31: C6-C17 (R3-R12) - Pantalla principal con navegación
+    // W31: C6-C17 (R3 hasta final de pantalla) - Pantalla principal; sin recuadro (T194)
     final w31X = columnWidth * 5;
     final w31Y = rowHeight * 2;
     final w31Width = columnWidth * 12;
-    final w31Height = rowHeight * 10;
+    final w31Height = rowHeight * 11; // Hasta R13 (final de pantalla)
     
     if (currentScreen == 'profile') {
       final overlayLeft = columnWidth;
@@ -1532,33 +1550,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         width: w31Width,
         height: w31Height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-          border: Border.all(
-            color: AppColorScheme.color2.withOpacity(0.5),
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+        // Sin recuadro de color (T194)
         child: noPlans
             ? _buildNoPlansYet()
             : (needsPlanSelection && !hasSelectedPlan)
@@ -1576,11 +1568,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Sección de invitaciones pendientes
-          if (user != null) _buildPendingInvitationsBanner(),
-          
           const SizedBox(height: 32),
-          
           // Mensaje de no planes
           Icon(
             Icons.event_busy,
@@ -1606,203 +1594,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPendingInvitationsBanner() {
-    final invitationsAsync = ref.watch(userPendingInvitationsProvider);
-    return invitationsAsync.when(
-      data: (invitations) {
-        if (invitations.isEmpty) return const SizedBox.shrink();
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.orange.shade50,
-            border: Border.all(
-              color: Colors.orange.shade300,
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.mail_outline, color: Colors.orange.shade700, size: 24),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      AppLocalizations.of(context)!.dashboardInvitationsPendingCount(invitations.length),
-                      style: AppTypography.titleStyle.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange.shade900,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ...invitations.map((inv) => _buildInvitationCard(inv)),
-              const SizedBox(height: 12),
-              Text(
-                AppLocalizations.of(context)!.dashboardInvitationTokenHint,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-              ),
-              const SizedBox(height: 6),
-              TextButton.icon(
-                onPressed: () => _showAcceptRejectDialog(),
-                icon: const Icon(Icons.vpn_key_outlined, size: 18),
-                label: Text(AppLocalizations.of(context)!.dashboardAcceptRejectByToken),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.orange.shade800,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildInvitationCard(PlanInvitation invitation) {
-    final user = ref.read(currentUserProvider);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.orange.shade200),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Text(
-                  AppLocalizations.of(context)!.invitationPlanLabel(invitation.planId),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                if (invitation.role != null)
-                  Text(
-                    AppLocalizations.of(context)!.invitationRoleLabel(invitation.role!),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: user == null
-                          ? null
-                          : () async {
-                              final ok = await ref.read(invitationServiceProvider).acceptInvitationByPlanId(
-                                invitation.planId,
-                                user.id,
-                              );
-                              if (!mounted) return;
-                              if (ok) {
-                                ref.invalidate(userPendingInvitationsProvider);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.invitationAcceptedParticipant),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                                setState(() {});
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.invitationAcceptFailed),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            },
-                      icon: const Icon(Icons.check_circle_outline, size: 18),
-                      label: Text(AppLocalizations.of(context)!.accept),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: user == null
-                          ? null
-                          : () async {
-                              final ok = await ref.read(invitationServiceProvider).rejectInvitationByPlanId(
-                                invitation.planId,
-                                user.id,
-                              );
-                              if (!mounted) return;
-                              if (ok) {
-                                ref.invalidate(userPendingInvitationsProvider);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.invitationRejected),
-                                    backgroundColor: Colors.orange,
-                                  ),
-                                );
-                                setState(() {});
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.invitationRejectFailed),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            },
-                      icon: const Icon(Icons.cancel_outlined, size: 18),
-                      label: Text(AppLocalizations.of(context)!.reject),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.orange.shade800,
-                        side: BorderSide(color: Colors.orange.shade300),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                    ),
-                    if (invitation.token != null) ...[
-                      const SizedBox(width: 8),
-                      TextButton.icon(
-                        onPressed: () async {
-                          final link = ref.read(invitationServiceProvider).generateInvitationLink(invitation.token!);
-                          await Clipboard.setData(ClipboardData(text: link));
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(AppLocalizations.of(context)!.linkCopiedToClipboard)),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.link, size: 16),
-                        label: Text(AppLocalizations.of(context)!.copyLink),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -1982,10 +1773,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         content = _buildChatScreen();
         break;
       case 'pendingEvents':
-        content = const WdUnifiedNotificationsScreen();
-        break;
       case 'unifiedNotifications':
-        content = const WdUnifiedNotificationsScreen();
+        content = selectedPlan != null
+            ? WdPlanNotificationsScreen(plan: selectedPlan!)
+            : Center(
+                child: Text(
+                  AppLocalizations.of(context)!.dashboardSelectPlanToSeeNotifications,
+                  style: TextStyle(color: Colors.grey.shade400),
+                ),
+              );
         break;
       case 'adminInsights':
         content = AdminInsightsScreen(
@@ -2002,13 +1798,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         break;
     }
     
-    // Añadir banner de invitaciones pendientes en la parte superior
-    return Column(
-      children: [
-        _buildPendingInvitationsBanner(),
-        Expanded(child: content),
-      ],
-    );
+    return content;
   }
 
   // NUEVO: Pantalla de datos principales del plan
@@ -2150,25 +1940,72 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
 
   Widget _buildW29(double columnWidth, double rowHeight) {
-    // W29: C2-C5 (R13) - Pie de página publicitario
-    final w29X = columnWidth; // Empieza en la columna C2 (índice 1)
-    final w29Y = rowHeight * 12; // Empieza en la fila R13 (índice 12)
-    final w29Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
-    final w29Height = rowHeight; // Alto de 1 fila (R13)
-    
+    // W29: C2-C5 (R13) - Centro de mensajes. Si hay invitaciones pendientes, mensaje + link a notificaciones.
+    final w29X = columnWidth;
+    final w29Y = rowHeight * 12;
+    final w29Width = columnWidth * 4;
+    final w29Height = rowHeight;
+    final loc = AppLocalizations.of(context)!;
+    final invitationsAsync = ref.watch(userPendingInvitationsProvider);
+
     return Positioned(
       left: w29X,
       top: w29Y,
       child: Container(
         width: w29Width,
         height: w29Height,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade800, // Color sólido, sin gradiente
-          // Sin borderRadius (esquinas en ángulo recto)
-          // Sin borde
-          // Sin sombras
+        decoration: BoxDecoration(color: Colors.grey.shade800),
+        child: Row(
+          children: [
+            Expanded(
+              child: invitationsAsync.when(
+          data: (invitations) {
+            if (invitations.isEmpty) {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      loc.dashboardInvitationsPendingCount(invitations.length),
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.grey.shade300,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const NotificationListDialog(),
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      minimumSize: Size.zero,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      foregroundColor: AppColorScheme.color2,
+                    ),
+                    child: Text(
+                      loc.dashboardMessageCenterOpenNotifications,
+                      style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+              ),
+            ),
+            Container(width: 4, color: AppColorScheme.color2),
+          ],
         ),
-        // Sin contenido
       ),
     );
   }
