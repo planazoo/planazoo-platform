@@ -1,0 +1,20 @@
+rules_version = '2';
+
+// Firebase Storage: reglas para archivos subidos por la app.
+// Las imágenes de perfil de plan se guardan en plan_images/{fileName}.
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Imágenes de planes: cualquier usuario autenticado puede subir (la app
+    // solo permite subir para planes que el usuario creó o administra).
+    // Lectura pública para que las URLs de imagen carguen en la UI.
+    match /plan_images/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Denegar todo lo demás por defecto
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

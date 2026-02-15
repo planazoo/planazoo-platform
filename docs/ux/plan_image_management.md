@@ -166,18 +166,13 @@ Widget _buildPlanImage() {
 - **Dimensiones máximas** para evitar problemas de memoria
 - **URLs válidas** antes de mostrar imagen
 
-### **Firebase Storage Rules** (Recomendadas)
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /plan_images/{allPaths=**} {
-      allow read: if true; // Público para lectura
-      allow write: if request.auth != null; // Solo usuarios autenticados
-    }
-  }
-}
-```
+### **Firebase Storage: reglas y configuración**
+
+- **Reglas:** definidas en `storage.rules` (proyecto). Desplegar con `firebase deploy --only storage`.
+- **CORS (web):** necesario para que la subida no se cuelgue en navegador. Ver [docs/configuracion/STORAGE_CORS.md](../configuracion/STORAGE_CORS.md).
+- **Bucket:** debe coincidir con `storageBucket` en `lib/firebase_options.dart` (en este proyecto: `planazoo.firebasestorage.app`).
+
+Configuración completa y troubleshooting: [docs/configuracion/IMAGENES_PLAN_FIREBASE.md](../configuracion/IMAGENES_PLAN_FIREBASE.md).
 
 ## 📊 **Rendimiento y Optimización**
 
@@ -246,10 +241,10 @@ service firebase.storage {
 ## 📝 **Notas de Desarrollo**
 
 ### **Consideraciones Técnicas**
-- **Firebase Storage** requiere configuración de reglas
-- **Permisos de galería** necesarios en dispositivos
-- **Tamaño de bundle** aumentado por dependencias
-- **Manejo de estados** complejo en múltiples widgets
+- **Firebase Storage** requiere: reglas (`storage.rules`), y en **web** además **CORS** en el bucket (ver [IMAGENES_PLAN_FIREBASE.md](../configuracion/IMAGENES_PLAN_FIREBASE.md)).
+- **Bucket:** `lib/firebase_options.dart` → `storageBucket` debe ser el mismo que en Firebase Console (ej. `planazoo.firebasestorage.app`).
+- **Permisos de galería** necesarios en dispositivos móviles.
+- **Web:** la subida usa `putData(bytes)` (no `putFile`); la vista previa usa `Image.memory(bytes)` (no `Image.file`).
 
 ### **Limitaciones Actuales**
 - **Solo galería** (no cámara)

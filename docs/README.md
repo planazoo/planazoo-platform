@@ -26,6 +26,12 @@ Flujos específicos del ciclo de vida de la aplicación:
 - [Validación](./flujos/FLUJO_VALIDACION.md) - Verificación y validación
 - [Configuración App](./flujos/FLUJO_CONFIGURACION_APP.md) - Configuración de usuario y app
 
+### 📦 [Producto](./producto/)
+Decisiones de producto y especificaciones funcionales:
+- [Sistema de notificaciones – Especificación](./producto/NOTIFICACIONES_ESPECIFICACION.md) – Lista global (campana), W20 por plan, filtros, badge
+- [Plan de codificación – Notificaciones](./producto/NOTIFICACIONES_PLAN_CODIFICACION.md) – Fases e implementación
+- [Buzón unificado (evolución)](./producto/BUZON_UNIFICADO_NOTIFICACIONES.md) – Contexto histórico y enlace a la especificación
+
 ### 📐 [Especificaciones](./especificaciones/)
 Especificaciones técnicas detalladas:
 - [Capacidades del Calendario](./especificaciones/CALENDAR_CAPABILITIES.md)
@@ -66,6 +72,8 @@ Configuración y contexto del proyecto:
 - [Despliegue Web en Firebase Hosting](./configuracion/DEPLOY_WEB_FIREBASE_HOSTING.md) - Guía completa de despliegue
 - [Desplegar índices Firestore](./configuracion/DEPLOY_INDICES_FIRESTORE.md) - Índices compuestos
 - [Desplegar reglas Firestore](./configuracion/DESPLEGAR_REGLAS_FIRESTORE.md) - Reglas de seguridad
+- [Imágenes de plan (Firebase Storage)](./configuracion/IMAGENES_PLAN_FIREBASE.md) - Bucket, reglas, CORS, código y troubleshooting
+- [CORS Storage (subida web)](./configuracion/STORAGE_CORS.md) - Configurar CORS para subir imágenes desde la web
 - [Testing Checklist](./configuracion/TESTING_CHECKLIST.md) - Checklist de pruebas (actualizar tras cada tarea)
 - [FCM Fase 1](./configuracion/FCM_FASE1_IMPLEMENTACION.md) - Notificaciones push
 - [Onboarding IA](./configuracion/ONBOARDING_IA.md) - Contexto para asistentes IA

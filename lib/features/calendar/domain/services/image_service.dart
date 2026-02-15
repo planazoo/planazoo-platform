@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,7 +10,7 @@ class ImageService {
   static const int _maxFileSize = 2 * 1024 * 1024; // 2MB
   static const List<String> _allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
 
-  /// Selecciona una imagen de la galería
+  /// Selecciona una imagen (galería o explorador de archivos en web).
   static Future<XFile?> pickImageFromGallery() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -28,60 +27,80 @@ class ImageService {
     }
   }
 
-  /// Valida una imagen antes de subirla
+  /// Obtiene la extensión del archivo de forma compatible con web (XFile.name o path).
+  static String _getExtension(XFile image) {
+    final name = image.name;
+    final pathStr = name ?? image.path;
+    final ext = path.extension(pathStr).toLowerCase().replaceFirst('.', '');
+    if (ext.isNotEmpty) return ext;
+    final mime = image.mimeType?.toLowerCase() ?? '';
+    if (mime.contains('jpeg') || mime.contains('jpg')) return 'jpg';
+    if (mime.contains('png')) return 'png';
+    if (mime.contains('webp')) return 'webp';
+    return 'jpg';
+  }
+
+  /// Content-Type para Firebase Storage según extensión.
+  static String _contentTypeFromExtension(String ext) {
+    switch (ext.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'image/jpeg';
+    }
+  }
+
+  /// Valida una imagen antes de subirla (compatible con web: usa bytes, no File).
   static Future<String?> validateImage(XFile image) async {
     try {
-      // Validar tamaño del archivo
-      final file = File(image.path);
-      final fileSize = await file.length();
-      if (fileSize > _maxFileSize) {
+      final bytes = await image.readAsBytes();
+      if (bytes.length > _maxFileSize) {
         return 'La imagen es demasiado grande. Máximo 2MB permitido.';
       }
-
-      // Validar extensión
-      final extension = path.extension(image.path).toLowerCase().substring(1);
+      final extension = _getExtension(image);
       if (!_allowedExtensions.contains(extension)) {
         return 'Formato no válido. Solo se permiten JPG, PNG y WEBP.';
       }
-
-      return null; // Sin errores
+      return null;
     } catch (e) {
       LoggerService.error('Error validating image', context: 'IMAGE_SERVICE', error: e);
       return 'Error al validar la imagen: $e';
     }
   }
 
-  /// Sube una imagen a Firebase Storage
-  static Future<String?> uploadPlanImage(XFile imageFile, String planId) async {
+  /// Sube una imagen a Firebase Storage (web y móvil: usa putData con bytes).
+  /// Lanza excepción si falla (permisos, red, etc.) para que la UI muestre el error.
+  static Future<String> uploadPlanImage(XFile imageFile, String planId) async {
+    final validationError = await validateImage(imageFile);
+    if (validationError != null) throw Exception(validationError);
+
     try {
-      // Validar imagen
-      final validationError = await validateImage(imageFile);
-      if (validationError != null) {
-        throw Exception(validationError);
-      }
+      final bytes = await imageFile.readAsBytes();
+      final extension = _getExtension(imageFile);
+      final fileName = '${planId}_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final path = '$_plansFolder/$fileName';
+      final Reference ref = _storage.ref(path);
 
-      // Crear referencia al archivo
-      final String fileName = '${planId}_${DateTime.now().millisecondsSinceEpoch}';
-      final String extension = path.extension(imageFile.path);
-      final Reference ref = _storage.ref('$_plansFolder/$fileName$extension');
-
-      // Subir archivo
-      final UploadTask uploadTask = ref.putFile(File(imageFile.path));
-      final TaskSnapshot snapshot = await uploadTask;
-
-      // Obtener URL de descarga
+      final metadata = SettableMetadata(
+        contentType: _contentTypeFromExtension(extension),
+      );
+      final TaskSnapshot snapshot = await ref.putData(bytes, metadata);
       final String downloadUrl = await snapshot.ref.getDownloadURL();
       return downloadUrl;
     } catch (e) {
       LoggerService.error('Error uploading plan image', context: 'IMAGE_SERVICE', error: e);
-      return null;
+      rethrow;
     }
   }
 
   /// Elimina una imagen de Firebase Storage
   static Future<bool> deletePlanImage(String imageUrl) async {
     try {
-      // Extraer la referencia del archivo desde la URL
       final Reference ref = _storage.refFromURL(imageUrl);
       await ref.delete();
       return true;
@@ -94,14 +113,10 @@ class ImageService {
   /// Comprime una imagen si es necesario
   static Future<Uint8List?> compressImage(XFile imageFile) async {
     try {
-      // Para simplificar, por ahora solo validamos
-      // En el futuro se puede añadir compresión real con packages como flutter_image_compress
       final bytes = await imageFile.readAsBytes();
-      
       if (bytes.length > _maxFileSize) {
         throw Exception('La imagen es demasiado grande. Máximo 2MB permitido.');
       }
-      
       return bytes;
     } catch (e) {
       LoggerService.error('Error compressing image', context: 'IMAGE_SERVICE', error: e);
@@ -109,19 +124,12 @@ class ImageService {
     }
   }
 
-  /// Obtiene la URL de una imagen por defecto
-  static String getDefaultImageUrl() {
-    // Por ahora retornamos una URL vacía, en el futuro se puede usar una imagen por defecto
-    return '';
-  }
+  static String getDefaultImageUrl() => '';
 
-  /// Verifica si una URL es una imagen válida
   static bool isValidImageUrl(String? url) {
     if (url == null || url.isEmpty) return false;
-    
-    final validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
     final lowercaseUrl = url.toLowerCase();
-    
     return validExtensions.any((ext) => lowercaseUrl.contains(ext));
   }
 }

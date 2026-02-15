@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -52,6 +52,7 @@ class PlanDataScreen extends ConsumerStatefulWidget {
 class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   late Plan currentPlan;
   XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
   bool _isUploadingImage = false;
   final _planFormKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
@@ -2190,11 +2191,11 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     final imageUrl = currentPlan.imageUrl;
 
     Widget buildImage() {
-      if (_selectedImage != null) {
+      if (_selectedImageBytes != null) {
         return ClipRRect(
           borderRadius: BorderRadius.circular(14),
-          child: Image.file(
-            File(_selectedImage!.path),
+          child: Image.memory(
+            _selectedImageBytes!,
             width: double.infinity,
             height: height,
             fit: BoxFit.cover,
@@ -2292,10 +2293,10 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     final imageUrl = currentPlan.imageUrl;
 
     Widget buildImage() {
-      if (_selectedImage != null) {
+      if (_selectedImageBytes != null) {
         return ClipOval(
-          child: Image.file(
-            File(_selectedImage!.path),
+          child: Image.memory(
+            _selectedImageBytes!,
             width: size,
             height: size,
             fit: BoxFit.cover,
@@ -2520,73 +2521,68 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
   }
 
   Future<void> _pickImage() async {
+    final XFile? image = await ImageService.pickImageFromGallery();
+    if (image == null) return;
+
+    final bytes = await image.readAsBytes();
+    if (!mounted) return;
+    setState(() {
+      _selectedImage = image;
+      _selectedImageBytes = bytes;
+      _isUploadingImage = true;
+    });
+
     try {
-      final XFile? image = await ImageService.pickImageFromGallery();
-      if (image != null) {
+      final validationError = await ImageService.validateImage(image);
+      if (validationError != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(validationError), backgroundColor: Colors.red),
+          );
+        }
+        return;
+      }
+
+      final uploadedImageUrl = await ImageService.uploadPlanImage(image, currentPlan.id!);
+      final updatedPlan = currentPlan.copyWith(imageUrl: uploadedImageUrl);
+      final planService = ref.read(planServiceProvider);
+      final success = await planService.updatePlan(updatedPlan);
+
+      if (!success) {
+        throw Exception('Error al actualizar el plan en la base de datos');
+      }
+
+      if (mounted) {
         setState(() {
-          _selectedImage = image;
-          _isUploadingImage = true;
+          currentPlan = updatedPlan;
+          _selectedImage = null;
+          _selectedImageBytes = null;
         });
-        
-        // Validar imagen
-        final validationError = await ImageService.validateImage(image);
-        if (validationError != null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(validationError),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          setState(() {
-            _isUploadingImage = false;
-          });
-          return;
-        }
-        
-        // Subir imagen
-        final uploadedImageUrl = await ImageService.uploadPlanImage(image, currentPlan.id!);
-        
-        if (uploadedImageUrl != null) {
-          // Actualizar el plan con la nueva URL de imagen
-          final updatedPlan = currentPlan.copyWith(imageUrl: uploadedImageUrl);
-          final planService = ref.read(planServiceProvider);
-          final success = await planService.updatePlan(updatedPlan);
-          
-          if (success) {
-            setState(() {
-              currentPlan = updatedPlan;
-              _isUploadingImage = false;
-            });
-            
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Imagen actualizada correctamente'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          } else {
-            throw Exception('Error al actualizar el plan');
-          }
-        } else {
-          throw Exception('Error al subir la imagen');
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Imagen actualizada correctamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
-      setState(() {
-        _isUploadingImage = false;
-      });
-      
+      final message = e is Exception ? e.toString().replaceFirst('Exception: ', '') : '$e';
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('Error al guardar la imagen: $message'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+          _selectedImage = null;
+          _selectedImageBytes = null;
+        });
       }
     }
   }
