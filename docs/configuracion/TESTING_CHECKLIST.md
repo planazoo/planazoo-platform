@@ -15,6 +15,7 @@
 3. **Ámbito:** Usa la tabla de contenidos de abajo y marca cada bloque (✅/❌/⚠️) según vayas probando.
 4. **Comportamiento esperado:** Los flujos en `docs/flujos/` (CRUD planes, eventos, participantes, etc.) describen el comportamiento esperado; úsalos como referencia si un caso falla o es ambiguo.
 5. **Pruebas lógicas (JSON):** Para casos automatizados por datos (login, contraseñas, eventos, etc.) y reportes para IA, ver [docs/testing/SISTEMA_PRUEBAS_LOGICAS.md](../testing/SISTEMA_PRUEBAS_LOGICAS.md).
+6. **Pruebas E2E tres usuarios (flujo completo):** Para simular un ciclo real con UA/UB/UC (crear plan → invitaciones → eventos → chat → aprobar → durante plan → cerrar), ver [docs/testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md). Incluye tabla de huecos/situaciones no contempladas para derivar tareas.
 
 ---
 

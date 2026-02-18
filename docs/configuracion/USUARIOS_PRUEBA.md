@@ -153,6 +153,19 @@ unplanazoo@gmail.com
 
 ### 🟡 Usuarios para Casos Especiales
 
+#### Escenario E2E – Tres usuarios (UA, UB, UC)
+Usados en el [Plan de pruebas E2E exhaustivo](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) (flujo completo: crear plan → invitaciones → eventos → chat → aprobar → cerrar).
+
+| Id | Email | Rol en el escenario | Timezone ejemplo |
+|----|--------|----------------------|-------------------|
+| **UA** | `Unplanazoo+cricla@gmail.com` | Organizador (único registrado al inicio) | Europe/Madrid |
+| **UB** | `Unplanazoo+marbat@gmail.com` | Participante (acepta invitación) | Europe/Madrid |
+| **UC** | `Unplanazoo+emmcla@gmail.com` | Participante (rechaza primero, acepta después; deja y vuelve al plan) | America/New_York |
+
+**Contraseña:** la misma para todos (ej. `test123456` o la que uses en tu entorno).
+
+---
+
 #### Usuario para Rechazar Invitación
 **Email:** `unplanazoo+reject@gmail.com`  
 **Rol:** N/A  
