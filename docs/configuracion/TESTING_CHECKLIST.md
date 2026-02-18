@@ -1849,6 +1849,8 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ### 9.2 Sistema de Pagos (T102)
 
+**Alcance MVP:** Ver [docs/producto/PAGOS_MVP.md](../producto/PAGOS_MVP.md). Flujo E2E con tres usuarios (UA registra pago de UB, ver balance, UC ve resumen): [docs/testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) — Fase 11.5 Pagos.
+
 - [ ] **PAY-001:** Registrar pago individual
   - Estado: ✅
 

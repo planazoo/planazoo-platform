@@ -377,6 +377,22 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "kitty_contributions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "planId", "order": "ASCENDING" },
+        { "fieldPath": "contributionDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "kitty_expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "planId", "order": "ASCENDING" },
+        { "fieldPath": "expenseDate", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -258,6 +258,18 @@ No verificación activa (trust-based)
 
 ---
 
+### 7. PAGOS (MVP) — Aviso de no procesamiento de cobros
+
+**T220 / PAGOS_MVP:** Incluir en **términos y FAQ** (y aviso breve en la pantalla de pagos):
+
+- **La aplicación no procesa cobros.** El módulo de pagos sirve únicamente para **anotar** pagos realizados fuera de la app y **cuadrar** balances entre el grupo (sugerencias de transferencias). No hay pasarela de pago ni cobro a través de la plataforma.
+- Si en el futuro se añade pasarela de pago, habrá que revisar términos, privacidad y normativa de pagos.
+
+**Texto sugerido para UI (pantalla de pagos):**  
+*"La app no procesa cobros; solo sirve para anotar pagos y cuadrar entre el grupo."*
+
+---
+
 ## 📄 DOCUMENTOS A CREAR
 
 ### 1. Terms of Service (Términos y Condiciones)
@@ -273,6 +285,7 @@ No verificación activa (trust-based)
 - Sección 4: Cuenta de usuario
 - Sección 5: Propiedad intelectual
 - Sección 6: Limitación de responsabilidad
+- **Sección "Pagos":** La app no procesa cobros; solo anotación y cuadre entre usuarios (T220).
 - Sección 7: Terminación
 - Sección 8: Cambios en términos
 - Sección 9: Jurisdicción

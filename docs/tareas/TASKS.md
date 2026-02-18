@@ -3,7 +3,7 @@
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
 
-**Siguiente código de tarea: T217**
+**Siguiente código de tarea: T223**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214 (widgets, info plan, calendario, cards)
@@ -15,6 +15,7 @@
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
 - **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, etc.
+- **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
 **Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
 
@@ -206,7 +207,22 @@
 
 ---
 
-### 12. Otras (chat, agencias, migración, futuro)
+### 12. Pagos MVP (primer MVP) — sistema de pagos (T102)
+
+> **Presupuesto del plan (T101)** = costes del plan, total, estadísticas. **Sistema de pagos (T102)** = quién ha pagado qué, balances, deudas/créditos. Las tareas de esta sección son del **sistema de pagos**, no del presupuesto. Decisiones en `docs/producto/PAGOS_MVP.md`. Pruebas E2E: fase 11.5; casos PAY-* en TESTING_CHECKLIST § 9.2.
+
+| Código | Descripción | Prioridad |
+|--------|-------------|-----------|
+| **T217** | Pagos MVP: unificar web/mobile. Sustituir placeholder "Próximamente" en vista móvil del plan (pg_plan_detail_page, case 'payments') por PaymentSummaryPage y flujo de registro de pago según permisos. | Alta (MVP) |
+| **T218** | Pagos MVP: permisos por rol. Organizador puede registrar cualquier pago (de cualquier participante); participante solo puede registrar "yo pagué X" (su propio pago). Aplicar en UI y en reglas/servicios; documentar en FLUJO_PRESUPUESTO_PAGOS.md. | Alta (MVP) |
+| **T219** | Pagos MVP: bote común. Definir e implementar flujo (quién aporta al bote, quién gasta del bote, reflejo en balances). Ver PAGOS_MVP.md decisión 5.3. | Media |
+| **T220** | Pagos MVP: aviso en UI y texto legal. Añadir aviso breve en la pantalla de pagos (ej. "La app no procesa cobros; solo sirve para anotar pagos y cuadrar entre el grupo"); incluir en términos/FAQ que la app no procesa cobros. | Alta (MVP) |
+| **T221** | Pagos MVP: actualizar FLUJO_PRESUPUESTO_PAGOS.md con las decisiones (quién registra qué, bote común en MVP, matriz de permisos por rol/estado del plan). | Media |
+| **T222** | Pagos MVP: ejecutar y validar. Ejecutar fase 11.5 Pagos del plan E2E (tres usuarios) y casos PAY-001 a PAY-003 del TESTING_CHECKLIST; marcar resultados. | Media |
+
+---
+
+### 13. Otras (chat, agencias, migración, futuro)
 
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|

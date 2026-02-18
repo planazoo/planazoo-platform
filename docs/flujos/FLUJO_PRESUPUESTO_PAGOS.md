@@ -2,9 +2,9 @@
 
 > Define cómo gestionar presupuestos, costes, pagos y bote común en un plan
 
-**Relacionado con:** T101 ✅, T102 ✅, T153 ✅  
-**Versión:** 1.1  
-**Fecha:** Enero 2025 (Actualizado - T102 y T153 completados)
+**Relacionado con:** T101 ✅, T102 ✅, T153 ✅, T217–T222 (Pagos MVP)  
+**Versión:** 1.2  
+**Fecha:** Febrero 2026 (Decisiones MVP, bote común T219, permisos T218)
 
 ---
 
@@ -27,6 +27,31 @@ Documentar el sistema completo de gestión financiera del plan: presupuestos, co
 | **Distribución equitativa** | Coste dividido entre participantes | €300 ÷ 4 = €75 c/u |
 | **Deuda** | Lo que debe pagar un participante | Juan debe €25 |
 | **Crédito** | Lo que se debe a un participante | María debe cobrar €15 |
+
+---
+
+## 📌 DECISIONES MVP (PAGOS_MVP.md)
+
+Resumen de decisiones para el primer MVP (T217–T222):
+
+| Tema | Decisión |
+|------|----------|
+| **Alcance** | Solo cuadre interno; la app **no procesa cobros** (solo anotación y sugerencias de transferencias). |
+| **Quién registra pagos** | **Organizador:** puede registrar cualquier pago (de cualquier participante). **Participante:** solo puede registrar "yo pagué X" (su propio pago). |
+| **Bote común** | **Sí en MVP.** Flujo: quién aporta al bote, quién gasta del bote, reflejo en balances (coste repartido entre participantes). |
+| **Mobile** | Misma experiencia que en web; pestaña Pagos con resumen y registro según permisos. |
+| **Legal** | Aviso breve en pantalla de pagos + referencia en términos/FAQ: la app no procesa cobros. |
+
+### Matriz de permisos por rol (estado del plan: cualquier estado con acceso a pagos)
+
+| Acción | Organizador (owner del plan) | Participante |
+|--------|------------------------------|--------------|
+| Ver resumen de pagos y balances | ✅ | ✅ |
+| Registrar pago de **cualquier** participante | ✅ | ❌ |
+| Registrar pago **"yo pagué X"** (propio) | ✅ | ✅ |
+| Ver / añadir **aportación al bote** | ✅ (cualquier participante) | ✅ (solo "mi aportación") |
+| Registrar **gasto del bote** | ✅ | ❌ |
+| Ver sugerencias de transferencias | ✅ | ✅ |
 
 ---
 
@@ -166,14 +191,15 @@ Distribución:
 
 #### 3.1 - Registro de Pagos Individuales
 
-**Flujo:**
+**Flujo (T218: permisos por rol):**
 ```
 Participante paga algo
   ↓
-Organizador → "Registrar pago" (T102)
+Organizador → "Registrar pago" (T102): puede elegir cualquier participante
+Participante → "Registrar pago": solo "yo pagué" (sin selector de participante)
   ↓
 Formulario:
-- Participante: [Seleccionar]
+- Participante: [Seleccionar] (solo organizador) / "Tú" fijo (participante)
 - Moneda del pago: [EUR/USD/GBP/JPY] (T153, default: moneda del plan)
 - Monto: 120
   ↓
@@ -226,11 +252,12 @@ Opciones:
 - Ver historial
 ```
 
-**Funcionalidad:**
-- Tracking de aportaciones por persona
-- Tracking de gastos del bote
-- Cálculo de saldo
-- Historial completo
+**Funcionalidad (T219 ✅):**
+- Tracking de aportaciones por persona (`kitty_contributions`)
+- Tracking de gastos del bote (`kitty_expenses`), reparto equitativo entre participantes
+- Cálculo de saldo del bote y reflejo en balances: aportación cuenta como "pagado" del participante; gasto suma al coste de cada participante (gasto ÷ n)
+- Historial en UI (PaymentSummaryPage, sección "Bote común")
+- Permisos: organizador puede registrar cualquier aportación y los gastos; participante solo "mi aportación"
 
 #### 3.3 - Cálculo de "Quién Debe Pagar / Cobrar"
 
@@ -518,7 +545,6 @@ graph TD
 ## 📋 TAREAS RELACIONADAS
 
 **Pendientes:**
-- T102-6: Sistema de bote común (opcional en esta fase)
 - T121: Formularios enriquecidos con más campos de coste
 - Comparación estimado vs real
 - Notificaciones de presupuesto
@@ -530,6 +556,11 @@ graph TD
 - T101: Sistema de presupuesto base (enero 2025)
 - T102: Sistema de pagos y cálculo de balances (enero 2025)
 - T153: Sistema multi-moneda con conversión automática (enero 2025)
+- T217: Unificar web/mobile – Pagos en vista móvil del plan
+- T218: Permisos por rol (organizador vs participante en registro de pago)
+- T219: Bote común (aportaciones, gastos, reflejo en balances)
+- T220: Aviso en UI y texto legal (no procesamos cobros)
+- T221: Actualización de este flujo con decisiones y matriz de permisos
 
 ---
 
@@ -546,14 +577,17 @@ graph TD
 - ✅ Desglose eventos vs alojamientos
 - ✅ Visualización en dashboard de estadísticas
 
-**Implementado (T102):**
+**Implementado (T102 + T218 + T219 + T220):**
 - ✅ Sistema de registro de pagos individuales (`PersonalPayment`)
 - ✅ Servicio `PaymentService` para CRUD de pagos
-- ✅ Servicio `BalanceService` para cálculo de balances
+- ✅ Servicio `BalanceService` para cálculo de balances (incl. bote común)
+- ✅ Permisos por rol (T218): organizador registra cualquier pago; participante solo "yo pagué"
+- ✅ Bote común (T219): `KittyContribution`, `KittyExpense`, `KittyService`; aportaciones suman al "pagado", gastos repartidos al "coste"; UI en PaymentSummaryPage
 - ✅ Cálculo automático de deudas/créditos por participante
 - ✅ Sugerencias de transferencias para equilibrar deudas
-- ✅ UI en `PaymentSummaryPage` para visualizar balances
-- ✅ Integración en dashboard (botón "pagos")
+- ✅ UI en `PaymentSummaryPage` (resumen, bote, balances, transferencias)
+- ✅ Aviso legal en pantalla de pagos (T220): "La app no procesa cobros..."
+- ✅ Integración en dashboard y móvil (T217)
 - ✅ Formateo de montos según moneda del plan
 
 **Implementado (T153):**
@@ -567,7 +601,6 @@ graph TD
 - ✅ Botón temporal para inicializar tipos de cambio
 
 **Pendiente:**
-- ❌ Sistema de bote común (T102-6, opcional)
 - ❌ Tracking estimado vs real (mejora futura)
 - ❌ Exportación de reportes a PDF/Excel
 - ❌ Actualización automática diaria de tipos de cambio (T153 futuro)

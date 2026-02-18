@@ -6,6 +6,7 @@ import 'package:unp_calendario/features/payments/presentation/providers/payment_
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
@@ -16,6 +17,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 /// T102: Diálogo para registrar o editar un pago
 class PaymentDialog extends ConsumerStatefulWidget {
   final String planId;
+  final Plan? plan; // Opcional: para T218 permisos (organizador vs participante)
   final String? eventId; // Opcional: si el pago está asociado a un evento
   final PersonalPayment? payment; // Si se proporciona, es edición
   final Event? event; // Evento asociado (opcional)
@@ -24,6 +26,7 @@ class PaymentDialog extends ConsumerStatefulWidget {
   const PaymentDialog({
     super.key,
     required this.planId,
+    this.plan,
     this.eventId,
     this.payment,
     this.event,
@@ -308,17 +311,19 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       return;
     }
 
-    if (_selectedParticipantId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona un participante')),
-      );
-      return;
-    }
-
     final currentUser = ref.read(currentUserProvider);
     if (currentUser?.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Usuario no autenticado')),
+      );
+      return;
+    }
+
+    final isOrganizer = widget.plan == null || currentUser!.id == widget.plan!.userId;
+    final participantId = isOrganizer ? _selectedParticipantId : currentUser.id;
+    if (participantId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecciona un participante')),
       );
       return;
     }
@@ -336,7 +341,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     final payment = PersonalPayment(
       id: widget.payment?.id,
       planId: widget.planId,
-      participantId: _selectedParticipantId!,
+      participantId: participantId,
       eventId: widget.eventId ?? widget.event?.id,
       amount: amount, // T153: Ya convertido a moneda del plan
       paymentDate: _selectedDate,
@@ -377,6 +382,17 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     final participationsAsync = ref.watch(
       planParticipantsProvider(widget.planId),
     );
+    final currentUser = ref.watch(currentUserProvider);
+    // T218: organizador = dueño del plan; participante solo puede registrar "yo pagué"
+    final isOrganizer = widget.plan == null || currentUser?.id == widget.plan!.userId;
+
+    if (!isOrganizer && currentUser?.id != null && _selectedParticipantId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _selectedParticipantId == null) {
+          setState(() => _selectedParticipantId = currentUser!.id);
+        }
+      });
+    }
 
     return AlertDialog(
       title: Text(
@@ -432,43 +448,54 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                   style: AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                participationsAsync.when(
-                  data: (participations) {
-                    final realParticipants = participations
-                        .where((p) => p.role != 'observer')
-                        .toList();
+                if (!isOrganizer)
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.person),
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                    ),
+                    child: Text('Tú (yo pagué)', style: AppTypography.bodyStyle),
+                  )
+                else
+                  participationsAsync.when(
+                    data: (participations) {
+                      final realParticipants = participations
+                          .where((p) => p.role != 'observer')
+                          .toList();
 
-                    return DropdownButtonFormField<String>(
-                      value: _selectedParticipantId,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.person),
-                        border: const OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                      ),
-                      hint: const Text('Selecciona un participante'),
-                      items: realParticipants.map((p) {
-                        return DropdownMenuItem<String>(
-                          value: p.userId,
-                          child: Text(p.userId), // TODO: Usar nombre real
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedParticipantId = value;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Selecciona un participante';
-                        }
-                        return null;
-                      },
-                    );
-                  },
-                  loading: () => const CircularProgressIndicator(),
-                  error: (error, stack) => Text('Error: $error'),
-                ),
+                      return DropdownButtonFormField<String>(
+                        value: _selectedParticipantId,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.person),
+                          border: const OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                        ),
+                        hint: const Text('Selecciona un participante'),
+                        items: realParticipants.map((p) {
+                          return DropdownMenuItem<String>(
+                            value: p.userId,
+                            child: Text(p.userId), // TODO: Usar nombre real
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedParticipantId = value;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Selecciona un participante';
+                          }
+                          return null;
+                        },
+                      );
+                    },
+                    loading: () => const CircularProgressIndicator(),
+                    error: (error, stack) => Text('Error: $error'),
+                  ),
                 const SizedBox(height: 16),
 
                 // Monto con selector de moneda (T153)

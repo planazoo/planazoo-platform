@@ -678,6 +678,20 @@ service cloud.firestore {
     }
     
     // ============================================
+    // REGLAS PARA BOTE COMÚN (T219)
+    // ============================================
+    
+    match /kitty_contributions/{contributionId} {
+      allow create, read: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
+    }
+    
+    match /kitty_expenses/{expenseId} {
+      allow create, read: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
+    }
+    
+    // ============================================
     // REGLAS PARA TIPOS DE CAMBIO (T153)
     // ============================================
     

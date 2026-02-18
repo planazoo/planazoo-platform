@@ -1,5 +1,7 @@
 import '../models/personal_payment.dart';
 import '../models/payment_summary.dart';
+import '../models/kitty_contribution.dart';
+import '../models/kitty_expense.dart';
 import '../../../../features/calendar/domain/models/event.dart';
 import '../../../../features/calendar/domain/models/accommodation.dart';
 import '../../../../features/calendar/domain/models/plan_participation.dart';
@@ -10,12 +12,15 @@ class BalanceService {
   final BudgetService _budgetService = BudgetService();
 
   /// Calcular resumen completo de pagos y balances
+  /// T219: [kittyContributions] y [kittyExpenses] integran el bote común en balances
   PaymentSummary calculatePaymentSummary({
     required List<Event> events,
     required List<Accommodation> accommodations,
     required List<PlanParticipation> participations,
     required List<PersonalPayment> payments,
     required Map<String, String> userIdToName, // userId -> nombre para mostrar
+    List<KittyContribution> kittyContributions = const [],
+    List<KittyExpense> kittyExpenses = const [],
   }) {
     // Paso 1: Calcular coste por participante usando BudgetService
     final budgetSummary = _budgetService.calculateBudgetSummary(
@@ -24,13 +29,20 @@ class BalanceService {
       participations: participations,
     );
 
-    // Paso 2: Calcular pagos por participante
+    // Paso 2: Calcular pagos por participante (incl. aportes al bote T219)
     final paymentsByParticipant = <String, List<PersonalPayment>>{};
     for (final payment in payments.where((p) => p.status == 'paid')) {
       if (!paymentsByParticipant.containsKey(payment.participantId)) {
         paymentsByParticipant[payment.participantId] = [];
       }
       paymentsByParticipant[payment.participantId]!.add(payment);
+    }
+    // T219: total gastos del bote (repartido entre todos) y aportes por participante
+    final totalKittyExpenses = kittyExpenses.fold<double>(0.0, (s, e) => s + e.amount);
+    final kittyContributionsByUser = <String, double>{};
+    for (final c in kittyContributions) {
+      kittyContributionsByUser[c.participantId] =
+          (kittyContributionsByUser[c.participantId] ?? 0.0) + c.amount;
     }
 
     // Paso 3: Calcular balances
@@ -40,40 +52,56 @@ class BalanceService {
     final realParticipants = participations
         .where((p) => p.role != 'observer')
         .toList();
+    final numParticipants = realParticipants.isEmpty ? 1 : realParticipants.length;
+    final kittyExpensePerParticipant = totalKittyExpenses / numParticipants;
 
     for (final participation in realParticipants) {
       final userId = participation.userId;
-      final totalCost = budgetSummary.costByParticipant[userId] ?? 0.0;
+      final baseCost = budgetSummary.costByParticipant[userId] ?? 0.0;
+      final totalCost = baseCost + kittyExpensePerParticipant;
       final participantPayments = paymentsByParticipant[userId] ?? [];
-      final totalPaid = participantPayments.fold<double>(
+      final paidFromPayments = participantPayments.fold<double>(
         0.0,
         (sum, payment) => sum + payment.amount,
       );
+      final paidFromKitty = kittyContributionsByUser[userId] ?? 0.0;
+      final totalPaid = paidFromPayments + paidFromKitty;
       
       final balance = totalPaid - totalCost;
       
-      // Convertir pagos a PaymentItems
-      final paymentItems = participantPayments.map((payment) {
-        // Buscar descripción del evento si está asociado
-        String? eventDescription;
-        if (payment.eventId != null) {
-          final event = events.firstWhere(
-            (e) => e.id == payment.eventId,
-            orElse: () => events.first,
+      // Convertir pagos a PaymentItems (incl. aportes al bote T219)
+      final paymentItems = <PaymentItem>[
+        ...participantPayments.map((payment) {
+          String? eventDescription;
+          if (payment.eventId != null) {
+            final event = events.firstWhere(
+              (e) => e.id == payment.eventId,
+              orElse: () => events.first,
+            );
+            eventDescription = event.description;
+          }
+          return PaymentItem(
+            paymentId: payment.id ?? '',
+            eventId: payment.eventId,
+            eventDescription: eventDescription,
+            amount: payment.amount,
+            paymentDate: payment.paymentDate,
+            paymentMethod: payment.paymentMethod,
+            concept: payment.concept,
           );
-          eventDescription = event.description;
-        }
-
-        return PaymentItem(
-          paymentId: payment.id ?? '',
-          eventId: payment.eventId,
-          eventDescription: eventDescription,
-          amount: payment.amount,
-          paymentDate: payment.paymentDate,
-          paymentMethod: payment.paymentMethod,
-          concept: payment.concept,
-        );
-      }).toList();
+        }),
+        ...kittyContributions
+            .where((c) => c.participantId == userId)
+            .map((c) => PaymentItem(
+                  paymentId: 'kitty_${c.id}',
+                  eventId: null,
+                  eventDescription: null,
+                  amount: c.amount,
+                  paymentDate: c.contributionDate,
+                  paymentMethod: null,
+                  concept: c.concept ?? 'Aporte al bote',
+                )),
+      ];
 
       // Determinar estado del pago
       final status = _determinePaymentStatus(balance, totalCost, totalPaid);
@@ -90,45 +118,60 @@ class BalanceService {
     }
 
     // Si hay participantes con coste pero sin entrada en participations,
-    // añadirlos también
+    // añadirlos también (T219: incluir bote en coste y pago)
     for (final entry in budgetSummary.costByParticipant.entries) {
       if (!balancesByParticipant.containsKey(entry.key)) {
         final payments = paymentsByParticipant[entry.key] ?? [];
-        final totalPaid = payments.fold<double>(
+        final paidFromPayments = payments.fold<double>(
           0.0,
           (sum, payment) => sum + payment.amount,
         );
-        final balance = totalPaid - entry.value;
+        final paidFromKitty = kittyContributionsByUser[entry.key] ?? 0.0;
+        final totalPaid = paidFromPayments + paidFromKitty;
+        final totalCost = entry.value + kittyExpensePerParticipant;
+        final balance = totalPaid - totalCost;
 
-        final paymentItems = payments.map((payment) {
-          String? eventDescription;
-          if (payment.eventId != null) {
-            final event = events.firstWhere(
-              (e) => e.id == payment.eventId,
-              orElse: () => events.first,
+        final paymentItems = <PaymentItem>[
+          ...payments.map((payment) {
+            String? eventDescription;
+            if (payment.eventId != null) {
+              final event = events.firstWhere(
+                (e) => e.id == payment.eventId,
+                orElse: () => events.first,
+              );
+              eventDescription = event.description;
+            }
+            return PaymentItem(
+              paymentId: payment.id ?? '',
+              eventId: payment.eventId,
+              eventDescription: eventDescription,
+              amount: payment.amount,
+              paymentDate: payment.paymentDate,
+              paymentMethod: payment.paymentMethod,
+              concept: payment.concept,
             );
-            eventDescription = event.description;
-          }
-
-          return PaymentItem(
-            paymentId: payment.id ?? '',
-            eventId: payment.eventId,
-            eventDescription: eventDescription,
-            amount: payment.amount,
-            paymentDate: payment.paymentDate,
-            paymentMethod: payment.paymentMethod,
-            concept: payment.concept,
-          );
-        }).toList();
+          }),
+          ...kittyContributions
+              .where((c) => c.participantId == entry.key)
+              .map((c) => PaymentItem(
+                    paymentId: 'kitty_${c.id}',
+                    eventId: null,
+                    eventDescription: null,
+                    amount: c.amount,
+                    paymentDate: c.contributionDate,
+                    paymentMethod: null,
+                    concept: c.concept ?? 'Aporte al bote',
+                  )),
+        ];
 
         balancesByParticipant[entry.key] = ParticipantBalance(
           userId: entry.key,
           userName: userIdToName[entry.key] ?? entry.key,
-          totalCost: entry.value,
+          totalCost: totalCost,
           totalPaid: totalPaid,
           balance: balance,
           payments: paymentItems,
-          status: _determinePaymentStatus(balance, entry.value, totalPaid),
+          status: _determinePaymentStatus(balance, totalCost, totalPaid),
         );
       }
     }

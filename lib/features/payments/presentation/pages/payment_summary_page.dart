@@ -9,6 +9,11 @@ import '../../domain/services/balance_service.dart';
 import '../providers/payment_providers.dart';
 import '../../../../widgets/dialogs/payment_dialog.dart';
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
+import '../widgets/kitty_contribution_dialog.dart';
+import '../widgets/kitty_expense_dialog.dart';
+import '../../domain/models/kitty_contribution.dart';
+import '../../domain/models/kitty_expense.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 
 /// T102: Página de resumen de pagos y balances del plan
 class PaymentSummaryPage extends ConsumerWidget {
@@ -38,6 +43,7 @@ class PaymentSummaryPage extends ConsumerWidget {
                 context: context,
                 builder: (context) => PaymentDialog(
                   planId: plan.id!,
+                  plan: plan,
                   onSaved: () {
                     // Refrescar el resumen
                     ref.invalidate(paymentSummaryProvider(plan.id!));
@@ -88,8 +94,16 @@ class PaymentSummaryPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // T220: Aviso legal — la app no procesa cobros
+          _buildPaymentDisclaimer(context),
+          const SizedBox(height: 16),
+
           // Resumen general
           _buildGeneralSummary(summary),
+          const SizedBox(height: 24),
+
+          // T219: Bote común
+          _buildKittySection(context, ref),
           const SizedBox(height: 24),
 
           // Balances por participante
@@ -105,6 +119,220 @@ class PaymentSummaryPage extends ConsumerWidget {
           // Gráfico de balances
           _buildBalanceChart(summary),
         ],
+      ),
+    );
+  }
+
+  /// T220: Aviso breve de que la app no procesa cobros (solo anotación y cuadre).
+  Widget _buildPaymentDisclaimer(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: Colors.amber.shade800, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'La app no procesa cobros; solo sirve para anotar pagos y cuadrar entre el grupo.',
+              style: AppTypography.bodyStyle.copyWith(
+                fontSize: 13,
+                color: Colors.amber.shade900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// T219: Sección Bote común (aportaciones, gastos, saldo)
+  Widget _buildKittySection(BuildContext context, WidgetRef ref) {
+    final planCurrency = plan.currency;
+    final contributionsAsync = ref.watch(kittyContributionsProvider(plan.id!));
+    final expensesAsync = ref.watch(kittyExpensesProvider(plan.id!));
+    final currentUser = ref.watch(currentUserProvider);
+    final isOrganizer = currentUser?.id == plan.userId;
+
+    return contributionsAsync.when(
+      data: (contributions) {
+        return expensesAsync.when(
+          data: (expenses) {
+            final totalContributions = contributions.fold<double>(0.0, (s, c) => s + c.amount);
+            final totalExpenses = expenses.fold<double>(0.0, (s, e) => s + e.amount);
+            final kittyBalance = totalContributions - totalExpenses;
+
+            return Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.savings, color: AppColorScheme.color2),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Bote común',
+                          style: AppTypography.titleStyle.copyWith(
+                            color: AppColorScheme.color4,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Saldo: ${CurrencyFormatterService.formatAmount(kittyBalance, planCurrency)}',
+                          style: AppTypography.bodyStyle.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: kittyBalance >= 0 ? Colors.green : Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        FilledButton.icon(
+                          icon: const Icon(Icons.add),
+                          label: const Text('Aportación'),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => KittyContributionDialog(
+                                plan: plan,
+                                onSaved: () {
+                                  ref.invalidate(paymentSummaryProvider(plan.id!));
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        if (isOrganizer)
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            label: const Text('Gasto del bote'),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => KittyExpenseDialog(
+                                  plan: plan,
+                                  onSaved: () {
+                                    ref.invalidate(paymentSummaryProvider(plan.id!));
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                    if (contributions.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Aportaciones',
+                        style: AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      ...contributions.take(10).map((c) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              children: [
+                                Icon(Icons.arrow_upward, size: 16, color: Colors.green),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${c.participantId}: ${c.concept ?? "Aporte"}',
+                                    style: AppTypography.bodyStyle.copyWith(fontSize: 12),
+                                  ),
+                                ),
+                                Text(
+                                  '${CurrencyFormatterService.formatAmount(c.amount, planCurrency)} · ${DateFormat('dd/MM/yyyy').format(c.contributionDate)}',
+                                  style: AppTypography.bodyStyle.copyWith(fontSize: 11, color: Colors.grey.shade600),
+                                ),
+                              ],
+                            ),
+                          )),
+                      if (contributions.length > 10)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '+ ${contributions.length - 10} más',
+                            style: AppTypography.bodyStyle.copyWith(fontSize: 11, color: Colors.grey),
+                          ),
+                        ),
+                    ],
+                    if (expenses.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Gastos del bote',
+                        style: AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      ...expenses.take(10).map((e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              children: [
+                                Icon(Icons.arrow_downward, size: 16, color: Colors.orange),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    e.concept,
+                                    style: AppTypography.bodyStyle.copyWith(fontSize: 12),
+                                  ),
+                                ),
+                                Text(
+                                  '-${CurrencyFormatterService.formatAmount(e.amount, planCurrency)} · ${DateFormat('dd/MM/yyyy').format(e.expenseDate)}',
+                                  style: AppTypography.bodyStyle.copyWith(fontSize: 11, color: Colors.grey.shade600),
+                                ),
+                              ],
+                            ),
+                          )),
+                      if (expenses.length > 10)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '+ ${expenses.length - 10} más',
+                            style: AppTypography.bodyStyle.copyWith(fontSize: 11, color: Colors.grey),
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
+          loading: () => const Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+          error: (e, _) => Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text('Error al cargar gastos del bote: $e', style: AppTypography.bodyStyle),
+            ),
+          ),
+        );
+      },
+      loading: () => const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      error: (e, _) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text('Error al cargar bote: $e', style: AppTypography.bodyStyle),
+        ),
       ),
     );
   }

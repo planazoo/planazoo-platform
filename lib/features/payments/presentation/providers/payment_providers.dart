@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/services/payment_service.dart';
 import '../../domain/services/balance_service.dart';
+import '../../domain/services/kitty_service.dart';
 import '../../domain/models/personal_payment.dart';
 import '../../domain/models/payment_summary.dart';
+import '../../domain/models/kitty_contribution.dart';
+import '../../domain/models/kitty_expense.dart';
 import '../../../../features/calendar/presentation/providers/calendar_providers.dart';
 import '../../../../features/calendar/presentation/providers/accommodation_providers.dart';
 import '../../../../features/calendar/presentation/providers/plan_participation_providers.dart';
@@ -17,6 +20,21 @@ final paymentServiceProvider = Provider<PaymentService>((ref) {
 /// T102: Provider del servicio de balances
 final balanceServiceProvider = Provider<BalanceService>((ref) {
   return BalanceService();
+});
+
+/// T219: Provider del servicio de bote común
+final kittyServiceProvider = Provider<KittyService>((ref) {
+  return KittyService();
+});
+
+/// T219: Aportaciones al bote por plan
+final kittyContributionsProvider = StreamProvider.family<List<KittyContribution>, String>((ref, planId) {
+  return ref.watch(kittyServiceProvider).getContributionsByPlanId(planId);
+});
+
+/// T219: Gastos del bote por plan
+final kittyExpensesProvider = StreamProvider.family<List<KittyExpense>, String>((ref, planId) {
+  return ref.watch(kittyServiceProvider).getExpensesByPlanId(planId);
 });
 
 /// T102: Stream de pagos de un plan
@@ -79,6 +97,11 @@ final paymentSummaryProvider = FutureProvider.family<PaymentSummary, String>((re
     const Duration(seconds: 10),
   );
 
+  // T219: Obtener bote común (aportes y gastos)
+  final kittyService = ref.watch(kittyServiceProvider);
+  final kittyContributions = await kittyService.getContributionsByPlanIdFirst(planId);
+  final kittyExpenses = await kittyService.getExpensesByPlanIdFirst(planId);
+
   // Obtener nombres de usuarios
   final userIdToName = <String, String>{};
   for (final participation in participations) {
@@ -90,13 +113,15 @@ final paymentSummaryProvider = FutureProvider.family<PaymentSummary, String>((re
     }
   }
 
-  // Calcular resumen
+  // Calcular resumen (T219: incluye bote común)
   return balanceService.calculatePaymentSummary(
     events: events,
     accommodations: accommodations,
     participations: participations,
     payments: payments,
     userIdToName: userIdToName,
+    kittyContributions: kittyContributions,
+    kittyExpenses: kittyExpenses,
   );
 });
 

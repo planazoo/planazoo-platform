@@ -23,6 +23,7 @@
 9. [Fase 3 – Eventos en borrador, timezones y participación](#9-fase-3--eventos-en-borrador-timezones-y-participación)
 10. [Fase 4 – Notificaciones y apuntarse a eventos (UB)](#10-fase-4--notificaciones-y-apuntarse-a-eventos-ub)
 11. [Fase 5 – Re-invitar a UC y asignar a eventos](#11-fase-5--re-invitar-a-uc-y-asignar-a-eventos)
+11.5. [Fase: Pagos (registro y balances)](#115-fase-pagos-registro-y-balances)
 12. [Fase 6 – Chat durante la creación del plan](#12-fase-6--chat-durante-la-creación-del-plan)
 13. [Fase 7 – Aprobar / confirmar el plan](#13-fase-7--aprobar--confirmar-el-plan-ua)
 14. [Fase 8 – Durante el plan: chat y propuestas](#14-fase-8--durante-el-plan-chat-y-propuestas)
@@ -322,6 +323,26 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 
 ---
 
+## 11.5 Fase: Pagos (registro y balances)
+
+**Objetivo:** Validar registro de pagos, cálculo de balances y vista de resumen para los tres usuarios. Forma parte del alcance Pagos MVP (ver `docs/producto/PAGOS_MVP.md`).
+
+**Precondición:** Fase 5 completada; plan con UA, UB, UC y al menos un evento con coste (para que haya coste por participante y balance tenga sentido).
+
+| # | Actor | Acción detallada | Resultado esperado | Verificación concreta | Resultado | Notas |
+|---|--------|-------------------|--------------------|------------------------|-----------|--------|
+| P.1 | UA | Abrir el plan → pestaña "Pagos" (W18 en dashboard web) | Resumen de pagos visible | PaymentSummaryPage con balances por participante (o mensaje "Sin pagos aún"); moneda del plan; sin error | | |
+| P.2 | UA | Registrar un pago: "UB pagó 50 €" (concepto ej. "Cena día 1", evento asociado si aplica) | Pago guardado | Diálogo o formulario de pago; mensaje de éxito; el pago aparece en la lista de pagos de UB | | |
+| P.3 | UA | Comprobar balance de UB en el resumen | Balance actualizado | UB muestra "pagado" o balance positivo según lógica (total pagado − coste asignado); sugerencias de transferencia si aplican | | |
+| P.4 | UB | Con UB, abrir el plan → Pagos | Ve el resumen y su balance | Mismo resumen que UA (o vista participante); UB ve su propio balance y el pago registrado por UA | | |
+| P.5 | UC | Con UC, abrir el plan → Pagos | Ve el resumen del plan | UC ve balances de todos (o solo el suyo según permisos); sin crash; montos en moneda del plan | | |
+| P.6 | UB | (Si la decisión de producto lo permite) Registrar "yo pagué X" desde UB: p. ej. 20 € por "Taxi" | Pago propio registrado | Mensaje de éxito; el pago aparece asociado a UB; balance de UB se actualiza | | |
+| P.7 | UA | Volver a Pagos y comprobar sugerencias de transferencia (si hay deudas/créditos) | Sugerencias coherentes | Texto tipo "X debe Y € a Z"; coherente con costes y pagos registrados | | |
+
+**Postcondición:** Al menos un pago registrado; los tres usuarios han abierto la pestaña Pagos y ven resumen coherente. Anotar en Huecos si algo no cuadra con las decisiones de `PAGOS_MVP.md` (permisos, bote común, etc.).
+
+---
+
 ## 12. Fase 6 – Chat durante la creación del plan
 
 **Objetivo:** UA, UB y UC envían mensajes en el chat del plan; orden y visibilidad correctos.
@@ -585,6 +606,7 @@ Así mantienes las pruebas como fuente de verdad y evitas mezclar “probar” y
 | 3. Eventos borrador/timezones | | | | |
 | 4. Notificaciones y apuntarse | | | | |
 | 5. Re-invitar UC y asignar | | | | |
+| 5.5 Pagos (registro y balances) | | | | |
 | 6. Chat durante creación | | | | |
 | 7. Aprobar plan | | | | |
 | 8. Durante plan: chat y cambios | | | | |

@@ -9,6 +9,7 @@ import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/pages/pg_calendar_mobile_page.dart';
 import 'package:unp_calendario/pages/pg_plan_participants_page.dart';
 import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
+import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
@@ -125,37 +126,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         );
       
       case 'payments':
-        // TODO: Implementar página de pagos (Tarea futura - Sistema de pagos)
-        // Ver: docs/tareas/TASKS.md para más detalles sobre funcionalidades pendientes
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.payment,
-                size: 64,
-                color: Colors.grey.shade600,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Pagos',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade400,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Próximamente',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
-                ),
-              ),
-            ],
-          ),
-        );
+        return PaymentSummaryPage(plan: widget.plan);
       
       default:
         return PlanDataScreen(
