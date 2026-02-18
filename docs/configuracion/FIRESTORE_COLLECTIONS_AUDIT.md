@@ -53,7 +53,7 @@
 - `announcements` - Avisos del plan (`plans/{planId}/announcements`) — ver AnnouncementService
 - `messages` - Mensajes del chat del plan (`plans/{planId}/messages`) — ChatService
 
-**Nota:** Los eventos y alojamientos **no** son subcolecciones de `plans`. Están en la colección raíz `events` (eventos con `planId`; alojamientos con `typeFamily: 'alojamiento'`). Los pagos personales están en la colección raíz `personal_payments`.
+**Nota:** Los eventos y alojamientos **no** son subcolecciones de `plans`. Están en la colección raíz `events` (eventos con `planId`; alojamientos con `typeFamily: 'alojamiento'`). Los pagos personales están en `personal_payments`; el bote común (T219) en `kitty_contributions` y `kitty_expenses`.
 
 **Campos principales:**
 - `name`, `unpId`, `userId`, `baseDate`, `startDate`, `endDate`
@@ -203,7 +203,9 @@
 1. **`participant_groups`** - Grupos de participantes (T123) ✅
 2. **`plan_invitations`** - Invitaciones por email (T104) ✅
 3. **`personal_payments`** - Pagos personales (T102) ✅
-4. **`userPreferences`** - Preferencias de usuario ✅
+4. **`kitty_contributions`** - Aportaciones al bote común (T219, KittyService) ✅
+5. **`kitty_expenses`** - Gastos del bote común (T219, KittyService) ✅
+6. **`userPreferences`** - Preferencias de usuario ✅
 
 ---
 

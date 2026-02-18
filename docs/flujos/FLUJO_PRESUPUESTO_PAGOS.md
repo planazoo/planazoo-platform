@@ -53,6 +53,8 @@ Resumen de decisiones para el primer MVP (T217–T222):
 | Registrar **gasto del bote** | ✅ | ❌ |
 | Ver sugerencias de transferencias | ✅ | ✅ |
 
+**Dónde se ve en la app:** El **presupuesto** del plan (coste total, desglose) se ve en la pestaña **Estadísticas (W17)** → `PlanStatsPage`. El **sistema de pagos** (balances, bote común, transferencias) en la pestaña **Pagos (W18)** → `PaymentSummaryPage`. Ver `docs/guias/GUIA_UI.md` y `docs/producto/PAGOS_MVP.md`.
+
 ---
 
 ## 📋 PROCESOS DE GESTIÓN

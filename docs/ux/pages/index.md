@@ -291,7 +291,7 @@ flowchart LR
   PDP --> PART[PlanParticipantsPage]
   PDP --> CHAT[PlanChatScreen]
   PDP --> STATS[PlanStatsPage]
-  PDP -->|pagos| PROX[Placeholder Próximamente]
+  PDP -->|pagos| PAY[PaymentSummaryPage]
   CAL -->|pantalla completa| FSC[FullScreenCalendarPage]
 ```
 

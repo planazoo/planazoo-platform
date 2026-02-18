@@ -145,8 +145,9 @@ Configuración y contexto del proyecto:
 - ✅ Cloud Function para envío de emails de invitación (Gmail SMTP)
 
 **Sistema Financiero:**
-- ✅ Sistema de presupuesto (T101)
-- ✅ Sistema de pagos personales (T102)
+- ✅ Sistema de presupuesto (T101) — costes por evento/alojamiento, total, desglose; se ve en **Estadísticas (W17)** → `PlanStatsPage`
+- ✅ Sistema de pagos personales (T102) — balances, quién debe a quién, sugerencias de transferencias; se ve en **Pagos (W18)** → `PaymentSummaryPage`
+- ✅ Pagos MVP (T217–T221): permisos por rol (organizador/participante), bote común (aportaciones y gastos), aviso legal "no procesamos cobros", misma experiencia web y móvil
 - ✅ Sistema multi-moneda (EUR, USD, GBP, JPY) (T153)
 
 **Sistema de Análisis:**

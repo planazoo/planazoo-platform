@@ -1805,6 +1805,10 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ## 9. PRESUPUESTO Y PAGOS
 
+**Distinción en la UI (ver `docs/producto/PAGOS_MVP.md`, `docs/flujos/FLUJO_PRESUPUESTO_PAGOS.md`):**
+- **Presupuesto (T101):** costes del plan, total, desglose. Se ve en la pestaña **Estadísticas (W17)** → `PlanStatsPage`.
+- **Pagos (T102):** quién ha pagado qué, balances, bote común, sugerencias de transferencias. Se ve en la pestaña **Pagos (W18)** → `PaymentSummaryPage`.
+
 ### 9.1 Gestión de Presupuesto (T101)
 
 - [ ] **BUD-001:** Añadir coste a evento
@@ -1818,8 +1822,8 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Estado: ✅
 
 - [ ] **BUD-003:** Ver presupuesto total del plan
-  - Pasos: Acceder a estadísticas
-  - Esperado: Total calculado correctamente
+  - Pasos: Abrir plan → pestaña **Estadísticas (W17)**; ver sección Presupuesto en `PlanStatsPage`
+  - Esperado: Total calculado correctamente; desglose por tipo de evento y alojamientos si hay costes
   - Estado: ✅
 
 - [ ] **BUD-004:** Ver desglose por tipo de evento
@@ -1849,16 +1853,42 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ### 9.2 Sistema de Pagos (T102)
 
-**Alcance MVP:** Ver [docs/producto/PAGOS_MVP.md](../producto/PAGOS_MVP.md). Flujo E2E con tres usuarios (UA registra pago de UB, ver balance, UC ve resumen): [docs/testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) — Fase 11.5 Pagos.
+**Alcance MVP:** Ver [docs/producto/PAGOS_MVP.md](../producto/PAGOS_MVP.md). Permisos: organizador registra cualquier pago; participante solo "yo pagué X". Bote común: aportaciones y gastos (reparto en balances). Aviso en UI: "La app no procesa cobros…". Flujo E2E: [docs/testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) — Fase 11.5 Pagos.
 
 - [ ] **PAY-001:** Registrar pago individual
+  - Pasos: Abrir plan → pestaña Pagos (W18) → "Registrar pago"; rellenar participante (organizador puede elegir cualquiera), monto, concepto, fecha
+  - Esperado: Pago guardado; aparece en resumen y en el balance del participante
   - Estado: ✅
 
 - [ ] **PAY-002:** Ver balance de participante
+  - Pasos: En PaymentSummaryPage ver tarjetas por participante (coste asignado, total pagado, balance)
+  - Esperado: Balances coherentes (total pagado − coste; incluye coste repartido del bote si hay gastos)
   - Estado: ✅
 
 - [ ] **PAY-003:** Cálculo de deudas (sugerencias de transferencias)
+  - Pasos: Con varios participantes y pagos/costes desiguales, ver sección "Sugerencias de transferencias"
+  - Esperado: Texto tipo "X debe Y € a Z"; coherente con balances
   - Estado: ✅
+
+- [ ] **PAY-004:** Permisos: participante solo "yo pagué"
+  - Pasos: Entrar como participante (no organizador) → Pagos → Registrar pago
+  - Esperado: No hay selector de participante; se muestra "Tú (yo pagué)" fijo; solo puede registrar su propio pago
+  - Estado: 🔄
+
+- [ ] **PAY-005:** Bote común — aportación
+  - Pasos: En PaymentSummaryPage, sección "Bote común" → "Aportación"; organizador elige participante (o participante solo "mi aportación"), monto, concepto
+  - Esperado: Aportación guardada; saldo del bote y balances actualizados (aporte cuenta como pagado del participante)
+  - Estado: 🔄
+
+- [ ] **PAY-006:** Bote común — gasto (solo organizador)
+  - Pasos: Como organizador → "Gasto del bote"; concepto y monto. Como participante: botón "Gasto del bote" no visible o no permitido
+  - Esperado: Gasto guardado; saldo del bote baja; coste repartido entre todos los participantes (balance actualizado)
+  - Estado: 🔄
+
+- [ ] **PAY-007:** Aviso legal en pantalla de pagos
+  - Pasos: Abrir plan → Pagos (W18)
+  - Esperado: Aviso visible tipo "La app no procesa cobros; solo sirve para anotar pagos y cuadrar entre el grupo"
+  - Estado: 🔄
 
 ### 9.3 Sistema Multi-moneda (T153)
 
@@ -1959,8 +1989,8 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Estado: ✅
 
 - [ ] **STAT-006:** Ver presupuesto en estadísticas (T101)
-  - Pasos: Ver sección presupuesto
-  - Esperado: Si hay costes, muestra sección completa
+  - Pasos: Abrir plan → pestaña Estadísticas (W17); ver sección Presupuesto en PlanStatsPage
+  - Esperado: Si hay costes, muestra sección completa (total, desglose por tipo, eventos vs alojamientos)
   - Estado: ✅
 
 - [ ] **STAT-007:** Estadísticas con plan vacío

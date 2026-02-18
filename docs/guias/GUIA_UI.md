@@ -480,8 +480,8 @@ R13 └─────┴─────┴─────┴─────┴�
 - **W14**: Acceso info plan (C6, R2)
 - **W15**: Acceso calendario (C7, R2)
 - **W16**: Participantes (C8, R2)
-- **W17**: Estadísticas (C9, R2)
-- **W18**: Pagos (C10, R2)
+- **W17**: Estadísticas (C9, R2) — aquí se muestra el **presupuesto** del plan (T101): coste total, por evento/alojamiento, desglose. `PlanStatsPage`.
+- **W18**: Pagos (C10, R2) — aquí se muestra el **sistema de pagos** (T102): quién ha pagado qué, balances, bote común, sugerencias de transferencias. `PaymentSummaryPage`.
 - **W19**: Chat (C11, R2)
 - **W20**: Notificaciones **del plan seleccionado** (C12, R2) — invitaciones a este plan, avisos, cambios en eventos del plan + sección "Eventos desde correo pendientes". Ver `docs/producto/NOTIFICACIONES_ESPECIFICACION.md`.
 - **W21-W23**: Reservados (C13-C15, R2)

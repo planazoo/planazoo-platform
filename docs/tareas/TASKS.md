@@ -209,16 +209,18 @@
 
 ### 12. Pagos MVP (primer MVP) — sistema de pagos (T102)
 
-> **Presupuesto del plan (T101)** = costes del plan, total, estadísticas. **Sistema de pagos (T102)** = quién ha pagado qué, balances, deudas/créditos. Las tareas de esta sección son del **sistema de pagos**, no del presupuesto. Decisiones en `docs/producto/PAGOS_MVP.md`. Pruebas E2E: fase 11.5; casos PAY-* en TESTING_CHECKLIST § 9.2.
+> **Presupuesto del plan (T101)** = costes del plan, total, estadísticas (se ve en **W17 Estadísticas**). **Sistema de pagos (T102)** = quién ha pagado qué, balances, deudas/créditos (se ve en **W18 Pagos**). Decisiones en `docs/producto/PAGOS_MVP.md`. Pruebas E2E: fase 11.5; casos PAY-* en TESTING_CHECKLIST § 9.2.
+
+**Completadas (Feb 2026):** T217, T218, T219, T220, T221. **Pendiente:** T222 (ejecutar E2E y casos PAY-*).
 
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
-| **T217** | Pagos MVP: unificar web/mobile. Sustituir placeholder "Próximamente" en vista móvil del plan (pg_plan_detail_page, case 'payments') por PaymentSummaryPage y flujo de registro de pago según permisos. | Alta (MVP) |
-| **T218** | Pagos MVP: permisos por rol. Organizador puede registrar cualquier pago (de cualquier participante); participante solo puede registrar "yo pagué X" (su propio pago). Aplicar en UI y en reglas/servicios; documentar en FLUJO_PRESUPUESTO_PAGOS.md. | Alta (MVP) |
-| **T219** | Pagos MVP: bote común. Definir e implementar flujo (quién aporta al bote, quién gasta del bote, reflejo en balances). Ver PAGOS_MVP.md decisión 5.3. | Media |
-| **T220** | Pagos MVP: aviso en UI y texto legal. Añadir aviso breve en la pantalla de pagos (ej. "La app no procesa cobros; solo sirve para anotar pagos y cuadrar entre el grupo"); incluir en términos/FAQ que la app no procesa cobros. | Alta (MVP) |
-| **T221** | Pagos MVP: actualizar FLUJO_PRESUPUESTO_PAGOS.md con las decisiones (quién registra qué, bote común en MVP, matriz de permisos por rol/estado del plan). | Media |
-| **T222** | Pagos MVP: ejecutar y validar. Ejecutar fase 11.5 Pagos del plan E2E (tres usuarios) y casos PAY-001 a PAY-003 del TESTING_CHECKLIST; marcar resultados. | Media |
+| ~~**T217**~~ | ✅ Pagos MVP: unificar web/mobile. Sustituir placeholder en vista móvil por PaymentSummaryPage. | Alta (MVP) |
+| ~~**T218**~~ | ✅ Pagos MVP: permisos por rol (organizador cualquier pago; participante solo "yo pagué"). | Alta (MVP) |
+| ~~**T219**~~ | ✅ Pagos MVP: bote común (aportaciones, gastos, reflejo en balances). | Media |
+| ~~**T220**~~ | ✅ Pagos MVP: aviso en UI y texto legal ("no procesamos cobros"). | Alta (MVP) |
+| ~~**T221**~~ | ✅ Pagos MVP: actualizar FLUJO_PRESUPUESTO_PAGOS.md con decisiones y matriz de permisos. | Media |
+| **T222** | Pagos MVP: ejecutar y validar. Ejecutar fase 11.5 Pagos del plan E2E (tres usuarios) y casos PAY-001 a PAY-007 del TESTING_CHECKLIST; marcar resultados. | Media |
 
 ---
 

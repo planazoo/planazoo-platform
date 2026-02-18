@@ -213,7 +213,7 @@ lib/
 | `lib/features/auth/` | [FLUJO_CRUD_USUARIOS](../flujos/FLUJO_CRUD_USUARIOS.md), [GUIA_SEGURIDAD](../guias/GUIA_SEGURIDAD.md) |
 | `lib/features/calendar/` | [FLUJO_CRUD_PLANES](../flujos/FLUJO_CRUD_PLANES.md), [FLUJO_CRUD_EVENTOS](../flujos/FLUJO_CRUD_EVENTOS.md), [FLUJO_CRUD_ALOJAMIENTOS](../flujos/FLUJO_CRUD_ALOJAMIENTOS.md), [FLUJO_GESTION_PARTICIPANTES](../flujos/FLUJO_GESTION_PARTICIPANTES.md), [IMAGENES_PLAN_FIREBASE.md](./IMAGENES_PLAN_FIREBASE.md) |
 | `lib/features/notifications/` | [NOTIFICACIONES_ESPECIFICACION](../producto/NOTIFICACIONES_ESPECIFICACION.md), [FLUJO_INVITACIONES_NOTIFICACIONES](../flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md) |
-| `lib/features/payments/` | [FLUJO_PRESUPUESTO_PAGOS](../flujos/FLUJO_PRESUPUESTO_PAGOS.md) |
+| `lib/features/payments/` | [FLUJO_PRESUPUESTO_PAGOS](../flujos/FLUJO_PRESUPUESTO_PAGOS.md) — Presupuesto en W17 (Estadísticas), pagos en W18 (Pagos); bote común (T219), permisos (T218), aviso legal (T220) |
 | `lib/features/offline/` | [ARCHITECTURE_DECISIONS](../arquitectura/ARCHITECTURE_DECISIONS.md) (Offline First), [TESTING_OFFLINE_FIRST](../testing/TESTING_OFFLINE_FIRST.md) |
 | `lib/shared/` | Modelos y servicios compartidos; ver flujos según dominio (permisos, roles, etc.) |
 | `lib/app/` | [GUIA_UI](../guias/GUIA_UI.md) (tema, colores, tipografía) |

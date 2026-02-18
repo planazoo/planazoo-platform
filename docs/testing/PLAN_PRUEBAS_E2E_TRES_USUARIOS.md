@@ -325,21 +325,24 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 
 ## 11.5 Fase: Pagos (registro y balances)
 
-**Objetivo:** Validar registro de pagos, cálculo de balances y vista de resumen para los tres usuarios. Forma parte del alcance Pagos MVP (ver `docs/producto/PAGOS_MVP.md`).
+**Objetivo:** Validar registro de pagos, cálculo de balances, bote común y vista de resumen para los tres usuarios. Forma parte del alcance Pagos MVP (ver `docs/producto/PAGOS_MVP.md` y `docs/flujos/FLUJO_PRESUPUESTO_PAGOS.md`). **Presupuesto** se ve en pestaña **Estadísticas (W17)**; **pagos** en pestaña **Pagos (W18)**.
 
 **Precondición:** Fase 5 completada; plan con UA, UB, UC y al menos un evento con coste (para que haya coste por participante y balance tenga sentido).
 
 | # | Actor | Acción detallada | Resultado esperado | Verificación concreta | Resultado | Notas |
 |---|--------|-------------------|--------------------|------------------------|-----------|--------|
-| P.1 | UA | Abrir el plan → pestaña "Pagos" (W18 en dashboard web) | Resumen de pagos visible | PaymentSummaryPage con balances por participante (o mensaje "Sin pagos aún"); moneda del plan; sin error | | |
-| P.2 | UA | Registrar un pago: "UB pagó 50 €" (concepto ej. "Cena día 1", evento asociado si aplica) | Pago guardado | Diálogo o formulario de pago; mensaje de éxito; el pago aparece en la lista de pagos de UB | | |
-| P.3 | UA | Comprobar balance de UB en el resumen | Balance actualizado | UB muestra "pagado" o balance positivo según lógica (total pagado − coste asignado); sugerencias de transferencia si aplican | | |
-| P.4 | UB | Con UB, abrir el plan → Pagos | Ve el resumen y su balance | Mismo resumen que UA (o vista participante); UB ve su propio balance y el pago registrado por UA | | |
-| P.5 | UC | Con UC, abrir el plan → Pagos | Ve el resumen del plan | UC ve balances de todos (o solo el suyo según permisos); sin crash; montos en moneda del plan | | |
-| P.6 | UB | (Si la decisión de producto lo permite) Registrar "yo pagué X" desde UB: p. ej. 20 € por "Taxi" | Pago propio registrado | Mensaje de éxito; el pago aparece asociado a UB; balance de UB se actualiza | | |
-| P.7 | UA | Volver a Pagos y comprobar sugerencias de transferencia (si hay deudas/créditos) | Sugerencias coherentes | Texto tipo "X debe Y € a Z"; coherente con costes y pagos registrados | | |
+| P.0 | UA | (Opcional) Abrir plan → pestaña **Estadísticas (W17)** | Presupuesto visible | PlanStatsPage con sección Presupuesto (coste total, desglose) si hay eventos/alojamientos con coste | | |
+| P.1 | UA | Abrir el plan → pestaña "Pagos" (W18 en dashboard web) | Resumen de pagos visible | PaymentSummaryPage con balances por participante (o "Sin pagos aún"); aviso "La app no procesa cobros…"; moneda del plan; sin error | | |
+| P.2 | UA | Registrar un pago: "UB pagó 50 €" (concepto ej. "Cena día 1", evento asociado si aplica) | Pago guardado | Organizador puede elegir participante en el diálogo; mensaje de éxito; el pago aparece en la lista de pagos de UB | | |
+| P.3 | UA | Comprobar balance de UB en el resumen | Balance actualizado | UB muestra balance según lógica (total pagado − coste asignado); sugerencias de transferencia si aplican | | |
+| P.4 | UA | En sección "Bote común" → "Aportación": registrar aportación de UC (ej. 30 €) | Aportación guardada | Saldo del bote y balances actualizados; aportación cuenta como "pagado" de UC | | |
+| P.5 | UA | "Gasto del bote": concepto "Comida grupo", 40 € | Gasto guardado | Saldo del bote baja; coste repartido entre UA, UB, UC; sugerencias de transferencia actualizadas si aplica | | |
+| P.6 | UB | Con UB, abrir el plan → Pagos | Ve el resumen y su balance | Mismo resumen; UB ve su balance y el pago registrado por UA; aviso legal visible | | |
+| P.7 | UB | Registrar "yo pagué X" desde UB: p. ej. 20 € por "Taxi" | Pago propio registrado | Diálogo sin selector de participante ("Tú (yo pagué)"); mensaje de éxito; pago asociado a UB; balance actualizado | | |
+| P.8 | UC | Con UC, abrir el plan → Pagos | Ve el resumen del plan | UC ve balances; no puede registrar gasto del bote (solo organizador); puede registrar "mi aportación" si aplica | | |
+| P.9 | UA | Volver a Pagos y comprobar sugerencias de transferencia (si hay deudas/créditos) | Sugerencias coherentes | Texto tipo "X debe Y € a Z"; coherente con costes, pagos y bote común | | |
 
-**Postcondición:** Al menos un pago registrado; los tres usuarios han abierto la pestaña Pagos y ven resumen coherente. Anotar en Huecos si algo no cuadra con las decisiones de `PAGOS_MVP.md` (permisos, bote común, etc.).
+**Postcondición:** Al menos un pago y opcionalmente aportación/gasto del bote registrados; los tres usuarios han abierto Pagos (W18) y ven resumen coherente. Presupuesto en Estadísticas (W17). Anotar si algo no cuadra con `PAGOS_MVP.md` (permisos, bote, aviso legal).
 
 ---
 

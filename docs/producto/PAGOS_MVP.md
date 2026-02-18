@@ -23,6 +23,8 @@ No es lo mismo:
 
 Este documento (**Pagos MVP**) y las tareas T217–T222 se refieren al **sistema de pagos** (T102). El presupuesto del plan (T101) ya está implementado y es un concepto distinto, aunque en la UI ambos se apoyan (p. ej. el coste por participante del presupuesto se usa para calcular el balance de pagos).
 
+**Dónde se ve en la UI:** El **presupuesto** del plan se ve en la pestaña **Estadísticas (W17)** → `PlanStatsPage`. El **sistema de pagos** (balances, quién debe a quién, bote común) se ve en la pestaña **Pagos (W18)** → `PaymentSummaryPage`.
+
 ---
 
 ## 2. Qué hay ya implementado (referencia)

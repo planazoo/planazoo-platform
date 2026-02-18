@@ -4,6 +4,26 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T217–T221 - Pagos MVP (sistema de pagos)
+
+**Estado:** ✅ Completadas  
+**Fecha de finalización:** Febrero 2026  
+
+**Descripción:** Bloque de tareas del sistema de pagos para el primer MVP. Distinción en la UI: **presupuesto** (T101) se ve en pestaña **Estadísticas (W17)** → `PlanStatsPage`; **pagos** (T102) en pestaña **Pagos (W18)** → `PaymentSummaryPage`. Decisiones en `docs/producto/PAGOS_MVP.md`.
+
+**Implementación:**
+- **T217:** Unificar web/mobile — en vista móvil del plan (`pg_plan_detail_page.dart`), case `payments` muestra `PaymentSummaryPage` (misma experiencia que web).
+- **T218:** Permisos por rol — en `PaymentDialog`: organizador puede elegir cualquier participante; participante solo ve "Tú (yo pagué)" y registra su propio pago. Parámetro `Plan? plan` para determinar rol.
+- **T219:** Bote común — modelos `KittyContribution` y `KittyExpense`; `KittyService` (Firestore `kitty_contributions`, `kitty_expenses`); integración en `BalanceService` (aportes suman al pagado, gastos repartidos al coste); UI en `PaymentSummaryPage` (sección Bote común, diálogos `KittyContributionDialog`, `KittyExpenseDialog`); permisos: organizador registra cualquier aportación y gastos; participante solo "mi aportación". Índices Firestore y reglas añadidos.
+- **T220:** Aviso legal — en `PaymentSummaryPage` aviso "La app no procesa cobros; solo sirve para anotar pagos y cuadrar entre el grupo"; sección 7 y referencia en `docs/guias/GUIA_ASPECTOS_LEGALES.md`.
+- **T221:** Documentación — `FLUJO_PRESUPUESTO_PAGOS.md` actualizado con decisiones MVP, matriz de permisos por rol y dónde se ve presupuesto vs pagos (W17/W18).
+
+**Archivos principales:** `lib/features/payments/` (modelos kitty, KittyService, balance_service, providers, payment_summary_page, widgets kitty_*_dialog), `lib/widgets/dialogs/payment_dialog.dart`, `lib/pages/pg_plan_detail_page.dart`, `docs/flujos/FLUJO_PRESUPUESTO_PAGOS.md`, `docs/producto/PAGOS_MVP.md`, `docs/guias/GUIA_UI.md`, `docs/guias/GUIA_ASPECTOS_LEGALES.md`, `firestore.indexes.json`, `firestore.rules`.
+
+**Pendiente:** T222 (ejecutar fase 11.5 E2E y casos PAY-* del TESTING_CHECKLIST).
+
+---
+
 ## T203 - Corregir subida de imagen en Info plan
 **Estado:** ✅ Completada  
 **Fecha de finalización:** Febrero 2026  

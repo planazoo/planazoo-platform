@@ -99,6 +99,8 @@ Los índices están definidos en `firestore.indexes.json` y cubren:
 - **plan_invitations**: Invitaciones por email y estado
 - **event_participants**: Participantes de eventos
 - **personal_payments**: Pagos por plan y fecha
+- **kitty_contributions**: Aportaciones al bote por plan y fecha (T219)
+- **kitty_expenses**: Gastos del bote por plan y fecha (T219)
 - **participant_groups**: Grupos de participantes
 - **users**: Usuarios activos
 
