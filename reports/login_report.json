@@ -1,0 +1,112 @@
+{
+  "metadata": {
+    "language": "dart",
+    "execution_time": "2026-02-10T09:56:34.367671Z",
+    "commit": "e57a41a2c0b4e143a0b229752e420c9764288bd5",
+    "environment": "local"
+  },
+  "summary": {
+    "total": 9,
+    "passed": 8,
+    "failed": 1,
+    "errors": 0,
+    "duration_ms": 56
+  },
+  "cases": [
+    {
+      "id": "LOGIN-001_email_ok",
+      "target": {
+        "module": "auth",
+        "scenario": "login"
+      },
+      "status": "passed",
+      "duration_ms": 2
+    },
+    {
+      "id": "LOGIN-002_username_with_at_ok",
+      "target": {
+        "module": "auth",
+        "scenario": "login"
+      },
+      "status": "passed",
+      "duration_ms": 0
+    },
+    {
+      "id": "LOGIN-003_username_without_at_ok",
+      "target": {
+        "module": "auth",
+        "scenario": "login"
+      },
+      "status": "passed",
+      "duration_ms": 0
+    },
+    {
+      "id": "LOGIN-004_email_not_found",
+      "target": {
+        "module": "auth",
+        "scenario": "login"
+      },
+      "status": "passed",
+      "duration_ms": 0
+    },
+    {
+      "id": "LOGIN-005_username_not_found",
+      "target": {
+        "module": "auth",
+        "scenario": "login"
+      },
+      "status": "passed",
+      "duration_ms": 0
+    },
+    {
+      "id": "LOGIN-006_wrong_password_email",
+      "target": {
+        "module": "auth",
+        "scenario": "login"
+      },
+      "status": "passed",
+      "duration_ms": 0
+    },
+    {
+      "id": "LOGIN-007_wrong_password_username",
+      "target": {
+        "module": "auth",
+        "scenario": "login"
+      },
+      "status": "passed",
+      "duration_ms": 0
+    },
+    {
+      "id": "LOGIN-008_invalid_identifier_format",
+      "target": {
+        "module": "auth",
+        "scenario": "login"
+      },
+      "status": "passed",
+      "duration_ms": 0
+    },
+    {
+      "id": "LOGIN-009_inactive_user",
+      "target": {
+        "module": "auth",
+        "scenario": "login"
+      },
+      "status": "failed",
+      "input": {
+        "identifier": "inactive@example.com",
+        "password": "CorrectPass123",
+        "backendResult": "inactive_user"
+      },
+      "expected": {
+        "status": "error",
+        "messageKey": "user-inactive"
+      },
+      "actual": {
+        "status": "error",
+        "messageKey": "loginUnknownError"
+      },
+      "diff": "expected {\"status\":\"error\",\"messageKey\":\"user-inactive\"} but got {\"status\":\"error\",\"messageKey\":\"loginUnknownError\"}",
+      "duration_ms": 0
+    }
+  ]
+}

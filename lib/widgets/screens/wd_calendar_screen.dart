@@ -43,15 +43,19 @@ import 'package:unp_calendario/widgets/screens/calendar/components/calendar_grid
 import 'package:unp_calendario/widgets/screens/calendar/components/calendar_tracks.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   final Plan plan;
   final int? initialVisibleDays;
+  /// Si se proporciona, se muestra un botón "Ver resumen" en la barra que abre el resumen del plan (p. ej. en dashboard).
+  final VoidCallback? onShowSummary;
 
   const CalendarScreen({
     super.key,
     required this.plan,
     this.initialVisibleDays,
+    this.onShowSummary,
   });
 
   @override
@@ -318,7 +322,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Construye el AppBar con navegación de días
   PreferredSizeWidget _buildAppBar() {
     _updateCalendarAppBar();
-    
+    final summaryLabel = widget.onShowSummary != null
+        ? AppLocalizations.of(context)!.planSummaryButtonTooltip
+        : null;
     return _calendarAppBar!.buildAppBar(
       onPreviousDayGroup: _previousDayGroup,
       onNextDayGroup: _nextDayGroup,
@@ -355,6 +361,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         );
       },
       onUserSelected: _onUserPerspectiveChanged,
+      onShowSummary: widget.onShowSummary,
+      summaryButtonLabel: summaryLabel,
     );
   }
 

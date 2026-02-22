@@ -98,7 +98,7 @@ Ver: `specs/plan_data_screen_mobile.json`
 
 **Estructura:**
 - BS: Nombre del plan
-- R1: Resumen del plan (F1)
+- R1: Datos principales del plan — nombre, descripción, imagen (F1). El resumen generado en texto (T193) se abre en diálogo o en vista W31 desde la pestaña Calendario.
 - R2: Estado del plan (F2)
 - R3: Información (F3)
 - R4: Información Meta (F4)

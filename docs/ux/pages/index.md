@@ -95,17 +95,16 @@ Este directorio contiene la documentación técnica y funcional de todas las pá
 
 ### 📋 **Resumen del plan (T193)**
 **Última actualización:** Febrero 2026  
-**Código:** Botón/diálogo en `lib/widgets/plan/plan_summary_button.dart`, `lib/widgets/dialogs/plan_summary_dialog.dart`; uso en card del plan (dashboard) y en pantalla de detalle (PlanDataScreen).
+**Código:** `lib/widgets/plan/plan_summary_button.dart`, `lib/widgets/dialogs/plan_summary_dialog.dart`, `lib/widgets/screens/wd_plan_summary_screen.dart`; uso en card, PlanDataScreen (info) y barra del calendario.
 
 **Descripción:** Funcionalidad que genera un resumen en texto del plan (eventos, alojamientos, fechas) y permite copiarlo al portapapeles.
 
 **Características principales:**
-- Botón "Ver resumen" / "Resumen" en la card del plan (dashboard) y en la pantalla de detalle del plan
-- Diálogo con indicador de carga ("Generando resumen...") y texto formateado
-- Botón "Copiar" que copia el resumen al portapapeles y muestra SnackBar de confirmación
-- Botón "Cerrar" para cerrar el diálogo
+- **Card del plan e Info del plan (PlanDataScreen):** icono/botón "Resumen" abre el **diálogo** (PlanSummaryDialog): carga, texto formateado, Copiar y Cerrar.
+- **Pestaña Calendario (W31):** en la barra del calendario hay un botón "Ver resumen" que cambia el contenido de W31 a la **vista de resumen** (WdPlanSummaryScreen). Desde esa vista, el botón "Calendario" vuelve a la cuadrícula. El resumen en W31 solo se muestra desde la pestaña Calendario (no hay pestaña "Resumen" ni bloque de resumen en la página de info).
+- Diálogo y vista W31: indicador de carga ("Generando resumen..."), texto formateado, botón Copiar con SnackBar de confirmación.
 
-**Tecnologías:** Riverpod, servicios de plan/eventos, Flutter
+**Tecnologías:** Riverpod, PlanSummaryService, Flutter
 
 ---
 
@@ -241,12 +240,15 @@ Listado alineado con el código actual. Las que tienen ficha en este directorio 
 | **PlanParticipantsPage** | `lib/pages/pg_plan_participants_page.dart` | Página de participantes del plan. |
 | **ParticipantsScreen** | `lib/widgets/screens/wd_participants_screen.dart` | Pantalla de gestión de participantes. |
 | **ParticipantGroupsPage** | `lib/pages/pg_participant_groups_page.dart` | Grupos de participantes. |
-| **PlanStatsPage** | `lib/features/stats/presentation/pages/plan_stats_page.dart` | Estadísticas del plan. |
-| **PaymentSummaryPage** | `lib/features/payments/presentation/pages/payment_summary_page.dart` | Resumen de pagos. |
-| **PlanChatScreen** | `lib/widgets/screens/wd_plan_chat_screen.dart` | Chat del plan. Ver **plan_chat_screen.md**. |
-| **AdminInsightsScreen** | `lib/widgets/screens/wd_admin_insights_screen.dart` | Panel admin (insights). |
+| **PlanStatsPage** | `lib/features/stats/presentation/pages/plan_stats_page.dart` | **W17 Estadísticas:** presupuesto del plan (T101), coste total, desglose por tipo de evento/alojamiento, por participante. |
+| **PaymentSummaryPage** | `lib/features/payments/presentation/pages/payment_summary_page.dart` | **W18 Pagos:** resumen de pagos (T102), balances por participante, bote común (aportaciones/gastos), sugerencias de transferencias, aviso "La app no procesa cobros". Diálogos: PaymentDialog, KittyContributionDialog, KittyExpenseDialog. |
+| **PlanChatScreen** | `lib/widgets/screens/wd_plan_chat_screen.dart` | Chat del plan (W19). Ver **plan_chat_screen.md**. |
+| **WdPlanNotificationsScreen** | `lib/widgets/screens/wd_plan_notifications_screen.dart` | Notificaciones del plan seleccionado (W20): invitaciones, avisos, eventos desde correo. Dashboard: `currentScreen` 'pendingEvents' o 'unifiedNotifications'. |
+| **AdminInsightsScreen** | `lib/widgets/screens/wd_admin_insights_screen.dart` | Panel admin (insights). Dashboard: `currentScreen` 'adminInsights'. |
 | **EditProfilePage** | `lib/features/auth/presentation/pages/edit_profile_page.dart` | Edición de perfil (modal/diálogo). |
 | **UIShowcasePage** | `lib/pages/pg_ui_showcase_page.dart` | Showcase de componentes UI (desarrollo). |
+
+**Diálogos** (abiertos desde pantallas; no son rutas propias): `PaymentDialog` (registrar/editar pago), `KittyContributionDialog` (aportación al bote), `KittyExpenseDialog` (gasto del bote, solo organizador), `PlanSummaryDialog` (resumen del plan), `EditProfilePage` (modal desde perfil).
 
 **No existen como página:** `AccountSettingsPage` (eliminado; opciones en perfil). Creación de planes: modal/diálogo desde dashboard, no página dedicada.
 
@@ -300,20 +302,23 @@ flowchart LR
 ```mermaid
 flowchart LR
   DASH[DashboardPage] --> W31["Área W31"]
-  W31 -->|currentScreen| CALW[CalendarScreen]
+  W31 -->|calendar| CALW[CalendarScreen]
+  CALW -->|Ver resumen en barra| SUMW[WdPlanSummaryScreen]
+  SUMW -->|Calendario| CALW
   W31 -->|planData| PDATA[PlanDataScreen]
   W31 -->|participants| PSCR[ParticipantsScreen]
   W31 -->|chat| CHAT[PlanChatScreen]
   W31 -->|profile| PROF[ProfilePage]
-  W31 -->|stats| STATS[PlanStatsPage]
-  W31 -->|payments| PAY[PaymentSummaryPage]
-  W31 -->|admin| ADMIN[AdminInsightsScreen]
+  W31 -->|stats / W17| STATS[PlanStatsPage]
+  W31 -->|payments / W18| PAY[PaymentSummaryPage]
+  W31 -->|pendingEvents / unifiedNotifications / W20| NOTIF[WdPlanNotificationsScreen]
+  W31 -->|adminInsights| ADMIN[AdminInsightsScreen]
   W31 -->|Gestionar participantes| PSCR
   CALW -->|fullscreen| FSC[FullScreenCalendarPage]
   PROF -->|modal| EP[EditProfilePage]
 ```
 
-*Chat:* en web se accede desde W19 (botón "Chat"); en móvil desde la barra de pestañas de **PlanDetailPage** (pestaña Chat).
+*W17 (Estadísticas)* = presupuesto del plan; *W18 (Pagos)* = resumen de pagos y bote común. *Calendario:* en W31 se puede alternar entre CalendarScreen y WdPlanSummaryScreen (botón "Ver resumen" / "Calendario" en la barra). *Chat:* en web desde W19; en móvil desde la barra de pestañas de **PlanDetailPage**. *Notificaciones del plan:* W20 → WdPlanNotificationsScreen.
 
 ### Leyenda
 

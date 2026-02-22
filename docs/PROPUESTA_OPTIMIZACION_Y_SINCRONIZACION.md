@@ -2,7 +2,8 @@
 
 > Revisión del proyecto para identificar optimizaciones de código y desajustes entre documentación (.md) y código.  
 > **Fecha:** Febrero 2026  
-> **Uso:** Decidir uno a uno qué ítems implementar.
+> **Uso:** Decidir uno a uno qué ítems implementar.  
+> **Estado (Feb 2026):** Varios ítems ya hechos: T193 (textos AppLocalizations, TESTING_CHECKLIST §3.6, index.md, README, ONBOARDING_IA); ver ítems marcados con ✅ y priorización §5 (4–7).
 
 ---
 
@@ -29,7 +30,7 @@
 - Varios archivos muy grandes (dashboard ~4k líneas, calendar screen ~4.5k, event dialog ~3k) que dificultan mantenimiento.
 - Documentos de arquitectura y estrategia referencian nombres de archivo y modelos que no coinciden con el código actual.
 - DOCS_AUDIT ya identificó referencias rotas; parte sigue sin corregir o no está reflejada en todos los sitios.
-- Textos de la funcionalidad T193 (resumen del plan) y otros están hardcodeados en español; CONTEXT exige AppLocalizations.
+- ~~Textos de la funcionalidad T193 (resumen del plan)~~: **Hecho (Feb 2026)** — T193 usa AppLocalizations (claves planSummary* en app_es.arb / app_en.arb). Otros textos en el proyecto siguen pendientes de migración donde aplique.
 - Firestore: la doc describe `events` como subcolección de `plans`; en código existe colección raíz `events` con `planId`.
 
 ---
@@ -63,8 +64,7 @@
 CONTEXT.md y T158 exigen usar `AppLocalizations` para todos los textos visibles. Hay muchos usos de `Text('...')` y cadenas en español.
 
 **Ejemplos detectados (muestra):**
-- `plan_summary_dialog.dart`: "Resumen del plan", "Resumen copiado al portapapeles", "Copiar", "Cerrar", "Generando resumen...", "No se pudo generar el resumen."
-- `plan_summary_button.dart`: tooltip "Ver resumen", label "Resumen".
+- ~~`plan_summary_dialog.dart` / `plan_summary_button.dart`~~: **Hecho** — T193 usa AppLocalizations (planSummaryTitle, planSummaryCopy, etc.).
 - `pg_dashboard_page.dart`: decenas de cadenas (mensajes, etiquetas, botones).
 - Otros: `wd_plan_data_screen`, `wd_participants_screen`, `invitation_response_dialog`, `announcement_dialog`, etc.
 
@@ -211,7 +211,7 @@ CONTEXT.md y T158 exigen usar `AppLocalizations` para todos los textos visibles.
 
 ### 4.4 ONBOARDING_IA y DOCS_AUDIT
 
-- **ONBOARDING_IA:** Incluir, si no está, una mención a que la aceptación de invitaciones usa la Cloud Function `markInvitationAccepted` y que el resumen del plan (T193) está implementado (diálogo + botón en card y detalle).
+- **ONBOARDING_IA:** ✅ Incluido: aceptación vía Cloud Function; T193 descrito (card e Info → diálogo; pestaña Calendario → vista resumen en W31).
 - **DOCS_AUDIT:** Marcar como “hecho” las acciones ya realizadas (corrección de rutas, ampliación del índice) y añadir una línea sobre esta propuesta (optimización + sincronización) como siguiente revisión.
 
 ---
@@ -229,7 +229,7 @@ CONTEXT.md y T158 exigen usar `AppLocalizations` para todos los textos visibles.
 
 ### Media (mejora de mantenibilidad y descubribilidad)
 
-7. Añadir en docs/ux/pages/index.md la página de invitación y el resumen del plan.
+7. ~~Añadir en docs/ux/pages/index.md invitación y resumen del plan.~~ ✅ Hecho.
 8. Actualizar FLUJO_INVITACIONES_NOTIFICACIONES con Cloud Function y query string.
 9. Revisar y corregir referencias rotas en TASKS.md (o notas “doc pendiente”).
 10. Completar índice docs/README.md (config, admin, design, testing, PLATFORM_STRATEGY).

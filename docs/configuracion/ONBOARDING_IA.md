@@ -85,7 +85,7 @@
 **Sistema de Planes:**
 - ✅ CRUD completo de planes
 - ✅ Estados de planes (borrador, planificando, confirmado, etc.)
-- ✅ Resumen del plan en texto (T193) — botón en card y en detalle del plan, diálogo con copiar al portapapeles
+- ✅ Resumen del plan en texto (T193) — card e Info del plan: icono/botón abre diálogo con copiar; pestaña Calendario: botón "Ver resumen" en barra muestra vista resumen en W31, "Calendario" vuelve
 - ✅ Gestión de participantes con roles
 - ✅ Sistema de permisos granulares
 - ✅ Eliminación en cascada de datos relacionados

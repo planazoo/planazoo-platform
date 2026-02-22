@@ -1,0 +1,18 @@
+# Reducir indexación de Cursor (evitar cuelgues / error 5)
+# Build y caché de Flutter
+build/
+.dart_tool/
+*.g.dart
+*.freezed.dart
+
+# Dependencias (si existen)
+node_modules/
+
+# Firebase / configuración local
+.firebase/
+*.iml
+
+# IDE / sistema
+.idea/
+.vscode/
+*.log

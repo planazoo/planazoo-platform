@@ -1,0 +1,178 @@
+[
+  {
+    "id": "EVENT-C-001_basic_event",
+    "description": "Crear evento básico con descripción y duración estándar",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 60,
+      "participantsCount": 1,
+      "maxParticipants": null
+    },
+    "expected": { "created": true, "errorCode": null }
+  },
+  {
+    "id": "EVENT-C-002_no_description",
+    "description": "Crear evento sin descripción",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": false,
+      "durationMinutes": 60,
+      "participantsCount": 1,
+      "maxParticipants": null
+    },
+    "expected": { "created": false, "errorCode": "missingDescription" }
+  },
+  {
+    "id": "EVENT-C-003_multi_participant",
+    "description": "Crear evento multi-participante (T47)",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 90,
+      "participantsCount": 4,
+      "maxParticipants": null
+    },
+    "expected": { "created": true, "errorCode": null }
+  },
+  {
+    "id": "EVENT-C-004_for_all_participants",
+    "description": "Crear evento para todos los participantes",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 120,
+      "participantsCount": 10,
+      "maxParticipants": null
+    },
+    "expected": { "created": true, "errorCode": null }
+  },
+  {
+    "id": "EVENT-C-005_custom_duration",
+    "description": "Crear evento con duración personalizada (45 min, 3h)",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 45,
+      "participantsCount": 1,
+      "maxParticipants": null
+    },
+    "expected": { "created": true, "errorCode": null }
+  },
+  {
+    "id": "EVENT-C-006_duration_over_24h",
+    "description": "Intentar crear evento con duración mayor a 24h",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 1500,
+      "participantsCount": 1,
+      "maxParticipants": null
+    },
+    "expected": { "created": false, "errorCode": "eventDurationTooLong" }
+  },
+  {
+    "id": "EVENT-C-009_within_max_participants",
+    "description": "Crear evento con límite de participantes respetado",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 60,
+      "participantsCount": 3,
+      "maxParticipants": 5
+    },
+    "expected": { "created": true, "errorCode": null }
+  },
+  {
+    "id": "EVENT-C-009_over_max_participants",
+    "description": "Crear evento con límite de participantes superado",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 60,
+      "participantsCount": 5,
+      "maxParticipants": 3
+    },
+    "expected": { "created": false, "errorCode": "eventMaxParticipantsExceeded" }
+  },
+  {
+    "id": "EVENT-C-010_requires_confirmation",
+    "description": "Crear evento que requiere confirmación (T120)",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 60,
+      "participantsCount": 2,
+      "maxParticipants": null
+    },
+    "expected": { "created": true, "errorCode": null }
+  },
+  {
+    "id": "EVENT-C-011_with_cost",
+    "description": "Crear evento con coste (T101)",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 60,
+      "participantsCount": 1,
+      "maxParticipants": null,
+      "cost": 25.50
+    },
+    "expected": { "created": true, "errorCode": null }
+  },
+  {
+    "id": "EVENT-C-011_negative_cost",
+    "description": "Intentar crear evento con coste negativo",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 60,
+      "participantsCount": 1,
+      "maxParticipants": null,
+      "cost": -10
+    },
+    "expected": { "created": false, "errorCode": "invalidCost" }
+  },
+  {
+    "id": "EVENT-C-012_draft",
+    "description": "Crear evento como borrador",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 60,
+      "participantsCount": 1,
+      "maxParticipants": null
+    },
+    "expected": { "created": true, "errorCode": null }
+  },
+  {
+    "id": "EVENT-C-017_inside_plan_range",
+    "description": "Crear evento dentro del rango del plan (T107)",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 60,
+      "participantsCount": 1,
+      "maxParticipants": null,
+      "planStartDate": "2026-06-01",
+      "planEndDate": "2026-06-15",
+      "eventDate": "2026-06-10"
+    },
+    "expected": { "created": true, "errorCode": null }
+  },
+  {
+    "id": "EVENT-C-017_outside_plan_range",
+    "description": "Crear evento fuera del rango del plan (T107)",
+    "target": { "module": "calendar", "scenario": "eventCreation" },
+    "input": {
+      "hasDescription": true,
+      "durationMinutes": 60,
+      "participantsCount": 1,
+      "maxParticipants": null,
+      "planStartDate": "2026-06-01",
+      "planEndDate": "2026-06-15",
+      "eventDate": "2026-06-20"
+    },
+    "expected": { "created": false, "errorCode": "eventOutsidePlanRange" }
+  }
+]

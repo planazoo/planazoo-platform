@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estructura de pantallas – UNP Calendario / Planazoo</title>
+  <style>
+    :root {
+      --color-bg: #f8f9fa;
+      --color-paper: #fff;
+      --color-border: #dee2e6;
+      --color-header: #2c3e50;
+      --color-header-bg: #e9ecef;
+      --color-accent: #0d6efd;
+      --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: var(--font-sans);
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #212529;
+      background: var(--color-bg);
+      margin: 0;
+      padding: 2rem;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 {
+      font-size: 1.75rem;
+      color: var(--color-header);
+      border-bottom: 2px solid var(--color-accent);
+      padding-bottom: 0.5rem;
+      margin-top: 0;
+    }
+    h2 {
+      font-size: 1.25rem;
+      color: var(--color-header);
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+    }
+    p { margin: 0.5rem 0; }
+    .meta { color: #6c757d; font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--color-paper);
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      margin-bottom: 1.5rem;
+    }
+    th, td {
+      border: 1px solid var(--color-border);
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: var(--color-header-bg);
+      font-weight: 600;
+      color: var(--color-header);
+    }
+    tbody tr:nth-child(even) { background: #f8f9fa; }
+    tbody tr:hover { background: #e9ecef; }
+    td:first-child { font-weight: 500; color: #0d6efd; }
+    td:nth-child(2) { font-family: Consolas, 'Courier New', monospace; font-size: 10pt; }
+
+    ul.compact { margin: 0.5rem 0; padding-left: 1.25rem; }
+    .flow {
+      background: #f1f3f5;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      font-size: 10pt;
+      font-family: Consolas, monospace;
+      white-space: pre-wrap;
+      margin: 0.75rem 0;
+    }
+    .legend-table { max-width: 480px; }
+    .legend-table td:first-child { font-weight: 600; color: inherit; }
+
+    /* Árbol jerárquico */
+    .tree { list-style: none; padding-left: 0; margin: 0; }
+    .tree ul { list-style: none; padding-left: 1.25rem; margin: 0.25rem 0; border-left: 2px solid var(--color-border); }
+    .tree li { margin: 0.35rem 0; position: relative; }
+    .tree .node { font-weight: 500; color: var(--color-header); }
+    .tree .node.screen { color: var(--color-accent); }
+    .tree .node.w { color: #0d6e0d; font-size: 0.95em; }
+    .tree .path { font-family: Consolas, monospace; font-size: 9pt; color: #6c757d; margin-left: 0.5rem; }
+    .tree .note { display: block; font-size: 0.9rem; color: #6c757d; margin-top: 0.15rem; margin-left: 0; }
+    @media print {
+      body { background: white; padding: 0.5rem; }
+      table { box-shadow: none; }
+      .no-print { display: none; }
+      .tree ul { border-left-color: #999; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Estructura de pantallas (jerárquica)</h1>
+  <p class="meta">UNP Calendario / Planazoo · Febrero 2026</p>
+
+  <h2>1. Árbol de navegación</h2>
+
+  <ul class="tree">
+    <li><span class="node">App</span> <span class="path">/</span>
+      <ul>
+        <li><span class="node">AuthGuard</span>
+          <ul>
+            <li><span class="node">No autenticado</span> → <span class="node screen">LoginPage</span> <span class="path">login_page.dart</span>
+              <ul>
+                <li><span class="node">Registrarse</span> → <span class="node screen">RegisterPage</span></li>
+              </ul>
+            </li>
+            <li><span class="node">Autenticado + móvil</span> → <span class="node screen">PlansListPage</span> <span class="path">pg_plans_list_page.dart</span>
+              <ul>
+                <li><span class="node">Tap plan / Crear plan</span> → <span class="node screen">PlanDetailPage</span> <span class="path">pg_plan_detail_page.dart</span>
+                  <ul>
+                    <li><span class="node">Pestaña Info</span> → <span class="node screen">PlanDataScreen</span></li>
+                    <li><span class="node">Pestaña Calendario</span> → <span class="node screen">CalendarMobilePage</span>
+                      <ul><li>→ <span class="node screen">FullScreenCalendarPage</span></li></ul>
+                    </li>
+                    <li><span class="node">Pestaña Participantes</span> → <span class="node screen">PlanParticipantsPage</span></li>
+                    <li><span class="node">Pestaña Chat</span> <span class="node w">(W19)</span> → <span class="node screen">PlanChatScreen</span></li>
+                    <li><span class="node">Pestaña Stats</span> <span class="node w">(W17)</span> → <span class="node screen">PlanStatsPage</span> <span class="note">Presupuesto del plan</span></li>
+                    <li><span class="node">Pestaña Pagos</span> <span class="node w">(W18)</span> → <span class="node screen">PaymentSummaryPage</span> <span class="note">Balances, bote común</span></li>
+                  </ul>
+                </li>
+                <li><span class="node">Perfil</span> → <span class="node screen">ProfilePage</span>
+                  <ul><li><span class="node">Editar perfil</span> → <span class="node screen">EditProfilePage</span> (modal)</li></ul>
+                </li>
+              </ul>
+            </li>
+            <li><span class="node">Autenticado + web</span> → <span class="node screen">DashboardPage</span> <span class="path">pg_dashboard_page.dart</span>
+              <ul>
+                <li><span class="node">Layout W1–W30</span> (barra, logo, lista de planes, etc.)</li>
+                <li><span class="node">W31 · Área de contenido</span> <span class="path">currentScreen</span>
+                  <ul>
+                    <li><span class="node">calendar</span> → <span class="node screen">CalendarScreen</span> (barra: botón «Ver resumen» → vista <span class="node screen">WdPlanSummaryScreen</span> en W31; botón «Calendario» vuelve) → FullScreenCalendarPage</li>
+                    <li><span class="node">planData</span> → <span class="node screen">PlanDataScreen</span></li>
+                    <li><span class="node">participants</span> → <span class="node screen">ParticipantsScreen</span></li>
+                    <li><span class="node">chat</span> <span class="node w">(W19)</span> → <span class="node screen">PlanChatScreen</span></li>
+                    <li><span class="node">profile</span> → <span class="node screen">ProfilePage</span> → EditProfilePage (modal)</li>
+                    <li><span class="node">stats</span> <span class="node w">(W17)</span> → <span class="node screen">PlanStatsPage</span></li>
+                    <li><span class="node">payments</span> <span class="node w">(W18)</span> → <span class="node screen">PaymentSummaryPage</span></li>
+                    <li><span class="node">pendingEvents / unifiedNotifications</span> <span class="node w">(W20)</span> → <span class="node screen">WdPlanNotificationsScreen</span></li>
+                    <li><span class="node">adminInsights</span> → <span class="node screen">AdminInsightsScreen</span></li>
+                  </ul>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><span class="node">Ruta invitación</span> <span class="path">/invitation/:token</span> → <span class="node screen">InvitationPage</span></li>
+      </ul>
+    </li>
+  </ul>
+
+  <h2>2. Diálogos (dependen de pantallas)</h2>
+  <ul class="tree">
+    <li><span class="node screen">PaymentSummaryPage</span>
+      <ul>
+        <li>→ <span class="node">PaymentDialog</span> (registrar/editar pago)</li>
+        <li>→ <span class="node">KittyContributionDialog</span> (aportación al bote)</li>
+        <li>→ <span class="node">KittyExpenseDialog</span> (gasto del bote, solo organizador)</li>
+      </ul>
+    </li>
+    <li><span class="node">PlanSummaryButton</span> (card / Info plan) → <span class="node">PlanSummaryDialog</span></li>
+    <li><span class="node screen">ProfilePage</span> → <span class="node">EditProfilePage</span> (modal)</li>
+  </ul>
+
+  <h2>3. Leyenda</h2>
+  <table class="legend-table">
+    <thead>
+      <tr><th>Símbolo / término</th><th>Significado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>→</td><td>Navegación (push o cambio de pantalla)</td></tr>
+      <tr><td>W17</td><td>Estadísticas: presupuesto del plan</td></tr>
+      <tr><td>W18</td><td>Pagos: resumen, bote común, balances</td></tr>
+      <tr><td>W19</td><td>Chat del plan</td></tr>
+      <tr><td>W20</td><td>Notificaciones del plan</td></tr>
+      <tr><td>W31</td><td>Área principal del dashboard (currentScreen)</td></tr>
+    </tbody>
+  </table>
+
+  <p class="meta no-print">Abrir en el navegador → <em>Archivo → Imprimir</em> o <em>Guardar como PDF</em>.</p>
+</body>
+</html>

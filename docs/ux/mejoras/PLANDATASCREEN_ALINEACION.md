@@ -25,8 +25,8 @@ Mejorar la alineación visual y la consistencia del layout en la pantalla de dat
 
 ## Secciones Afectadas
 
-### Fila 1: Resumen del Plan y Gestión de Estado
-- **Izquierda (2/3)**: `_buildPlanSummarySection()` - Resumen del plan
+### Fila 1: Datos principales del plan y Gestión de Estado
+- **Izquierda (2/3)**: `_buildPlanSummarySection()` - Nombre, descripción e imagen del plan (bloque de datos editables). *No incluye el resumen generado en texto (T193), que se abre en diálogo desde el botón "Resumen" de esta pantalla o en vista W31 desde la pestaña Calendario.*
 - **Derecha (1/3)**: `_buildStateManagementSection()` - Gestión de estado del plan
 
 ### Fila 2: Información del Plan
@@ -60,7 +60,7 @@ Mejorar la alineación visual y la consistencia del layout en la pantalla de dat
 
 ```
 ┌─────────────────────────────────────┬─────────────┐
-│  Resumen del Plan (2/3)            │ Estado (1/3)│
+│  Datos principales (2/3)            │ Estado (1/3)│
 │  - Nombre                           │ - Estado    │
 │  - Descripción                      │ - Botones   │
 │  - Imagen                           │             │

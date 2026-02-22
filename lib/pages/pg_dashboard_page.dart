@@ -41,6 +41,7 @@ import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_pending_email_events_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_unified_notifications_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
+import 'package:unp_calendario/widgets/screens/wd_plan_summary_screen.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_timezone_banner.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_nav_tabs.dart';
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
@@ -79,6 +80,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // NUEVO: Estado para trackear qué widget de W14-W25 está seleccionado
   String? selectedWidgetId; // 'W14', 'W15', 'W16', etc.
   String selectedFilter = 'todos'; // 'todos', 'estoy_in', 'pendientes', 'cerrados'
+  /// En pestaña Calendario: 'calendar' = cuadrícula, 'summary' = resumen del plan (solo en W31).
+  String _calendarPanelView = 'calendar';
 
   // Flag para evitar procesar transiciones múltiples veces en la misma carga
   List<String> _processedPlanIds = [];
@@ -339,6 +342,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         _previousScreen = screen;
       }
       currentScreen = screen;
+      if (screen == 'calendar') _calendarPanelView = 'calendar';
     });
   }
   
@@ -404,9 +408,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       // NUEVO: Activar calendario por defecto al seleccionar plan
       selectedWidgetId = 'W15';
       currentScreen = 'calendar';
+      _calendarPanelView = 'calendar';
     });
   }
-  
+
+  void _showSummaryInPanel() {
+    setState(() => _calendarPanelView = 'summary');
+  }
+
   Future<void> _deletePlanazoo(String planId) async {
     try {
       // Mostrar confirmación
@@ -1807,13 +1816,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return PlanDataScreen(
       plan: selectedPlan!,
       onPlanDeleted: () {
-        // Actualizar la lista de planes después de eliminar
         setState(() {
           planazoos.removeWhere((p) => p.id == selectedPlan!.id);
           filteredPlanazoos = List.from(planazoos);
           selectedPlan = null;
           selectedPlanId = null;
-          currentScreen = 'calendar'; // Volver al calendario
+          currentScreen = 'calendar';
         });
       },
       onManageParticipants: () {
@@ -1926,14 +1934,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
 
 
-  // Nuevo método para mostrar el calendario
+  // Nuevo método para mostrar el calendario (o resumen, solo en W31 desde esta pestaña)
   Widget _buildCalendarWidget() {
     if (selectedPlan == null) {
       return _buildNoPlanSelected();
     }
+    if (_calendarPanelView == 'summary') {
+      final user = ref.watch(currentUserProvider);
+      if (user == null) return CalendarScreen(key: ValueKey(selectedPlan!.id), plan: selectedPlan!, onShowSummary: _showSummaryInPanel);
+      return WdPlanSummaryScreen(
+        key: ValueKey('summary-${selectedPlan!.id}'),
+        plan: selectedPlan!,
+        userId: user.id,
+        onShowCalendar: () => setState(() => _calendarPanelView = 'calendar'),
+      );
+    }
     return CalendarScreen(
-      key: ValueKey(selectedPlan!.id), // Forzar rebuild cuando cambie el plan
+      key: ValueKey(selectedPlan!.id),
       plan: selectedPlan!,
+      onShowSummary: _showSummaryInPanel,
     );
   }
 

@@ -47,6 +47,8 @@ class CalendarAppBar {
     required Future<bool> Function() canManageRoles,
     required VoidCallback onManageRoles,
     required Function(String) onUserSelected,
+    VoidCallback? onShowSummary,
+    String? summaryButtonLabel,
   }) {
     final startDay = currentDayGroup * visibleDays + 1;
     final endDay = startDay + visibleDays - 1;
@@ -65,6 +67,8 @@ class CalendarAppBar {
         onReorderTracks: onReorderTracks,
         onFullscreen: onFullscreen,
         onUserSelected: onUserSelected,
+        onShowSummary: onShowSummary,
+        summaryButtonLabel: summaryButtonLabel,
       ),
       backgroundColor: AppColorScheme.color2,
       foregroundColor: Colors.white,
@@ -108,8 +112,27 @@ class CalendarAppBar {
     required VoidCallback onReorderTracks,
     required VoidCallback onFullscreen,
     required Function(String) onUserSelected,
+    VoidCallback? onShowSummary,
+    String? summaryButtonLabel,
   }) {
     return [
+      // Botón Ver resumen (cuando se proporciona callback, p. ej. en dashboard)
+      if (onShowSummary != null && summaryButtonLabel != null && summaryButtonLabel.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4),
+          child: TextButton.icon(
+            onPressed: onShowSummary,
+            icon: const Icon(Icons.summarize, size: 18, color: Colors.white),
+            label: Text(
+              summaryButtonLabel,
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              minimumSize: const Size(0, 36),
+            ),
+          ),
+        ),
       // Selector de perspectiva de usuario
       if (participations.isNotEmpty)
         UserPerspectiveSelector(

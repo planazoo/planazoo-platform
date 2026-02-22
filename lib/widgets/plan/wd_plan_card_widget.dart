@@ -17,6 +17,8 @@ class PlanCardWidget extends ConsumerWidget {
   final VoidCallback? onTap;
   final bool isSelected;
   final VoidCallback? onDelete;
+  /// Si se proporciona, el icono de resumen abre el resumen en el panel (W31) en lugar del diálogo.
+  final void Function(Plan plan)? onSummaryInPanel;
 
   const PlanCardWidget({
     super.key,
@@ -24,6 +26,7 @@ class PlanCardWidget extends ConsumerWidget {
     this.onTap,
     this.isSelected = false,
     this.onDelete,
+    this.onSummaryInPanel,
   });
 
   @override
@@ -125,6 +128,7 @@ class PlanCardWidget extends ConsumerWidget {
                             plan: plan,
                             iconOnly: true,
                             foregroundColor: isSelected ? Colors.white : Colors.white70,
+                            onShowInPanel: onSummaryInPanel,
                           ),
                       ],
                     ),

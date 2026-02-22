@@ -77,9 +77,14 @@
                       "label": "Participantes"
                     },
                     {
+                      "id": "chat",
+                      "icon": "chat_bubble_outline",
+                      "label": "Chat"
+                    },
+                    {
                       "id": "stats",
                       "icon": "bar_chart",
-                      "label": "Estadísticas"
+                      "label": "Stats"
                     },
                     {
                       "id": "payments",
@@ -138,11 +143,17 @@
                     },
                     {
                       "value": "payments",
-                      "component": "placeholder",
+                      "component": "PaymentSummaryPage",
                       "properties": {
-                        "icon": "payment",
-                        "title": "Pagos",
-                        "subtitle": "Próximamente"
+                        "plan": "{{plan}}"
+                      }
+                    },
+                    {
+                      "value": "chat",
+                      "component": "PlanChatScreen",
+                      "properties": {
+                        "planId": "{{plan.id}}",
+                        "planName": "{{plan.name}}"
                       }
                     },
                     {

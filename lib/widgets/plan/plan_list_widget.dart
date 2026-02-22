@@ -8,6 +8,8 @@ class PlanListWidget extends StatelessWidget {
   final bool isLoading;
   final Function(String) onPlanSelected;
   final Function(String) onPlanDeleted;
+  /// Si se proporciona, el icono de resumen en la card abre el resumen en el panel (W31).
+  final void Function(Plan plan)? onSummaryInPanel;
 
   const PlanListWidget({
     super.key,
@@ -16,6 +18,7 @@ class PlanListWidget extends StatelessWidget {
     required this.isLoading,
     required this.onPlanSelected,
     required this.onPlanDeleted,
+    this.onSummaryInPanel,
   });
 
   @override
@@ -42,6 +45,7 @@ class PlanListWidget extends StatelessWidget {
           isSelected: isSelected,
           onTap: () => onPlanSelected(plan.id!),
           onDelete: () => onPlanDeleted(plan.id!),
+          onSummaryInPanel: onSummaryInPanel,
         );
       },
     );

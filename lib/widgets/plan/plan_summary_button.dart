@@ -5,19 +5,23 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/widgets/dialogs/plan_summary_dialog.dart';
 
-/// T193: Botón que abre el diálogo de resumen del plan. Reutilizable en card, detalle y panel de datos.
+/// T193: Botón que abre el resumen del plan (diálogo o panel W31).
+/// Si [onShowInPanel] está definido, al pulsar se llama y no se abre el diálogo (p. ej. desde la lista del dashboard).
 class PlanSummaryButton extends ConsumerWidget {
   final Plan plan;
   /// true = solo icono (cards); false = icono + texto "Resumen" (página de detalle).
   final bool iconOnly;
   /// Opcional: color del icono/texto (p. ej. en PlanDataScreen se usa gris).
   final Color? foregroundColor;
+  /// Si se proporciona, al pulsar se muestra el resumen en el panel (W31) en lugar del diálogo.
+  final void Function(Plan plan)? onShowInPanel;
 
   const PlanSummaryButton({
     super.key,
     required this.plan,
     this.iconOnly = true,
     this.foregroundColor,
+    this.onShowInPanel,
   });
 
   @override
@@ -46,6 +50,10 @@ class PlanSummaryButton extends ConsumerWidget {
   }
 
   void _openSummary(BuildContext context, WidgetRef ref) {
+    if (onShowInPanel != null) {
+      onShowInPanel!(plan);
+      return;
+    }
     final user = ref.read(currentUserProvider);
     if (user == null) return;
     showPlanSummaryDialog(context: context, plan: plan, userId: user.id);

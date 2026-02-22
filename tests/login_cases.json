@@ -1,0 +1,156 @@
+[
+  {
+    "id": "LOGIN-001_email_ok",
+    "description": "Iniciar sesión con email válido",
+    "target": {
+      "module": "auth",
+      "scenario": "login"
+    },
+    "input": {
+      "identifier": "unplanazoo+admin@gmail.com",
+      "password": "test123456",
+      "backendResult": "ok"
+    },
+    "expected": {
+      "status": "success",
+      "messageKey": null
+    }
+  },
+  {
+    "id": "LOGIN-002_username_with_at_ok",
+    "description": "Iniciar sesión con username (con @)",
+    "target": {
+      "module": "auth",
+      "scenario": "login"
+    },
+    "input": {
+      "identifier": "@admin_user",
+      "password": "test123456",
+      "backendResult": "ok"
+    },
+    "expected": {
+      "status": "success",
+      "messageKey": null
+    }
+  },
+  {
+    "id": "LOGIN-003_username_without_at_ok",
+    "description": "Iniciar sesión con username (sin @)",
+    "target": {
+      "module": "auth",
+      "scenario": "login"
+    },
+    "input": {
+      "identifier": "admin_user",
+      "password": "test123456",
+      "backendResult": "ok"
+    },
+    "expected": {
+      "status": "success",
+      "messageKey": null
+    }
+  },
+  {
+    "id": "LOGIN-004_email_not_found",
+    "description": "Iniciar sesión con email incorrecto/no registrado",
+    "target": {
+      "module": "auth",
+      "scenario": "login"
+    },
+    "input": {
+      "identifier": "no_existe@example.com",
+      "password": "cualquier_cosa",
+      "backendResult": "user_not_found_email"
+    },
+    "expected": {
+      "status": "error",
+      "messageKey": "user-not-found"
+    }
+  },
+  {
+    "id": "LOGIN-005_username_not_found",
+    "description": "Iniciar sesión con username incorrecto/no existente",
+    "target": {
+      "module": "auth",
+      "scenario": "login"
+    },
+    "input": {
+      "identifier": "usuario_que_no_existe",
+      "password": "lo_que_sea",
+      "backendResult": "user_not_found_username"
+    },
+    "expected": {
+      "status": "error",
+      "messageKey": "username-not-found"
+    }
+  },
+  {
+    "id": "LOGIN-006_wrong_password_email",
+    "description": "Contraseña incorrecta usando email",
+    "target": {
+      "module": "auth",
+      "scenario": "login"
+    },
+    "input": {
+      "identifier": "unplanazoo+admin@gmail.com",
+      "password": "contraseña_incorrecta",
+      "backendResult": "wrong_password"
+    },
+    "expected": {
+      "status": "error",
+      "messageKey": "wrong-password"
+    }
+  },
+  {
+    "id": "LOGIN-007_wrong_password_username",
+    "description": "Contraseña incorrecta usando username",
+    "target": {
+      "module": "auth",
+      "scenario": "login"
+    },
+    "input": {
+      "identifier": "admin_user",
+      "password": "contraseña_incorrecta",
+      "backendResult": "wrong_password"
+    },
+    "expected": {
+      "status": "error",
+      "messageKey": "wrong-password"
+    }
+  },
+  {
+    "id": "LOGIN-008_invalid_identifier_format",
+    "description": "Validación de campo email/username en login",
+    "target": {
+      "module": "auth",
+      "scenario": "login"
+    },
+    "input": {
+      "identifier": "no_es_email_ni_username_valido",
+      "password": "lo_que_sea",
+      "backendResult": "invalid_identifier_format"
+    },
+    "expected": {
+      "status": "error",
+      "messageKey": "invalid-email-or-username"
+    }
+  },
+  {
+    "id": "LOGIN-009_inactive_user",
+    "description": "Usuario inactivo no puede iniciar sesión (nuevo requisito)",
+    "target": {
+      "module": "auth",
+      "scenario": "login"
+    },
+    "input": {
+      "identifier": "inactive@example.com",
+      "password": "CorrectPass123",
+      "backendResult": "inactive_user"
+    },
+    "expected": {
+      "status": "error",
+      "messageKey": "user-inactive"
+    }
+  }
+]
+

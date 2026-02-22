@@ -236,19 +236,21 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 **Estado:** ✅ Completada  
 **Fecha de finalización:** Febrero 2026  
 
-**Descripción:** El usuario puede generar un resumen del plan en texto (informe) de forma dinámica al pulsar un botón. Contenido: cabecera (nombre, fechas, participantes) y listado cronológico por día con eventos y alojamientos. Diálogo con opción de copiar al portapapeles.
+**Descripción:** El usuario puede generar un resumen del plan en texto (informe) de forma dinámica. Contenido: cabecera (nombre, fechas, participantes) y listado cronológico por día con eventos y alojamientos. Opción de copiar al portapapeles.
 
 **Criterios de aceptación cumplidos:**
-- ✅ Botón en la card del plan (dashboard y lista): solo icono
-- ✅ Botón en la página de detalle del plan (PlanDataScreen): icono + texto "Resumen"
+- ✅ Botón en la card del plan (dashboard): solo icono → abre **diálogo** (PlanSummaryDialog)
+- ✅ Botón en la página Info del plan (PlanDataScreen): icono + texto "Resumen" → abre **diálogo**
+- ✅ En la **pestaña Calendario**, botón "Ver resumen" en la barra del calendario → vista de resumen en W31 (WdPlanSummaryScreen); botón "Calendario" vuelve a la cuadrícula. El resumen en W31 solo existe desde la pestaña Calendario (sin pestaña "Resumen" ni bloque embebido en Info)
 - ✅ Informe con cabecera y listado cronológico día a día (eventos y alojamientos)
-- ✅ Copiar al portapapeles con feedback SnackBar
+- ✅ Copiar al portapapeles con feedback SnackBar (diálogo y vista W31)
 - ✅ Informe dinámico (datos actuales)
 - ✅ Textos localizados (AppLocalizations, app_es.arb / app_en.arb)
 
 **Archivos principales:**
-- `lib/widgets/dialogs/plan_summary_dialog.dart` - Diálogo y textos localizados
-- `lib/widgets/plan/plan_summary_button.dart` - Botón reutilizable (card y detalle)
+- `lib/widgets/dialogs/plan_summary_dialog.dart` - Diálogo (card e Info del plan)
+- `lib/widgets/plan/plan_summary_button.dart` - Botón reutilizable (card e Info; sin callback abre diálogo)
+- `lib/widgets/screens/wd_plan_summary_screen.dart` - Vista resumen en W31 (solo desde pestaña Calendario)
 - `lib/features/calendar/domain/services/plan_summary_service.dart` - Generación del texto
 - `lib/l10n/app_es.arb`, `lib/l10n/app_en.arb` - Claves planSummary*
 
