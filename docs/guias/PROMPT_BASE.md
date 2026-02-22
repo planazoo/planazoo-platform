@@ -56,6 +56,13 @@
 - **Refactoring**: Identificar y corregir inconsistencias arquitectónicas - siempre al dar una acción o fase por finalizada
 - **Tracking**: Usar herramientas de seguimiento para tareas complejas - siempre al dar una acción o fase por finalizada
 
+## 📋 Fundamentos del proyecto
+
+- **Máxima participación de IA y herramientas**: Priorizar la altísima participación de la IA y del software (y la menor participación humana posible); elegir opciones que maximicen automatización y uso de herramientas y minimicen la intervención manual.
+- **Valor incremental antes que big-bang**: Priorizar entregar valor verificable en cada paso antes que invertir todo en la parte más compleja; preferir opciones que den feedback pronto frente a soluciones “todo o nada”.
+- **Reutilizar y comprobar antes de crear**: Comprobar si ya existe algo equivalente (código, tareas, modelos, docs) antes de añadir funcionalidad o artefactos; priorizar reutilizar, adaptar o extender sobre duplicar o crear de cero.
+- **Documentación viva**: La documentación es parte del producto y evoluciona con él; cualquier cambio relevante debe reflejarse en los documentos correspondientes; la documentación obsoleta es deuda.
+
 ## 📋 Principios Técnicos
 
 - **Simplicidad**: Preferir soluciones simples y mantenibles

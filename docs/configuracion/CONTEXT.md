@@ -2,6 +2,15 @@
 
 Este documento fija criterios estables para trabajar juntos sin olvidar pasos clave, manteniendo consistencia entre código, documentación y comunicación.
 
+### 🧭 Fundamentos del proyecto
+
+Las decisiones del proyecto (diseño, implementación, testing, documentación, flujos) han de seguir, **entre otros criterios**, estos principios:
+
+- **Máxima participación de IA y herramientas:** Buscar la altísima participación de la IA y de herramientas de software y la menor participación humana posible en todo lo automatizable; priorizar opciones que maximicen uso de IA/herramientas y minimicen la intervención manual.
+- **Valor incremental antes que big-bang:** Priorizar entregar valor verificable en cada paso antes que invertir todo en la parte más compleja; preferir opciones que den feedback pronto frente a soluciones “todo o nada”.
+- **Reutilizar y comprobar antes de crear:** Comprobar si ya existe algo equivalente (código, tareas, modelos, documentación) antes de añadir funcionalidad o artefactos nuevos; priorizar reutilizar, adaptar o extender sobre duplicar o crear de cero.
+- **Documentación viva:** La documentación es parte del producto y evoluciona con él; cualquier cambio relevante debe reflejarse en los documentos correspondientes; la documentación obsoleta es deuda.
+
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
 - `docs/guias/PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
@@ -104,6 +113,13 @@ Este documento fija criterios estables para trabajar juntos sin olvidar pasos cl
 - **Ruta de Flutter (macOS)**: `/Users/emmclaraso/development/flutter`
 - Usar la ruta correspondiente a tu sistema; actualizar si tu instalación está en otra ubicación.
 - Añadir al PATH del sistema si es necesario para ejecutar comandos `flutter`.
+
+---
+
+### Pendiente de aprobación del usuario
+- **Ninguno** (revisión doc/código y sincronización resumen T193 completada). Cuando haya ítems que requieran decisión explícita, se listarán aquí.
+
+**Opcional (sin urgencia):** Si no se va a usar en el futuro el callback "abrir resumen en panel" desde la card, se pueden eliminar los parámetros `onSummaryInPanel` de `PlanListWidget` y `PlanCardWidget` y `onShowInPanel` de `PlanSummaryButton` para simplificar. Hoy la card solo abre el diálogo y el resumen en W31 solo se accede desde la pestaña Calendario.
 
 ---
 

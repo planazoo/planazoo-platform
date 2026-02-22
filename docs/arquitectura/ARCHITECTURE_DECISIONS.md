@@ -38,6 +38,12 @@ La aplicación está diseñada para funcionar completamente sin conexión, con s
 
 ### Principios de Diseño
 
+#### 0. **Fundamentos del proyecto** (detalle en `docs/configuracion/CONTEXT.md`)
+- **Máxima participación de IA y herramientas:** Priorizar opciones que permitan a la IA y al software hacer más y a las personas menos.
+- **Valor incremental antes que big-bang:** Entregar valor verificable en cada paso; preferir feedback pronto frente a soluciones “todo o nada”.
+- **Reutilizar y comprobar antes de crear:** Comprobar si ya existe algo equivalente; priorizar reutilizar, adaptar o extender sobre duplicar o crear de cero.
+- **Documentación viva:** La documentación evoluciona con el producto; los cambios relevantes se reflejan en los documentos; la doc obsoleta es deuda.
+
 #### 1. **Offline First**
 La aplicación debe funcionar perfectamente sin conexión a internet. La sincronización es un bonus, no un requisito.
 

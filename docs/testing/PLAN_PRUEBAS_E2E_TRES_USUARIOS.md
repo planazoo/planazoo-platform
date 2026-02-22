@@ -47,7 +47,8 @@
 **Referencias:**  
 - `docs/configuracion/USUARIOS_PRUEBA.md`  
 - `docs/configuracion/TESTING_CHECKLIST.md`  
-- `docs/testing/SISTEMA_PRUEBAS_LOGICAS.md`
+- `docs/testing/SISTEMA_PRUEBAS_LOGICAS.md`  
+- `docs/testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md` (E2E automatizado nocturno; el smoke/multiusuario pueden basarse en este plan)
 
 ---
 
@@ -530,7 +531,19 @@ Ejecutar según tiempo; anotar resultado y huecos.
 | O.1 | Con conexión: abrir plan y cargar calendario. Activar modo avión. Intentar editar un evento | Error controlado o cola de sincronización; no crash | | |
 | O.2 | Desactivar modo avión | Cambios pendientes se sincronizan o mensaje claro de conflicto | | |
 
-### 18.7 Errores y bordes (anotar, no bloquear flujo)
+### 18.7 Resumen del plan (T193)
+
+**Referencia detallada:** `docs/configuracion/TESTING_CHECKLIST.md` § 3.6 (casos PLAN-SUM-001 a PLAN-SUM-009).
+
+| # | Acción | Verificación | Resultado | Notas |
+|---|--------|--------------|-----------|--------|
+| R.1 | En dashboard, card del plan → clic en icono resumen | Se abre **diálogo** con resumen (no cambia pestaña ni W31) | | |
+| R.2 | Pestaña planazoo (Info) → clic en "Resumen" | Se abre el mismo diálogo de resumen | | |
+| R.3 | Pestaña Calendario → en la barra del calendario, clic en "Ver resumen" | W31 muestra vista de resumen (barra con "Calendario" y "Copiar") | | |
+| R.4 | En vista resumen (W31), clic en "Calendario" | W31 vuelve a la cuadrícula del calendario | | |
+| R.5 | En diálogo o vista W31, clic en "Copiar" | SnackBar "Resumen copiado al portapapeles"; texto en portapapeles | | |
+
+### 18.8 Errores y bordes (anotar, no bloquear flujo)
 
 | # | Situación | Qué anotar |
 |---|-----------|------------|

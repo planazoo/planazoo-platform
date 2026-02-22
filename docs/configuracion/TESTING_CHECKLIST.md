@@ -16,6 +16,7 @@
 4. **Comportamiento esperado:** Los flujos en `docs/flujos/` (CRUD planes, eventos, participantes, etc.) describen el comportamiento esperado; úsalos como referencia si un caso falla o es ambiguo.
 5. **Pruebas lógicas (JSON):** Para casos automatizados por datos (login, contraseñas, eventos, etc.) y reportes para IA, ver [docs/testing/SISTEMA_PRUEBAS_LOGICAS.md](../testing/SISTEMA_PRUEBAS_LOGICAS.md).
 6. **Pruebas E2E tres usuarios (flujo completo):** Para simular un ciclo real con UA/UB/UC (crear plan → invitaciones → eventos → chat → aprobar → durante plan → cerrar), ver [docs/testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md). Incluye tabla de huecos/situaciones no contempladas para derivar tareas.
+7. **QA nocturno (futuro):** Para el diseño del sistema de E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac, alertas), ver [docs/testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md](../testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md).
 
 ---
 
@@ -739,55 +740,54 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ### 3.6 Resumen del plan (T193)
 
-**Contexto:** La funcionalidad "Resumen del plan" genera un texto resumido del plan (eventos, alojamientos, fechas) y permite copiarlo al portapapeles. Está disponible desde la card del plan en el dashboard y desde la pantalla de detalle del plan.
+**Contexto:** La funcionalidad "Resumen del plan" genera un texto resumido del plan (eventos, alojamientos, fechas) y permite copiarlo al portapapeles.
 
-- [ ] **PLAN-SUM-001:** Ver botón "Resumen" / "Ver resumen" en la card del plan (dashboard)
-  - Pasos: 
-    1. Iniciar sesión y abrir el dashboard
-    2. Localizar una card de plan que tenga eventos o alojamientos
-  - Esperado: Se muestra el botón/link "Ver resumen" (o equivalente) en la card del plan
+- **Desde card e Info del plan:** el icono/botón abre siempre el **diálogo** (PlanSummaryDialog). No hay pestaña "Resumen" ni vista de resumen embebida en la página de info.
+- **Vista resumen en W31:** solo desde la **pestaña Calendario**. En la barra del calendario hay un botón "Ver resumen" que cambia W31 a la vista de resumen (WdPlanSummaryScreen). En esa vista, el botón "Calendario" vuelve a la cuadrícula del calendario.
+
+- [ ] **PLAN-SUM-001:** Ver icono de resumen en la card del plan (dashboard)
+  - Pasos: Iniciar sesión, abrir el dashboard, localizar una card de plan.
+  - Esperado: Se muestra el icono "Ver resumen" (summarize) en la card del plan.
   - Estado: 🔄
 
 - [ ] **PLAN-SUM-002:** Abrir diálogo de resumen desde la card del plan
-  - Pasos: 
-    1. En el dashboard, en una card de plan, hacer clic en "Ver resumen"
-  - Esperado: 
-    - Se abre un diálogo/modal con el resumen del plan
-    - Mientras se genera: indicador de carga ("Generando resumen..." o similar)
-    - Al cargar: se muestra texto con eventos, alojamientos y fechas (formato legible)
+  - Pasos: En el dashboard, en una card de plan, hacer clic en el icono de resumen.
+  - Esperado: Se abre un diálogo con el resumen (carga "Generando resumen...", luego texto formateado). No se cambia de pestaña ni de contenido en W31.
   - Estado: 🔄
 
-- [ ] **PLAN-SUM-003:** Abrir diálogo de resumen desde la pantalla de detalle del plan
-  - Pasos: 
-    1. Abrir un plan (detalle / PlanDataScreen)
-    2. Localizar y hacer clic en el botón "Ver resumen" / "Resumen"
-  - Esperado: Mismo comportamiento que PLAN-SUM-002 (diálogo con resumen generado)
+- [ ] **PLAN-SUM-003:** Abrir diálogo de resumen desde la pantalla Info del plan (PlanDataScreen)
+  - Pasos: Abrir un plan (pestaña planazoo / PlanDataScreen), localizar y hacer clic en el botón "Resumen" (icono + texto).
+  - Esperado: Mismo comportamiento que PLAN-SUM-002: se abre el diálogo de resumen.
   - Estado: 🔄
 
-- [ ] **PLAN-SUM-004:** Copiar resumen al portapapeles
-  - Pasos: 
-    1. Abrir el diálogo de resumen (desde card o desde detalle)
-    2. Cuando el resumen esté cargado, hacer clic en "Copiar" (o botón equivalente)
-  - Esperado: 
-    - El texto del resumen se copia al portapapeles
-    - Se muestra SnackBar o mensaje de confirmación ("Resumen copiado al portapapeles" o similar)
+- [ ] **PLAN-SUM-004:** Vista resumen en W31 desde la pestaña Calendario
+  - Pasos: Seleccionar un plan, ir a la pestaña Calendario (W15), en la barra del calendario hacer clic en el botón "Ver resumen".
+  - Esperado: W31 muestra la vista de resumen (WdPlanSummaryScreen): barra con botón "Calendario" y "Copiar", y el texto del resumen. La pestaña activa sigue siendo Calendario.
   - Estado: 🔄
 
-- [ ] **PLAN-SUM-005:** Cerrar diálogo de resumen
-  - Pasos: En el diálogo de resumen, hacer clic en "Cerrar" o fuera del diálogo
-  - Esperado: El diálogo se cierra sin errores
+- [ ] **PLAN-SUM-005:** Volver al calendario desde la vista resumen en W31
+  - Pasos: Estar en la vista resumen dentro de la pestaña Calendario, hacer clic en el botón "Calendario" de la barra.
+  - Esperado: W31 vuelve a mostrar la cuadrícula del calendario (CalendarScreen).
   - Estado: 🔄
 
-- [ ] **PLAN-SUM-006:** Resumen cuando el plan no tiene eventos ni alojamientos
-  - Pasos: Abrir resumen de un plan recién creado sin eventos ni alojamientos
-  - Esperado: 
-    - Se muestra un resumen mínimo (nombre del plan, fechas si existen) o mensaje tipo "Aún no hay eventos ni alojamientos"
-    - No se muestra error; el diálogo se comporta correctamente
+- [ ] **PLAN-SUM-006:** Copiar resumen al portapapeles (diálogo o vista W31)
+  - Pasos: Abrir el resumen (diálogo desde card/detalle, o vista W31 desde calendario); cuando esté cargado, hacer clic en "Copiar".
+  - Esperado: El texto se copia al portapapeles y se muestra SnackBar de confirmación.
   - Estado: 🔄
 
-- [ ] **PLAN-SUM-007:** Error al generar resumen (simulado)
-  - Pasos: Simular fallo de red o de servicio al abrir el resumen (opcional: desactivar red o mock)
-  - Esperado: Mensaje de error claro ("No se pudo generar el resumen" o similar), sin crash
+- [ ] **PLAN-SUM-007:** Cerrar diálogo de resumen
+  - Pasos: En el diálogo de resumen, hacer clic en "Cerrar" o fuera del diálogo.
+  - Esperado: El diálogo se cierra sin errores.
+  - Estado: 🔄
+
+- [ ] **PLAN-SUM-008:** Resumen cuando el plan no tiene eventos ni alojamientos
+  - Pasos: Abrir resumen (diálogo o vista W31) de un plan recién creado sin eventos ni alojamientos.
+  - Esperado: Resumen mínimo (nombre, fechas) o mensaje adecuado; sin error.
+  - Estado: 🔄
+
+- [ ] **PLAN-SUM-009:** Error al generar resumen (simulado)
+  - Pasos: Simular fallo de red o de servicio al abrir el resumen.
+  - Esperado: Mensaje de error claro ("No se pudo generar el resumen" o similar), sin crash.
   - Estado: 🔄
 
 ---

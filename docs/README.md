@@ -63,6 +63,8 @@ Gestión de tareas del proyecto:
 
 ### 🧪 [Testing](./testing/)
 - [Sistema de pruebas lógicas (JSON + reportes)](./testing/SISTEMA_PRUEBAS_LOGICAS.md) - Casos por datos, evaluadores, reportes para IA
+- [Sistema Nocturno de QA Distribuido](./testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md) - E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac), capas A/B/C, alertas y fases de implementación
+- [Plan E2E tres usuarios (manual)](./testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) - Flujo completo UA/UB/UC para pruebas manuales
 - [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md)
 
 ### ⚙️ [Configuración](./configuracion/)
@@ -110,6 +112,7 @@ Configuración y contexto del proyecto:
 2. Ten a mano [Usuarios de prueba](./configuracion/USUARIOS_PRUEBA.md) (emails, roles, contraseñas)
 3. Usa el [Checklist](./configuracion/TESTING_CHECKLIST.md) por área y marca estado (✅/❌/⚠️)
 4. Si pruebas offline: [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md)
+5. Para diseño de E2E automatizado nocturno: [Sistema Nocturno de QA Distribuido](./testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md)
 
 ---
 
@@ -121,7 +124,7 @@ Configuración y contexto del proyecto:
 
 **Sistema Core:**
 - ✅ CRUD completo de planes, eventos y alojamientos
-- ✅ Resumen del plan en texto (T193) — botón en card y en detalle del plan, diálogo con copiar al portapapeles
+- ✅ Resumen del plan en texto (T193) — card e Info: icono/botón abre diálogo con copiar; pestaña Calendario: "Ver resumen" en barra muestra vista resumen en W31, "Calendario" vuelve
 - ✅ Sistema de tracks (multi-participante)
 - ✅ Eventos multi-día (hasta 24h) con EventSegment
 - ✅ Drag & Drop con magnetismo
