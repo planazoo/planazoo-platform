@@ -25,6 +25,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - Respuestas concisas y accionables; detalles técnicos cuando aporten valor.
 - Evitar bloquear por confirmaciones innecesarias; preguntar solo si hay ambigüedad real.
 - No mostrar código en propuestas: aplicar directamente y describir el cambio a alto nivel.
+- **Al codificar o editar documentación:** No incluir en el chat fragmentos de código, diffs ni trozos de archivos .md; solo indicar qué se ha hecho (archivos tocados y resumen). Esto reduce uso de memoria y mejora el rendimiento; el usuario puede revisar los cambios en el editor o en el control de versiones.
 - **⚠️ REVISAR ANTES DE PROPUESTA/IMPLEMENTACIÓN**: Siempre buscar si ya existe funcionalidad similar antes de proponer o implementar (código, TASKS.md, Firestore, documentación).
 
 ### 2) Flujo de Trabajo de Tareas
@@ -125,5 +126,5 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 Mantenemos este documento corto y de alto impacto. Cualquier nueva norma estable se añade aquí.
 
-*Última actualización: Febrero 2026*
+*Última actualización: Febrero 2026 (acuerdo: no mostrar fragmentos ni diffs al codificar).*
 

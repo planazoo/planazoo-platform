@@ -55,7 +55,10 @@ MODAL CREAR PLAN
 MODAL ELIMINAR CUENTA
 - añadir el icono para poder ver la contraseña. 
 
-ZONA HORARIA
+PAGINA INFORMACION DEL PLAN
+- REvisar si el apartado "avisos" tiene sentido mantenerlo
+
+PERFIL USUARIO
 - En el perfil de usuarios las zonas horarias son pocas. Añadir todas las del mundo con capitales de ejemplo.
 - Una vez seleccionada se ha de visualizar la selección en el menu "Zona horaria"
 - La zona horaria debería verse en la info del usuario en W6
@@ -65,6 +68,17 @@ PAGINA PARTICIPANTES
 - La lista de participantes ha de ser lo primero. Hacerla más pequeña para que se vean los máximos posible
 - La parte de invitar va colocada a continuación de la lista de participantes
 - Revisar la parte de aceptar invitaciones. Es necesaria?
+- Eliminar el botón "Aceptar / Rechaar por token" y todo el código relacionado porque esta opción ya no está activa. Revisar y actualizar el codigo y la documentación.
+- Hay un icono "X" para cerra la ventana, ya no es necesario. Se puede eliminar
+- En la barra superior solo ha de apraecer el nombre de la página sin el nombre del plan
 
 INVITACIONES
-Cuando está enviada, UB ha de aparecer el usuario en los particpatnes con el estado de "pendiente de aceptar inviatación". CReo que esto ya está implementado en la invitacion por correo. 
+- Cuando está enviada, UB ha de aparecer el usuario en los particpatnes con el estado de "pendiente de aceptar inviatación". CReo que esto ya está implementado en la invitacion por correo. 
+- Si UA invita a UB, cuando UB acepte o rechaze la invitación, UA ha de recibir una notificación informando de la aceptacion/rechazo de la invitacion por parte de UB
+
+CARD DEL PLAN
+- Cuando está seleccionado el estado no se lee bien. Los colores no son los correctos. 
+
+NOTIFICACIONES
+- En el icono de notifications en W1, el circulo con el número de notificaciones tapa el icono. Colocarlo de otra forma para que no lo tape. 
+- LA estética de los botones de aceptar y rechazar no sigue el estilo principal de la aplicación

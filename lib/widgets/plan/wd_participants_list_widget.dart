@@ -6,6 +6,7 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/app/theme/color_scheme.dart';
 
 class ParticipantsListWidget extends ConsumerWidget {
   final String planId;
@@ -59,19 +60,24 @@ class ParticipantsListWidget extends ConsumerWidget {
                 final isDarkMode = Theme.of(context).brightness == Brightness.dark;
                 final textColor = isDarkMode ? Colors.white : Colors.grey.shade900;
                 final secondaryTextColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
-                
+                // Estándar UIShowcase: organizador con color2 (no azul).
+                final organizerBg = isDarkMode
+                    ? AppColorScheme.color2.withOpacity(0.3)
+                    : AppColorScheme.color2.withOpacity(0.2);
+                final organizerFg = isDarkMode ? Colors.white : AppColorScheme.color2;
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     leading: CircleAvatar(
                       backgroundColor: isOrganizer
-                          ? (isDarkMode ? Colors.blue.shade800 : Colors.blue.shade100)
+                          ? organizerBg
                           : (isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200),
                       child: Icon(
                         isOrganizer ? Icons.admin_panel_settings : Icons.person,
                         color: isOrganizer
-                            ? (isDarkMode ? Colors.blue.shade200 : Colors.blue.shade700)
+                            ? organizerFg
                             : (isDarkMode ? Colors.grey.shade300 : Colors.grey.shade700),
                         size: 18,
                       ),

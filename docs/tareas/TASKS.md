@@ -3,7 +3,7 @@
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
 
-**Siguiente código de tarea: T224**
+**Siguiente código de tarea: T225**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214 (widgets, info plan, calendario, cards)
@@ -14,7 +14,7 @@
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224 (reenviar invitación), etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
 **Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
@@ -178,6 +178,7 @@
 | **T120** | Sistema de invitaciones y confirmación de eventos (base implementada; faltan notificaciones push, etc.). | Alta |
 | **T121** | Revisión y enriquecimiento de formularios EventDialog y AccommodationDialog por tipo. | Media |
 | **T122** | Guardar plan como plantilla (local, editar, usar plantilla). | Baja |
+| **T224** | **Reenviar invitación:** Permitir al organizador reenviar una invitación pendiente (por email o desde lista) por si el usuario no la ha recibido (email no llegó, notificación perdida, etc.). UI en Participantes → sección Invitaciones: acción "Reenviar" por invitación pendiente; regenerar/enviar de nuevo notificación y, si aplica, email con link. Relacionado con T104, T105; ver FLUJO_INVITACIONES_NOTIFICACIONES. | Media |
 | ~~**T189**~~ | ~~Mejorar UX del diálogo de invitaciones por email (errores dentro del modal).~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 
 ---
