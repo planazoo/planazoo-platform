@@ -7,6 +7,7 @@ import '../../../../shared/services/logger_service.dart';
 import '../models/plan_invitation.dart';
 import 'plan_participation_service.dart';
 import '../../../auth/domain/services/user_service.dart';
+import '../../../notifications/domain/services/notification_helper.dart';
 
 /// Servicio para gestionar invitaciones a planes por email (T104)
 /// 
@@ -327,6 +328,13 @@ class InvitationService {
         }
       }
 
+      final respondedDisplay = user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
+      await NotificationHelper().notifyInvitationResponded(
+        inviterUserId: invitation.invitedBy,
+        planId: planId,
+        respondedUserDisplay: respondedDisplay,
+        accepted: true,
+      );
       return true;
     } catch (e) {
       LoggerService.error(
@@ -358,11 +366,20 @@ class InvitationService {
       if (querySnapshot.docs.isEmpty) return false;
 
       final doc = querySnapshot.docs.first;
+      final inv = PlanInvitation.fromFirestore(doc);
       await doc.reference.update({
         'status': 'rejected',
         'respondedAt': Timestamp.fromDate(DateTime.now()),
       });
       LoggerService.database('Invitation rejected by planId: ${doc.id}', operation: 'UPDATE');
+
+      final respondedDisplay = user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
+      await NotificationHelper().notifyInvitationResponded(
+        inviterUserId: inv.invitedBy,
+        planId: planId,
+        respondedUserDisplay: respondedDisplay,
+        accepted: false,
+      );
       return true;
     } catch (e) {
       LoggerService.error(
@@ -438,6 +455,13 @@ class InvitationService {
             error: cfError,
           );
         }
+        final respondedDisplay = user.displayName?.trim().isNotEmpty == true ? user.displayName! : (user.email);
+        await NotificationHelper().notifyInvitationResponded(
+          inviterUserId: invitation.invitedBy,
+          planId: invitation.planId,
+          respondedUserDisplay: respondedDisplay ?? invitation.email ?? '',
+          accepted: true,
+        );
         return true;
       }
 
@@ -473,6 +497,13 @@ class InvitationService {
       LoggerService.database(
         'Invitation rejected: ${invitation.id}',
         operation: 'UPDATE',
+      );
+
+      await NotificationHelper().notifyInvitationResponded(
+        inviterUserId: invitation.invitedBy,
+        planId: invitation.planId,
+        respondedUserDisplay: invitation.email ?? '',
+        accepted: false,
       );
       return true;
     } catch (e) {
@@ -533,6 +564,30 @@ class InvitationService {
     } catch (e) {
       LoggerService.error(
         'Error getting pending invitations: $planId',
+        context: 'INVITATION_SERVICE',
+        error: e,
+      );
+      return [];
+    }
+  }
+
+  /// Obtener todas las invitaciones de un plan (cualquier estado: pending, accepted, rejected, cancelled, expired)
+  Future<List<PlanInvitation>> getInvitationsForPlan(String planId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .get();
+
+      final list = querySnapshot.docs
+          .map((doc) => PlanInvitation.fromFirestore(doc))
+          .toList();
+      list.sort((a, b) => (b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+          .compareTo(a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)));
+      return list;
+    } catch (e) {
+      LoggerService.error(
+        'Error getting invitations for plan: $planId',
         context: 'INVITATION_SERVICE',
         error: e,
       );

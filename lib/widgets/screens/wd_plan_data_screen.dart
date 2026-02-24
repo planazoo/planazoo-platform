@@ -630,6 +630,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                           const SizedBox(height: cardSpacing),
                           _buildAnnouncementsSection(),
                           const SizedBox(height: cardSpacing),
+                          _buildLeavePlanButton(),
+                          const SizedBox(height: cardSpacing),
                           _buildDeleteButton(),
                           const SizedBox(height: cardSpacing),
                           _buildInfoSection(loc, showBaseInfo: false),
@@ -1644,6 +1646,134 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           SnackBar(
             content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Botón "Salir del plan" para participantes (no organizador). Elimina su participación.
+  Widget _buildLeavePlanButton() {
+    final currentUser = ref.watch(currentUserProvider);
+    if (currentPlan.id == null || currentUser == null) return const SizedBox.shrink();
+    final isOwner = currentUser.id == currentPlan.userId;
+    if (isOwner) return const SizedBox.shrink();
+
+    final participantsAsync = ref.watch(planParticipantsProvider(currentPlan.id!));
+    final isParticipant = participantsAsync.maybeWhen(
+      data: (list) => list.any((p) => p.userId == currentUser.id),
+      orElse: () => false,
+    );
+    if (!isParticipant) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _cardBackgroundStart,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Salir del plan',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: _textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Dejarás de ser participante y no verás los eventos ni el chat de este plan.',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: _textSecondary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showLeavePlanConfirmation(context),
+              icon: const Icon(Icons.exit_to_app, size: 18),
+              label: const Text('Salir del plan'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.orange.shade300,
+                side: BorderSide(color: Colors.orange.shade400),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showLeavePlanConfirmation(BuildContext context) async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null || currentPlan.id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => Theme(
+        data: AppTheme.darkTheme,
+        child: AlertDialog(
+          backgroundColor: Colors.grey.shade800,
+          title: Text(
+            'Salir del plan',
+            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          content: Text(
+            '¿Estás seguro de que quieres salir de "${currentPlan.name}"? Dejarás de ver eventos y participantes.',
+            style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Salir', style: GoogleFonts.poppins(color: Colors.orange.shade300)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      final participationService = ref.read(planParticipationServiceProvider);
+      final success = await participationService.removeParticipation(currentPlan.id!, currentUser.id);
+      if (!context.mounted) return;
+      if (success) {
+        ref.read(planParticipationNotifierProvider(currentPlan.id!).notifier).reload();
+        widget.onPlanDeleted?.call();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Has salido del plan', style: GoogleFonts.poppins(color: Colors.white)),
+            backgroundColor: Colors.green.shade700,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No se pudo salir del plan', style: GoogleFonts.poppins(color: Colors.white)),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } catch (e) {
+      LoggerService.error('Error leaving plan', context: 'PlanDataScreen', error: e);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al salir del plan: $e', style: GoogleFonts.poppins(color: Colors.white)),
+            backgroundColor: Colors.red.shade700,
           ),
         );
       }

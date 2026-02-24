@@ -366,6 +366,12 @@ service cloud.firestore {
                        resource.data.userId == request.auth.uid;
     }
     
+    // Preferencias de usuario por plan (subcolección). Necesario para borrado de cuenta.
+    match /plans/{planId}/userPreferences/{prefUserId} {
+      allow read, write: if isAuthenticated() && 
+                           (prefUserId == request.auth.uid || isPlanOwner(planId));
+    }
+    
     // ============================================
     // REGLAS PARA AVISOS/NOTIFICACIONES (subcolección de planes) - T105
     // ============================================
@@ -487,13 +493,14 @@ service cloud.firestore {
       )) || isAdmin(request.auth.uid);
       
       // Eliminar: 
-      // - Owner del plan puede eliminar participaciones (si el plan existe)
-      // - Usuario puede eliminar su propia participación si el plan no existe (huérfana)
-      // - Los administradores pueden eliminar cualquier participación (útil para limpiar huérfanas)
+      // - Owner del plan puede eliminar participaciones
+      // - Usuario puede eliminar su propia participación (al salir del plan o borrar cuenta)
+      // - Usuario puede eliminar su participación huérfana (plan no existe)
+      // - Los administradores pueden eliminar cualquier participación
       allow delete: if (isAuthenticated() && (
-                       isPlanOwner(resource.data.planId) || // Owner del plan
-                       (!planExists(resource.data.planId) && // Plan no existe (huérfana)
-                        resource.data.userId == request.auth.uid) // Y es la propia participación
+                       isPlanOwner(resource.data.planId) ||
+                       resource.data.userId == request.auth.uid ||
+                       (!planExists(resource.data.planId) && resource.data.userId == request.auth.uid)
                      )) || isAdmin(request.auth.uid);
     }
     
@@ -737,10 +744,10 @@ service cloud.firestore {
                        permissionId == resource.data.planId + '_' + resource.data.userId) ||
                       isAdmin(request.auth.uid);
       
-      // Eliminar: Solo el owner del plan puede eliminar permisos
-      // Los administradores pueden eliminar cualquier permiso
+      // Eliminar: Owner del plan, o el propio usuario (al borrar cuenta/salir del plan), o admin
       allow delete: if (isAuthenticated() && 
-                       isPlanOwner(resource.data.planId)) || isAdmin(request.auth.uid);
+                       (isPlanOwner(resource.data.planId) || resource.data.userId == request.auth.uid)) ||
+                      isAdmin(request.auth.uid);
     }
     
     // ============================================
@@ -812,8 +819,15 @@ service cloud.firestore {
         )
       ) || isAdmin(request.auth.uid);
 
-      // Eliminar: owner del plan o admin
-      allow delete: if (isAuthenticated() && isPlanOwner(resource.data.planId)) || isAdmin(request.auth.uid);
+      // Eliminar: owner del plan, o el invitado (email invitación = email usuario), o quien creó la invitación (invitedBy), o admin
+      allow delete: if (isAuthenticated() && (
+                       isPlanOwner(resource.data.planId) ||
+                       (request.auth.token.email != null && request.auth.token.email.toLowerCase() == resource.data.email.toLowerCase()) ||
+                       (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+                        'email' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+                        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email.toLowerCase() == resource.data.email.toLowerCase()) ||
+                       ('invitedBy' in resource.data && resource.data.invitedBy == request.auth.uid)
+                     )) || isAdmin(request.auth.uid);
     }
     
     // ============================================

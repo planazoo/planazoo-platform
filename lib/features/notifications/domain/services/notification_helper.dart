@@ -198,4 +198,59 @@ class NotificationHelper {
       return false;
     }
   }
+
+  /// Notificar al organizador (invitador) cuando un invitado acepta o rechaza la invitación.
+  ///
+  /// [inviterUserId] - ID del usuario que envió la invitación (recibe la notificación)
+  /// [planId] - ID del plan
+  /// [respondedUserDisplay] - Nombre o email del que respondió (para el cuerpo del mensaje)
+  /// [accepted] - true si aceptó, false si rechazó
+  Future<bool> notifyInvitationResponded({
+    required String? inviterUserId,
+    required String planId,
+    required String respondedUserDisplay,
+    required bool accepted,
+  }) async {
+    if (inviterUserId == null || inviterUserId.isEmpty) return false;
+    try {
+      String finalPlanName = 'Un plan';
+      final plan = await _planService.getPlanById(planId);
+      if (plan != null) finalPlanName = plan.name;
+
+      final type = accepted ? NotificationType.invitationAccepted : NotificationType.invitationRejected;
+      final title = accepted
+          ? '✅ Invitación aceptada'
+          : 'Invitación rechazada';
+      final body = accepted
+          ? '$respondedUserDisplay ha aceptado tu invitación al plan "$finalPlanName"'
+          : '$respondedUserDisplay ha rechazado tu invitación al plan "$finalPlanName"';
+
+      final notification = NotificationModel(
+        userId: inviterUserId,
+        type: type,
+        title: title,
+        body: body,
+        planId: planId,
+        createdAt: DateTime.now(),
+        data: {'accepted': accepted, 'respondedUserDisplay': respondedUserDisplay},
+      );
+
+      final id = await _notificationService.createNotification(inviterUserId, notification);
+      if (id != null) {
+        LoggerService.info(
+          'Invitation response notification created for inviter: $inviterUserId, plan: $planId',
+          context: 'NOTIFICATION_HELPER',
+        );
+        return true;
+      }
+      return false;
+    } catch (e) {
+      LoggerService.error(
+        'Error creating invitation response notification for plan: $planId',
+        context: 'NOTIFICATION_HELPER',
+        error: e,
+      );
+      return false;
+    }
+  }
 }

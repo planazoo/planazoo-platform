@@ -3,11 +3,11 @@
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
 
-**Siguiente código de tarea: T223**
+**Siguiente código de tarea: T224**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214 (widgets, info plan, calendario, cards)
-- **Administración:** T183-T191 (vista admin, export CSV, seed, permisos legacy, T188 en progreso)
+- **Administración:** T183-T191, T223 (vista admin, export CSV, seed, espacio admin RUD toda la BD, T188 en progreso)
 - **Auth / Perfil:** T159-T162, T173, T174 (permisos Firestore, verificación, perfil, soporte email)
 - **Seguridad avanzada:** T166-T172 (2FA, token refresh, legal, etc.)
 - **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212
@@ -102,6 +102,7 @@
 | **T187** | Herramienta admin para eliminar todos los datos de un usuario (GDPR). | Baja |
 | **T188** | Sistema de gestión administrativa — **En progreso** (Fase 1 hecha; Fase 2: _adminCreatedBy, scripts, doc). | Alta |
 | **T191** | Completar UserId del administrador en ADMINS_WHITELIST.md. | Baja |
+| **T223** | **Espacio admin para gestionar toda la BD (RUD + huérfanos):** Panel desde el que un administrador pueda **leer** todos los documentos de Firestore (y listar usuarios Auth), **actualizar de forma masiva** y **eliminar** documentos concretos. Incluye: (1) eliminar un usuario completo con todos sus datos relacionados (Auth + Firestore, vía UserService.deleteAllUserData o equivalente con Admin SDK); (2) **detectar y listar documentos huérfanos** — documentos que referencian entidades ya eliminadas (p. ej. `plan_participations` con `userId` o `planId` inexistente, `events` con `planId` inexistente, `event_participants` con `eventId` o `userId` inexistente, `plan_invitations`/`plan_permissions` con plan o usuario borrado). El panel debe permitir revisar esos huérfanos y eliminarlos en lote o uno a uno. La (C) de crear no es prioritaria (se hace desde la app). Relacionado con T183, T187, T188. | Alta |
 
 ---
 

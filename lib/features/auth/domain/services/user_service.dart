@@ -230,7 +230,7 @@ class UserService {
   }
 
   // Eliminar todos los datos de un usuario (eliminación completa)
-  /// 
+  ///
   /// Elimina todos los datos relacionados con un usuario en el siguiente orden:
   /// 1. Obtener email del usuario (necesario para eliminar invitaciones)
   /// 2. Planes creados por el usuario (y todos sus datos relacionados)
@@ -244,8 +244,10 @@ class UserService {
   /// 10. Preferencias del usuario (userPreferences)
   /// 11. Preferencias por plan (plans/{planId}/userPreferences/{userId})
   /// 12. El usuario mismo (users/{userId})
-  /// 
+  ///
   /// NOTA: Este método es destructivo e irreversible. Usar solo para eliminación de cuenta.
+  /// Al añadir nuevas estructuras de BD por usuario, actualizar este método y la documentación
+  /// de pruebas (TESTING_CHECKLIST.md § 3.5.1 Borrado total de usuario; FLUJO_CRUD_USUARIOS.md).
   Future<bool> deleteAllUserData(String userId) async {
     try {
       LoggerService.database('Starting complete user data deletion for: $userId', operation: 'DELETE');

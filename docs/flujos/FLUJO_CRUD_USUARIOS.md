@@ -201,6 +201,11 @@ Acciones:
 
 **⚠️ IMPORTANTE:** La eliminación es **completa e irreversible**. Todos los datos del usuario se eliminan físicamente de Firestore.
 
+**Mantenimiento:** Al añadir **nuevas colecciones o estructuras en Firestore** relacionadas con un usuario (subcolecciones, documentos por userId, etc.), hay que:
+1. Actualizar `UserService.deleteAllUserData()` en `lib/features/auth/domain/services/user_service.dart` para incluir el borrado de esas estructuras.
+2. Revisar `firestore.rules` para que el usuario (o admin) pueda borrar esos documentos en el flujo de eliminación de cuenta.
+3. Volver a probar el borrado total (ver `TESTING_CHECKLIST.md` § 3.5.1 Borrado total de usuario).
+
 **Para administradores:** Si necesitas eliminar los datos de un usuario desde código o consola, puedes llamar directamente a `UserService.deleteAllUserData(userId)`. Esto es útil para limpieza administrativa o cumplimiento de solicitudes de eliminación de datos (GDPR).
 
 Gaps:

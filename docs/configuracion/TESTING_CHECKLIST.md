@@ -738,6 +738,26 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: No quedan invitaciones asociadas al email ni al `invitedBy` del usuario eliminado.
   - Estado: 🔄
 
+### 3.5.1 Borrado total de usuario (eliminar cuenta)
+
+**Objetivo:** Asegurarse de que "Eliminar cuenta" borra **todos** los datos del usuario en Firestore y en Auth, sin dejar huérfanos ni fallos por permisos.
+
+> **Acción pendiente:** Revisar borrado de cuenta (falla `permission-denied` en pruebas). Ver `docs/testing/REGISTRO_OBSERVACIONES_PRUEBAS.md` § Acciones pendientes.
+
+- [ ] **USER-D-007:** Borrado total de usuario (flujo completo)
+  - Pasos:
+    1. Crear un usuario de prueba con datos variados: al menos 1 plan donde es owner, 1 participación en plan ajeno, 1 invitación pendiente recibida (o enviada), preferencias si existen.
+    2. En la app: Perfil → Acciones avanzadas → "Eliminar cuenta" → reautenticar con contraseña.
+    3. Comprobar que el flujo termina sin error (no `permission-denied`) y que se cierra sesión.
+    4. En Firestore (y Auth), comprobar que **no queda** ningún dato del usuario: `users/{uid}` eliminado, participaciones, permisos, invitaciones (recibidas y enviadas), eventos creados por él, pagos personales, grupos, preferencias, etc. Ver lista en `UserService.deleteAllUserData()` y en `FLUJO_CRUD_USUARIOS.md` § Eliminación de cuenta.
+  - Esperado: Cuenta y todos los datos asociados eliminados; no es posible volver a iniciar sesión con ese email sin registrarse de nuevo.
+  - Estado: 🔄
+
+**Mantenimiento:** Cada vez que se añadan **nuevas colecciones o estructuras en Firestore relacionadas con un usuario**, hay que:
+  1. Actualizar `UserService.deleteAllUserData()` en `lib/features/auth/domain/services/user_service.dart` para borrar también esas estructuras.
+  2. Revisar/actualizar las reglas en `firestore.rules` para que el usuario (o admin) pueda borrar esos documentos en el contexto de eliminación de cuenta.
+  3. Volver a ejecutar esta prueba (USER-D-007) y la de invitaciones (USER-D-006) para validar que el borrado sigue siendo completo.
+
 ### 3.6 Resumen del plan (T193)
 
 **Contexto:** La funcionalidad "Resumen del plan" genera un texto resumido del plan (eventos, alojamientos, fechas) y permite copiarlo al portapapeles.
@@ -1158,9 +1178,18 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Participante eliminado, eventos ajustados
   - Estado: 🔄
 
-- [ ] **PART-D-002:** Participante se auto-elimina
-  - Pasos: Participante abandona plan
-  - Esperado: Removido del plan
+- [ ] **PART-D-002:** Participante se auto-elimina ("Salir del plan")
+  - Pasos: Como participante (no organizador), desde Info del plan o desde pestaña Participantes → "Salir del plan" → confirmar.
+  - Esperado: Confirmación mostrada; al confirmar se elimina su participación, se cierra/redirige la vista del plan y el plan deja de aparecer en su lista.
+  - Referencia: `FLUJO_GESTION_PARTICIPANTES.md` § 2.5.
+  - Estado: 🔄
+
+- [ ] **PART-LEAVE-001:** Salir del plan desde Info del plan y desde Participantes
+  - Pasos:
+    1. Usuario B es participante (no owner) de un plan de Usuario A.
+    2. Desde la pantalla del plan → pestaña "Info" → botón "Salir del plan" → confirmar.
+    3. En otro plan donde B sea participante: pestaña "Participantes" → sección "Salir del plan" → confirmar.
+  - Esperado: En ambos casos se muestra diálogo de confirmación; al aceptar, la participación se elimina y B vuelve al dashboard o deja de ver el plan.
   - Estado: 🔄
 
 - [ ] **PART-D-003:** Intentar eliminar organizador
@@ -1503,30 +1532,42 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
     - El link es válido y funcional
   - Estado: ✅
 
-#### 7.1.6 Invitar por Username (T104 - Futuro)
+#### 7.1.6 Invitar desde lista de usuarios (T104)
 
-- [ ] **INV-024:** Invitar por username (búsqueda)
+- [ ] **INV-024:** Invitar desde lista de usuarios (búsqueda)
   - Pasos: 
-    1. Organizador → Plan → Participantes → "Invitar por username"
-    2. Campo de búsqueda: escribir `@usuario` o `usuario` o email
-    3. Ver resultados de autocompletar
-    4. Seleccionar usuario
-    5. Enviar invitación
+    1. Organizador → Plan → Participantes → "Invitar usuarios" / lista de usuarios
+    2. Buscar usuario por nombre o email
+    3. Pulsar "Invitar" en el usuario deseado
   - Esperado: 
-    - Búsqueda funciona por username, email o nombre
-    - Autocompletar muestra resultados relevantes
-    - Se crea invitación (o participación directa si el usuario existe)
-    - Usuario recibe notificación push (si tiene app)
-  - Estado: 🔄 (Pendiente implementación)
+    - Se crea invitación en `plan_invitations` (status pending), no se añade al plan directamente
+    - Invitado recibe notificación in-app
+    - En Participantes, en la sección "Invitaciones", aparece la invitación con estado Pendiente
+  - Referencia: `FLUJO_INVITACIONES_NOTIFICACIONES.md` § 1.2.
+  - Estado: 🔄 (Implementado Feb 2026)
 
-- [ ] **INV-025:** Invitar usuario que no existe por username
+- [ ] **INV-024b:** Organizador recibe notificación al aceptar/rechazar
   - Pasos: 
-    1. Organizador → Plan → Participantes → "Invitar por username"
-    2. Buscar username que no existe: `@usuario_inexistente`
+    1. Organizador invita a un usuario (por email o desde lista)
+    2. Invitado acepta la invitación (o rechaza, en otra ejecución)
+  - Esperado: Organizador recibe notificación push/in-app del tipo " [Nombre] ha aceptado tu invitación" o " [Nombre] ha rechazado tu invitación".
+  - Estado: 🔄
+
+- [ ] **INV-024c:** Ver estado de invitaciones en Participantes (organizador)
+  - Pasos: 
+    1. Organizador → Plan → Participantes
+    2. Revisar sección "Invitaciones"
+  - Esperado: Se listan todas las invitaciones del plan con su estado: Pendiente, Aceptada, Rechazada, Cancelada, Expirada.
+  - Estado: 🔄
+
+- [ ] **INV-025:** Invitar usuario que no existe por búsqueda (lista)
+  - Pasos: 
+    1. Organizador → Plan → Participantes → "Invitar usuarios"
+    2. Buscar texto que no coincida con ningún usuario
   - Esperado: 
-    - Mensaje: "No se encontró ningún usuario con ese username"
-    - Sugerencia: "¿Quieres invitar por email en su lugar?"
-  - Estado: 🔄 (Pendiente implementación)
+    - Mensaje tipo "No se encontró ningún usuario" o lista vacía
+    - Opción de invitar por email si aplica
+  - Estado: 🔄
 
 #### 7.1.7 Invitar Grupo (T123)
 

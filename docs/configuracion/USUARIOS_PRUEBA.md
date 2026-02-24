@@ -264,6 +264,10 @@ Usados en el [Plan de pruebas E2E exhaustivo](../testing/PLAN_PRUEBAS_E2E_TRES_U
 
 ## 📝 Crear Usuarios de Prueba
 
+### Método 0: Crear desde la app (registro desde cero)
+
+Si quieres crear los usuarios UA, UB y UC (o los alias que uses) tú mismo desde la pantalla de registro de la app, sin Firebase Console ni Init Firestore: **[CREAR_USUARIOS_DESDE_CERO.md](./CREAR_USUARIOS_DESDE_CERO.md)**. Incluye emails con alias, username único, verificación por email y orden sugerido para el Plan E2E.
+
 ### Método 1: Crear en Firebase Console (Recomendado)
 
 **Paso 1: Abrir Firebase Console**

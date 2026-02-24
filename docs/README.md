@@ -28,6 +28,7 @@ Flujos específicos del ciclo de vida de la aplicación:
 
 ### 📦 [Producto](./producto/)
 Decisiones de producto y especificaciones funcionales:
+- [Posición del producto frente a la IA](./producto/POSICION_PRODUCTO_FRENTE_A_IA.md) – Por qué la app no es fácilmente sustituible; IA como aliado, no sustituto
 - [Sistema de notificaciones – Especificación](./producto/NOTIFICACIONES_ESPECIFICACION.md) – Lista global (campana), W20 por plan, filtros, badge
 - [Plan de codificación – Notificaciones](./producto/NOTIFICACIONES_PLAN_CODIFICACION.md) – Fases e implementación
 - [Buzón unificado (evolución)](./producto/BUZON_UNIFICADO_NOTIFICACIONES.md) – Contexto histórico y enlace a la especificación
@@ -62,6 +63,7 @@ Gestión de tareas del proyecto:
 - [Paleta de colores de eventos](./design/EVENT_COLOR_PALETTE.md)
 
 ### 🧪 [Testing](./testing/)
+- **[Inicio pruebas – Día 1](./testing/INICIO_PRUEBAS_DIA1.md)** – Por dónde empezar: arrancar app, usuarios, smoke manual, luego ciclo E2E
 - [Sistema de pruebas lógicas (JSON + reportes)](./testing/SISTEMA_PRUEBAS_LOGICAS.md) - Casos por datos, evaluadores, reportes para IA
 - [Sistema Nocturno de QA Distribuido](./testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md) - E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac), capas A/B/C, alertas y fases de implementación
 - [Plan E2E tres usuarios (manual)](./testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) - Flujo completo UA/UB/UC para pruebas manuales

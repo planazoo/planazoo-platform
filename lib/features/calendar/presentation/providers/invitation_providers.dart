@@ -39,6 +39,21 @@ final pendingInvitationsProvider = FutureProvider.family<List<PlanInvitation>, S
   }
 });
 
+/// Provider para obtener todas las invitaciones de un plan (cualquier estado)
+final invitationsForPlanProvider = FutureProvider.family<List<PlanInvitation>, String>((ref, planId) async {
+  final invitationService = ref.read(invitationServiceProvider);
+  try {
+    return await invitationService.getInvitationsForPlan(planId);
+  } catch (e) {
+    LoggerService.error(
+      'Error getting invitations for plan: $planId',
+      context: 'INVITATION_PROVIDERS',
+      error: e,
+    );
+    return [];
+  }
+});
+
 /// Provider para obtener todas las invitaciones pendientes del usuario actual
 /// 
 /// Prioriza búsqueda por userId (participaciones pendientes).

@@ -127,38 +127,74 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     });
   }
 
+  /// Invita a un usuario desde la lista: crea invitación (pending) y notificación.
+  /// El invitado puede aceptar o rechazar; no se añade directamente al plan.
   Future<void> _inviteUser(UserModel user) async {
     try {
-      final participationService = ref.read(planParticipationServiceProvider);
       final currentUser = ref.read(currentUserProvider);
-      
       if (currentUser == null) {
         throw Exception('Usuario no autenticado');
       }
 
-      await participationService.createParticipation(
+      final email = (user.email ?? '').trim().toLowerCase();
+      if (email.isEmpty) {
+        throw Exception('El usuario no tiene email');
+      }
+
+      final invitationId = await ref.read(invitationServiceProvider).createInvitation(
         planId: widget.plan.id!,
-        userId: user.id,
-        role: 'participant',
+        email: email,
         invitedBy: currentUser.id,
-        autoAccept: true,
+        role: 'participant',
       );
 
+      if (invitationId == null) {
+        final existingInv = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(widget.plan.id!, email);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                existingInv != null
+                    ? 'Ya existe una invitación pendiente para ${user.displayName ?? user.email}'
+                    : '${user.displayName ?? user.email} ya es participante o no se pudo crear la invitación',
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              backgroundColor: Colors.orange.shade600,
+            ),
+          );
+        }
+        return;
+      }
+
+      final invitation = await ref.read(invitationServiceProvider).getInvitationById(invitationId);
+      if (invitation != null) {
+        final notificationHelper = NotificationHelper();
+        await notificationHelper.notifyInvitationCreated(
+          planId: widget.plan.id!,
+          invitedUserId: user.id,
+          invitedEmail: email,
+          inviterUserId: currentUser.id,
+          invitationToken: invitation.token,
+          planName: widget.plan.name,
+          inviterName: currentUser.displayName ?? currentUser.email ?? 'Un usuario',
+        );
+      }
+
       await ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
-      ref
-        ..invalidate(planParticipantsProvider(widget.plan.id!))
-        ..invalidate(planRealParticipantsProvider(widget.plan.id!));
+      ref.invalidate(planParticipantsProvider(widget.plan.id!));
+      ref.invalidate(planRealParticipantsProvider(widget.plan.id!));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '✅ ${user.displayName ?? user.email} invitado al plan',
+              '✅ Invitación enviada a ${user.displayName ?? user.email}. Puede aceptar o rechazar.',
               style: GoogleFonts.poppins(color: Colors.white),
             ),
             backgroundColor: Colors.green.shade600,
           ),
         );
+        setState(() {});
       }
     } catch (e) {
       LoggerService.error('Error inviting user', context: 'ParticipantsScreen', error: e);
@@ -166,7 +202,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '❌ Error al invitar usuario: $e',
+              '❌ Error al enviar invitación: $e',
               style: GoogleFonts.poppins(color: Colors.white),
             ),
             backgroundColor: Colors.red.shade600,
@@ -1559,6 +1595,149 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     );
   }
 
+  /// Sección "Salir del plan" para el usuario actual cuando es participante (no organizador).
+  Widget _buildLeavePlanSection() {
+    final currentUser = ref.watch(currentUserProvider);
+    if (currentUser == null || widget.plan.id == null) return const SizedBox.shrink();
+    if (currentUser.id == widget.plan.userId) return const SizedBox.shrink();
+
+    final participantsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
+    final isParticipant = participantsAsync.maybeWhen(
+      data: (list) => list.any((p) => p.userId == currentUser.id),
+      orElse: () => false,
+    );
+    if (!isParticipant) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade800,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade700.withOpacity(0.5)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.exit_to_app, color: Colors.orange.shade300, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Salir del plan',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Dejarás de ser participante de este plan.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            OutlinedButton(
+              onPressed: () => _showLeavePlanConfirmation(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.orange.shade300,
+                side: BorderSide(color: Colors.orange.shade400),
+              ),
+              child: Text(
+                'Salir',
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showLeavePlanConfirmation() async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null || widget.plan.id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => Theme(
+        data: AppTheme.darkTheme,
+        child: AlertDialog(
+          backgroundColor: Colors.grey.shade800,
+          title: Text(
+            'Salir del plan',
+            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          content: Text(
+            '¿Estás seguro de que quieres salir de "${widget.plan.name}"? Dejarás de ver eventos y participantes.',
+            style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Salir', style: GoogleFonts.poppins(color: Colors.orange.shade300)),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      final participationService = ref.read(planParticipationServiceProvider);
+      final success = await participationService.removeParticipation(widget.plan.id!, currentUser.id);
+      if (!mounted) return;
+      if (success) {
+        ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
+        ref.invalidate(planParticipantsProvider(widget.plan.id!));
+        ref.invalidate(planRealParticipantsProvider(widget.plan.id!));
+        widget.onBack?.call();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Has salido del plan',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Colors.green.shade600,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'No se pudo salir del plan',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Colors.red.shade600,
+          ),
+        );
+      }
+    } catch (e) {
+      LoggerService.error('Error leaving plan', context: 'ParticipantsScreen', error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error al salir del plan: $e',
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Colors.red.shade600,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildInviteUsersSection({required bool showCloseButton}) {
     return Consumer(
       builder: (context, ref, _) {
@@ -1989,11 +2168,22 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
 
   String _formatDate(DateTime date) => DateFormatter.formatDate(date);
 
+  String _invitationStatusLabel(String? status) {
+    switch (status) {
+      case 'pending': return 'Pendiente';
+      case 'accepted': return 'Aceptada';
+      case 'rejected': return 'Rechazada';
+      case 'cancelled': return 'Cancelada';
+      case 'expired': return 'Expirada';
+      default: return status ?? 'Pendiente';
+    }
+  }
+
   Widget _buildPendingInvitationsSection() {
     final currentUser = ref.watch(currentUserProvider);
     final isOwner = currentUser?.id == widget.plan.userId;
     return FutureBuilder<List<PlanInvitation>>(
-      future: ref.read(invitationServiceProvider).getPendingInvitations(widget.plan.id!),
+      future: ref.read(invitationsForPlanProvider(widget.plan.id!).future),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Padding(
@@ -2009,7 +2199,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Invitaciones pendientes',
+                'Invitaciones',
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -2021,6 +2211,8 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
               ...items.map((inv) {
                 final created = inv.createdAt != null ? _formatDate(inv.createdAt!) : '';
                 final expires = inv.expiresAt != null ? _formatDate(inv.expiresAt!) : '';
+                final statusLabel = _invitationStatusLabel(inv.status);
+                final isPending = inv.status == 'pending';
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
@@ -2062,7 +2254,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                       ),
                     ),
                     subtitle: Text(
-                      'Rol: ${inv.role ?? 'participant'} • Creada: $created • Expira: $expires',
+                      'Estado: $statusLabel • Rol: ${inv.role ?? 'participant'} • Creada: $created${isPending ? ' • Expira: $expires' : ''}',
                       style: GoogleFonts.poppins(
                         color: Colors.grey.shade400,
                         fontSize: 12,
@@ -2071,34 +2263,36 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          tooltip: 'Copiar enlace',
-                          icon: Icon(Icons.link, color: Colors.grey.shade400),
-                          onPressed: () async {
-                            if (inv.token != null) {
-                              final link = ref.read(invitationServiceProvider).generateInvitationLink(inv.token!);
-                              await Clipboard.setData(ClipboardData(text: link));
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Enlace copiado',
-                                      style: GoogleFonts.poppins(color: Colors.white),
+                        if (isPending && inv.token != null)
+                          IconButton(
+                            tooltip: 'Copiar enlace',
+                            icon: Icon(Icons.link, color: Colors.grey.shade400),
+                            onPressed: () async {
+                              if (inv.token != null) {
+                                final link = ref.read(invitationServiceProvider).generateInvitationLink(inv.token!);
+                                await Clipboard.setData(ClipboardData(text: link));
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Enlace copiado',
+                                        style: GoogleFonts.poppins(color: Colors.white),
+                                      ),
+                                      backgroundColor: Colors.grey.shade800,
                                     ),
-                                    backgroundColor: Colors.grey.shade800,
-                                  ),
-                                );
+                                  );
+                                }
                               }
-                            }
-                          },
-                        ),
-                        if (isOwner && inv.id != null)
+                            },
+                          ),
+                        if (isOwner && inv.id != null && isPending)
                           IconButton(
                             tooltip: 'Cancelar',
                             icon: Icon(Icons.cancel, color: Colors.red.shade400),
                             onPressed: () async {
                               final ok = await ref.read(invitationServiceProvider).cancelInvitation(inv.id!);
                               if (ok) {
+                                ref.invalidate(invitationsForPlanProvider(widget.plan.id!));
                                 if (mounted) setState(() {});
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -2295,6 +2489,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 child: Column(
                   children: [
                     _buildInviteUsersSection(showCloseButton: !isCompact),
+                    _buildLeavePlanSection(),
                     _buildPendingInvitationsSection(),
                     _buildMyInvitationsSection(),
                     _buildParticipantsList(),

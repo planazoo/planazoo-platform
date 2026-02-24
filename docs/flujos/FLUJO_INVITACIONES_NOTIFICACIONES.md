@@ -3,8 +3,8 @@
 > Define el sistema de invitaciones a planes y notificaciones de cambios
 
 **Relacionado con:** T104, T105, T110  
-**Versión:** 1.1  
-**Fecha:** Enero 2025 (Actualizado: Noviembre 2025)
+**Versión:** 1.2  
+**Fecha:** Enero 2025 (Actualizado: Febrero 2026)
 
 ---
 
@@ -20,7 +20,7 @@ Documentar el sistema completo de invitaciones a participantes y notificaciones 
 |------|-------------|-----------|-------|--------|
 | **Invitación** | Invitación a un plan nuevo | Alta | Email + Push | Al invitar |
 | **Invitación cancelada** | El organizador cancela una invitación pendiente | Alta | Email + Push | Al cancelar |
-| **Confirmación** | Participante acepta/rechaza | Normal | Push | Al responder |
+| **Confirmación** | Participante acepta/rechaza → Organizador recibe notificación | Normal | Push | Al responder |
 | **Cambio evento** | Modificación de evento | Variable | Variable | Al cambiar |
 | **Cambio participante** | Añadir/eliminar participante | Alta | Email + Push | Al cambiar |
 | **Estado plan** | Plan cambia de estado | Alta | Email + Push | Al cambiar |
@@ -86,29 +86,26 @@ Email: "[Nombre] ha aceptado tu invitación"
 Actualizar contador de participantes
 ```
 
-#### 1.2 - Invitar por Username
+#### 1.2 - Invitar desde la lista de usuarios (registrados)
 
-**Flujo:**
+**Implementado (Feb 2026):** El organizador puede invitar tanto **por email** (diálogo "Invitar por email") como **desde la lista de usuarios** (buscar usuario y pulsar "Invitar"). En ambos casos se crea una **invitación pendiente** (no se añade al plan directamente); el invitado recibe notificación y puede **aceptar o rechazar**. Tanto si acepta como si rechaza, **el organizador recibe una notificación** (tipo `invitationAccepted` o `invitationRejected`). En la página de Participantes, el organizador ve la sección **"Invitaciones"** con el **estado** de cada una: Pendiente, Aceptada, Rechazada, Cancelada, Expirada.
+
+**Flujo (desde lista):**
 ```
-Organizador → "Invitar por username"
+Organizador → Participantes → "Invitar usuarios" (lista)
   ↓
-Búsqueda:
-- Campo de búsqueda
-- Autocompletar por @username, email, nombre
+Buscar usuario por nombre/email
   ↓
-Seleccionar usuario
+Pulsar "Invitar" en el usuario deseado
   ↓
-Enviar invitación
+Sistema crea plan_invitation (pending) + notificación in-app al invitado
   ↓
-Usuario recibe notificación push (T105)
+Invitado recibe notificación → abre → [Aceptar] / [Rechazar]
   ↓
-Usuario abre notificación
+Si acepta: participación creada; invitación → "accepted"; notificación al organizador
+Si rechaza: invitación → "rejected"; notificación al organizador
   ↓
-Ver detalles del plan en app
-  ↓
-Botones: [Aceptar] / [Rechazar]
-  ↓
-Mismo flujo que email después
+Organizador ve en "Invitaciones" el estado (Pendiente / Aceptada / Rechazada)
 ```
 
 #### 1.3 - Invitar Grupo (T123)

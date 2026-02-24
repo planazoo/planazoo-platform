@@ -4,8 +4,8 @@
 
 **Relacionado con:** T51 - Validación de formularios (✅), T104, T117, T120, T123, T126 - Rate limiting (✅)  
 **Ver CRUD completo:** `FLUJO_CRUD_PLANES.md`  
-**Versión:** 1.1  
-**Fecha:** Enero 2025 (Actualizado)
+**Versión:** 1.2  
+**Fecha:** Enero 2025 (Actualizado: Febrero 2026)
 
 ---
 
@@ -67,32 +67,26 @@ Estado cambia a "Participante"
 - Redirección a app después de aceptar
 - Expiración de link
 
-#### 1.2 - Invitar por Username/Nickname
+#### 1.2 - Invitar desde la lista de usuarios (registrados)
+
+**Implementado (Feb 2026):** Igual que invitar por email, se crea una **invitación** (no se añade al plan directamente). El invitado recibe notificación y puede aceptar o rechazar; el organizador recibe notificación al aceptar/rechazar. En Participantes, el organizador ve la sección "Invitaciones" con el estado de cada una (Pendiente, Aceptada, Rechazada, Cancelada, Expirada). Ver detalles en `FLUJO_INVITACIONES_NOTIFICACIONES.md` § 1.2.
 
 **Flujo:**
 ```
-Organizador → "Invitar por @username"
+Organizador → Participantes → "Invitar usuarios" (lista)
   ↓
-Búsqueda de usuarios por username/email/nombre
+Búsqueda por nombre/email
   ↓
-Seleccionar usuario
+Pulsar "Invitar" en el usuario
   ↓
-Sistema envía notificación push (T105)
+Sistema crea invitación (pending) + notificación al invitado
   ↓
-Participante ve notificación en app
+Invitado acepta/rechaza → notificación al organizador
   ↓
-Participante acepta/rechaza invitación
-  ↓
-Estado: "Pendiente", "Aceptada", "Rechazada"
-  ↓
-Si acepta: Se añade como participante
+Si acepta: se crea participación; organizador ve estado en "Invitaciones"
 ```
 
-**Campos necesarios:**
-- Username, email o nombre
-- Rol asignado
-- Timezone inicial
-- Mensaje personalizado (opcional)
+**Campos necesarios:** Rol asignado (y opcionalmente timezone, mensaje). Usuario identificado por la lista.
 
 #### 1.3 - Invitar Grupo Completo (T123)
 
@@ -156,6 +150,32 @@ Recordatorio automático en 2 días
 - **Aceptada:** Editar parte personal, ver plan completo, participar
 - **Rechazada:** Ver plan básico, re-aceptar invitación, dejar comentario
 - **Expirada:** Re-enviar invitación, Eliminar de plan
+
+---
+
+### 2.5 SALIR DEL PLAN (VOLUNTARIO)
+
+**Implementado (Feb 2026):** Un **participante** (no organizador) puede abandonar el plan por su cuenta desde dos sitios:
+
+1. **Info del plan (PlanDataScreen):** Botón "Salir del plan" en la zona de acciones.
+2. **Pestaña Participantes (ParticipantsScreen):** Sección "Salir del plan" con botón y confirmación.
+
+**Flujo:**
+```
+Participante (no owner) → "Salir del plan"
+  ↓
+Diálogo de confirmación: "¿Seguro que quieres salir del plan [nombre]?"
+  ↓
+Confirmar
+  ↓
+Sistema: PlanParticipationService.removeParticipation(planId, userId)
+- Se elimina su documento en plan_participations
+- Se invalidan providers y se cierra/redirige la vista del plan
+  ↓
+Usuario deja de ver el plan en su lista; ya no es participante
+```
+
+**Reglas:** Solo el propio usuario puede borrar su participación (`resource.data.userId == request.auth.uid` en Firestore). El organizador no puede "salir" del plan (debe eliminarlo o transferir ownership si se implementa).
 
 ---
 

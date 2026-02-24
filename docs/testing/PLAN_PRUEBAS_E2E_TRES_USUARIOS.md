@@ -40,7 +40,7 @@
 ## 1. Resumen y enfoque
 
 - **Usuarios:** UA (organizador), UB, UC (participantes). Emails en sección 2.
-- **Ciclo:** Registro → Crear plan (sin eventos) → Invitar → Aceptar/Rechazar → Eventos (borrador, timezones, apuntarse) → Notificaciones → Re-invitar → Asignar a eventos → Chat → Aprobar plan → Durante el plan (chat, proponer/modificar) → UC deja → UC vuelve → Cerrar plan.
+- **Ciclo:** Registro → Crear plan (sin eventos) → **Sistema de invitaciones** (Invitar → email → Aceptar/Rechazar → Re-invitar) → Eventos (borrador, timezones, apuntarse) → Notificaciones → Asignar a eventos → Chat → Aprobar plan → Durante el plan (chat, proponer/modificar) → UC deja → UC vuelve → Cerrar plan.
 - **Criterios:** Cada paso con resultado esperado; **Resultado** = ✅ / ❌ / ⚠️ Bloqueado / 🔶 No implementado; anotar huecos en sección 19.
 - **Idiomas:** Ejecutar el flujo (o partes clave) en **español** y en **inglés**; comprobar que la UI, mensajes y estados se ven correctamente en ambos (ver sección 5.5).
 
@@ -58,10 +58,11 @@
 |-----|----------------------------|-------------|----------------------|--------------------|
 | **UA** | Unplanazoo+cricla@gmail.com  | Organizador | (tu contraseña)      | Europe/Madrid      |
 | **UB** | Unplanazoo+marbat@gmail.com  | Participante| (tu contraseña)      | Europe/Madrid      |
-| **UC** | Unplanazoo+emmcla@gmail.com  | Participante| (tu contraseña)      | America/New_York   |
+| **UC** | Unplanazoo+emmcla@gmail.com  | Participante| (tu contraseña)      | Europe/London      |
 
 - **Precondición:** Solo UA registrado al inicio.
 - **Timezone:** UA y UB mismo huso; UC distinto (comprobar conversión en eventos y calendario).
+- **Usuario UD (para más adelante):** No incluido en el ciclo estándar de 3 usuarios. Para pruebas futuras (p. ej. cuarto invitado no registrado): email `unplanazoo+matcla@gmail.com`, idioma español, zona **Nueva York (GMT-5)**. Ver `REGISTRO_OBSERVACIONES_PRUEBAS.md` y `CREAR_USUARIOS_DESDE_CERO.md`.
 
 ---
 
@@ -141,7 +142,7 @@ Estas pruebas son **solo para web**. Si ejecutas la app en **local** (localhost)
 
 - [ ] **Setup:** 3 ventanas o 3 navegadores en **1 ordenador** (solo web), uno por usuario (UA, UB, UC); ventanas identificadas (ej. "UA", "UB", "UC").
 - [ ] Emails UA, UB, UC y contraseña definidos.
-- [ ] Timezones: UA/UB Europe/Madrid, UC America/New_York (o las que uses) configuradas en perfil o plan.
+- [ ] Timezones: UA/UB Europe/Madrid, UC Europe/London (Madrid GMT+1, Londres GMT+0) (o las que uses) configuradas en perfil o plan.
 - [ ] **Idiomas:** Decidido cómo probar el segundo idioma (ver 5.5): misma sesión cambiando idioma, o una ejecución completa por idioma, o un usuario en ES y otro en EN.
 - [ ] Referencia a `TESTING_CHECKLIST.md` y `USUARIOS_PRUEBA.md` a mano.
 
@@ -157,7 +158,7 @@ Buscar en la UI el selector de idioma (p. ej. en menú de perfil, ajustes o cabe
 | Opción | Descripción | Cuándo usarla |
 |--------|-------------|----------------|
 | **A. Una ejecución por idioma** | Hacer el flujo completo primero en español (todas las ventanas en ES) y luego repetir en inglés (todas en EN). | Máxima cobertura de traducciones; más tiempo. |
-| **B. Usuarios en idiomas distintos** | UA en español, UB en inglés, UC en inglés (o UA en EN y UB/UC en ES). Cada ventana con su idioma desde el inicio. | Comprueba que varios usuarios pueden usar idiomas distintos en el mismo plan; una sola pasada. |
+| **B. Usuarios en idiomas distintos** | **Recomendado:** UA y UB en español, UC en inglés. Cada ventana con su idioma desde el inicio. | Comprueba que varios usuarios pueden usar idiomas distintos en el mismo plan; una sola pasada. |
 | **C. Cambiar idioma a mitad del flujo** | En una o dos ventanas (p. ej. UA), cambiar de ES a EN en una fase concreta (p. ej. tras Fase 5) y seguir el resto en EN. | Comprueba persistencia del idioma y que no se rompe el flujo al cambiar. |
 
 **Textos clave a comprobar en ambos idiomas (anotar ✅/❌ en cada uno):**
@@ -194,17 +195,17 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 | 0.7 | — | En la tercera ventana: intentar login con UC (Unplanazoo+emmcla@gmail.com) | Igual que 0.6 | Anotar si UC existe o no al inicio | | |
 | 0.8 | UA | Cerrar sesión (si hay opción en menú/perfil) y volver a iniciar sesión con UA | Login de nuevo correcto | Dashboard visible de nuevo | | |
 | 0.9 | UA | Localizar el selector de idioma (perfil, ajustes o cabecera) y comprobar que hay al menos Español e Inglés | Selector visible con ES y EN | Opción "Seleccionar idioma" o similar; al elegir EN, la UI cambia a inglés | | |
-| 0.10 | UA | *(Si usas opción B o C de 5.5)* En la ventana de UA, cambiar idioma a English (o dejar en ES y usar UB/UC en EN) | Idioma aplicado | Textos de dashboard (filtros, títulos) en el idioma elegido; anotar si algo sigue en otro idioma | | |
+| 0.10 | UA, UB, UC | *(Si usas opción B de 5.5: UA y UB en ES, UC en EN)* Dejar UA y UB en Español; en la ventana de UC, ir a Perfil y elegir English | Idioma aplicado por ventana | UA y UB ven la UI en español; UC en inglés; anotar si algo sigue en otro idioma | | |
 
-**Postcondición:** UA logueado; estado de UB/UC anotado; idioma de cada ventana decidido (todas ES, todas EN, o reparto según 5.5).
+**Postcondición:** UA logueado; estado de UB/UC anotado; idioma de cada ventana decidido (si opción B: UA y UB en español, UC en inglés).
 
 ---
 
 ## 7. Fase 1 – Creación del plan e invitaciones (solo UA)
 
-**Objetivo:** Plan en borrador sin eventos; dos invitaciones enviadas (UB, UC).
+**Objetivo:** Plan en borrador sin eventos; dos invitaciones enviadas. **UB = no registrado** (recibirá email, se registrará con ese email y luego aceptará). **UC = registrado** (acepta desde la app o el enlace del email). UA puede invitar **por email** o **desde la lista de usuarios**; en ambos casos el invitado recibe notificación y puede aceptar/rechazar, y **el organizador recibe notificación** al aceptar/rechazar y ve el **estado de invitaciones** (Pendiente, Aceptada, Rechazada, etc.) en Participantes.
 
-**Precondición:** UA logueado (Fase 0).
+**Precondición:** UA logueado (Fase 0). UC ya tiene cuenta; UB no (UB se crea en Fase 2 tras recibir la invitación).
 
 | # | Actor | Acción detallada | Resultado esperado | Verificación concreta | Resultado | Notas |
 |---|--------|-------------------|--------------------|------------------------|-----------|--------|
@@ -217,8 +218,8 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 | 1.7 | UA | Ir a "Info plan" (o equivalente) y comprobar estado | Estado "Borrador" o "Es borrador" | Badge o texto que indique borrador | | |
 | 1.8 | UA | No crear eventos aún; ir a pestaña/sección "Participantes" | Lista de participantes visible | Solo UA como organizador (o lista vacía según implementación); opción "Invitar" visible | | |
 | 1.9 | UA | Pulsar "Invitar" o "Añadir por email" | Se abre diálogo o campo para introducir email | Campo email y botón Enviar/Invitar | | |
-| 1.10 | UA | Introducir Unplanazoo+marbat@gmail.com (UB) y enviar invitación | Invitación enviada | Mensaje de éxito (SnackBar o similar); sin error de red/Firestore | | |
-| 1.11 | UA | Repetir con Unplanazoo+emmcla@gmail.com (UC) | Segunda invitación enviada | Mensaje de éxito | | |
+| 1.10 | UA | Introducir email de **UB (no registrado):** Unplanazoo+marbat@gmail.com y enviar invitación | Invitación enviada | Mensaje de éxito; UB recibirá email; en Fase 2 se registrará con ese email y aceptará | | |
+| 1.11 | UA | Introducir email de **UC (registrado):** Unplanazoo+emmcla@gmail.com y enviar invitación | Invitación enviada | Mensaje de éxito; UC (ya con cuenta) podrá aceptar desde la app o el enlace del email | | |
 | 1.12 | UA | Comprobar lista de invitaciones pendientes (si existe en UI) | UB y UC aparecen como pendientes | Tabla o lista con 2 invitaciones en estado "pendiente" o "enviada" | | |
 | 1.13 | UA | Comprobar que no hay eventos en el plan (pestaña Calendario) | Calendario sin eventos o vacío | Vista calendario sin bloques de evento; o mensaje "Sin eventos" | | |
 
@@ -228,9 +229,9 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 
 ## 8. Fase 2 – Aceptar / rechazar invitaciones
 
-**Objetivo:** UB acepta y pasa a ser participante; UC no acepta (ignora o rechaza).
+**Objetivo:** **UC (registrado)** acepta la invitación desde la app o el enlace del email. **UB (no registrado)** recibe el email, se registra con Unplanazoo+marbat@gmail.com, verifica si aplica y acepta la invitación.
 
-**Precondición:** Fase 1 completada; invitaciones enviadas a UB y UC.
+**Precondición:** Fase 1 completada; invitaciones enviadas a UB (no registrado) y UC (registrado).
 
 | # | Actor | Acción detallada | Resultado esperado | Verificación concreta | Resultado | Notas |
 |---|--------|-------------------|--------------------|------------------------|-----------|--------|
@@ -415,13 +416,13 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 
 ## 15. Fase 9 – UC deja el plan
 
-**Objetivo:** UC deja de ser participante (por botón "Dejar plan" o porque UA lo remueve); UA y UB ven la lista actualizada; UC ya no ve el plan (o ve mensaje "Ya no participas").
+**Objetivo:** UC deja de ser participante (por **"Salir del plan"** o porque UA lo remueve); UA y UB ven la lista actualizada; UC ya no ve el plan (o ve mensaje "Ya no participas"). **Implementado:** El participante puede "Salir del plan" desde **Info del plan** o desde la pestaña **Participantes**; confirmación y eliminación de su participación. Ver `FLUJO_GESTION_PARTICIPANTES.md` § 2.5.
 
 **Precondición:** Plan en confirmado o en_curso; UC participante.
 
 | # | Actor | Acción detallada | Resultado esperado | Verificación concreta | Resultado | Notas |
 |---|--------|-------------------|--------------------|------------------------|-----------|--------|
-| 9.1 | UC | Buscar opción "Dejar plan" / "Abandonar plan" / "Salir del plan" (en menú del plan, Participantes o Configuración) | Si existe: confirmación y salida; si no: anotar en Huecos | Botón o enlace; al pulsar, diálogo de confirmación; al confirmar, UC deja de ser participante | | |
+| 9.1 | UC | Usar "Salir del plan" (Info del plan o pestaña Participantes) → confirmar | Confirmación y salida | Diálogo "¿Seguro que quieres salir del plan [nombre]?"; al confirmar, UC deja de ser participante y sale de la vista del plan | | |
 | 9.2 | Si no existe 9.1 | UA abre Participantes → selecciona UC → "Remover" / "Eliminar del plan" | UC removido por organizador | Confirmación; UC desaparece de la lista de participantes | | |
 | 9.3 | UA | Ver lista de participantes del plan | Solo UA y UB | Contador o lista: 2 participantes (UA, UB) | | |
 | 9.4 | UB | Abrir Participantes o Chat | UC no figura como participante activo | Lista de participantes sin UC; en chat, mensajes antiguos de UC pueden seguir visibles pero UC no está en la lista de miembros | | |
@@ -562,7 +563,7 @@ Durante la prueba, anotar aquí todo lo que **no está implementado**, **es ambi
 
 | # | Descripción del hueco o comportamiento inesperado | Dónde ocurrió (fase/paso) | Severidad | Acción (Tarea / Issue) |
 |---|-----------------------------------------------------|---------------------------|-----------|--------------------------|
-| 1 | *(ejemplo)* No existe "Dejar plan" por parte del participante; solo organizador puede remover | Fase 9 | Media | TXXX: Permitir que participante abandone el plan |
+| 1 | *(ejemplo ya resuelto)* "Salir del plan" por participante: implementado (Info del plan y pestaña Participantes). Ver FLUJO_GESTION_PARTICIPANTES § 2.5. | Fase 9 | — | — |
 | 2 | | | | |
 | 3 | | | | |
 | 4 | | | | |
@@ -575,7 +576,7 @@ Durante la prueba, anotar aquí todo lo que **no está implementado**, **es ambi
 
 **Sugerencias de qué buscar (no implementado o confuso):**
 
-- Participante puede "dejar el plan" sin que le elimine el organizador.
+- ~~Participante puede "dejar el plan" sin que le elimine el organizador.~~ ✅ Implementado: "Salir del plan" (Info del plan y Participantes).
 - Re-invitar a un usuario que ya rechazó o que dejó el plan (mensaje claro, no duplicados).
 - Propuestas de eventos por participantes (crear sugerencia que el organizador apruebe/rechace).
 - Notificaciones push cuando hay nuevo mensaje en el chat o nuevo evento.
