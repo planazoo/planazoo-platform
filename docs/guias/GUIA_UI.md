@@ -18,6 +18,8 @@ Establecer un sistema de diseño consistente que:
 - Proporcione componentes reutilizables
 - Facilite el desarrollo sin experiencia de UI
 
+**Referencia visual:** El estándar de la app está definido y demostrado en **UIShowcase** (`lib/pages/pg_ui_showcase_page.dart`). Resumen de decisiones clave: inputs oscuros (caja grey800, borderRadius 14, focusedBorder color2), card de sección (gradiente radius 18), barra guardar (color2 + "Cancelar cambios" naranja + "Guardar" FilledButton), aviso solo lectura (fondo oscuro, borde naranja), lista organizador (color2), SnackBars (éxito/error/aviso), panel W31 (barra color2 + contenido) y **chat** (barra color2, input pill + botón enviar, burbujas propio/recibido). Ver secciones siguientes para detalle.
+
 ---
 
 ## 🎨 SISTEMA DE COLORES
@@ -292,6 +294,37 @@ Icons.delete         // Eliminar
 ✅ **Usar `Icons.*` de Material Icons** + `size` consistente (16, 24, 32, 48) + `AppColorScheme` para color.
 
 ⚠️ **NO crear `AppIcon` wrapper** a menos que realmente sea necesario para tu caso específico.
+
+#### Barras de feedback (SnackBar)
+
+Para mensajes de éxito, error o aviso tras una acción, usar **SnackBar** con el estilo estándar de la app. Referencia visual y botones de prueba en **UIShowcase** (sección "Barras inferiores (SnackBar estándar)").
+
+| Tipo   | Uso              | Color de fondo      | Ejemplo de texto              |
+|--------|------------------|---------------------|-------------------------------|
+| Éxito  | Acción completada| `Colors.green.shade700`  | "Plan guardado correctamente" |
+| Error  | Fallo o excepción| `Colors.red.shade600`   | "Error al guardar. Inténtalo de nuevo." |
+| Aviso  | Advertencia      | `Colors.orange.shade700`| "Tienes cambios sin guardar"  |
+
+- Contenido: `Text(..., style: GoogleFonts.poppins(color: Colors.white, fontSize: 14))`.
+- `behavior: SnackBarBehavior.floating`.
+- Uso: `ScaffoldMessenger.of(context).showSnackBar(SnackBar(...))`.
+
+#### Panel W31 (modelo estándar)
+
+Las vistas que se muestran en el **área W31** del dashboard (Stats, Calendario, Resumen, Datos del plan, etc.) siguen un **modelo común**: barra superior + área de contenido. Referencia visual en **UIShowcase** (sección "Panel W31 estándar").
+
+- **Barra superior:** altura 48 px, fondo `AppColorScheme.color2`, texto blanco. Título de la sección a la izquierda (Poppins 16, fontWeight 600). A la derecha, iconos de acción (actualizar, más opciones, etc.) con `IconButton`.
+- **Área de contenido:** debajo de la barra; contenido específico de cada vista (scroll cuando haga falta). Fondo según tema (oscuro/claro).
+
+Así se mantiene coherencia entre Estadísticas, Calendario, Resumen y el resto de pantallas en W31.
+
+#### Chat (pantalla de mensajes del plan)
+
+La pantalla de chat del plan usa el mismo estándar de barra superior (color2, 48 px, título Poppins 16) y añade dos patrones propios. Referencia visual en **UIShowcase** (sección "Chat (input + burbujas de mensaje)").
+
+- **Barra superior:** igual que el panel W31 (AppBar o barra custom con color2, altura 48, título + subtítulo opcional "Chat del plan").
+- **Input de chat:** barra inferior con borde superior discreto (grey700). Campo de texto en contenedor con fondo grey800, **borderRadius 24** (tipo pill), Poppins 15; botón enviar circular con fondo **color2** e icono `Icons.send` blanco. El botón puede estar deshabilitado (grey700) cuando no hay texto.
+- **Burbujas de mensaje:** mensajes propios alineados a la derecha, fondo **color2**, bordes redondeados (18 en lados exteriores, 4 en el que toca al borde); mensajes recibidos alineados a la izquierda, fondo **grey800**, mismo criterio de radios. Texto del mensaje Poppins 15 blanco; hora en Poppins 11 con opacidad. Opcional: indicador de leído (icono) en mensajes propios.
 
 ---
 

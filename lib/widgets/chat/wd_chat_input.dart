@@ -69,13 +69,14 @@ class _ChatInputState extends ConsumerState<ChatInput> {
                   },
                   onSubmitted: (_) => _handleSend(),
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
+                    fontSize: 15,
                     color: Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Escribe un mensaje...',
                     hintStyle: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 15,
                       color: Colors.grey.shade500,
                     ),
                     border: InputBorder.none,

@@ -69,7 +69,7 @@ class ChatMessageBubble extends ConsumerWidget {
                   Text(
                     message.message,
                     style: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 15,
                       color: Colors.white,
                       height: 1.4,
                     ),

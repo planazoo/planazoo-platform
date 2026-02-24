@@ -98,15 +98,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       });
       LoggerService.error('Error loading users', context: 'ParticipantsScreen', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error al cargar usuarios: $e',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
+        _showSnackBarError(context, 'Error al cargar usuarios: $e');
       }
     }
   }
@@ -125,6 +117,42 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         }).toList();
       }
     });
+  }
+
+  /// SnackBar estándar UI: éxito (verde), Poppins blanco 14, floating.
+  void _showSnackBarSuccess(BuildContext context, String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
+        backgroundColor: Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /// SnackBar estándar UI: error (rojo), Poppins blanco 14, floating.
+  void _showSnackBarError(BuildContext context, String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /// SnackBar estándar UI: aviso (naranja), Poppins blanco 14, floating.
+  void _showSnackBarWarning(BuildContext context, String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
+        backgroundColor: Colors.orange.shade700,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   /// Invita a un usuario desde la lista: crea invitación (pending) y notificación.
@@ -151,16 +179,11 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       if (invitationId == null) {
         final existingInv = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(widget.plan.id!, email);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                existingInv != null
-                    ? 'Ya existe una invitación pendiente para ${user.displayName ?? user.email}'
-                    : '${user.displayName ?? user.email} ya es participante o no se pudo crear la invitación',
-                style: GoogleFonts.poppins(color: Colors.white),
-              ),
-              backgroundColor: Colors.orange.shade600,
-            ),
+          _showSnackBarWarning(
+            context,
+            existingInv != null
+                ? 'Ya existe una invitación pendiente para ${user.displayName ?? user.email}'
+                : '${user.displayName ?? user.email} ya es participante o no se pudo crear la invitación',
           );
         }
         return;
@@ -185,29 +208,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       ref.invalidate(planRealParticipantsProvider(widget.plan.id!));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✅ Invitación enviada a ${user.displayName ?? user.email}. Puede aceptar o rechazar.',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.green.shade600,
-          ),
-        );
+        _showSnackBarSuccess(context, 'Invitación enviada a ${user.displayName ?? user.email}. Puede aceptar o rechazar.');
         setState(() {});
       }
     } catch (e) {
       LoggerService.error('Error inviting user', context: 'ParticipantsScreen', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '❌ Error al enviar invitación: $e',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
+        _showSnackBarError(context, 'Error al enviar invitación: $e');
       }
     }
   }
@@ -301,15 +308,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     await Clipboard.setData(ClipboardData(text: link));
                     if (mounted) Navigator.of(context).pop();
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Enlace copiado al portapapeles',
-                            style: GoogleFonts.poppins(color: Colors.white),
-                          ),
-                          backgroundColor: Colors.grey.shade800,
-                        ),
-                      );
+                      _showSnackBarSuccess(context, 'Enlace copiado al portapapeles');
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -424,7 +423,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             keyboardType: TextInputType.emailAddress,
                             enabled: !isLoading,
                             style: GoogleFonts.poppins(
-                              fontSize: 14,
+                              fontSize: 15,
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
@@ -475,7 +474,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             value: role,
                             dropdownColor: Colors.grey.shade800,
                             style: GoogleFonts.poppins(
-                              fontSize: 13,
+                              fontSize: 15,
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
@@ -485,7 +484,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                 child: Text(
                                   'Participante',
                                   style: GoogleFonts.poppins(
-                                    fontSize: 13,
+                                    fontSize: 15,
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -496,7 +495,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                 child: Text(
                                   'Observador',
                                   style: GoogleFonts.poppins(
-                                    fontSize: 13,
+                                    fontSize: 15,
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -547,7 +546,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             maxLines: 3,
                             enabled: !isLoading,
                             style: GoogleFonts.poppins(
-                              fontSize: 14,
+                              fontSize: 15,
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
@@ -597,12 +596,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             final cancelled = await ref.read(invitationServiceProvider).cancelInvitation(pendingInvitation!.id!);
                             if (!context.mounted) return;
                             if (cancelled) {
-                              ScaffoldMessenger.of(dialogContext).showSnackBar(
-                                SnackBar(
-                                  content: Text('✅ Invitación anterior cancelada', style: GoogleFonts.poppins(color: Colors.white)),
-                                  backgroundColor: Colors.orange.shade600,
-                                ),
-                              );
+                              _showSnackBarWarning(dialogContext, 'Invitación anterior cancelada');
                             }
                             setInnerState(() {
                               showPendingOptions = false;
@@ -617,15 +611,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                         ),
                         ElevatedButton(
                           onPressed: () async {
-                            ScaffoldMessenger.of(dialogContext).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '✅ Re-enviando invitación a ${emailController.text.trim()}',
-                                  style: GoogleFonts.poppins(color: Colors.white),
-                                ),
-                                backgroundColor: AppColorScheme.color2,
-                              ),
-                            );
+                            _showSnackBarSuccess(dialogContext, 'Re-enviando invitación a ${emailController.text.trim()}');
                             Navigator.of(dialogContext).pop(true);
                             await _showInvitationLink(pendingInvitation!.id!);
                             if (mounted) setState(() {});
@@ -744,22 +730,12 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                             inviterName: currentUser?.displayName ?? currentUser?.email ?? 'Un usuario',
                                           );
                                         }
-                                        ScaffoldMessenger.of(dialogContext).showSnackBar(
-                                          SnackBar(
-                                            content: Text('✅ Invitación creada para $email', style: GoogleFonts.poppins(color: Colors.white)),
-                                            backgroundColor: Colors.green.shade600,
-                                          ),
-                                        );
+                                        _showSnackBarSuccess(dialogContext, 'Invitación creada para $email');
                                         Navigator.of(dialogContext).pop(true);
                                         await _showInvitationLink(invitationId);
                                         if (mounted) setState(() {});
                                       } else {
-                                        ScaffoldMessenger.of(dialogContext).showSnackBar(
-                                          SnackBar(
-                                            content: Text('✅ Usuario $email añadido al plan', style: GoogleFonts.poppins(color: Colors.white)),
-                                            backgroundColor: Colors.green.shade600,
-                                          ),
-                                        );
+                                        _showSnackBarSuccess(dialogContext, 'Usuario $email añadido al plan');
                                         Navigator.of(dialogContext).pop(true);
                                         if (mounted) setState(() {});
                                       }
@@ -845,7 +821,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     child: TextFormField(
                       controller: tokenController,
                       style: GoogleFonts.poppins(
-                        fontSize: 14,
+                        fontSize: 15,
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1007,15 +983,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       
       if (token.isEmpty) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '❌ Token inválido',
-                style: GoogleFonts.poppins(color: Colors.white),
-              ),
-              backgroundColor: Colors.red.shade600,
-            ),
-          );
+          _showSnackBarError(context, 'Token inválido');
         }
         return;
       }
@@ -1026,15 +994,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       if (isAccept) {
         if (user == null) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '❌ Debes iniciar sesión para aceptar invitaciones',
-                  style: GoogleFonts.poppins(color: Colors.white),
-                ),
-                backgroundColor: Colors.red.shade600,
-              ),
-            );
+            _showSnackBarError(context, 'Debes iniciar sesión para aceptar invitaciones');
           }
           return;
         }
@@ -1045,45 +1005,18 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             ..invalidate(planParticipantsProvider(widget.plan.id!))
             ..invalidate(planRealParticipantsProvider(widget.plan.id!));
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '✅ Invitación aceptada. Has sido añadido al plan.',
-                  style: GoogleFonts.poppins(color: Colors.white),
-                ),
-                backgroundColor: Colors.green.shade600,
-              ),
-            );
+            _showSnackBarSuccess(context, 'Invitación aceptada. Has sido añadido al plan.');
           }
           setState(() {}); // Actualizar UI
         } else if (mounted) {
-          // Si falló, mostrar mensaje de error
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ No se pudo procesar el token. Verifica que sea válido y no haya expirado.'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          _showSnackBarError(context, 'No se pudo procesar el token. Verifica que sea válido y no haya expirado.');
         }
       } else {
         ok = await ref.read(invitationServiceProvider).rejectInvitationByToken(token);
         if (ok && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '✅ Invitación rechazada',
-                style: GoogleFonts.poppins(color: Colors.white),
-              ),
-              backgroundColor: Colors.orange.shade600,
-            ),
-          );
+          _showSnackBarWarning(context, 'Invitación rechazada');
         } else if (!ok && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ No se pudo procesar el token. Verifica que sea válido y no haya expirado.'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          _showSnackBarError(context, 'No se pudo procesar el token. Verifica que sea válido y no haya expirado.');
         }
       }
     }
@@ -1179,29 +1112,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
           ..invalidate(planRealParticipantsProvider(widget.plan.id!));
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '✅ Participante eliminado del plan',
-                style: GoogleFonts.poppins(color: Colors.white),
-              ),
-              backgroundColor: Colors.green.shade600,
-            ),
-          );
+          _showSnackBarSuccess(context, 'Participante eliminado del plan');
         }
       }
     } catch (e) {
       LoggerService.error('Error removing participant', context: 'ParticipantsScreen', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '❌ Error al eliminar participante: $e',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
+        _showSnackBarError(context, 'Error al eliminar participante: $e');
       }
     }
   }
@@ -1219,28 +1136,12 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         ..invalidate(planRealParticipantsProvider(widget.plan.id!));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✅ Rol actualizado a $newRole',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.green.shade600,
-          ),
-        );
+        _showSnackBarSuccess(context, 'Rol actualizado a $newRole');
       }
     } catch (e) {
       LoggerService.error('Error updating role', context: 'ParticipantsScreen', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '❌ Error al actualizar rol: $e',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
+        _showSnackBarError(context, 'Error al actualizar rol: $e');
       }
     }
   }
@@ -1702,38 +1603,14 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         ref.invalidate(planParticipantsProvider(widget.plan.id!));
         ref.invalidate(planRealParticipantsProvider(widget.plan.id!));
         widget.onBack?.call();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Has salido del plan',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.green.shade600,
-          ),
-        );
+        _showSnackBarSuccess(context, 'Has salido del plan');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'No se pudo salir del plan',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
+        _showSnackBarError(context, 'No se pudo salir del plan');
       }
     } catch (e) {
       LoggerService.error('Error leaving plan', context: 'ParticipantsScreen', error: e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error al salir del plan: $e',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
+        _showSnackBarError(context, 'Error al salir del plan: $e');
       }
     }
   }
@@ -2272,15 +2149,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                 final link = ref.read(invitationServiceProvider).generateInvitationLink(inv.token!);
                                 await Clipboard.setData(ClipboardData(text: link));
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Enlace copiado',
-                                        style: GoogleFonts.poppins(color: Colors.white),
-                                      ),
-                                      backgroundColor: Colors.grey.shade800,
-                                    ),
-                                  );
+                                  _showSnackBarSuccess(context, 'Enlace copiado');
                                 }
                               }
                             },
@@ -2295,27 +2164,11 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                 ref.invalidate(invitationsForPlanProvider(widget.plan.id!));
                                 if (mounted) setState(() {});
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Invitación cancelada',
-                                        style: GoogleFonts.poppins(color: Colors.white),
-                                      ),
-                                      backgroundColor: Colors.grey.shade800,
-                                    ),
-                                  );
+                                  _showSnackBarSuccess(context, 'Invitación cancelada');
                                 }
                               } else {
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'No se pudo cancelar',
-                                        style: GoogleFonts.poppins(color: Colors.white),
-                                      ),
-                                      backgroundColor: Colors.red.shade600,
-                                    ),
-                                  );
+                                  _showSnackBarError(context, 'No se pudo cancelar');
                                 }
                               }
                             },
@@ -2465,11 +2318,67 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     );
   }
 
+  /// Barra superior estándar W31: altura 48, color2, título + iconos (cuando se muestra en panel derecho).
+  Widget _buildParticipantsHeader() {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: AppColorScheme.color2,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Text(
+            'Participantes • ${widget.plan.name}',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              letterSpacing: 0.1,
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            onPressed: _acceptRejectTokenDialog,
+            icon: const Icon(Icons.vpn_key_outlined, color: Colors.white, size: 22),
+            tooltip: 'Aceptar/Rechazar invitación (token)',
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.of(context).size.width < 900;
 
     Widget content() {
+      final scrollContent = LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                children: [
+                  _buildInviteUsersSection(showCloseButton: !isCompact),
+                  _buildLeavePlanSection(),
+                  _buildPendingInvitationsSection(),
+                  _buildMyInvitationsSection(),
+                  _buildParticipantsList(),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
       return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -2481,24 +2390,15 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             ],
           ),
         ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Column(
-                  children: [
-                    _buildInviteUsersSection(showCloseButton: !isCompact),
-                    _buildLeavePlanSection(),
-                    _buildPendingInvitationsSection(),
-                    _buildMyInvitationsSection(),
-                    _buildParticipantsList(),
-                  ],
-                ),
+        child: isCompact
+            ? scrollContent
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildParticipantsHeader(),
+                  Expanded(child: scrollContent),
+                ],
               ),
-            );
-          },
-        ),
       );
     }
 
@@ -2511,13 +2411,14 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         child: Scaffold(
           backgroundColor: Colors.grey.shade900,
           appBar: AppBar(
+            toolbarHeight: 48,
             backgroundColor: AppColorScheme.color2,
             foregroundColor: Colors.white,
             elevation: 0,
             title: Text(
               'Participantes • ${widget.plan.name}',
               style: GoogleFonts.poppins(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
                 letterSpacing: 0.1,

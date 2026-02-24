@@ -139,6 +139,30 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     }
   }
 
+  /// SnackBar estándar UI: éxito (verde), Poppins blanco 14, floating.
+  void _showSnackBarSuccess(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
+        backgroundColor: Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /// SnackBar estándar UI: error (rojo), Poppins blanco 14, floating.
+  void _showSnackBarError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _showDatesModal() async {
     DateTime tempStart = _startDate;
     DateTime tempEnd = _endDate;
@@ -282,28 +306,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
           _hasUnsavedChanges = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(loc.planDetailsSaveSuccess),
-            backgroundColor: Colors.green,
-          ),
-        );
+        _showSnackBarSuccess(loc.planDetailsSaveSuccess);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(loc.planDetailsSaveError),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showSnackBarError(loc.planDetailsSaveError);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar el plan: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showSnackBarError('Error al guardar el plan: $e');
       }
     } finally {
       if (mounted) {
@@ -343,13 +352,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withOpacity(0.4),
                 blurRadius: 24,
                 offset: const Offset(0, 6),
                 spreadRadius: 0,
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withOpacity(0.2),
                 blurRadius: 12,
                 offset: const Offset(0, 2),
                 spreadRadius: -4,
@@ -388,7 +397,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     ),
                     backgroundColor: AppColorScheme.color2.withOpacity(0.1),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ],
@@ -449,13 +458,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withOpacity(0.4),
               blurRadius: 24,
               offset: const Offset(0, 6),
               spreadRadius: 0,
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withOpacity(0.2),
               blurRadius: 12,
               offset: const Offset(0, 2),
               spreadRadius: -4,
@@ -506,10 +515,12 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     final isCompact = MediaQuery.of(context).size.width < 900;
 
+    /// Barra superior estándar W31: altura 48, color2, título Poppins 16 w600, acciones a la derecha.
     Widget buildHeader() {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           color: AppColorScheme.color2,
           boxShadow: [
@@ -527,7 +538,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             Text(
               'Info del plan',
               style: GoogleFonts.poppins(
-                fontSize: 14,
+                fontSize: 16,
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.1,
@@ -563,9 +574,9 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   side: BorderSide(color: Colors.orange.shade300),
                   foregroundColor: Colors.orange.shade200,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(loc.cancelChanges, style: const TextStyle(fontSize: 12)),
+                child: Text(loc.cancelChanges, style: GoogleFonts.poppins(fontSize: 12, color: Colors.orange.shade200)),
               ),
               const SizedBox(width: 8),
               FilledButton.icon(
@@ -577,10 +588,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : const Icon(Icons.save_outlined, size: 18),
-                label: Text(loc.saveChanges, style: const TextStyle(fontSize: 12)),
+                label: Text(loc.saveChanges, style: GoogleFonts.poppins(fontSize: 12, color: Colors.white)),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ],
@@ -1030,7 +1041,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         value: safeSelectedTimezone,
         isExpanded: true,
         style: GoogleFonts.poppins(
-          fontSize: 13,
+          fontSize: 15,
           color: Colors.white,
           fontWeight: FontWeight.w500,
         ),
@@ -1078,7 +1089,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         TimezoneService.getTimezoneDisplayName(tz),
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
-                          fontSize: 13,
+                          fontSize: 15,
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
                         ),
@@ -1105,7 +1116,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                   TimezoneService.getTimezoneDisplayName(tz),
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
-                    fontSize: 13,
+                    fontSize: 15,
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1158,7 +1169,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         value: value,
         isExpanded: true,
         style: GoogleFonts.poppins(
-          fontSize: 13,
+          fontSize: 15,
           color: Colors.white,
           fontWeight: FontWeight.w500,
         ),
@@ -1228,7 +1239,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         controller: _budgetController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         style: GoogleFonts.poppins(
-          fontSize: 13,
+          fontSize: 15,
           color: Colors.white,
           fontWeight: FontWeight.w500,
         ),
@@ -1343,8 +1354,9 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           child: Text(
             _formatDate(value),
             style: GoogleFonts.poppins(
-              fontSize: 12,
+              fontSize: 15,
               color: Colors.white,
+              fontWeight: FontWeight.w500,
               letterSpacing: 0.1,
             ),
           ),
@@ -1353,30 +1365,31 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     );
   }
 
+  /// Aviso solo lectura: estándar UIShowcase — fondo oscuro, borde y texto naranja (contraste en tema oscuro).
   Widget _buildReadOnlyWarning() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: Colors.grey.shade800,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(color: Colors.orange.shade700),
       ),
       child: Row(
         children: [
           Icon(
             Icons.info_outline,
-            color: Colors.orange.shade700,
+            color: Colors.orange.shade300,
             size: 24,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              PlanStatePermissions.getBlockedReason('view', currentPlan) ?? 
+              PlanStatePermissions.getBlockedReason('view', currentPlan) ??
                   'Este plan tiene restricciones de edición según su estado.',
-              style: AppTypography.bodyStyle.copyWith(
+              style: GoogleFonts.poppins(
                 fontSize: 13,
-                color: Colors.orange.shade900,
+                color: Colors.orange.shade200,
               ),
             ),
           ),
@@ -1601,12 +1614,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     try {
       final currentUser = ref.read(currentUserProvider);
       if (currentUser == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error: Usuario no autenticado'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showSnackBarError('Error: Usuario no autenticado');
         return;
       }
 
@@ -1625,29 +1633,14 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           setState(() {
             currentPlan = updatedPlan;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Estado del plan actualizado a: ${PlanStateService.getStateDisplayInfo(newState)['label']}'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          _showSnackBarSuccess('Estado del plan actualizado a: ${PlanStateService.getStateDisplayInfo(newState)['label']}');
         }
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al cambiar el estado del plan'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showSnackBarError('Error al cambiar el estado del plan');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showSnackBarError('Error: ${e.toString()}');
       }
     }
   }
@@ -1698,14 +1691,14 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () => _showLeavePlanConfirmation(context),
-              icon: const Icon(Icons.exit_to_app, size: 18),
-              label: const Text('Salir del plan'),
+              icon: Icon(Icons.exit_to_app, size: 18, color: Colors.red.shade700),
+              label: Text('Salir del plan', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.red.shade700)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.orange.shade300,
-                side: BorderSide(color: Colors.orange.shade400),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                foregroundColor: Colors.red.shade700,
+                side: BorderSide(color: Colors.red.shade400, width: 1.5),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -1753,29 +1746,14 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       if (success) {
         ref.read(planParticipationNotifierProvider(currentPlan.id!).notifier).reload();
         widget.onPlanDeleted?.call();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Has salido del plan', style: GoogleFonts.poppins(color: Colors.white)),
-            backgroundColor: Colors.green.shade700,
-          ),
-        );
+        _showSnackBarSuccess('Has salido del plan');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No se pudo salir del plan', style: GoogleFonts.poppins(color: Colors.white)),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
+        _showSnackBarError('No se pudo salir del plan');
       }
     } catch (e) {
       LoggerService.error('Error leaving plan', context: 'PlanDataScreen', error: e);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al salir del plan: $e', style: GoogleFonts.poppins(color: Colors.white)),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
+        _showSnackBarError('Error al salir del plan: $e');
       }
     }
   }
@@ -1791,28 +1769,28 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey.shade800,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.shade200),
+        border: Border.all(color: Colors.red.shade700, width: 1),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Zona de Peligro',
-            style: AppTypography.bodyStyle.copyWith(
-              fontSize: 13,
-              color: Colors.red,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.red.shade200,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 12),
           Text(
             'Eliminar este plan eliminará todos los eventos asociados y no se puede deshacer.',
-            style: AppTypography.bodyStyle.copyWith(
-              fontSize: 12,
-              color: Colors.grey.shade600,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: Colors.red.shade200,
             ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -1820,13 +1798,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             child: ElevatedButton.icon(
               onPressed: () => _showDeleteConfirmation(context),
               icon: const Icon(Icons.delete, size: 18),
-              label: const Text('Eliminar Plan'),
+              label: Text('Eliminar Plan', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: Colors.red.shade700,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -1910,32 +1888,17 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       if (!context.mounted) return deleted;
 
       if (!deleted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(loc.planDeleteError),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showSnackBarError(loc.planDeleteError);
         return false;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(loc.planDeleteSuccess(currentPlan.name)),
-          backgroundColor: Colors.green,
-        ),
-      );
+      _showSnackBarSuccess(loc.planDeleteSuccess(currentPlan.name));
       return true;
     } catch (e) {
       LoggerService.error('Error deleting plan', context: 'PLAN_DATA_SCREEN', error: e);
       if (!context.mounted) return false;
       final loc = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(loc.planDeleteError),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showSnackBarError(loc.planDeleteError);
       return false;
     }
   }
@@ -2084,30 +2047,15 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       if (!context.mounted) return deleted;
 
       if (!deleted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(loc.planDeleteError),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showSnackBarError(loc.planDeleteError);
         return false;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(loc.planDeleteSuccess(currentPlan.name)),
-          backgroundColor: Colors.green,
-        ),
-      );
+      _showSnackBarSuccess(loc.planDeleteSuccess(currentPlan.name));
       return true;
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_mapDeleteErrorMessage(e.toString().replaceFirst('Exception: ', ''), AppLocalizations.of(context)!)),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showSnackBarError(_mapDeleteErrorMessage(e.toString().replaceFirst('Exception: ', ''), AppLocalizations.of(context)!));
       }
       return false;
     }
@@ -2743,9 +2691,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       final validationError = await ImageService.validateImage(image);
       if (validationError != null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(validationError), backgroundColor: Colors.red),
-          );
+          _showSnackBarError(validationError);
         }
         return;
       }
@@ -2765,23 +2711,12 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
           _selectedImage = null;
           _selectedImageBytes = null;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Imagen actualizada correctamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        _showSnackBarSuccess('Imagen actualizada correctamente');
       }
     } catch (e) {
       final message = e is Exception ? e.toString().replaceFirst('Exception: ', '') : '$e';
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar la imagen: $message'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        _showSnackBarError('Error al guardar la imagen: $message');
       }
     } finally {
       if (mounted) {

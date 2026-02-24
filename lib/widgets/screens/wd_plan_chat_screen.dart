@@ -112,27 +112,19 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade900,
       appBar: AppBar(
-        backgroundColor: Colors.grey.shade800,
+        toolbarHeight: 48,
+        backgroundColor: AppColorScheme.color2,
+        foregroundColor: Colors.white,
         elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.planName,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              'Chat del plan',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey.shade400,
-              ),
-            ),
-          ],
+        centerTitle: false,
+        title: Text(
+          'Chat del plan',
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+            letterSpacing: 0.1,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -240,10 +232,20 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
-                          // Forzar refresh del provider
                           ref.invalidate(planMessagesProvider(widget.planId));
                         },
-                        child: const Text('Reintentar'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColorScheme.color2,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Reintentar',
+                          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ],
                   ),
