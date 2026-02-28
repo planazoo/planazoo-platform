@@ -753,6 +753,65 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dashboardTabCalendar => 'calendario';
 
   @override
+  String get calendarOptionsTooltip => 'Opciones del calendario';
+
+  @override
+  String calendarTitleDaysRange(int start, int end, int total, int visible) {
+    return 'Días $start-$end de $total ($visible visibles)';
+  }
+
+  @override
+  String get calendarPreviousDays => 'Días anteriores';
+
+  @override
+  String get calendarNextDays => 'Días siguientes';
+
+  @override
+  String get calendarMenuSectionView => 'Vista';
+
+  @override
+  String get calendarMenuPlanComplete => 'Plan completo';
+
+  @override
+  String get calendarMenuMyAgenda => 'Mi agenda';
+
+  @override
+  String get calendarMenuCustomView => 'Vista personalizada';
+
+  @override
+  String get calendarMenuSectionEventFilter => 'Filtro eventos';
+
+  @override
+  String get calendarMenuAllEvents => 'Todos los eventos';
+
+  @override
+  String get calendarMenuDraftsOnly => 'Solo borradores';
+
+  @override
+  String get calendarMenuConfirmedOnly => 'Solo confirmados';
+
+  @override
+  String get calendarMenuSectionDaysVisible => 'Días visibles';
+
+  @override
+  String get calendarMenuDays1 => '1 día';
+
+  @override
+  String get calendarMenuDays3 => '3 días';
+
+  @override
+  String get calendarMenuDays7 => '7 días';
+
+  @override
+  String get calendarMenuManageParticipants => 'Gestionar participantes';
+
+  @override
+  String get calendarMenuFullscreen => 'Pantalla completa';
+
+  @override
+  String get calendarMenuManageRoles => 'Gestión de roles';
+
+  @override
   String get dashboardTabIn => 'in';
 
   @override

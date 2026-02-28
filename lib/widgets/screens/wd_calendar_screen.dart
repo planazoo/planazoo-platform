@@ -329,6 +329,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ? AppLocalizations.of(context)!.planSummaryButtonTooltip
         : null;
     return _calendarAppBar!.buildAppBar(
+      context,
       onPreviousDayGroup: _previousDayGroup,
       onNextDayGroup: _nextDayGroup,
       onVisibleDaysChanged: (int value) {

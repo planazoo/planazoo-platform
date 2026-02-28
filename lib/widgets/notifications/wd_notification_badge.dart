@@ -37,11 +37,11 @@ class NotificationBadge extends ConsumerWidget {
                 _showNotificationList(context, ref);
               },
             ),
-            // T236: Badge en esquina superior derecha sin tapar el icono de la campana
+            // T236: Badge fuera del área del icono (esquina superior derecha) para no tapar la campana
             if (count > 0)
               Positioned(
-                right: 0,
-                top: 0,
+                right: -2,
+                top: -2,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(

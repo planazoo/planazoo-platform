@@ -1430,6 +1430,120 @@ abstract class AppLocalizations {
   /// **'calendario'**
   String get dashboardTabCalendar;
 
+  /// Tooltip menú opciones barra calendario
+  ///
+  /// In es, this message translates to:
+  /// **'Opciones del calendario'**
+  String get calendarOptionsTooltip;
+
+  /// No description provided for @calendarTitleDaysRange.
+  ///
+  /// In es, this message translates to:
+  /// **'Días {start}-{end} de {total} ({visible} visibles)'**
+  String calendarTitleDaysRange(int start, int end, int total, int visible);
+
+  /// No description provided for @calendarPreviousDays.
+  ///
+  /// In es, this message translates to:
+  /// **'Días anteriores'**
+  String get calendarPreviousDays;
+
+  /// No description provided for @calendarNextDays.
+  ///
+  /// In es, this message translates to:
+  /// **'Días siguientes'**
+  String get calendarNextDays;
+
+  /// No description provided for @calendarMenuSectionView.
+  ///
+  /// In es, this message translates to:
+  /// **'Vista'**
+  String get calendarMenuSectionView;
+
+  /// No description provided for @calendarMenuPlanComplete.
+  ///
+  /// In es, this message translates to:
+  /// **'Plan completo'**
+  String get calendarMenuPlanComplete;
+
+  /// No description provided for @calendarMenuMyAgenda.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi agenda'**
+  String get calendarMenuMyAgenda;
+
+  /// No description provided for @calendarMenuCustomView.
+  ///
+  /// In es, this message translates to:
+  /// **'Vista personalizada'**
+  String get calendarMenuCustomView;
+
+  /// No description provided for @calendarMenuSectionEventFilter.
+  ///
+  /// In es, this message translates to:
+  /// **'Filtro eventos'**
+  String get calendarMenuSectionEventFilter;
+
+  /// No description provided for @calendarMenuAllEvents.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los eventos'**
+  String get calendarMenuAllEvents;
+
+  /// No description provided for @calendarMenuDraftsOnly.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo borradores'**
+  String get calendarMenuDraftsOnly;
+
+  /// No description provided for @calendarMenuConfirmedOnly.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo confirmados'**
+  String get calendarMenuConfirmedOnly;
+
+  /// No description provided for @calendarMenuSectionDaysVisible.
+  ///
+  /// In es, this message translates to:
+  /// **'Días visibles'**
+  String get calendarMenuSectionDaysVisible;
+
+  /// No description provided for @calendarMenuDays1.
+  ///
+  /// In es, this message translates to:
+  /// **'1 día'**
+  String get calendarMenuDays1;
+
+  /// No description provided for @calendarMenuDays3.
+  ///
+  /// In es, this message translates to:
+  /// **'3 días'**
+  String get calendarMenuDays3;
+
+  /// No description provided for @calendarMenuDays7.
+  ///
+  /// In es, this message translates to:
+  /// **'7 días'**
+  String get calendarMenuDays7;
+
+  /// No description provided for @calendarMenuManageParticipants.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestionar participantes'**
+  String get calendarMenuManageParticipants;
+
+  /// No description provided for @calendarMenuFullscreen.
+  ///
+  /// In es, this message translates to:
+  /// **'Pantalla completa'**
+  String get calendarMenuFullscreen;
+
+  /// No description provided for @calendarMenuManageRoles.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestión de roles'**
+  String get calendarMenuManageRoles;
+
   /// Pestaña dashboard: participantes
   ///
   /// In es, this message translates to:

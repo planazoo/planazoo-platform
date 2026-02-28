@@ -130,13 +130,14 @@ class InvitationNotificationTile extends ConsumerWidget {
                 icon: const Icon(Icons.close, size: 14),
                 label: Text(loc.reject, style: GoogleFonts.poppins(fontSize: 11)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColorScheme.color4,
-                  side: const BorderSide(color: AppColorScheme.color4),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  foregroundColor: AppColorScheme.color3,
+                  side: const BorderSide(color: AppColorScheme.color3, width: 1.5),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   minimumSize: Size.zero,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () async {
                   final ok = await ref.read(invitationServiceProvider).acceptInvitationByPlanId(invitation.planId, userId);
@@ -154,8 +155,9 @@ class InvitationNotificationTile extends ConsumerWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColorScheme.color2,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   minimumSize: Size.zero,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ],

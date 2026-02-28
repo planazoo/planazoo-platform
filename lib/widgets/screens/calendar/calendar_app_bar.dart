@@ -9,6 +9,7 @@ import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// Clase que maneja la construcción del AppBar del calendario
 class CalendarAppBar {
@@ -36,7 +37,8 @@ class CalendarAppBar {
 
   /// Construye el AppBar completo
   /// [eventDraftFilter] y [onEventDraftFilterChanged]: T242 filtro eventos todos/borrador.
-  PreferredSizeWidget buildAppBar({
+  PreferredSizeWidget buildAppBar(
+    BuildContext context, {
     required VoidCallback onPreviousDayGroup,
     required VoidCallback onNextDayGroup,
     required Function(int) onVisibleDaysChanged,
@@ -55,11 +57,12 @@ class CalendarAppBar {
     final startDay = currentDayGroup * visibleDays + 1;
     final endDay = startDay + visibleDays - 1;
     final totalDays = plan.durationInDays;
-    
+
     return AppBar(
       toolbarHeight: 48.0,
-      title: _buildTitle(startDay, endDay, totalDays, onPreviousDayGroup, onNextDayGroup),
+      title: _buildTitle(context, startDay, endDay, totalDays, onPreviousDayGroup, onNextDayGroup),
       actions: _buildActions(
+        context,
         onVisibleDaysChanged: onVisibleDaysChanged,
         canManageRoles: canManageRoles,
         onManageRoles: onManageRoles,
@@ -80,33 +83,36 @@ class CalendarAppBar {
   }
 
   /// Construye el título del AppBar con navegación
-  Widget _buildTitle(int startDay, int endDay, int totalDays, VoidCallback onPrevious, VoidCallback onNext) {
+  Widget _buildTitle(BuildContext context, int startDay, int endDay, int totalDays, VoidCallback onPrevious, VoidCallback onNext) {
+    final loc = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
           onPressed: currentDayGroup > 0 ? onPrevious : null,
           icon: const Icon(Icons.chevron_left),
-          tooltip: 'Días anteriores',
+          tooltip: loc.calendarPreviousDays,
         ),
         Text(
-          'Días $startDay-${startDay + visibleDays - 1} de $totalDays ($visibleDays visibles)',
+          loc.calendarTitleDaysRange(startDay, endDay, totalDays, visibleDays),
           style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
           ),
         ),
         IconButton(
           onPressed: (startDay + visibleDays - 1) < totalDays ? onNext : null,
           icon: const Icon(Icons.chevron_right),
-          tooltip: 'Días siguientes',
+          tooltip: loc.calendarNextDays,
         ),
       ],
     );
   }
 
   /// Construye las acciones del AppBar
-  List<Widget> _buildActions({
+  List<Widget> _buildActions(
+    BuildContext context, {
     required Function(int) onVisibleDaysChanged,
     required Future<bool> Function() canManageRoles,
     required VoidCallback onManageRoles,
@@ -139,107 +145,103 @@ class CalendarAppBar {
             ),
           ),
         ),
-      // T242: Filtro eventos todos / borrador / confirmados
-      if (onEventDraftFilterChanged != null)
-        PopupMenuButton<String>(
-          icon: Icon(
-            eventDraftFilter == 'draft'
-                ? Icons.edit_note
-                : eventDraftFilter == 'confirmed'
-                    ? Icons.check_circle_outline
-                    : Icons.filter_list_alt,
-            color: Colors.white,
-          ),
-          tooltip: 'Filtro de eventos',
-          onSelected: onEventDraftFilterChanged,
-          itemBuilder: (context) => [
-            const PopupMenuItem(value: 'all', child: Row(children: [Icon(Icons.event_note, size: 20), SizedBox(width: 8), Text('Todos los eventos')])),
-            const PopupMenuItem(value: 'draft', child: Row(children: [Icon(Icons.edit_note, size: 20), SizedBox(width: 8), Text('Solo borradores')])),
-            const PopupMenuItem(value: 'confirmed', child: Row(children: [Icon(Icons.check_circle_outline, size: 20), SizedBox(width: 8), Text('Solo confirmados')])),
-          ],
-        ),
-      // Control de días visibles
-      _buildVisibleDaysMenu(onVisibleDaysChanged),
-      
-      // Gestión de roles (solo para admins)
-      FutureBuilder<bool>(
-        future: canManageRoles(),
-        builder: (context, snapshot) {
-          if (snapshot.data == true) {
-            return IconButton(
-              icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
-              tooltip: 'Gestión de Roles',
-              onPressed: onManageRoles,
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
-      
-      // Acceso rápido a Mi Agenda
-      IconButton(
-        icon: const Icon(Icons.person, color: Colors.white),
-        tooltip: 'Mi Agenda',
-        onPressed: onPersonalView,
-      ),
-      
-      // Selector de filtros de vista
-      calendarFilters.buildFilterMenu(
-        viewMode,
-        onFilterChanged,
-        onCustomFilter,
-      ),
-      
-      // Botón para gestionar participantes
-      calendarTrackReorder.buildParticipantManagementButton(onReorderTracks),
-      
-      // Botón de pantalla completa
-      IconButton(
-        icon: const Icon(Icons.fullscreen, color: Colors.white),
-        tooltip: 'Pantalla completa',
-        onPressed: onFullscreen,
+      // T242 (2): Menú categorizado con todas las opciones del calendario
+      _buildGroupedOptionsMenu(
+        context,
+        onVisibleDaysChanged: onVisibleDaysChanged,
+        canManageRoles: canManageRoles,
+        onManageRoles: onManageRoles,
+        onPersonalView: onPersonalView,
+        onFilterChanged: onFilterChanged,
+        onCustomFilter: onCustomFilter,
+        onReorderTracks: onReorderTracks,
+        onFullscreen: onFullscreen,
+        eventDraftFilter: eventDraftFilter,
+        onEventDraftFilterChanged: onEventDraftFilterChanged,
       ),
     ];
   }
 
-  /// Construye el menú de días visibles
-  Widget _buildVisibleDaysMenu(Function(int) onVisibleDaysChanged) {
-    return PopupMenuButton<int>(
-      icon: const Icon(Icons.tune, color: Colors.white),
-      tooltip: 'Ajustar días visibles',
-      onSelected: onVisibleDaysChanged,
-      itemBuilder: (BuildContext context) => [
-        PopupMenuItem<int>(
-          value: 1,
-          child: Row(
-            children: [
-              Icon(Icons.calendar_view_day, size: 16),
-              const SizedBox(width: 8),
-              const Text('1 día'),
-            ],
-          ),
-        ),
-        PopupMenuItem<int>(
-          value: 3,
-          child: Row(
-            children: [
-              Icon(Icons.calendar_view_week, size: 16),
-              const SizedBox(width: 8),
-              const Text('3 días'),
-            ],
-          ),
-        ),
-        PopupMenuItem<int>(
-          value: 7,
-          child: Row(
-            children: [
-              Icon(Icons.calendar_view_month, size: 16),
-              const SizedBox(width: 8),
-              const Text('7 días'),
-            ],
-          ),
-        ),
-      ],
+  /// T242 (2): Menú categorizado con Vista, Filtro eventos, Días visibles, Participantes, Pantalla completa, Roles
+  Widget _buildGroupedOptionsMenu(
+    BuildContext context, {
+    required Function(int) onVisibleDaysChanged,
+    required Future<bool> Function() canManageRoles,
+    required VoidCallback onManageRoles,
+    required VoidCallback onPersonalView,
+    required Function(CalendarViewMode) onFilterChanged,
+    required VoidCallback onCustomFilter,
+    required VoidCallback onReorderTracks,
+    required VoidCallback onFullscreen,
+    String eventDraftFilter = 'all',
+    void Function(String)? onEventDraftFilterChanged,
+  }) {
+    final loc = AppLocalizations.of(context)!;
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: Colors.white),
+      tooltip: loc.calendarOptionsTooltip,
+      onSelected: (String value) {
+        if (value.startsWith('_')) return;
+        switch (value) {
+          case 'view_all':
+            onFilterChanged(CalendarViewMode.all);
+            break;
+          case 'view_personal':
+            onPersonalView();
+            break;
+          case 'view_custom':
+            onCustomFilter();
+            break;
+          case 'filter_all':
+            onEventDraftFilterChanged?.call('all');
+            break;
+          case 'filter_draft':
+            onEventDraftFilterChanged?.call('draft');
+            break;
+          case 'filter_confirmed':
+            onEventDraftFilterChanged?.call('confirmed');
+            break;
+          case 'days_1':
+          case 'days_3':
+          case 'days_7':
+            onVisibleDaysChanged(int.parse(value.split('_')[1]));
+            break;
+          case 'participants':
+            onReorderTracks();
+            break;
+          case 'fullscreen':
+            onFullscreen();
+            break;
+          case 'roles':
+            onManageRoles();
+            break;
+        }
+      },
+      itemBuilder: (BuildContext _) {
+        final entries = <PopupMenuEntry<String>>[
+          PopupMenuItem<String>(value: '_header', enabled: false, height: 28, child: Text(loc.calendarMenuSectionView, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+          PopupMenuItem<String>(value: 'view_all', child: Row(children: [Icon(Icons.calendar_view_day, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuPlanComplete)])),
+          PopupMenuItem<String>(value: 'view_personal', child: Row(children: [Icon(Icons.person, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuMyAgenda)])),
+          PopupMenuItem<String>(value: 'view_custom', child: Row(children: [Icon(Icons.filter_list, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuCustomView)])),
+          const PopupMenuDivider(),
+        ];
+        if (onEventDraftFilterChanged != null) {
+          entries.add(PopupMenuItem<String>(value: '_h2', enabled: false, height: 28, child: Text(loc.calendarMenuSectionEventFilter, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))));
+          entries.add(PopupMenuItem<String>(value: 'filter_all', child: Row(children: [Icon(Icons.event_note, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuAllEvents)])));
+          entries.add(PopupMenuItem<String>(value: 'filter_draft', child: Row(children: [Icon(Icons.edit_note, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDraftsOnly)])));
+          entries.add(PopupMenuItem<String>(value: 'filter_confirmed', child: Row(children: [Icon(Icons.check_circle_outline, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuConfirmedOnly)])));
+          entries.add(const PopupMenuDivider());
+        }
+        entries.add(PopupMenuItem<String>(value: '_h3', enabled: false, height: 28, child: Text(loc.calendarMenuSectionDaysVisible, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))));
+        entries.add(PopupMenuItem<String>(value: 'days_1', child: Row(children: [Icon(Icons.calendar_view_day, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDays1)])));
+        entries.add(PopupMenuItem<String>(value: 'days_3', child: Row(children: [Icon(Icons.calendar_view_week, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDays3)])));
+        entries.add(PopupMenuItem<String>(value: 'days_7', child: Row(children: [Icon(Icons.calendar_view_month, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDays7)])));
+        entries.add(const PopupMenuDivider());
+        entries.add(PopupMenuItem<String>(value: 'participants', child: Row(children: [Icon(Icons.people, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuManageParticipants)])));
+        entries.add(PopupMenuItem<String>(value: 'fullscreen', child: Row(children: [Icon(Icons.fullscreen, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuFullscreen)])));
+        entries.add(PopupMenuItem<String>(value: 'roles', child: Row(children: [Icon(Icons.admin_panel_settings, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuManageRoles)])));
+        return entries;
+      },
     );
   }
 }
