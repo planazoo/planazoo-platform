@@ -1139,6 +1139,14 @@
   "@accommodationNameHint": {
     "description": "Hint del nombre de alojamiento"
   },
+  "placeSearchHint": "Buscar lugar (hotel, dirección…)",
+  "@placeSearchHint": {
+    "description": "Hint del campo de búsqueda de lugar (Places)"
+  },
+  "placeAddressLabel": "Dirección",
+  "@placeAddressLabel": {
+    "description": "Label del campo dirección del lugar"
+  },
   "costCurrency": "Moneda del coste",
   "@costCurrency": {
     "description": "Label de moneda del coste"
@@ -1162,6 +1170,22 @@
   "eventDescriptionHint": "Nombre del evento",
   "@eventDescriptionHint": {
     "description": "Hint de descripción de evento"
+  },
+  "eventLocationLabel": "Lugar",
+  "@eventLocationLabel": {
+    "description": "Label del lugar del evento (opcional)"
+  },
+  "eventLocationHint": "Buscar lugar (dirección, sitio…)",
+  "@eventLocationHint": {
+    "description": "Hint de búsqueda de lugar para evento"
+  },
+  "eventAddressLabel": "Dirección",
+  "@eventAddressLabel": {
+    "description": "Label de dirección del evento"
+  },
+  "openInGoogleMaps": "Abrir en Google Maps",
+  "@openInGoogleMaps": {
+    "description": "Botón para abrir la ubicación en Google Maps"
   },
   "eventType": "Tipo de evento",
   "@eventType": {

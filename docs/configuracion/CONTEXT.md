@@ -84,6 +84,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
   - `GUIA_SEGURIDAD.md` - Seguridad, autenticación y protección de datos
   - `GUIA_ASPECTOS_LEGALES.md` - Términos, privacidad, cookies y cumplimiento legal
 - Al implementar una funcionalidad completa: revisar si debe actualizarse el flujo correspondiente en `docs/flujos/`.
+- **Desplegar reglas Firestore:** Desde la raíz del proyecto: `npx firebase deploy --only firestore:rules`. Ver `docs/configuracion/DESPLEGAR_REGLAS_FIRESTORE.md`.
 - **Testing Checklist:** Actualizar `docs/configuracion/TESTING_CHECKLIST.md` después de completar cada tarea:
   - Marcar como probadas las funcionalidades nuevas
   - Añadir nuevos casos de prueba si aplica

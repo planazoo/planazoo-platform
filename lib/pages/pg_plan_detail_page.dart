@@ -11,6 +11,7 @@ import 'package:unp_calendario/pages/pg_plan_participants_page.dart';
 import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
 import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
+import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 
@@ -59,15 +60,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
+  /// T237 (3): Barra superior verde y estado del plan visible en la barra.
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.grey.shade900,
+      backgroundColor: AppColorScheme.color2,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(
-          Icons.arrow_back,
-          color: Colors.white,
-        ),
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: Text(
@@ -83,6 +82,17 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       ),
       centerTitle: false,
       actions: [
+        // T237 (3): Estado del plan visible en la barra (en actions para no quedar oculto con títulos largos)
+        Padding(
+          padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+          child: Center(
+            child: PlanStateBadgeCompact(
+              plan: widget.plan,
+              fontSize: 10,
+              onColoredBackground: true,
+            ),
+          ),
+        ),
         if (widget.plan.id != null)
           PlanSummaryButton(
             plan: widget.plan,

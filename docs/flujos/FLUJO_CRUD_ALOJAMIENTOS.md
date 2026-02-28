@@ -2,9 +2,9 @@
 
 > Define todo el ciclo de vida de un alojamiento: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T51 - Validación de formularios (✅), T101 ✅, T102 ✅, T153 ✅, T105, T110, T120, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
-**Versión:** 1.3  
-**Fecha:** Enero 2025 (Actualizado - T101, T102, T153 implementados)
+**Relacionado con:** T51 - Validación de formularios (✅), T101 ✅, T102 ✅, T153 ✅, T225 - Google Places (✅), T105, T110, T120, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
+**Versión:** 1.4  
+**Fecha:** Febrero 2026 (T225 - búsqueda de lugar en alojamientos)
 
 ---
 
@@ -105,17 +105,18 @@ Mostrar sugerencias contextuales del Oráculo de Delfos (T146) si disponible:
 - Hoteles mejor valorados por usuarios similares
 - Sugerencias basadas en presupuesto y fechas del plan
   ↓
-Abrir formulario de alojamiento
+Abrir formulario de alojamiento (estética tipo login; T225)
   ↓
 Completar campos:
-- Nombre del hotel/alojamiento (requerido)
+- Búsqueda de lugar (Google Places - T225): primer campo del formulario; al elegir una sugerencia se rellenan automáticamente nombre y dirección. Campo "Dirección" visible y editable. Tarjeta de ubicación con dirección formateada y botón "Abrir en Google Maps". Coordenadas y dirección se guardan en commonPart.extraData (placeLat, placeLng, placeAddress, placeName).
+- Nombre del hotel/alojamiento (requerido; puede venir de Places o escribirse a mano)
 - Check-in: Fecha y hora (requerido)
 - Check-out: Fecha y hora (requerido)
 - Tipo (Hotel/Airbnb/Hostal/Apartamento/etc.)
 - Subtipo (Suite/Dormitorio/Estudio/etc.)
 - Participantes asignados (quién se aloja)
 - Descripción (opcional, máximo 1000 caracteres)
-- Dirección y contacto (opcional)
+- Dirección (visible; rellenada por Places o editable manualmente) y contacto (opcional)
 - Servicios/amenities (opcional)
 - Capacidad máxima (opcional)
 - Color (opcional, para visualización)
@@ -146,6 +147,7 @@ Guardar alojamiento en Firestore:
   - hotelName, checkIn, checkOut, description
   - address, contactInfo, amenities, maxCapacity
   - participantIds, isForAllParticipants
+  - extraData (T225): placeLat, placeLng, placeAddress, placeName cuando el lugar viene de Google Places
 - Si hay parte personal: Crear AccommodationPersonalPart para cada participante:
   - roomNumber, bedType, preferences, notes, fields
 - Asignar accommodationId único

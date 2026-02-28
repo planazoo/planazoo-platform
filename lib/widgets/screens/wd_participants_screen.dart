@@ -782,246 +782,6 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     if (result == true && mounted) setState(() {});
   }
 
-  Future<void> _acceptRejectTokenDialog() async {
-    final tokenController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    
-    // Usar StatefulBuilder para manejar el estado dentro del diálogo
-    bool isAccept = true;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => Theme(
-        data: AppTheme.darkTheme,
-        child: StatefulBuilder(
-          builder: (dialogContext, setDialogState) => AlertDialog(
-            backgroundColor: Colors.grey.shade800,
-            title: Text(
-              'Gestionar invitación por token',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            content: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade800, // Color sólido, sin gradiente
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.grey.shade700.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: TextFormField(
-                      controller: tokenController,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Link o token de invitación',
-                        labelStyle: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.grey.shade400,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        hintText: 'Pega el link completo o solo el token',
-                        hintStyle: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.grey.shade500,
-                        ),
-                        helperText: 'Ejemplo: https://planazoo.app/invitation/abc123... o solo abc123...',
-                        helperStyle: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(
-                            color: AppColorScheme.color2,
-                            width: 2.5,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Introduce el link o token';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<bool>(
-                          title: Text(
-                            'Aceptar',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                          value: true,
-                          groupValue: isAccept,
-                          activeColor: AppColorScheme.color2,
-                          onChanged: (v) => setDialogState(() => isAccept = v ?? true),
-                        ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<bool>(
-                          title: Text(
-                            'Rechazar',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ),
-                          value: false,
-                          groupValue: isAccept,
-                          activeColor: AppColorScheme.color2,
-                          onChanged: (v) => setDialogState(() => isAccept = v ?? false),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(
-                  'Cancelar',
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey.shade400,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColorScheme.color2,
-                      AppColorScheme.color2.withOpacity(0.85),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColorScheme.color2.withOpacity(0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (!formKey.currentState!.validate()) return;
-                    Navigator.of(context).pop(true);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    'Continuar',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (result == true) {
-      String input = tokenController.text.trim();
-      
-      // Extraer token del link si se pegó el link completo
-      String token = input;
-      if (input.contains('/invitation/')) {
-        // Extraer token del link: https://planazoo.app/invitation/{token}
-        final parts = input.split('/invitation/');
-        if (parts.length > 1) {
-          token = parts[1].split('?').first; // Remover query params si existen
-        }
-      }
-      
-      if (token.isEmpty) {
-        if (mounted) {
-          _showSnackBarError(context, 'Token inválido');
-        }
-        return;
-      }
-      
-      final user = ref.read(currentUserProvider);
-      if (!mounted) return;
-      bool ok = false;
-      if (isAccept) {
-        if (user == null) {
-          if (mounted) {
-            _showSnackBarError(context, 'Debes iniciar sesión para aceptar invitaciones');
-          }
-          return;
-        }
-        ok = await ref.read(invitationServiceProvider).acceptInvitationByToken(token, user.id);
-        if (ok) {
-          await ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
-          ref
-            ..invalidate(planParticipantsProvider(widget.plan.id!))
-            ..invalidate(planRealParticipantsProvider(widget.plan.id!));
-          if (mounted) {
-            _showSnackBarSuccess(context, 'Invitación aceptada. Has sido añadido al plan.');
-          }
-          setState(() {}); // Actualizar UI
-        } else if (mounted) {
-          _showSnackBarError(context, 'No se pudo procesar el token. Verifica que sea válido y no haya expirado.');
-        }
-      } else {
-        ok = await ref.read(invitationServiceProvider).rejectInvitationByToken(token);
-        if (ok && mounted) {
-          _showSnackBarWarning(context, 'Invitación rechazada');
-        } else if (!ok && mounted) {
-          _showSnackBarError(context, 'No se pudo procesar el token. Verifica que sea válido y no haya expirado.');
-        }
-      }
-    }
-  }
-
   Future<void> _removeParticipant(PlanParticipation participation) async {
     try {
       final confirmed = await showDialog<bool>(
@@ -1256,7 +1016,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Column(
         children: participations.map((participation) {
           return _buildParticipantCard(participation);
@@ -1274,7 +1034,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     final emailLabel = user?.email;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -1284,103 +1044,86 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             const Color(0xFF2C2C2C),
           ],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.grey.shade700.withOpacity(0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 2),
-            spreadRadius: -4,
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
           children: [
-            // Avatar
             CircleAvatar(
+              radius: 18,
               backgroundColor: _getRoleColor(participation.role),
               child: Text(
                 _initialsFor(user, participation.userId),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontSize: 12,
                 ),
               ),
             ),
-            const SizedBox(width: 16),
-            
-            // Información del participante
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     displayName,
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
-                      fontSize: 16,
+                      fontSize: 14,
                       color: Colors.white,
                     ),
                   ),
+                  const SizedBox(height: 2),
+                  if (usernameLabel != null || emailLabel != null)
+                    Text(
+                      usernameLabel ?? emailLabel ?? '',
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade400,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   const SizedBox(height: 4),
-                  if (usernameLabel != null) ...[
-                    Text(
-                      usernameLabel,
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                  ],
-                  if (emailLabel != null) ...[
-                    Text(
-                      emailLabel,
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                  ] else
-                    const SizedBox(height: 6),
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: _getRoleColor(participation.role),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           _getRoleLabel(participation.role),
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text(
                         'Se unió: ${_formatDate(participation.joinedAt)}',
                         style: GoogleFonts.poppins(
                           color: Colors.grey.shade400,
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1615,7 +1358,8 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     }
   }
 
-  Widget _buildInviteUsersSection({required bool showCloseButton}) {
+  /// T233: Sin botón X; lista va primero, invitar a continuación.
+  Widget _buildInviteUsersSection() {
     return Consumer(
       builder: (context, ref, _) {
         final participantsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
@@ -1707,50 +1451,6 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                AppColorScheme.color2,
-                                AppColorScheme.color2.withOpacity(0.85),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColorScheme.color2.withOpacity(0.4),
-                                blurRadius: 16,
-                                offset: const Offset(0, 6),
-                                spreadRadius: 0,
-                              ),
-                            ],
-                          ),
-                          child: TextButton.icon(
-                            onPressed: _acceptRejectTokenDialog,
-                            icon: const Icon(Icons.vpn_key_outlined, color: Colors.white),
-                            label: Text(
-                              'Aceptar/Rechazar por token',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
-                        ),
-                        if (showCloseButton && widget.onBack != null)
-                          IconButton(
-                            onPressed: widget.onBack,
-                            icon: const Icon(Icons.close),
-                            tooltip: 'Cerrar',
-                          ),
                       ],
                     ),
                   ),
@@ -2253,62 +1953,14 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     const SizedBox(height: 4),
                     Text(
                       hasPendingInvitations
-                          ? 'Puedes aceptarlas desde el enlace recibido o con un token.'
-                          : 'Si recibiste una invitación, puedes aceptarla usando el token o el enlace.',
+                          ? 'Puedes aceptarlas desde el enlace recibido en tu correo.'
+                          : 'Si recibiste una invitación, acepta desde el enlace en tu correo.',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: Colors.grey.shade400,
                       ),
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: hasPendingInvitations
-                        ? [
-                            Colors.orange.shade600,
-                            Colors.orange.shade600.withOpacity(0.85),
-                          ]
-                        : [
-                            AppColorScheme.color2,
-                            AppColorScheme.color2.withOpacity(0.85),
-                          ],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (hasPendingInvitations ? Colors.orange : AppColorScheme.color2)
-                          .withOpacity(0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: ElevatedButton.icon(
-                  onPressed: _acceptRejectTokenDialog,
-                  icon: const Icon(Icons.vpn_key_outlined, size: 18),
-                  label: Text(
-                    'Aceptar/Rechazar',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -2318,8 +1970,9 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     );
   }
 
-  /// Barra superior estándar W31: altura 48, color2, título + iconos (cuando se muestra en panel derecho).
+  /// Barra superior estándar W31: altura 48, color2. T233: solo nombre de la página, sin nombre del plan.
   Widget _buildParticipantsHeader() {
+    final loc = AppLocalizations.of(context)!;
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -2336,19 +1989,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       child: Row(
         children: [
           Text(
-            'Participantes • ${widget.plan.name}',
+            loc.participants,
             style: GoogleFonts.poppins(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: Colors.white,
               letterSpacing: 0.1,
             ),
-          ),
-          const Spacer(),
-          IconButton(
-            onPressed: _acceptRejectTokenDialog,
-            icon: const Icon(Icons.vpn_key_outlined, color: Colors.white, size: 22),
-            tooltip: 'Aceptar/Rechazar invitación (token)',
           ),
         ],
       ),
@@ -2367,11 +2014,11 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Column(
                 children: [
-                  _buildInviteUsersSection(showCloseButton: !isCompact),
+                  _buildParticipantsList(),
+                  _buildInviteUsersSection(),
                   _buildLeavePlanSection(),
                   _buildPendingInvitationsSection(),
                   _buildMyInvitationsSection(),
-                  _buildParticipantsList(),
                 ],
               ),
             ),
@@ -2416,7 +2063,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             foregroundColor: Colors.white,
             elevation: 0,
             title: Text(
-              'Participantes • ${widget.plan.name}',
+              AppLocalizations.of(context)!.participants,
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -2424,13 +2071,6 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 letterSpacing: 0.1,
               ),
             ),
-            actions: [
-              IconButton(
-                onPressed: _acceptRejectTokenDialog,
-                icon: const Icon(Icons.vpn_key_outlined),
-                tooltip: 'Aceptar/Rechazar invitación (token)',
-              )
-            ],
             leading: canPop
                 ? IconButton(
                     icon: const Icon(Icons.arrow_back),

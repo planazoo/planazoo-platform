@@ -2570,6 +2570,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // T231: Apartado Avisos — decisión mantener/simplificar/quitar: docs/ux/plan_info_aviso_t231.md
           // Header con título y botón
           Container(
             padding: const EdgeInsets.all(20),
@@ -2663,9 +2664,9 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
               ],
             ),
           ),
-          // Timeline de avisos
+          // Timeline de avisos (altura acotada para evitar "unbounded height" del ListView interno)
           ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 300),
+            constraints: const BoxConstraints(minHeight: 200, maxHeight: 420),
             child: AnnouncementTimeline(
               planId: currentPlan.id!,
             ),

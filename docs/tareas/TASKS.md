@@ -3,7 +3,7 @@
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
 
-**Siguiente código de tarea: T244**
+**Siguiente código de tarea: T245**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237 (widgets, info plan, calendario, cards, modales)
@@ -58,6 +58,7 @@
 | **T231** | Info plan: Revisar el apartado «Avisos»: comentar, evaluar si tiene sentido mantenerlo y tomar una decisión en ese momento (mantener / simplificar / quitar). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Baja |
 | **T236** | Notificaciones: (1) En el icono de notificaciones en W1, el círculo con el número no debe tapar el icono; recolocarlo. (2) Estética de los botones Aceptar y Rechazar según estilo principal de la app. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T237** | Página Info del plan: (1) Optimizar para ver más datos; estructura pensada sobre todo para móvil. (2) Sobre la zona de Avisos: comentar y tomar decisión en ese momento (ver T231). (3) El estado del plan debería verse en la barra superior verde. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T244** | **Mejorar visualización de los avisos en la Info del plan:** Revisar y mejorar la presentación del timeline de avisos (tipografía, espaciado, diferenciación por tipo urgente/importante/info, legibilidad en móvil, orden y agrupación). Mantener funcionalidad actual (publicar, ver, eliminar). Origen: decisión de mantener avisos (T231); notificaciones ya funcionando vía Cloud Function. | Media |
 
 *Nota: T214 se ha fusionado en T213 (tamaño + contraste).*
 
@@ -77,7 +78,7 @@
 | **T99** | Documentación de API del calendario. | Baja |
 | **T182** | Afinar UI de calendario en W28: celdas, tipografía, espaciado, tooltips. | Media |
 | **T215** | Mover un evento de un plan a otro: permitir cambiar el plan al que pertenece un evento (UI + lógica + permisos). Relacionado con buzón de eventos por email y asignación a plan. | Media |
-| **T225** | **Búsqueda de lugar con Google Places API:** Integrar autocompletado y Place Details (Google Places API) para **alojamientos** y **eventos**. En el diálogo de alojamiento: campo de búsqueda con sugerencias (tipo lodging); al elegir un resultado, rellenar nombre (y opcionalmente dirección, coordenadas). La misma opción se añadirá al diálogo de eventos (campo descripción/lugar con búsqueda). Requiere: API key en Google Cloud (Places API), paquete Flutter (p. ej. google_place), variable de entorno para la key, UI de búsqueda + Place Details y mapeo a modelo. Coste: ~10k Place Details/mes gratis; con sesión el Autocomplete no se cobra. | Media |
+| **T225** | **Búsqueda de lugar con Google Places API:** Integrar autocompletado y Place Details para **alojamientos** y **eventos**. Plan de fases en `docs/tareas/T225_GOOGLE_PLACES_PLAN.md`. Requiere: API key (Places API), paquete Flutter, variable de entorno, UI de búsqueda + mapeo a modelo. Coste: ~10k Place Details/mes gratis. **En progreso** (Fase 1: dependencia y API key). | Media |
 | **T238** | Modal crear evento: (1) ~~Barra verde superior con título.~~ ✅ Hecho. (2) Mejorar visualización de las opciones «General» y «Mi información». (3) Evaluar si el texto «Puedes editar esta información» es necesario. (4) Hacer muy rápido y fácil definir el evento — *decidir al abordar la tarea*: flujo corto con «Más opciones» vs todos los campos visibles reordenados, etc. (5) Orden de aparición de los campos mejorado. Relacionado con T208 (duración/hora concreta). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T242** | Página Calendario: (1) ~~Eliminar la opción «perspectiva de usuario».~~ ✅ Hecho. (2) Agrupar las opciones de la barra en un menú categorizado; revisar cuáles son necesarias. (3) Añadir menú de filtros de eventos: todos, borrador. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T243** | Copiar planes, eventos y alojamientos: (1) Revisar si ya existe tarea (T35, T211 para eventos). (2) Crear ambas opciones: (a) copiar eventos y alojamientos dentro del mismo plan (pegar en el plan actual); (b) duplicar plan entero (plan nuevo con eventos y alojamientos copiados). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |

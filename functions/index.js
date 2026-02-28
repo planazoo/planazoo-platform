@@ -2,8 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const sgMail = require('@sendgrid/mail');
 const nodemailer = require('nodemailer');
-const { google } = require('googleapis');
-
+// googleapis se carga solo en getGmailClientForMailbox (eventos desde correo) para no bloquear el deploy si no está instalado
 admin.initializeApp();
 
 // --- Constantes para eventos desde correo (T134) ---
@@ -367,6 +366,82 @@ exports.markInvitationAccepted = functions.https.onCall(async (data, context) =>
   return { success: true, invitationId: invDoc.id };
 });
 
+// Cloud Function: Crear notificaciones in-app cuando se publica un aviso en un plan
+// Las reglas de Firestore solo permiten que cada usuario cree en users/{userId}/notifications,
+// por tanto el cliente no puede crear notificaciones para otros; esta función usa Admin SDK.
+exports.onCreateAnnouncementNotifyParticipants = functions.firestore
+  .document('plans/{planId}/announcements/{announcementId}')
+  .onCreate(async (snap, context) => {
+    const { planId, announcementId } = context.params;
+    const announcement = snap.data();
+    const authorUserId = announcement.userId || '';
+    const message = announcement.message || '';
+    const type = announcement.type || 'info';
+    const createdAt = announcement.createdAt || admin.firestore.Timestamp.now();
+
+    if (!authorUserId || !message) {
+      console.warn(`Announcement ${announcementId} missing userId or message, skipping notifications`);
+      return null;
+    }
+
+    const db = admin.firestore();
+
+    try {
+      const planDoc = await db.collection('plans').doc(planId).get();
+      const planName = planDoc.exists && planDoc.data().name ? planDoc.data().name : 'Un plan';
+
+      const participationsSnap = await db.collection('plan_participations')
+        .where('planId', '==', planId)
+        .where('isActive', '==', true)
+        .get();
+
+      const participantIds = [];
+      participationsSnap.docs.forEach((doc) => {
+        const uid = doc.data().userId;
+        if (uid && uid !== authorUserId) participantIds.push(uid);
+      });
+
+      if (participantIds.length === 0) {
+        console.log(`No other participants to notify for announcement ${announcementId}`);
+        return null;
+      }
+
+      let title;
+      const body = message.length > 100 ? message.substring(0, 100) + '...' : message;
+      if (type === 'urgent') {
+        title = `🚨 Aviso urgente en "${planName}"`;
+      } else if (type === 'important') {
+        title = `⚠️ Aviso importante en "${planName}"`;
+      } else {
+        title = `📢 Nuevo aviso en "${planName}"`;
+      }
+
+      const batch = db.batch();
+      for (const userId of participantIds) {
+        const notifRef = db.collection('users').doc(userId).collection('notifications').doc();
+        batch.set(notifRef, {
+          userId,
+          type: 'announcement',
+          title,
+          body,
+          planId,
+          isRead: false,
+          createdAt,
+          data: {
+            announcementType: type,
+            announcementUserId: authorUserId,
+          },
+        });
+      }
+      await batch.commit();
+      console.log(`Created ${participantIds.length} notification(s) for announcement ${announcementId} in plan ${planId}`);
+      return null;
+    } catch (error) {
+      console.error(`Error creating notifications for announcement ${announcementId}:`, error);
+      return null;
+    }
+  });
+
 // Cloud Function: Enviar notificación push (Fase 1 - FCM Básico)
 // 
 // Uso: Llamar desde otra función o desde el cliente (con permisos admin)
@@ -375,6 +450,72 @@ exports.markInvitationAccepted = functions.https.onCall(async (data, context) =>
 //   - title: Título de la notificación
 //   - body: Cuerpo del mensaje
 //   - data: (opcional) Datos adicionales para la app
+// T225: Proxy Places API (New) para evitar CORS en Flutter web
+const PLACES_API_KEY = functions.config().places?.api_key || process.env.PLACES_API_KEY;
+const PLACES_BASE = 'https://places.googleapis.com/v1';
+
+exports.placesAutocomplete = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+  if (!PLACES_API_KEY) {
+    throw new functions.https.HttpsError('failed-precondition', 'Places API key no configurada (functions.config().places.api_key).');
+  }
+  const { input, sessionToken, languageCode, includedPrimaryTypes } = data || {};
+  if (!input || typeof input !== 'string' || input.trim().length < 2) {
+    return { suggestions: [] };
+  }
+  const body = {
+    input: input.trim(),
+    ...(sessionToken && { sessionToken }),
+    ...(languageCode && { languageCode }),
+    ...(includedPrimaryTypes && includedPrimaryTypes.length && { includedPrimaryTypes }),
+  };
+  const res = await fetch(`${PLACES_BASE}/places:autocomplete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': PLACES_API_KEY },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    console.warn('Places autocomplete error', res.status, JSON.stringify(json).slice(0, 300));
+    return { suggestions: [] };
+  }
+  return json;
+});
+
+exports.placesDetails = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+  if (!PLACES_API_KEY) {
+    throw new functions.https.HttpsError('failed-precondition', 'Places API key no configurada.');
+  }
+  const { placeId, sessionToken, languageCode } = data || {};
+  if (!placeId || typeof placeId !== 'string') {
+    throw new functions.https.HttpsError('invalid-argument', 'placeId es requerido.');
+  }
+  const params = new URLSearchParams();
+  if (sessionToken) params.set('sessionToken', sessionToken);
+  if (languageCode) params.set('languageCode', languageCode);
+  const url = `${PLACES_BASE}/places/${encodeURIComponent(placeId)}${params.toString() ? `?${params}` : ''}`;
+  const headers = {
+    'X-Goog-Api-Key': PLACES_API_KEY,
+    'X-Goog-FieldMask': 'id,name,displayName,formattedAddress,location',
+  };
+  const res = await fetch(url, { headers });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const errMsg = json.error?.message || json.message || JSON.stringify(json).slice(0, 200);
+    console.warn('Places details error', res.status, errMsg, json);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error al obtener detalles del lugar (${res.status}): ${errMsg}`,
+    );
+  }
+  return json;
+});
+
 exports.sendPushNotification = functions.https.onCall(async (data, context) => {
   // Verificar autenticación
   if (!context.auth) {
@@ -776,6 +917,7 @@ function getGmailClientForMailbox(mailbox) {
     if (privateKey && typeof privateKey === 'string') privateKey = privateKey.replace(/\\n/g, '\n');
   }
   if (!clientEmail || !privateKey) return null;
+  const { google } = require('googleapis');
   const auth = new google.auth.JWT({
     email: clientEmail,
     key: privateKey,

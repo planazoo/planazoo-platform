@@ -23,6 +23,7 @@
 
 - **Invitaciones:** Invitar **desde la lista de usuarios** (además de por email): se crea invitación pendiente, el invitado recibe notificación y puede aceptar/rechazar. **El organizador recibe notificación** cuando el invitado acepta o rechaza. En la página de Participantes, el organizador ve la sección **"Invitaciones"** con el estado de cada una (Pendiente, Aceptada, Rechazada, Cancelada, Expirada). Flujos: `FLUJO_INVITACIONES_NOTIFICACIONES.md` § 1.2, `FLUJO_GESTION_PARTICIPANTES.md` § 1.2.
 - **Salir del plan:** Un participante (no organizador) puede **salir del plan** desde Info del plan o desde la pestaña Participantes; confirmación y eliminación de su participación. `FLUJO_GESTION_PARTICIPANTES.md` § 2.5. Casos de prueba: `TESTING_CHECKLIST.md` § 6.4 (PART-D-002, PART-LEAVE-001) y § 7.1.6 (INV-024, INV-024b, INV-024c).
+- **T225 - Google Places en alojamientos y eventos:** En el **modal de alojamiento**: primer campo de búsqueda con Places; al seleccionar un resultado se rellenan nombre y dirección; campo Dirección visible; tarjeta de ubicación y botón "Abrir en Google Maps"; datos guardados en commonPart.extraData. En el **modal de evento**: campo "Lugar" con autocompletado Places; tarjeta de ubicación y enlace a Google Maps; location + extraData. Configuración: `docs/configuracion/CONFIGURAR_GOOGLE_PLACES_API.md`. Casos de prueba: `TESTING_CHECKLIST.md` § 5.5 (ACC-PLACES-001 a 004) y § 4.1 (EVENT-C-018, EVENT-C-019). Flujos: `FLUJO_CRUD_ALOJAMIENTOS.md`, `FLUJO_CRUD_EVENTOS.md`.
 
 ---
 

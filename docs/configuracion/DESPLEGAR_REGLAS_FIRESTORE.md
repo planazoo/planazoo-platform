@@ -2,7 +2,13 @@
 
 ## 📋 Comando
 
-Para desplegar las reglas de Firestore, ejecuta:
+Para desplegar las reglas de Firestore, ejecuta desde la **raíz del proyecto**:
+
+```bash
+npx firebase deploy --only firestore:rules
+```
+
+Alternativa (si usas el paquete global con otro nombre):
 
 ```bash
 npx firebase-tools deploy --only firestore:rules

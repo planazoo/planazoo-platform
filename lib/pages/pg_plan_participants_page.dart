@@ -6,6 +6,7 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/widgets/dialogs/invite_group_dialog.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class PlanParticipantsPage extends ConsumerStatefulWidget {
   final Plan plan;
@@ -55,9 +56,10 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
       error: (_, __) => 0,
     );
 
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Participantes - ${widget.plan.name}'),
+        title: Text(loc.participants),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [

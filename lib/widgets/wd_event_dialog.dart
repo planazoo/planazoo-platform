@@ -30,7 +30,10 @@ import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/places/data/places_api_service.dart';
+import 'package:unp_calendario/features/places/presentation/widgets/place_autocomplete_field.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
@@ -58,6 +61,8 @@ class EventDialog extends ConsumerStatefulWidget {
 class _EventDialogState extends ConsumerState<EventDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _descriptionController;
+  late TextEditingController _locationController; // T225: lugar del evento (Places)
+  PlaceDetails? _lastPlaceDetails; // T225: último lugar seleccionado (para lat/lng en extraData)
   late TextEditingController _typeFamilyController;
   late TextEditingController _typeSubtypeController;
   late DateTime _selectedDate;
@@ -133,6 +138,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     // Inicializar controladores
     _descriptionController = TextEditingController(
       text: widget.event?.commonPart?.description ?? '',
+    );
+    _locationController = TextEditingController(
+      text: widget.event?.commonPart?.location ?? '',
     );
     _typeFamilyController = TextEditingController(
       text: widget.event?.commonPart?.family ?? '',
@@ -311,6 +319,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   @override
   void dispose() {
     _descriptionController.dispose();
+    _locationController.dispose();
     _typeFamilyController.dispose();
     _typeSubtypeController.dispose();
     _asientoController.dispose();
@@ -322,6 +331,125 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _maxParticipantsController.dispose();
     _costController.dispose(); // T101
     super.dispose();
+  }
+
+  /// Decoración tipo login: fondo sólido, borde y sombra (estética unificada).
+  BoxDecoration _buildLoginStyleDecoration() {
+    return BoxDecoration(
+      color: Colors.grey.shade800,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(
+        color: Colors.grey.shade700.withOpacity(0.5),
+        width: 1,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.4),
+          blurRadius: 12,
+          offset: const Offset(0, 3),
+          spreadRadius: 0,
+        ),
+        BoxShadow(
+          color: Colors.black.withOpacity(0.2),
+          blurRadius: 6,
+          offset: const Offset(0, 1),
+          spreadRadius: -2,
+        ),
+      ],
+    );
+  }
+
+  /// Card de ubicación: dirección y enlace a Google Maps (cuando hay lugar).
+  Widget _buildLocationDetailsCard() {
+    final hasCoords = _lastPlaceDetails?.lat != null || (widget.event?.commonPart?.extraData?['placeLat'] != null);
+    final address = _lastPlaceDetails?.formattedAddress
+        ?? widget.event?.commonPart?.extraData?['placeAddress'] as String?
+        ?? _locationController.text.trim()
+        ?? widget.event?.commonPart?.location;
+    final hasAddress = address != null && address.toString().trim().isNotEmpty;
+    if (!hasAddress && !hasCoords) return const SizedBox.shrink();
+
+    final displayAddress = address?.toString().trim() ?? '';
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: _buildLoginStyleDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (displayAddress.isNotEmpty) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.location_on_outlined, size: 18, color: Colors.grey.shade400),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      displayAddress,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade300,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _openLocationInGoogleMaps,
+                icon: const Icon(Icons.map_outlined, size: 18),
+                label: Text(
+                  AppLocalizations.of(context)!.openInGoogleMaps,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColorScheme.color2,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColorScheme.color2.withOpacity(0.8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Abre la ubicación en Google Maps (por coordenadas o por búsqueda de dirección).
+  Future<void> _openLocationInGoogleMaps() async {
+    final lat = _lastPlaceDetails?.lat ?? (widget.event?.commonPart?.extraData?['placeLat'] as num?)?.toDouble();
+    final lng = _lastPlaceDetails?.lng ?? (widget.event?.commonPart?.extraData?['placeLng'] as num?)?.toDouble();
+    final locationText = _locationController.text.trim();
+    final address = _lastPlaceDetails?.formattedAddress
+        ?? widget.event?.commonPart?.extraData?['placeAddress'] as String?
+        ?? (locationText.isNotEmpty ? locationText : widget.event?.commonPart?.location);
+    final String url;
+    if (lat != null && lng != null) {
+      url = 'https://www.google.com/maps?q=$lat,$lng';
+    } else if (address != null && address.isNotEmpty) {
+      url = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}';
+    } else {
+      return;
+    }
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   /// T238: Barra verde superior del modal (UI estándar).
@@ -502,20 +630,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Indicador de permisos
+                          // Indicador de permisos (estética tipo login)
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.grey.shade800,
-                                  const Color(0xFF2C2C2C),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(14),
+                            decoration: _buildLoginStyleDecoration().copyWith(
                               border: Border.all(
                                 color: _canEditGeneral 
                                     ? AppColorScheme.color2.withOpacity(0.5)
@@ -547,23 +666,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             ),
                           ),
                           const SizedBox(height: 16),
-            // Descripción
+            // Descripción (estética tipo login)
             Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: Colors.grey.shade700.withOpacity(0.5),
-                  width: 1,
-                ),
-              ),
+              decoration: _buildLoginStyleDecoration(),
               child: TextFormField(
                 controller: _descriptionController,
                 readOnly: !(_canEditGeneral || _canEditGeneralInitial),
@@ -630,24 +735,71 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            
-            // Tipo de familia
+            // T225: Lugar del evento (opcional) con búsqueda Places
+            PlaceAutocompleteField(
+              initialAddress: widget.event?.commonPart?.location,
+              lodgingOnly: false,
+              onPlaceSelected: (PlaceDetails details) {
+                setState(() {
+                  _lastPlaceDetails = details;
+                  final addr = details.formattedAddress;
+                  _locationController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                      ? '${details.displayName}, $addr'
+                      : details.displayName;
+                });
+              },
+            ),
+            const SizedBox(height: 8),
             Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
+              decoration: _buildLoginStyleDecoration(),
+              child: TextFormField(
+                controller: _locationController,
+                maxLines: 1,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
                 ),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: Colors.grey.shade700.withOpacity(0.5),
-                  width: 1,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.eventLocationLabel,
+                  hintText: AppLocalizations.of(context)!.eventLocationHint,
+                  labelStyle: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey.shade400,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.grey.shade500,
+                  ),
+                  prefixIcon: Icon(Icons.place, color: Colors.grey.shade400),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: AppColorScheme.color2,
+                      width: 2.5,
+                    ),
+                  ),
+                  fillColor: Colors.transparent,
+                  filled: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
                 ),
               ),
+            ),
+            // Bloque ubicación: dirección + enlace a Google Maps (si hay lugar)
+            _buildLocationDetailsCard(),
+            const SizedBox(height: 16),
+            // Tipo de familia
+            Container(
+              decoration: _buildLoginStyleDecoration(),
               child: DropdownButtonFormField<String>(
                 value: _typeFamilyController.text.isEmpty || !_typeFamilies.contains(_typeFamilyController.text) 
                     ? null 
@@ -999,21 +1151,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             
             // Timezone
             Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: Colors.grey.shade700.withOpacity(0.5),
-                  width: 1,
-                ),
-              ),
+              decoration: _buildLoginStyleDecoration(),
               child: DropdownButtonFormField<String>(
                 value: _selectedTimezone,
                 dropdownColor: Colors.grey.shade800,
@@ -1139,23 +1277,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             const SizedBox(height: 12),
             
-            // Límite de participantes (T117)
+            // Límite de participantes (T117) (estética tipo login)
             Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: Colors.grey.shade700.withOpacity(0.5),
-                  width: 1,
-                ),
-              ),
+              decoration: _buildLoginStyleDecoration(),
               child: TextFormField(
                 controller: _maxParticipantsController,
                 readOnly: !_canEditGeneral,
@@ -1378,23 +1502,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           ),
                           const SizedBox(height: 16),
                           
-                          // Campo: Asiento
+                          // Campo: Asiento (estética tipo login)
                           Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.grey.shade800,
-                                  const Color(0xFF2C2C2C),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: Colors.grey.shade700.withOpacity(0.5),
-                                width: 1,
-                              ),
-                            ),
+                            decoration: _buildLoginStyleDecoration(),
                             child: TextFormField(
                               controller: _asientoController,
                               style: GoogleFonts.poppins(
@@ -1565,15 +1675,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           // Info sobre privacidad
                           Container(
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.grey.shade800,
-                                  const Color(0xFF2C2C2C),
-                                ],
-                              ),
+                            decoration: _buildLoginStyleDecoration().copyWith(
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(
                                 color: AppColorScheme.color2.withOpacity(0.5),
@@ -1735,15 +1837,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.grey.shade800,
-                  const Color(0xFF2C2C2C),
-                ],
-              ),
+            decoration: _buildLoginStyleDecoration().copyWith(
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: Colors.orange.shade400.withOpacity(0.5),
@@ -1781,20 +1875,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+      decoration: _buildLoginStyleDecoration().copyWith(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
-          width: 1,
-        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1913,21 +1995,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     String? Function(String?)? validator,
   }) {
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
-          width: 1,
-        ),
-      ),
+      decoration: _buildLoginStyleDecoration(),
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
@@ -2532,23 +2600,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Selector de moneda local
+        // Selector de moneda local (estética tipo login)
         Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.grey.shade800,
-                const Color(0xFF2C2C2C),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: Colors.grey.shade700.withOpacity(0.5),
-              width: 1,
-            ),
-          ),
+          decoration: _buildLoginStyleDecoration(),
           child: DropdownButtonFormField<String>(
                   value: _costCurrency ?? _planCurrency ?? 'EUR',
                   dropdownColor: Colors.grey.shade800,
@@ -2614,23 +2668,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ),
         const SizedBox(height: 12),
         
-        // Campo de coste
+        // Campo de coste (estética tipo login)
         Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.grey.shade800,
-                const Color(0xFF2C2C2C),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: Colors.grey.shade700.withOpacity(0.5),
-              width: 1,
-            ),
-          ),
+          decoration: _buildLoginStyleDecoration(),
           child: TextFormField(
             controller: _costController,
             enabled: _canEditGeneral,
@@ -2749,15 +2789,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 final convertedAmount = snapshot.data!;
                 return Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.grey.shade800,
-                        const Color(0xFF2C2C2C),
-                      ],
-                    ),
+                  decoration: _buildLoginStyleDecoration().copyWith(
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: AppColorScheme.color2.withOpacity(0.5),
@@ -2974,7 +3006,18 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser?.id ?? '';
 
-    // Construir EventCommonPart (T47)
+    // Construir EventCommonPart (T47). T225: location y opcional extraData con coordenadas
+    final locationText = _locationController.text.trim();
+    final locationSanitized = locationText.isEmpty
+        ? null
+        : Sanitizer.sanitizePlainText(locationText, maxLength: 500);
+    final baseExtra = Map<String, dynamic>.from(widget.event?.commonPart?.extraData ?? {});
+    if (_lastPlaceDetails != null) {
+      if (_lastPlaceDetails!.lat != null) baseExtra['placeLat'] = _lastPlaceDetails!.lat;
+      if (_lastPlaceDetails!.lng != null) baseExtra['placeLng'] = _lastPlaceDetails!.lng;
+      if (_lastPlaceDetails!.formattedAddress != null) baseExtra['placeAddress'] = _lastPlaceDetails!.formattedAddress;
+      baseExtra['placeName'] = _lastPlaceDetails!.displayName;
+    }
     final commonPart = EventCommonPart(
       description: Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000),
       date: _selectedDate,
@@ -2984,7 +3027,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       customColor: _selectedColor,
       family: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       subtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
+      location: locationSanitized,
       isDraft: _isDraft,
+      extraData: baseExtra.isEmpty ? null : baseExtra,
       // Si está marcado "para todos", participantIds debe estar vacío
       // Si no, debe contener los IDs seleccionados
       participantIds: _isForAllParticipants ? [] : _selectedParticipantIds,

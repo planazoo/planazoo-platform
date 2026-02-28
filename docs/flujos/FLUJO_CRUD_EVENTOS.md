@@ -2,10 +2,10 @@
 
 > Define todo el ciclo de vida de un evento: crear, leer, actualizar y eliminar
 
-**Relacionado con:** T51 - Validación de formularios (✅), T105 (✅ Base), T117 - Registro de participantes por evento (✅ Base), T120 - Confirmación de eventos (✅ Base Fases 1 y 2), T121, T110, T101 ✅, T102 ✅, T153 ✅, T100 ✅, T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
+**Relacionado con:** T51 - Validación de formularios (✅), T105 (✅ Base), T117 - Registro de participantes por evento (✅ Base), T120 - Confirmación de eventos (✅ Base Fases 1 y 2), T121, T110, T101 ✅, T102 ✅, T153 ✅, T100 ✅, T225 - Google Places (✅), T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
 **Nota:** Los eventos comparten estructura **Parte Común/Parte Personal** similar a los alojamientos (ver FLUJO_CRUD_ALOJAMIENTOS)  
-**Versión:** 1.4  
-**Fecha:** Enero 2025 (Actualizado - T100, T101, T102, T153 implementados)
+**Versión:** 1.5  
+**Fecha:** Febrero 2026 (T225 - lugar del evento con Google Places)
 
 ---
 
@@ -112,7 +112,7 @@ Completar campos:
 - Tipo (Desplazamiento/Restauración/Actividad) [Nota: Alojamientos son entidad separada, ver FLUJO_CRUD_ALOJAMIENTOS]
 - Subtipo (Avión/Tren/Restaurante/Museo/etc.)
 - Participantes asignados
-- Ubicación (opcional)
+- Ubicación / Lugar (opcional, T225): búsqueda con Google Places; al elegir una sugerencia se rellena el campo Lugar; aparece tarjeta de ubicación con dirección y botón "Abrir en Google Maps". Se guarda en location y en extraData (placeLat, placeLng, placeAddress, placeName). Formulario con estética tipo login.
 - Presupuesto si aplica (T101/T153):
   - Moneda local del coste (EUR/USD/GBP/JPY) (T153)
   - Coste por persona o total (T101)

@@ -2336,6 +2336,18 @@ abstract class AppLocalizations {
   /// **'Hotel, apartamento, etc.'**
   String get accommodationNameHint;
 
+  /// Hint del campo de búsqueda de lugar (Places)
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar lugar (hotel, dirección…)'**
+  String get placeSearchHint;
+
+  /// Label del campo dirección del lugar
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección'**
+  String get placeAddressLabel;
+
   /// Label de moneda del coste
   ///
   /// In es, this message translates to:
@@ -2371,6 +2383,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Nombre del evento'**
   String get eventDescriptionHint;
+
+  /// Label del lugar del evento (opcional)
+  ///
+  /// In es, this message translates to:
+  /// **'Lugar'**
+  String get eventLocationLabel;
+
+  /// Hint de búsqueda de lugar para evento
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar lugar (dirección, sitio…)'**
+  String get eventLocationHint;
+
+  /// Label de dirección del evento
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección'**
+  String get eventAddressLabel;
+
+  /// Botón para abrir la ubicación en Google Maps
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir en Google Maps'**
+  String get openInGoogleMaps;
 
   /// Label de tipo de evento
   ///

@@ -319,8 +319,10 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 | 4.6 | UA | Con UA, abrir el plan → Calendario; abrir Evento 3 | Participación de UB visible | Lista de participantes del evento incluye a UB; o estado "Confirmado" para UB | | |
 | 4.7 | UA | Abrir Evento 1 (y Evento 2 si aplica); comprobar que UB no está apuntado | UB no figura en esos eventos | Lista de participantes sin UB (o sin confirmación de UB) | | |
 | 4.8 | UB | Volver a abrir Evento 3 y comprobar que puede "Cancelar mi participación" o similar (si existe) | Opción de desapuntarse | Botón o enlace para cancelar; al usarlo, UB deja de estar apuntado (opcional probar y deshacer para seguir con el flujo) | | |
+| 4.9 | UA | En el plan → Info del plan → Avisos → "Publicar" → escribir mensaje, tipo (ej. importante) → Publicar | Aviso publicado | Aviso aparece en el timeline de Avisos; SnackBar "Aviso publicado" | | |
+| 4.10 | UB | Con UB, abrir icono de notificaciones (campana) | UB recibe notificación del aviso | Notificación tipo "Nuevo aviso / Aviso importante en [nombre del plan]"; al abrirla, navegación al plan; en Info del plan, el aviso de UA visible en el timeline | | |
 
-**Postcondición:** UB apuntado al menos a un evento (Evento 3); UA ve la participación correcta. Notificaciones han sido recibidas por UB (anotar si llegaron por push, solo en app, o email).
+**Postcondición:** UB apuntado al menos a un evento (Evento 3); UA ve la participación correcta. Notificaciones han sido recibidas por UB (anotar si llegaron por push, solo en app, o email). Opcional: aviso publicado por UA y notificación recibida por UB (ver AVISO-001 a AVISO-005 en TESTING_CHECKLIST § 7.5).
 
 ---
 

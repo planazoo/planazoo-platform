@@ -1284,6 +1284,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get accommodationNameHint => 'Hotel, apartamento, etc.';
 
   @override
+  String get placeSearchHint => 'Buscar lugar (hotel, dirección…)';
+
+  @override
+  String get placeAddressLabel => 'Dirección';
+
+  @override
   String get costCurrency => 'Moneda del coste';
 
   @override
@@ -1300,6 +1306,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eventDescriptionHint => 'Nombre del evento';
+
+  @override
+  String get eventLocationLabel => 'Lugar';
+
+  @override
+  String get eventLocationHint => 'Buscar lugar (dirección, sitio…)';
+
+  @override
+  String get eventAddressLabel => 'Dirección';
+
+  @override
+  String get openInGoogleMaps => 'Abrir en Google Maps';
 
   @override
   String get eventType => 'Tipo de evento';

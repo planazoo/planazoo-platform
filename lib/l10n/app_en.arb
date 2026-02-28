@@ -1139,6 +1139,14 @@
   "@accommodationNameHint": {
     "description": "Accommodation name hint"
   },
+  "placeSearchHint": "Search place (hotel, address…)",
+  "@placeSearchHint": {
+    "description": "Place search field hint (Places API)"
+  },
+  "placeAddressLabel": "Address",
+  "@placeAddressLabel": {
+    "description": "Place address field label"
+  },
   "costCurrency": "Cost currency",
   "@costCurrency": {
     "description": "Cost currency label"
@@ -1162,6 +1170,22 @@
   "eventDescriptionHint": "Event name",
   "@eventDescriptionHint": {
     "description": "Event description hint"
+  },
+  "eventLocationLabel": "Location",
+  "@eventLocationLabel": {
+    "description": "Event location label (optional)"
+  },
+  "eventLocationHint": "Search place (address, venue…)",
+  "@eventLocationHint": {
+    "description": "Event location search hint"
+  },
+  "eventAddressLabel": "Address",
+  "@eventAddressLabel": {
+    "description": "Event address label"
+  },
+  "openInGoogleMaps": "Open in Google Maps",
+  "@openInGoogleMaps": {
+    "description": "Button to open location in Google Maps"
   },
   "eventType": "Event type",
   "@eventType": {

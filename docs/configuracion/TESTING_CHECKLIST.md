@@ -92,9 +92,11 @@ Cada caso de prueba debe incluir:
    - 3.6 [Resumen del plan (T193)](#36-resumen-del-plan-t193)
 4. [CRUD de Eventos](#4-crud-de-eventos)
 5. [CRUD de Alojamientos](#5-crud-de-alojamientos)
+   - 5.5 [Búsqueda de lugar en alojamientos (T225)](#55-búsqueda-de-lugar-en-alojamientos-google-places---t225)
 6. [Gestión de Participantes](#6-gestión-de-participantes)
 7. [Invitaciones y Notificaciones](#7-invitaciones-y-notificaciones)
    - 7.4 [Sistema de notificaciones (lista global y W20)](#74-sistema-de-notificaciones-lista-global-y-w20)
+   - 7.5 [Avisos del plan (Info del plan)](#75-avisos-del-plan-info-del-plan)
 8. [Estados del Plan](#8-estados-del-plan)
 9. [Presupuesto y Pagos](#9-presupuesto-y-pagos)
    - 9.1 [Gestión de Presupuesto (T101)](#91-gestión-de-presupuesto-t101)
@@ -901,6 +903,16 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Diálogo de expansión, actualización automática
   - Estado: ✅
 
+- [ ] **EVENT-C-018:** Crear evento con lugar (Google Places - T225)
+  - Pasos: En el diálogo de evento, usar el campo "Lugar": escribir en el autocompletado, elegir una sugerencia; comprobar que se rellena el campo y aparece la tarjeta de ubicación con dirección y botón "Abrir en Google Maps"; guardar evento.
+  - Esperado: Lugar guardado en `location` y coordenadas/dirección en `extraData` (placeLat, placeLng, placeAddress, placeName); al reabrir el evento se muestran lugar y tarjeta; enlace abre Google Maps correctamente.
+  - Estado: 🔄
+
+- [ ] **EVENT-C-019:** Editar evento cambiando el lugar (T225)
+  - Pasos: Editar un evento que ya tiene lugar; cambiar eligiendo otro resultado de Places o borrar el lugar.
+  - Esperado: Nuevo lugar actualizado o eliminado; tarjeta y enlace coherentes con el lugar actual.
+  - Estado: 🔄
+
 ### 4.2 Leer/Ver Eventos
 
 - [ ] **EVENT-R-001:** Ver eventos del plan en calendario
@@ -1110,6 +1122,28 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Pasos: Intentar eliminar alojamiento en plan finalizado/cancelado
   - Esperado: Botón "Eliminar" deshabilitado, mensaje informativo
   - Estado: ✅
+
+### 5.5 Búsqueda de lugar en alojamientos (Google Places - T225)
+
+- [ ] **ACC-PLACES-001:** Búsqueda y selección de lugar al crear alojamiento
+  - Pasos: Crear alojamiento → en el primer campo (búsqueda), escribir nombre o dirección (ej. hotel o ciudad); elegir una sugerencia de la lista.
+  - Esperado: Se rellenan automáticamente nombre y dirección; no aparece un segundo listado de sugerencias; campo Dirección visible y editable.
+  - Estado: 🔄
+
+- [ ] **ACC-PLACES-002:** Tarjeta de ubicación y enlace a Google Maps (alojamiento)
+  - Pasos: Tras seleccionar un lugar en el formulario de alojamiento, comprobar la tarjeta de ubicación y el botón "Abrir en Google Maps".
+  - Esperado: Tarjeta muestra la dirección formateada; el botón abre Google Maps con la ubicación correcta.
+  - Estado: 🔄
+
+- [ ] **ACC-PLACES-003:** Guardado de coordenadas y dirección (alojamiento)
+  - Pasos: Crear/editar alojamiento con un lugar seleccionado por Places; guardar.
+  - Esperado: En Firestore, commonPart incluye en extraData placeLat, placeLng, placeAddress, placeName; al reabrir el diálogo se muestran nombre, dirección y tarjeta.
+  - Estado: 🔄
+
+- [ ] **ACC-PLACES-004:** Alojamiento sin lugar (solo texto manual)
+  - Pasos: Crear alojamiento rellenando nombre y dirección a mano, sin usar el autocompletado de Places.
+  - Esperado: Se guarda correctamente; no se exige selección de Places.
+  - Estado: 🔄
 
 ---
 
@@ -1710,6 +1744,35 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 - [ ] **NOTIF-007:** Acciones desde lista global (aceptar/rechazar invitación, asignar evento)
   - Pasos: Desde la lista global, aceptar una invitación, rechazar otra, asignar un evento desde correo a un plan.
   - Esperado: Las acciones se ejecutan correctamente; la lista se actualiza; los contadores (badge, invitaciones pendientes) se actualizan.
+  - Estado: 🔄
+
+### 7.5 Avisos del plan (Info del plan)
+
+**Referencia:** `docs/ux/plan_info_aviso_t231.md`, `docs/flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md` § 2.1. Avisos en `plans/{planId}/announcements`; notificaciones in-app creadas por Cloud Function `onCreateAnnouncementNotifyParticipants`.
+
+- [ ] **AVISO-001:** Publicar aviso desde Info del plan
+  - Pasos: Abrir un plan → pestaña Info → sección Avisos → "Publicar" → escribir mensaje, elegir tipo (info / urgente / importante) → confirmar.
+  - Esperado: Aviso guardado en Firestore; aparece en el timeline de la sección Avisos; SnackBar de confirmación.
+  - Estado: 🔄
+
+- [ ] **AVISO-002:** Ver timeline de avisos (todos los participantes)
+  - Pasos: Como cualquier participante del plan, abrir Info del plan → sección Avisos.
+  - Esperado: Se muestran todos los avisos del plan en orden cronológico (más reciente primero o último según diseño); autor, tipo, mensaje y fecha visibles.
+  - Estado: 🔄
+
+- [ ] **AVISO-003:** Otro participante recibe notificación al publicar un aviso
+  - Pasos: Usuario A publica un aviso en el plan. Usuario B (otro participante, misma sesión o otra) abre la app y revisa el icono de notificaciones (campana).
+  - Esperado: Usuario B tiene una notificación nueva del tipo "Nuevo aviso en [nombre del plan]" (o "Aviso urgente/importante" según tipo); al abrirla puede navegar al plan y ver el aviso en Info.
+  - Estado: 🔄
+
+- [ ] **AVISO-004:** Eliminar aviso (autor u organizador)
+  - Pasos: Como autor del aviso o como organizador del plan, en el timeline de Avisos usar la opción de eliminar en un aviso.
+  - Esperado: Confirmación si aplica; aviso eliminado de Firestore y del timeline; participantes no pueden eliminar avisos de otros (solo autor u organizador).
+  - Estado: 🔄
+
+- [ ] **AVISO-005:** Tipos de aviso (info, urgente, importante)
+  - Pasos: Publicar tres avisos con tipo distinto (info, urgente, importante).
+  - Esperado: En el timeline se distingue visualmente el tipo (icono, color o etiqueta); en la notificación in-app el título refleja el tipo (ej. "Aviso urgente en [plan]").
   - Estado: 🔄
 
 ---

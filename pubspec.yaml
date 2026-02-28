@@ -76,6 +76,12 @@ dependencies:
   # Connectivity detection for offline/online status
   connectivity_plus: ^6.0.5
 
+  # Google Places API (New) - autocomplete and place details (T225)
+  http: ^1.2.0
+
+  # Open URLs (e.g. Google Maps) from the app
+  url_launcher: ^6.2.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
