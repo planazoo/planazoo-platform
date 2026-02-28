@@ -138,6 +138,27 @@ Estas pruebas son **solo para web**. Si ejecutas la app en **local** (localhost)
 - [ ] Este documento abierto; sección **19. Huecos** lista para rellenar.
 - [ ] Opcional: hoja de cálculo o tabla aparte para pegar resultados por paso (copiar filas de las tablas).
 
+### 5.4 Procedimiento asistido con IA (modo guiado paso a paso)
+
+En este modo, una IA (por ejemplo, un asistente integrado en el IDE) actúa como **director de orquesta** de la prueba manual:
+
+1. La IA **indica el siguiente paso concreto** de este documento (ej. "Ejecuta 1.6, abrir el plan desde el dashboard de UA…").  
+2. La persona que prueba **ejecuta la acción en la app** con los 3 usuarios (UA, UB, UC).  
+3. La persona **devuelve el resultado** a la IA (ej. ✅, ❌, mensaje de error, captura de lo que ha pasado).  
+4. La IA **traslada ese resultado** a este documento: marca la columna **Resultado** de la fila correspondiente y añade un resumen en **Notas** (incluyendo referencias a bugs/tareas si aplica).  
+5. Cuando la fase ya no da más fallos bloqueantes, la IA propone avanzar al siguiente paso/fase.
+
+**Reglas de uso:**
+
+- El **origen de verdad** sigue siendo este documento; la IA solo lo rellena siguiendo lo que le cuente la persona.  
+- Los **hallazgos más cualitativos** (opiniones, UX, ideas) se apuntan en `REGISTRO_OBSERVACIONES_PRUEBAS.md` en la sección **MIS NOTAS**; aquí se recoge el resultado formal (✅/❌/⚠️).  
+- Si en mitad de una fase aparece un bug serio, la IA puede:
+  - Marcar el paso como ❌ o ⚠️.  
+  - Proponer una **tarea** (referencia a `docs/tareas/TASKS.md`) y enlazarla en la columna Notas.  
+  - Decidir, junto con la persona, si se sigue avanzando o se bloquea la fase.
+
+Este modo es útil cuando se quiere **repetir el plan E2E varias veces** o cuando el equipo quiere que alguien vaya probando y otra persona (o la IA) vaya dejando el registro formal en las tablas.
+
 ### 5.4 Checklist rápido pre-ejecución
 
 - [ ] **Setup:** 3 ventanas o 3 navegadores en **1 ordenador** (solo web), uno por usuario (UA, UB, UC); ventanas identificadas (ej. "UA", "UB", "UC").
@@ -214,11 +235,11 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 | 1.3 | UA | Dejar fechas vacías o rellenar inicio/fin (según diseño "se puede rellenar más adelante") | Guardado o aviso claro | No bloqueo; mensaje opcional de fechas posteriores | | |
 | 1.4 | UA | Guardar/crear plan | Plan creado | Mensaje de éxito; vuelta al dashboard o al detalle del plan | | |
 | 1.5 | UA | Comprobar que el plan aparece en la lista (W28) | Plan visible en lista | Card del plan con nombre correcto; filtro "Todos" o "Estoy in" lo muestra | | |
-| 1.6 | UA | Abrir el plan (clic en card o doble clic) | Entra al detalle del plan | Pantalla con pestañas o secciones (Info plan, Calendario, Participantes, Chat, etc.) | | |
-| 1.7 | UA | Ir a "Info plan" (o equivalente) y comprobar estado | Estado "Borrador" o "Es borrador" | Badge o texto que indique borrador | | |
-| 1.8 | UA | No crear eventos aún; ir a pestaña/sección "Participantes" | Lista de participantes visible | Solo UA como organizador (o lista vacía según implementación); opción "Invitar" visible | | |
-| 1.9 | UA | Pulsar "Invitar" o "Añadir por email" | Se abre diálogo o campo para introducir email | Campo email y botón Enviar/Invitar | | |
-| 1.10 | UA | Introducir email de **UB (no registrado):** Unplanazoo+marbat@gmail.com y enviar invitación | Invitación enviada | Mensaje de éxito; UB recibirá email; en Fase 2 se registrará con ese email y aceptará | | |
+| 1.6 | UA | Abrir el plan (clic en card o doble clic) | Entra al detalle del plan | Pantalla con pestañas o secciones (Info plan, Calendario, Participantes, Chat, etc.) | ✅ | Se abre correctamente el detalle del plan con sus pestañas. |
+| 1.7 | UA | Ir a "Info plan" (o equivalente) y comprobar estado | Estado "Borrador" o "Es borrador" | Badge o texto que indique borrador | ✅ | Texto claro indicando que el plan está en borrador. |
+| 1.8 | UA | No crear eventos aún; ir a pestaña/sección "Participantes" | Lista de participantes visible | Solo UA como organizador (o lista vacía según implementación); opción "Invitar" visible | ✅ | Se ve solo UA como organizador y la acción para invitar. |
+| 1.9 | UA | Pulsar "Invitar" o "Añadir por email" | Se abre diálogo o campo para introducir email | Campo email y botón Enviar/Invitar | ✅ | Diálogo/bloque de invitación visible con campo email y botón. |
+| 1.10 | UA | Introducir email de **UB (no registrado):** Unplanazoo+marbat@gmail.com y enviar invitación | Invitación enviada | Mensaje de éxito; UB recibirá email; en Fase 2 se registrará con ese email y aceptará | ⚠️ | UB ya estaba invitada por correo de ejecuciones anteriores; se mantiene la invitación existente. |
 | 1.11 | UA | Introducir email de **UC (registrado):** Unplanazoo+emmcla@gmail.com y enviar invitación | Invitación enviada | Mensaje de éxito; UC (ya con cuenta) podrá aceptar desde la app o el enlace del email | | |
 | 1.12 | UA | Comprobar lista de invitaciones pendientes (si existe en UI) | UB y UC aparecen como pendientes | Tabla o lista con 2 invitaciones en estado "pendiente" o "enviada" | | |
 | 1.13 | UA | Comprobar que no hay eventos en el plan (pestaña Calendario) | Calendario sin eventos o vacío | Vista calendario sin bloques de evento; o mensaje "Sin eventos" | | |

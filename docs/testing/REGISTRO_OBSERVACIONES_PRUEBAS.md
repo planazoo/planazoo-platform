@@ -34,51 +34,39 @@
 ---
 
 ## MIS NOTAS
+INSTRUCCIONES PARA EL PROMPT
+Esta sección no es una tarea, es para dar contexto a la IA. Nno codigiques. dentro del documento @docs/testing/REGISTRO_OBSERVACIONES_PRUEBAS.md  hay una seccion con mis notas. De es lista crea las tareas necesarias. Hazme todas las preguntas que necesites en cada tarea para dejarla bien documentada. una vez creada la tarea, marca el texto dentro de MIS NOTAS añadiendo un "*" al principio de la frase y cambiandola de color. Así sabremos lo que has pasado a Tareas. 
 
 *(Tus notas, opiniones e ideas — no el resultado formal de las pruebas.)*
 
-PAGINA DE REGISTRO
-•	el campo nombre, debería ser nombre y apellidos. Decidir si es necesario añadir un control de campos rellenados
+<span style="color:#888">* UI Standard — Definir la UI para los modales. Quiero que tengan una  barra superior en color verde con el titulo del modal y, si lo necesitan, botones o textos. → **T226**</span>
 
-•	El recuadro que muestra si la contraseña cumple con los requisitos no me gusta. Ocupa toda la pantalla. Hay que mejorarla.
+<span style="color:#888">* PAGINA DE REGISTRO — el campo nombre, debería ser nombre y apellidos. Decidir si es necesario añadir un control de campos rellenados. El recuadro que muestra si la contraseña cumple con los requisitos no me gusta. Ocupa toda la pantalla. Hay que mejorarla. → **T227**</span>
 
-MAIL VERIFICACION NUEVO REGISTRO DE USUARIO
-- Está en inglés, debería estar en el idioma del usuario, es decir, necesitamos dos versiones como mínimo.
-- En el "subject" pone esto "Verify your email for project-794752310537". Deberíamos buscar un texto más adecuado
-- El mail ha de ir firmado como "Equipo planazoo" o algo así
+<span style="color:#888">* MAIL VERIFICACION NUEVO REGISTRO DE USUARIO — Está en inglés, debería estar en el idioma del usuario (dos versiones como mínimo). Subject "Verify your email for project-..." más adecuado. El mail ha de ir firmado como "Equipo planazoo". → **T228**</span>
 
-MODAL CREAR PLAN
-- El estilo ha de seguir el de la app
-- No hace falta que aparezca el ID del plan
-- Justo al crear el plan, se abre la pagina de Info del plan pero la pertaña marcada es la del calendario. Ha de ser la de inicio del plan
+<span style="color:#888">* MODAL CREAR PLAN — El estilo ha de seguir el de la app. No hace falta que aparezca el ID del plan. Justo al crear el plan, abrir Info del plan con la pestaña de inicio (no calendario). → **T229**</span>
 
-MODAL ELIMINAR CUENTA
-- añadir el icono para poder ver la contraseña. 
+<span style="color:#888">* PAGINA INFORMACION DEL PLAN — Revisar si el apartado "avisos" tiene sentido mantenerlo. → **T231**</span>
 
-PAGINA INFORMACION DEL PLAN
-- REvisar si el apartado "avisos" tiene sentido mantenerlo
+<span style="color:#888">* PERFIL USUARIO — Zonas horarias: añadir todas las del mundo con capitales. Visualizar la selección en el menú "Zona horaria". La zona horaria en la info del usuario en W6. El idioma seleccionado en el menú de idioma. → **T232**</span>
 
-PERFIL USUARIO
-- En el perfil de usuarios las zonas horarias son pocas. Añadir todas las del mundo con capitales de ejemplo.
-- Una vez seleccionada se ha de visualizar la selección en el menu "Zona horaria"
-- La zona horaria debería verse en la info del usuario en W6
-- El idioma seleccionado se ha de mostrar en el menú de idioma.
+<span style="color:#888">* PAGINA PARTICIPANTES — Lista de participantes lo primero, más pequeña. Invitar a continuación. Revisar aceptar invitaciones. Eliminar botón "Aceptar/Rechazar por token" y código/doc. Eliminar icono X. Barra superior solo nombre de la página sin nombre del plan. → **T233**</span>
 
-PAGINA PARTICIPANTES
-- La lista de participantes ha de ser lo primero. Hacerla más pequeña para que se vean los máximos posible
-- La parte de invitar va colocada a continuación de la lista de participantes
-- Revisar la parte de aceptar invitaciones. Es necesaria?
-- Eliminar el botón "Aceptar / Rechaar por token" y todo el código relacionado porque esta opción ya no está activa. Revisar y actualizar el codigo y la documentación.
-- Hay un icono "X" para cerra la ventana, ya no es necesario. Se puede eliminar
-- En la barra superior solo ha de apraecer el nombre de la página sin el nombre del plan
+<span style="color:#888">* INVITACIONES — UB en lista con "pendiente de aceptar invitación". UA recibe notificación cuando UB acepta/rechaza. Icono "?" en enviar por mail para explicar tipos de usuario. → **T234**</span>
 
-INVITACIONES
-- Cuando está enviada, UB ha de aparecer el usuario en los particpatnes con el estado de "pendiente de aceptar inviatación". CReo que esto ya está implementado en la invitacion por correo. 
-- Si UA invita a UB, cuando UB acepte o rechaze la invitación, UA ha de recibir una notificación informando de la aceptacion/rechazo de la invitacion por parte de UB
+<span style="color:#888">* CARD DEL PLAN — Cuando está seleccionado el estado no se lee bien. Los colores no son los correctos. → **T235**</span>
 
-CARD DEL PLAN
-- Cuando está seleccionado el estado no se lee bien. Los colores no son los correctos. 
+<span style="color:#888">* NOTIFICACIONES — Círculo con número en W1 no debe tapar el icono. Estética botones aceptar/rechazar según estilo de la app. → **T236**</span>
 
-NOTIFICACIONES
-- En el icono de notifications en W1, el circulo con el número de notificaciones tapa el icono. Colocarlo de otra forma para que no lo tape. 
-- LA estética de los botones de aceptar y rechazar no sigue el estilo principal de la aplicación
+<span style="color:#888">* PAGINA INFO DEL PLAN — Optimizar para ver más datos, estructura para móvil. Evaluar si Avisos es necesaria. Estado del plan en la barra superior verde. → **T237**</span>
+
+<span style="color:#888">* MODAL CREAR EVENTO — Barra verde superior con título. ✅ (1) hecha. Mejorar visualización "General" y "Mi información". Evaluar texto "Puedes editar esta información". Muy rápido y fácil definir evento. Menú duración: opción hora concreta (T208). Orden de campos. → **T238**</span>
+
+<span style="color:#888">* ALOJAMIENTO — Revisar el modal alojamiento para que cumpla con la UI Standard. → **T240**</span>
+
+<span style="color:#888">* RESUMEN DEL PLAN — Añadir hora de inicio, duración, hora de final de los eventos. → **T241**</span>
+
+<span style="color:#888">* PAGINA CALENDARIO — Quitar "perspectiva de usuario". ✅ Hecho. Agrupar opciones de la barra en menú categorizado. Menú filtros eventos: todos, borrador. → **T242**</span>
+
+<span style="color:#888">* COPIAR EVENTOS Y PLANES — Revisar si ya existe tarea. Crear opción de copiar planes, eventos y alojamientos (eventos/alojamientos mismo plan). → **T243**</span>

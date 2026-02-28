@@ -104,6 +104,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   String? _currentUserId;
   List<String> _filteredParticipantIds = [];
   
+  /// T242: Filtro de eventos. 'all' = todos, 'draft' = solo borradores, 'confirmed' = solo confirmados.
+  String _eventDraftFilter = 'all';
+
   // Variables para perspectiva de usuario
   String? _selectedPerspectiveUserId;
   String? _currentPerspectiveTimezone;
@@ -363,6 +366,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       onUserSelected: _onUserPerspectiveChanged,
       onShowSummary: widget.onShowSummary,
       summaryButtonLabel: summaryLabel,
+      eventDraftFilter: _eventDraftFilter,
+      onEventDraftFilterChanged: (value) {
+        setState(() => _eventDraftFilter = value);
+      },
     );
   }
 
@@ -762,14 +769,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ));
       
       
-      // NUEVO: Combinar eventos de hoy + eventos de ayer que continúan hoy
+      // NUEVO: Combinar eventos de hoy + eventos de ayer que continúan hoy. T242: aplicar filtro todos/borrador.
+      final filteredForDate = _filterEventsByDraft(eventsForDate);
       final allRelevantEvents = <Event>[
-        ...eventsForDate,
-        ...previousDayEvents.where((e) => _eventCrossesMidnight(e)),
+        ...filteredForDate,
+        ..._filterEventsByDraft(previousDayEvents.where((e) => _eventCrossesMidnight(e)).toList()),
       ];
       
       // AÑADIDO: Incluir eventos multi-día con timezones diferentes
-      final multiDayEvents = _getMultiDayEventsForDay(currentDay, dayOffset);
+      final multiDayEvents = _filterEventsByDraft(_getMultiDayEventsForDay(currentDay, dayOffset));
       for (final event in multiDayEvents) {
         if (!allRelevantEvents.any((e) => e.id == event.id)) {
           allRelevantEvents.add(event);
@@ -832,14 +840,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
       ));
       
-      // NUEVO: Combinar eventos de hoy + eventos de ayer que continúan hoy
+      // NUEVO: Combinar eventos de hoy + eventos de ayer que continúan hoy. T242: aplicar filtro todos/borrador.
+      final filteredForDate = _filterEventsByDraft(eventsForDate);
       final allRelevantEvents = <Event>[
-        ...eventsForDate,
-        ...previousDayEvents.where((e) => _eventCrossesMidnight(e)),
+        ...filteredForDate,
+        ..._filterEventsByDraft(previousDayEvents.where((e) => _eventCrossesMidnight(e)).toList()),
       ];
       
       // AÑADIDO: Incluir eventos multi-día con timezones diferentes
-      final multiDayEvents = _getMultiDayEventsForDay(currentDay, dayOffset);
+      final multiDayEvents = _filterEventsByDraft(_getMultiDayEventsForDay(currentDay, dayOffset));
       for (final event in multiDayEvents) {
         if (!allRelevantEvents.any((e) => e.id == event.id)) {
           allRelevantEvents.add(event);
@@ -901,10 +910,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
       ));
       
-      // NUEVO: Combinar eventos de hoy + eventos de ayer que continúan hoy
+      // NUEVO: Combinar eventos de hoy + eventos de ayer que continúan hoy. T242: filtro todos/borrador.
+      final filteredForDate = _filterEventsByDraft(eventsForDate);
       final allRelevantEvents = <Event>[
-        ...eventsForDate,
-        ...previousDayEvents.where((e) => _eventCrossesMidnight(e)),
+        ...filteredForDate,
+        ..._filterEventsByDraft(previousDayEvents.where((e) => _eventCrossesMidnight(e)).toList()),
       ];
       
       // Expandir eventos a segmentos para este día específico
@@ -2319,6 +2329,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  // T239: Texto "modo borrador" cuando el evento es borrador
+                  if (segment.isDraft && height > 14)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Text(
+                        AppLocalizations.of(context)!.isDraft,
+                        style: TextStyle(
+                          color: ColorUtils.getEventTextColor(segment.typeFamily, true, customColor: segment.color),
+                          fontSize: fontSize - 3,
+                          fontWeight: FontWeight.w500,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   // Hora
                   if (height > 15)
                     Flexible(
@@ -3360,7 +3386,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           final accommodationService = ref.read(accommodationServiceProvider);
           final success = await accommodationService.saveAccommodation(newAccommodation);
           Navigator.of(context).pop();
-          
+
           if (mounted) {
             if (success) {
               // Invalidar providers de alojamientos para forzar recarga
@@ -3368,7 +3394,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               // También refrescar manualmente el notifier para asegurar actualización inmediata
               final notifier = ref.read(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id ?? '')).notifier);
               await notifier.refresh();
-              
+
               // Invalidar provider de estadísticas para que se recalcule el presupuesto
               if (widget.plan.id != null) {
                 ref.invalidate(planStatsProvider(widget.plan.id!));
@@ -3560,6 +3586,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       _currentUserId,
       _filteredParticipantIds,
     );
+  }
+
+  /// T242: Filtra eventos según filtro todos / borrador / confirmados.
+  List<Event> _filterEventsByDraft(List<Event> events) {
+    switch (_eventDraftFilter) {
+      case 'draft':
+        return events.where((e) => e.isDraft).toList();
+      case 'confirmed':
+        return events.where((e) => !e.isDraft).toList();
+      default:
+        return events;
+    }
   }
 
   /// Obtiene el nombre del modo de vista actual

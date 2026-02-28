@@ -90,8 +90,19 @@ class PlanSummaryService {
         buffer.writeln('  $_sinEventosSinAlojamiento');
       } else {
         for (final e in dayEvents) {
-          final time = '${e.hour.toString().padLeft(2, '0')}:${e.startMinute.toString().padLeft(2, '0')}';
-          buffer.writeln('  - $time ${e.description}');
+          // T241: nombre primero; luego hora inicio, hora fin y duración
+          final startH = e.hour.toString().padLeft(2, '0');
+          final startM = e.startMinute.toString().padLeft(2, '0');
+          final startTime = '$startH:$startM';
+          final totalMins = e.durationMinutes;
+          final endMins = (e.hour * 60 + e.startMinute + totalMins) % (24 * 60);
+          final endH = (endMins ~/ 60).toString().padLeft(2, '0');
+          final endM = (endMins % 60).toString().padLeft(2, '0');
+          final endTime = '$endH:$endM';
+          final durationStr = totalMins >= 60
+              ? '${totalMins ~/ 60}h ${totalMins % 60}min'
+              : '${totalMins}min';
+          buffer.writeln('  - ${e.description}  $startTime - $endTime ($durationStr)');
         }
         for (final a in dayAccommodations) {
           buffer.writeln('  - Alojamiento: ${a.hotelName}');

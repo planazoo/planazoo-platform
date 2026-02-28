@@ -310,30 +310,27 @@ service cloud.firestore {
     // ============================================
     
     match /events/{eventId} {
-      // Crear: Solo usuarios autenticados pueden crear eventos
-      // Los administradores pueden crear eventos
-      // La verificación de participación se hace en el código cliente
-      allow create: if (isAuthenticated() && isValidEventData(request.resource.data.planId)) || isAdmin(request.auth.uid);
+      // Crear: eventos (isValidEventData) O alojamientos (typeFamily='alojamiento' + isValidAccommodationData)
+      // Los administradores pueden crear cualquier documento
+      allow create: if isAuthenticated() && (
+        (request.resource.data.get('typeFamily', '') == 'alojamiento' && isValidAccommodationData(request.resource.data.planId))
+        || (request.resource.data.get('typeFamily', '') != 'alojamiento' && isValidEventData(request.resource.data.planId))
+      ) || isAdmin(request.auth.uid);
       
-      // Leer: Usuarios autenticados pueden leer eventos
-      // Los administradores pueden leer todos los eventos
-      // La validación de participación se hace en el código cliente
+      // Leer: Usuarios autenticados pueden leer eventos y alojamientos
       allow read: if isAuthenticated();
       
-      // Actualizar: 
-      // - Owner del plan: puede editar cualquier evento
-      // - Creador del evento: puede editar su evento
-      // - Administradores: pueden editar cualquier evento
-      allow update: if (isAuthenticated() && (
-        isPlanOwner(resource.data.planId) || // Owner del plan puede editar todo
-        resource.data.userId == request.auth.uid // Creador puede editar
-      ) && isValidEventData(resource.data.planId)) || isAdmin(request.auth.uid);
+      // Actualizar: Owner del plan o creador del evento (solo eventos); para alojamientos solo owner del plan
+      allow update: if isAuthenticated() && (
+        (resource.data.get('typeFamily', '') == 'alojamiento' && isPlanOwner(resource.data.planId))
+        || (resource.data.get('typeFamily', '') != 'alojamiento' && (isPlanOwner(resource.data.planId) || resource.data.userId == request.auth.uid))
+      ) || isAdmin(request.auth.uid);
       
-      // Eliminar: Solo owner del plan o creador del evento puede eliminar
-      // Los administradores pueden eliminar cualquier evento
-      allow delete: if (isAuthenticated() && 
-                       (isPlanOwner(resource.data.planId) || resource.data.userId == request.auth.uid)) ||
-                      isAdmin(request.auth.uid);
+      // Eliminar: Owner del plan o creador del evento (eventos); para alojamientos solo owner del plan
+      allow delete: if isAuthenticated() && (
+        (resource.data.get('typeFamily', '') == 'alojamiento' && isPlanOwner(resource.data.planId))
+        || (resource.data.get('typeFamily', '') != 'alojamiento' && (isPlanOwner(resource.data.planId) || resource.data.userId == request.auth.uid))
+      ) || isAdmin(request.auth.uid);
     }
     
     // ============================================

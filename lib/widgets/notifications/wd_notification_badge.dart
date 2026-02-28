@@ -37,25 +37,27 @@ class NotificationBadge extends ConsumerWidget {
                 _showNotificationList(context, ref);
               },
             ),
+            // T236: Badge en esquina superior derecha sin tapar el icono de la campana
             if (count > 0)
               Positioned(
-                right: 8,
-                top: 8,
+                right: 0,
+                top: 0,
                 child: Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(
                     color: badgeColor ?? Colors.red,
                     shape: BoxShape.circle,
+                    border: Border.all(color: iconColor ?? Colors.white, width: 1.2),
                   ),
                   constraints: const BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
+                    minWidth: 14,
+                    minHeight: 14,
                   ),
                   child: Text(
                     count > 99 ? '99+' : count.toString(),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,

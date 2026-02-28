@@ -4,7 +4,6 @@ import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mod
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.dart';
-import 'package:unp_calendario/widgets/screens/calendar/user_perspective_selector.dart';
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
@@ -36,6 +35,7 @@ class CalendarAppBar {
   });
 
   /// Construye el AppBar completo
+  /// [eventDraftFilter] y [onEventDraftFilterChanged]: T242 filtro eventos todos/borrador.
   PreferredSizeWidget buildAppBar({
     required VoidCallback onPreviousDayGroup,
     required VoidCallback onNextDayGroup,
@@ -49,6 +49,8 @@ class CalendarAppBar {
     required Function(String) onUserSelected,
     VoidCallback? onShowSummary,
     String? summaryButtonLabel,
+    String eventDraftFilter = 'all',
+    void Function(String)? onEventDraftFilterChanged,
   }) {
     final startDay = currentDayGroup * visibleDays + 1;
     final endDay = startDay + visibleDays - 1;
@@ -69,6 +71,8 @@ class CalendarAppBar {
         onUserSelected: onUserSelected,
         onShowSummary: onShowSummary,
         summaryButtonLabel: summaryButtonLabel,
+        eventDraftFilter: eventDraftFilter,
+        onEventDraftFilterChanged: onEventDraftFilterChanged,
       ),
       backgroundColor: AppColorScheme.color2,
       foregroundColor: Colors.white,
@@ -114,6 +118,8 @@ class CalendarAppBar {
     required Function(String) onUserSelected,
     VoidCallback? onShowSummary,
     String? summaryButtonLabel,
+    String eventDraftFilter = 'all',
+    void Function(String)? onEventDraftFilterChanged,
   }) {
     return [
       // Botón Ver resumen (cuando se proporciona callback, p. ej. en dashboard)
@@ -133,15 +139,25 @@ class CalendarAppBar {
             ),
           ),
         ),
-      // Selector de perspectiva de usuario
-      if (participations.isNotEmpty)
-        UserPerspectiveSelector(
-          participations: participations,
-          selectedUserId: selectedUserId,
-          onUserSelected: onUserSelected,
-          currentTimezone: currentTimezone,
+      // T242: Filtro eventos todos / borrador / confirmados
+      if (onEventDraftFilterChanged != null)
+        PopupMenuButton<String>(
+          icon: Icon(
+            eventDraftFilter == 'draft'
+                ? Icons.edit_note
+                : eventDraftFilter == 'confirmed'
+                    ? Icons.check_circle_outline
+                    : Icons.filter_list_alt,
+            color: Colors.white,
+          ),
+          tooltip: 'Filtro de eventos',
+          onSelected: onEventDraftFilterChanged,
+          itemBuilder: (context) => [
+            const PopupMenuItem(value: 'all', child: Row(children: [Icon(Icons.event_note, size: 20), SizedBox(width: 8), Text('Todos los eventos')])),
+            const PopupMenuItem(value: 'draft', child: Row(children: [Icon(Icons.edit_note, size: 20), SizedBox(width: 8), Text('Solo borradores')])),
+            const PopupMenuItem(value: 'confirmed', child: Row(children: [Icon(Icons.check_circle_outline, size: 20), SizedBox(width: 8), Text('Solo confirmados')])),
+          ],
         ),
-      
       // Control de días visibles
       _buildVisibleDaysMenu(onVisibleDaysChanged),
       

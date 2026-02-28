@@ -324,34 +324,114 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     super.dispose();
   }
 
+  /// T238: Barra verde superior del modal (UI estándar).
+  Widget _buildEventDialogGreenBar(BuildContext context, String title, {required bool isMobile, required bool showBadges}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF79A2A8),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: isMobile ? 14 : 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+          if (showBadges && _isCreator) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white54, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.person, size: isMobile ? 12 : 14, color: Colors.white),
+                  if (!isMobile) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      AppLocalizations.of(context)!.creator,
+                      style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          if (showBadges && _isCreator && _isAdmin) const SizedBox(width: 6),
+          if (showBadges && _isAdmin)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red.shade700.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white54, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.admin_panel_settings, size: isMobile ? 12 : 14, color: Colors.white),
+                  if (!isMobile) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      'Admin',
+                      style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
     
     // Mostrar indicador de carga mientras se inicializan los permisos
     if (_isInitializing) {
+      final title = widget.event == null ? AppLocalizations.of(context)!.createEvent : AppLocalizations.of(context)!.editEvent;
       return Theme(
         data: AppTheme.darkTheme,
         child: AlertDialog(
           backgroundColor: Colors.grey.shade800,
-          title: Text(
-            widget.event == null ? AppLocalizations.of(context)!.createEvent : AppLocalizations.of(context)!.editEvent,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
+          title: null,
+          contentPadding: EdgeInsets.zero,
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const CircularProgressIndicator(color: AppColorScheme.color2),
-              const SizedBox(height: 16),
-              Text(
-                AppLocalizations.of(context)!.initializingPermissions,
-                style: GoogleFonts.poppins(
-                  color: Colors.grey.shade400,
-                  fontSize: 14,
+              _buildEventDialogGreenBar(context, title, isMobile: false, showBadges: false),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(color: AppColorScheme.color2),
+                    const SizedBox(height: 16),
+                    Text(
+                      AppLocalizations.of(context)!.initializingPermissions,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade400,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -360,6 +440,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       );
     }
 
+    final dialogTitle = widget.event == null ? AppLocalizations.of(context)!.createEvent : AppLocalizations.of(context)!.editEvent;
     return Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
@@ -370,95 +451,21 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         insetPadding: isMobile 
             ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
             : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-        title: Row(
+        title: null,
+        contentPadding: EdgeInsets.zero,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Flexible(
-              child: Text(
-                widget.event == null ? AppLocalizations.of(context)!.createEvent : AppLocalizations.of(context)!.editEvent,
-                style: GoogleFonts.poppins(
-                  fontSize: isMobile ? 14 : 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-            if (_isCreator || _isAdmin) const SizedBox(width: 8),
-            // Badge de Creador
-            if (_isCreator) 
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 6 : 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                color: AppColorScheme.color2, // Color sólido, sin gradiente
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColorScheme.color2, width: 1),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.person, size: isMobile ? 12 : 14, color: Colors.white),
-                    if (!isMobile) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        AppLocalizations.of(context)!.creator,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            if (_isCreator && _isAdmin) const SizedBox(width: 6),
-            // Badge de Admin
-            if (_isAdmin) 
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 6 : 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.red.shade600,
-                      Colors.red.shade600.withOpacity(0.85),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.shade600, width: 1),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.admin_panel_settings, size: isMobile ? 12 : 14, color: Colors.white),
-                    if (!isMobile) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        'Admin',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-        ],
-      ),
-      content: Form(
-        key: _formKey,
-        child: SizedBox(
-          width: isMobile ? MediaQuery.of(context).size.width * 0.95 : 520,
+            _buildEventDialogGreenBar(context, dialogTitle, isMobile: isMobile, showBadges: true),
+            SizedBox(
+              height: isMobile ? MediaQuery.of(context).size.height * 0.65 : 540,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Form(
+                  key: _formKey,
+                  child: SizedBox(
+                    width: isMobile ? MediaQuery.of(context).size.width * 0.95 : 520,
           child: DefaultTabController(
           length: _isAdmin ? 3 : 2,
           child: Column(
@@ -1602,9 +1609,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ],
           ),
+          ),
         ),
         ),
         ),
+        ),
+            ],
+          ),
       actions: [
         // Botón eliminar (solo si es edición) (T109: Deshabilitado según estado del plan)
         if (widget.event != null)

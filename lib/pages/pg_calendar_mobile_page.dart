@@ -29,6 +29,7 @@ import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
+import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 
 /// Página de calendario mobile completa
@@ -648,6 +649,32 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         planStartDate: widget.plan.startDate,
         planEndDate: widget.plan.startDate.add(Duration(days: widget.plan.durationInDays)),
         initialCheckIn: dayDate,
+        onSaved: (newAccommodation) async {
+          final notifier = ref.read(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id!)).notifier);
+          final success = await notifier.saveAccommodation(newAccommodation);
+          if (!context.mounted) return;
+          Navigator.of(context).pop();
+          if (mounted) {
+            if (success) {
+              if (widget.plan.id != null) {
+                ref.invalidate(planStatsProvider(widget.plan.id!));
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Alojamiento creado correctamente'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
       ),
     );
   }
@@ -661,6 +688,49 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         planId: widget.plan.id!,
         planStartDate: widget.plan.startDate,
         planEndDate: widget.plan.startDate.add(Duration(days: widget.plan.durationInDays)),
+        onSaved: (updatedAccommodation) async {
+          final notifier = ref.read(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id!)).notifier);
+          final success = await notifier.saveAccommodation(updatedAccommodation);
+          if (!context.mounted) return;
+          Navigator.of(context).pop();
+          if (mounted) {
+            if (success) {
+              if (widget.plan.id != null) {
+                ref.invalidate(planStatsProvider(widget.plan.id!));
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Alojamiento actualizado correctamente'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+        onDeleted: (accommodationId) async {
+          final notifier = ref.read(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id!)).notifier);
+          final success = await notifier.deleteAccommodation(accommodationId);
+          if (!context.mounted) return;
+          Navigator.of(context).pop();
+          if (mounted) {
+            if (success && widget.plan.id != null) {
+              ref.invalidate(planStatsProvider(widget.plan.id!));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Alojamiento eliminado'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          }
+        },
       ),
     );
   }

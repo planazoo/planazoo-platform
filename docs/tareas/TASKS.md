@@ -3,18 +3,18 @@
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
 
-**Siguiente código de tarea: T225**
+**Siguiente código de tarea: T244**
 
 **📊 Resumen (solo pendientes):**
-- **Mejoras UI/UX:** T194-T214 (widgets, info plan, calendario, cards)
+- **Mejoras UI/UX:** T194-T214, T226, T231, T237 (widgets, info plan, calendario, cards, modales)
 - **Administración:** T183-T191, T223 (vista admin, export CSV, seed, espacio admin RUD toda la BD, T188 en progreso)
-- **Auth / Perfil:** T159-T162, T173, T174 (permisos Firestore, verificación, perfil, soporte email)
+- **Auth / Perfil:** T159-T162, T173, T174, T226-T228, T232 (permisos Firestore, verificación, perfil, registro, modales)
 - **Seguridad avanzada:** T166-T172 (2FA, token refresh, legal, etc.)
-- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212
+- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T238, T242, T243
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224 (reenviar invitación), etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234 (reenviar invitación, invitaciones, correos), etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
 **Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
@@ -48,26 +48,16 @@
 
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
-| ~~**T194**~~ | ~~Layout W30/W31: ocultar W30 en UI, W31 hasta el final de pantalla, eliminar recuadro de color de W31.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-| ~~**T195**~~ | ~~Widgets W14-W25: recuadro seleccionado con bordes superiores redondeados; icono mismo color que texto cuando seleccionado.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-| ~~**T196**~~ | ~~Pantallas W14-W25: encabezado verde con título a la izquierda y espacio para más elementos (texto, botones).~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-| ~~**T197**~~ | ~~Barra lateral verde a la derecha en W4, W13, W26, W27, W28, W29.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-| ~~**T198**~~ | ~~Decidir estado de W29: desactivar o definir contenido. Documentar.~~ ✅ Completada (W29 = centro de mensajes; ver COMPLETED_TASKS.md) | — |
-| ~~**T199**~~ | ~~Vista calendario: mejorar encabezado de cada día (legibilidad, contraste). Relacionado con T182.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-| ~~**T200**~~ | ~~Info plan: fecha de inicio y fin en un mismo modal.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-| ~~**T201**~~ | ~~Modal nuevo plan: fechas optativas con texto "se puede rellenar más adelante".~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-| ~~**T202**~~ | ~~Barra de guardar cambios fija junto al título "Info plan".~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-| ~~**T203**~~ | ~~Corregir subida de imagen en Info plan.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 | **T204** | Info plan: imagen a media pantalla; nombre y descripción en layout acordado. | Media |
 | **T205** | Modal cambio de estado del plan: estilo básico, restricciones en borrador, mensaje explicando implicación. | Media |
-| ~~**T206**~~ | ~~Info plan: sección Información detallada en dos columnas.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-| ~~**T207**~~ | ~~Aclarar en UI qué hace la sección Avisos (tooltip o texto de ayuda). Relacionado con T105.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 | **T208** | Modal evento: fecha fin por duración o manual; campo a la derecha de Duración. | Media |
-| ~~**T209**~~ | ~~Botón aceptar en verde en modal evento y en selector de horas.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 | **T210** | Calendario: revisar drag and drop y desplazamiento móvil. | Media |
 | **T211** | Calendario: copiar/pegar con Ctrl+mouse; corregir colocación a la altura correcta. Complementa T35. | Media |
 | **T212** | Calendario en pantalla completa por defecto. | Media |
-| ~~**T213**~~ | ~~Cards de planes: reducir tamaño y mejorar contraste en card seleccionada (texto e indicadores de estado).~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
+| **T226** | **UI estándar modales:** Definir y aplicar que los modales tengan barra superior en color verde con el título del modal y, si aplica, botones o textos. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T231** | Info plan: Revisar el apartado «Avisos»: comentar, evaluar si tiene sentido mantenerlo y tomar una decisión en ese momento (mantener / simplificar / quitar). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Baja |
+| **T236** | Notificaciones: (1) En el icono de notificaciones en W1, el círculo con el número no debe tapar el icono; recolocarlo. (2) Estética de los botones Aceptar y Rechazar según estilo principal de la app. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T237** | Página Info del plan: (1) Optimizar para ver más datos; estructura pensada sobre todo para móvil. (2) Sobre la zona de Avisos: comentar y tomar decisión en ese momento (ver T231). (3) El estado del plan debería verse en la barra superior verde. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 
 *Nota: T214 se ha fusionado en T213 (tamaño + contraste).*
 
@@ -87,8 +77,10 @@
 | **T99** | Documentación de API del calendario. | Baja |
 | **T182** | Afinar UI de calendario en W28: celdas, tipografía, espaciado, tooltips. | Media |
 | **T215** | Mover un evento de un plan a otro: permitir cambiar el plan al que pertenece un evento (UI + lógica + permisos). Relacionado con buzón de eventos por email y asignación a plan. | Media |
-| ~~**T216**~~ | ~~Eventos por correo: eliminar la opción de aceptar alias como From; solo aceptar el email principal del usuario registrado.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-
+| **T225** | **Búsqueda de lugar con Google Places API:** Integrar autocompletado y Place Details (Google Places API) para **alojamientos** y **eventos**. En el diálogo de alojamiento: campo de búsqueda con sugerencias (tipo lodging); al elegir un resultado, rellenar nombre (y opcionalmente dirección, coordenadas). La misma opción se añadirá al diálogo de eventos (campo descripción/lugar con búsqueda). Requiere: API key en Google Cloud (Places API), paquete Flutter (p. ej. google_place), variable de entorno para la key, UI de búsqueda + Place Details y mapeo a modelo. Coste: ~10k Place Details/mes gratis; con sesión el Autocomplete no se cobra. | Media |
+| **T238** | Modal crear evento: (1) ~~Barra verde superior con título.~~ ✅ Hecho. (2) Mejorar visualización de las opciones «General» y «Mi información». (3) Evaluar si el texto «Puedes editar esta información» es necesario. (4) Hacer muy rápido y fácil definir el evento — *decidir al abordar la tarea*: flujo corto con «Más opciones» vs todos los campos visibles reordenados, etc. (5) Orden de aparición de los campos mejorado. Relacionado con T208 (duración/hora concreta). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T242** | Página Calendario: (1) ~~Eliminar la opción «perspectiva de usuario».~~ ✅ Hecho. (2) Agrupar las opciones de la barra en un menú categorizado; revisar cuáles son necesarias. (3) Añadir menú de filtros de eventos: todos, borrador. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T243** | Copiar planes, eventos y alojamientos: (1) Revisar si ya existe tarea (T35, T211 para eventos). (2) Crear ambas opciones: (a) copiar eventos y alojamientos dentro del mismo plan (pegar en el plan actual); (b) duplicar plan entero (plan nuevo con eventos y alojamientos copiados). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 ---
 
 ### 3. Administración y datos
@@ -112,10 +104,12 @@
 |--------|-------------|-----------|
 | **T159** | Corregir permisos Firestore para event_participants tras logout/login. | Alta |
 | **T160** | Mostrar "Reenviar verificación" solo cuando sea necesario. | Media |
-| ~~**T161**~~ | ~~Añadir nota sobre bandeja de spam en mensaje de registro.~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
 | **T162** | Traducir mensajes de error en auth_service (códigos en lugar de texto; UI traduce). | Media |
 | **T173** | Refinar UX de perfil: modal editar, cabecera nombre+email, foto de perfil, quitar botones obsoletos. | Media |
 | **T174** | Definir canal de soporte para cambios de email (landing/FAQ/formulario); actualizar modal perfil. | Baja |
+| **T227** | Página de registro: (1) El campo nombre debería ser «nombre y apellidos». (2) Añadir control de campos rellenados: validación (no permitir enviar si faltan obligatorios) e indicador de progreso (ej. «X/Y campos completados» o barra). (3) Mejorar el recuadro de requisitos de contraseña (no debe ocupar toda la pantalla). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T228** | Email de verificación (nuevo registro): (1) Contenido en idioma del usuario: versiones ES y EN. (2) Subject incluir nombre de la app (ej. «Verifica tu email en Planazoo» / «Verify your email in Planazoo»). (3) Firma del correo tipo «Equipo Planazoo». Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. Relacionado con T176. | Media |
+| **T232** | Perfil usuario: (1) Añadir todas las zonas horarias del mundo con lista curada y etiquetas legibles (ej. «Madrid (Europe/Madrid)», «Buenos Aires (America/Argentina/Buenos_Aires)»). (2) Una vez seleccionada, visualizar la selección en el menú «Zona horaria». (3) Mostrar la zona horaria en la info del usuario en W6. (4) Mostrar el idioma seleccionado en el menú de idioma. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 
 ---
 
@@ -179,8 +173,8 @@
 | **T121** | Revisión y enriquecimiento de formularios EventDialog y AccommodationDialog por tipo. | Media |
 | **T122** | Guardar plan como plantilla (local, editar, usar plantilla). | Baja |
 | **T224** | **Reenviar invitación:** Permitir al organizador reenviar una invitación pendiente (por email o desde lista) por si el usuario no la ha recibido (email no llegó, notificación perdida, etc.). UI en Participantes → sección Invitaciones: acción "Reenviar" por invitación pendiente; regenerar/enviar de nuevo notificación y, si aplica, email con link. Relacionado con T104, T105; ver FLUJO_INVITACIONES_NOTIFICACIONES. | Media |
-| ~~**T189**~~ | ~~Mejorar UX del diálogo de invitaciones por email (errores dentro del modal).~~ ✅ Completada (ver COMPLETED_TASKS.md) | — |
-
+| **T233** | Página Participantes: (1) La lista de participantes ha de ser lo primero; hacerla más compacta para ver el máximo posible. (2) La parte de invitar va a continuación de la lista. (3) Revisar si la parte de aceptar invitaciones es necesaria — *aclarar al abordar la tarea*: ¿se refiere a la vista del organizador (gestionar invitaciones) o a la del invitado (aceptar/rechazar)? (4) Eliminar el botón «Aceptar/Rechazar por token» y todo el código y documentación relacionada (opción ya no activa). (5) Eliminar el icono «X» para cerrar si ya no es necesario. (6) En la barra superior solo ha de aparecer el nombre de la página, sin el nombre del plan. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T234** | Invitaciones: (1) Cuando la invitación está enviada, el usuario invitado (ej. UB) ha de aparecer en la lista de participantes con estado «pendiente de aceptar invitación» (verificar si ya está implementado). (2) Cuando el invitado acepta o rechaza, el organizador (ej. UA) ha de recibir notificación. (3) En el recuadro de enviar por mail, añadir icono «?» para explicar cada tipo de usuario (participante, observador). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 ---
 
 ### 10. IA, importación, exportación, integración
@@ -217,11 +211,6 @@
 
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
-| ~~**T217**~~ | ✅ Pagos MVP: unificar web/mobile. Sustituir placeholder en vista móvil por PaymentSummaryPage. | Alta (MVP) |
-| ~~**T218**~~ | ✅ Pagos MVP: permisos por rol (organizador cualquier pago; participante solo "yo pagué"). | Alta (MVP) |
-| ~~**T219**~~ | ✅ Pagos MVP: bote común (aportaciones, gastos, reflejo en balances). | Media |
-| ~~**T220**~~ | ✅ Pagos MVP: aviso en UI y texto legal ("no procesamos cobros"). | Alta (MVP) |
-| ~~**T221**~~ | ✅ Pagos MVP: actualizar FLUJO_PRESUPUESTO_PAGOS.md con decisiones y matriz de permisos. | Media |
 | **T222** | Pagos MVP: ejecutar y validar. Ejecutar fase 11.5 Pagos del plan E2E (tres usuarios) y casos PAY-001 a PAY-007 del TESTING_CHECKLIST; marcar resultados. | Media |
 
 ---

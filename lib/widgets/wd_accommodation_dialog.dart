@@ -184,15 +184,41 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final title = widget.accommodation == null ? loc.newAccommodation : loc.editAccommodation;
     return AlertDialog(
-      title: Text(widget.accommodation == null ? AppLocalizations.of(context)!.newAccommodation : AppLocalizations.of(context)!.editAccommodation),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      title: null,
+      contentPadding: EdgeInsets.zero,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // T240 / T226: Barra verde superior con título (UI estándar modales)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFF79A2A8),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
             // Nombre del hotel/alojamiento
               TextFormField(
                 controller: _hotelNameController,
@@ -342,9 +368,12 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             
             // Selección de participantes
             _buildParticipantSelection(),
-            ],
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
       actions: [
         // Botón eliminar (solo si es edición) (T109: Deshabilitado según estado del plan)
@@ -873,6 +902,13 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     // Normalizar el tipo seleccionado antes de guardar
     final normalizedType = _normalizeType(_selectedType);
 
+    double? costValue;
+    try {
+      costValue = await _getConvertedCost();
+    } catch (_) {
+      // Si falla la conversión de moneda, guardar sin coste
+    }
+
     final accommodation = Accommodation(
       id: widget.accommodation?.id,
       planId: widget.planId,
@@ -888,7 +924,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       // Si está marcado "para todos", participantTrackIds debe estar vacío
       // Si no, debe contener los IDs seleccionados
       participantTrackIds: _isForAllParticipants ? [] : _selectedParticipantTrackIds,
-      cost: await _getConvertedCost(), // T153: Coste convertido a moneda del plan
+      cost: costValue, // T153: Coste convertido a moneda del plan
       createdAt: widget.accommodation?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );

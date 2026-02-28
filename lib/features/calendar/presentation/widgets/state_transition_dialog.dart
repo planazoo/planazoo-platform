@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../../app/theme/color_scheme.dart';
 import '../../domain/services/plan_state_service.dart';
 import '../../domain/models/plan.dart';
 
-/// Diálogo de confirmación para cambiar el estado de un plan
-/// 
+/// Diálogo de confirmación para cambiar el estado de un plan (T205: estilo estándar, mensaje de implicación).
+///
 /// Muestra información sobre la transición y solicita confirmación del usuario.
 class StateTransitionDialog extends StatelessWidget {
   final Plan plan;
@@ -26,13 +27,13 @@ class StateTransitionDialog extends StatelessWidget {
     // Mensajes según la transición
     String title;
     String message;
-    Color? titleColor;
+    Color? actionColor;
     IconData titleIcon;
 
     switch (newState) {
       case 'confirmado':
         title = 'Confirmar Plan';
-        titleColor = Colors.green;
+        actionColor = Colors.green;
         titleIcon = Icons.check_circle_outline;
         message = customMessage ??
             'Este plan quedará como confirmado. Los cambios importantes estarán bloqueados.\n\n'
@@ -41,7 +42,7 @@ class StateTransitionDialog extends StatelessWidget {
 
       case 'en_curso':
         title = 'Marcar Plan como En Curso';
-        titleColor = Colors.orange;
+        actionColor = Colors.orange;
         titleIcon = Icons.play_circle_outline;
         message = customMessage ??
             'El plan pasará a estado "En Curso". Solo se permitirán cambios urgentes.\n\n'
@@ -50,7 +51,7 @@ class StateTransitionDialog extends StatelessWidget {
 
       case 'finalizado':
         title = 'Finalizar Plan';
-        titleColor = Colors.blueGrey;
+        actionColor = Colors.blueGrey;
         titleIcon = Icons.check_circle;
         message = customMessage ??
             'El plan pasará a estado "Finalizado". No se podrán realizar más cambios.\n\n'
@@ -59,7 +60,7 @@ class StateTransitionDialog extends StatelessWidget {
 
       case 'cancelado':
         title = 'Cancelar Plan';
-        titleColor = Colors.red;
+        actionColor = Colors.red;
         titleIcon = Icons.cancel_outlined;
         message = customMessage ??
             '⚠️ ADVERTENCIA:\n\n'
@@ -71,7 +72,7 @@ class StateTransitionDialog extends StatelessWidget {
 
       case 'planificando':
         title = 'Volver a Planificación';
-        titleColor = Colors.blue;
+        actionColor = Colors.blue;
         titleIcon = Icons.event_note;
         message = customMessage ??
             'El plan volverá a estado "Planificando". Se desbloquearán todas las restricciones.\n\n'
@@ -80,47 +81,99 @@ class StateTransitionDialog extends StatelessWidget {
 
       default:
         title = 'Cambiar Estado del Plan';
-        titleColor = Colors.grey;
+        actionColor = Colors.grey;
         titleIcon = Icons.info_outline;
         message = customMessage ??
             '¿Deseas cambiar el estado del plan de "${currentInfo['label']}" a "${newInfo['label']}"?';
     }
 
+    final implicationText = currentState == 'borrador' && newState != 'cancelado'
+        ? 'Implicación: Al salir de borrador, el plan podrá ser compartido y las restricciones de edición dependerán del nuevo estado.'
+        : null;
+
     return AlertDialog(
-      title: Row(
-        children: [
-          Icon(titleIcon, color: titleColor, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: titleColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
+      title: null,
+      contentPadding: EdgeInsets.zero,
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Badges de estado actual y nuevo
-          Row(
-            children: [
-              _buildStateChip(currentInfo['label'] as String,
-                  Color(currentInfo['color'] as int)),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(Icons.arrow_forward, size: 20),
-              ),
-              _buildStateChip(
-                  newInfo['label'] as String, Color(newInfo['color'] as int)),
-            ],
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: const BoxDecoration(
+              color: Color(0xFF79A2A8),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Row(
+              children: [
+                Icon(titleIcon, color: Colors.white, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          Text(message),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _buildStateChip(currentInfo['label'] as String,
+                        Color(currentInfo['color'] as int)),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(Icons.arrow_forward, size: 20),
+                    ),
+                    _buildStateChip(
+                        newInfo['label'] as String, Color(newInfo['color'] as int)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(message),
+                if (implicationText != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColorScheme.color2.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline, size: 18, color: AppColorScheme.color2),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            implicationText,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey.shade200
+                                  : Colors.grey.shade800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
       actions: [
@@ -131,7 +184,7 @@ class StateTransitionDialog extends StatelessWidget {
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: titleColor,
+            backgroundColor: actionColor,
             foregroundColor: Colors.white,
           ),
           child: Text(title.contains('Cancelar') ? 'Cancelar Plan' : 'Confirmar'),
@@ -178,4 +231,3 @@ Future<bool> showStateTransitionDialog({
   );
   return result ?? false;
 }
-

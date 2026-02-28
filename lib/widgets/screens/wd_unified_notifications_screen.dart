@@ -215,8 +215,8 @@ class _InvitationCard extends StatelessWidget {
                   icon: const Icon(Icons.cancel_outlined, size: 18),
                   label: Text(loc.reject),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.orange.shade800,
-                    side: BorderSide(color: Colors.orange.shade300),
+                    foregroundColor: AppColorScheme.color4,
+                    side: BorderSide(color: AppColorScheme.color4),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -224,7 +224,10 @@ class _InvitationCard extends StatelessWidget {
                   onPressed: onAccept,
                   icon: const Icon(Icons.check_circle_outline, size: 18),
                   label: Text(loc.accept),
-                  style: FilledButton.styleFrom(backgroundColor: Colors.green.shade700),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColorScheme.color2,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),

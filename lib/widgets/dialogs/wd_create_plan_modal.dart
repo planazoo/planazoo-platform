@@ -186,15 +186,6 @@ class _WdCreatePlanModalState extends ConsumerState<WdCreatePlanModal> {
                   return null;
                 },
               ),
-              const SizedBox(height: 12),
-              Text(
-                _unpIdController.text.isEmpty
-                    ? loc.createPlanUnpIdLoading
-                    : loc.createPlanUnpIdHeader(_unpIdController.text),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-              ),
               const SizedBox(height: 16),
               Text(
                 loc.createPlanQuickIntro,

@@ -130,7 +130,8 @@ class InvitationNotificationTile extends ConsumerWidget {
                 icon: const Icon(Icons.close, size: 14),
                 label: Text(loc.reject, style: GoogleFonts.poppins(fontSize: 11)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.orange.shade300,
+                  foregroundColor: AppColorScheme.color4,
+                  side: const BorderSide(color: AppColorScheme.color4),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                 ),
@@ -151,7 +152,8 @@ class InvitationNotificationTile extends ConsumerWidget {
                 icon: const Icon(Icons.check, size: 14),
                 label: Text(loc.accept, style: GoogleFonts.poppins(fontSize: 11)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
+                  backgroundColor: AppColorScheme.color2,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: Size.zero,
                 ),

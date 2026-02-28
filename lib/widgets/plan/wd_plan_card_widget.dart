@@ -153,6 +153,7 @@ class PlanCardWidget extends ConsumerWidget {
                     PlanStateBadgeCompact(
                       plan: plan,
                       fontSize: 8,
+                      onColoredBackground: isSelected,
                     ),
                     const SizedBox(height: 2),
                     DaysRemainingIndicator(

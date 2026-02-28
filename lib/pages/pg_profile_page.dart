@@ -856,119 +856,163 @@ class ProfilePage extends ConsumerWidget {
     WidgetRef ref,
     AuthNotifier authNotifier,
   ) async {
-    final loc = AppLocalizations.of(context)!;
-    final passwordController = TextEditingController();
-    bool isLoading = false;
-    String? errorMessage;
-
-    String _mapDeleteAccountError(String rawMessage) {
-      final code = rawMessage.replaceFirst('Exception: ', '');
-      switch (code) {
-        case 'wrong-password':
-        case 'invalid-credential':
-          return loc.profileDeleteAccountWrongPasswordError;
-        case 'too-many-requests':
-          return loc.profileDeleteAccountTooManyAttemptsError;
-        case 'requires-recent-login':
-          return loc.profileDeleteAccountRecentLoginError;
-        default:
-          return loc.profileDeleteAccountGenericError;
-      }
-    }
-
     await showDialog(
       context: context,
-      barrierDismissible: !isLoading,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setState) => AlertDialog(
-            title: Text(loc.profileDeleteAccountOption),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(loc.profileDeleteAccountDescription),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: loc.passwordLabel,
-                    border: const OutlineInputBorder(),
+      barrierDismissible: false,
+      builder: (dialogContext) => _DeleteAccountDialogContent(
+        authNotifier: authNotifier,
+        onClosed: () {
+          Navigator.of(dialogContext).pop();
+        },
+        onSuccess: () {
+          Navigator.of(dialogContext).pop();
+          if (context.mounted) {
+            Navigator.of(context).pushReplacementNamed('/');
+          }
+        },
+      ),
+    );
+  }
+}
+
+/// Diálogo de eliminar cuenta. StatefulWidget que posee el [TextEditingController]
+/// y lo dispone en [dispose], evitando "used after being disposed" al cerrar.
+class _DeleteAccountDialogContent extends StatefulWidget {
+  final AuthNotifier authNotifier;
+  final VoidCallback onClosed;
+  final VoidCallback onSuccess;
+
+  const _DeleteAccountDialogContent({
+    required this.authNotifier,
+    required this.onClosed,
+    required this.onSuccess,
+  });
+
+  @override
+  State<_DeleteAccountDialogContent> createState() => _DeleteAccountDialogContentState();
+}
+
+class _DeleteAccountDialogContentState extends State<_DeleteAccountDialogContent> {
+  late final TextEditingController _passwordController;
+  bool _obscurePassword = true;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  String _mapError(String rawMessage) {
+    final loc = AppLocalizations.of(context)!;
+    final code = rawMessage.replaceFirst('Exception: ', '');
+    switch (code) {
+      case 'wrong-password':
+      case 'invalid-credential':
+        return loc.profileDeleteAccountWrongPasswordError;
+      case 'too-many-requests':
+        return loc.profileDeleteAccountTooManyAttemptsError;
+      case 'requires-recent-login':
+        return loc.profileDeleteAccountRecentLoginError;
+      default:
+        return loc.profileDeleteAccountGenericError;
+    }
+  }
+
+  Future<void> _submitDelete() async {
+    final loc = AppLocalizations.of(context)!;
+    final password = _passwordController.text.trim();
+    if (password.isEmpty) {
+      setState(() => _errorMessage = loc.profileDeleteAccountEmptyPasswordError);
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await widget.authNotifier.deleteAccount(password);
+      if (!mounted) return;
+      widget.onSuccess();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = _mapError(e.toString());
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(loc.profileDeleteAccountOption),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(loc.profileDeleteAccountDescription),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              decoration: InputDecoration(
+                labelText: loc.passwordLabel,
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    size: 22,
                   ),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
-                if (errorMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    errorMessage!,
-                    style: AppTypography.bodyStyle.copyWith(
-                      color: Colors.red.shade600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
-                child: Text(loc.cancel),
               ),
-              ElevatedButton(
-                onPressed: isLoading
-                    ? null
-                    : () async {
-                        final password = passwordController.text.trim();
-                        if (password.isEmpty) {
-                          setState(() {
-                            errorMessage = loc.profileDeleteAccountEmptyPasswordError;
-                          });
-                          return;
-                        }
-
-                        setState(() {
-                          isLoading = true;
-                          errorMessage = null;
-                        });
-
-                        try {
-                          await authNotifier.deleteAccount(password);
-                        } catch (e) {
-                          setState(() {
-                            isLoading = false;
-                            errorMessage = _mapDeleteAccountError(e.toString());
-                          });
-                          return;
-                        }
-
-                        if (dialogContext.mounted) {
-                          Navigator.of(dialogContext).pop();
-                        }
-                        if (context.mounted) {
-                          Navigator.of(context).pushReplacementNamed('/');
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade600,
-                  foregroundColor: Colors.white,
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                style: AppTypography.bodyStyle.copyWith(
+                  color: Colors.red.shade600,
+                  fontSize: 13,
                 ),
-                child: isLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(loc.profileDeleteAccountOption),
               ),
             ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : widget.onClosed,
+          child: Text(loc.cancel),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _submitDelete,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red.shade600,
+            foregroundColor: Colors.white,
           ),
-        );
-      },
+          child: _isLoading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text(loc.profileDeleteAccountOption),
+        ),
+      ],
     );
-
-    passwordController.dispose();
   }
 }

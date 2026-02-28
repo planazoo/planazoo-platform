@@ -4,6 +4,54 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T238 (parcial), T242 (parcial) - Modal evento barra verde, Calendario sin perspectiva de usuario (Febrero 2026)
+
+**Estado:** ✅ Completadas (parciales)  
+**Fecha de finalización:** Febrero 2026  
+**Origen:** REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS.
+
+**Descripción e implementación:**
+
+- **T238 - Modal crear/editar evento (punto 1):** Barra verde superior con título (color 0xFF79A2A8), mismo estándar que alojamiento y otros modales. En `wd_event_dialog.dart`: método `_buildEventDialogGreenBar` con título y badges Creador/Admin; estado de carga y diálogo principal usan esta barra; contenido del formulario envuelto en `SizedBox` con altura fija para que el `TabBarView` con `Expanded` reciba restricción de altura. Pendiente en T238: (2) mejorar pestañas General/Mi información, (3) evaluar texto "Puedes editar...", (4) flujo rápido, (5) orden de campos.
+- **T242 - Página Calendario (punto 1):** Eliminada la opción «perspectiva de usuario» de la barra del calendario. En `calendar_app_bar.dart` se quitó el `UserPerspectiveSelector` y su import. Pendiente en T242: agrupar opciones en menú categorizado y menú de filtros (todos, borrador).
+
+**Archivos principales:** `lib/widgets/wd_event_dialog.dart`, `lib/widgets/screens/calendar/calendar_app_bar.dart`.
+
+---
+
+## T229, T235, T240, T241 - Modal crear plan, card plan, modal alojamiento, resumen plan (Febrero 2026)
+
+**Estado:** ✅ Completadas  
+**Fecha de finalización:** Febrero 2026  
+**Origen:** REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS.
+
+**Descripción e implementación:**
+
+- **T229 - Modal crear plan:** (1) No mostrar el ID del plan en el modal: eliminado el texto que mostraba `createPlanUnpIdHeader` en `wd_create_plan_modal.dart`. El UNP ID se sigue generando en segundo plano y se asigna al plan. (2) Tras crear el plan, la navegación ya abría `PlanDetailPage` con `_selectedOption = 'planData'` por defecto (pestaña Info/inicio).
+- **T235 - Card del plan:** Cuando la card está seleccionada (fondo `AppColorScheme.color2`), el badge de estado no se leía bien. Se añadió el parámetro `onColoredBackground` a `PlanStateBadge` y `PlanStateBadgeCompact`; cuando es true se usa texto e icono blancos y fondo semi-opaco blanco para contraste. En `PlanCardWidget` se pasa `onColoredBackground: isSelected`.
+- **T240 - Modal alojamiento:** Barra verde superior (color 0xFF79A2A8) con el título del modal ("Nuevo alojamiento" / "Editar alojamiento"), mismo patrón que otros modales estándar. Contenido del diálogo en `Column` con la barra + `SingleChildScrollView` con el formulario.
+- **T241 - Resumen del plan:** En `PlanSummaryService.generatePlanSummaryText` cada evento del resumen muestra primero el nombre/descripción del evento y luego la hora de inicio, hora de fin y duración (ej. "Descripción  10:00 - 11:30 (1h 30min)"). Se calcula la hora de fin a partir de `hour`, `startMinute` y `durationMinutes`.
+
+**Archivos principales:** `lib/widgets/dialogs/wd_create_plan_modal.dart`, `lib/features/calendar/presentation/widgets/plan_state_badge.dart`, `lib/widgets/plan/wd_plan_card_widget.dart`, `lib/widgets/wd_accommodation_dialog.dart`, `lib/features/calendar/domain/services/plan_summary_service.dart`.
+
+---
+
+## T230, T236, T239 - Modal eliminar cuenta, notificaciones, eventos borrador (Febrero 2026)
+
+**Estado:** ✅ Completadas  
+**Fecha de finalización:** Febrero 2026  
+**Origen:** REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS.
+
+**Descripción e implementación:**
+
+- **T230 - Modal eliminar cuenta:** Añadir icono para ver la contraseña (toggle mostrar/ocultar). Implementado: campo de contraseña con `suffixIcon` (IconButton visibility/visibility_off). El diálogo se refactorizó a un StatefulWidget (`_DeleteAccountDialogContent`) que posee el `TextEditingController` y lo dispone en `dispose()`, evitando el error "used after being disposed" al pulsar Cancelar. Contenido envuelto en `SingleChildScrollView` para evitar overflow.
+- **T236 - Notificaciones:** (1) En el icono de notificaciones en W1, el badge (círculo con número) se recolocó a `right: 0, top: 0`, se redujo tamaño (min 14x14, fontSize 9) y se añadió borde del color del icono para que no tape la campana. (2) Botones Aceptar y Rechazar en invitaciones unificadas: estilo según app (Aceptar con `AppColorScheme.color2`, Rechazar con `AppColorScheme.color4` outline) en `wd_unified_notifications_screen.dart` y `wd_unified_notification_item.dart`.
+- **T239 - Eventos en borrador:** Además del color, se muestra el texto localizado "Es borrador" (isDraft) debajo de la descripción del evento en el calendario, en cursiva y tamaño menor, cuando el segmento es borrador y la altura del chip > 14 px.
+
+**Archivos principales:** `lib/pages/pg_profile_page.dart`, `lib/widgets/notifications/wd_notification_badge.dart`, `lib/widgets/screens/wd_unified_notifications_screen.dart`, `lib/widgets/notifications/wd_unified_notification_item.dart`, `lib/widgets/screens/wd_calendar_screen.dart`.
+
+---
+
 ## T217–T221 - Pagos MVP (sistema de pagos)
 
 **Estado:** ✅ Completadas  
