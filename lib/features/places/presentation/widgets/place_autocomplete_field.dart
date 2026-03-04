@@ -28,6 +28,10 @@ class PlaceAutocompleteField extends StatefulWidget {
   final String? hintText;
   /// Tamaño de fuente del texto del campo. Si null, usa el del tema.
   final double? fontSize;
+  /// Fondo del campo. Si no se pasa, usa el del tema. Transparent para integrar en contenedor (sin recuadro).
+  final Color? fillColor;
+  /// Borde del campo. Si no se pasa, usa OutlineInputBorder. InputBorder.none para quitar recuadro.
+  final InputBorder? border;
 
   const PlaceAutocompleteField({
     super.key,
@@ -40,6 +44,8 @@ class PlaceAutocompleteField extends StatefulWidget {
     this.labelText,
     this.hintText,
     this.fontSize,
+    this.fillColor,
+    this.border,
   });
 
   @override
@@ -256,7 +262,11 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
                   ),
                 )
               : null,
-          border: const OutlineInputBorder(),
+          fillColor: widget.fillColor,
+          filled: widget.fillColor != null,
+          border: widget.border ?? const OutlineInputBorder(),
+          enabledBorder: widget.border,
+          focusedBorder: widget.border,
         ),
         maxLines: 1,
         onTap: () {

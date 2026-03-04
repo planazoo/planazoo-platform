@@ -1163,7 +1163,7 @@
   "@costHint": {
     "description": "Cost hint"
   },
-  "eventDescription": "Description",
+  "eventDescription": "Event description",
   "@eventDescription": {
     "description": "Event description label"
   },

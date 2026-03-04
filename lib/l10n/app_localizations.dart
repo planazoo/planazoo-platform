@@ -2375,7 +2375,7 @@ abstract class AppLocalizations {
   /// Label de descripción de evento
   ///
   /// In es, this message translates to:
-  /// **'Descripción'**
+  /// **'Descripción del evento'**
   String get eventDescription;
 
   /// Hint de descripción de evento

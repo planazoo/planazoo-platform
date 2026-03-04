@@ -595,6 +595,51 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
+  /// Decoración para campos con título sobre el borde (sin sombra).
+  BoxDecoration get _borderedFieldDecoration => BoxDecoration(
+    color: Colors.grey.shade800,
+    borderRadius: BorderRadius.circular(14),
+    border: Border.all(
+      color: Colors.grey.shade700.withOpacity(0.5),
+      width: 1,
+    ),
+  );
+
+  /// Estilo del título que va sobre el borde del campo.
+  TextStyle get _labelOnBorderStyle => GoogleFonts.poppins(
+    fontSize: 13,
+    color: Colors.grey.shade400,
+    fontWeight: FontWeight.w500,
+  );
+
+  /// Campo con título sobre el borde superior (formato unificado Descripción, Timezone, etc.).
+  /// [contentPadding] por defecto (18) para campos estándar; (8) para campos con icono/botón a la derecha.
+  Widget _buildLabelOnBorderField({
+    required String label,
+    required Widget child,
+    EdgeInsetsGeometry? contentPadding,
+  }) {
+    final padding = contentPadding ?? const EdgeInsets.only(top: 14, left: 18, right: 18, bottom: 18);
+    return Container(
+      decoration: _borderedFieldDecoration,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 14,
+            top: -7,
+            child: Container(
+              color: Colors.grey.shade800,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(label, style: _labelOnBorderStyle),
+            ),
+          ),
+          Padding(padding: padding, child: child),
+        ],
+      ),
+    );
+  }
+
   /// Envuelve [child] en una capa que, si no puede editar (solo lectura), muestra SnackBar al tocar.
   Widget _wrapReadOnlyIfNeeded({required Widget child}) {
     if (_canEditGeneral) return child;
@@ -676,66 +721,48 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final hasSubtype = _typeSubtypeController.text.isNotEmpty && subtypes.contains(_typeSubtypeController.text);
 
     if (!_canEditGeneral) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: _buildLoginStyleDecoration(),
+      return _buildLabelOnBorderField(
+        label: loc.eventType,
+        contentPadding: const EdgeInsets.only(top: 14, left: 16, right: 16, bottom: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              loc.eventType,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey.shade400,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
             if (hasType || hasSubtype)
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  if (hasType) _buildTypeSubtypeChip(
-                    label: _typeFamilyController.text,
-                    icon: _typeIcons[_typeFamilyController.text] ?? Icons.category,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (hasType) _buildTypeSubtypeChip(
+                          label: _typeFamilyController.text,
+                          icon: _typeIcons[_typeFamilyController.text] ?? Icons.category,
+                        ),
+                        if (hasSubtype) _buildTypeSubtypeChip(
+                          label: _typeSubtypeController.text,
+                          icon: _subtypeIcons['${_typeFamilyController.text}|${_typeSubtypeController.text}'] ?? Icons.label,
+                        ),
+                      ],
+                    )
+                  else
+                    Text(
+                    '—',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                    ),
                   ),
-                  if (hasSubtype) _buildTypeSubtypeChip(
-                    label: _typeSubtypeController.text,
-                    icon: _subtypeIcons['${_typeFamilyController.text}|${_typeSubtypeController.text}'] ?? Icons.label,
-                  ),
-                ],
-              )
-            else
-              Text(
-                '—',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
-                ),
-              ),
           ],
         ),
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _buildLoginStyleDecoration(),
+    return _buildLabelOnBorderField(
+      label: loc.eventType,
+      contentPadding: const EdgeInsets.only(top: 14, left: 16, right: 16, bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            loc.eventType,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.grey.shade400,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 12),
           if (_typePickerExpanded) ...[
             Wrap(
               spacing: 10,
@@ -953,37 +980,41 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   /// Bloque Origen + Destino (+ opcionalmente Plazas) para Desplazamiento (Taxi, Tren, Autobús, Coche, Caminar).
+  /// Origen y Destino con el mismo formato (título sobre el borde) que Descripción y Timezone.
   /// [showPlazas] true solo para Taxi.
   Widget _buildTransportOriginDestinationBlock({required bool showPlazas}) {
     final loc = AppLocalizations.of(context)!;
-    return Container(
-      decoration: _buildLoginStyleDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Origen
+        _buildLabelOnBorderField(
+          label: loc.taxiOriginLabel,
+          contentPadding: const EdgeInsets.only(top: 14, left: 8, right: 0, bottom: 8),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: PlaceAutocompleteField(
                   controller: _taxiOriginController,
-                  initialAddress: null,
-                  lodgingOnly: false,
-                  labelText: loc.taxiOriginLabel,
-                  hintText: loc.taxiOriginHint,
-                  fontSize: 12,
-                  onPlaceSelected: (PlaceDetails details) {
-                    setState(() {
-                      _taxiOriginDetails = details;
-                      final addr = details.formattedAddress;
-                      _taxiOriginController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
-                          ? '${details.displayName}, $addr'
-                          : details.displayName;
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
+                        initialAddress: null,
+                        lodgingOnly: false,
+                        labelText: '',
+                        hintText: loc.taxiOriginHint,
+                        fontSize: 12,
+                        fillColor: Colors.transparent,
+                        border: InputBorder.none,
+                        onPlaceSelected: (PlaceDetails details) {
+                          setState(() {
+                            _taxiOriginDetails = details;
+                            final addr = details.formattedAddress;
+                            _taxiOriginController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                                ? '${details.displayName}, $addr'
+                                : details.displayName;
+                          });
+                        },
+                      ),
+                    ),
               IconButton(
                 icon: Icon(
                   Icons.map_outlined,
@@ -1000,8 +1031,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
+        ),
+        const SizedBox(height: 12),
+        // Destino
+        _buildLabelOnBorderField(
+          label: loc.taxiDestinationLabel,
+          contentPadding: const EdgeInsets.only(top: 14, left: 8, right: 0, bottom: 8),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
@@ -1009,9 +1045,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   controller: _taxiDestinationController,
                   initialAddress: null,
                   lodgingOnly: false,
-                  labelText: loc.taxiDestinationLabel,
+                  labelText: '',
                   hintText: loc.taxiDestinationHint,
                   fontSize: 12,
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
                   onPlaceSelected: (PlaceDetails details) {
                     setState(() {
                       _taxiDestinationDetails = details;
@@ -1023,7 +1061,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   },
                 ),
               ),
-              const SizedBox(width: 8),
               IconButton(
                 icon: Icon(
                   Icons.map_outlined,
@@ -1040,7 +1077,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ],
           ),
-          if (showPlazas) ...[
+        ),
+        if (showPlazas) ...[
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
               value: _taxiSeats.clamp(1, 9),
@@ -1077,8 +1115,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ),
           ],
         ],
-      ),
-    );
+      );
   }
 
   Future<void> _openTaxiAddressInMaps(String address, double? lat, double? lng) async {
@@ -1094,6 +1131,39 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  /// Campo Fecha / Hora / Duración con título sobre el borde.
+  Widget _buildWhenField({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+    required bool isMobile,
+    required double fsBody,
+  }) {
+    return _buildLabelOnBorderField(
+      label: label,
+      contentPadding: EdgeInsets.only(left: 8, right: 8, top: 14, bottom: isMobile ? 10 : 12),
+      child: SizedBox(
+        width: double.infinity,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: fsBody,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Dropdown de timezone para el bloque vuelo (salida/llegada).
@@ -1143,85 +1213,95 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   /// T246: Bloque número de vuelo + botón Obtener datos (Amadeus).
-  /// Aeropuertos con Google Places; timezone salida/llegada al lado de cada uno.
+  /// Aeropuertos con Google Places (formato título sobre el borde); timezone salida/llegada al lado de cada uno.
   Widget _buildFlightNumberBlock() {
     final loc = AppLocalizations.of(context)!;
-    return Container(
-      decoration: _buildLoginStyleDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Aeropuerto de salida + timezone salida
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: PlaceAutocompleteField(
-                  controller: _departureAirportController,
-                  initialAddress: null,
-                  lodgingOnly: false,
-                  labelText: loc.departureAirportLabel,
-                  hintText: loc.departureAirportHint,
-                  fontSize: 12,
-                  onPlaceSelected: (PlaceDetails details) {
-                    setState(() {
-                      _departureAirportDetails = details;
-                      final addr = details.formattedAddress;
-                      _departureAirportController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
-                          ? '${details.displayName}, $addr'
-                          : details.displayName;
-                    });
-                  },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Aeropuerto de origen
+        _buildLabelOnBorderField(
+          label: loc.departureAirportLabel,
+          contentPadding: const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
+          child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: PlaceAutocompleteField(
+                        controller: _departureAirportController,
+                        initialAddress: null,
+                        lodgingOnly: false,
+                        labelText: '',
+                        hintText: loc.departureAirportHint,
+                        fontSize: 12,
+                        fillColor: Colors.transparent,
+                        border: InputBorder.none,
+                        onPlaceSelected: (PlaceDetails details) {
+                          setState(() {
+                            _departureAirportDetails = details;
+                            final addr = details.formattedAddress;
+                            _departureAirportController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                                ? '${details.displayName}, $addr'
+                                : details.displayName;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 165,
+                      child: _buildFlightTimezoneDropdown(
+                        value: _selectedTimezone,
+                        label: loc.timezone,
+                        onChanged: _canEditGeneral ? (value) => setState(() => _selectedTimezone = value ?? 'Europe/Madrid') : null,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 165,
-                child: _buildFlightTimezoneDropdown(
-                  value: _selectedTimezone,
-                  label: loc.timezone,
-                  onChanged: _canEditGeneral ? (value) => setState(() => _selectedTimezone = value ?? 'Europe/Madrid') : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Aeropuerto de llegada + timezone llegada
-          Row(
+        ),
+        const SizedBox(height: 12),
+        // Aeropuerto de destino
+        _buildLabelOnBorderField(
+          label: loc.arrivalAirportLabel,
+          contentPadding: const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: PlaceAutocompleteField(
                   controller: _arrivalAirportController,
-                  initialAddress: null,
-                  lodgingOnly: false,
-                  labelText: loc.arrivalAirportLabel,
-                  hintText: loc.arrivalAirportHint,
-                  fontSize: 12,
-                  onPlaceSelected: (PlaceDetails details) {
-                    setState(() {
-                      _arrivalAirportDetails = details;
-                      final addr = details.formattedAddress;
-                      _arrivalAirportController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
-                          ? '${details.displayName}, $addr'
-                          : details.displayName;
-                    });
-                  },
+                        initialAddress: null,
+                        lodgingOnly: false,
+                        labelText: '',
+                        hintText: loc.arrivalAirportHint,
+                        fontSize: 12,
+                        fillColor: Colors.transparent,
+                        border: InputBorder.none,
+                        onPlaceSelected: (PlaceDetails details) {
+                          setState(() {
+                            _arrivalAirportDetails = details;
+                            final addr = details.formattedAddress;
+                            _arrivalAirportController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                                ? '${details.displayName}, $addr'
+                                : details.displayName;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 165,
+                      child: _buildFlightTimezoneDropdown(
+                        value: _selectedArrivalTimezone,
+                        label: loc.arrivalTimezone,
+                        onChanged: _canEditGeneral ? (value) => setState(() => _selectedArrivalTimezone = value ?? 'Europe/Madrid') : null,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 165,
-                child: _buildFlightTimezoneDropdown(
-                  value: _selectedArrivalTimezone,
-                  label: loc.arrivalTimezone,
-                  onChanged: _canEditGeneral ? (value) => setState(() => _selectedArrivalTimezone = value ?? 'Europe/Madrid') : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
+        ),
+        const SizedBox(height: 12),
+        Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
@@ -1320,7 +1400,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ],
           ),
         ],
-      ),
     );
   }
 
@@ -1900,73 +1979,73 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             // 1. Identidad: Tipo y subtipo
             _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
             SizedBox(height: spacing),
-            // Descripción
+            // Descripción del evento
             _wrapReadOnlyIfNeeded(
-              child: Container(
-              decoration: _buildLoginStyleDecoration(),
-              child: TextFormField(
-                controller: _descriptionController,
-                readOnly: !(_canEditGeneral || _canEditGeneralInitial),
-                maxLines: 2,
-                style: GoogleFonts.poppins(
-                  fontSize: fsBody,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
+              child: _buildLabelOnBorderField(
+                label: AppLocalizations.of(context)!.eventDescription,
+                child: TextFormField(
+                        controller: _descriptionController,
+                        readOnly: !(_canEditGeneral || _canEditGeneralInitial),
+                        maxLines: 1,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: AppLocalizations.of(context)!.eventDescriptionHint,
+                          labelStyle: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.grey.shade400,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.grey.shade500,
+                          ),
+                          prefixIcon: Icon(Icons.subject, color: Colors.grey.shade400),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: AppColorScheme.color2,
+                              width: 2.5,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: Colors.red.shade400,
+                              width: 1,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: Colors.red.shade400,
+                              width: 2.5,
+                            ),
+                          ),
+                          fillColor: Colors.transparent,
+                          filled: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+                        ),
+                        validator: (value) {
+                          if (!_canEditGeneral) return null;
+                          final v = value?.trim() ?? '';
+                          if (v.isNotEmpty && v.length < 3) return 'Mínimo 3 caracteres';
+                          if (v.length > 1000) return 'Máximo 1000 caracteres';
+                          return null;
+                        },
                 ),
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.eventDescription,
-                  hintText: AppLocalizations.of(context)!.eventDescriptionHint,
-                  labelStyle: GoogleFonts.poppins(
-                    fontSize: fsLabel,
-                    color: Colors.grey.shade400,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintStyle: GoogleFonts.poppins(
-                    fontSize: fsHint,
-                    color: Colors.grey.shade500,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: AppColorScheme.color2,
-                      width: 2.5,
-                    ),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.red.shade400,
-                      width: 1,
-                    ),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.red.shade400,
-                      width: 2.5,
-                    ),
-                  ),
-                  fillColor: Colors.transparent,
-                  filled: true,
-                  contentPadding: EdgeInsets.symmetric(horizontal: contentPad, vertical: contentPad),
-                ),
-                validator: (value) {
-                  if (!_canEditGeneral) return null;
-                  final v = value?.trim() ?? '';
-                  if (v.isNotEmpty && v.length < 3) return 'Mínimo 3 caracteres';
-                  if (v.length > 1000) return 'Máximo 1000 caracteres';
-                  return null;
-                },
               ),
-            ),
             ),
             SizedBox(height: spacing),
             // Dirección: 1 campo (Dirección del evento) si NO es Desplazamiento; 2 campos (Origen, Destino) si es Desplazamiento
@@ -1987,131 +2066,36 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 _typeSubtypeController.text.isNotEmpty &&
                 _typeSubtypeController.text != 'Avión')
               SizedBox(height: spacing),
-            // 2. Cuándo: Fecha, Hora, Duración en una fila; luego Timezone(s)
+            // 2. Cuándo: Fecha, Hora, Duración — cada campo con el mismo formato (título sobre el borde)
             Row(
               children: [
                 Expanded(
-                  child: InkWell(
+                  child: _buildWhenField(
+                    label: AppLocalizations.of(context)!.date,
+                    value: DateFormatter.formatDate(_selectedDate),
                     onTap: _canEditGeneral ? _selectDate : _showReadOnlySnackBar,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 10 : 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade800,
-                        border: Border.all(
-                          color: Colors.grey.shade700.withOpacity(0.5),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppLocalizations.of(context)!.date,
-                            style: GoogleFonts.poppins(
-                              fontSize: fsLabel,
-                              color: Colors.grey.shade400,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            DateFormatter.formatDate(_selectedDate),
-                            style: GoogleFonts.poppins(
-                              fontSize: fsBody,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
+                    isMobile: isMobile,
+                    fsBody: fsBody,
                   ),
                 ),
                 SizedBox(width: isMobile ? 6 : 8),
                 Expanded(
-                  child: InkWell(
+                  child: _buildWhenField(
+                    label: AppLocalizations.of(context)!.time,
+                    value: '${_selectedHour.toString().padLeft(2, '0')}:${_selectedStartMinute.toString().padLeft(2, '0')}',
                     onTap: _canEditGeneral ? _selectStartTime : _showReadOnlySnackBar,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 10 : 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade800,
-                        border: Border.all(
-                          color: Colors.grey.shade700.withOpacity(0.5),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hora',
-                            style: GoogleFonts.poppins(
-                              fontSize: fsLabel,
-                              color: Colors.grey.shade400,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${_selectedHour.toString().padLeft(2, '0')}:${_selectedStartMinute.toString().padLeft(2, '0')}',
-                            style: GoogleFonts.poppins(
-                              fontSize: fsBody,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    isMobile: isMobile,
+                    fsBody: fsBody,
                   ),
                 ),
                 SizedBox(width: isMobile ? 6 : 8),
                 Expanded(
-                  child: InkWell(
+                  child: _buildWhenField(
+                    label: AppLocalizations.of(context)!.duration,
+                    value: _formatDuration(_selectedDurationMinutes),
                     onTap: _canEditGeneral ? _selectDuration : _showReadOnlySnackBar,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 10 : 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade800,
-                        border: Border.all(
-                          color: Colors.grey.shade700.withOpacity(0.5),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Duración',
-                            style: GoogleFonts.poppins(
-                              fontSize: fsLabel,
-                              color: Colors.grey.shade400,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _formatDuration(_selectedDurationMinutes),
-                            style: GoogleFonts.poppins(
-                              fontSize: fsBody,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
+                    isMobile: isMobile,
+                    fsBody: fsBody,
                   ),
                 ),
               ],
@@ -2254,78 +2238,71 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             // 3. Opciones: Límite, Confirmación, Coste
             // Límite de participantes (T117)
             _wrapReadOnlyIfNeeded(
-              child: Container(
-              decoration: _buildLoginStyleDecoration(),
-              child: TextFormField(
-                controller: _maxParticipantsController,
-                readOnly: !_canEditGeneral,
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
+              child: _buildLabelOnBorderField(
+                label: 'Límite de participantes (opcional)',
+                child: TextFormField(
+                        controller: _maxParticipantsController,
+                        readOnly: !_canEditGeneral,
+                        keyboardType: TextInputType.number,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Ej: 10 (dejar vacío para sin límite)',
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                          ),
+                          prefixIcon: Icon(Icons.people_outline, color: Colors.grey.shade400),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: AppColorScheme.color2,
+                              width: 2.5,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: Colors.red.shade400,
+                              width: 1,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: Colors.red.shade400,
+                              width: 2.5,
+                            ),
+                          ),
+                          fillColor: Colors.transparent,
+                          filled: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+                        ),
+                        validator: (value) {
+                          if (!_canEditGeneral) return null;
+                          final v = value?.trim() ?? '';
+                          if (v.isEmpty) return null; // Opcional
+                          final intValue = int.tryParse(v);
+                          if (intValue == null) return 'Debe ser un número válido';
+                          if (intValue < 1) return 'Debe ser mayor que 0';
+                          if (intValue > 1000) return 'Máximo 1000 participantes';
+                          return null;
+                        },
                 ),
-                decoration: InputDecoration(
-                  labelText: 'Límite de participantes (opcional)',
-                  hintText: 'Ej: 10 (dejar vacío para sin límite)',
-                  labelStyle: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.grey.shade400,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintStyle: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                  ),
-                  prefixIcon: Icon(Icons.people_outline, color: Colors.grey.shade400),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: AppColorScheme.color2,
-                      width: 2.5,
-                    ),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.red.shade400,
-                      width: 1,
-                    ),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.red.shade400,
-                      width: 2.5,
-                    ),
-                  ),
-                  fillColor: Colors.transparent,
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                ),
-                validator: (value) {
-                  if (!_canEditGeneral) return null;
-                  final v = value?.trim() ?? '';
-                  if (v.isEmpty) return null; // Opcional
-                  final intValue = int.tryParse(v);
-                  if (intValue == null) return 'Debe ser un número válido';
-                  if (intValue < 1) return 'Debe ser mayor que 0';
-                  if (intValue > 1000) return 'Máximo 1000 participantes';
-                  return null;
-                },
               ),
             ),
-            ),
             const SizedBox(height: 16),
-            
             // Requiere confirmación (T120 Fase 2)
             if (_canEditGeneral)
               CheckboxListTile(
@@ -3498,16 +3475,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// T153: Construir campo de coste con selector de moneda y conversión automática
+  /// T153: Construir campo de coste con selector de moneda y conversión automática.
+  /// Moneda del coste y Coste del evento con formato título sobre el borde.
   Widget _buildCostFieldWithCurrency() {
     final exchangeRateService = ExchangeRateService();
     
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Selector de moneda local (estética tipo login)
-        Container(
-          decoration: _buildLoginStyleDecoration(),
+        // Moneda del coste
+        _buildLabelOnBorderField(
+          label: 'Moneda del coste',
           child: DropdownButtonFormField<String>(
                   value: _costCurrency ?? _planCurrency ?? 'EUR',
                   dropdownColor: Colors.grey.shade800,
@@ -3517,12 +3495,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Moneda del coste',
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.grey.shade400,
-                      fontWeight: FontWeight.w500,
-                    ),
                     prefixIcon: Icon(
                       _getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'),
                       color: Colors.grey.shade400,
@@ -3544,7 +3516,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     ),
                     filled: true,
                     fillColor: Colors.transparent,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
                   ),
                   items: Currency.supportedCurrencies.map((currency) {
                     return DropdownMenuItem<String>(
@@ -3559,98 +3531,84 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       ),
                     );
                   }).toList(),
-                onChanged: _canEditGeneral ? (value) async {
-                  if (value == null) return;
-                  
-                  setState(() {
-                    _costCurrency = value;
-                  });
-                  
-                  // Convertir automáticamente si hay un monto y la moneda cambió
-                  await _convertCostToPlanCurrency(exchangeRateService);
-                } : null,
-              ),
-            ),
+                  onChanged: _canEditGeneral ? (value) async {
+                    if (value == null) return;
+                    setState(() => _costCurrency = value);
+                    await _convertCostToPlanCurrency(exchangeRateService);
+                  } : null,
+                ),
+        ),
         const SizedBox(height: 12),
-        
-        // Campo de coste (estética tipo login)
-        Container(
-          decoration: _buildLoginStyleDecoration(),
+        // Coste del evento
+        _buildLabelOnBorderField(
+          label: 'Coste del evento (opcional)',
           child: TextFormField(
             controller: _costController,
-            enabled: _canEditGeneral,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              labelText: 'Coste del evento (opcional)',
-              hintText: 'Ej: 150.50',
-              labelStyle: GoogleFonts.poppins(
-                fontSize: 13,
-                color: Colors.grey.shade400,
-                fontWeight: FontWeight.w500,
-              ),
-              hintStyle: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
-              prefixIcon: Icon(
-                _getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'),
-                color: Colors.grey.shade400,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: AppColorScheme.color2,
-                  width: 2.5,
-                ),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: Colors.red.shade400,
-                  width: 1,
-                ),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: Colors.red.shade400,
-                  width: 2.5,
-                ),
-              ),
-              fillColor: Colors.transparent,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            ),
-            onChanged: _canEditGeneral ? (value) {
-              // Convertir automáticamente cuando cambia el monto (sin await para no bloquear)
-              _convertCostToPlanCurrency(exchangeRateService);
-            } : null,
-            validator: (value) {
-              if (!_canEditGeneral) return null;
-              final v = value?.trim() ?? '';
-              if (v.isEmpty) return null; // Opcional
-              final doubleValue = double.tryParse(v.replaceAll(',', '.'));
-              if (doubleValue == null) return 'Debe ser un número válido';
-              if (doubleValue < 0) return 'No puede ser negativo';
-              if (doubleValue > 1000000) return 'Máximo 1.000.000';
-              return null;
-            },
+                  enabled: _canEditGeneral,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Ej: 150.50',
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                    ),
+                    prefixIcon: Icon(
+                      _getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'),
+                      color: Colors.grey.shade400,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: AppColorScheme.color2,
+                        width: 2.5,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: Colors.red.shade400,
+                        width: 1,
+                      ),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: Colors.red.shade400,
+                        width: 2.5,
+                      ),
+                    ),
+                    fillColor: Colors.transparent,
+                    filled: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+                  ),
+                  onChanged: _canEditGeneral ? (value) {
+                    _convertCostToPlanCurrency(exchangeRateService);
+                  } : null,
+                  validator: (value) {
+                    if (!_canEditGeneral) return null;
+                    final v = value?.trim() ?? '';
+                    if (v.isEmpty) return null;
+                    final doubleValue = double.tryParse(v.replaceAll(',', '.'));
+                    if (doubleValue == null) return 'Debe ser un número válido';
+                    if (doubleValue < 0) return 'No puede ser negativo';
+                    if (doubleValue > 1000000) return 'Máximo 1.000.000';
+                    return null;
+                  },
           ),
         ),
-        
         // Mostrar conversión si la moneda local es diferente a la del plan
         if (_costCurrency != null && 
             _planCurrency != null && 

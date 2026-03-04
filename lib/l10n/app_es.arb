@@ -1163,7 +1163,7 @@
   "@costHint": {
     "description": "Hint del coste"
   },
-  "eventDescription": "Descripción",
+  "eventDescription": "Descripción del evento",
   "@eventDescription": {
     "description": "Label de descripción de evento"
   },

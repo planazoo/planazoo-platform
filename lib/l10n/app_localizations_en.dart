@@ -1285,7 +1285,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get costHint => 'Ex: 450.00';
 
   @override
-  String get eventDescription => 'Description';
+  String get eventDescription => 'Event description';
 
   @override
   String get eventDescriptionHint => 'Event name';

@@ -1302,7 +1302,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get costHint => 'Ej: 450.00';
 
   @override
-  String get eventDescription => 'Descripción';
+  String get eventDescription => 'Descripción del evento';
 
   @override
   String get eventDescriptionHint => 'Nombre del evento';
