@@ -32,6 +32,9 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_state_perm
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/places/data/places_api_service.dart';
 import 'package:unp_calendario/features/places/presentation/widgets/place_autocomplete_field.dart';
+import 'package:unp_calendario/features/flights/data/flight_status_service.dart';
+import 'package:unp_calendario/features/flights/data/flight_status_result.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -101,6 +104,21 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late TextEditingController _gateController;
   late TextEditingController _notasPersonalesController;
   late bool _tarjetaObtenida;
+  // T246: número de vuelo (Desplazamiento / Avión)
+  late TextEditingController _flightNumberController;
+  /// Fecha usada para buscar el vuelo en Amadeus (puede diferir de la fecha del evento).
+  late DateTime _flightSearchDate;
+  FlightStatusResult? _lastFlightStatus;
+  bool _flightStatusLoading = false;
+
+  // T247: conexión a proveedor externo (evento conectado)
+  Map<String, dynamic>? _initialConnection;
+  DateTime? _initialCommonDate;
+  int? _initialCommonStartHour;
+  int? _initialCommonStartMinute;
+  int? _initialCommonDurationMinutes;
+  String? _initialFlightNumber;
+  bool _disconnectConnection = false;
 
   // Colores predefinidos para eventos
   final List<String> _eventColors = [
@@ -130,6 +148,44 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     'Actividad': ['Museo', 'Monumento', 'Parque', 'Teatro', 'Concierto', 'Deporte'],
     'Otro': ['Compra', 'Reunión', 'Trabajo', 'Personal'],
   };
+
+  /// Iconos por tipo de evento (familia).
+  static const Map<String, IconData> _typeIcons = {
+    'Desplazamiento': Icons.directions_car,
+    'Restauración': Icons.restaurant,
+    'Actividad': Icons.local_activity,
+    'Otro': Icons.more_horiz,
+  };
+
+  /// Iconos por subtipo (clave: 'Tipo|Subtipo' para desambiguar).
+  static const Map<String, IconData> _subtypeIcons = {
+    'Desplazamiento|Taxi': Icons.local_taxi,
+    'Desplazamiento|Avión': Icons.flight,
+    'Desplazamiento|Tren': Icons.train,
+    'Desplazamiento|Autobús': Icons.directions_bus,
+    'Desplazamiento|Coche': Icons.directions_car,
+    'Desplazamiento|Caminar': Icons.directions_walk,
+    'Restauración|Desayuno': Icons.free_breakfast,
+    'Restauración|Comida': Icons.lunch_dining,
+    'Restauración|Cena': Icons.dinner_dining,
+    'Restauración|Snack': Icons.cookie,
+    'Restauración|Bebida': Icons.local_bar,
+    'Actividad|Museo': Icons.museum,
+    'Actividad|Monumento': Icons.account_balance,
+    'Actividad|Parque': Icons.park,
+    'Actividad|Teatro': Icons.theater_comedy,
+    'Actividad|Concierto': Icons.music_note,
+    'Actividad|Deporte': Icons.sports_soccer,
+    'Otro|Compra': Icons.shopping_cart,
+    'Otro|Reunión': Icons.groups,
+    'Otro|Trabajo': Icons.work,
+    'Otro|Personal': Icons.person,
+  };
+
+  /// Selector gráfico tipo/subtipo: true = mostrar rejilla de tipos.
+  bool _typePickerExpanded = true;
+  /// Selector gráfico subtipo: true = mostrar rejilla de subtipos (cuando hay tipo).
+  bool _subtypePickerExpanded = true;
 
   @override
   void initState() {
@@ -174,9 +230,45 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       text: personalFields['notasPersonales'] ?? '',
     );
     _tarjetaObtenida = personalFields['tarjetaObtenida'] ?? false;
-    
+    _flightNumberController = TextEditingController(
+      text: widget.event?.commonPart?.extraData?['flightNumber'] as String? ?? '',
+    );
+    final ed = widget.event?.commonPart?.extraData;
+    if (ed != null && ed['flightNumber'] != null) {
+      _lastFlightStatus = FlightStatusResult(
+        flightNumber: ed['flightNumber'] as String? ?? '',
+        carrierCode: ed['carrierCode'] as String?,
+        originIata: ed['originIata'] as String?,
+        destinationIata: ed['destinationIata'] as String?,
+        originName: ed['originName'] as String?,
+        destinationName: ed['destinationName'] as String?,
+        departureScheduled: ed['departureScheduled'] as String?,
+        arrivalScheduled: ed['arrivalScheduled'] as String?,
+        durationMinutes: ed['durationMinutes'] as int?,
+        airlineName: ed['airlineName'] as String?,
+      );
+    }
+
+    // T247: guardar estado inicial de conexión y campos sincronizados
+    _initialConnection = widget.event?.commonPart?.connection;
+    _initialCommonDate = widget.event?.commonPart?.date;
+    _initialCommonStartHour = widget.event?.commonPart?.startHour;
+    _initialCommonStartMinute = widget.event?.commonPart?.startMinute;
+    _initialCommonDurationMinutes = widget.event?.commonPart?.durationMinutes;
+    _initialFlightNumber = ed != null ? ed['flightNumber'] as String? : null;
     // Inicializar valores
     _selectedDate = widget.initialDate ?? widget.event?.commonPart?.date ?? DateTime.now();
+    final depStr = ed?['departureScheduled'] as String?;
+    if (depStr != null && depStr.isNotEmpty) {
+      final dt = DateTime.tryParse(depStr);
+      if (dt != null) {
+        _flightSearchDate = DateTime(dt.year, dt.month, dt.day);
+      } else {
+        _flightSearchDate = _selectedDate;
+      }
+    } else {
+      _flightSearchDate = _selectedDate;
+    }
     _selectedHour = widget.initialHour ?? widget.event?.commonPart?.startHour ?? 9;
     _selectedDuration = (widget.event?.commonPart?.durationMinutes ?? 60) ~/ 60;
     _selectedStartMinute = widget.event?.commonPart?.startMinute ?? 0;
@@ -217,6 +309,114 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     
     // Inicializar permisos del usuario
     _initializePermissions();
+
+    // Selector gráfico tipo/subtipo: colapsar si ya hay selección
+    _typePickerExpanded = _typeFamilyController.text.isEmpty;
+    _subtypePickerExpanded = _typeSubtypeController.text.isEmpty && _typeFamilyController.text.isNotEmpty;
+  }
+
+  /// T247: Manejar aviso de desconexión de eventos conectados a proveedores externos.
+  Future<bool> _handleConnectionBeforeSave() async {
+    // Si no había conexión previa, nada que hacer
+    if (_initialConnection == null) {
+      _disconnectConnection = false;
+      return true;
+    }
+    final provider = _initialConnection!['provider'] as String?;
+    // Por ahora solo tratamos Amadeus (vuelos)
+    if (provider != 'amadeus') {
+      _disconnectConnection = false;
+      return true;
+    }
+
+    bool changed = false;
+    if (_initialCommonDate != null && _selectedDate != _initialCommonDate) {
+      changed = true;
+    }
+    if (_initialCommonStartHour != null && _selectedHour != _initialCommonStartHour) {
+      changed = true;
+    }
+    if (_initialCommonStartMinute != null && _selectedStartMinute != _initialCommonStartMinute) {
+      changed = true;
+    }
+    if (_initialCommonDurationMinutes != null &&
+        _selectedDurationMinutes != _initialCommonDurationMinutes) {
+      changed = true;
+    }
+    final currentFlightNumber = _flightNumberController.text.trim();
+    final initialFlightNumber = _initialFlightNumber?.trim() ?? '';
+    if (currentFlightNumber != initialFlightNumber) {
+      changed = true;
+    }
+
+    if (!changed) {
+      _disconnectConnection = false;
+      return true;
+    }
+
+    // Mostrar diálogo de confirmación
+    final loc = AppLocalizations.of(context)!;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey.shade900,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Evento conectado',
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        content: Text(
+          'Este evento está conectado a Amadeus (datos de vuelo).\n\n'
+          'Si continúas, se desconectará y dejará de actualizarse desde el proveedor.\n\n'
+          '¿Quieres continuar y desconectar, o cancelar para mantener la conexión?',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: Colors.grey.shade200,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancelar',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade300,
+              ),
+            ),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColorScheme.color2,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              'Desconectar y continuar',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      // Usuario acepta desconectar
+      _disconnectConnection = true;
+      return true;
+    } else {
+      // Usuario cancela, no guardar
+      _disconnectConnection = false;
+      return false;
+    }
   }
 
   /// Cargar moneda del plan (T153) y plan completo (T109)
@@ -328,6 +528,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _numeroReservaController.dispose();
     _gateController.dispose();
     _notasPersonalesController.dispose();
+    _flightNumberController.dispose();
     _maxParticipantsController.dispose();
     _costController.dispose(); // T101
     super.dispose();
@@ -356,6 +557,38 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           spreadRadius: -2,
         ),
       ],
+    );
+  }
+
+  /// Envuelve [child] en una capa que, si no puede editar (solo lectura), muestra SnackBar al tocar.
+  Widget _wrapReadOnlyIfNeeded({required Widget child}) {
+    if (_canEditGeneral) return child;
+    return Stack(
+      children: [
+        child,
+        Positioned.fill(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _showReadOnlySnackBar,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showReadOnlySnackBar() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context)!.eventReadOnlySnackBar,
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+        backgroundColor: Colors.orange.shade700,
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
@@ -428,6 +661,496 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ),
       ),
     );
+  }
+
+  /// Selector gráfico de tipo y subtipo de evento (iconos + chips con "+" para reabrir).
+  Widget _buildTypeSubtypeSelector() {
+    final loc = AppLocalizations.of(context)!;
+    final hasType = _typeFamilyController.text.isNotEmpty && _typeFamilies.contains(_typeFamilyController.text);
+    final subtypes = hasType ? (_typeSubtypes[_typeFamilyController.text] ?? []) : <String>[];
+    final hasSubtype = _typeSubtypeController.text.isNotEmpty && subtypes.contains(_typeSubtypeController.text);
+
+    if (!_canEditGeneral) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: _buildLoginStyleDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              loc.eventType,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey.shade400,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (hasType || hasSubtype)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (hasType) _buildTypeSubtypeChip(
+                    label: _typeFamilyController.text,
+                    icon: _typeIcons[_typeFamilyController.text] ?? Icons.category,
+                  ),
+                  if (hasSubtype) _buildTypeSubtypeChip(
+                    label: _typeSubtypeController.text,
+                    icon: _subtypeIcons['${_typeFamilyController.text}|${_typeSubtypeController.text}'] ?? Icons.label,
+                  ),
+                ],
+              )
+            else
+              Text(
+                '—',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _buildLoginStyleDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            loc.eventType,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.grey.shade400,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (_typePickerExpanded) ...[
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: _typeFamilies.map((family) {
+                final selected = _typeFamilyController.text == family;
+                return _buildTypeSubtypeChip(
+                  label: family,
+                  icon: _typeIcons[family] ?? Icons.category,
+                  selected: selected,
+                  onTap: () {
+                    setState(() {
+                      _typeFamilyController.text = family;
+                      _typeSubtypeController.text = '';
+                      _typePickerExpanded = false;
+                      _subtypePickerExpanded = true;
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ] else ...[
+            if (hasType && _subtypePickerExpanded) ...[
+              _buildTypeSubtypeChip(
+                label: _typeFamilyController.text,
+                icon: _typeIcons[_typeFamilyController.text] ?? Icons.category,
+                selected: true,
+                showPlus: true,
+                onTap: () {
+                  setState(() {
+                    _typePickerExpanded = true;
+                    _subtypePickerExpanded = false;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              Text(
+                loc.eventSubtype,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey.shade400,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: subtypes.map((subtype) {
+                  final selected = _typeSubtypeController.text == subtype;
+                  return _buildTypeSubtypeChip(
+                    label: subtype,
+                    icon: _subtypeIcons['${_typeFamilyController.text}|$subtype'] ?? Icons.label,
+                    selected: selected,
+                    onTap: () {
+                      setState(() {
+                        _typeSubtypeController.text = subtype;
+                        _subtypePickerExpanded = false;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+            ] else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTypeSubtypeChip(
+                      label: _typeFamilyController.text,
+                      icon: _typeIcons[_typeFamilyController.text] ?? Icons.category,
+                      selected: true,
+                      showPlus: true,
+                      onTap: () {
+                        setState(() {
+                          _typePickerExpanded = true;
+                          _subtypePickerExpanded = false;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: hasSubtype
+                        ? _buildTypeSubtypeChip(
+                            label: _typeSubtypeController.text,
+                            icon: _subtypeIcons['${_typeFamilyController.text}|${_typeSubtypeController.text}'] ?? Icons.label,
+                            selected: true,
+                            showPlus: true,
+                            onTap: () {
+                              setState(() => _subtypePickerExpanded = true);
+                            },
+                          )
+                        : _buildTypeSubtypeChip(
+                            label: loc.chooseSubtypeLabel,
+                            icon: Icons.add,
+                            selected: false,
+                            showPlus: false,
+                            onTap: () {
+                              setState(() => _subtypePickerExpanded = true);
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypeSubtypeChip({
+    required String label,
+    required IconData icon,
+    bool selected = false,
+    bool showPlus = false,
+    VoidCallback? onTap,
+  }) {
+    final color = selected ? AppColorScheme.color2 : Colors.grey.shade700;
+    final borderColor = selected ? AppColorScheme.color2 : Colors.grey.shade600;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor, width: selected ? 2 : 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: selected ? AppColorScheme.color2 : Colors.grey.shade400),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: selected ? Colors.white : Colors.grey.shade300,
+                ),
+              ),
+              if (showPlus) ...[
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.add_circle_outline,
+                  size: 16,
+                  color: selected ? Colors.white : Colors.grey.shade500,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Formatea horarios de salida/llegada para la tarjeta del vuelo (T246).
+  String _formatFlightTimes(String? depIso, String? arrIso) {
+    final dep = depIso != null && depIso.isNotEmpty ? DateTime.tryParse(depIso) : null;
+    final arr = arrIso != null && arrIso.isNotEmpty ? DateTime.tryParse(arrIso) : null;
+    if (dep != null && arr != null) {
+      return '${DateFormatter.formatTimeOnly(dep)} – ${DateFormatter.formatTimeOnly(arr)}';
+    }
+    if (dep != null) return DateFormatter.formatTimeOnly(dep);
+    if (arr != null) return DateFormatter.formatTimeOnly(arr);
+    return '';
+  }
+
+  /// T246: Bloque número de vuelo + botón Obtener datos (Amadeus).
+  Widget _buildFlightNumberBlock() {
+    final loc = AppLocalizations.of(context)!;
+    return Container(
+      decoration: _buildLoginStyleDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _flightNumberController,
+            readOnly: !_canEditGeneral,
+            textCapitalization: TextCapitalization.characters,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              labelText: loc.flightNumberLabel,
+              hintText: loc.flightNumberHint,
+              labelStyle: GoogleFonts.poppins(
+                fontSize: 13,
+                color: Colors.grey.shade400,
+                fontWeight: FontWeight.w500,
+              ),
+              hintStyle: GoogleFonts.poppins(
+                fontSize: 13,
+                color: Colors.grey.shade500,
+              ),
+              prefixIcon: Icon(Icons.flight, color: Colors.grey.shade400),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color: AppColorScheme.color2,
+                  width: 2.5,
+                ),
+              ),
+              fillColor: Colors.transparent,
+              filled: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+            ),
+          ),
+          if (_canEditGeneral) ...[
+            const SizedBox(height: 10),
+            InkWell(
+              onTap: _selectFlightDate,
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 18, color: Colors.grey.shade400),
+                    const SizedBox(width: 10),
+                    Text(
+                      loc.flightDateLabel,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      DateFormatter.formatDate(_flightSearchDate),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _flightStatusLoading ? null : _fetchFlightStatus,
+                icon: _flightStatusLoading
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.search, size: 18),
+                label: Text(
+                  loc.getFlightDataButton,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColorScheme.color2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                ),
+              ),
+            ),
+          ],
+          if (_lastFlightStatus != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _lastFlightStatus!.shortDescription,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: Colors.grey.shade300,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (_lastFlightStatus!.departureScheduled != null || _lastFlightStatus!.arrivalScheduled != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                _formatFlightTimes(
+                  _lastFlightStatus!.departureScheduled,
+                  _lastFlightStatus!.arrivalScheduled,
+                ),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey.shade400,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+            if (_lastFlightStatus!.airlineName != null && _lastFlightStatus!.airlineName!.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                _lastFlightStatus!.airlineName!,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey.shade400,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _fetchFlightStatus() async {
+    final number = _flightNumberController.text.trim();
+    if (number.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.flightNumberRequired,
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Colors.orange.shade700,
+          ),
+        );
+      }
+      return;
+    }
+    setState(() => _flightStatusLoading = true);
+    try {
+      final dateStr = '${_flightSearchDate.year}-${_flightSearchDate.month.toString().padLeft(2, '0')}-${_flightSearchDate.day.toString().padLeft(2, '0')}';
+      final result = await FlightStatusService().getFlightStatus(
+        flightNumber: number,
+        date: dateStr,
+      );
+      if (!mounted) return;
+      if (result == null) {
+        setState(() => _flightStatusLoading = false);
+        return;
+      }
+      setState(() {
+        _lastFlightStatus = result;
+        _flightStatusLoading = false;
+        _descriptionController.text = result.shortDescription;
+        final dep = result.departureScheduled;
+        final arr = result.arrivalScheduled;
+        if (dep != null && dep.isNotEmpty) {
+          final dt = DateTime.tryParse(dep);
+          if (dt != null) {
+            _selectedDate = DateTime(dt.year, dt.month, dt.day);
+            _selectedHour = dt.hour;
+            _selectedStartMinute = dt.minute;
+          }
+        }
+        if (result.durationMinutes != null && result.durationMinutes! > 0) {
+          _selectedDurationMinutes = result.durationMinutes!;
+          _selectedDuration = _selectedDurationMinutes ~/ 60;
+        } else if (arr != null && arr.isNotEmpty && dep != null && dep.isNotEmpty) {
+          final start = DateTime.tryParse(dep);
+          final end = DateTime.tryParse(arr);
+          if (start != null && end != null && end.isAfter(start)) {
+            _selectedDurationMinutes = end.difference(start).inMinutes;
+            _selectedDuration = _selectedDurationMinutes ~/ 60;
+          }
+        }
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.flightDataLoaded,
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Colors.green.shade600,
+          ),
+        );
+      }
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      setState(() => _flightStatusLoading = false);
+      final msg = e.message ?? e.code;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            msg,
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
+          backgroundColor: Colors.red.shade600,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _flightStatusLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString(),
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+    }
   }
 
   /// Abre la ubicación en Google Maps (por coordenadas o por búsqueda de dirección).
@@ -599,25 +1322,41 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
-              TabBar(
-                labelColor: AppColorScheme.color2,
-                unselectedLabelColor: Colors.grey.shade400,
-                indicatorColor: AppColorScheme.color2,
-                labelStyle: GoogleFonts.poppins(
-                  fontSize: isMobile ? 12 : 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                unselectedLabelStyle: GoogleFonts.poppins(
-                  fontSize: isMobile ? 12 : 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                tabs: [
-                  Tab(text: 'General'),
-                  Tab(text: 'Mi información'),
-                  if (_isAdmin) Tab(text: 'Info de Otros'),
-                ],
+              Builder(
+                builder: (context) {
+                  final tabController = DefaultTabController.of(context)!;
+                  final tabLabels = [
+                    AppLocalizations.of(context)!.eventTabGeneral,
+                    AppLocalizations.of(context)!.eventTabMyInfo,
+                    if (_isAdmin) AppLocalizations.of(context)!.eventTabOthersInfo,
+                  ].whereType<String>().toList();
+                  return ListenableBuilder(
+                    listenable: tabController,
+                    builder: (context, _) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: List.generate(tabController.length, (i) {
+                            final isSelected = tabController.index == i;
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4),
+                                child: _EventTabChip(
+                                  label: tabLabels[i],
+                                  isSelected: isSelected,
+                                  isMobile: isMobile,
+                                  onTap: () => tabController.animateTo(i),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Expanded(
                 child: SizedBox(
                   height: isMobile ? MediaQuery.of(context).size.height * 0.6 : 520,
@@ -630,44 +1369,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Indicador de permisos (estética tipo login)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: _buildLoginStyleDecoration().copyWith(
-                              border: Border.all(
-                                color: _canEditGeneral 
-                                    ? AppColorScheme.color2.withOpacity(0.5)
-                                    : Colors.grey.shade700.withOpacity(0.5),
-                                width: 1,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _canEditGeneral ? Icons.lock_open : Icons.lock,
-                                  size: 16,
-                                  color: _canEditGeneral ? AppColorScheme.color2 : Colors.grey.shade400,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _canEditGeneral ? 'Puedes editar esta información' : 'Solo lectura - información común',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: _canEditGeneral ? Colors.white : Colors.grey.shade400,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
             // Descripción (estética tipo login)
-            Container(
+            _wrapReadOnlyIfNeeded(
+              child: Container(
               decoration: _buildLoginStyleDecoration(),
               child: TextFormField(
                 controller: _descriptionController,
@@ -734,6 +1438,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 },
               ),
             ),
+            ),
             const SizedBox(height: 16),
             // T225: Lugar del evento (opcional) con búsqueda Places
             PlaceAutocompleteField(
@@ -797,186 +1502,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             // Bloque ubicación: dirección + enlace a Google Maps (si hay lugar)
             _buildLocationDetailsCard(),
             const SizedBox(height: 16),
-            // Tipo de familia
-            Container(
-              decoration: _buildLoginStyleDecoration(),
-              child: DropdownButtonFormField<String>(
-                value: _typeFamilyController.text.isEmpty || !_typeFamilies.contains(_typeFamilyController.text) 
-                    ? null 
-                    : _typeFamilyController.text,
-                dropdownColor: Colors.grey.shade800,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.eventType,
-                  labelStyle: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.grey.shade400,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  prefixIcon: Icon(Icons.category, color: Colors.grey.shade400),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: AppColorScheme.color2,
-                      width: 2.5,
-                    ),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.red.shade400,
-                      width: 1,
-                    ),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.red.shade400,
-                      width: 2.5,
-                    ),
-                  ),
-                  fillColor: Colors.transparent,
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                ),
-                items: _typeFamilies.map((family) {
-                  return DropdownMenuItem(
-                    value: family,
-                    child: Text(
-                      family,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: _canEditGeneral ? (value) {
-                  setState(() {
-                    _typeFamilyController.text = value ?? '';
-                    _typeSubtypeController.text = ''; // Reset subtipo
-                  });
-                } : null,
-                validator: (value) {
-                  if (!_canEditGeneral) return null;
-                  // Tipo es opcional, pero si hay subtipo, debe haber tipo válido
-                  if ((_typeSubtypeController.text.isNotEmpty) && (value == null || !_typeFamilies.contains(value))) {
-                    return AppLocalizations.of(context)!.selectValidTypeFirst;
-                  }
-                  return null;
-                },
-              ),
-            ),
-              const SizedBox(height: 16),
-            
-            // Subtipo
-            if (_typeFamilyController.text.isNotEmpty)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade800, // Color sólido, sin gradiente
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.grey.shade700.withOpacity(0.5),
-                    width: 1,
-                  ),
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: _typeSubtypeController.text.isEmpty || 
-                         !(_typeSubtypes[_typeFamilyController.text] ?? []).contains(_typeSubtypeController.text)
-                      ? null 
-                      : _typeSubtypeController.text,
-                  dropdownColor: Colors.grey.shade800,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.eventSubtype,
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.grey.shade400,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    prefixIcon: Icon(Icons.label, color: Colors.grey.shade400),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: AppColorScheme.color2,
-                        width: 2.5,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 1,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 2.5,
-                      ),
-                    ),
-                    fillColor: Colors.transparent,
-                    filled: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                  ),
-                  items: (_typeSubtypes[_typeFamilyController.text] ?? []).map((subtype) {
-                    return DropdownMenuItem(
-                      value: subtype,
-                      child: Text(
-                        subtype,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: _canEditGeneral ? (value) {
-                    setState(() {
-                      _typeSubtypeController.text = value ?? '';
-                    });
-                  } : null,
-                  validator: (value) {
-                    if (!_canEditGeneral) return null;
-                    // Subtipo es opcional, pero si hay valor debe pertenecer a la lista
-                    if (value != null && !(_typeSubtypes[_typeFamilyController.text] ?? []).contains(value)) {
-                      return AppLocalizations.of(context)!.invalidSubtype;
-                    }
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
+            // Tipo y subtipo de evento (selector gráfico con iconos)
+            _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
+            const SizedBox(height: 16),
             
             // Borrador - Switch estilo iOS
-            SwitchListTile.adaptive(
+            _wrapReadOnlyIfNeeded(
+              child: SwitchListTile.adaptive(
               title: Text(
                 AppLocalizations.of(context)!.isDraft,
                 style: GoogleFonts.poppins(
@@ -1000,11 +1532,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 });
               },
             ),
+            ),
             const SizedBox(height: 8),
             
             // Fecha - Con estilo editable
             InkWell(
-              onTap: _canEditGeneral ? _selectDate : null,
+              onTap: _canEditGeneral ? _selectDate : _showReadOnlySnackBar,
               borderRadius: BorderRadius.circular(14),
               child: Container(
                 padding: const EdgeInsets.all(16),
@@ -1053,7 +1586,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             
             // Hora - Con estilo editable
             InkWell(
-              onTap: _canEditGeneral ? _selectStartTime : null,
+              onTap: _canEditGeneral ? _selectStartTime : _showReadOnlySnackBar,
               borderRadius: BorderRadius.circular(14),
               child: Container(
                 padding: const EdgeInsets.all(16),
@@ -1102,7 +1635,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             
             // Duración - Con estilo editable
             InkWell(
-              onTap: _canEditGeneral ? _selectDuration : null,
+              onTap: _canEditGeneral ? _selectDuration : _showReadOnlySnackBar,
               borderRadius: BorderRadius.circular(14),
               child: Container(
                 padding: const EdgeInsets.all(16),
@@ -1150,7 +1683,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             const SizedBox(height: 12),
             
             // Timezone
-            Container(
+            _wrapReadOnlyIfNeeded(
+              child: Container(
               decoration: _buildLoginStyleDecoration(),
               child: DropdownButtonFormField<String>(
                 value: _selectedTimezone,
@@ -1207,11 +1741,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 } : null,
               ),
             ),
+            ),
             const SizedBox(height: 12),
             
             // Timezone de llegada (solo para vuelos/viajes)
             if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
-              Container(
+              _wrapReadOnlyIfNeeded(
+                child: Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade800, // Color sólido, sin gradiente
                   borderRadius: BorderRadius.circular(14),
@@ -1275,10 +1811,16 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   } : null,
                 ),
               ),
+                ),
             const SizedBox(height: 12),
-            
+            // T246: Número de vuelo (solo Desplazamiento + Avión)
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
+              _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
+              const SizedBox(height: 12),
             // Límite de participantes (T117) (estética tipo login)
-            Container(
+            _wrapReadOnlyIfNeeded(
+              child: Container(
               decoration: _buildLoginStyleDecoration(),
               child: TextFormField(
                 controller: _maxParticipantsController,
@@ -1347,6 +1889,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 },
               ),
             ),
+            ),
             const SizedBox(height: 16),
             
             // Requiere confirmación (T120 Fase 2)
@@ -1380,7 +1923,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             const SizedBox(height: 16),
             
             // Coste del evento (T101/T153)
-            if (_planCurrency != null) _buildCostFieldWithCurrency(),
+            if (_planCurrency != null) _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
             const SizedBox(height: 16),
             
             // Sección de registro de participantes (T117)
@@ -1427,11 +1970,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             const SizedBox(height: 16),
             
             // Participantes (tracks asignados)
-            _buildParticipantsSection(),
+            _wrapReadOnlyIfNeeded(child: _buildParticipantsSection()),
             const SizedBox(height: 16),
             
             // Color
-            ListTile(
+            _wrapReadOnlyIfNeeded(
+              child: ListTile(
               leading: Icon(Icons.palette, color: AppColorScheme.color2),
               title: Text(
                 'Color',
@@ -1480,6 +2024,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   }).toList(),
                 ),
               ),
+            ),
             ),
                         ],
                       ),
@@ -2125,6 +2670,20 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       setState(() {
         _selectedDate = picked;
       });
+    }
+  }
+
+  /// T246: selector de fecha del vuelo (para búsqueda en Amadeus).
+  Future<void> _selectFlightDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _flightSearchDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (!mounted) return;
+    if (picked != null && picked != _flightSearchDate) {
+      setState(() => _flightSearchDate = picked);
     }
   }
 
@@ -2943,6 +3502,30 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    // Validación tipo/subtipo (selector gráfico sin FormField)
+    final loc = AppLocalizations.of(context)!;
+    if (_typeSubtypeController.text.isNotEmpty &&
+        (_typeFamilyController.text.isEmpty || !_typeFamilies.contains(_typeFamilyController.text))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.selectValidTypeFirst, style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.orange.shade700,
+        ),
+      );
+      return;
+    }
+    final allowedSubtypes = _typeFamilyController.text.isNotEmpty
+        ? (_typeSubtypes[_typeFamilyController.text] ?? [])
+        : <String>[];
+    if (_typeSubtypeController.text.isNotEmpty && !allowedSubtypes.contains(_typeSubtypeController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.invalidSubtype, style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.orange.shade700,
+        ),
+      );
+      return;
+    }
     // Validar permisos antes de proceder
     if (!_canEditGeneral) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -3002,6 +3585,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return;
     }
 
+    // Aviso si se van a romper conexiones externas (T247)
+    final shouldContinue = await _handleConnectionBeforeSave();
+    if (!shouldContinue) {
+      return;
+    }
+
     // Obtener el userId del usuario actual
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser?.id ?? '';
@@ -3018,6 +3607,49 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       if (_lastPlaceDetails!.formattedAddress != null) baseExtra['placeAddress'] = _lastPlaceDetails!.formattedAddress;
       baseExtra['placeName'] = _lastPlaceDetails!.displayName;
     }
+    if (_lastFlightStatus != null) {
+      baseExtra['flightNumber'] = _lastFlightStatus!.flightNumber;
+      if (_lastFlightStatus!.carrierCode != null) baseExtra['carrierCode'] = _lastFlightStatus!.carrierCode;
+      if (_lastFlightStatus!.originIata != null) baseExtra['originIata'] = _lastFlightStatus!.originIata;
+      if (_lastFlightStatus!.destinationIata != null) baseExtra['destinationIata'] = _lastFlightStatus!.destinationIata;
+      if (_lastFlightStatus!.originName != null) baseExtra['originName'] = _lastFlightStatus!.originName;
+      if (_lastFlightStatus!.destinationName != null) baseExtra['destinationName'] = _lastFlightStatus!.destinationName;
+      if (_lastFlightStatus!.departureScheduled != null) baseExtra['departureScheduled'] = _lastFlightStatus!.departureScheduled;
+      if (_lastFlightStatus!.arrivalScheduled != null) baseExtra['arrivalScheduled'] = _lastFlightStatus!.arrivalScheduled;
+      if (_lastFlightStatus!.durationMinutes != null) baseExtra['durationMinutes'] = _lastFlightStatus!.durationMinutes;
+      if (_lastFlightStatus!.airlineName != null) baseExtra['airlineName'] = _lastFlightStatus!.airlineName;
+    }
+
+    // T247: calcular metadatos de conexión
+    Map<String, dynamic>? connection;
+    // Si hay nuevo resultado de vuelo, marcamos conexión Amadeus
+    if (_lastFlightStatus != null) {
+      final dateIso =
+          '${_selectedDate.year.toString().padLeft(4, '0')}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+      connection = {
+        'provider': 'amadeus',
+        'type': 'flight',
+        'externalId': '${_lastFlightStatus!.flightNumber}-$dateIso',
+        'source': 'T246',
+        'lastSyncAt': DateTime.now().toUtc().toIso8601String(),
+        'fields': [
+          'date',
+          'startHour',
+          'startMinute',
+          'durationMinutes',
+          'extraData.flightNumber',
+          'extraData.originIata',
+          'extraData.destinationIata',
+          'extraData.departureScheduled',
+          'extraData.arrivalScheduled',
+        ],
+      };
+    } else if (_initialConnection != null && !_disconnectConnection) {
+      // Mantener conexión previa si no se ha pedido desconectar
+      connection = _initialConnection;
+    } else {
+      connection = null;
+    }
     final commonPart = EventCommonPart(
       description: Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000),
       date: _selectedDate,
@@ -3030,6 +3662,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       location: locationSanitized,
       isDraft: _isDraft,
       extraData: baseExtra.isEmpty ? null : baseExtra,
+      connection: connection,
       // Si está marcado "para todos", participantIds debe estar vacío
       // Si no, debe contener los IDs seleccionados
       participantIds: _isForAllParticipants ? [] : _selectedParticipantIds,
@@ -3156,5 +3789,95 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     if (widget.onSaved != null) {
       widget.onSaved!(event);
     }
+  }
+}
+
+/// Chip de pestaña del diálogo de evento (estilo W14/W15: fondo destacado si seleccionado).
+class _EventTabChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final bool isMobile;
+  final VoidCallback onTap;
+
+  const _EventTabChip({
+    required this.label,
+    required this.isSelected,
+    required this.isMobile,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = isSelected ? Colors.white : Colors.grey.shade400;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: EdgeInsets.symmetric(
+          vertical: isMobile ? 10 : 12,
+          horizontal: isMobile ? 8 : 12,
+        ),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColorScheme.color2,
+                    AppColorScheme.color2.withOpacity(0.85),
+                  ],
+                )
+              : LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+                ),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColorScheme.color2.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 2),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              color: textColor,
+              fontSize: isMobile ? 12 : 14,
+              fontWeight: FontWeight.w600,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
   }
 } 

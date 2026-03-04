@@ -516,6 +516,128 @@ exports.placesDetails = functions.https.onCall(async (data, context) => {
   return json;
 });
 
+// T246: Amadeus On-Demand Flight Status — rellenar evento desplazamiento por número de vuelo
+const AMADEUS_CLIENT_ID = functions.config().amadeus?.client_id || process.env.AMADEUS_CLIENT_ID;
+const AMADEUS_CLIENT_SECRET = functions.config().amadeus?.client_secret || process.env.AMADEUS_CLIENT_SECRET;
+const AMADEUS_BASE = functions.config().amadeus?.base || process.env.AMADEUS_BASE || 'https://test.api.amadeus.com';
+
+function parseFlightNumber(input) {
+  if (!input || typeof input !== 'string') return null;
+  const s = input.trim().toUpperCase();
+  const match = s.match(/^([A-Z0-9]{2})(\d{1,5})$/);
+  if (match) return { carrierCode: match[1], flightNumber: match[2] };
+  return null;
+}
+
+async function getAmadeusToken() {
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: AMADEUS_CLIENT_ID,
+    client_secret: AMADEUS_CLIENT_SECRET,
+  });
+  const res = await fetch(`${AMADEUS_BASE}/v1/security/oauth2/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json.access_token) {
+    console.warn('Amadeus token error', res.status, json);
+    return null;
+  }
+  return json.access_token;
+}
+
+exports.flightStatus = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+  if (!AMADEUS_CLIENT_ID || !AMADEUS_CLIENT_SECRET) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'Amadeus API no configurada (functions.config().amadeus.client_id y client_secret).'
+    );
+  }
+  const { flightNumber: flightNumberInput, date: dateStr } = data || {};
+  if (!flightNumberInput || typeof flightNumberInput !== 'string') {
+    throw new functions.https.HttpsError('invalid-argument', 'flightNumber es requerido (ej: IB6842).');
+  }
+  const parsed = parseFlightNumber(flightNumberInput);
+  if (!parsed) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Formato de número de vuelo no válido. Usa código IATA (ej: IB6842, AF1135).'
+    );
+  }
+  const scheduledDate = dateStr && /^\d{4}-\d{2}-\d{2}$/.test(String(dateStr).trim())
+    ? String(dateStr).trim()
+    : new Date().toISOString().slice(0, 10);
+  const token = await getAmadeusToken();
+  if (!token) {
+    throw new functions.https.HttpsError('internal', 'No se pudo obtener token de Amadeus.');
+  }
+  const params = new URLSearchParams({
+    carrierCode: parsed.carrierCode,
+    flightNumber: parsed.flightNumber,
+    scheduledDepartureDate: scheduledDate,
+  });
+  const url = `${AMADEUS_BASE}/v2/schedule/flights?${params.toString()}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const errMsg = json.errors?.[0]?.detail || json.error_description || JSON.stringify(json).slice(0, 200);
+    console.warn('Amadeus flight status error', res.status, errMsg);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error al obtener datos del vuelo (${res.status}): ${errMsg}`
+    );
+  }
+  const dataList = Array.isArray(json.data) ? json.data : (json.data ? [json.data] : []);
+  const flight = dataList[0];
+  if (!flight) {
+    throw new functions.https.HttpsError('not-found', 'No se encontraron datos para este vuelo y fecha.');
+  }
+
+  // Amadeus v2 schedule/flights devuelve estructura DatedFlight con flightPoints[]
+  const flightPoints = Array.isArray(flight.flightPoints) ? flight.flightPoints : [];
+  const originPoint = flightPoints[0] || {};
+  const destinationPoint = flightPoints[flightPoints.length - 1] || {};
+
+  const depSection = originPoint.departure || originPoint.departureInfo || {};
+  const arrSection = destinationPoint.arrival || destinationPoint.arrivalInfo || {};
+
+  const depTimings = Array.isArray(depSection.timings) ? depSection.timings : [];
+  const arrTimings = Array.isArray(arrSection.timings) ? arrSection.timings : [];
+
+  const stdDep = depTimings.find(t => t.qualifier === 'STD') || depTimings[0] || {};
+  const stdArr = arrTimings.find(t => t.qualifier === 'STA') || arrTimings[0] || {};
+
+  const depTime = stdDep.value || depSection.scheduledTime || depSection.scheduledAt || depSection.time;
+  const arrTime = stdArr.value || arrSection.scheduledTime || arrSection.scheduledAt || arrSection.time;
+
+  const depIata = originPoint.iataCode || depSection.iataCode || depSection.airport || flight.departureAirport;
+  const arrIata = destinationPoint.iataCode || arrSection.iataCode || arrSection.airport || flight.arrivalAirport;
+
+  const carrier = (flight.flightDesignator && flight.flightDesignator.carrierCode) || flight.carrierCode || parsed.carrierCode;
+  const number = (flight.flightDesignator && flight.flightDesignator.flightNumber) || flight.number || parsed.flightNumber;
+
+  const duration = flight.duration || flight.durationMinutes;
+  return {
+    flightNumber: `${carrier}${number}`,
+    carrierCode: carrier,
+    originIata: depIata || null,
+    destinationIata: arrIata || null,
+    originName: depSection.terminal ? `${depIata || ''} (T${depSection.terminal})` : (depIata || null),
+    destinationName: arrSection.terminal ? `${arrIata || ''} (T${arrSection.terminal})` : (arrIata || null),
+    departureScheduled: depTime || null,
+    arrivalScheduled: arrTime || null,
+    durationMinutes: typeof duration === 'number' ? duration : null,
+    airlineName: flight.airlineName || carrier,
+  };
+});
+
 exports.sendPushNotification = functions.https.onCall(async (data, context) => {
   // Verificar autenticación
   if (!context.auth) {

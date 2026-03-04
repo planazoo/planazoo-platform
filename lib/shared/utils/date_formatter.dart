@@ -11,6 +11,13 @@ class DateFormatter {
     return 'Hora $hour';
   }
 
+  /// Hora en formato HH:mm (p. ej. para salida/llegada de vuelos).
+  static String formatTimeOnly(DateTime dateTime) {
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
   static String formatDateTime(DateTime dateTime) {
     final day = dateTime.day.toString().padLeft(2, '0');
     final month = dateTime.month.toString().padLeft(2, '0');

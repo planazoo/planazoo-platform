@@ -1320,10 +1320,51 @@ class AppLocalizationsEs extends AppLocalizations {
   String get openInGoogleMaps => 'Abrir en Google Maps';
 
   @override
+  String get flightNumberLabel => 'Número de vuelo';
+
+  @override
+  String get flightNumberHint => 'Ej: IB6842, AF1135';
+
+  @override
+  String get flightDateLabel => 'Fecha del vuelo';
+
+  @override
+  String get getFlightDataButton => 'Obtener datos del vuelo';
+
+  @override
+  String get flightNumberRequired =>
+      'Introduce el número de vuelo (ej: IB6842).';
+
+  @override
+  String get flightDataLoaded => 'Datos del vuelo cargados.';
+
+  @override
+  String get eventTabGeneral => 'General';
+
+  @override
+  String get eventTabMyInfo => 'Mi información';
+
+  @override
+  String get eventTabOthersInfo => 'Info de Otros';
+
+  @override
+  String get eventReadOnlySnackBar =>
+      'Este dato es común al plan y solo puede editarlo el creador o un administrador.';
+
+  @override
   String get eventType => 'Tipo de evento';
 
   @override
   String get eventSubtype => 'Subtipo';
+
+  @override
+  String get changeTypeLabel => 'Cambiar tipo';
+
+  @override
+  String get changeSubtypeLabel => 'Cambiar subtipo';
+
+  @override
+  String get chooseSubtypeLabel => 'Elegir subtipo';
 
   @override
   String get selectValidTypeFirst => 'Selecciona primero un tipo válido';

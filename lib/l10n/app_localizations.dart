@@ -2408,6 +2408,66 @@ abstract class AppLocalizations {
   /// **'Abrir en Google Maps'**
   String get openInGoogleMaps;
 
+  /// No description provided for @flightNumberLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Número de vuelo'**
+  String get flightNumberLabel;
+
+  /// No description provided for @flightNumberHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: IB6842, AF1135'**
+  String get flightNumberHint;
+
+  /// No description provided for @flightDateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha del vuelo'**
+  String get flightDateLabel;
+
+  /// No description provided for @getFlightDataButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Obtener datos del vuelo'**
+  String get getFlightDataButton;
+
+  /// No description provided for @flightNumberRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce el número de vuelo (ej: IB6842).'**
+  String get flightNumberRequired;
+
+  /// No description provided for @flightDataLoaded.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos del vuelo cargados.'**
+  String get flightDataLoaded;
+
+  /// No description provided for @eventTabGeneral.
+  ///
+  /// In es, this message translates to:
+  /// **'General'**
+  String get eventTabGeneral;
+
+  /// No description provided for @eventTabMyInfo.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi información'**
+  String get eventTabMyInfo;
+
+  /// No description provided for @eventTabOthersInfo.
+  ///
+  /// In es, this message translates to:
+  /// **'Info de Otros'**
+  String get eventTabOthersInfo;
+
+  /// No description provided for @eventReadOnlySnackBar.
+  ///
+  /// In es, this message translates to:
+  /// **'Este dato es común al plan y solo puede editarlo el creador o un administrador.'**
+  String get eventReadOnlySnackBar;
+
   /// Label de tipo de evento
   ///
   /// In es, this message translates to:
@@ -2419,6 +2479,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Subtipo'**
   String get eventSubtype;
+
+  /// No description provided for @changeTypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar tipo'**
+  String get changeTypeLabel;
+
+  /// No description provided for @changeSubtypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar subtipo'**
+  String get changeSubtypeLabel;
+
+  /// No description provided for @chooseSubtypeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir subtipo'**
+  String get chooseSubtypeLabel;
 
   /// Error de seleccionar tipo válido primero
   ///

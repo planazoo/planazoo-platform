@@ -3,14 +3,14 @@
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
 
-**Siguiente código de tarea: T245**
+**Siguiente código de tarea: T248**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237 (widgets, info plan, calendario, cards, modales)
 - **Administración:** T183-T191, T223 (vista admin, export CSV, seed, espacio admin RUD toda la BD, T188 en progreso)
 - **Auth / Perfil:** T159-T162, T173, T174, T226-T228, T232 (permisos Firestore, verificación, perfil, registro, modales)
 - **Seguridad avanzada:** T166-T172 (2FA, token refresh, legal, etc.)
-- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T238, T242, T243
+- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T246, T238, T242, T243
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
@@ -79,6 +79,8 @@
 | **T182** | Afinar UI de calendario en W28: celdas, tipografía, espaciado, tooltips. | Media |
 | **T215** | Mover un evento de un plan a otro: permitir cambiar el plan al que pertenece un evento (UI + lógica + permisos). Relacionado con buzón de eventos por email y asignación a plan. | Media |
 | **T225** | **Búsqueda de lugar con Google Places API:** Integrar autocompletado y Place Details para **alojamientos** y **eventos**. Plan de fases en `docs/tareas/T225_GOOGLE_PLACES_PLAN.md`. Requiere: API key (Places API), paquete Flutter, variable de entorno, UI de búsqueda + mapeo a modelo. Coste: ~10k Place Details/mes gratis. **En progreso** (Fase 1: dependencia y API key). | Media |
+| **T246** | **Rellenar evento desplazamiento por número de vuelo o tren:** En evento tipo Desplazamiento, campo opcional "Número de vuelo" (ej. IB6842) o "Número de tren"; API devuelve origen, destino, horarios; rellenar descripción y fecha/hora del evento. Plan y APIs en `docs/tareas/T246_DESPLAZAMIENTO_POR_NUMERO_VUELO_TREN.md`. Fase 1: vuelos (ej. AviationStack); Fase 2 opcional: trenes (Renfe, etc.). | Media |
+| **T247** | **Eventos conectados a proveedores:** Marcar eventos que se rellenan desde APIs externas (Amadeus, email, etc.) con metadatos de conexión, mostrar un badge/indicador en calendario y modal, y al cambiar campos sincronizados (fecha/hora, duración, número de vuelo, etc.), avisar al usuario de que se perderá la conexión, permitiendo elegir entre desconectar y mantener el cambio o deshacer el cambio y mantener la conexión. Testing y docs: ver `docs/tareas/T247_EVENTOS_CONECTADOS.md`. | Media |
 | **T238** | Modal crear evento: (1) ~~Barra verde superior con título.~~ ✅ Hecho. (2) Mejorar visualización de las opciones «General» y «Mi información». (3) Evaluar si el texto «Puedes editar esta información» es necesario. (4) Hacer muy rápido y fácil definir el evento — *decidir al abordar la tarea*: flujo corto con «Más opciones» vs todos los campos visibles reordenados, etc. (5) Orden de aparición de los campos mejorado. Relacionado con T208 (duración/hora concreta). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T242** | Página Calendario: (1) ~~Eliminar la opción «perspectiva de usuario».~~ ✅ Hecho. (2) Agrupar las opciones de la barra en un menú categorizado; revisar cuáles son necesarias. (3) Añadir menú de filtros de eventos: todos, borrador. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T243** | Copiar planes, eventos y alojamientos: (1) Revisar si ya existe tarea (T35, T211 para eventos). (2) Crear ambas opciones: (a) copiar eventos y alojamientos dentro del mismo plan (pegar en el plan actual); (b) duplicar plan entero (plan nuevo con eventos y alojamientos copiados). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |

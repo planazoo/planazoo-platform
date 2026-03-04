@@ -913,6 +913,16 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Nuevo lugar actualizado o eliminado; tarjeta y enlace coherentes con el lugar actual.
   - Estado: 🔄
 
+- [ ] **EVENT-C-020:** Crear evento desplazamiento con número de vuelo (T246)
+  - Pasos: Crear evento → Tipo Desplazamiento, Subtipo Avión. Introducir número de vuelo (ej. IB6842) y pulsar "Obtener datos del vuelo". Comprobar que se rellenan descripción, fecha, hora de inicio y duración; guardar.
+  - Esperado: Evento guardado con descripción tipo "IB6842 MAD → FCO"; fecha/hora y duración coherentes con el vuelo; extraData con flightNumber, originIata, destinationIata, departureScheduled, arrivalScheduled, durationMinutes, airlineName. Requiere Amadeus configurado en Cloud Functions.
+  - Estado: 🔄
+
+- [ ] **EVENT-C-021:** Editar evento de vuelo y volver a obtener datos (T246)
+  - Pasos: Editar un evento que ya tiene datos de vuelo; cambiar número de vuelo o fecha del evento y pulsar de nuevo "Obtener datos del vuelo".
+  - Esperado: Se actualizan descripción, hora y duración; al guardar, extraData refleja el nuevo vuelo.
+  - Estado: 🔄
+
 ### 4.2 Leer/Ver Eventos
 
 - [ ] **EVENT-R-001:** Ver eventos del plan en calendario

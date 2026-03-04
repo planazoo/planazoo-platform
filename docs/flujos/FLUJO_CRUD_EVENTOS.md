@@ -113,6 +113,7 @@ Completar campos:
 - Subtipo (Avión/Tren/Restaurante/Museo/etc.)
 - Participantes asignados
 - Ubicación / Lugar (opcional, T225): búsqueda con Google Places; al elegir una sugerencia se rellena el campo Lugar; aparece tarjeta de ubicación con dirección y botón "Abrir en Google Maps". Se guarda en location y en extraData (placeLat, placeLng, placeAddress, placeName). Formulario con estética tipo login.
+- Número de vuelo (T246, solo Desplazamiento / Avión): campo opcional "Número de vuelo" (formato IATA, ej. IB6842); botón "Obtener datos del vuelo" llama a Amadeus On-Demand Flight Status vía Cloud Function; se rellenan descripción, fecha, hora de inicio y duración; se guarda en extraData (flightNumber, originIata, destinationIata, departureScheduled, arrivalScheduled, durationMinutes, airlineName). Configuración: docs/configuracion/CONFIGURAR_AMADEUS_FLIGHT_STATUS.md.
 - Presupuesto si aplica (T101/T153):
   - Moneda local del coste (EUR/USD/GBP/JPY) (T153)
   - Coste por persona o total (T101)

@@ -576,6 +576,8 @@ class EventCommonPart {
   final bool isForAllParticipants;
   final bool isDraft;
   final Map<String, dynamic>? extraData;
+  /// Metadatos de conexión a proveedores externos (T247): amadeus, email, etc.
+  final Map<String, dynamic>? connection;
 
   const EventCommonPart({
     required this.description,
@@ -592,6 +594,7 @@ class EventCommonPart {
     this.isForAllParticipants = true,
     this.isDraft = false,
     this.extraData,
+    this.connection,
   });
 
   factory EventCommonPart.fromMap(Map<String, dynamic> map) {
@@ -610,6 +613,7 @@ class EventCommonPart {
       isForAllParticipants: map['isForAllParticipants'] ?? true,
       isDraft: map['isDraft'] ?? false,
       extraData: map['extraData'] as Map<String, dynamic>?,
+      connection: map['connection'] as Map<String, dynamic>?,
     );
   }
 
@@ -629,6 +633,7 @@ class EventCommonPart {
       'isForAllParticipants': isForAllParticipants,
       'isDraft': isDraft,
       if (extraData != null) 'extraData': extraData,
+      if (connection != null) 'connection': connection,
     };
   }
 }

@@ -84,7 +84,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
   - `GUIA_SEGURIDAD.md` - Seguridad, autenticación y protección de datos
   - `GUIA_ASPECTOS_LEGALES.md` - Términos, privacidad, cookies y cumplimiento legal
 - Al implementar una funcionalidad completa: revisar si debe actualizarse el flujo correspondiente en `docs/flujos/`.
-- **Desplegar reglas Firestore:** Desde la raíz del proyecto: `npx firebase deploy --only firestore:rules`. Ver `docs/configuracion/DESPLEGAR_REGLAS_FIRESTORE.md`.
+- **Desplegar reglas Firestore:** Desde la raíz del proyecto: `npx firebase deploy --only firestore:rules` (o `npx firebase-tools deploy --only firestore:rules`). Ver `docs/configuracion/DESPLEGAR_REGLAS_FIRESTORE.md`. Recuérdese: en este proyecto se usa **npx** para Firebase (ver sección 10).
 - **Testing Checklist:** Actualizar `docs/configuracion/TESTING_CHECKLIST.md` después de completar cada tarea:
   - Marcar como probadas las funcionalidades nuevas
   - Añadir nuevos casos de prueba si aplica
@@ -115,6 +115,12 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - **Ruta de Flutter (macOS)**: `/Users/emmclaraso/development/flutter`
 - Usar la ruta correspondiente a tu sistema; actualizar si tu instalación está en otra ubicación.
 - Añadir al PATH del sistema si es necesario para ejecutar comandos `flutter`.
+- **Firebase y herramientas CLI: usar `npx`.** En este proyecto se trabaja con **npx** (sin instalar Firebase CLI u otras herramientas globalmente). Ejemplos:
+  - Desplegar Functions: `npx firebase deploy --only functions` (o `npx firebase-tools deploy --only functions`).
+  - Reglas Firestore: `npx firebase deploy --only firestore:rules`.
+  - Hosting: `npx firebase-tools deploy --only hosting`.
+  - Config: `npx firebase functions:config:set ...`
+  En la documentación y en los comandos propuestos, usar siempre la variante con `npx`.
 
 ---
 

@@ -1187,6 +1187,16 @@
   "@openInGoogleMaps": {
     "description": "Botón para abrir la ubicación en Google Maps"
   },
+  "flightNumberLabel": "Número de vuelo",
+  "flightNumberHint": "Ej: IB6842, AF1135",
+  "flightDateLabel": "Fecha del vuelo",
+  "getFlightDataButton": "Obtener datos del vuelo",
+  "flightNumberRequired": "Introduce el número de vuelo (ej: IB6842).",
+  "flightDataLoaded": "Datos del vuelo cargados.",
+  "eventTabGeneral": "General",
+  "eventTabMyInfo": "Mi información",
+  "eventTabOthersInfo": "Info de Otros",
+  "eventReadOnlySnackBar": "Este dato es común al plan y solo puede editarlo el creador o un administrador.",
   "eventType": "Tipo de evento",
   "@eventType": {
     "description": "Label de tipo de evento"
@@ -1195,6 +1205,9 @@
   "@eventSubtype": {
     "description": "Label de subtipo de evento"
   },
+  "changeTypeLabel": "Cambiar tipo",
+  "changeSubtypeLabel": "Cambiar subtipo",
+  "chooseSubtypeLabel": "Elegir subtipo",
   "selectValidTypeFirst": "Selecciona primero un tipo válido",
   "@selectValidTypeFirst": {
     "description": "Error de seleccionar tipo válido primero"
