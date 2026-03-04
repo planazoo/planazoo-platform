@@ -2390,6 +2390,18 @@ abstract class AppLocalizations {
   /// **'Lugar'**
   String get eventLocationLabel;
 
+  /// No description provided for @eventAddressSingleLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Localización'**
+  String get eventAddressSingleLabel;
+
+  /// No description provided for @eventAddressSingleHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Lugar o dirección del evento'**
+  String get eventAddressSingleHint;
+
   /// Hint de búsqueda de lugar para evento
   ///
   /// In es, this message translates to:
@@ -2407,6 +2419,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Abrir en Google Maps'**
   String get openInGoogleMaps;
+
+  /// No description provided for @departureAirportLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Aeropuerto de salida'**
+  String get departureAirportLabel;
+
+  /// No description provided for @departureAirportHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Madrid Barajas, MAD'**
+  String get departureAirportHint;
+
+  /// No description provided for @arrivalAirportLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Aeropuerto de llegada'**
+  String get arrivalAirportLabel;
+
+  /// No description provided for @arrivalAirportHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Roma Fiumicino, FCO'**
+  String get arrivalAirportHint;
+
+  /// No description provided for @taxiOriginLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Origen'**
+  String get taxiOriginLabel;
+
+  /// No description provided for @taxiOriginHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección de recogida'**
+  String get taxiOriginHint;
+
+  /// No description provided for @taxiDestinationLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Destino'**
+  String get taxiDestinationLabel;
+
+  /// No description provided for @taxiDestinationHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección de llegada'**
+  String get taxiDestinationHint;
+
+  /// No description provided for @taxiSeatsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Plazas del taxi'**
+  String get taxiSeatsLabel;
+
+  /// No description provided for @taxiSeatsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Número de plazas'**
+  String get taxiSeatsHint;
 
   /// No description provided for @flightNumberLabel.
   ///
@@ -2509,6 +2581,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Subtipo inválido para el tipo seleccionado'**
   String get invalidSubtype;
+
+  /// No description provided for @eventStatusDraft.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrador'**
+  String get eventStatusDraft;
+
+  /// No description provided for @eventStatusConfirmed.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmado'**
+  String get eventStatusConfirmed;
 
   /// Label de es borrador
   ///

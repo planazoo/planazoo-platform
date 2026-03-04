@@ -1172,6 +1172,8 @@
     "description": "Event description hint"
   },
   "eventLocationLabel": "Location",
+  "eventAddressSingleLabel": "Location",
+  "eventAddressSingleHint": "Place or address of the event",
   "@eventLocationLabel": {
     "description": "Event location label (optional)"
   },
@@ -1187,6 +1189,16 @@
   "@openInGoogleMaps": {
     "description": "Button to open location in Google Maps"
   },
+  "departureAirportLabel": "Departure airport",
+  "departureAirportHint": "E.g. Madrid Barajas, MAD",
+  "arrivalAirportLabel": "Arrival airport",
+  "arrivalAirportHint": "E.g. Rome Fiumicino, FCO",
+  "taxiOriginLabel": "Origin",
+  "taxiOriginHint": "Pick-up address",
+  "taxiDestinationLabel": "Destination",
+  "taxiDestinationHint": "Drop-off address",
+  "taxiSeatsLabel": "Taxi seats",
+  "taxiSeatsHint": "Number of seats",
   "flightNumberLabel": "Flight number",
   "flightNumberHint": "E.g. IB6842, AF1135",
   "flightDateLabel": "Flight date",
@@ -1216,6 +1228,8 @@
   "@invalidSubtype": {
     "description": "Invalid subtype error"
   },
+  "eventStatusDraft": "Draft",
+  "eventStatusConfirmed": "Confirmed",
   "isDraft": "Is draft",
   "@isDraft": {
     "description": "Is draft label"

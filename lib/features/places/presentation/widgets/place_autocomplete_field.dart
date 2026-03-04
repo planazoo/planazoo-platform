@@ -12,6 +12,7 @@ import '../../../../l10n/app_localizations.dart';
 /// Al seleccionar un resultado se obtienen detalles y se llama [onPlaceSelected].
 /// Opcionalmente [onPlaceIdSelected] se llama con el placeId al pulsar una sugerencia (para rellenar campos con un botón).
 /// Si [placesApiKey] está vacío, el campo se muestra pero no hace peticiones.
+/// Si se pasa [controller], se usa ese en lugar de uno interno (útil para unificar con otros campos).
 class PlaceAutocompleteField extends StatefulWidget {
   final String? initialAddress;
   final bool lodgingOnly;
@@ -19,6 +20,14 @@ class PlaceAutocompleteField extends StatefulWidget {
   /// Se llama al seleccionar una sugerencia con el [placeId]; permite al padre rellenar campos con un botón.
   final void Function(String placeId)? onPlaceIdSelected;
   final String? placesApiKey;
+  /// Si se proporciona, se usa este controlador en lugar de uno interno (no se hace dispose).
+  final TextEditingController? controller;
+  /// Etiqueta dentro del campo (p. ej. "Origen", "Destino", "Localización"). Si null, usa [placeAddressLabel].
+  final String? labelText;
+  /// Hint dentro del campo. Si null, usa [placeSearchHint].
+  final String? hintText;
+  /// Tamaño de fuente del texto del campo. Si null, usa el del tema.
+  final double? fontSize;
 
   const PlaceAutocompleteField({
     super.key,
@@ -27,6 +36,10 @@ class PlaceAutocompleteField extends StatefulWidget {
     required this.onPlaceSelected,
     this.onPlaceIdSelected,
     this.placesApiKey,
+    this.controller,
+    this.labelText,
+    this.hintText,
+    this.fontSize,
   });
 
   @override
@@ -34,7 +47,9 @@ class PlaceAutocompleteField extends StatefulWidget {
 }
 
 class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
-  final _controller = TextEditingController();
+  TextEditingController? _internalController;
+  TextEditingController get _controller =>
+      widget.controller ?? (_internalController ??= TextEditingController());
   final _focusNode = FocusNode();
   Timer? _debounce;
   List<PlacePrediction> _predictions = [];
@@ -60,7 +75,7 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
     _debounce?.cancel();
     _controller.removeListener(_onTextChanged);
     _focusNode.removeListener(_onFocusChange);
-    _controller.dispose();
+    _internalController?.dispose();
     _focusNode.dispose();
     _removeOverlay();
     super.dispose();
@@ -209,6 +224,8 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
       // corra después de cerrar el overlay y los campos se actualicen correctamente.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+        // Evitar que al actualizar el padre _controller.text se dispare _onTextChanged y se vuelva a abrir el overlay.
+        _skipNextFetch = true;
         widget.onPlaceSelected(details);
       });
     }
@@ -222,9 +239,12 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
       child: TextFormField(
         controller: _controller,
         focusNode: _focusNode,
+        style: widget.fontSize != null
+            ? TextStyle(fontSize: widget.fontSize)
+            : null,
         decoration: InputDecoration(
-          labelText: loc.placeAddressLabel,
-          hintText: loc.placeSearchHint,
+          labelText: widget.labelText ?? loc.placeAddressLabel,
+          hintText: widget.hintText ?? loc.placeSearchHint,
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _loading
               ? const Padding(

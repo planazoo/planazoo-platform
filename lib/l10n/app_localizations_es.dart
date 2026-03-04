@@ -1311,6 +1311,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get eventLocationLabel => 'Lugar';
 
   @override
+  String get eventAddressSingleLabel => 'Localización';
+
+  @override
+  String get eventAddressSingleHint => 'Lugar o dirección del evento';
+
+  @override
   String get eventLocationHint => 'Buscar lugar (dirección, sitio…)';
 
   @override
@@ -1318,6 +1324,36 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get openInGoogleMaps => 'Abrir en Google Maps';
+
+  @override
+  String get departureAirportLabel => 'Aeropuerto de salida';
+
+  @override
+  String get departureAirportHint => 'Ej: Madrid Barajas, MAD';
+
+  @override
+  String get arrivalAirportLabel => 'Aeropuerto de llegada';
+
+  @override
+  String get arrivalAirportHint => 'Ej: Roma Fiumicino, FCO';
+
+  @override
+  String get taxiOriginLabel => 'Origen';
+
+  @override
+  String get taxiOriginHint => 'Dirección de recogida';
+
+  @override
+  String get taxiDestinationLabel => 'Destino';
+
+  @override
+  String get taxiDestinationHint => 'Dirección de llegada';
+
+  @override
+  String get taxiSeatsLabel => 'Plazas del taxi';
+
+  @override
+  String get taxiSeatsHint => 'Número de plazas';
 
   @override
   String get flightNumberLabel => 'Número de vuelo';
@@ -1371,6 +1407,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get invalidSubtype => 'Subtipo inválido para el tipo seleccionado';
+
+  @override
+  String get eventStatusDraft => 'Borrador';
+
+  @override
+  String get eventStatusConfirmed => 'Confirmado';
 
   @override
   String get isDraft => 'Es borrador';

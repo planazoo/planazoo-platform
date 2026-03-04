@@ -1172,6 +1172,8 @@
     "description": "Hint de descripción de evento"
   },
   "eventLocationLabel": "Lugar",
+  "eventAddressSingleLabel": "Localización",
+  "eventAddressSingleHint": "Lugar o dirección del evento",
   "@eventLocationLabel": {
     "description": "Label del lugar del evento (opcional)"
   },
@@ -1187,6 +1189,16 @@
   "@openInGoogleMaps": {
     "description": "Botón para abrir la ubicación en Google Maps"
   },
+  "departureAirportLabel": "Aeropuerto de salida",
+  "departureAirportHint": "Ej: Madrid Barajas, MAD",
+  "arrivalAirportLabel": "Aeropuerto de llegada",
+  "arrivalAirportHint": "Ej: Roma Fiumicino, FCO",
+  "taxiOriginLabel": "Origen",
+  "taxiOriginHint": "Dirección de recogida",
+  "taxiDestinationLabel": "Destino",
+  "taxiDestinationHint": "Dirección de llegada",
+  "taxiSeatsLabel": "Plazas del taxi",
+  "taxiSeatsHint": "Número de plazas",
   "flightNumberLabel": "Número de vuelo",
   "flightNumberHint": "Ej: IB6842, AF1135",
   "flightDateLabel": "Fecha del vuelo",
@@ -1216,6 +1228,8 @@
   "@invalidSubtype": {
     "description": "Error de subtipo inválido"
   },
+  "eventStatusDraft": "Borrador",
+  "eventStatusConfirmed": "Confirmado",
   "isDraft": "Es borrador",
   "@isDraft": {
     "description": "Label de es borrador"

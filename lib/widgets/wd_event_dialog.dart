@@ -106,8 +106,20 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late bool _tarjetaObtenida;
   // T246: número de vuelo (Desplazamiento / Avión)
   late TextEditingController _flightNumberController;
-  /// Fecha usada para buscar el vuelo en Amadeus (puede diferir de la fecha del evento).
-  late DateTime _flightSearchDate;
+  late TextEditingController _departureAirportController;
+  late TextEditingController _arrivalAirportController;
+  PlaceDetails? _departureAirportDetails;
+  PlaceDetails? _arrivalAirportDetails;
+  /// Taxi (Desplazamiento / Taxi): origen, destino y plazas.
+  late TextEditingController _taxiOriginController;
+  late TextEditingController _taxiDestinationController;
+  PlaceDetails? _taxiOriginDetails;
+  PlaceDetails? _taxiDestinationDetails;
+  double? _taxiOriginStoredLat;
+  double? _taxiOriginStoredLng;
+  double? _taxiDestinationStoredLat;
+  double? _taxiDestinationStoredLng;
+  int _taxiSeats = 4;
   FlightStatusResult? _lastFlightStatus;
   bool _flightStatusLoading = false;
 
@@ -234,6 +246,29 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       text: widget.event?.commonPart?.extraData?['flightNumber'] as String? ?? '',
     );
     final ed = widget.event?.commonPart?.extraData;
+    final depAirport = ed?['departureAirport'] as String? ?? ed?['originName'] as String? ?? '';
+    final arrAirport = ed?['arrivalAirport'] as String? ?? ed?['destinationName'] as String? ?? '';
+    _departureAirportController = TextEditingController(text: depAirport);
+    _arrivalAirportController = TextEditingController(text: arrAirport);
+    _taxiOriginController = TextEditingController(
+      text: ed?['taxiOriginAddress'] as String? ?? '',
+    );
+    _taxiDestinationController = TextEditingController(
+      text: ed?['taxiDestinationAddress'] as String? ?? '',
+    );
+    final oLat = ed?['taxiOriginLat'];
+    final oLng = ed?['taxiOriginLng'];
+    final dLat = ed?['taxiDestinationLat'];
+    final dLng = ed?['taxiDestinationLng'];
+    if (oLat != null) _taxiOriginStoredLat = (oLat as num).toDouble();
+    if (oLng != null) _taxiOriginStoredLng = (oLng as num).toDouble();
+    if (dLat != null) _taxiDestinationStoredLat = (dLat as num).toDouble();
+    if (dLng != null) _taxiDestinationStoredLng = (dLng as num).toDouble();
+    final seats = ed?['taxiSeats'];
+    if (seats != null) {
+      if (seats is int) _taxiSeats = seats.clamp(1, 9);
+      else if (seats is num) _taxiSeats = seats.toInt().clamp(1, 9);
+    }
     if (ed != null && ed['flightNumber'] != null) {
       _lastFlightStatus = FlightStatusResult(
         flightNumber: ed['flightNumber'] as String? ?? '',
@@ -262,12 +297,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     if (depStr != null && depStr.isNotEmpty) {
       final dt = DateTime.tryParse(depStr);
       if (dt != null) {
-        _flightSearchDate = DateTime(dt.year, dt.month, dt.day);
-      } else {
-        _flightSearchDate = _selectedDate;
+        // Fecha del vuelo = fecha del evento; ya actualizada arriba si Amadeus devolvió hora salida
       }
-    } else {
-      _flightSearchDate = _selectedDate;
     }
     _selectedHour = widget.initialHour ?? widget.event?.commonPart?.startHour ?? 9;
     _selectedDuration = (widget.event?.commonPart?.durationMinutes ?? 60) ~/ 60;
@@ -529,6 +560,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _gateController.dispose();
     _notasPersonalesController.dispose();
     _flightNumberController.dispose();
+    _departureAirportController.dispose();
+    _arrivalAirportController.dispose();
+    _taxiOriginController.dispose();
+    _taxiDestinationController.dispose();
     _maxParticipantsController.dispose();
     _costController.dispose(); // T101
     super.dispose();
@@ -592,74 +627,44 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Card de ubicación: dirección y enlace a Google Maps (cuando hay lugar).
-  Widget _buildLocationDetailsCard() {
+  /// Un solo campo: dirección del evento (Places) + botón Abrir en Google Maps.
+  /// Se usa solo cuando el evento NO es Desplazamiento (para eventos localizados: 1 dirección).
+  /// Dentro del campo se muestra "Localización".
+  Widget _buildUnifiedLocationField() {
+    final loc = AppLocalizations.of(context)!;
     final hasCoords = _lastPlaceDetails?.lat != null || (widget.event?.commonPart?.extraData?['placeLat'] != null);
-    final address = _lastPlaceDetails?.formattedAddress
-        ?? widget.event?.commonPart?.extraData?['placeAddress'] as String?
-        ?? _locationController.text.trim()
-        ?? widget.event?.commonPart?.location;
-    final hasAddress = address != null && address.toString().trim().isNotEmpty;
-    if (!hasAddress && !hasCoords) return const SizedBox.shrink();
+    final hasAddress = _locationController.text.trim().isNotEmpty;
+    final canOpenMaps = hasCoords || hasAddress;
 
-    final displayAddress = address?.toString().trim() ?? '';
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: _buildLoginStyleDecoration(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (displayAddress.isNotEmpty) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.location_on_outlined, size: 18, color: Colors.grey.shade400),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      displayAddress,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.grey.shade300,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-            ],
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _openLocationInGoogleMaps,
-                icon: const Icon(Icons.map_outlined, size: 18),
-                label: Text(
-                  AppLocalizations.of(context)!.openInGoogleMaps,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColorScheme.color2,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppColorScheme.color2.withOpacity(0.8)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                ),
-              ),
-            ),
-          ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: PlaceAutocompleteField(
+            controller: _locationController,
+            initialAddress: widget.event?.commonPart?.location,
+            lodgingOnly: false,
+            labelText: loc.eventAddressSingleLabel,
+            hintText: loc.eventAddressSingleHint,
+            fontSize: 12,
+            onPlaceSelected: (PlaceDetails details) {
+              setState(() {
+                _lastPlaceDetails = details;
+                final addr = details.formattedAddress;
+                _locationController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                    ? '${details.displayName}, $addr'
+                    : details.displayName;
+              });
+            },
+          ),
         ),
-      ),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: Icon(Icons.map_outlined, color: canOpenMaps ? AppColorScheme.color2 : Colors.grey.shade600),
+          tooltip: loc.openInGoogleMaps,
+          onPressed: canOpenMaps ? _openLocationInGoogleMaps : null,
+        ),
+      ],
     );
   }
 
@@ -903,7 +908,242 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return '';
   }
 
+  /// Construye la descripción a guardar: si el usuario rellenó el campo, se usa; si no, se genera solo a partir de subtipo y ubicación.
+  String _buildDescriptionForSave() {
+    final userDesc = _descriptionController.text.trim();
+    if (userDesc.isNotEmpty) return userDesc;
+
+    final family = _typeFamilyController.text.trim();
+    final subtype = _typeSubtypeController.text.trim();
+    const maxPart = 50; // truncar partes largas (ej. direcciones)
+
+    String short(String s) =>
+        s.length <= maxPart ? s : '${s.substring(0, maxPart)}…';
+
+    // Vuelo: usar descripción de Amadeus si existe, si no "Vuelo salida → llegada"
+    if (family == 'Desplazamiento' && subtype == 'Avión') {
+      final fromAmadeus = _lastFlightStatus?.shortDescription?.trim();
+      if (fromAmadeus != null && fromAmadeus.isNotEmpty) return fromAmadeus;
+      final dep = _departureAirportController.text.trim();
+      final arr = _arrivalAirportController.text.trim();
+      if (dep.isNotEmpty && arr.isNotEmpty) return 'Vuelo ${short(dep)} → ${short(arr)}';
+      return subtype.isNotEmpty ? subtype : 'Vuelo';
+    }
+
+    // Otro desplazamiento (taxi, tren, etc.): solo subtipo y opcionalmente origen → destino
+    if (family == 'Desplazamiento' && subtype.isNotEmpty) {
+      final origin = _taxiOriginController.text.trim();
+      final dest = _taxiDestinationController.text.trim();
+      if (origin.isNotEmpty && dest.isNotEmpty) {
+        return '$subtype · ${short(origin)} → ${short(dest)}';
+      }
+      return subtype;
+    }
+
+    // Evento con localización única
+    final location = _locationController.text.trim();
+    if (location.isNotEmpty) {
+      if (subtype.isNotEmpty) return '$subtype · ${short(location)}';
+      return short(location);
+    }
+
+    // Sin ubicación: solo subtipo
+    if (subtype.isNotEmpty) return subtype;
+    return 'Evento';
+  }
+
+  /// Bloque Origen + Destino (+ opcionalmente Plazas) para Desplazamiento (Taxi, Tren, Autobús, Coche, Caminar).
+  /// [showPlazas] true solo para Taxi.
+  Widget _buildTransportOriginDestinationBlock({required bool showPlazas}) {
+    final loc = AppLocalizations.of(context)!;
+    return Container(
+      decoration: _buildLoginStyleDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: PlaceAutocompleteField(
+                  controller: _taxiOriginController,
+                  initialAddress: null,
+                  lodgingOnly: false,
+                  labelText: loc.taxiOriginLabel,
+                  hintText: loc.taxiOriginHint,
+                  fontSize: 12,
+                  onPlaceSelected: (PlaceDetails details) {
+                    setState(() {
+                      _taxiOriginDetails = details;
+                      final addr = details.formattedAddress;
+                      _taxiOriginController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                          ? '${details.displayName}, $addr'
+                          : details.displayName;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: Icon(
+                  Icons.map_outlined,
+                  color: (_taxiOriginDetails != null || _taxiOriginController.text.trim().isNotEmpty)
+                      ? AppColorScheme.color2
+                      : Colors.grey.shade600,
+                ),
+                tooltip: loc.openInGoogleMaps,
+                onPressed: () => _openTaxiAddressInMaps(
+                  _taxiOriginController.text.trim(),
+                  _taxiOriginDetails?.lat ?? _taxiOriginStoredLat,
+                  _taxiOriginDetails?.lng ?? _taxiOriginStoredLng,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: PlaceAutocompleteField(
+                  controller: _taxiDestinationController,
+                  initialAddress: null,
+                  lodgingOnly: false,
+                  labelText: loc.taxiDestinationLabel,
+                  hintText: loc.taxiDestinationHint,
+                  fontSize: 12,
+                  onPlaceSelected: (PlaceDetails details) {
+                    setState(() {
+                      _taxiDestinationDetails = details;
+                      final addr = details.formattedAddress;
+                      _taxiDestinationController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                          ? '${details.displayName}, $addr'
+                          : details.displayName;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: Icon(
+                  Icons.map_outlined,
+                  color: (_taxiDestinationDetails != null || _taxiDestinationController.text.trim().isNotEmpty)
+                      ? AppColorScheme.color2
+                      : Colors.grey.shade600,
+                ),
+                tooltip: loc.openInGoogleMaps,
+                onPressed: () => _openTaxiAddressInMaps(
+                  _taxiDestinationController.text.trim(),
+                  _taxiDestinationDetails?.lat ?? _taxiDestinationStoredLat,
+                  _taxiDestinationDetails?.lng ?? _taxiDestinationStoredLng,
+                ),
+              ),
+            ],
+          ),
+          if (showPlazas) ...[
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              value: _taxiSeats.clamp(1, 9),
+              decoration: InputDecoration(
+                labelText: loc.taxiSeatsLabel,
+                hintText: loc.taxiSeatsHint,
+                labelStyle: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: Colors.grey.shade400,
+                  fontWeight: FontWeight.w500,
+                ),
+                prefixIcon: Icon(Icons.airline_seat_recline_normal, color: Colors.grey.shade400),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.transparent,
+              ),
+              dropdownColor: Colors.grey.shade800,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+              items: List.generate(9, (i) => i + 1).map((n) {
+                return DropdownMenuItem<int>(value: n, child: Text('$n'));
+              }).toList(),
+              onChanged: _canEditGeneral
+                  ? (int? value) {
+                      if (value != null) setState(() => _taxiSeats = value);
+                    }
+                  : null,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openTaxiAddressInMaps(String address, double? lat, double? lng) async {
+    String url;
+    if (lat != null && lng != null) {
+      url = 'https://www.google.com/maps?q=$lat,$lng';
+    } else if (address.isNotEmpty) {
+      url = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(address)}';
+    } else {
+      return;
+    }
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  /// Dropdown de timezone para el bloque vuelo (salida/llegada).
+  /// En el futuro se podría calcular desde las coordenadas del aeropuerto (PlaceDetails.lat/lng)
+  /// usando p. ej. Google Time Zone API o un paquete que resuelva IANA por lat/lng.
+  Widget _buildFlightTimezoneDropdown({
+    required String value,
+    required String label,
+    required void Function(String?)? onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade700.withOpacity(0.5), width: 1),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        dropdownColor: Colors.grey.shade800,
+        style: GoogleFonts.poppins(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
+          ),
+          fillColor: Colors.transparent,
+          filled: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        ),
+        items: TimezoneService.getCommonTimezones().map((tz) {
+          return DropdownMenuItem(
+            value: tz,
+            child: Text(
+              TimezoneService.getUtcOffsetFormatted(tz),
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white),
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+        }).toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
   /// T246: Bloque número de vuelo + botón Obtener datos (Amadeus).
+  /// Aeropuertos con Google Places; timezone salida/llegada al lado de cada uno.
   Widget _buildFlightNumberBlock() {
     final loc = AppLocalizations.of(context)!;
     return Container(
@@ -911,149 +1151,174 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextFormField(
-            controller: _flightNumberController,
-            readOnly: !_canEditGeneral,
-            textCapitalization: TextCapitalization.characters,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: InputDecoration(
-              labelText: loc.flightNumberLabel,
-              hintText: loc.flightNumberHint,
-              labelStyle: GoogleFonts.poppins(
-                fontSize: 13,
-                color: Colors.grey.shade400,
-                fontWeight: FontWeight.w500,
-              ),
-              hintStyle: GoogleFonts.poppins(
-                fontSize: 13,
-                color: Colors.grey.shade500,
-              ),
-              prefixIcon: Icon(Icons.flight, color: Colors.grey.shade400),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(
-                  color: AppColorScheme.color2,
-                  width: 2.5,
+          // Aeropuerto de salida + timezone salida
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: PlaceAutocompleteField(
+                  controller: _departureAirportController,
+                  initialAddress: null,
+                  lodgingOnly: false,
+                  labelText: loc.departureAirportLabel,
+                  hintText: loc.departureAirportHint,
+                  fontSize: 12,
+                  onPlaceSelected: (PlaceDetails details) {
+                    setState(() {
+                      _departureAirportDetails = details;
+                      final addr = details.formattedAddress;
+                      _departureAirportController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                          ? '${details.displayName}, $addr'
+                          : details.displayName;
+                    });
+                  },
                 ),
               ),
-              fillColor: Colors.transparent,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 165,
+                child: _buildFlightTimezoneDropdown(
+                  value: _selectedTimezone,
+                  label: loc.timezone,
+                  onChanged: _canEditGeneral ? (value) => setState(() => _selectedTimezone = value ?? 'Europe/Madrid') : null,
+                ),
+              ),
+            ],
           ),
-          if (_canEditGeneral) ...[
-            const SizedBox(height: 10),
-            InkWell(
-              onTap: _selectFlightDate,
-              borderRadius: BorderRadius.circular(14),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_today, size: 18, color: Colors.grey.shade400),
-                    const SizedBox(width: 10),
-                    Text(
-                      loc.flightDateLabel,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.grey.shade400,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      DateFormatter.formatDate(_flightSearchDate),
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+          const SizedBox(height: 12),
+          // Aeropuerto de llegada + timezone llegada
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: PlaceAutocompleteField(
+                  controller: _arrivalAirportController,
+                  initialAddress: null,
+                  lodgingOnly: false,
+                  labelText: loc.arrivalAirportLabel,
+                  hintText: loc.arrivalAirportHint,
+                  fontSize: 12,
+                  onPlaceSelected: (PlaceDetails details) {
+                    setState(() {
+                      _arrivalAirportDetails = details;
+                      final addr = details.formattedAddress;
+                      _arrivalAirportController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                          ? '${details.displayName}, $addr'
+                          : details.displayName;
+                    });
+                  },
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _flightStatusLoading ? null : _fetchFlightStatus,
-                icon: _flightStatusLoading
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.search, size: 18),
-                label: Text(
-                  loc.getFlightDataButton,
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 165,
+                child: _buildFlightTimezoneDropdown(
+                  value: _selectedArrivalTimezone,
+                  label: loc.arrivalTimezone,
+                  onChanged: _canEditGeneral ? (value) => setState(() => _selectedArrivalTimezone = value ?? 'Europe/Madrid') : null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _flightNumberController,
+                  readOnly: !_canEditGeneral,
+                  textCapitalization: TextCapitalization.characters,
                   style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
                     color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: loc.flightNumberLabel,
+                    hintText: loc.flightNumberHint,
+                    labelStyle: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.grey.shade500,
+                    ),
+                    prefixIcon: Icon(Icons.flight, color: Colors.grey.shade400),
+                    suffixIcon: _canEditGeneral
+                        ? IconButton(
+                            onPressed: _flightStatusLoading ? null : _fetchFlightStatus,
+                            icon: _flightStatusLoading
+                                ? SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColorScheme.color2,
+                                    ),
+                                  )
+                                : Icon(Icons.search, color: Colors.grey.shade400),
+                            tooltip: loc.getFlightDataButton,
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: AppColorScheme.color2,
+                        width: 2.5,
+                      ),
+                    ),
+                    fillColor: Colors.transparent,
+                    filled: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
                   ),
                 ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColorScheme.color2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                ),
               ),
-            ),
-          ],
-          if (_lastFlightStatus != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              _lastFlightStatus!.shortDescription,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: Colors.grey.shade300,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            if (_lastFlightStatus!.departureScheduled != null || _lastFlightStatus!.arrivalScheduled != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                _formatFlightTimes(
-                  _lastFlightStatus!.departureScheduled,
-                  _lastFlightStatus!.arrivalScheduled,
-                ),
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey.shade400,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-            if (_lastFlightStatus!.airlineName != null && _lastFlightStatus!.airlineName!.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(
-                _lastFlightStatus!.airlineName!,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey.shade400,
-                  fontWeight: FontWeight.w400,
-                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _lastFlightStatus != null
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _lastFlightStatus!.shortDescription,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.grey.shade300,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (_lastFlightStatus!.departureScheduled != null || _lastFlightStatus!.arrivalScheduled != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              _formatFlightTimes(
+                                _lastFlightStatus!.departureScheduled,
+                                _lastFlightStatus!.arrivalScheduled,
+                              ),
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.grey.shade400,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ],
+                      )
+                    : const SizedBox.shrink(),
               ),
             ],
-          ],
+          ),
         ],
       ),
     );
@@ -1077,7 +1342,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
     setState(() => _flightStatusLoading = true);
     try {
-      final dateStr = '${_flightSearchDate.year}-${_flightSearchDate.month.toString().padLeft(2, '0')}-${_flightSearchDate.day.toString().padLeft(2, '0')}';
+      final dateStr = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
       final result = await FlightStatusService().getFlightStatus(
         flightNumber: number,
         date: dateStr,
@@ -1091,6 +1356,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         _lastFlightStatus = result;
         _flightStatusLoading = false;
         _descriptionController.text = result.shortDescription;
+        // Rellenar aeropuertos desde Amadeus (originName/originIata, destinationName/destinationIata)
+        _departureAirportController.text = result.originName ?? result.originIata ?? '';
+        _arrivalAirportController.text = result.destinationName ?? result.destinationIata ?? '';
         final dep = result.departureScheduled;
         final arr = result.arrivalScheduled;
         if (dep != null && dep.isNotEmpty) {
@@ -1175,17 +1443,73 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
   }
 
+  Widget _buildDraftStatusOption({
+    required String label,
+    required bool selected,
+    required bool isMobile,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: selected ? Colors.white.withOpacity(0.35) : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 14, vertical: isMobile ? 6 : 8),
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: isMobile ? 11 : 12,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// T238: Barra verde superior del modal (UI estándar).
-  Widget _buildEventDialogGreenBar(BuildContext context, String title, {required bool isMobile, required bool showBadges}) {
+  /// Si [showDraftSwitch] es true, se muestra el selector Borrador/Confirmado alineado a la derecha.
+  /// En móvil puede mostrarse [showCloseButton] para cerrar el modal.
+  Widget _buildEventDialogGreenBar(
+    BuildContext context,
+    String title, {
+    required bool isMobile,
+    required bool showBadges,
+    bool showDraftSwitch = false,
+    bool isDraft = false,
+    ValueChanged<bool>? onDraftChanged,
+    bool showCloseButton = false,
+    VoidCallback? onClose,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF79A2A8),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 20,
+        vertical: isMobile ? 10 : 14,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF79A2A8),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(isMobile ? 0 : 18),
+        ),
       ),
       child: Row(
         children: [
+          if (showCloseButton && onClose != null) ...[
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: onClose,
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              style: IconButton.styleFrom(
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
           Expanded(
             child: Text(
               title,
@@ -1245,6 +1569,33 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 ],
               ),
             ),
+          if (showDraftSwitch && onDraftChanged != null) ...[
+            const SizedBox(width: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white54, width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDraftStatusOption(
+                    label: AppLocalizations.of(context)!.eventStatusDraft,
+                    selected: isDraft,
+                    isMobile: isMobile,
+                    onTap: () => onDraftChanged(true),
+                  ),
+                  _buildDraftStatusOption(
+                    label: AppLocalizations.of(context)!.eventStatusConfirmed,
+                    selected: !isDraft,
+                    isMobile: isMobile,
+                    onTap: () => onDraftChanged(false),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1261,115 +1612,295 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         data: AppTheme.darkTheme,
         child: AlertDialog(
           backgroundColor: Colors.grey.shade800,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
+          ),
+          insetPadding: isMobile ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
           title: null,
           contentPadding: EdgeInsets.zero,
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildEventDialogGreenBar(context, title, isMobile: false, showBadges: false),
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircularProgressIndicator(color: AppColorScheme.color2),
-                    const SizedBox(height: 16),
-                    Text(
-                      AppLocalizations.of(context)!.initializingPermissions,
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400,
-                        fontSize: 14,
+          content: SizedBox(
+            width: isMobile ? MediaQuery.sizeOf(context).width : null,
+            height: isMobile ? MediaQuery.sizeOf(context).height * 0.4 : null,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildEventDialogGreenBar(context, title, isMobile: isMobile, showBadges: false),
+                Padding(
+                  padding: EdgeInsets.all(isMobile ? 16 : 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(color: AppColorScheme.color2),
+                      SizedBox(height: isMobile ? 12 : 16),
+                      Text(
+                        AppLocalizations.of(context)!.initializingPermissions,
+                        style: GoogleFonts.poppins(
+                          color: Colors.grey.shade400,
+                          fontSize: isMobile ? 13 : 14,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
     }
 
     final dialogTitle = widget.event == null ? AppLocalizations.of(context)!.createEvent : AppLocalizations.of(context)!.editEvent;
+    final screenSize = MediaQuery.sizeOf(context);
+    final contentHeight = isMobile ? screenSize.height - 64 : null;
+    final contentWidth = isMobile ? screenSize.width : null;
+
     return Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
         backgroundColor: Colors.grey.shade800,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
         ),
-        insetPadding: isMobile 
-            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
+        insetPadding: isMobile
+            ? EdgeInsets.zero
             : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
         title: null,
         contentPadding: EdgeInsets.zero,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildEventDialogGreenBar(context, dialogTitle, isMobile: isMobile, showBadges: true),
-            SizedBox(
-              height: isMobile ? MediaQuery.of(context).size.height * 0.65 : 540,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Form(
-                  key: _formKey,
-                  child: SizedBox(
-                    width: isMobile ? MediaQuery.of(context).size.width * 0.95 : 520,
-          child: DefaultTabController(
-          length: _isAdmin ? 3 : 2,
+        content: SizedBox(
+          width: contentWidth,
+          height: contentHeight,
           child: Column(
-            mainAxisSize: MainAxisSize.max,
+            mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Builder(
-                builder: (context) {
-                  final tabController = DefaultTabController.of(context)!;
-                  final tabLabels = [
-                    AppLocalizations.of(context)!.eventTabGeneral,
-                    AppLocalizations.of(context)!.eventTabMyInfo,
-                    if (_isAdmin) AppLocalizations.of(context)!.eventTabOthersInfo,
-                  ].whereType<String>().toList();
-                  return ListenableBuilder(
-                    listenable: tabController,
-                    builder: (context, _) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: List.generate(tabController.length, (i) {
-                            final isSelected = tabController.index == i;
-                            return Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
-                                child: _EventTabChip(
-                                  label: tabLabels[i],
-                                  isSelected: isSelected,
-                                  isMobile: isMobile,
-                                  onTap: () => tabController.animateTo(i),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      );
-                    },
-                  );
-                },
+              _buildEventDialogGreenBar(
+                context,
+                dialogTitle,
+                isMobile: isMobile,
+                showBadges: true,
+                showDraftSwitch: _canEditGeneral,
+                isDraft: _isDraft,
+                onDraftChanged: (value) => setState(() => _isDraft = value),
+                showCloseButton: isMobile,
+                onClose: () => Navigator.of(context).pop(),
               ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: SizedBox(
-                  height: isMobile ? MediaQuery.of(context).size.height * 0.6 : 520,
-                  child: TabBarView(
-                    children: [
-                      // Tab 1: General (Parte Común)
-                      SingleChildScrollView(
-                        padding: const EdgeInsets.all(8),
-                        child: Column(
+              isMobile
+                  ? Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                        child: Form(
+                          key: _formKey,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: DefaultTabController(
+                              length: _isAdmin ? 3 : 2,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Builder(
+                                    builder: (context) {
+                                      final tabController = DefaultTabController.of(context)!;
+                                      final tabLabels = [
+                                        AppLocalizations.of(context)!.eventTabGeneral,
+                                        AppLocalizations.of(context)!.eventTabMyInfo,
+                                        if (_isAdmin) AppLocalizations.of(context)!.eventTabOthersInfo,
+                                      ].whereType<String>().toList();
+                                      return ListenableBuilder(
+                                        listenable: tabController,
+                                        builder: (context, _) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(bottom: 6),
+                                            child: Row(
+                                              children: List.generate(tabController.length, (i) {
+                                                final isSelected = tabController.index == i;
+                                                return Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                                                    child: _EventTabChip(
+                                                      label: tabLabels[i],
+                                                      isSelected: isSelected,
+                                                      isMobile: true,
+                                                      onTap: () => tabController.animateTo(i),
+                                                    ),
+                                                  ),
+                                                );
+                                              }),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Expanded(
+                                    child: TabBarView(
+                                      children: _buildEventTabViews(isMobile: true),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : SizedBox(
+                      height: 540,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: Form(
+                          key: _formKey,
+                          child: SizedBox(
+                            width: 520,
+                            child: DefaultTabController(
+                              length: _isAdmin ? 3 : 2,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Builder(
+                                    builder: (context) {
+                                      final tabController = DefaultTabController.of(context)!;
+                                      final tabLabels = [
+                                        AppLocalizations.of(context)!.eventTabGeneral,
+                                        AppLocalizations.of(context)!.eventTabMyInfo,
+                                        if (_isAdmin) AppLocalizations.of(context)!.eventTabOthersInfo,
+                                      ].whereType<String>().toList();
+                                      return ListenableBuilder(
+                                        listenable: tabController,
+                                        builder: (context, _) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(bottom: 8),
+                                            child: Row(
+                                              children: List.generate(tabController.length, (i) {
+                                                final isSelected = tabController.index == i;
+                                                return Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                    child: _EventTabChip(
+                                                      label: tabLabels[i],
+                                                      isSelected: isSelected,
+                                                      isMobile: false,
+                                                      onTap: () => tabController.animateTo(i),
+                                                    ),
+                                                  ),
+                                                );
+                                              }),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Expanded(
+                                    child: TabBarView(
+                                      children: _buildEventTabViews(isMobile: false),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+              ],
+            ),
+          ),
+      actions: [
+        // Botón eliminar (solo si es edición) (T109: Deshabilitado según estado del plan)
+        if (widget.event != null)
+          TextButton(
+            onPressed: _canDeleteEvent() ? () => _confirmDelete() : null,
+            child: Text(
+              AppLocalizations.of(context)!.delete,
+              style: GoogleFonts.poppins(
+                color: Colors.red.shade400,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        
+        // Botón cancelar
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            AppLocalizations.of(context)!.cancel,
+            style: GoogleFonts.poppins(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        
+        // Botón guardar / aceptar en verde (T209)
+        Container(
+          decoration: BoxDecoration(
+                color: Colors.green.shade600,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.green.shade600.withOpacity(0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          child: ElevatedButton(
+            onPressed: _canSaveEvent() ? _saveEvent : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.white,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: Text(
+              widget.event == null ? AppLocalizations.of(context)!.create : AppLocalizations.of(context)!.save,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+    );
+  }
+
+  /// Lista de pestañas del formulario (General, Mi información, [Otros]). Compartido entre móvil y desktop.
+  List<Widget> _buildEventTabViews({required bool isMobile}) {
+    return [
+      _buildGeneralTabScroll(isMobile),
+      _buildMyInfoTabScroll(isMobile),
+      if (_isAdmin) _buildOthersInfoTab(),
+    ].whereType<Widget>().toList();
+  }
+
+  Widget _buildGeneralTabScroll(bool isMobile) {
+    final pad = isMobile ? 6.0 : 8.0;
+    final fsBody = isMobile ? 13.0 : 14.0;
+    final fsLabel = isMobile ? 12.0 : 13.0;
+    final fsHint = isMobile ? 12.0 : 14.0;
+    final contentPad = isMobile ? 14.0 : 18.0;
+    final spacing = isMobile ? 12.0 : 16.0;
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(pad),
+      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-            // Descripción (estética tipo login)
+            // 1. Identidad: Tipo y subtipo
+            _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
+            SizedBox(height: spacing),
+            // Descripción
             _wrapReadOnlyIfNeeded(
               child: Container(
               decoration: _buildLoginStyleDecoration(),
@@ -1378,7 +1909,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 readOnly: !(_canEditGeneral || _canEditGeneralInitial),
                 maxLines: 2,
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
+                  fontSize: fsBody,
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
                 ),
@@ -1386,15 +1917,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   labelText: AppLocalizations.of(context)!.eventDescription,
                   hintText: AppLocalizations.of(context)!.eventDescriptionHint,
                   labelStyle: GoogleFonts.poppins(
-                    fontSize: 13,
+                    fontSize: fsLabel,
                     color: Colors.grey.shade400,
                     fontWeight: FontWeight.w500,
                   ),
                   hintStyle: GoogleFonts.poppins(
-                    fontSize: 14,
+                    fontSize: fsHint,
                     color: Colors.grey.shade500,
                   ),
-                  prefixIcon: Icon(Icons.title, color: Colors.grey.shade400),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
@@ -1426,199 +1956,113 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   ),
                   fillColor: Colors.transparent,
                   filled: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                  contentPadding: EdgeInsets.symmetric(horizontal: contentPad, vertical: contentPad),
                 ),
                 validator: (value) {
                   if (!_canEditGeneral) return null;
                   final v = value?.trim() ?? '';
-                  if (v.isEmpty) return 'La descripción es obligatoria';
-                  if (v.length < 3) return 'Mínimo 3 caracteres';
+                  if (v.isNotEmpty && v.length < 3) return 'Mínimo 3 caracteres';
                   if (v.length > 1000) return 'Máximo 1000 caracteres';
                   return null;
                 },
               ),
             ),
             ),
-            const SizedBox(height: 16),
-            // T225: Lugar del evento (opcional) con búsqueda Places
-            PlaceAutocompleteField(
-              initialAddress: widget.event?.commonPart?.location,
-              lodgingOnly: false,
-              onPlaceSelected: (PlaceDetails details) {
-                setState(() {
-                  _lastPlaceDetails = details;
-                  final addr = details.formattedAddress;
-                  _locationController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
-                      ? '${details.displayName}, $addr'
-                      : details.displayName;
-                });
-              },
-            ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: _buildLoginStyleDecoration(),
-              child: TextFormField(
-                controller: _locationController,
-                maxLines: 1,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.eventLocationLabel,
-                  hintText: AppLocalizations.of(context)!.eventLocationHint,
-                  labelStyle: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.grey.shade400,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintStyle: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                  ),
-                  prefixIcon: Icon(Icons.place, color: Colors.grey.shade400),
-                  border: OutlineInputBorder(
+            SizedBox(height: spacing),
+            // Dirección: 1 campo (Dirección del evento) si NO es Desplazamiento; 2 campos (Origen, Destino) si es Desplazamiento
+            if (_typeFamilyController.text != 'Desplazamiento') ...[
+              _buildUnifiedLocationField(),
+              SizedBox(height: spacing),
+            ],
+            // Desplazamiento: siempre Origen + Destino (Avión = aeropuertos; resto = direcciones)
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
+              _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
+              SizedBox(height: spacing),
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text.isNotEmpty &&
+                _typeSubtypeController.text != 'Avión')
+              _wrapReadOnlyIfNeeded(child: _buildTransportOriginDestinationBlock(showPlazas: _typeSubtypeController.text == 'Taxi')),
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text.isNotEmpty &&
+                _typeSubtypeController.text != 'Avión')
+              SizedBox(height: spacing),
+            // 2. Cuándo: Fecha, Hora, Duración en una fila; luego Timezone(s)
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: _canEditGeneral ? _selectDate : _showReadOnlySnackBar,
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: AppColorScheme.color2,
-                      width: 2.5,
-                    ),
-                  ),
-                  fillColor: Colors.transparent,
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                ),
-              ),
-            ),
-            // Bloque ubicación: dirección + enlace a Google Maps (si hay lugar)
-            _buildLocationDetailsCard(),
-            const SizedBox(height: 16),
-            // Tipo y subtipo de evento (selector gráfico con iconos)
-            _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
-            const SizedBox(height: 16),
-            
-            // Borrador - Switch estilo iOS
-            _wrapReadOnlyIfNeeded(
-              child: SwitchListTile.adaptive(
-              title: Text(
-                AppLocalizations.of(context)!.isDraft,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              subtitle: Text(
-                AppLocalizations.of(context)!.isDraftSubtitle,
-                style: GoogleFonts.poppins(
-                  color: Colors.grey.shade400,
-                  fontSize: 12,
-                ),
-              ),
-              value: _isDraft,
-              activeColor: AppColorScheme.color2,
-              onChanged: !_canEditGeneral ? null : (value) {
-                setState(() {
-                  _isDraft = value;
-                });
-              },
-            ),
-            ),
-            const SizedBox(height: 8),
-            
-            // Fecha - Con estilo editable
-            InkWell(
-              onTap: _canEditGeneral ? _selectDate : _showReadOnlySnackBar,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade800, // Color sólido, sin gradiente
-                  border: Border.all(
-                    color: Colors.grey.shade700.withOpacity(0.5),
-                    width: 1,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_today, color: AppColorScheme.color2),
-                    const SizedBox(width: 12),
-                    Expanded(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 10 : 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade800,
+                        border: Border.all(
+                          color: Colors.grey.shade700.withOpacity(0.5),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             AppLocalizations.of(context)!.date,
                             style: GoogleFonts.poppins(
-                              fontSize: 12,
+                              fontSize: fsLabel,
                               color: Colors.grey.shade400,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             DateFormatter.formatDate(_selectedDate),
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
+                              fontSize: fsBody,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.edit, size: 20, color: Colors.grey.shade400),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            
-            // Hora - Con estilo editable
-            InkWell(
-              onTap: _canEditGeneral ? _selectStartTime : _showReadOnlySnackBar,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade800, // Color sólido, sin gradiente
-                  border: Border.all(
-                    color: Colors.grey.shade700.withOpacity(0.5),
-                    width: 1,
                   ),
-                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.access_time, color: AppColorScheme.color2),
-                    const SizedBox(width: 12),
-                    Expanded(
+                SizedBox(width: isMobile ? 6 : 8),
+                Expanded(
+                  child: InkWell(
+                    onTap: _canEditGeneral ? _selectStartTime : _showReadOnlySnackBar,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 10 : 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade800,
+                        border: Border.all(
+                          color: Colors.grey.shade700.withOpacity(0.5),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Hora de inicio',
+                            'Hora',
                             style: GoogleFonts.poppins(
-                              fontSize: 12,
+                              fontSize: fsLabel,
                               color: Colors.grey.shade400,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             '${_selectedHour.toString().padLeft(2, '0')}:${_selectedStartMinute.toString().padLeft(2, '0')}',
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
+                              fontSize: fsBody,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
                             ),
@@ -1626,68 +2070,61 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                         ],
                       ),
                     ),
-                    Icon(Icons.edit, size: 20, color: Colors.grey.shade400),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            
-            // Duración - Con estilo editable
-            InkWell(
-              onTap: _canEditGeneral ? _selectDuration : _showReadOnlySnackBar,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade800, // Color sólido, sin gradiente
-                  border: Border.all(
-                    color: Colors.grey.shade700.withOpacity(0.5),
-                    width: 1,
                   ),
-                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.schedule, color: AppColorScheme.color2),
-                    const SizedBox(width: 12),
-                    Expanded(
+                SizedBox(width: isMobile ? 6 : 8),
+                Expanded(
+                  child: InkWell(
+                    onTap: _canEditGeneral ? _selectDuration : _showReadOnlySnackBar,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 10 : 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade800,
+                        border: Border.all(
+                          color: Colors.grey.shade700.withOpacity(0.5),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Duración',
                             style: GoogleFonts.poppins(
-                              fontSize: 12,
+                              fontSize: fsLabel,
                               color: Colors.grey.shade400,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             _formatDuration(_selectedDurationMinutes),
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
+                              fontSize: fsBody,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.edit, size: 20, color: Colors.grey.shade400),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: spacing),
             
-            // Timezone
-            _wrapReadOnlyIfNeeded(
-              child: Container(
-              decoration: _buildLoginStyleDecoration(),
-              child: DropdownButtonFormField<String>(
-                value: _selectedTimezone,
+            // Timezone (oculto para Desplazamiento/Avión: se muestra en el bloque vuelo)
+            if (!(_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión'))
+              _wrapReadOnlyIfNeeded(
+                child: Container(
+                decoration: _buildLoginStyleDecoration(),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedTimezone,
                 dropdownColor: Colors.grey.shade800,
                 style: GoogleFonts.poppins(
                   fontSize: 13,
@@ -1725,7 +2162,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   return DropdownMenuItem(
                     value: tz,
                     child: Text(
-                      TimezoneService.getTimezoneDisplayName(tz),
+                      TimezoneService.getUtcOffsetFormatted(tz),
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         color: Colors.white,
@@ -1742,10 +2179,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
             ),
-            const SizedBox(height: 12),
+            if (!(_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión'))
+              const SizedBox(height: 12),
             
-            // Timezone de llegada (solo para vuelos/viajes)
-            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
+            // Timezone de llegada (solo para vuelos: se muestra en el bloque vuelo; aquí no se muestra para Avión)
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text != 'Avión')
               _wrapReadOnlyIfNeeded(
                 child: Container(
                 decoration: BoxDecoration(
@@ -1795,7 +2233,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     return DropdownMenuItem(
                       value: tz,
                       child: Text(
-                        TimezoneService.getTimezoneDisplayName(tz),
+                        TimezoneService.getUtcOffsetFormatted(tz),
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           color: Colors.white,
@@ -1812,13 +2250,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 ),
               ),
                 ),
-            const SizedBox(height: 12),
-            // T246: Número de vuelo (solo Desplazamiento + Avión)
-            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
-              _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
-            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
-              const SizedBox(height: 12),
-            // Límite de participantes (T117) (estética tipo login)
+            const SizedBox(height: 16),
+            // 3. Opciones: Límite, Confirmación, Coste
+            // Límite de participantes (T117)
             _wrapReadOnlyIfNeeded(
               child: Container(
               decoration: _buildLoginStyleDecoration(),
@@ -1926,7 +2360,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             if (_planCurrency != null) _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
             const SizedBox(height: 16),
             
-            // Sección de registro de participantes (T117)
+            // 4. Participación: asignación y registro
+            // Participantes (tracks asignados)
+            _wrapReadOnlyIfNeeded(child: _buildParticipantsSection()),
+            const SizedBox(height: 16),
+            
+            // Registro de participantes (quién se ha apuntado)
             if (widget.event != null && widget.planId != null)
               Container(
                 padding: const EdgeInsets.all(16),
@@ -1969,11 +2408,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             const SizedBox(height: 16),
             
-            // Participantes (tracks asignados)
-            _wrapReadOnlyIfNeeded(child: _buildParticipantsSection()),
-            const SizedBox(height: 16),
-            
-            // Color
+            // 5. Apariencia: Color
             _wrapReadOnlyIfNeeded(
               child: ListTile(
               leading: Icon(Icons.palette, color: AppColorScheme.color2),
@@ -2028,23 +2463,28 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ),
                         ],
                       ),
-                    ),
-                  // Tab "Mi información"
-                  SingleChildScrollView(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 16),
-                          Text(
-                            'Información personal para este evento',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
+                    );
+  }
+
+  Widget _buildMyInfoTabScroll(bool isMobile) {
+    final pad = isMobile ? 6.0 : 8.0;
+    final fsBody = isMobile ? 13.0 : 14.0;
+    final fsLabel = isMobile ? 12.0 : 13.0;
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(pad),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: isMobile ? 12 : 16),
+          Text(
+            'Información personal para este evento',
+            style: GoogleFonts.poppins(
+              fontSize: isMobile ? 16 : 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
                           const SizedBox(height: 16),
                           
                           // Campo: Asiento (estética tipo login)
@@ -2246,88 +2686,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           ),
                         ],
                       ),
-                    ),
-                  // Tab 3: Info de Otros (Solo Admins)
-                  if (_isAdmin)
-                    _buildOthersInfoTab(),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          ),
-        ),
-        ),
-        ),
-        ),
-            ],
-          ),
-      actions: [
-        // Botón eliminar (solo si es edición) (T109: Deshabilitado según estado del plan)
-        if (widget.event != null)
-          TextButton(
-            onPressed: _canDeleteEvent() ? () => _confirmDelete() : null,
-            child: Text(
-              AppLocalizations.of(context)!.delete,
-              style: GoogleFonts.poppins(
-                color: Colors.red.shade400,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        
-        // Botón cancelar
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            AppLocalizations.of(context)!.cancel,
-            style: GoogleFonts.poppins(
-              color: Colors.grey.shade400,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        
-        // Botón guardar / aceptar en verde (T209)
-        Container(
-          decoration: BoxDecoration(
-                color: Colors.green.shade600,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.green.shade600.withOpacity(0.4),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-                spreadRadius: 0,
-              ),
-            ],
-          ),
-          child: ElevatedButton(
-            onPressed: _canSaveEvent() ? _saveEvent : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: Colors.white,
-              shadowColor: Colors.transparent,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            child: Text(
-              widget.event == null ? AppLocalizations.of(context)!.create : AppLocalizations.of(context)!.save,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-    );
+                    );
   }
 
   /// T109: Verifica si se puede guardar/crear el evento según el estado del plan
@@ -2674,19 +3033,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   /// T246: selector de fecha del vuelo (para búsqueda en Amadeus).
-  Future<void> _selectFlightDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _flightSearchDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-    );
-    if (!mounted) return;
-    if (picked != null && picked != _flightSearchDate) {
-      setState(() => _flightSearchDate = picked);
-    }
-  }
-
   Future<void> _selectStartTime() async {
     final greenTheme = Theme.of(context).copyWith(
       colorScheme: Theme.of(context).colorScheme.copyWith(primary: Colors.green.shade600),
@@ -3540,18 +3886,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return;
     }
 
-    if (_descriptionController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'La descripción es obligatoria',
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
-            backgroundColor: Colors.red.shade600,
-          ),
-        );
-      return;
-    }
+    // Descripción opcional: no validar que esté rellenada
 
     // Validación de participantes (T47)
     // Si no está marcado "para todos", debe haber al menos un participante seleccionado
@@ -3619,6 +3954,42 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       if (_lastFlightStatus!.durationMinutes != null) baseExtra['durationMinutes'] = _lastFlightStatus!.durationMinutes;
       if (_lastFlightStatus!.airlineName != null) baseExtra['airlineName'] = _lastFlightStatus!.airlineName;
     }
+    // Aeropuerto salida/llegada (Desplazamiento / Avión) — texto y opcionalmente lat/lng desde Places
+    if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión') {
+      final dep = _departureAirportController.text.trim();
+      final arr = _arrivalAirportController.text.trim();
+      if (dep.isNotEmpty) baseExtra['departureAirport'] = Sanitizer.sanitizePlainText(dep, maxLength: 200);
+      if (arr.isNotEmpty) baseExtra['arrivalAirport'] = Sanitizer.sanitizePlainText(arr, maxLength: 200);
+      if (_departureAirportDetails != null) {
+        if (_departureAirportDetails!.lat != null) baseExtra['departureAirportLat'] = _departureAirportDetails!.lat;
+        if (_departureAirportDetails!.lng != null) baseExtra['departureAirportLng'] = _departureAirportDetails!.lng;
+        if (_departureAirportDetails!.formattedAddress != null) baseExtra['departureAirportAddress'] = _departureAirportDetails!.formattedAddress;
+      }
+      if (_arrivalAirportDetails != null) {
+        if (_arrivalAirportDetails!.lat != null) baseExtra['arrivalAirportLat'] = _arrivalAirportDetails!.lat;
+        if (_arrivalAirportDetails!.lng != null) baseExtra['arrivalAirportLng'] = _arrivalAirportDetails!.lng;
+        if (_arrivalAirportDetails!.formattedAddress != null) baseExtra['arrivalAirportAddress'] = _arrivalAirportDetails!.formattedAddress;
+      }
+    }
+    // Desplazamiento (no Avión): origen, destino (direcciones + coordenadas); Taxi además plazas
+    if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text != 'Avión' && _typeSubtypeController.text.isNotEmpty) {
+      final originAddr = _taxiOriginController.text.trim();
+      final destAddr = _taxiDestinationController.text.trim();
+      if (originAddr.isNotEmpty) {
+        baseExtra['taxiOriginAddress'] = Sanitizer.sanitizePlainText(originAddr, maxLength: 500);
+        if (_taxiOriginDetails?.lat != null) baseExtra['taxiOriginLat'] = _taxiOriginDetails!.lat;
+        if (_taxiOriginDetails?.lng != null) baseExtra['taxiOriginLng'] = _taxiOriginDetails!.lng;
+      }
+      if (destAddr.isNotEmpty) {
+        baseExtra['taxiDestinationAddress'] = Sanitizer.sanitizePlainText(destAddr, maxLength: 500);
+        if (_taxiDestinationDetails?.lat != null) baseExtra['taxiDestinationLat'] = _taxiDestinationDetails!.lat;
+        if (_taxiDestinationDetails?.lng != null) baseExtra['taxiDestinationLng'] = _taxiDestinationDetails!.lng;
+      }
+      if (_typeSubtypeController.text == 'Taxi') baseExtra['taxiSeats'] = _taxiSeats;
+    }
+
+    // Descripción: si el usuario dejó el campo vacío, generar una a partir de tipo, subtipo y ubicación
+    final descriptionToSave = _buildDescriptionForSave();
 
     // T247: calcular metadatos de conexión
     Map<String, dynamic>? connection;
@@ -3638,6 +4009,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           'startMinute',
           'durationMinutes',
           'extraData.flightNumber',
+          'extraData.departureAirport',
+          'extraData.arrivalAirport',
           'extraData.originIata',
           'extraData.destinationIata',
           'extraData.departureScheduled',
@@ -3651,7 +4024,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       connection = null;
     }
     final commonPart = EventCommonPart(
-      description: Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000),
+      description: Sanitizer.sanitizePlainText(descriptionToSave, maxLength: 1000),
       date: _selectedDate,
       startHour: _selectedHour,
       startMinute: _selectedStartMinute,
@@ -3696,7 +4069,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       duration: _selectedDuration,
       startMinute: _selectedStartMinute,
       durationMinutes: _selectedDurationMinutes,
-      description: Sanitizer.sanitizePlainText(_descriptionController.text, maxLength: 1000),
+      description: Sanitizer.sanitizePlainText(descriptionToSave, maxLength: 1000),
       color: _selectedColor,
       typeFamily: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       typeSubtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,

@@ -1294,6 +1294,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventLocationLabel => 'Location';
 
   @override
+  String get eventAddressSingleLabel => 'Location';
+
+  @override
+  String get eventAddressSingleHint => 'Place or address of the event';
+
+  @override
   String get eventLocationHint => 'Search place (address, venue…)';
 
   @override
@@ -1301,6 +1307,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openInGoogleMaps => 'Open in Google Maps';
+
+  @override
+  String get departureAirportLabel => 'Departure airport';
+
+  @override
+  String get departureAirportHint => 'E.g. Madrid Barajas, MAD';
+
+  @override
+  String get arrivalAirportLabel => 'Arrival airport';
+
+  @override
+  String get arrivalAirportHint => 'E.g. Rome Fiumicino, FCO';
+
+  @override
+  String get taxiOriginLabel => 'Origin';
+
+  @override
+  String get taxiOriginHint => 'Pick-up address';
+
+  @override
+  String get taxiDestinationLabel => 'Destination';
+
+  @override
+  String get taxiDestinationHint => 'Drop-off address';
+
+  @override
+  String get taxiSeatsLabel => 'Taxi seats';
+
+  @override
+  String get taxiSeatsHint => 'Number of seats';
 
   @override
   String get flightNumberLabel => 'Flight number';
@@ -1353,6 +1389,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get invalidSubtype => 'Invalid subtype for selected type';
+
+  @override
+  String get eventStatusDraft => 'Draft';
+
+  @override
+  String get eventStatusConfirmed => 'Confirmed';
 
   @override
   String get isDraft => 'Is draft';
