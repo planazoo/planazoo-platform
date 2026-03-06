@@ -7,11 +7,9 @@ import 'package:unp_calendario/features/calendar/presentation/providers/plan_par
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
-import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
-import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';

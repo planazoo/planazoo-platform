@@ -13,6 +13,8 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
 - `docs/guias/PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
+- `docs/guias/PROMPT_INICIO_CHAT.md` - Texto para pegar al iniciar un chat nuevo (cargar contexto y normas)
+- `docs/guias/PROMPT_TRABAJO_AUTONOMO.md` - Prompt para sesiones autónomas (revisión doc/código, limpieza)
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
 - `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice y visión general del sistema de planes
 - `docs/configuracion/TESTING_CHECKLIST.md` - Checklist exhaustivo de pruebas (actualizar tras cada tarea)

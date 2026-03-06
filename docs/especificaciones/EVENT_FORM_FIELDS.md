@@ -7,7 +7,7 @@
 
 > **Nota:** Los alojamientos se gestionan por separado. Ver `ACCOMMODATION_FORM_FIELDS.md` para detalles.
 
-**Implementación actual (Feb 2026):** Modelo `Event` y `EventCommonPart`/`EventPersonalPart` en `lib/features/calendar/domain/models/event.dart`. Campos: description, date, hour, startMinute, durationMinutes, color, typeFamily, typeSubtype, details, participantTrackIds, isDraft, commonPart, personalParts, timezone, arrivalTimezone, maxParticipants (T117), requiresConfirmation (T120), cost (T101). Formulario: `wd_event_dialog.dart` con validaciones.
+**Implementación actual (Feb 2026):** Modelo `Event` y `EventCommonPart`/`EventPersonalPart` en `lib/features/calendar/domain/models/event.dart`. Campos: description, date, hour, startMinute, durationMinutes, color, typeFamily, typeSubtype, details, participantTrackIds, isDraft, commonPart, personalParts, timezone, arrivalTimezone, maxParticipants (T117), requiresConfirmation (T120), cost (T101). Formulario: `lib/widgets/wd_event_dialog.dart` con validaciones. Descripción opcional: si está vacía al guardar, se auto-genera a partir de subtipo y ubicación (vuelo, taxi, etc.). UI unificada con formato "título sobre el borde" (`_buildLabelOnBorderField`).
 
 ---
 
@@ -66,7 +66,7 @@ Estos campos son aplicables a TODOS los eventos:
 ## ✅ Validaciones y Límites (aplicadas en formularios)
 
 ### Comunes
-- Descripción: obligatorio, 3–1000 caracteres
+- Descripción: opcional (si está vacía se auto-genera al guardar); si se rellena, 3–1000 caracteres
 - Duración: máximo 24h (para estancias usar Alojamiento)
 - Tipo/Subtipo: consistentes con listas por familia
 

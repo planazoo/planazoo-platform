@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
-import 'package:unp_calendario/features/calendar/domain/models/participant_track.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
-import 'package:unp_calendario/features/calendar/domain/services/track_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
-import 'package:unp_calendario/features/calendar/presentation/notifiers/calendar_notifier.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
@@ -18,13 +15,11 @@ import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/models/plan_permissions.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/edit_personal_info_dialog.dart';
-import 'package:unp_calendario/widgets/permission_field.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/widgets/event/event_participant_registration_widget.dart';
 import 'package:unp_calendario/shared/utils/plan_range_utils.dart';
 import 'package:unp_calendario/widgets/dialogs/expand_plan_dialog.dart';
-import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
@@ -1081,7 +1076,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         if (showPlazas) ...[
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
-              value: _taxiSeats.clamp(1, 9),
+              initialValue: _taxiSeats.clamp(1, 9),
               decoration: InputDecoration(
                 labelText: loc.taxiSeatsLabel,
                 hintText: loc.taxiSeatsHint,

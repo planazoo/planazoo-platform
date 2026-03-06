@@ -12,6 +12,8 @@ Guías transversales que aplican a todo el proyecto:
 - [Guía del Patrón Común/Personal](./guias/GUIA_PATRON_COMUN_PERSONAL.md) - Patrón arquitectónico parte común/personal
 - [Gestión de Timezones](./guias/GESTION_TIMEZONES.md) - Sistema completo de manejo de zonas horarias
 - [Prompt Base](./guias/PROMPT_BASE.md) - Metodología de trabajo del equipo
+- [Prompt inicio de chat](./guias/PROMPT_INICIO_CHAT.md) - Texto para pegar al abrir un chat nuevo (cargar contexto)
+- [Prompt trabajo autónomo](./guias/PROMPT_TRABAJO_AUTONOMO.md) - Sesión de varias horas (sincronizar docs/código, limpieza)
 
 ### 🔄 [Flujos de Proceso](./flujos/)
 Flujos específicos del ciclo de vida de la aplicación:
@@ -67,6 +69,7 @@ Gestión de tareas del proyecto:
 - [Sistema de pruebas lógicas (JSON + reportes)](./testing/SISTEMA_PRUEBAS_LOGICAS.md) - Casos por datos, evaluadores, reportes para IA
 - [Sistema Nocturno de QA Distribuido](./testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md) - E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac), capas A/B/C, alertas y fases de implementación
 - [Plan E2E tres usuarios (manual)](./testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) - Flujo completo UA/UB/UC para pruebas manuales
+- [Registro de observaciones de pruebas](./testing/REGISTRO_OBSERVACIONES_PRUEBAS.md) - Notas y observaciones durante pruebas manuales
 - [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md)
 
 ### ⚙️ [Configuración](./configuracion/)

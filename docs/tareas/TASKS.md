@@ -3,18 +3,18 @@
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
 
-**Siguiente código de tarea: T248**
+**Siguiente código de tarea: T253**
 
 **📊 Resumen (solo pendientes):**
-- **Mejoras UI/UX:** T194-T214, T226, T231, T237 (widgets, info plan, calendario, cards, modales)
+- **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
 - **Administración:** T183-T191, T223 (vista admin, export CSV, seed, espacio admin RUD toda la BD, T188 en progreso)
 - **Auth / Perfil:** T159-T162, T173, T174, T226-T228, T232 (permisos Firestore, verificación, perfil, registro, modales)
 - **Seguridad avanzada:** T166-T172 (2FA, token refresh, legal, etc.)
-- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T246, T238, T242, T243
+- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T246, T238, T242, T243, T250 (campos tipo/subtipo)
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234 (reenviar invitación, invitaciones, correos), etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252 (participantes usuarios vs planificadores, resumen por participante), etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
 **Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
@@ -59,6 +59,7 @@
 | **T236** | Notificaciones: (1) En el icono de notificaciones en W1, el círculo con el número no debe tapar el icono; recolocarlo. (2) Estética de los botones Aceptar y Rechazar según estilo principal de la app. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T237** | Página Info del plan: (1) Optimizar para ver más datos; estructura pensada sobre todo para móvil. (2) Sobre la zona de Avisos: comentar y tomar decisión en ese momento (ver T231). (3) El estado del plan debería verse en la barra superior verde. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T244** | **Mejorar visualización de los avisos en la Info del plan:** Revisar y mejorar la presentación del timeline de avisos (tipografía, espaciado, diferenciación por tipo urgente/importante/info, legibilidad en móvil, orden y agrupación). Mantener funcionalidad actual (publicar, ver, eliminar). Origen: decisión de mantener avisos (T231); notificaciones ya funcionando vía Cloud Function. | Media |
+| **T251** | **Estética estándar en formularios de eventos y alojamientos:** Adecuar el modal de eventos (`wd_event_dialog.dart`) y el modal de alojamientos (`wd_accommodation_dialog.dart`) a la estética estándar de la app (barra verde, espaciado, tipografía, campos con formato "título sobre el borde", botones y estados coherentes con GUIA_UI y con el resto de modales). Complementa T226 (UI estándar modales). | Media |
 
 *Nota: T214 se ha fusionado en T213 (tamaño + contraste).*
 
@@ -84,6 +85,7 @@
 | **T238** | Modal crear evento: (1) ~~Barra verde superior con título.~~ ✅ Hecho. (2) Mejorar visualización de las opciones «General» y «Mi información». (3) Evaluar si el texto «Puedes editar esta información» es necesario. (4) Hacer muy rápido y fácil definir el evento — *decidir al abordar la tarea*: flujo corto con «Más opciones» vs todos los campos visibles reordenados, etc. (5) Orden de aparición de los campos mejorado. Relacionado con T208 (duración/hora concreta). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T242** | Página Calendario: (1) ~~Eliminar la opción «perspectiva de usuario».~~ ✅ Hecho. (2) Agrupar las opciones de la barra en un menú categorizado; revisar cuáles son necesarias. (3) Añadir menú de filtros de eventos: todos, borrador. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T243** | Copiar planes, eventos y alojamientos: (1) Revisar si ya existe tarea (T35, T211 para eventos). (2) Crear ambas opciones: (a) copiar eventos y alojamientos dentro del mismo plan (pegar en el plan actual); (b) duplicar plan entero (plan nuevo con eventos y alojamientos copiados). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T250** | **Definir campos por combinación tipo-subtipo de evento:** Para cada par tipo/subtipo (Desplazamiento/Avión, Desplazamiento/Taxi, Restauración/Comida, etc.), especificar qué campos son visibles, editables, obligatorios u opcionales, y en qué contexto (crear vs editar, rol del usuario). Documentar en `docs/especificaciones/EVENT_FORM_FIELDS.md` o anexo; alinear después el formulario `wd_event_dialog.dart` con esa definición. | Media |
 ---
 
 ### 3. Administración y datos
@@ -226,6 +228,9 @@
 | **T132** | Definición del sistema de agencias de viajes. | Baja |
 | **T154-T156** | Migración a Mac/iOS. | Baja |
 | **T22** | Definir sistema de IDs de planes (concurrencia, colisiones). | Media |
+| **T252** | **Participantes "usuarios" vs "planificadores":** Definir y documentar soluciones de producto y UX para participantes que usan la app más como viajeros (resumen por participante, hoy/mañana, lista cronológica, accesos rápidos a vuelos/alojamiento, propuestas de eventos, confirmación de asistencia, recordatorios, exportar/imprimir). Especificación completa en `docs/tareas/T252_PARTICIPANTES_USUARIOS_VS_PLANIFICADORES.md`. Alcance: no incluye cambios de permisos/roles ni rediseño completo del calendario; export/offline se diseñan aquí, implementación según T56–T62. | Media |
+| **T249** | Migrar usos de `withOpacity` a `withValues` en widgets clave (`wd_event_dialog.dart`, `wd_plan_data_screen.dart`, `wd_calendar_screen.dart`, `wd_participants_screen.dart`), manteniendo exactamente el mismo aspecto visual (alpha equivalente) y corrigiendo los lints deprecados. | Baja |
+| **T248** | Tests unitarios: configurar setup para tests que usan Firebase o PermissionService (Firebase.initializeApp en test; ProviderScope en widget_test). Actualmente fallan circular_dependency_test, permission_system_test y widget_test. | Baja |
 
 ---
 
