@@ -18,6 +18,8 @@ class WdDashboardHeaderBar extends ConsumerWidget {
   final double rowHeight;
   final Plan? selectedPlan;
   final VoidCallback onCreatePlan;
+  /// T252: Si se proporciona, se muestra un enlace "Ver mi resumen" en la info del plan.
+  final VoidCallback? onShowMySummary;
 
   const WdDashboardHeaderBar({
     super.key,
@@ -25,6 +27,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     required this.rowHeight,
     required this.selectedPlan,
     required this.onCreatePlan,
+    this.onShowMySummary,
   });
 
   @override
@@ -235,13 +238,17 @@ class WdDashboardHeaderBar extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.all(3.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            plan.name,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: rowHeight - 6),
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                plan.name,
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -282,8 +289,25 @@ class WdDashboardHeaderBar extends ConsumerWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          if (onShowMySummary != null) ...[
+            const SizedBox(height: 4),
+            GestureDetector(
+              onTap: onShowMySummary,
+              child: Text(
+                loc.viewMySummaryLabel,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: AppColorScheme.color2,
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ],
         ],
-      ),
+            ),
+          ),
+        ),
     );
   }
 

@@ -791,6 +791,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get calendarMenuConfirmedOnly => 'Solo confirmados';
 
   @override
+  String get calendarMenuProposalsOnly => 'Solo propuestas';
+
+  @override
   String get calendarMenuSectionDaysVisible => 'Días visibles';
 
   @override
@@ -1732,4 +1735,63 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get planSummaryButtonLabel => 'Resumen';
+
+  @override
+  String get myPlanSummaryTab => 'Mi resumen';
+
+  @override
+  String get calendarViewModeCalendar => 'Calendario';
+
+  @override
+  String get myPlanSummaryHint => 'Esta es tu vista como participante';
+
+  @override
+  String get myPlanSummaryToday => 'Hoy';
+
+  @override
+  String get myPlanSummaryTomorrow => 'Mañana';
+
+  @override
+  String get myPlanSummaryFlights => 'Mis vuelos';
+
+  @override
+  String get myPlanSummaryAccommodation => 'Mi alojamiento';
+
+  @override
+  String get myPlanSummaryImportant => 'Lo más importante';
+
+  @override
+  String get myPlanSummaryChronological => 'Itinerario completo';
+
+  @override
+  String get myPlanSummaryMyInfo => 'Mi información';
+
+  @override
+  String get proposalsTab => 'Propuestas';
+
+  @override
+  String get proposalsPendingTitle => 'Propuestas pendientes';
+
+  @override
+  String get proposalsEmpty => 'No hay propuestas pendientes';
+
+  @override
+  String get proposalsOnlyOrganizer =>
+      'Solo el organizador puede revisar las propuestas de eventos.';
+
+  @override
+  String get proposalsAccept => 'Aceptar';
+
+  @override
+  String get proposalsReject => 'Rechazar';
+
+  @override
+  String get viewMySummaryLabel => 'Ver mi resumen';
+
+  @override
+  String get viewMySummaryTooltip => 'Ir a Mi resumen';
+
+  @override
+  String get eventProposalParticipantHint =>
+      'Guardarás este evento como propuesta. El organizador recibirá una notificación y podrá aceptarla o rechazarla desde el calendario.';
 }

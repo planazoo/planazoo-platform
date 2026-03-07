@@ -90,6 +90,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   // Inicializar _canEditGeneral como true si se está creando un evento nuevo
   // para que el campo de descripción esté habilitado desde el inicio
   bool get _canEditGeneralInitial => widget.event == null;
+
+  /// T252: Participante creando evento nuevo → solo puede guardar como propuesta (borrador).
+  bool get _isParticipantCreatingProposal {
+    final user = ref.read(currentUserProvider);
+    return _plan != null && user != null && widget.event == null && _plan!.userId != user.id;
+  }
   
   // Campos de información personal
   late TextEditingController _asientoController;
@@ -478,9 +484,18 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     try {
       final planService = ref.read(planServiceProvider);
       final plan = await planService.getPlanById(widget.planId!);
+      final currentUser = ref.read(currentUserProvider);
       if (plan != null && mounted) {
         setState(() {
           _plan = plan;
+          // T252: Si es participante creando evento nuevo, solo puede ser borrador (propuesta)
+          if (widget.event == null && currentUser != null && plan.userId != currentUser.id) {
+            _isDraft = true;
+          }
+          // T252: El organizador debe poder ver el selector borrador/confirmado en cualquier evento (p. ej. para aceptar propuestas)
+          if (currentUser != null && plan.userId == currentUser.id) {
+            _canEditGeneral = true;
+          }
         });
       }
     } catch (e) {
@@ -1675,6 +1690,40 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
+  /// T252: Mensaje en el modal cuando un participante crea un evento (solo propuesta/borrador).
+  Widget _buildProposalHint(BuildContext context, bool isMobile) {
+    final loc = AppLocalizations.of(context)!;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(isMobile ? 12 : 20, 8, isMobile ? 12 : 20, 4),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColorScheme.color2.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColorScheme.color2.withOpacity(0.4)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.lightbulb_outline, size: isMobile ? 20 : 22, color: AppColorScheme.color2),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                loc.eventProposalParticipantHint,
+                style: GoogleFonts.poppins(
+                  fontSize: isMobile ? 12 : 13,
+                  color: Colors.white.withOpacity(0.95),
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
@@ -1753,12 +1802,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 dialogTitle,
                 isMobile: isMobile,
                 showBadges: true,
-                showDraftSwitch: _canEditGeneral,
+                showDraftSwitch: _canEditGeneral && !_isParticipantCreatingProposal,
                 isDraft: _isDraft,
                 onDraftChanged: (value) => setState(() => _isDraft = value),
                 showCloseButton: isMobile,
                 onClose: () => Navigator.of(context).pop(),
               ),
+              if (_isParticipantCreatingProposal) _buildProposalHint(context, isMobile),
               isMobile
                   ? Expanded(
                       child: Padding(
@@ -3976,6 +4026,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     } else {
       connection = null;
     }
+    // T252: Participante creando → solo borrador (propuesta)
+    final effectiveIsDraft = _isParticipantCreatingProposal ? true : _isDraft;
     final commonPart = EventCommonPart(
       description: Sanitizer.sanitizePlainText(descriptionToSave, maxLength: 1000),
       date: _selectedDate,
@@ -3986,7 +4038,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       family: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       subtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
       location: locationSanitized,
-      isDraft: _isDraft,
+      isDraft: effectiveIsDraft,
       extraData: baseExtra.isEmpty ? null : baseExtra,
       connection: connection,
       // Si está marcado "para todos", participantIds debe estar vacío
@@ -4027,7 +4079,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       typeFamily: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       typeSubtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
       participantTrackIds: _selectedParticipantIds,
-      isDraft: _isDraft,
+      isDraft: effectiveIsDraft,
       timezone: _selectedTimezone,
       arrivalTimezone: _selectedArrivalTimezone,
       maxParticipants: _maxParticipantsController.text.trim().isEmpty 
@@ -4042,7 +4094,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
 
     // T107: Detectar si el evento se extiende fuera del rango del plan
-    if (widget.planId != null && !_isDraft) {
+    if (widget.planId != null && !effectiveIsDraft) {
       final planService = ref.read(planServiceProvider);
       final plan = await planService.getPlanById(widget.planId!);
       

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// Barra de navegación horizontal para las opciones del plan en mobile
 /// Equivalente a los widgets W14-W25 del dashboard web
@@ -14,39 +15,47 @@ class PlanNavigationBar extends StatelessWidget {
     required this.onOptionSelected,
   });
 
-  // Opciones principales del plan
-  static const List<NavigationOption> _options = [
-    NavigationOption(
-      id: 'planData',
-      icon: Icons.info,
-      label: 'Info',
-    ),
-    NavigationOption(
-      id: 'calendar',
-      icon: Icons.calendar_today,
-      label: 'Calendario',
-    ),
-    NavigationOption(
-      id: 'participants',
-      icon: Icons.group,
-      label: 'Participantes',
-    ),
-    NavigationOption(
-      id: 'chat',
-      icon: Icons.chat_bubble_outline,
-      label: 'Chat',
-    ),
-    NavigationOption(
-      id: 'stats',
-      icon: Icons.bar_chart,
-      label: 'Stats',
-    ),
-    NavigationOption(
-      id: 'payments',
-      icon: Icons.payment,
-      label: 'Pagos',
-    ),
-  ];
+  // Opciones principales del plan (T252: añadida "Mi resumen")
+  static List<NavigationOption> _options(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    return [
+      NavigationOption(
+        id: 'planData',
+        icon: Icons.info,
+        label: 'Info',
+      ),
+      NavigationOption(
+        id: 'mySummary',
+        icon: Icons.list_alt,
+        label: loc.myPlanSummaryTab,
+      ),
+      NavigationOption(
+        id: 'calendar',
+        icon: Icons.calendar_today,
+        label: 'Calendario',
+      ),
+      NavigationOption(
+        id: 'participants',
+        icon: Icons.group,
+        label: 'Participantes',
+      ),
+      NavigationOption(
+        id: 'chat',
+        icon: Icons.chat_bubble_outline,
+        label: 'Chat',
+      ),
+      NavigationOption(
+        id: 'stats',
+        icon: Icons.bar_chart,
+        label: 'Stats',
+      ),
+      NavigationOption(
+        id: 'payments',
+        icon: Icons.payment,
+        label: 'Pagos',
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,9 +87,9 @@ class PlanNavigationBar extends StatelessWidget {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        itemCount: _options.length,
+        itemCount: _options(context).length,
         itemBuilder: (context, index) {
-          final option = _options[index];
+          final option = _options(context)[index];
           final isSelected = selectedOption == option.id;
           
           return Padding(

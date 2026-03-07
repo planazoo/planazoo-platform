@@ -53,11 +53,12 @@ class WdDashboardNavTabs extends StatelessWidget {
     required this.onTabTap,
   });
 
-  /// Lista de pestañas (W14–W20) con etiquetas localizadas.
+  /// Lista de pestañas (W14–W20) con etiquetas localizadas. T252: añadida "Mi resumen".
   static List<DashboardNavTabItem> tabItems(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return [
       DashboardNavTabItem(id: 'W14', icon: Icons.info, label: loc.dashboardTabPlanazoo, screen: 'planData'),
+      DashboardNavTabItem(id: 'W15_MYSUMMARY', icon: Icons.list_alt, label: loc.myPlanSummaryTab, screen: 'mySummary'),
       DashboardNavTabItem(id: 'W15', icon: Icons.calendar_today, label: loc.dashboardTabCalendar, screen: 'calendar'),
       DashboardNavTabItem(id: 'W16', icon: Icons.group, label: loc.dashboardTabIn, screen: 'participants'),
       DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: loc.dashboardTabStats, screen: 'stats'),

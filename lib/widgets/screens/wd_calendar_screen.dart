@@ -43,6 +43,7 @@ import 'package:unp_calendario/widgets/screens/calendar/components/calendar_grid
 import 'package:unp_calendario/widgets/screens/calendar/components/calendar_tracks.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
+import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -3203,7 +3204,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           
           // Si pasa validación, crear evento
           final eventService = ref.read(eventServiceProvider);
-          await eventService.createEvent(newEvent);
+          final eventId = await eventService.createEvent(newEvent);
+          
+          // T252: Si es propuesta (borrador de un participante), notificar al organizador
+          if (newEvent.isDraft && widget.plan.userId != null && newEvent.userId != widget.plan.userId) {
+            await NotificationHelper().notifyEventProposed(
+              organizerUserId: widget.plan.userId!,
+              planId: widget.plan.id ?? '',
+              planName: widget.plan.name,
+              eventId: eventId,
+              eventDescription: newEvent.description,
+            );
+          }
           
           // Cerrar el diálogo primero
           if (context.mounted) {
@@ -3589,13 +3601,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  /// T242: Filtra eventos según filtro todos / borrador / confirmados.
+  /// T242/T252: Filtra eventos según filtro todos / borrador / confirmados / solo propuestas.
   List<Event> _filterEventsByDraft(List<Event> events) {
     switch (_eventDraftFilter) {
       case 'draft':
         return events.where((e) => e.isDraft).toList();
       case 'confirmed':
         return events.where((e) => !e.isDraft).toList();
+      case 'proposals':
+        // Solo propuestas = borradores creados por participantes (no por el organizador)
+        final organizerId = widget.plan.userId;
+        return events.where((e) => e.isDraft && e.userId != organizerId).toList();
       default:
         return events;
     }

@@ -367,3 +367,22 @@ final accommodationProvider = FutureProvider.family<String?, String>(
     }
   },
 );
+
+/// T252: Eventos del plan para el usuario actual (stream). Para "Mi resumen" filtrar por participantTrackIds.contains(userId).
+final planEventsStreamProvider = StreamProvider.family<List<Event>, String>((ref, planId) {
+  final user = ref.watch(currentUserProvider);
+  if (user?.id == null) return Stream.value(<Event>[]);
+  final eventService = ref.read(eventServiceProvider);
+  return eventService.getEventsByPlanId(planId, user!.id);
+});
+
+/// T252: Propuestas pendientes (eventos en borrador creados por participantes, no por el organizador).
+/// Solo tiene sentido para el organizador; filtrar en UI por currentUser.id == plan.userId.
+final planProposalEventsStreamProvider = StreamProvider.family<List<Event>, String>((ref, planId) async* {
+  final plan = await ref.read(planServiceProvider).getPlanById(planId);
+  if (plan == null || plan.userId == null) return;
+  final eventService = ref.read(eventServiceProvider);
+  await for (final list in eventService.getEventsByPlanId(planId, plan.userId!)) {
+    yield list.where((e) => e.isDraft && e.userId != plan.userId).toList();
+  }
+});

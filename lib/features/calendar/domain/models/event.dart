@@ -93,11 +93,22 @@ class Event {
       personalParts = raw.map((key, value) => MapEntry(key, EventPersonalPart.fromMap(Map<String, dynamic>.from(value as Map))));
     }
 
+    // Parsear Timestamps de forma segura (algunos docs pueden tener null por datos antiguos o migración)
+    final dateParsed = data['date'] != null && data['date'] is Timestamp
+        ? (data['date'] as Timestamp).toDate()
+        : DateTime.now();
+    final createdAtParsed = data['createdAt'] != null && data['createdAt'] is Timestamp
+        ? (data['createdAt'] as Timestamp).toDate()
+        : dateParsed;
+    final updatedAtParsed = data['updatedAt'] != null && data['updatedAt'] is Timestamp
+        ? (data['updatedAt'] as Timestamp).toDate()
+        : createdAtParsed;
+
     return Event(
       id: doc.id,
       planId: data['planId'] ?? '',
       userId: data['userId'] ?? '',
-      date: (data['date'] as Timestamp).toDate(),
+      date: dateParsed,
       hour: data['hour'] ?? (commonPart?.startHour ?? 0),
       duration: duration,
       startMinute: startMinute,
@@ -112,8 +123,8 @@ class Event {
           .toList(),
       participantTrackIds: participantTrackIds,
       isDraft: data['isDraft'] ?? false,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt: createdAtParsed,
+      updatedAt: updatedAtParsed,
       commonPart: commonPart,
       personalParts: personalParts,
       baseEventId: data['baseEventId'],
@@ -495,13 +506,16 @@ class EventDocument {
   });
 
   factory EventDocument.fromMap(Map<String, dynamic> map) {
+    final uploadedAt = map['uploadedAt'] != null && map['uploadedAt'] is Timestamp
+        ? (map['uploadedAt'] as Timestamp).toDate()
+        : DateTime.now();
     return EventDocument(
       id: map['id'],
       name: map['name'] ?? '',
       url: map['url'] ?? '',
       type: map['type'] ?? '',
       size: map['size'] ?? 0,
-      uploadedAt: (map['uploadedAt'] as Timestamp).toDate(),
+      uploadedAt: uploadedAt,
       description: map['description'],
     );
   }
@@ -598,9 +612,15 @@ class EventCommonPart {
   });
 
   factory EventCommonPart.fromMap(Map<String, dynamic> map) {
+    final dateValue = map['date'];
+    final dateParsed = dateValue == null
+        ? DateTime.now()
+        : (dateValue is Timestamp)
+            ? (dateValue as Timestamp).toDate()
+            : DateTime.parse(dateValue.toString());
     return EventCommonPart(
       description: map['description'] ?? '',
-      date: (map['date'] is Timestamp) ? (map['date'] as Timestamp).toDate() : DateTime.parse(map['date'] as String),
+      date: dateParsed,
       startHour: map['startHour'] ?? 0,
       startMinute: map['startMinute'] ?? 0,
       durationMinutes: map['durationMinutes'] ?? 60,

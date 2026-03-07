@@ -60,48 +60,80 @@ class ChatService {
     }
   }
 
-  /// Obtener todos los mensajes del chat del plan (stream en tiempo real)
+  /// Convierte un QuerySnapshot a lista de PlanMessage (ordenada por createdAt).
+  static List<PlanMessage> _snapshotToMessages(QuerySnapshot snapshot) {
+    final list = snapshot.docs
+        .map((doc) {
+          try {
+            return PlanMessage.fromFirestore(doc);
+          } catch (e) {
+            LoggerService.error(
+              'Error parsing message: ${doc.id}',
+              context: 'CHAT_SERVICE',
+              error: e,
+            );
+            return null;
+          }
+        })
+        .where((message) => message != null && !message.isDeleted)
+        .cast<PlanMessage>()
+        .toList();
+    list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return list;
+  }
+
+  /// Obtener todos los mensajes del chat del plan (stream en tiempo real).
+  /// Primera emisión desde servidor (Source.server) para evitar caché incompleta entre clientes;
+  /// luego snapshots() para actualizaciones en tiempo real.
   Stream<List<PlanMessage>> getMessages(String planId) {
     try {
-      return _firestore
+      final ref = _firestore
           .collection(_collectionName)
           .doc(planId)
-          .collection(_subCollectionName)
-          .orderBy('createdAt', descending: false) // Más antiguos primero (para chat)
-          .snapshots()
-          .map((snapshot) {
-        // Filtrar mensajes eliminados en el cliente (para evitar necesidad de índice compuesto)
-        return snapshot.docs
-            .map((doc) {
-              try {
-                return PlanMessage.fromFirestore(doc);
-              } catch (e) {
-                LoggerService.error(
-                  'Error parsing message: ${doc.id}',
-                  context: 'CHAT_SERVICE',
-                  error: e,
-                );
-                return null;
-              }
-            })
-            .where((message) => message != null && !message.isDeleted)
-            .cast<PlanMessage>()
-            .toList();
-      }).handleError((error) {
-        LoggerService.error(
-          'Error in messages stream for plan: $planId',
-          context: 'CHAT_SERVICE',
-          error: error,
-        );
-        return <PlanMessage>[];
-      });
+          .collection(_subCollectionName);
+
+      return _streamWithInitialServerFetch(ref, planId);
     } catch (e) {
       LoggerService.error(
         'Error creating messages stream for plan: $planId',
         context: 'CHAT_SERVICE',
         error: e,
       );
-      return Stream.value(<PlanMessage>[]);
+      return Stream.error(e);
+    }
+  }
+
+  Stream<List<PlanMessage>> _streamWithInitialServerFetch(
+    CollectionReference<Map<String, dynamic>> ref,
+    String planId,
+  ) async* {
+    try {
+      // Primera carga desde servidor para ver todos los mensajes (evita caché incompleta por cliente)
+      final serverSnapshot = await ref.get(const GetOptions(source: Source.server));
+      yield _snapshotToMessages(serverSnapshot);
+
+      // Luego escuchar cambios en tiempo real; solo emitir cuando los datos vienen del servidor
+      // para no sobrescribir con caché local (que podría tener solo los mensajes de este cliente)
+      await for (final snapshot in ref.snapshots().handleError((error, stackTrace) {
+        LoggerService.error(
+          'Error in messages stream for plan: $planId',
+          context: 'CHAT_SERVICE',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        throw error;
+      })) {
+        if (!snapshot.metadata.isFromCache) {
+          yield _snapshotToMessages(snapshot);
+        }
+      }
+    } catch (e) {
+      LoggerService.error(
+        'Error in messages stream for plan: $planId',
+        context: 'CHAT_SERVICE',
+        error: e,
+      );
+      rethrow;
     }
   }
 
@@ -329,6 +361,65 @@ class ChatService {
     } catch (e) {
       LoggerService.error(
         'Error deleting message: $planId/$messageId',
+        context: 'CHAT_SERVICE',
+        error: e,
+      );
+      return false;
+    }
+  }
+
+  /// Añade o quita una reacción del usuario en un mensaje (toggle).
+  /// [emoji] es el carácter de la reacción (ej. "👍", "❤️").
+  Future<bool> toggleReaction(
+    String planId,
+    String messageId,
+    String userId,
+    String emoji,
+  ) async {
+    if (emoji.isEmpty) return false;
+    try {
+      final messageRef = _firestore
+          .collection(_collectionName)
+          .doc(planId)
+          .collection(_subCollectionName)
+          .doc(messageId);
+
+      final messageDoc = await messageRef.get();
+      if (!messageDoc.exists) return false;
+
+      final data = messageDoc.data()!;
+      final reactionsRaw = data['reactions'];
+      final Map<String, List<String>> reactions = reactionsRaw != null && reactionsRaw is Map
+          ? PlanMessage.parseReactions(reactionsRaw)
+          : {};
+
+      final list = reactions[emoji] ?? [];
+      final newList = List<String>.from(list);
+      if (newList.contains(userId)) {
+        newList.remove(userId);
+      } else {
+        newList.add(userId);
+      }
+
+      if (newList.isEmpty) {
+        reactions.remove(emoji);
+      } else {
+        reactions[emoji] = newList;
+      }
+
+      await messageRef.update({
+        'reactions': reactions.map((k, v) => MapEntry(k, v)),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      LoggerService.database(
+        'Reaction toggled: $planId/$messageId emoji=$emoji by $userId',
+        operation: 'UPDATE',
+      );
+      return true;
+    } catch (e) {
+      LoggerService.error(
+        'Error toggling reaction: $planId/$messageId',
         context: 'CHAT_SERVICE',
         error: e,
       );

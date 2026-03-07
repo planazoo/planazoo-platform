@@ -14,6 +14,7 @@ enum UnifiedNotificationType {
   eventCreated,
   eventUpdated,
   eventDeleted,
+  eventProposed, // T252: Propuesta de evento por participante
   eventChange,
   invitationAccepted,
   invitationRejected,

@@ -201,6 +201,9 @@ class CalendarAppBar {
           case 'filter_confirmed':
             onEventDraftFilterChanged?.call('confirmed');
             break;
+          case 'filter_proposals':
+            onEventDraftFilterChanged?.call('proposals');
+            break;
           case 'days_1':
           case 'days_3':
           case 'days_7':
@@ -230,6 +233,7 @@ class CalendarAppBar {
           entries.add(PopupMenuItem<String>(value: 'filter_all', child: Row(children: [Icon(Icons.event_note, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuAllEvents)])));
           entries.add(PopupMenuItem<String>(value: 'filter_draft', child: Row(children: [Icon(Icons.edit_note, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDraftsOnly)])));
           entries.add(PopupMenuItem<String>(value: 'filter_confirmed', child: Row(children: [Icon(Icons.check_circle_outline, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuConfirmedOnly)])));
+          entries.add(PopupMenuItem<String>(value: 'filter_proposals', child: Row(children: [Icon(Icons.lightbulb_outline, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuProposalsOnly)])));
           entries.add(const PopupMenuDivider());
         }
         entries.add(PopupMenuItem<String>(value: '_h3', enabled: false, height: 28, child: Text(loc.calendarMenuSectionDaysVisible, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))));

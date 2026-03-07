@@ -116,3 +116,18 @@ Las tres formas acordadas (todas):
 2. Definir wireframes o maquetas de "Mi resumen" (hoy/mañana, lista, accesos rápidos, pantallazo).
 3. Derivar tareas de implementación (p. ej. nueva pestaña, providers, notificaciones de propuestas, export).
 4. Revisar integración de confirmación de asistencia en "Mi resumen" y en listados de eventos del participante.
+
+---
+
+## Estado de implementación
+
+| Ítem | Estado |
+|------|--------|
+| Pestaña "Mi resumen" + pantalla (hoy/mañana, cronológica, accesos rápidos, pantallazo) | Hecho |
+| Landing por defecto para participantes + tooltip primera vez | Hecho |
+| **Selector Calendario / Mi resumen en pestaña Calendario** | **Hecho** (segmentos "Calendario" \| "Mi resumen") |
+| **Proponer eventos** (participante propone como borrador → notificación al organizador; ver propuestas en calendario + filtro "Solo propuestas" en menú Filtro de eventos; sin pestaña dedicada) | **Hecho** |
+| **Prueba de proponer eventos** (flujo participante → notificación → organizador acepta/rechaza) | **Pendiente** |
+| Recordatorios automáticos (reglas fijas) | Pendiente |
+| Exportar/imprimir (mi itinerario y plan completo) | Pendiente |
+| **Botón "Ver mi resumen" en cabecera** (opcional) | **Hecho** (icono en AppBar PlanDetailPage + enlace en header dashboard W6) |

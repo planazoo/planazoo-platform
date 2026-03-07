@@ -15,6 +15,9 @@ class PlanMessage {
   final DateTime? deletedAt; // Timestamp si el mensaje fue eliminado
   final List<String> readBy; // Lista de userIds que han leído el mensaje
   final String? replyTo; // ID del mensaje al que responde (opcional)
+  /// Reacciones: emoji -> lista de userIds que pusieron esa reacción (ej. "👍" -> [id1, id2])
+  /// Nullable por compatibilidad con mensajes cargados antes de existir este campo (hot reload / datos antiguos).
+  final Map<String, List<String>>? reactions;
 
   const PlanMessage({
     this.id,
@@ -27,7 +30,21 @@ class PlanMessage {
     this.deletedAt,
     this.readBy = const [],
     this.replyTo,
+    this.reactions,
   });
+
+  /// Reacciones; nunca null (vacío si no hay).
+  Map<String, List<String>> get reactionsOrEmpty => reactions ?? const {};
+
+  /// Devuelve las reacciones de forma segura. Usar en UI por si el mensaje
+  /// viene de una instancia antigua (hot reload) donde el campo puede fallar al leer.
+  static Map<String, List<String>> safeReactions(PlanMessage message) {
+    try {
+      return message.reactions ?? const {};
+    } catch (_) {
+      return const {};
+    }
+  }
 
   /// Crear desde Firestore
   factory PlanMessage.fromFirestore(DocumentSnapshot doc) {
@@ -74,7 +91,21 @@ class PlanMessage {
           ? List<String>.from(data['readBy'])
           : [],
       replyTo: data['replyTo']?.toString(),
+      reactions: PlanMessage.parseReactions(data['reactions']),
     );
+  }
+
+  static Map<String, List<String>> parseReactions(dynamic raw) {
+    if (raw == null || raw is! Map) return {};
+    final map = <String, List<String>>{};
+    for (final entry in raw.entries) {
+      final key = entry.key.toString();
+      final list = entry.value;
+      if (list is List) {
+        map[key] = list.map((e) => e.toString()).toList();
+      }
+    }
+    return map;
   }
 
   /// Convertir a Firestore
@@ -89,6 +120,7 @@ class PlanMessage {
       if (deletedAt != null) 'deletedAt': Timestamp.fromDate(deletedAt!),
       'readBy': readBy,
       if (replyTo != null) 'replyTo': replyTo,
+      if (reactionsOrEmpty.isNotEmpty) 'reactions': reactionsOrEmpty.map((k, v) => MapEntry(k, v)),
     };
   }
 
@@ -104,6 +136,7 @@ class PlanMessage {
     DateTime? deletedAt,
     List<String>? readBy,
     String? replyTo,
+    Map<String, List<String>>? reactions,
   }) {
     return PlanMessage(
       id: id ?? this.id,
@@ -116,6 +149,7 @@ class PlanMessage {
       deletedAt: deletedAt ?? this.deletedAt,
       readBy: readBy ?? this.readBy,
       replyTo: replyTo ?? this.replyTo,
+      reactions: reactions ?? this.reactions,
     );
   }
 

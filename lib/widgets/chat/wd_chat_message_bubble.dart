@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../features/chat/domain/models/plan_message.dart';
+import '../../features/chat/domain/services/chat_service.dart';
+import '../../features/chat/presentation/providers/chat_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../shared/utils/date_formatter.dart';
 import '../../app/theme/color_scheme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Emojis disponibles para reacciones (clic derecho o pulsación larga en el mensaje)
+const List<String> _reactionEmojis = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+
 /// Widget que muestra una burbuja de mensaje tipo WhatsApp
 class ChatMessageBubble extends ConsumerWidget {
+  final String planId;
   final PlanMessage message;
   final String? senderDisplayName;
   final String? senderUsername;
 
   const ChatMessageBubble({
     super.key,
+    required this.planId,
     required this.message,
     this.senderDisplayName,
     this.senderUsername,
@@ -24,6 +31,8 @@ class ChatMessageBubble extends ConsumerWidget {
     final currentUser = ref.watch(currentUserProvider);
     final isOwnMessage = currentUser != null && message.userId == currentUser.id;
     final isRead = currentUser != null && message.isReadBy(currentUser.id);
+    // Defensivo: mensajes antiguos/hot reload pueden hacer que .reactions falle al leer
+    final reactions = PlanMessage.safeReactions(message);
 
     return Align(
       alignment: isOwnMessage ? Alignment.centerRight : Alignment.centerLeft,
@@ -35,7 +44,6 @@ class ChatMessageBubble extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: isOwnMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            // Nombre del remitente (solo si no es nuestro mensaje)
             if (!isOwnMessage && senderDisplayName != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4, left: 12),
@@ -48,75 +56,173 @@ class ChatMessageBubble extends ConsumerWidget {
                   ),
                 ),
               ),
-            // Burbuja del mensaje
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: isOwnMessage
-                    ? AppColorScheme.color2 // Color para mensajes propios
-                    : Colors.grey.shade800, // Color para mensajes de otros
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isOwnMessage ? 18 : 4),
-                  bottomRight: Radius.circular(isOwnMessage ? 4 : 18),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Mensaje
-                  Text(
-                    message.message,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      color: Colors.white,
-                      height: 1.4,
-                    ),
+            GestureDetector(
+              onSecondaryTapDown: (details) => _showReactionMenu(context, ref, details.globalPosition),
+              onLongPress: () {
+                final box = context.findRenderObject() as RenderBox?;
+                if (box != null) {
+                  final offset = box.localToGlobal(Offset.zero);
+                  _showReactionMenu(context, ref, Offset(offset.dx + box.size.width / 2, offset.dy));
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isOwnMessage
+                      ? AppColorScheme.color2
+                      : Colors.grey.shade800,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(18),
+                    topRight: const Radius.circular(18),
+                    bottomLeft: Radius.circular(isOwnMessage ? 18 : 4),
+                    bottomRight: Radius.circular(isOwnMessage ? 4 : 18),
                   ),
-                  const SizedBox(height: 4),
-                  // Timestamp y estado
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _formatTime(message.createdAt),
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: Colors.white.withOpacity(0.7),
-                        ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      message.message,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        color: Colors.white,
+                        height: 1.4,
                       ),
-                      if (isOwnMessage) ...[
-                        const SizedBox(width: 4),
-                        // Indicador de estado (solo para mensajes propios)
-                        Icon(
-                          isRead ? Icons.done_all : Icons.done,
-                          size: 14,
-                          color: isRead
-                              ? Colors.blue.shade300 // Leído (azul)
-                              : Colors.white.withOpacity(0.7), // Enviado (gris)
-                        ),
-                      ],
-                      if (message.isEdited) ...[
-                        const SizedBox(width: 4),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         Text(
-                          'editado',
+                          _formatTime(message.createdAt),
                           style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: Colors.white.withOpacity(0.6),
-                            fontStyle: FontStyle.italic,
+                            fontSize: 11,
+                            color: Colors.white.withOpacity(0.7),
                           ),
                         ),
+                        if (isOwnMessage) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            isRead ? Icons.done_all : Icons.done,
+                            size: 14,
+                            color: isRead
+                                ? Colors.blue.shade300
+                                : Colors.white.withOpacity(0.7),
+                          ),
+                        ],
+                        if (message.isEdited) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            'editado',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: Colors.white.withOpacity(0.6),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
                       ],
+                    ),
+                    if (reactions.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: reactions.entries.map((e) {
+                          final emoji = e.key;
+                          final userIds = e.value;
+                          final count = userIds.length;
+                          final isMe = currentUser != null && userIds.contains(currentUser.id);
+                          return GestureDetector(
+                            onTap: () => _toggleReaction(context, ref, emoji),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isMe
+                                    ? AppColorScheme.color2.withOpacity(0.6)
+                                    : Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(emoji, style: const TextStyle(fontSize: 14)),
+                                  if (count > 1) ...[
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      '$count',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _showReactionMenu(BuildContext context, WidgetRef ref, Offset globalPosition) {
+    const double menuWidth = 220;
+    const double menuHeight = 56;
+    final screenSize = MediaQuery.of(context).size;
+    final left = (globalPosition.dx - menuWidth / 2).clamp(8.0, screenSize.width - menuWidth - 8);
+    final top = (globalPosition.dy - menuHeight - 8).clamp(8.0, screenSize.height - menuHeight - 8);
+    final position = RelativeRect.fromLTRB(left, top, left + menuWidth, top + menuHeight);
+    showMenu<String>(
+      context: context,
+      position: position,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.grey.shade800,
+      items: [
+        PopupMenuItem<String>(
+          enabled: false,
+          child: SizedBox(
+            width: menuWidth,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 4,
+              runSpacing: 4,
+              children: _reactionEmojis.map((emoji) {
+                return InkWell(
+                  onTap: () {
+                    Navigator.of(context).pop(emoji);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ],
+    ).then((emoji) {
+      if (emoji != null) _toggleReaction(context, ref, emoji);
+    });
+  }
+
+  Future<void> _toggleReaction(BuildContext context, WidgetRef ref, String emoji) async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null || message.id == null) return;
+    final chatService = ref.read(chatServiceProvider);
+    final ok = await chatService.toggleReaction(planId, message.id!, currentUser.id, emoji);
+    if (ok && context.mounted) {
+      ref.invalidate(planMessagesProvider(planId));
+    }
   }
 
   String _formatTime(DateTime dateTime) {

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_navigation_bar.dart';
 import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
+import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/pages/pg_calendar_mobile_page.dart';
 import 'package:unp_calendario/pages/pg_plan_participants_page.dart';
@@ -14,6 +17,7 @@ import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// Página de detalle del plan para mobile
 /// Incluye barra de navegación horizontal y contenido según la opción seleccionada
@@ -30,10 +34,28 @@ class PlanDetailPage extends ConsumerStatefulWidget {
 }
 
 class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
-  String _selectedOption = 'planData'; // Opción por defecto
+  String _selectedOption = 'planData'; // Opción por defecto (T252: participante → mySummary)
+  bool _hasSetInitialTabForParticipant = false;
+  /// T252: Dentro de la pestaña Calendario, modo 'calendar' (rejilla) o 'summary' (mi itinerario).
+  String _calendarViewMode = 'calendar';
 
   @override
   Widget build(BuildContext context) {
+    // T252: Si el usuario es participante (no organizador), abrir por defecto en "Mi resumen"
+    final currentUser = ref.watch(currentUserProvider);
+    final planId = widget.plan.id;
+    if (planId != null && currentUser != null && widget.plan.userId != currentUser.id && !_hasSetInitialTabForParticipant) {
+      final participantsAsync = ref.watch(planParticipantsProvider(planId));
+      participantsAsync.whenData((participants) {
+        final isParticipant = participants.any((p) => p.userId == currentUser.id);
+        if (isParticipant && _selectedOption == 'planData') {
+          _hasSetInitialTabForParticipant = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _selectedOption = 'mySummary');
+          });
+        }
+      });
+    }
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
@@ -62,6 +84,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
 
   /// T237 (3): Barra superior verde y estado del plan visible en la barra.
   PreferredSizeWidget _buildAppBar() {
+    final loc = AppLocalizations.of(context)!;
     return AppBar(
       backgroundColor: AppColorScheme.color2,
       elevation: 0,
@@ -93,6 +116,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             ),
           ),
         ),
+        // T252: Botón "Ver mi resumen" en cabecera
+        IconButton(
+          icon: const Icon(Icons.list_alt, color: Colors.white, size: 22),
+          tooltip: loc.viewMySummaryTooltip,
+          onPressed: () => setState(() => _selectedOption = 'mySummary'),
+        ),
         if (widget.plan.id != null)
           PlanSummaryButton(
             plan: widget.plan,
@@ -113,11 +142,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             Navigator.of(context).pop();
           },
         );
+
+      case 'mySummary':
+        return MyPlanSummaryScreen(plan: widget.plan);
       
       case 'calendar':
-        return CalendarMobilePage(
-          plan: widget.plan,
-        );
+        return _buildCalendarTabContent();
       
       case 'participants':
         return PlanParticipantsPage(
@@ -144,6 +174,81 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           showAppBar: false,
         );
     }
+  }
+
+  /// T252: Pestaña Calendario con selector "Ver como calendario" / "Ver mi resumen".
+  Widget _buildCalendarTabContent() {
+    final loc = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: _CalendarSegmentButton(
+                  label: loc.calendarViewModeCalendar,
+                  isSelected: _calendarViewMode == 'calendar',
+                  onTap: () => setState(() => _calendarViewMode = 'calendar'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _CalendarSegmentButton(
+                  label: loc.myPlanSummaryTab,
+                  isSelected: _calendarViewMode == 'summary',
+                  onTap: () => setState(() => _calendarViewMode = 'summary'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _calendarViewMode == 'calendar'
+              ? CalendarMobilePage(plan: widget.plan)
+              : MyPlanSummaryScreen(plan: widget.plan),
+        ),
+      ],
+    );
+  }
+}
+
+/// Botón de segmento para Calendario / Mi resumen (T252).
+class _CalendarSegmentButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CalendarSegmentButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isSelected ? AppColorScheme.color2 : Colors.grey.shade800,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? Colors.white : Colors.grey.shade400,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

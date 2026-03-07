@@ -253,4 +253,48 @@ class NotificationHelper {
       return false;
     }
   }
+
+  /// T252: Notificar al organizador cuando un participante propone un evento (guarda como borrador).
+  /// [organizerUserId] - ID del organizador (recipiente de la notificación)
+  /// [planId] - ID del plan
+  /// [planName] - Nombre del plan (opcional)
+  /// [eventId] - ID del evento propuesto (opcional, si ya existe)
+  /// [eventDescription] - Descripción del evento para el body
+  Future<bool> notifyEventProposed({
+    required String organizerUserId,
+    required String planId,
+    String? planName,
+    String? eventId,
+    String? eventDescription,
+  }) async {
+    try {
+      String finalPlanName = planName ?? 'Un plan';
+      if (planName == null) {
+        final plan = await _planService.getPlanById(planId);
+        if (plan != null) finalPlanName = plan.name;
+      }
+      final body = eventDescription != null && eventDescription.isNotEmpty
+          ? '${eventDescription.length > 80 ? '${eventDescription.substring(0, 80)}...' : eventDescription}'
+          : 'Un participante ha propuesto un nuevo evento.';
+      final notification = NotificationModel(
+        userId: organizerUserId,
+        type: NotificationType.eventProposed,
+        title: '📅 Propuesta de evento en "$finalPlanName"',
+        body: body,
+        planId: planId,
+        eventId: eventId,
+        createdAt: DateTime.now(),
+        data: {'source': 'T252'},
+      );
+      final id = await _notificationService.createNotification(organizerUserId, notification);
+      if (id != null) {
+        LoggerService.info('Event proposal notification created for organizer: $organizerUserId', context: 'NOTIFICATION_HELPER');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      LoggerService.error('Error creating event proposal notification', context: 'NOTIFICATION_HELPER', error: e);
+      return false;
+    }
+  }
 }

@@ -155,6 +155,8 @@ class GlobalNotificationsService {
         return UnifiedNotificationType.eventUpdated;
       case NotificationType.eventDeleted:
         return UnifiedNotificationType.eventDeleted;
+      case NotificationType.eventProposed:
+        return UnifiedNotificationType.eventProposed;
       case NotificationType.invitationAccepted:
         return UnifiedNotificationType.invitationAccepted;
       case NotificationType.invitationRejected:

@@ -31,6 +31,7 @@ import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
+import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
 
 /// Página de calendario mobile completa
 /// Funciona como el calendario web pero adaptado para 1-3 días visibles
@@ -621,7 +622,18 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         onSaved: (newEvent) async {
           // Guardar el evento
           final eventService = ref.read(eventServiceProvider);
-          await eventService.createEvent(newEvent);
+          final eventId = await eventService.createEvent(newEvent);
+          
+          // T252: Si es propuesta (borrador de un participante), notificar al organizador
+          if (newEvent.isDraft && widget.plan.userId != null && newEvent.userId != widget.plan.userId) {
+            await NotificationHelper().notifyEventProposed(
+              organizerUserId: widget.plan.userId!,
+              planId: widget.plan.id ?? '',
+              planName: widget.plan.name,
+              eventId: eventId,
+              eventDescription: newEvent.description,
+            );
+          }
           
           // Cerrar el diálogo
           if (context.mounted) {

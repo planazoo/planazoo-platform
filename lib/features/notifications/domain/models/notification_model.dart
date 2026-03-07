@@ -6,6 +6,7 @@ enum NotificationType {
   eventCreated, // Nuevo evento creado
   eventUpdated, // Evento modificado
   eventDeleted, // Evento eliminado
+  eventProposed, // T252: Participante propone evento (borrador para revisión del organizador)
   invitation, // Invitación a un plan
   invitationAccepted, // Invitación aceptada
   invitationRejected, // Invitación rechazada

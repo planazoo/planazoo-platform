@@ -186,6 +186,7 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
                     final user = _userCache[message.userId];
 
                     return ChatMessageBubble(
+                      planId: widget.planId,
                       message: message,
                       senderDisplayName: user?.displayName,
                       senderUsername: user?.username,

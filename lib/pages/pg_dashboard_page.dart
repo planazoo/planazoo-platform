@@ -42,6 +42,7 @@ import 'package:unp_calendario/widgets/screens/wd_pending_email_events_screen.da
 import 'package:unp_calendario/widgets/screens/wd_unified_notifications_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_summary_screen.dart';
+import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_timezone_banner.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_nav_tabs.dart';
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
@@ -1371,6 +1372,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 rowHeight: rowHeight,
                 selectedPlan: selectedPlan,
                 onCreatePlan: _showCreatePlanDialog,
+                onShowMySummary: () {
+                  setState(() {
+                    currentScreen = 'mySummary';
+                    selectedWidgetId = 'W15_MYSUMMARY';
+                  });
+                },
               ),
               // W7–W12: Celdas vacías header (C12–C17, R1)
               WdDashboardHeaderPlaceholders(
@@ -1546,6 +1553,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     final screensRequiringPlan = <String>{
       'planData',
+      'mySummary',
       'stats',
       'payments',
       'participants',
@@ -1762,6 +1770,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     switch (currentScreen) {
       case 'planData':
         content = _buildPlanDataScreen();
+        break;
+      case 'mySummary':
+        content = selectedPlan != null
+            ? MyPlanSummaryScreen(plan: selectedPlan!)
+            : _buildNoPlanSelected();
         break;
       case 'stats':
         content = _buildStatsScreen();

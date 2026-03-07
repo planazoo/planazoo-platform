@@ -1502,6 +1502,12 @@ abstract class AppLocalizations {
   /// **'Solo confirmados'**
   String get calendarMenuConfirmedOnly;
 
+  /// T252: Filtro eventos - solo propuestas (borradores de participantes)
+  ///
+  /// In es, this message translates to:
+  /// **'Solo propuestas'**
+  String get calendarMenuProposalsOnly;
+
   /// No description provided for @calendarMenuSectionDaysVisible.
   ///
   /// In es, this message translates to:
@@ -3199,6 +3205,120 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Resumen'**
   String get planSummaryButtonLabel;
+
+  /// T252: Pestaña Mi resumen / itinerario participante
+  ///
+  /// In es, this message translates to:
+  /// **'Mi resumen'**
+  String get myPlanSummaryTab;
+
+  /// T252: Modo vista calendario en pestaña Calendario
+  ///
+  /// In es, this message translates to:
+  /// **'Calendario'**
+  String get calendarViewModeCalendar;
+
+  /// T252: Tooltip primera vez en Mi resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Esta es tu vista como participante'**
+  String get myPlanSummaryHint;
+
+  /// T252: Sección hoy
+  ///
+  /// In es, this message translates to:
+  /// **'Hoy'**
+  String get myPlanSummaryToday;
+
+  /// T252: Sección mañana
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana'**
+  String get myPlanSummaryTomorrow;
+
+  /// T252: Acceso rápido vuelos
+  ///
+  /// In es, this message translates to:
+  /// **'Mis vuelos'**
+  String get myPlanSummaryFlights;
+
+  /// T252: Acceso rápido alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Mi alojamiento'**
+  String get myPlanSummaryAccommodation;
+
+  /// T252: Bloque resumen plan
+  ///
+  /// In es, this message translates to:
+  /// **'Lo más importante'**
+  String get myPlanSummaryImportant;
+
+  /// T252: Lista cronológica
+  ///
+  /// In es, this message translates to:
+  /// **'Itinerario completo'**
+  String get myPlanSummaryChronological;
+
+  /// T252: Bloque datos personales del participante
+  ///
+  /// In es, this message translates to:
+  /// **'Mi información'**
+  String get myPlanSummaryMyInfo;
+
+  /// T252: Pestaña propuestas pendientes
+  ///
+  /// In es, this message translates to:
+  /// **'Propuestas'**
+  String get proposalsTab;
+
+  /// T252: Título sección propuestas
+  ///
+  /// In es, this message translates to:
+  /// **'Propuestas pendientes'**
+  String get proposalsPendingTitle;
+
+  /// T252: Estado vacío propuestas
+  ///
+  /// In es, this message translates to:
+  /// **'No hay propuestas pendientes'**
+  String get proposalsEmpty;
+
+  /// T252: Mensaje para no organizador
+  ///
+  /// In es, this message translates to:
+  /// **'Solo el organizador puede revisar las propuestas de eventos.'**
+  String get proposalsOnlyOrganizer;
+
+  /// T252: Botón aceptar propuesta
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptar'**
+  String get proposalsAccept;
+
+  /// T252: Botón rechazar propuesta
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazar'**
+  String get proposalsReject;
+
+  /// T252: Botón en cabecera para ir a Mi resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Ver mi resumen'**
+  String get viewMySummaryLabel;
+
+  /// T252: Tooltip del botón Ver mi resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Ir a Mi resumen'**
+  String get viewMySummaryTooltip;
+
+  /// T252: Mensaje en modal evento cuando un participante crea (solo borrador)
+  ///
+  /// In es, this message translates to:
+  /// **'Guardarás este evento como propuesta. El organizador recibirá una notificación y podrá aceptarla o rechazarla desde el calendario.'**
+  String get eventProposalParticipantHint;
 }
 
 class _AppLocalizationsDelegate
