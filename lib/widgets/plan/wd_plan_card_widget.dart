@@ -7,6 +7,8 @@ import 'package:unp_calendario/features/calendar/domain/services/image_service.d
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
+import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
+import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
@@ -17,8 +19,12 @@ class PlanCardWidget extends ConsumerWidget {
   final VoidCallback? onTap;
   final bool isSelected;
   final VoidCallback? onDelete;
-  /// Si se proporciona, el icono de resumen abre el resumen en el panel (W31) en lugar del diálogo.
+  /// Si se proporciona, el icono de resumen abre la página de resumen (no el diálogo generador).
   final void Function(Plan plan)? onSummaryInPanel;
+  /// Al clic en icono notificaciones: abrir página de notificaciones del plan.
+  final void Function(Plan plan)? onNotificationsTap;
+  /// Al clic en icono chat: abrir página de chat del plan.
+  final void Function(Plan plan)? onChatTap;
 
   const PlanCardWidget({
     super.key,
@@ -27,6 +33,8 @@ class PlanCardWidget extends ConsumerWidget {
     this.isSelected = false,
     this.onDelete,
     this.onSummaryInPanel,
+    this.onNotificationsTap,
+    this.onChatTap,
   });
 
   @override
@@ -45,134 +53,186 @@ class PlanCardWidget extends ConsumerWidget {
       orElse: () => false,
     );
 
+    // W28: iconos de notificaciones y mensajes no leídos por plan
+    final notifUnread = plan.id != null
+        ? ref.watch(planUnreadCountProvider(plan.id)).valueOrNull ?? 0
+        : 0;
+    final chatUnread = plan.id != null
+        ? ref.watch(unreadMessagesCountProvider(plan.id!)).valueOrNull ?? 0
+        : 0;
+
     // T213: card más compacta; mayor contraste cuando está seleccionada
     final textSecondary = isSelected ? Colors.white.withOpacity(0.95) : Colors.grey.shade400;
     final textTertiary = isSelected ? Colors.white.withOpacity(0.85) : Colors.grey.shade500;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: isSelected
             ? AppColorScheme.color2
             : Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.zero,
         border: hasPendingInvitation
-            ? Border.all(color: Colors.orange.shade400, width: 2)
-            : isSelected
-                ? Border.all(color: Colors.white.withOpacity(0.25), width: 1)
-                : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isSelected ? 0.35 : 0.4),
-            blurRadius: isSelected ? 10 : 12,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
+            ? Border(
+                top: BorderSide(color: Colors.orange.shade400, width: 2),
+                bottom: BorderSide(color: Colors.orange.shade400, width: 2),
+              )
+            : Border(
+                top: BorderSide(
+                  color: isSelected ? Colors.white.withOpacity(0.25) : Colors.grey.shade700.withOpacity(0.5),
+                  width: 1,
+                ),
+                bottom: BorderSide(
+                  color: isSelected ? Colors.white.withOpacity(0.25) : Colors.grey.shade700.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.zero,
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildPlanImage(),
-              const SizedBox(width: 8),
+              // Zona principal: imagen + nombre, fechas, estado, participantes
               Expanded(
-                child: Column(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            plan.name,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (hasPendingInvitation)
-                          Container(
-                            margin: const EdgeInsets.only(left: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.shade400,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.mail_outline, size: 10, color: Colors.white),
-                                const SizedBox(width: 2),
-                                Text(
-                                  'Invitación',
+                    _buildPlanImage(),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  plan.name,
                                   style: GoogleFonts.poppins(
-                                    fontSize: 8,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (hasPendingInvitation)
+                                Container(
+                                  margin: const EdgeInsets.only(left: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade400,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.mail_outline, size: 10, color: Colors.white),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        'Invitación',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatPlanDates(),
+                            style: GoogleFonts.poppins(
+                              color: textSecondary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        if (plan.id != null)
-                          PlanSummaryButton(
-                            plan: plan,
-                            iconOnly: true,
-                            foregroundColor: isSelected ? Colors.white : Colors.white70,
-                            onShowInPanel: onSummaryInPanel,
+                          Text(
+                            '${plan.columnCount} días',
+                            style: GoogleFonts.poppins(
+                              color: textTertiary,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _formatPlanDates(),
-                      style: GoogleFonts.poppins(
-                        color: textSecondary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      '${plan.columnCount} días',
-                      style: GoogleFonts.poppins(
-                        color: textTertiary,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    PlanStateBadgeCompact(
-                      plan: plan,
-                      fontSize: 8,
-                      onColoredBackground: isSelected,
-                    ),
-                    const SizedBox(height: 2),
-                    DaysRemainingIndicator(
-                      plan: plan,
-                      fontSize: 8,
-                      compact: true,
-                      showIcon: false,
-                    ),
-                    Text(
-                      'Participantes: $participantsCount',
-                      style: GoogleFonts.poppins(
-                        color: textTertiary,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w500,
+                          const SizedBox(height: 4),
+                          PlanStateBadgeCompact(
+                            plan: plan,
+                            fontSize: 8,
+                            onColoredBackground: isSelected,
+                          ),
+                          const SizedBox(height: 2),
+                          DaysRemainingIndicator(
+                            plan: plan,
+                            fontSize: 8,
+                            compact: true,
+                            showIcon: false,
+                          ),
+                          Text(
+                            'Participantes: $participantsCount',
+                            style: GoogleFonts.poppins(
+                              color: textTertiary,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+              // Columna vertical estrecha: iconos resumen, notificaciones, chat
+              if (plan.id != null) ...[
+                Container(
+                  width: 1,
+                  height: 40,
+                  margin: const EdgeInsets.only(left: 8, right: 8),
+                  color: (isSelected ? Colors.white : Colors.grey.shade600).withOpacity(0.3),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      PlanSummaryButton(
+                      plan: plan,
+                      iconOnly: true,
+                      foregroundColor: isSelected ? Colors.white : Colors.white70,
+                      onShowInPanel: onSummaryInPanel,
+                    ),
+                    GestureDetector(
+                      onTap: onNotificationsTap != null ? () => onNotificationsTap!(plan) : null,
+                      child: _buildBadgeIcon(
+                        icon: notifUnread > 0 ? Icons.notifications : Icons.notifications_outlined,
+                        hasUnread: notifUnread > 0,
+                        isSelected: isSelected,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: onChatTap != null ? () => onChatTap!(plan) : null,
+                      child: _buildBadgeIcon(
+                        icon: chatUnread > 0 ? Icons.chat_bubble : Icons.chat_bubble_outline,
+                        hasUnread: chatUnread > 0,
+                        isSelected: isSelected,
+                      ),
+                    ),
+                  ],
+                ),
+                ),
+              ],
             ],
           ),
         ),
@@ -187,6 +247,22 @@ class PlanCardWidget extends ConsumerWidget {
   }
 
   String _formatDate(DateTime date) => DateFormatter.formatDate(date);
+
+  static const double _badgeIconSize = 20.0;
+
+  Widget _buildBadgeIcon({
+    required IconData icon,
+    required bool hasUnread,
+    required bool isSelected,
+  }) {
+    final color = hasUnread
+        ? AppColorScheme.color3
+        : (isSelected ? Colors.white.withOpacity(0.9) : Colors.grey.shade400);
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Icon(icon, size: _badgeIconSize, color: color),
+    );
+  }
 
   Widget _buildPlanImage() {
     const double imageSize = 32.0;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme/color_scheme.dart';
@@ -60,15 +61,28 @@ class _ChatInputState extends ConsumerState<ChatInput> {
                   color: Colors.grey.shade800,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: TextField(
-                  controller: _controller,
-                  onChanged: (text) {
-                    setState(() {
-                      _isComposing = text.trim().isNotEmpty;
-                    });
+                child: Focus(
+                  onKeyEvent: (node, event) {
+                    if (event is KeyDownEvent &&
+                        (event.logicalKey == LogicalKeyboardKey.enter ||
+                            event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                      if (HardwareKeyboard.instance.isAltPressed) {
+                        return KeyEventResult.ignored;
+                      }
+                      _handleSend();
+                      return KeyEventResult.handled;
+                    }
+                    return KeyEventResult.ignored;
                   },
-                  onSubmitted: (_) => _handleSend(),
-                  style: GoogleFonts.poppins(
+                  child: TextField(
+                    controller: _controller,
+                    onChanged: (text) {
+                      setState(() {
+                        _isComposing = text.trim().isNotEmpty;
+                      });
+                    },
+                    onSubmitted: (_) => _handleSend(),
+                    style: GoogleFonts.poppins(
                     fontSize: 15,
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -87,6 +101,7 @@ class _ChatInputState extends ConsumerState<ChatInput> {
                   ),
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
+                  ),
                 ),
               ),
             ),

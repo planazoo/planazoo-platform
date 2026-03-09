@@ -91,6 +91,8 @@ Configuración y contexto del proyecto:
 - [Propuesta optimización y sincronización](./PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md) - Código y documentación (ítems a implementar)
 - [Configurar Google Sign-In](./configuracion/CONFIGURAR_GOOGLE_SIGNIN.md) - Login con Google
 - [Migración Mac / iOS](./configuracion/MIGRACION_MAC_PLAYBOOK.md) - Playbook para desarrollo en Mac
+- [Evaluación primeras pruebas con familia](./configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md) - Checklist y estado (listo para invitar a familia)
+- [Revisión iOS vs Web (TestFlight)](./configuracion/REVISION_IOS_VS_WEB.md) - Diferencias web/iOS, checklist pre-TestFlight
 
 ---
 
@@ -123,7 +125,7 @@ Configuración y contexto del proyecto:
 
 ## 📊 Estado del Proyecto
 
-**Última actualización:** Febrero 2026
+**Última actualización:** Marzo 2026
 
 ### Completado ✅
 

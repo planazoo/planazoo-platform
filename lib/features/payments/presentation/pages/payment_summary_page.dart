@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
-import 'package:unp_calendario/app/theme/typography.dart';
+import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import '../../domain/models/payment_summary.dart';
 import '../../domain/services/balance_service.dart';
@@ -29,57 +30,83 @@ class PaymentSummaryPage extends ConsumerWidget {
     final summaryAsync = ref.watch(paymentSummaryProvider(plan.id!));
     final balanceService = ref.watch(balanceServiceProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Resumen de Pagos'),
-        backgroundColor: AppColorScheme.color2,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Registrar pago',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => PaymentDialog(
-                  planId: plan.id!,
-                  plan: plan,
-                  onSaved: () {
-                    // Refrescar el resumen
-                    ref.invalidate(paymentSummaryProvider(plan.id!));
-                  },
-                ),
-              );
-            },
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade900,
+        appBar: AppBar(
+          title: Text(
+            'Resumen de Pagos',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
-        ],
-      ),
-      body: summaryAsync.when(
+          backgroundColor: AppColorScheme.color2,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Registrar pago',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => PaymentDialog(
+                    planId: plan.id!,
+                    plan: plan,
+                    onSaved: () {
+                      ref.invalidate(paymentSummaryProvider(plan.id!));
+                    },
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: summaryAsync.when(
         data: (summary) {
           final transferSuggestions = balanceService.calculateTransferSuggestions(summary);
           return _buildSummaryContent(context, ref, summary, transferSuggestions);
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: AppColorScheme.color2),
+        ),
         error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
-              const SizedBox(height: 16),
-              Text(
-                'Error al cargar resumen de pagos',
-                style: AppTypography.titleStyle.copyWith(color: Colors.red),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: AppTypography.bodyStyle.copyWith(color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                const SizedBox(height: 16),
+                Text(
+                  'Error al cargar resumen de pagos',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red.shade300,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.grey.shade400,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
+        );  // when
       ),
+    ),
     );
   }
 

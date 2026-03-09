@@ -49,6 +49,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 ### 5) UI/UX y Calidad
 - **⚠️ Estilo Base:** La aplicación Planazoo utiliza una UI oscura por defecto. No es un "modo oscuro" opcional, sino el diseño estándar de la app. Consultar `docs/ux/estilos/ESTILO_SOFISTICADO.md` (renombrado a "Estilo Base") para detalles.
+- **⚠️ Consistencia Web e iOS:** Todos los cambios de UI y flujos han de aplicarse y verse de forma coherente en web y en iOS (ver sección 6, norma "Consistencia Web e iOS").
 - Mantener UI consistente: tamaños, tipografías, colores según `AppColorScheme` y el Estilo Base.
 - Evitar regresiones de interacción (tap, drag&drop, dobles clics).
 - Revisar lints tras cada cambio en archivos modificados.
@@ -67,6 +68,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
   - **Excepciones:** Solo se permite hardcodear textos técnicos/debug que nunca se muestran al usuario
   - **Ver T158:** Sistema multi-idioma en progreso (~65% completado). Consultar `docs/tareas/TASKS.md` para estado actual
 - **Multi-plataforma:** App soporta Web + iOS + Android. Verificar compatibilidad de plugins/APIs en las 3 plataformas antes de usar. Priorizar soluciones cross-platform. Consultar `docs/arquitectura/PLATFORM_STRATEGY.md` para estrategia de desarrollo multi-plataforma.
+- **⚠️ Consistencia Web e iOS (obligatorio):** A partir de ahora, **todos los cambios** (UI, flujos, funcionalidad, iconos, navegación) han de ser **consistentes en web y en iOS** (y en Android cuando aplique). No introducir comportamiento, diseño o elementos que solo existan o se vean en una plataforma sin replicarlos en las demás. Al implementar una funcionalidad nueva o modificar una existente, verificar y ajustar tanto la experiencia web como la móvil (p. ej. lista de planes, barra inferior, cards, modales).
 - **Offline-First:** Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
 - **UI/UX:** Consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar siempre `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons` para mantener consistencia. Documentar componentes nuevos en la guía.
 - **Seguridad:** Consultar `docs/guias/GUIA_SEGURIDAD.md` antes de implementar funcionalidades y verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
@@ -135,5 +137,5 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 Mantenemos este documento corto y de alto impacto. Cualquier nueva norma estable se añade aquí.
 
-*Última actualización: Febrero 2026 (acuerdo: no mostrar fragmentos ni diffs al codificar).*
+*Última actualización: Marzo 2026 (norma: consistencia obligatoria web e iOS en todos los cambios).*
 

@@ -23,10 +23,13 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 /// Incluye barra de navegación horizontal y contenido según la opción seleccionada
 class PlanDetailPage extends ConsumerStatefulWidget {
   final Plan plan;
+  /// Pestaña inicial al abrir (p. ej. 'mySummary', 'chat').
+  final String? initialTab;
 
   const PlanDetailPage({
     super.key,
     required this.plan,
+    this.initialTab,
   });
 
   @override
@@ -34,17 +37,23 @@ class PlanDetailPage extends ConsumerStatefulWidget {
 }
 
 class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
-  String _selectedOption = 'planData'; // Opción por defecto (T252: participante → mySummary)
+  late String _selectedOption;
   bool _hasSetInitialTabForParticipant = false;
   /// T252: Dentro de la pestaña Calendario, modo 'calendar' (rejilla) o 'summary' (mi itinerario).
   String _calendarViewMode = 'calendar';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedOption = widget.initialTab ?? 'planData';
+  }
 
   @override
   Widget build(BuildContext context) {
     // T252: Si el usuario es participante (no organizador), abrir por defecto en "Mi resumen"
     final currentUser = ref.watch(currentUserProvider);
     final planId = widget.plan.id;
-    if (planId != null && currentUser != null && widget.plan.userId != currentUser.id && !_hasSetInitialTabForParticipant) {
+        if (widget.initialTab == null && planId != null && currentUser != null && widget.plan.userId != currentUser.id && !_hasSetInitialTabForParticipant) {
       final participantsAsync = ref.watch(planParticipantsProvider(planId));
       participantsAsync.whenData((participants) {
         final isParticipant = participants.any((p) => p.userId == currentUser.id);
@@ -61,22 +70,24 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       child: Scaffold(
         backgroundColor: Colors.grey.shade900,
         appBar: _buildAppBar(),
-        body: Column(
-          children: [
-            // Barra de navegación horizontal
-            PlanNavigationBar(
-              selectedOption: _selectedOption,
-              onOptionSelected: (option) {
-                setState(() {
-                  _selectedOption = option;
-                });
-              },
-            ),
-            // Contenido según la opción seleccionada
-            Expanded(
-              child: _buildContent(),
-            ),
-          ],
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Barra de navegación horizontal
+              PlanNavigationBar(
+                selectedOption: _selectedOption,
+                onOptionSelected: (option) {
+                  setState(() {
+                    _selectedOption = option;
+                  });
+                },
+              ),
+              // Contenido según la opción seleccionada
+              Expanded(
+                child: _buildContent(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -138,6 +149,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         return PlanDataScreen(
           plan: widget.plan,
           showAppBar: false,
+          onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
           onPlanDeleted: () {
             Navigator.of(context).pop();
           },
@@ -172,6 +184,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         return PlanDataScreen(
           plan: widget.plan,
           showAppBar: false,
+          onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
         );
     }
   }

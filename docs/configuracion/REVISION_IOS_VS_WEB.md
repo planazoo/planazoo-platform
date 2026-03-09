@@ -117,17 +117,32 @@ La decisión de qué mostrar (mobile vs desktop) se hace en `app.dart` con `Plat
 
 ## 3. Checklist pre–TestFlight (resumen)
 
-| # | Ítem | Prioridad |
-|---|------|-----------|
-| 1 | Sustituir textos hardcodeados por AppLocalizations en `pg_plans_list_page.dart` y `pg_invitation_page.dart` | Alta |
-| 2 | Tras aceptar invitación en móvil, navegar a `PlanDetailPage(plan)` del plan aceptado | Media |
-| 3 | Revisar Safe area en `PlanDetailPage` (sobre todo parte inferior) | Media |
-| 4 | Quitar `import 'dart:io'` de `pg_plans_list_page.dart` | Baja |
-| 5 | Añadir `UIBackgroundModes` → `remote-notification` en Info.plist para FCM | Alta (si quieres push en iOS) |
-| 6 | Comprobar GoogleService-Info.plist y APNs en Firebase para iOS | Alta |
-| 7 | Decidir y, si aplica, implementar deep link (Universal Links o URL scheme) para invitaciones | Media |
-| 8 | Probar barra de pestañas del plan en iPhone pequeño; ajustar si hace falta | Baja |
-| 9 | Añadir descripciones de uso cámara/fotos en Info.plist si la app las usa | Media |
+| # | Ítem | Prioridad | Estado (revisión Marzo 2026) |
+|---|------|-----------|------------------------------|
+| 1 | Sustituir textos hardcodeados por AppLocalizations en `pg_plans_list_page.dart` y `pg_invitation_page.dart` | Alta | **Hecho:** PlansListPage ya usaba `loc.plansList*` y `loc.createPlan*` en SnackBars. InvitationPage: sustituidos todos los textos visibles por claves (invitationYouHaveBeenInvited, invitationPlanDetails, invitationLabelName, invitationWrongUserWarning, invitationExpiresOn, etc.) en ES/EN y en los archivos de localización. |
+| 2 | Tras aceptar invitación en móvil, navegar a `PlanDetailPage(plan)` del plan aceptado | Media | **Hecho:** En `pg_invitation_page.dart` (líneas 430-434) si `shouldShowMobileUI` y `plan != null` se hace `pushReplacement(PlanDetailPage(plan))`. |
+| 3 | Revisar Safe area en `PlanDetailPage` (sobre todo parte inferior) | Media | **Hecho:** El `body` del Scaffold está envuelto en `SafeArea` (línea 73). Revisar en dispositivo real si el home indicator tapa algo. |
+| 4 | Quitar `import 'dart:io'` de `pg_plans_list_page.dart` | Baja | **Hecho:** Ya no existe ese import. |
+| 5 | Añadir `UIBackgroundModes` → `remote-notification` en Info.plist para FCM | Alta (si quieres push en iOS) | **Hecho:** Añadido en `ios/Runner/Info.plist`. |
+| 6 | Comprobar GoogleService-Info.plist y APNs en Firebase para iOS | Alta | **Pendiente:** Verificar en proyecto y Firebase Console. |
+| 7 | Decidir y, si aplica, implementar deep link (Universal Links o URL scheme) para invitaciones | Media | **Pendiente.** |
+| 8 | Probar barra de pestañas del plan en iPhone pequeño; ajustar si hace falta | Baja | **Pendiente** (prueba manual). |
+| 9 | Añadir descripciones de uso cámara/fotos en Info.plist si la app las usa | Media | **Hecho:** Añadidos `NSPhotoLibraryUsageDescription` y `NSCameraUsageDescription` en `ios/Runner/Info.plist` (la app usa ImagePicker para imagen del plan y perfil). |
+
+---
+
+## 3b. Checklist de paridad Web vs iOS (T257) – rellenado
+
+| Área | Estado | Notas |
+|------|--------|--------|
+| **Lista de planes** | Paridad | iOS: filtros (todos, estoy in, pendientes, cerrados), búsqueda (`WdPlanSearchWidget`), crear plan, card con imagen, iconos resumen/notificaciones/chat, navegación a detalle. Mismo contenido que web (PlanListWidget + PlanCardWidget). |
+| **Detalle del plan / pestañas** | Paridad | Las 7 pestañas existen en iOS (Info, Mi resumen, Calendario, Participantes, Chat, Stats, Pagos). Mismas pantallas: `WdPlanDataScreen`, `WdMyPlanSummaryScreen`, `CalendarMobilePage`/resumen, `PgPlanParticipantsPage`, `WdPlanChatScreen`, `PlanStatsPage`, `PaymentSummaryPage`. |
+| **Calendario** | Paridad funcional | iOS usa `CalendarMobilePage` (1–3 días visibles), con tracks, eventos, alojamientos, diálogos crear/editar evento y alojamiento. Menos vista “rejilla grande” que web; adecuado para móvil. |
+| **Notificaciones e invitaciones** | Paridad + 1 pendiente | Aceptar/rechazar invitación en ambas. Tras aceptar en móvil ya se navega a `PlanDetailPage(plan)`. **Pendiente:** deep link (Universal Links o URL scheme) para abrir app desde link de invitación. |
+| **Perfil y ajustes** | Paridad | Acceso desde barra inferior en iOS (`ProfilePage`). Misma página que web (edición, idioma, zona horaria, eliminar cuenta). |
+| **Multi-idioma** | OK | PlansListPage e InvitationPage usan solo AppLocalizations. InvitationPage: añadidas y usadas claves para header, detalles del plan, aviso email incorrecto y fecha de expiración (ES/EN). |
+| **Safe area y navegación** | OK | `PlansListPage` y `PlanDetailPage` usan `SafeArea`. Barra de pestañas del plan: 7 opciones en horizontal; en iPhone pequeño puede requerir scroll (pendiente prueba manual, ítem 8). |
+| **Consistencia visual** | OK | Cards, iconos naranja para no leídos, bordes solo arriba/abajo y ancho completo aplicados en web e iOS (CONTEXT.md). |
 
 ---
 

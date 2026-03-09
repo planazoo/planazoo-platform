@@ -29,6 +29,28 @@ class PlanChatScreen extends ConsumerStatefulWidget {
 class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final Map<String, UserModel> _userCache = {};
+  bool _hasMarkedAsRead = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Marcar todos como leídos al abrir el chat (una sola vez) para que desaparezca el badge
+    WidgetsBinding.instance.addPostFrameCallback((_) => _markAllAsReadIfNeeded());
+  }
+
+  Future<void> _markAllAsReadIfNeeded() async {
+    if (_hasMarkedAsRead || !mounted) return;
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null) return;
+    _hasMarkedAsRead = true;
+    await ref.read(markAllMessagesAsReadProvider((
+      planId: widget.planId,
+      userId: currentUser.id,
+    )).future);
+    if (!mounted) return;
+    ref.invalidate(planMessagesProvider(widget.planId));
+    ref.invalidate(unreadMessagesCountProvider(widget.planId));
+  }
 
   @override
   void dispose() {
@@ -100,14 +122,6 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
   Widget build(BuildContext context) {
     final messagesAsync = ref.watch(planMessagesProvider(widget.planId));
     final currentUser = ref.watch(currentUserProvider);
-
-    // Marcar todos los mensajes como leídos cuando se abre el chat
-    if (currentUser != null) {
-      ref.read(markAllMessagesAsReadProvider((
-        planId: widget.planId,
-        userId: currentUser.id,
-      )).future);
-    }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade900,

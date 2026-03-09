@@ -35,6 +35,8 @@ class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
   final VoidCallback? onPlanDeleted;
   final VoidCallback? onManageParticipants;
+  /// Si se proporciona, el botón resumen abre la página de resumen en lugar del diálogo.
+  final VoidCallback? onOpenSummary;
   final bool showAppBar;
 
   const PlanDataScreen({
@@ -42,6 +44,7 @@ class PlanDataScreen extends ConsumerStatefulWidget {
     required this.plan,
     this.onPlanDeleted,
     this.onManageParticipants,
+    this.onOpenSummary,
     this.showAppBar = true,
   });
 
@@ -751,6 +754,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     plan: currentPlan,
                     iconOnly: false,
                     foregroundColor: _textSecondary,
+                    onShowInPanel: widget.onOpenSummary != null ? (_) => widget.onOpenSummary!() : null,
                   ),
               ],
             ),

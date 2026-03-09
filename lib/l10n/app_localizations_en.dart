@@ -1101,7 +1101,7 @@ class AppLocalizationsEn extends AppLocalizations {
       '❌ Could not process token. Verify it is valid and has not expired.';
 
   @override
-  String get invitationRejectedSuccess => '✅ Invitation rejected';
+  String get invitationRejectedSuccess => 'Invitation rejected';
 
   @override
   String get dashboardSelectPlanazoo => 'Select a Planazoo';
@@ -1774,4 +1774,143 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get eventProposalParticipantHint =>
       'This event will be saved as a proposal. The organizer will receive a notification and can accept or reject it from the calendar.';
+
+  @override
+  String get plansListNoPlansYet => 'You don\'t have any plans yet';
+
+  @override
+  String get plansListCreateFirstPlan =>
+      'Create your first plan to get started';
+
+  @override
+  String get plansListNoPlansFound => 'No plans found';
+
+  @override
+  String get plansListLoadError => 'Error loading plans';
+
+  @override
+  String get plansListFilterAll => 'All';
+
+  @override
+  String get plansListFilterIn => 'I\'m in';
+
+  @override
+  String get plansListFilterPending => 'Pending';
+
+  @override
+  String get plansListFilterClosed => 'Closed';
+
+  @override
+  String get plansListProfileTooltip => 'Profile';
+
+  @override
+  String get invitationTitle => 'Plan Invitation';
+
+  @override
+  String get invitationNotFound => 'Invitation not found or invalid';
+
+  @override
+  String get invitationExpired => 'This invitation has expired';
+
+  @override
+  String get invitationAlreadyAccepted =>
+      'You have already accepted this invitation';
+
+  @override
+  String get invitationAlreadyRejected => 'You have rejected this invitation';
+
+  @override
+  String invitationLoadError(Object error) {
+    return 'Error loading invitation: $error';
+  }
+
+  @override
+  String get invitationLoginToAccept => 'Sign in to accept the invitation';
+
+  @override
+  String get invitationNeedAccount => 'You need an account to join the plan';
+
+  @override
+  String get invitationLoginButton => 'Sign in';
+
+  @override
+  String get invitationCreateAccount => 'Create account';
+
+  @override
+  String get invitationAcceptButton => 'Accept invitation';
+
+  @override
+  String get invitationProcessing => 'Processing...';
+
+  @override
+  String get invitationRejectButton => 'Reject invitation';
+
+  @override
+  String get invitationAcceptSuccess =>
+      'Invitation accepted. Redirecting to the plan...';
+
+  @override
+  String get invitationAcceptError => 'Error accepting invitation';
+
+  @override
+  String get invitationRejectConfirmTitle => 'Reject invitation';
+
+  @override
+  String get invitationRejectConfirmMessage =>
+      'Are you sure you want to reject this invitation?';
+
+  @override
+  String get invitationCancel => 'Cancel';
+
+  @override
+  String get invitationRejectConfirmButton => 'Reject';
+
+  @override
+  String get invitationRejectError => 'Error rejecting invitation';
+
+  @override
+  String get invitationBack => 'Back';
+
+  @override
+  String get invitationYouHaveBeenInvited => 'You have been invited!';
+
+  @override
+  String get invitationInvitedToJoinPlan =>
+      'You have been invited to join a plan';
+
+  @override
+  String get invitationPlanDetails => 'Plan details';
+
+  @override
+  String get invitationLabelName => 'Name';
+
+  @override
+  String get invitationLabelDescription => 'Description';
+
+  @override
+  String get invitationLabelStartDate => 'Start date';
+
+  @override
+  String get invitationLabelEndDate => 'End date';
+
+  @override
+  String get invitationLabelInvitedEmail => 'Invited email';
+
+  @override
+  String get invitationCustomMessage => 'Custom message';
+
+  @override
+  String invitationWrongUserWarning(String invitedEmail, String currentEmail) {
+    return 'This invitation is for $invitedEmail, but you are signed in as $currentEmail. Please sign in with the correct email.';
+  }
+
+  @override
+  String invitationExpiresOn(String date) {
+    return 'This invitation expires on $date';
+  }
+
+  @override
+  String genericErrorWithMessage(Object message) {
+    return 'Error: $message';
+  }
 }

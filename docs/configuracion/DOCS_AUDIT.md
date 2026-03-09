@@ -17,7 +17,7 @@
 
 | Carpeta | Archivos | En índice README |
 |---------|----------|------------------|
-| **configuracion/** | CONTEXT.md, INDICE_SISTEMA_PLANES.md, DEPLOY_WEB_FIREBASE_HOSTING.md, TESTING_CHECKLIST.md, FCM_FASE1_IMPLEMENTACION.md, DEPLOY_INDICES_FIRESTORE.md, DESPLEGAR_REGLAS_FIRESTORE.md, ONBOARDING_IA.md, USUARIOS_PRUEBA.md, MIGRACION_MAC_*.md, SETUP_IOS_SIMULATOR.md, EMAILS_*, SERVICIO_EMAILS_*, GUIA_PASO_A_PASO_GMAIL_EN.md, FIRESTORE_*.md, NOMENCLATURA_UI.md, CONFIGURAR_GOOGLE_SIGNIN.md, INSTALAR_JAVA.md, TESTING_FEEDBACK_TEMPLATE.md | Parcial (solo 3 enlaces) |
+| **configuracion/** | CONTEXT.md, INDICE_SISTEMA_PLANES.md, DEPLOY_WEB_*, TESTING_CHECKLIST.md, FCM_FASE1_IMPLEMENTACION.md, DESPLEGAR_*, ONBOARDING_IA.md, USUARIOS_PRUEBA.md, MIGRACION_MAC_*, SETUP_IOS_SIMULATOR.md, EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md, REVISION_IOS_VS_WEB.md, DOCS_AUDIT.md, DOCS_EVALUACION_UNO_A_UNO.md, NOMENCLATURA_UI.md, CONFIGURAR_GOOGLE_*, TESTING_FEEDBACK_TEMPLATE.md, etc. | En docs/README.md (Configuración) |
 | **admin/** | ADMINS_WHITELIST.md | No |
 | **arquitectura/** | ARCHITECTURE_DECISIONS.md, PLATFORM_STRATEGY.md | Sí (solo ARCHITECTURE_DECISIONS) |
 | **guias/** | GUIA_UI.md, GUIA_SEGURIDAD.md, GUIA_ASPECTOS_LEGALES.md, GUIA_PATRON_COMUN_PERSONAL.md, GESTION_TIMEZONES.md, PROMPT_BASE.md | Sí |
@@ -114,6 +114,46 @@ Ubicaciones previstas para documentos legales: `docs/legal/terms_of_service.md`,
 - [x] **Refactor 2.1 pg_dashboard_page (Feb 2026):** Extraídos a `lib/widgets/dashboard/` y `lib/widgets/dialogs/wd_create_plan_modal.dart`: WdTimezoneBanner, WdCreatePlanModal, WdDashboardNavTabs, WdDashboardSidebar, WdDashboardHeaderBar, WdDashboardFilters, WdDashboardHeaderPlaceholders. Estado y siguientes pasos en PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md (sección 2.1 y Estado de la propuesta).
 - [x] **Referencias TASKS.md (Feb 2026):** Añadido "(doc pendiente)" a `docs/admin/SCRIPTS_ADMINISTRATIVOS.md` y `docs/admin/PROCEDIMIENTOS_EMERGENCIA.md`; normalizadas rutas en "Relacionado con" a `docs/flujos/FLUJO_*.md` donde solo se citaba el nombre del archivo.
 - **Próxima revisión:** Seguir ítems pendientes de la propuesta (contenido W31, otros archivos grandes, etc.); el documento de la propuesta es la referencia única de seguimiento.
+
+---
+
+## 6. ¿Son necesarios todos los .md?
+
+**No.** Hay ~109 .md en docs/; no todos tienen el mismo peso. Esta sección clasifica por necesidad.
+
+### 6.1 Nucleo imprescindible (no eliminar)
+
+- **docs/README.md** – Índice de la documentación.
+- **configuracion/CONTEXT.md** – Normas del proyecto.
+- **tareas/TASKS.md** y **tareas/COMPLETED_TASKS.md** – Gestión de tareas.
+- **guias/** – GUIA_UI.md, GUIA_SEGURIDAD.md, PROMPT_BASE.md, PROMPT_INICIO_CHAT.md, PROMPT_TRABAJO_AUTONOMO.md, GESTION_TIMEZONES.md.
+- **configuracion/** – TESTING_CHECKLIST.md, USUARIOS_PRUEBA.md, EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md, REVISION_IOS_VS_WEB.md, DESPLEGAR_REGLAS_FIRESTORE.md, ONBOARDING_IA.md.
+- **flujos/** – FLUJO_CRUD_PLANES.md, FLUJO_CRUD_EVENTOS.md, FLUJO_CRUD_ALOJAMIENTOS.md, FLUJO_ESTADOS_PLAN.md, FLUJO_GESTION_PARTICIPANTES.md, FLUJO_INVITACIONES_NOTIFICACIONES.md, FLUJO_CRUD_USUARIOS.md.
+- **especificaciones/** – CALENDAR_CAPABILITIES.md, EVENT_FORM_FIELDS.md, PLAN_FORM_FIELDS.md, FRANKENSTEIN_PLAN_SPEC.md (si se usa el plan de pruebas).
+- **arquitectura/** – ARCHITECTURE_DECISIONS.md, PLATFORM_STRATEGY.md.
+- **testing/** – PLAN_PRUEBAS_E2E_TRES_USUARIOS.md, INICIO_PRUEBAS_DIA1.md, REGISTRO_OBSERVACIONES_PRUEBAS.md, SISTEMA_PRUEBAS_LOGICAS.md.
+
+### 6.2 Útiles pero opcionales (mantener si se usan)
+
+- **configuracion/** – DOCS_AUDIT.md, DOCS_EVALUACION_UNO_A_UNO.md (auditoría), CONFIGURAR_GOOGLE_*, DEPLOY_*, FCM_FASE1_IMPLEMENTACION.md, MIGRACION_MAC_*, SETUP_IOS_SIMULATOR.md, CREAR_USUARIOS_DESDE_CERO.md, emails/Gmail (si se usan invitaciones por correo).
+- **producto/** – NOTIFICACIONES_ESPECIFICACION.md, PAGOS_MVP.md, BUZON_UNIFICADO_NOTIFICACIONES.md.
+- **ux/pages/** (w1–w30, login, register, profile) – Especificaciones de widgets; útiles para diseño/QA; si no se mantienen, GUIA_UI y NOMENCLATURA_UI pueden bastar.
+- **design/EVENT_COLOR_PALETTE.md**, **admin/ADMINS_WHITELIST.md**.
+
+### 6.3 Candidatos a archivar o fusionar (reducir ruido)
+
+- **PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md** (raíz): Cuando todos los ítems estén hechos o descartados, mover el estado final a COMPLETED_TASKS o a un “Estado de la propuesta” en DOCS_AUDIT y archivar el doc (o borrarlo si ya no aporta).
+- **DOCS_EVALUACION_UNO_A_UNO.md**: Muy largo (evaluación doc a doc). Opciones: (A) mantener como está y enlazarlo solo desde DOCS_AUDIT; (B) archivar en `docs/_archivo/` y dejar en DOCS_AUDIT un resumen de “qué mantener/actualizar”; (C) fusionar solo la tabla resumen en DOCS_AUDIT y eliminar el detalle.
+- **producto/POSICION_PRODUCTO_FRENTE_A_IA.md**: Muy corto; se puede integrar en otro doc de producto (p. ej. README de producto o ONBOARDING_IA) y eliminar el .md.
+- **ux/mejoras/PLANDATASCREEN_ALINEACION.md**, **ux/plan_info_aviso_t231.md**: Si las decisiones ya están aplicadas y no se consultan, mover a _archivo o fusionar en una sola “Notas UX” en ux/.
+- **Especificaciones de producto futuro** (PATROCINIOS_Y_MONETIZACION, CORREO_EVENTOS_*, etc.): Mantener si hay roadmap; si no, mover a una carpeta `docs/producto/futuro/` o _archivo para no mezclar con lo activo.
+
+### 6.4 No recomendado eliminar sin revisar
+
+- Cualquier .md referenciado desde CONTEXT.md, TASKS.md, ONBOARDING_IA.md o desde el código (comentarios, README de lib/).
+- Flujos y guías citados en CONTEXT: mantener al menos el enlace o un doc resumen si se fusionan varios.
+
+**Resumen:** Se puede reducir cantidad archivando o fusionando los de §6.3 y agrupando “producto futuro” sin tocar el núcleo (§6.1). No es obligatorio eliminar; es una opción para que la documentación sea más manejable.
 
 ---
 

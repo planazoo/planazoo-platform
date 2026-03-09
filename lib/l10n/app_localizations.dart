@@ -2051,7 +2051,7 @@ abstract class AppLocalizations {
   /// No description provided for @invitationRejectedSuccess.
   ///
   /// In es, this message translates to:
-  /// **'✅ Invitación rechazada'**
+  /// **'Invitación rechazada'**
   String get invitationRejectedSuccess;
 
   /// No description provided for @dashboardSelectPlanazoo.
@@ -3319,6 +3319,258 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Guardarás este evento como propuesta. El organizador recibirá una notificación y podrá aceptarla o rechazarla desde el calendario.'**
   String get eventProposalParticipantHint;
+
+  /// No description provided for @plansListNoPlansYet.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes planes aún'**
+  String get plansListNoPlansYet;
+
+  /// No description provided for @plansListCreateFirstPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea tu primer plan para comenzar'**
+  String get plansListCreateFirstPlan;
+
+  /// No description provided for @plansListNoPlansFound.
+  ///
+  /// In es, this message translates to:
+  /// **'No se encontraron planes'**
+  String get plansListNoPlansFound;
+
+  /// No description provided for @plansListLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar planes'**
+  String get plansListLoadError;
+
+  /// No description provided for @plansListFilterAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos'**
+  String get plansListFilterAll;
+
+  /// No description provided for @plansListFilterIn.
+  ///
+  /// In es, this message translates to:
+  /// **'Estoy in'**
+  String get plansListFilterIn;
+
+  /// No description provided for @plansListFilterPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendientes'**
+  String get plansListFilterPending;
+
+  /// No description provided for @plansListFilterClosed.
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrados'**
+  String get plansListFilterClosed;
+
+  /// No description provided for @plansListProfileTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Perfil'**
+  String get plansListProfileTooltip;
+
+  /// No description provided for @invitationTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación a Plan'**
+  String get invitationTitle;
+
+  /// No description provided for @invitationNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación no encontrada o inválida'**
+  String get invitationNotFound;
+
+  /// No description provided for @invitationExpired.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta invitación ha expirado'**
+  String get invitationExpired;
+
+  /// No description provided for @invitationAlreadyAccepted.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya has aceptado esta invitación'**
+  String get invitationAlreadyAccepted;
+
+  /// No description provided for @invitationAlreadyRejected.
+  ///
+  /// In es, this message translates to:
+  /// **'Has rechazado esta invitación'**
+  String get invitationAlreadyRejected;
+
+  /// No description provided for @invitationLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar la invitación: {error}'**
+  String invitationLoadError(Object error);
+
+  /// No description provided for @invitationLoginToAccept.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicia sesión para aceptar la invitación'**
+  String get invitationLoginToAccept;
+
+  /// No description provided for @invitationNeedAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas una cuenta para unirte al plan'**
+  String get invitationNeedAccount;
+
+  /// No description provided for @invitationLoginButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Iniciar sesión'**
+  String get invitationLoginButton;
+
+  /// No description provided for @invitationCreateAccount.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear cuenta'**
+  String get invitationCreateAccount;
+
+  /// No description provided for @invitationAcceptButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptar invitación'**
+  String get invitationAcceptButton;
+
+  /// No description provided for @invitationProcessing.
+  ///
+  /// In es, this message translates to:
+  /// **'Procesando...'**
+  String get invitationProcessing;
+
+  /// No description provided for @invitationRejectButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazar invitación'**
+  String get invitationRejectButton;
+
+  /// No description provided for @invitationAcceptSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación aceptada. Redirigiendo al plan...'**
+  String get invitationAcceptSuccess;
+
+  /// No description provided for @invitationAcceptError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al aceptar la invitación'**
+  String get invitationAcceptError;
+
+  /// No description provided for @invitationRejectConfirmTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazar invitación'**
+  String get invitationRejectConfirmTitle;
+
+  /// No description provided for @invitationRejectConfirmMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Estás seguro de que quieres rechazar esta invitación?'**
+  String get invitationRejectConfirmMessage;
+
+  /// No description provided for @invitationCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get invitationCancel;
+
+  /// No description provided for @invitationRejectConfirmButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazar'**
+  String get invitationRejectConfirmButton;
+
+  /// No description provided for @invitationRejectError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al rechazar la invitación'**
+  String get invitationRejectError;
+
+  /// No description provided for @invitationBack.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver'**
+  String get invitationBack;
+
+  /// No description provided for @invitationYouHaveBeenInvited.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Has sido invitado!'**
+  String get invitationYouHaveBeenInvited;
+
+  /// No description provided for @invitationInvitedToJoinPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Te han invitado a unirse a un plan'**
+  String get invitationInvitedToJoinPlan;
+
+  /// No description provided for @invitationPlanDetails.
+  ///
+  /// In es, this message translates to:
+  /// **'Detalles del Plan'**
+  String get invitationPlanDetails;
+
+  /// No description provided for @invitationLabelName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre'**
+  String get invitationLabelName;
+
+  /// No description provided for @invitationLabelDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción'**
+  String get invitationLabelDescription;
+
+  /// No description provided for @invitationLabelStartDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha inicio'**
+  String get invitationLabelStartDate;
+
+  /// No description provided for @invitationLabelEndDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha fin'**
+  String get invitationLabelEndDate;
+
+  /// No description provided for @invitationLabelInvitedEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Email invitado'**
+  String get invitationLabelInvitedEmail;
+
+  /// No description provided for @invitationCustomMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Mensaje personalizado'**
+  String get invitationCustomMessage;
+
+  /// No description provided for @invitationWrongUserWarning.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta invitación es para {invitedEmail}, pero estás conectado como {currentEmail}. Por favor, inicia sesión con el email correcto.'**
+  String invitationWrongUserWarning(String invitedEmail, String currentEmail);
+
+  /// No description provided for @invitationExpiresOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta invitación expira el {date}'**
+  String invitationExpiresOn(String date);
+
+  /// No description provided for @genericErrorWithMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Error: {message}'**
+  String genericErrorWithMessage(Object message);
 }
 
 class _AppLocalizationsDelegate

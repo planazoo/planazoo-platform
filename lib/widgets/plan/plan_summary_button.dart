@@ -34,7 +34,7 @@ class PlanSummaryButton extends ConsumerWidget {
 
     if (iconOnly) {
       return IconButton(
-        icon: Icon(Icons.summarize, size: 20, color: color),
+        icon: Icon(Icons.list_alt_outlined, size: 20, color: color),
         onPressed: () => _openSummary(context, ref),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -44,7 +44,7 @@ class PlanSummaryButton extends ConsumerWidget {
 
     return TextButton.icon(
       onPressed: () => _openSummary(context, ref),
-      icon: Icon(Icons.summarize, size: 18, color: color),
+      icon: Icon(Icons.list_alt_outlined, size: 18, color: color),
       label: Text(l10n.planSummaryButtonLabel, style: TextStyle(color: color, fontSize: 13)),
     );
   }

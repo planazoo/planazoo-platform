@@ -9,7 +9,7 @@ Usa este prompt cuando quieras que la IA trabaje sola durante unas horas en tare
 **Antes de ejecutar las fases de trabajo autónomo**, revisa que la sección **"Contexto del proyecto"** de este mismo archivo sigue siendo fiel al estado actual del repositorio:
 
 - Comprueba que las carpetas y archivos citados existen y que la descripción (lib/app, lib/features, lib/pages, lib/widgets, docs/ y sus subcarpetas) coincide con lo que hay en el repo.
-- Comprueba que los nombres de documentos en `docs/` (configuracion, guias, flujos, especificaciones, tareas, testing, etc.) y los ejemplos de archivos siguen siendo correctos.
+- Comprueba que los nombres de documentos en `docs/` (configuracion, guias, flujos, especificaciones, tareas, testing, etc.) y los ejemplos de archivos siguen siendo correctos. En `docs/configuracion/` deben existir, entre otros: CONTEXT.md, EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md, REVISION_IOS_VS_WEB.md, DOCS_AUDIT.md.
 - Si algo ha cambiado (nueva feature, docs movidos o renombrados, convenciones actualizadas), **actualiza primero este archivo** (PROMPT_TRABAJO_AUTONOMO.md) con el contexto corregido y luego continúa con las fases 1–5.
 
 Solo después de esta comprobación (y de actualizar este prompt si hace falta) pasa a la sección "Tu tarea" y ejecuta las fases de trabajo autónomo.
@@ -22,21 +22,21 @@ Solo después de esta comprobación (y de actualizar este prompt si hace falta) 
 
 **Estructura principal:**
 - `lib/app/` – bootstrap y tema (Estilo Base oscuro, AppColorScheme, Poppins).
-- `lib/features/` – módulos por feature: auth, budget, calendar, chat, flights, language, notifications, offline, payments, places, security, stats, testing (demo_data_generator). Cada uno suele tener domain/, presentation/, providers.
+- `lib/features/` – módulos por feature: auth, budget, calendar, **chat** (mensajes, reacciones, plan_messages), flights, language, notifications, offline, payments, places, security, stats, testing (demo_data_generator). Cada uno suele tener domain/, presentation/, providers.
 - `lib/pages/` – pantallas de nivel superior: pg_dashboard_page, pg_plans_list_page, pg_calendar_mobile_page, pg_plan_detail_page, pg_profile_page, etc.
 - `lib/widgets/` – UI reutilizable: screens/, dialogs/, plan/, event/, notifications/, etc. Incluye `wd_event_dialog.dart` (formulario de eventos con formato “título sobre el borde” y helper `_buildLabelOnBorderField`).
 - `lib/shared/` – servicios, utils, permisos, FCM.
 - `lib/l10n/` – localizaciones generadas (app_es.arb, app_en.arb). **Todos los textos visibles deben usar AppLocalizations** (CONTEXT.md §6).
 
 **Documentación (`docs/`):**
-- **README.md** – Índice: Guías, Flujos, Producto, Especificaciones, Arquitectura, UX, Configuración, Tareas, Testing, Admin.
+- **README.md** – Índice principal: Guías, Flujos, Producto, Especificaciones, Arquitectura, UX, Configuración, Tareas, Testing, Admin. La lista completa de enlaces está en README; aquí solo se citan ejemplos.
 - **configuracion/CONTEXT.md** – Normas: doc viva, reutilizar antes que crear, commits atómicos, no push sin confirmación, Estilo Base, multi-idioma obligatorio, referencias a GUIA_UI, GUIA_SEGURIDAD, flujos en `docs/flujos/`.
-- **configuracion/** – ~30 docs: CONFIGURAR_GOOGLE_PLACES_API.md, CONFIGURAR_GOOGLE_SIGNIN.md, CONFIGURAR_AMADEUS_FLIGHT_STATUS.md, CREAR_USUARIOS_DESDE_CERO.md, DEPLOY_*, DESPLEGAR_REGLAS_FIRESTORE.md, TESTING_CHECKLIST.md, DOCS_AUDIT.md, etc.
+- **configuracion/** – CONTEXT.md, TESTING_CHECKLIST.md, USUARIOS_PRUEBA.md, DEPLOY_*, DESPLEGAR_REGLAS_FIRESTORE.md, DOCS_AUDIT.md, **EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md** (checklist y estado para pruebas con familia), **REVISION_IOS_VS_WEB.md** (iOS vs web, TestFlight, checklist), CONFIGURAR_GOOGLE_*, CREAR_USUARIOS_DESDE_CERO.md, etc.
 - **guias/** – GUIA_UI.md, GUIA_SEGURIDAD.md, GUIA_PATRON_COMUN_PERSONAL.md, GESTION_TIMEZONES.md, PROMPT_BASE.md, PROMPT_INICIO_CHAT.md, PROMPT_TRABAJO_AUTONOMO.md.
 - **flujos/** – FLUJO_CRUD_PLANES.md, FLUJO_CRUD_EVENTOS.md, FLUJO_CRUD_ALOJAMIENTOS.md, FLUJO_ESTADOS_PLAN.md, FLUJO_GESTION_PARTICIPANTES.md, etc.
 - **especificaciones/** – CALENDAR_CAPABILITIES.md, EVENT_FORM_FIELDS.md, PLAN_FORM_FIELDS.md, ACCOMMODATION_FORM_FIELDS.md, FRANKENSTEIN_PLAN_SPEC.md.
-- **tareas/** – TASKS.md (pendientes, códigos T###), COMPLETED_TASKS.md, propuestas (T96_REFACTORING_PLAN, T225_GOOGLE_PLACES_PLAN, T246, T247, etc.).
-- **testing/** – REGISTRO_OBSERVACIONES_PRUEBAS.md, PLAN_PRUEBAS_E2E_TRES_USUARIOS.md, TESTING_OFFLINE_FIRST.md, SISTEMA_PRUEBAS_LOGICAS.md.
+- **tareas/** – TASKS.md (pendientes, códigos T###), COMPLETED_TASKS.md, propuestas (T96, T225, T246, T247, T252, etc.).
+- **testing/** – INICIO_PRUEBAS_DIA1.md, REGISTRO_OBSERVACIONES_PRUEBAS.md, PLAN_PRUEBAS_E2E_TRES_USUARIOS.md, TESTING_OFFLINE_FIRST.md, SISTEMA_PRUEBAS_LOGICAS.md.
 - **arquitectura/** – ARCHITECTURE_DECISIONS.md, PLATFORM_STRATEGY.md (naming pg_*, wd_*).
 - **ux/**, **producto/**, **admin/**, **design/** – más especificaciones y guías.
 
@@ -56,7 +56,8 @@ Trabaja de forma sistemática en el repo **unp_calendario** (Planazoo) para mejo
    - Revisar `docs/README.md` y cada subcarpeta de `docs/` (configuracion, guias, flujos, especificaciones, tareas, testing, arquitectura, ux, producto). Para cada doc relevante, comprobar que los nombres de archivos, rutas, APIs y flujos descritos existan y coincidan con `lib/` y con el comportamiento actual.
    - Actualizar o anotar en el propio doc donde haya pasos obsoletos, referencias a archivos/carpetas eliminados o secciones que ya no aplican.
    - Tener en cuenta: `docs/especificaciones/EVENT_FORM_FIELDS.md` vs `lib/widgets/wd_event_dialog.dart`; `docs/especificaciones/CALENDAR_CAPABILITIES.md` vs código del calendario; flujos en `docs/flujos/` vs implementación en `lib/features/` y `lib/pages/`.
-   - Si existe `docs/configuracion/DOCS_AUDIT.md` o `PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md`, usarlos como lista de comprobación o prioridades donde encaje.
+   - Si existe `docs/configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md`, comprobar que el estado (Hecho/pendiente) y el checklist §4 reflejan el código actual (invitación móvil → PlanDetailPage, Safe area, timezones Africa/Cairo, l10n en lista de planes e invitación).
+   - Usar `docs/configuracion/DOCS_AUDIT.md` y, si aplica, `PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md` como lista de comprobación o prioridades.
 
 2. **Limpieza de archivos**
    - Identificar archivos obsoletos, duplicados o de solo ejemplo que no se referencien desde el resto del código ni desde scripts (buscar imports y menciones en docs).
@@ -82,12 +83,10 @@ Trabaja de forma sistemática en el repo **unp_calendario** (Planazoo) para mejo
 
 ---
 
-## Última ejecución (4 mar 2026)
+## Última ejecución (7 mar 2026)
 
-- **Paso 0:** Actualizado contexto: añadidos `PROMPT_INICIO_CHAT.md`, `PROMPT_TRABAJO_AUTONOMO.md` en guias/; feature `language` en lib/features/.
-- **Fase 1:** `EVENT_FORM_FIELDS.md`: ruta completa a `lib/widgets/wd_event_dialog.dart`, descripción opcional (auto-generada), validaciones y UI unificada. `docs/README.md`: enlace a `REGISTRO_OBSERVACIONES_PRUEBAS.md` en Testing. TASKS.md y PROMPT_BASE.md ya usaban rutas correctas a CONTEXT y COMPLETED_TASKS.
-- **Fase 2:** No se encontraron archivos .bak, _old ni duplicados obvios; no se eliminó nada.
-- **Fase 3:** Revisados TODOs/FIXMEs en lib (varios en auth, calendar, widgets, FCM, edit_personal_info); no se eliminaron bloques de código comentado.
-- **Fase 4:** `flutter test`: 32 pasaron, 1 omitido, 13 fallos (tests que instancian Firebase/PermissionService sin `Firebase.initializeApp`, widget_test sin ProviderScope). `flutter analyze` no se pudo ejecutar por restricción de entorno (engine.stamp).
-- **Fase 5:** pubspec.yaml y README raíz coherentes; no se modificaron guías de configuración.
-- **Pendiente / sugerido:** Tarea en TASKS.md para arreglar tests que requieren Firebase/ProviderScope en setup (circular_dependency_test, permission_system_test, widget_test).
+- **Paso 0:** Contexto actualizado: añadidos en configuracion/ `EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md` (checklist y estado para pruebas con familia) y `REVISION_IOS_VS_WEB.md` (iOS vs web, TestFlight); feature **chat** (mensajes, reacciones) en lib/features/; guias/ y tareas/ con referencias actuales.
+- **Fase 1 (doc ↔ código):** EVALUACION_PRIMERAS_PRUEBAS_FAMILIA refleja estado actual: ítems 3.1.1–3.1.4 marcados Hecho (l10n planes list e invitación, navegación al plan en móvil, Safe area, timezones Africa/Cairo). README enlaza a EVALUACION y REVISION_IOS_VS_WEB en Configuración.
+- **Limpieza / consolidación:** DOCS_AUDIT y DOCS_EVALUACION_UNO_A_UNO se mantienen; se añadió referencia cruzada (resumen en DOCS_AUDIT, evaluación detallada en DOCS_EVALUACION). No se eliminaron .md; INICIO_PRUEBAS_DIA1 y EVALUACION_PRIMERAS_PRUEBAS_FAMILIA son complementarios (inicio genérico vs checklist familia).
+- **TASKS.md:** Rutas a CONTEXT y COMPLETED_TASKS ya correctas. Añadida línea en Resumen sobre preparación pruebas familia (ver EVALUACION_PRIMERAS_PRUEBAS_FAMILIA).
+- **Pendiente / sugerido:** Tarea para arreglar tests que requieren Firebase/ProviderScope en setup; ejecutar checklist §4 de EVALUACION_PRIMERAS_PRUEBAS_FAMILIA antes de invitar a familia.

@@ -7,6 +7,9 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_service.da
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/shared/utils/platform_utils.dart';
+import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// Página para procesar invitaciones por token (T104)
 /// 
@@ -29,32 +32,33 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final invitationAsync = ref.watch(invitationByTokenProvider(widget.token));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invitación a Plan'),
+        title: Text(loc.invitationTitle),
       ),
       body: invitationAsync.when(
         data: (invitation) {
           if (invitation == null) {
-            return _buildError('Invitación no encontrada o inválida');
+            return _buildError(context, loc.invitationNotFound);
           }
 
           if (invitation.isExpired) {
-            return _buildError('Esta invitación ha expirado');
+            return _buildError(context, loc.invitationExpired);
           }
 
           if (invitation.isAccepted) {
-            return _buildSuccess('Ya has aceptado esta invitación');
+            return _buildSuccess(context, loc.invitationAlreadyAccepted);
           }
 
           if (invitation.isRejected) {
-            return _buildError('Has rechazado esta invitación');
+            return _buildError(context, loc.invitationAlreadyRejected);
           }
 
           // Invitación válida: mostrar detalles y botones
-          return _buildInvitationDetails(invitation);
+          return _buildInvitationDetails(context, invitation);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) {
@@ -63,20 +67,21 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
             context: 'INVITATION_PAGE',
             error: error,
           );
-          return _buildError('Error al cargar la invitación: $error');
+          return _buildError(context, loc.invitationLoadError(error.toString()));
         },
       ),
     );
   }
 
-  Widget _buildInvitationDetails(invitation) {
+  Widget _buildInvitationDetails(BuildContext context, invitation) {
+    final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
     final planAsync = ref.watch(planByIdProvider(invitation.planId));
 
     return planAsync.when(
       data: (plan) {
         if (plan == null) {
-          return _buildError('Plan no encontrado');
+          return _buildError(context, loc.invitationNotFound);
         }
 
         return SingleChildScrollView(
@@ -101,7 +106,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '¡Has sido invitado!',
+                      loc.invitationYouHaveBeenInvited,
                       style: AppTypography.titleStyle.copyWith(
                         color: AppColorScheme.color3,
                         fontWeight: FontWeight.bold,
@@ -110,7 +115,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Te han invitado a unirse a un plan',
+                      loc.invitationInvitedToJoinPlan,
                       style: AppTypography.bodyStyle.copyWith(
                         color: Colors.grey.shade700,
                       ),
@@ -130,29 +135,29 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Detalles del Plan',
+                        loc.invitationPlanDetails,
                         style: AppTypography.bodyStyle.copyWith(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _buildDetailRow(Icons.title, 'Nombre', plan.name),
+                      _buildDetailRow(Icons.title, loc.invitationLabelName, plan.name),
                       if (plan.description != null && plan.description!.isNotEmpty)
-                        _buildDetailRow(Icons.description, 'Descripción', plan.description!),
+                        _buildDetailRow(Icons.description, loc.invitationLabelDescription, plan.description!),
                       if (plan.startDate != null)
                         _buildDetailRow(
                           Icons.calendar_today,
-                          'Fecha inicio',
+                          loc.invitationLabelStartDate,
                           _formatDate(plan.startDate!),
                         ),
                       if (plan.endDate != null)
                         _buildDetailRow(
                           Icons.calendar_today,
-                          'Fecha fin',
+                          loc.invitationLabelEndDate,
                           _formatDate(plan.endDate!),
                         ),
-                      _buildDetailRow(Icons.email, 'Email invitado', invitation.email),
+                      _buildDetailRow(Icons.email, loc.invitationLabelInvitedEmail, invitation.email),
                     ],
                   ),
                 ),
@@ -172,7 +177,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
                             Icon(Icons.message, size: 20, color: Colors.blue.shade700),
                             const SizedBox(width: 8),
                             Text(
-                              'Mensaje personalizado',
+                              loc.invitationCustomMessage,
                               style: AppTypography.bodyStyle.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.blue.shade700,
@@ -197,7 +202,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
 
               // Verificar si el usuario está autenticado
               if (currentUser == null) ...[
-                _buildNotAuthenticatedWarning(invitation),
+                _buildNotAuthenticatedWarning(context),
               ] else ...[
                 // Verificar si el email del usuario coincide
                 if (currentUser.email?.toLowerCase() != invitation.email.toLowerCase()) ...[
@@ -214,7 +219,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Esta invitación es para ${invitation.email}, pero estás conectado como ${currentUser.email}. Por favor, inicia sesión con el email correcto.',
+                            loc.invitationWrongUserWarning(invitation.email, currentUser.email),
                             style: TextStyle(color: Colors.orange.shade700),
                           ),
                         ),
@@ -224,7 +229,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
                   const SizedBox(height: 24),
                 ] else
                   // Email coincide: mostrar botones de acción
-                  _buildActionButtons(invitation, currentUser.id),
+                  _buildActionButtons(context, invitation, currentUser.id),
               ],
 
               const SizedBox(height: 16),
@@ -242,7 +247,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Esta invitación expira el ${_formatDate(invitation.expiresAt)}',
+                        loc.invitationExpiresOn(_formatDate(invitation.expiresAt)),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -257,7 +262,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => _buildError('Error al cargar el plan: $error'),
+      error: (error, stack) => _buildError(context, loc.invitationLoadError(error.toString())),
     );
   }
 
@@ -294,7 +299,8 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
     );
   }
 
-  Widget _buildNotAuthenticatedWarning(invitation) {
+  Widget _buildNotAuthenticatedWarning(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
         Container(
@@ -309,7 +315,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
               Icon(Icons.login, size: 32, color: Colors.blue.shade700),
               const SizedBox(height: 12),
               Text(
-                'Inicia sesión para aceptar la invitación',
+                loc.invitationLoginToAccept,
                 style: AppTypography.bodyStyle.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.blue.shade700,
@@ -318,7 +324,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Necesitas una cuenta para unirte al plan',
+                loc.invitationNeedAccount,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.blue.shade600,
@@ -331,12 +337,10 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
         const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: () {
-            // Navegar a login (guardar token para después)
-            // TODO: Implementar navegación a login con token guardado
             Navigator.of(context).pushNamed('/');
           },
           icon: const Icon(Icons.login),
-          label: const Text('Iniciar sesión'),
+          label: Text(loc.invitationLoginButton),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColorScheme.color3,
             foregroundColor: Colors.white,
@@ -346,16 +350,16 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
         const SizedBox(height: 8),
         TextButton(
           onPressed: () {
-            // TODO: Implementar navegación a registro con token guardado
             Navigator.of(context).pushNamed('/');
           },
-          child: const Text('Crear cuenta'),
+          child: Text(loc.invitationCreateAccount),
         ),
       ],
     );
   }
 
-  Widget _buildActionButtons(invitation, String userId) {
+  Widget _buildActionButtons(BuildContext context, invitation, String userId) {
+    final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
         ElevatedButton.icon(
@@ -369,7 +373,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
               : const Icon(Icons.check_circle),
-          label: Text(_isProcessing ? 'Procesando...' : 'Aceptar invitación'),
+          label: Text(_isProcessing ? loc.invitationProcessing : loc.invitationAcceptButton),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
@@ -383,7 +387,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
               ? null
               : () => _rejectInvitation(invitation),
           icon: const Icon(Icons.cancel),
-          label: const Text('Rechazar invitación'),
+          label: Text(loc.invitationRejectButton),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.red,
             side: const BorderSide(color: Colors.red),
@@ -408,8 +412,8 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Invitación aceptada. Redirigiendo al plan...'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.invitationAcceptSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -419,12 +423,23 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
 
         if (!mounted) return;
 
-        // Redirigir al dashboard (el plan se seleccionará automáticamente si hay argumentos)
-        Navigator.of(context).pushReplacementNamed('/');
+        // En móvil: ir al detalle del plan aceptado. En web: al dashboard.
+        final planId = invitation.planId;
+        final plan = await ref.read(planByIdProvider(planId).future);
+        if (!mounted) return;
+        if (plan != null && PlatformUtils.shouldShowMobileUI(context)) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (context) => PlanDetailPage(plan: plan),
+            ),
+          );
+        } else {
+          Navigator.of(context).pushReplacementNamed('/');
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Error al aceptar la invitación'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.invitationAcceptError),
             backgroundColor: Colors.red,
           ),
         );
@@ -438,7 +453,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(AppLocalizations.of(context)!.genericErrorWithMessage(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -453,20 +468,21 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
   }
 
   Future<void> _rejectInvitation(invitation) async {
+    final loc = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rechazar invitación'),
-        content: const Text('¿Estás seguro de que quieres rechazar esta invitación?'),
+        title: Text(loc.invitationRejectConfirmTitle),
+        content: Text(loc.invitationRejectConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(loc.invitationCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Rechazar'),
+            child: Text(loc.invitationRejectConfirmButton),
           ),
         ],
       ),
@@ -486,8 +502,8 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invitación rechazada'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.invitationRejectedSuccess),
             backgroundColor: Colors.orange,
           ),
         );
@@ -501,8 +517,8 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
         Navigator.of(context).pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Error al rechazar la invitación'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.invitationRejectError),
             backgroundColor: Colors.red,
           ),
         );
@@ -516,7 +532,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(AppLocalizations.of(context)!.genericErrorWithMessage(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -530,7 +546,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
     }
   }
 
-  Widget _buildSuccess(String message) {
+  Widget _buildSuccess(BuildContext context, String message) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -550,7 +566,8 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
     );
   }
 
-  Widget _buildError(String message) {
+  Widget _buildError(BuildContext context, String message) {
+    final loc = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -567,7 +584,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Volver'),
+              child: Text(loc.invitationBack),
             ),
           ],
         ),

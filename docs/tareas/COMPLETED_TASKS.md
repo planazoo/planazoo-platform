@@ -4,6 +4,19 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## T255 - Evaluar Fastlane para publicar apps iOS y Android (Marzo 2026)
+
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Marzo 2026  
+
+**Descripción:** Evaluación de Fastlane como herramienta para automatizar publicación y despliegue de las apps Planazoo en iOS (App Store) y Android (Google Play).
+
+**Resultado:** Recomendación de **usar Fastlane**. Documento ampliado en `docs/tareas/T255_EVALUACION_FASTLANE.md` con: qué es Fastlane, idoneidad para Flutter, requisitos (Ruby, Bundler, cuentas Apple/Google), ventajas e inconvenientes, pasos de integración, prioridad de lanes (beta → release → screenshots), referencias oficiales y ejemplos Flutter + GitHub Actions. Se sugiere tarea derivada para implementación (T256).
+
+**Archivos:** `docs/tareas/T255_EVALUACION_FASTLANE.md`.
+
+---
+
 ## T238 (parcial), T242 (parcial) - Modal evento barra verde, Calendario sin perspectiva de usuario (Febrero 2026)
 
 **Estado:** ✅ Completadas (parciales)  

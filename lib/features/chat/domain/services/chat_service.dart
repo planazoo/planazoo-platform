@@ -30,11 +30,16 @@ class ChatService {
         return null;
       }
 
-      // Crear mensaje con contenido sanitizado
+      // Crear mensaje con contenido sanitizado; el autor cuenta como "leído" para no mostrar badge al enviar
+      final readBy = List<String>.from(message.readBy);
+      if (!readBy.contains(message.userId)) {
+        readBy.add(message.userId);
+      }
       final sanitizedPlanMessage = message.copyWith(
         message: sanitizedMessage,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        readBy: readBy,
       );
 
       // Guardar en Firestore
@@ -112,8 +117,8 @@ class ChatService {
       final serverSnapshot = await ref.get(const GetOptions(source: Source.server));
       yield _snapshotToMessages(serverSnapshot);
 
-      // Luego escuchar cambios en tiempo real; solo emitir cuando los datos vienen del servidor
-      // para no sobrescribir con caché local (que podría tener solo los mensajes de este cliente)
+      // Escuchar cambios en tiempo real (servidor y caché) para que al marcar como leído
+      // (escritura local) el stream emita y los badges se actualicen.
       await for (final snapshot in ref.snapshots().handleError((error, stackTrace) {
         LoggerService.error(
           'Error in messages stream for plan: $planId',
@@ -123,9 +128,7 @@ class ChatService {
         );
         throw error;
       })) {
-        if (!snapshot.metadata.isFromCache) {
-          yield _snapshotToMessages(snapshot);
-        }
+        yield _snapshotToMessages(snapshot);
       }
     } catch (e) {
       LoggerService.error(
@@ -199,19 +202,19 @@ class ChatService {
     String userId,
   ) async {
     try {
-      // Obtener todos los mensajes no leídos del usuario
+      // Sin where() para evitar que en web devuelva 0; filtramos no eliminados en código (igual que el stream)
       final messagesSnapshot = await _firestore
           .collection(_collectionName)
           .doc(planId)
           .collection(_subCollectionName)
-          .where('deletedAt', isNull: true)
-          .get();
+          .get(const GetOptions(source: Source.server));
 
       int count = 0;
       final batch = _firestore.batch();
 
       for (var doc in messagesSnapshot.docs) {
         final data = doc.data();
+        if (data['deletedAt'] != null) continue; // no actualizar mensajes eliminados
         final readBy = List<String>.from(data['readBy'] ?? []);
 
         // Si el usuario no lo ha leído, añadirlo

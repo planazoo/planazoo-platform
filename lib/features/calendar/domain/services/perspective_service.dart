@@ -200,6 +200,7 @@ class PerspectiveService {
     final displayNames = {
       'Europe/Madrid': 'Madrid',
       'Europe/London': 'Londres',
+      'Africa/Cairo': 'El Cairo',
       'America/Argentina/Buenos_Aires': 'Buenos Aires',
       'Australia/Sydney': 'Sídney',
       'Asia/Tokyo': 'Tokio',

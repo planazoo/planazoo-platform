@@ -1,8 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
@@ -21,6 +22,10 @@ import 'package:unp_calendario/features/calendar/domain/services/timezone_servic
 import 'package:unp_calendario/widgets/notifications/wd_notification_badge.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
+import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
+import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
+import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
+import 'package:unp_calendario/widgets/dialogs/wd_plans_with_unread_chat_modal.dart';
 
 /// Página de lista de planes para móviles (iOS/Android)
 /// Incluye: barra superior con botón crear plan, búsqueda, filtros, lista y navegación inferior
@@ -147,6 +152,13 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
     // Actualizar planes cuando cambian
     plansAsync.whenData(_onPlansLoaded);
 
+    int totalChatUnread = 0;
+    for (final p in _allPlans) {
+      if (p.id != null) {
+        totalChatUnread += ref.watch(unreadMessagesCountProvider(p.id!)).valueOrNull ?? 0;
+      }
+    }
+
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
@@ -227,19 +239,19 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
               child: Row(
                 children: [
                   Expanded(
-                    child: _buildFilterButton('todos', 'Todos', isDarkMode),
+                    child: _buildFilterButton('todos', loc.plansListFilterAll, isDarkMode),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: _buildFilterButton('estoy_in', 'Estoy in', isDarkMode),
+                    child: _buildFilterButton('estoy_in', loc.plansListFilterIn, isDarkMode),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: _buildFilterButton('pendientes', 'Pendientes', isDarkMode),
+                    child: _buildFilterButton('pendientes', loc.plansListFilterPending, isDarkMode),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: _buildFilterButton('cerrados', 'Cerrados', isDarkMode),
+                    child: _buildFilterButton('cerrados', loc.plansListFilterClosed, isDarkMode),
                   ),
                 ],
               ),
@@ -261,7 +273,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No tienes planes aún',
+                            loc.plansListNoPlansYet,
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
@@ -270,7 +282,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Crea tu primer plan para comenzar',
+                            loc.plansListCreateFirstPlan,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               color: Colors.grey.shade500,
@@ -293,7 +305,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No se encontraron planes',
+                            loc.plansListNoPlansFound,
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
@@ -306,11 +318,11 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     itemCount: _filteredPlans.length,
                     itemBuilder: (context, index) {
                       final plan = _filteredPlans[index];
-                      return _buildPlanCard(context, plan, isDarkMode);
+                      return _buildPlanCard(context, ref, plan, isDarkMode);
                     },
                   );
                 },
@@ -330,7 +342,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Error al cargar planes',
+                        loc.plansListLoadError,
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -379,11 +391,33 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Badge de notificaciones
-                  NotificationBadge(
+                  // Notificaciones (icono naranja si hay no leídas)
+                  const NotificationBadge(
                     iconColor: Colors.white,
-                    badgeColor: Colors.red,
                     iconSize: 28,
+                  ),
+                  const SizedBox(width: 8),
+                  // Chat (icono relleno naranja si hay no leídos)
+                  IconButton(
+                    icon: Icon(
+                      totalChatUnread > 0 ? Icons.chat_bubble : Icons.chat_bubble_outline,
+                      size: 28,
+                      color: totalChatUnread > 0 ? AppColorScheme.color3 : Colors.white,
+                    ),
+                    onPressed: () {
+                      showPlansWithUnreadChatModal(
+                        context: context,
+                        plans: _allPlans,
+                        onPlanSelected: (plan) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => PlanDetailPage(plan: plan, initialTab: 'chat'),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    tooltip: loc.dashboardTabChat,
                   ),
                   const SizedBox(width: 8),
                   // Icono de perfil
@@ -400,7 +434,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                         ),
                       );
                     },
-                    tooltip: 'Perfil',
+                    tooltip: loc.plansListProfileTooltip,
                   ),
                 ],
               ),
@@ -465,13 +499,23 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
     );
   }
 
-  Widget _buildPlanCard(BuildContext context, Plan plan, bool isDarkMode) {
+  Widget _buildPlanCard(BuildContext context, WidgetRef ref, Plan plan, bool isDarkMode) {
     final startDate = plan.startDate;
     final endDate = plan.endDate;
     final dateRange = '${DateFormatter.formatDate(startDate)} - ${DateFormatter.formatDate(endDate)}';
 
+    final notifUnread = plan.id != null
+        ? ref.watch(planUnreadCountProvider(plan.id)).valueOrNull ?? 0
+        : 0;
+    final chatUnread = plan.id != null
+        ? ref.watch(unreadMessagesCountProvider(plan.id!)).valueOrNull ?? 0
+        : 0;
+    final iconColor = Colors.grey.shade400;
+    final notifIconColor = notifUnread > 0 ? AppColorScheme.color3 : iconColor;
+    final chatIconColor = chatUnread > 0 ? AppColorScheme.color3 : iconColor;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -481,25 +525,11 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
             const Color(0xFF2C2C2C),
           ],
         ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
-          width: 1,
+        borderRadius: BorderRadius.zero,
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade700.withOpacity(0.5), width: 1),
+          bottom: BorderSide(color: Colors.grey.shade700.withOpacity(0.5), width: 1),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-            spreadRadius: -4,
-          ),
-        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -511,16 +541,21 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
               ),
             );
           },
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.zero,
           child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
+                // Imagen del plan (thumbnail)
+                _buildPlanCardImage(plan),
+                const SizedBox(width: 16),
+                // Zona principal: nombre, descripción, fechas
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         plan.name,
                         style: GoogleFonts.poppins(
                           fontSize: 18,
@@ -529,56 +564,175 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                           letterSpacing: 0.1,
                         ),
                       ),
-                    ),
-                    if (plan.id != null)
-                      PlanSummaryButton(
+                      if (plan.description != null && plan.description!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          plan.description!,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey.shade400,
+                            letterSpacing: 0.1,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              dateRange,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.grey.shade400,
+                                letterSpacing: 0.1,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Columna vertical estrecha: iconos resumen, notificaciones, chat
+                if (plan.id != null) ...[
+                  Container(
+                    width: 1,
+                    height: 44,
+                    margin: const EdgeInsets.only(left: 8, right: 8),
+                    color: Colors.grey.shade600.withOpacity(0.5),
+                  ),
+                  SizedBox(
+                    width: 40,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        PlanSummaryButton(
                         plan: plan,
                         iconOnly: true,
-                        foregroundColor: Colors.grey.shade400,
+                        foregroundColor: iconColor,
+                        onShowInPanel: (_) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => PlanDetailPage(plan: plan, initialTab: 'mySummary'),
+                            ),
+                          );
+                        },
                       ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey.shade400,
-                    ),
-                  ],
-                ),
-                if (plan.description != null && plan.description!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    plan.description!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.grey.shade400,
-                      letterSpacing: 0.1,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => Scaffold(
+                                appBar: AppBar(
+                                  title: Text(plan.name),
+                                  backgroundColor: AppColorScheme.color2,
+                                ),
+                                body: WdPlanNotificationsScreen(plan: plan),
+                              ),
+                            ),
+                          );
+                        },
+                        child: _buildPlanCardBadgeIcon(
+                          icon: notifUnread > 0 ? Icons.notifications : Icons.notifications_outlined,
+                          color: notifIconColor,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => PlanDetailPage(plan: plan, initialTab: 'chat'),
+                            ),
+                          );
+                        },
+                        child: _buildPlanCardBadgeIcon(
+                          icon: chatUnread > 0 ? Icons.chat_bubble : Icons.chat_bubble_outline,
+                          color: chatIconColor,
+                        ),
+                      ),
+                    ],
+                  ),
                   ),
                 ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: 16,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      dateRange,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.grey.shade400,
-                        letterSpacing: 0.1,
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  static const double _cardBadgeIconSize = 20.0;
+  static const double _planCardImageSize = 48.0;
+
+  Widget _buildPlanCardImage(Plan plan) {
+    if (plan.imageUrl != null && ImageService.isValidImageUrl(plan.imageUrl)) {
+      return Container(
+        width: _planCardImageSize,
+        height: _planCardImageSize,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: CachedNetworkImage(
+            imageUrl: plan.imageUrl!,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              color: AppColorScheme.color2.withOpacity(0.1),
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => _buildPlanCardPlaceholderImage(),
+          ),
+        ),
+      );
+    }
+    return _buildPlanCardPlaceholderImage();
+  }
+
+  Widget _buildPlanCardPlaceholderImage() {
+    return Container(
+      width: _planCardImageSize,
+      height: _planCardImageSize,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
+        color: AppColorScheme.color2.withOpacity(0.1),
+      ),
+      child: Icon(
+        Icons.image,
+        color: AppColorScheme.color2.withOpacity(0.5),
+        size: 24,
+      ),
+    );
+  }
+
+  Widget _buildPlanCardBadgeIcon({
+    required IconData icon,
+    required Color color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Icon(icon, size: _cardBadgeIconSize, color: color),
     );
   }
 }

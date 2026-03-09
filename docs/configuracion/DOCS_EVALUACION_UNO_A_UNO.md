@@ -3,6 +3,8 @@
 > Revisión de cada .md: mantener, actualizar, eliminar, referencias.  
 > **Fecha:** Febrero 2026
 
+**Resumen de referencias rotas y acciones realizadas:** `docs/configuracion/DOCS_AUDIT.md`.
+
 ---
 
 ## Cómo leer esta evaluación

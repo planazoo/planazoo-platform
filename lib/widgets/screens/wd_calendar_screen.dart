@@ -3837,6 +3837,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       'Europe/Paris': 'París',
       'Europe/Berlin': 'Berlín',
       'Europe/Rome': 'Roma',
+      'Africa/Cairo': 'El Cairo',
       'America/New_York': 'Nueva York',
       'America/Los_Angeles': 'Los Ángeles',
       'America/Chicago': 'Chicago',
@@ -3849,7 +3850,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       'Australia/Sydney': 'Sídney',
       'Pacific/Auckland': 'Auckland',
     };
-    
+
     return displayNames[timezone] ?? timezone.split('/').last;
   }
 

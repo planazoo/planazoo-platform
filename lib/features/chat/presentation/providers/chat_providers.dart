@@ -14,15 +14,23 @@ final planMessagesProvider = StreamProvider.family<List<PlanMessage>, String>((r
   return chatService.getMessages(planId);
 });
 
-/// StreamProvider para obtener el contador de mensajes no leídos
-final unreadMessagesCountProvider = StreamProvider.family<int, String>((ref, planId) {
+/// Contador de mensajes no leídos derivado del stream de mensajes (misma fuente que el chat).
+/// Así los badges se actualizan en tiempo real cuando llegan mensajes nuevos.
+final unreadMessagesCountProvider = Provider.family<AsyncValue<int>, String>((ref, planId) {
   final currentUser = ref.watch(currentUserProvider);
   if (currentUser == null) {
-    return Stream.value(0);
+    return const AsyncValue.data(0);
   }
 
-  final chatService = ref.watch(chatServiceProvider);
-  return chatService.getUnreadCountStream(planId, currentUser.id);
+  final messagesAsync = ref.watch(planMessagesProvider(planId));
+  return messagesAsync.when(
+    data: (messages) {
+      final count = messages.where((m) => !m.isReadBy(currentUser.id)).length;
+      return AsyncValue.data(count);
+    },
+    loading: () => const AsyncValue.data(0),
+    error: (_, __) => const AsyncValue.data(0),
+  );
 });
 
 /// FutureProvider para marcar un mensaje como leído

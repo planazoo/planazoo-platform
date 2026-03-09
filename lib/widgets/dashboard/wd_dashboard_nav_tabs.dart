@@ -61,10 +61,10 @@ class WdDashboardNavTabs extends StatelessWidget {
       DashboardNavTabItem(id: 'W15_MYSUMMARY', icon: Icons.list_alt, label: loc.myPlanSummaryTab, screen: 'mySummary'),
       DashboardNavTabItem(id: 'W15', icon: Icons.calendar_today, label: loc.dashboardTabCalendar, screen: 'calendar'),
       DashboardNavTabItem(id: 'W16', icon: Icons.group, label: loc.dashboardTabIn, screen: 'participants'),
-      DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: loc.dashboardTabStats, screen: 'stats'),
       DashboardNavTabItem(id: 'W18', icon: Icons.payment, label: loc.dashboardTabPayments, screen: 'payments'),
       DashboardNavTabItem(id: 'W19', icon: Icons.chat_bubble_outline, label: loc.dashboardTabChat, screen: 'chat'),
       DashboardNavTabItem(id: 'W20', icon: Icons.notifications_outlined, label: loc.dashboardTabNotifications, screen: 'unifiedNotifications', smallLabel: true),
+      DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: loc.dashboardTabStats, screen: 'stats'),
     ];
   }
 
@@ -122,10 +122,12 @@ class _NavTabCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isSelected ? Colors.white : Colors.grey.shade400;
-    final fontSize = item.smallLabel ? 10.0 : 12.0;
     final badgeCount = item.badgeCount ?? 0;
-    final showBadge = badgeCount > 0;
+    final hasUnread = badgeCount > 0;
+    final textColor = isSelected
+        ? Colors.white
+        : (hasUnread ? AppColorScheme.color3 : Colors.grey.shade400);
+    final fontSize = item.smallLabel ? 10.0 : 12.0;
 
     return SizedBox(
       width: width,
@@ -163,7 +165,7 @@ class _NavTabCell extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      item.icon,
+                      (item.id == 'W19' && hasUnread) ? Icons.chat_bubble : item.icon,
                       color: textColor,
                       size: 20,
                     ),
@@ -182,27 +184,6 @@ class _NavTabCell extends StatelessWidget {
                   ],
                 ),
               ),
-              if (showBadge)
-                Positioned(
-                  top: 2,
-                  right: 4,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                    child: Text(
-                      badgeCount > 99 ? '99+' : '$badgeCount',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
         ),

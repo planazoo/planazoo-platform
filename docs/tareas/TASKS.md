@@ -3,7 +3,7 @@
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
 
-**Siguiente código de tarea: T253**
+**Siguiente código de tarea: T258**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
@@ -14,10 +14,12 @@
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252 (participantes usuarios vs planificadores, resumen por participante), etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
 **Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
+
+**Preparación pruebas con familia:** Ver `docs/configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md`. Ítems de prioridad alta (l10n lista planes/invitación, navegación al plan en móvil, Safe area, timezones Egipto+Londres) implementados; checklist §4 pendiente de ejecutar antes de invitar.
 
 ---
 
@@ -205,6 +207,9 @@
 | **T165** | Definir y crear usuarios de administración (modelo, Firestore, documentación). | Media |
 | **T192** | Adaptar la app a personas con discapacidad (accesibilidad). | Media |
 | **T176** | Unificar plantillas de correos transaccionales (verificación, recuperación, invitaciones). | Baja |
+| **T254** | **Pantalla de bienvenida a Planazoo:** Crear una pantalla de bienvenida/onboarding con explicación de qué hace la app. Especificación en `docs/tareas/T254_PANTALLA_BIENVENIDA_PLANAZOO.md`. | Media |
+| **T256** | **Implementar Fastlane** para publicar apps iOS y Android. Tras evaluación T255: `fastlane init` en `ios/` y `android/`, Appfile y credenciales, lanes beta (TestFlight + Play interna) y opcionalmente release; Gemfile en ambas carpetas; opcional CI (GitHub Actions). Ver `docs/tareas/T256_IMPLEMENTAR_FASTLANE.md`. | Media |
+| **T257** | **Revisión web vs iOS (prioridad iOS):** Identificar y cerrar diferencias entre versión web (más desarrollada) e iOS. La plataforma prioritaria es iOS. Checklist y hallazgos en `docs/configuracion/REVISION_IOS_VS_WEB.md`; tarea en `docs/tareas/T257_REVISION_WEB_VS_IOS.md`. | Alta |
 
 ---
 
@@ -225,6 +230,7 @@
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
 | **T190** | Sistema de chat bidireccional del plan (tipo WhatsApp) — en progreso. | Media |
+| **T253** | **Chat: mostrar fecha de los mensajes.** Opciones: (A) separador con la fecha al cambiar de día (estilo WhatsApp) + hora en cada burbuja; (B) fecha y hora en cada mensaje. Especificación y recomendación en `docs/tareas/T253_CHAT_FECHA_MENSAJES.md`. | Media |
 | **T132** | Definición del sistema de agencias de viajes. | Baja |
 | **T154-T156** | Migración a Mac/iOS. | Baja |
 | **T22** | Definir sistema de IDs de planes (concurrencia, colisiones). | Media |

@@ -134,16 +134,18 @@ class FlightCalculationService {
     switch (timezone) {
       case 'Europe/Madrid':
         return 'Madrid';
+      case 'Europe/London':
+        return 'Londres';
+      case 'Europe/Paris':
+        return 'París';
+      case 'Africa/Cairo':
+        return 'El Cairo';
       case 'Australia/Sydney':
         return 'Sídney';
       case 'America/New_York':
         return 'Nueva York';
       case 'America/Los_Angeles':
         return 'Los Ángeles';
-      case 'Europe/London':
-        return 'Londres';
-      case 'Europe/Paris':
-        return 'París';
       case 'Asia/Tokyo':
         return 'Tokio';
       case 'America/Argentina/Buenos_Aires':

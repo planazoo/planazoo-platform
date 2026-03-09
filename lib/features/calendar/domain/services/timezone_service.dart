@@ -117,6 +117,7 @@ class TimezoneService {
       'Europe/Paris',       // GMT+1/+2
       'Europe/Berlin',      // GMT+1/+2
       'Europe/Rome',        // GMT+1/+2
+      'Africa/Cairo',       // Egipto GMT+2
       'America/New_York',   // GMT-5/-4
       'America/Los_Angeles', // GMT-8/-7
       'America/Chicago',    // GMT-6/-5
@@ -146,6 +147,7 @@ class TimezoneService {
       'Europe/Paris': 'París',
       'Europe/Berlin': 'Berlín',
       'Europe/Rome': 'Roma',
+      'Africa/Cairo': 'El Cairo',
       'America/New_York': 'Nueva York',
       'America/Los_Angeles': 'Los Ángeles',
       'America/Chicago': 'Chicago',
@@ -274,6 +276,7 @@ class TimezoneService {
       'Europe/Paris': 1,       // GMT+1
       'Europe/Berlin': 1,      // GMT+1
       'Europe/Rome': 1,        // GMT+1
+      'Africa/Cairo': 2,       // GMT+2 (Egipto)
       'America/New_York': -5,  // GMT-5
       'America/Los_Angeles': -8, // GMT-8
       'America/Chicago': -6,   // GMT-6

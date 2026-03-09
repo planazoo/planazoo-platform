@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../app/theme/color_scheme.dart';
 import '../../features/notifications/presentation/providers/notification_providers.dart';
 import 'wd_notification_list_dialog.dart';
 
@@ -24,47 +25,16 @@ class NotificationBadge extends ConsumerWidget {
 
     return unreadCountAsync.when(
       data: (count) {
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.notifications_outlined,
-                color: iconColor ?? Colors.white,
-                size: iconSize,
-              ),
-              onPressed: () {
-                _showNotificationList(context, ref);
-              },
-            ),
-            // T236: Badge fuera del área del icono (esquina superior derecha) para no tapar la campana
-            if (count > 0)
-              Positioned(
-                right: -2,
-                top: -2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: badgeColor ?? Colors.red,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: iconColor ?? Colors.white, width: 1.2),
-                  ),
-                  constraints: const BoxConstraints(
-                    minWidth: 14,
-                    minHeight: 14,
-                  ),
-                  child: Text(
-                    count > 99 ? '99+' : count.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-          ],
+        final hasUnread = count > 0;
+        return IconButton(
+          icon: Icon(
+            Icons.notifications_outlined,
+            color: hasUnread ? AppColorScheme.color3 : (iconColor ?? Colors.white),
+            size: iconSize,
+          ),
+          onPressed: () {
+            _showNotificationList(context, ref);
+          },
         );
       },
       loading: () => IconButton(

@@ -46,6 +46,7 @@ import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_timezone_banner.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_nav_tabs.dart';
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
+import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_sidebar.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_header_bar.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_filters.dart';
@@ -363,10 +364,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   List<DashboardNavTabItem> _dashboardTabItemsWithBadge(BuildContext context) {
     final baseTabs = WdDashboardNavTabs.tabItems(context);
-    final planUnread = ref.watch(planUnreadCountProvider(selectedPlanId));
-    final count = planUnread.valueOrNull ?? 0;
+    final planNotifUnread = ref.watch(planUnreadCountProvider(selectedPlanId));
+    final notifCount = planNotifUnread.valueOrNull ?? 0;
+    final chatUnread = selectedPlanId != null
+        ? ref.watch(unreadMessagesCountProvider(selectedPlanId!)).valueOrNull ?? 0
+        : 0;
     return baseTabs
-        .map((t) => t.id == 'W20' ? t.copyWith(badgeCount: count) : t)
+        .map((t) {
+          if (t.id == 'W20') return t.copyWith(badgeCount: notifCount);
+          if (t.id == 'W19') return t.copyWith(badgeCount: chatUnread);
+          return t;
+        })
         .toList();
   }
 
@@ -415,6 +423,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   void _showSummaryInPanel() {
     setState(() => _calendarPanelView = 'summary');
+  }
+
+  /// Selecciona el plan y cambia a la pestaña indicada (resumen, notificaciones o chat).
+  void _openPlanTab(Plan plan, String screen, String widgetId) {
+    if (plan.id == null) return;
+    setState(() {
+      selectedPlanId = plan.id;
+      try {
+        selectedPlan = planazoos.firstWhere((p) => p.id == plan.id);
+      } catch (_) {
+        selectedPlan = plan;
+      }
+      currentScreen = screen;
+      selectedWidgetId = widgetId;
+    });
   }
 
   Future<void> _deletePlanazoo(String planId) async {
@@ -1365,6 +1388,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 columnWidth: columnWidth,
                 gridHeight: gridHeight,
                 onProfileTap: () => _changeScreen('profile'),
+                plans: filteredPlanazoos,
+                onOpenChatForPlan: (plan) {
+                  if (plan.id != null) _openPlanTab(plan, 'chat', 'W19');
+                },
               ),
               // W2–W6: Logo, +, showcase, imagen e info del plan (C2–C11, R1)
               WdDashboardHeaderBar(
@@ -1489,6 +1516,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   isLoading: isLoading,
                   onPlanSelected: _selectPlanazoo,
                   onPlanDeleted: _deletePlanazoo,
+                  onSummaryInPanel: (plan) => _openPlanTab(plan, 'mySummary', 'W15_MYSUMMARY'),
+                  onNotificationsTap: (plan) => _openPlanTab(plan, 'unifiedNotifications', 'W20'),
+                  onChatTap: (plan) => _openPlanTab(plan, 'chat', 'W19'),
                 ),
               ),
             ),
@@ -1828,6 +1858,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (selectedPlan == null) return const SizedBox.shrink();
     return PlanDataScreen(
       plan: selectedPlan!,
+      onOpenSummary: () => _openPlanTab(selectedPlan!, 'mySummary', 'W15_MYSUMMARY'),
       onPlanDeleted: () {
         setState(() {
           planazoos.removeWhere((p) => p.id == selectedPlan!.id);
