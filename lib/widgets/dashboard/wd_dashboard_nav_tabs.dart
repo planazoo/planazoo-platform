@@ -134,7 +134,7 @@ class _NavTabCell extends StatelessWidget {
       height: height,
       child: Container(
         decoration: BoxDecoration(
-          color: isSelected ? AppColorScheme.color2 : Colors.grey.shade800,
+          color: isSelected ? AppColorScheme.color2 : Colors.grey.shade900,
           borderRadius: isSelected
               ? const BorderRadius.only(
                   topLeft: Radius.circular(10),
@@ -213,7 +213,7 @@ class _EmptyNavCell extends StatelessWidget {
       height: height,
       child: Container(
         decoration: BoxDecoration(
-          color: isSelected ? AppColorScheme.color2 : Colors.grey.shade800,
+          color: isSelected ? AppColorScheme.color2 : Colors.grey.shade900,
           border: isSelected
               ? Border.all(color: AppColorScheme.color2, width: 2)
               : null,

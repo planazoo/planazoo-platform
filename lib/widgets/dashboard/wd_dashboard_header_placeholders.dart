@@ -27,7 +27,7 @@ class WdDashboardHeaderPlaceholders extends StatelessWidget {
               width: columnWidth + 1,
               height: rowHeight,
               decoration: BoxDecoration(
-                color: Colors.grey.shade800,
+                color: Colors.grey.shade900,
               ),
             ),
           ),

@@ -8,15 +8,18 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 class PlanNavigationBar extends StatelessWidget {
   final String selectedOption;
   final ValueChanged<String> onOptionSelected;
+  /// Si false, la pestaña Estadísticas no se muestra (solo visible para organizador).
+  final bool showStatsTab;
 
   const PlanNavigationBar({
     super.key,
     required this.selectedOption,
     required this.onOptionSelected,
+    this.showStatsTab = true,
   });
 
   // Opciones principales del plan (T252: añadida "Mi resumen")
-  static List<NavigationOption> _options(BuildContext context) {
+  static List<NavigationOption> _allOptions(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return [
       NavigationOption(
@@ -59,6 +62,9 @@ class PlanNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final options = _allOptions(context)
+        .where((o) => o.id != 'stats' || showStatsTab)
+        .toList();
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -87,9 +93,9 @@ class PlanNavigationBar extends StatelessWidget {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        itemCount: _options(context).length,
+        itemCount: options.length,
         itemBuilder: (context, index) {
-          final option = _options(context)[index];
+          final option = options[index];
           final isSelected = selectedOption == option.id;
           
           return Padding(

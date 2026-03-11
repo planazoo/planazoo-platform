@@ -1461,7 +1461,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         width: w13Width,
         height: w13Height,
-        decoration: BoxDecoration(color: Colors.grey.shade700),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Row(
           children: [
             Expanded(
@@ -1490,7 +1490,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         width: w28Width,
         height: w28Height,
-        decoration: BoxDecoration(color: Colors.grey.shade700),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Row(
           children: [
             Expanded(
@@ -2017,7 +2017,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         width: w29Width,
         height: w29Height,
-        decoration: BoxDecoration(color: Colors.grey.shade800),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Row(
           children: [
             Expanded(

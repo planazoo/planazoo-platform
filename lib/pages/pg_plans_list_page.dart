@@ -173,12 +173,12 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
               color: Colors.white,
             ),
           ),
-          backgroundColor: Colors.grey.shade800,
+          backgroundColor: Colors.grey.shade900,
           foregroundColor: Colors.white,
           elevation: 0,
           flexibleSpace: Container(
             decoration: BoxDecoration(
-              color: Colors.grey.shade800, // Color sólido, sin gradiente
+              color: Colors.grey.shade900,
             ),
           ),
           actions: [
@@ -515,20 +515,19 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
     final chatIconColor = chatUnread > 0 ? AppColorScheme.color3 : iconColor;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
+            Colors.grey.shade900,
+            const Color(0xFF1E1E1E),
           ],
         ),
         borderRadius: BorderRadius.zero,
         border: Border(
-          top: BorderSide(color: Colors.grey.shade700.withOpacity(0.5), width: 1),
-          bottom: BorderSide(color: Colors.grey.shade700.withOpacity(0.5), width: 1),
+          bottom: BorderSide(color: AppColorScheme.color2, width: 1),
         ),
       ),
       child: Material(

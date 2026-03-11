@@ -41,7 +41,7 @@ class WdDashboardFilters extends StatelessWidget {
       child: Container(
         width: columnWidth * 4,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade700),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Row(
           children: [
             Expanded(
@@ -136,7 +136,7 @@ class WdDashboardFilters extends StatelessWidget {
       child: Container(
         width: columnWidth * 4,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade700),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Row(
           children: [
             Expanded(
@@ -146,7 +146,7 @@ class WdDashboardFilters extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.grey.shade700,
+            color: Colors.grey.shade900,
             borderRadius: BorderRadius.circular(24),
           ),
           child: ToggleButtons(

@@ -240,7 +240,155 @@
   "@termsRequired": {
     "description": "Terms required error"
   },
-  
+
+  "paymentsSummaryTitle": "Payment summary",
+  "@paymentsSummaryTitle": {
+    "description": "Title of the payment summary page"
+  },
+  "paymentsRegisterPayment": "Register payment",
+  "@paymentsRegisterPayment": {
+    "description": "Tooltip/button to register a payment"
+  },
+  "paymentsSummaryError": "Error loading payment summary",
+  "@paymentsSummaryError": {
+    "description": "Error message when loading the payment summary fails"
+  },
+  "paymentsDisclaimerText": "The app does not process charges; it is only used to record payments and reconcile within the group.",
+  "@paymentsDisclaimerText": {
+    "description": "Short legal disclaimer that the app does not process payments"
+  },
+  "paymentsKittyTitle": "Shared kitty",
+  "@paymentsKittyTitle": {
+    "description": "Title of the shared kitty section"
+  },
+  "paymentsKittyBalanceLabel": "Balance",
+  "@paymentsKittyBalanceLabel": {
+    "description": "Label for the kitty balance"
+  },
+  "paymentsKittyAddContribution": "Contribution",
+  "@paymentsKittyAddContribution": {
+    "description": "Button to add a contribution to the kitty"
+  },
+  "paymentsKittyAddExpense": "Kitty expense",
+  "@paymentsKittyAddExpense": {
+    "description": "Button to add an expense from the kitty"
+  },
+  "paymentsKittyContributionsTitle": "Contributions",
+  "@paymentsKittyContributionsTitle": {
+    "description": "Title of the list of kitty contributions"
+  },
+  "paymentsKittyMoreItems": "+ {count} more",
+  "@paymentsKittyMoreItems": {
+    "description": "Text indicating there are more items in the list",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paymentsKittyExpensesTitle": "Kitty expenses",
+  "@paymentsKittyExpensesTitle": {
+    "description": "Title of the list of kitty expenses"
+  },
+  "paymentsKittyExpensesLoadError": "Error loading kitty expenses: {error}",
+  "@paymentsKittyExpensesLoadError": {
+    "description": "Error message when loading kitty expenses fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentsKittyLoadError": "Error loading kitty: {error}",
+  "@paymentsKittyLoadError": {
+    "description": "Error message when loading the shared kitty fails",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentsGeneralSummaryTitle": "General summary",
+  "@paymentsGeneralSummaryTitle": {
+    "description": "Title of the general payment summary section"
+  },
+  "paymentsGeneralSummaryTotalCost": "Total cost",
+  "@paymentsGeneralSummaryTotalCost": {
+    "description": "Label for the total plan cost"
+  },
+  "paymentsGeneralSummaryTotalPaid": "Total paid",
+  "@paymentsGeneralSummaryTotalPaid": {
+    "description": "Label for the total amount paid"
+  },
+  "paymentsGeneralSummaryParticipants": "Participants",
+  "@paymentsGeneralSummaryParticipants": {
+    "description": "Label for the number of participants"
+  },
+  "paymentsGeneralSummaryBalanceTitle": "Overall balance",
+  "@paymentsGeneralSummaryBalanceTitle": {
+    "description": "Title of the overall balance block"
+  },
+  "paymentsBalancesSectionTitle": "Balances by participant",
+  "@paymentsBalancesSectionTitle": {
+    "description": "Title of the per-participant balances section"
+  },
+  "paymentsBalanceAssignedCost": "Assigned cost",
+  "@paymentsBalanceAssignedCost": {
+    "description": "Label for the assigned cost per participant"
+  },
+  "paymentsBalanceTotalPaid": "Total paid",
+  "@paymentsBalanceTotalPaid": {
+    "description": "Label for the total amount paid by a participant"
+  },
+  "paymentsBalancePaymentsTitle": "Recorded payments:",
+  "@paymentsBalancePaymentsTitle": {
+    "description": "Title of the list of recorded payments per participant"
+  },
+  "paymentsTransferSuggestionsTitle": "Transfer suggestions",
+  "@paymentsTransferSuggestionsTitle": {
+    "description": "Title of the transfer suggestions section"
+  },
+  "paymentsBalanceChartTitle": "Balance distribution",
+  "@paymentsBalanceChartTitle": {
+    "description": "Title of the balance distribution chart"
+  },
+  "paymentsBalanceStatusCreditor": "Should receive {amount}",
+  "@paymentsBalanceStatusCreditor": {
+    "description": "Status text when the participant is a creditor",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentsBalanceStatusDebtor": "Should pay {amount}",
+  "@paymentsBalanceStatusDebtor": {
+    "description": "Status text when the participant is a debtor",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentsBalanceStatusSettled": "Balance settled",
+  "@paymentsBalanceStatusSettled": {
+    "description": "Status text when the participant is settled"
+  },
+  "paymentsAddExpense": "Add expense",
+  "paymentsAddExpenseTitle": "New expense (who paid, split)",
+  "paymentsExpensePayer": "Who paid",
+  "paymentsExpenseAmount": "Amount",
+  "paymentsExpenseConcept": "Concept (optional)",
+  "paymentsExpenseDate": "Date",
+  "paymentsExpenseSplitBetween": "Split between",
+  "paymentsActivityTitle": "Activity",
+  "paymentsExpenseSaved": "Expense recorded",
+  "paymentsExpenseSaveError": "Error saving expense",
+  "paymentsExpenseSplitEqual": "Equal split",
+  "paymentsExpenseSplitCustom": "Custom split",
+  "paymentsExpensePerPerson": "Per person",
+  "paymentsCalculator": "Calculator",
+
   "loginSuccess": "Welcome!",
   "@loginSuccess": {
     "description": "Login success message"

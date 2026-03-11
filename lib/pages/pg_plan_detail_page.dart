@@ -50,10 +50,17 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    // T252: Si el usuario es participante (no organizador), abrir por defecto en "Mi resumen"
     final currentUser = ref.watch(currentUserProvider);
     final planId = widget.plan.id;
-        if (widget.initialTab == null && planId != null && currentUser != null && widget.plan.userId != currentUser.id && !_hasSetInitialTabForParticipant) {
+    final isOrganizer = currentUser?.id == widget.plan.userId;
+    // Si no es organizador y está en Estadísticas, redirigir a Info
+    if (!isOrganizer && _selectedOption == 'stats') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _selectedOption = 'planData');
+      });
+    }
+    // T252: Si el usuario es participante (no organizador), abrir por defecto en "Mi resumen"
+    if (widget.initialTab == null && planId != null && currentUser != null && widget.plan.userId != currentUser.id && !_hasSetInitialTabForParticipant) {
       final participantsAsync = ref.watch(planParticipantsProvider(planId));
       participantsAsync.whenData((participants) {
         final isParticipant = participants.any((p) => p.userId == currentUser.id);
@@ -73,7 +80,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         body: SafeArea(
           child: Column(
             children: [
-              // Barra de navegación horizontal
+              // Barra de navegación horizontal (Estadísticas solo para organizador)
               PlanNavigationBar(
                 selectedOption: _selectedOption,
                 onOptionSelected: (option) {
@@ -81,6 +88,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                     _selectedOption = option;
                   });
                 },
+                showStatsTab: isOrganizer,
               ),
               // Contenido según la opción seleccionada
               Expanded(
@@ -93,9 +101,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  /// T237 (3): Barra superior verde y estado del plan visible en la barra.
+  /// Barra superior: solo nombre del plan. Estado del plan a la derecha solo en pestaña Info.
   PreferredSizeWidget _buildAppBar() {
-    final loc = AppLocalizations.of(context)!;
     return AppBar(
       backgroundColor: AppColorScheme.color2,
       elevation: 0,
@@ -116,28 +123,17 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       ),
       centerTitle: false,
       actions: [
-        // T237 (3): Estado del plan visible en la barra (en actions para no quedar oculto con títulos largos)
-        Padding(
-          padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-          child: Center(
-            child: PlanStateBadgeCompact(
-              plan: widget.plan,
-              fontSize: 10,
-              onColoredBackground: true,
+        // Estado del plan a la derecha solo cuando se está en la página Info del plan
+        if (_selectedOption == 'planData')
+          Padding(
+            padding: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+            child: Center(
+              child: PlanStateBadgeCompact(
+                plan: widget.plan,
+                fontSize: 10,
+                onColoredBackground: true,
+              ),
             ),
-          ),
-        ),
-        // T252: Botón "Ver mi resumen" en cabecera
-        IconButton(
-          icon: const Icon(Icons.list_alt, color: Colors.white, size: 22),
-          tooltip: loc.viewMySummaryTooltip,
-          onPressed: () => setState(() => _selectedOption = 'mySummary'),
-        ),
-        if (widget.plan.id != null)
-          PlanSummaryButton(
-            plan: widget.plan,
-            iconOnly: false,
-            foregroundColor: Colors.white,
           ),
       ],
     );

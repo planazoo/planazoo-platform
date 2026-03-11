@@ -29,6 +29,7 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
   final _conceptController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   String? _selectedParticipantId;
+  Map<String, String> _resolvedNames = {};
 
   @override
   void initState() {
@@ -38,8 +39,33 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
       if (currentUser?.id != null && currentUser?.id != widget.plan.userId) {
         setState(() => _selectedParticipantId = currentUser!.id);
       }
+      _resolveParticipantNames();
     });
   }
+
+  Future<void> _resolveParticipantNames() async {
+    final participationsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
+    participationsAsync.whenData((list) async {
+      final userIds = list.where((p) => p.role != 'observer').map((p) => p.userId).toSet();
+      final userService = ref.read(userServiceProvider);
+      final map = <String, String>{};
+      for (final uid in userIds) {
+        try {
+          final user = await userService.getUser(uid);
+          final name = (user?.displayName?.trim().isNotEmpty == true
+                  ? user!.displayName
+                  : user?.email) ??
+              uid;
+          map[uid] = name;
+        } catch (_) {
+          map[uid] = uid;
+        }
+      }
+      if (mounted) setState(() => _resolvedNames = map);
+    });
+  }
+
+  String _userName(String userId) => _resolvedNames[userId] ?? userId;
 
   @override
   void dispose() {
@@ -150,13 +176,22 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
                       final real = list.where((p) => p.role != 'observer').toList();
                       return DropdownButtonFormField<String>(
                         value: _selectedParticipantId,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(Icons.person),
                           border: OutlineInputBorder(),
                           filled: true,
                         ),
                         hint: const Text('Selecciona participante'),
-                        items: real.map((p) => DropdownMenuItem(value: p.userId, child: Text(p.userId))).toList(),
+                        items: real
+                            .map((p) => DropdownMenuItem<String>(
+                                  value: p.userId,
+                                  child: Text(
+                                    _userName(p.userId),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ))
+                            .toList(),
                         onChanged: (v) => setState(() => _selectedParticipantId = v),
                         validator: (v) => v == null ? 'Selecciona un participante' : null,
                       );

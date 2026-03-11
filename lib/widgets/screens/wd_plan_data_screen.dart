@@ -27,6 +27,7 @@ import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
+import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
@@ -677,6 +678,16 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                 )
               : null,
           actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+              child: Center(
+                child: PlanStateBadgeCompact(
+                  plan: currentPlan,
+                  fontSize: 10,
+                  onColoredBackground: false,
+                ),
+              ),
+            ),
             if (widget.onManageParticipants != null)
               IconButton(
                 icon: const Icon(Icons.group_outlined),

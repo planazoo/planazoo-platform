@@ -707,6 +707,14 @@ service cloud.firestore {
     }
     
     // ============================================
+    // REGLAS PARA GASTOS TIPO TRICOUNT (plan_expenses)
+    // ============================================
+    match /plan_expenses/{expenseId} {
+      allow create, read: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
+    }
+    
+    // ============================================
     // REGLAS PARA TIPOS DE CAMBIO (T153)
     // ============================================
     

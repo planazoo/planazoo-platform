@@ -16,7 +16,9 @@ class PlanSearchWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const double fieldHeight = 36;
     return Container(
+      height: fieldHeight,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -61,9 +63,11 @@ class PlanSearchWidget extends StatelessWidget {
           prefixIcon: Icon(
             Icons.search,
             color: Colors.grey.shade400,
+            size: 22,
           ),
           filled: true,
           fillColor: Colors.transparent,
+          isDense: true,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
@@ -80,8 +84,8 @@ class PlanSearchWidget extends StatelessWidget {
             ),
           ),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 16,
+            horizontal: 16,
+            vertical: 10,
           ),
         ),
         onChanged: onSearchChanged,

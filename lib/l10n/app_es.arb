@@ -240,7 +240,155 @@
   "@termsRequired": {
     "description": "Error de términos requeridos"
   },
-  
+
+  "paymentsSummaryTitle": "Resumen de pagos",
+  "@paymentsSummaryTitle": {
+    "description": "Título de la página de resumen de pagos"
+  },
+  "paymentsRegisterPayment": "Registrar pago",
+  "@paymentsRegisterPayment": {
+    "description": "Tooltip/botón para registrar un pago"
+  },
+  "paymentsSummaryError": "Error al cargar resumen de pagos",
+  "@paymentsSummaryError": {
+    "description": "Mensaje de error al cargar el resumen de pagos"
+  },
+  "paymentsDisclaimerText": "La app no procesa cobros; solo sirve para anotar pagos y cuadrar entre el grupo.",
+  "@paymentsDisclaimerText": {
+    "description": "Aviso legal corto sobre que la app no procesa cobros"
+  },
+  "paymentsKittyTitle": "Bote común",
+  "@paymentsKittyTitle": {
+    "description": "Título de la sección de bote común"
+  },
+  "paymentsKittyBalanceLabel": "Saldo",
+  "@paymentsKittyBalanceLabel": {
+    "description": "Etiqueta para el saldo del bote común"
+  },
+  "paymentsKittyAddContribution": "Aportación",
+  "@paymentsKittyAddContribution": {
+    "description": "Botón para añadir aportación al bote"
+  },
+  "paymentsKittyAddExpense": "Gasto del bote",
+  "@paymentsKittyAddExpense": {
+    "description": "Botón para registrar un gasto del bote"
+  },
+  "paymentsKittyContributionsTitle": "Aportaciones",
+  "@paymentsKittyContributionsTitle": {
+    "description": "Título de la lista de aportaciones al bote"
+  },
+  "paymentsKittyMoreItems": "+ {count} más",
+  "@paymentsKittyMoreItems": {
+    "description": "Texto para indicar que hay más elementos en la lista",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "paymentsKittyExpensesTitle": "Gastos del bote",
+  "@paymentsKittyExpensesTitle": {
+    "description": "Título de la lista de gastos del bote"
+  },
+  "paymentsKittyExpensesLoadError": "Error al cargar gastos del bote: {error}",
+  "@paymentsKittyExpensesLoadError": {
+    "description": "Mensaje de error al cargar los gastos del bote",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentsKittyLoadError": "Error al cargar bote: {error}",
+  "@paymentsKittyLoadError": {
+    "description": "Mensaje de error al cargar el bote común",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentsGeneralSummaryTitle": "Resumen general",
+  "@paymentsGeneralSummaryTitle": {
+    "description": "Título de la sección de resumen general de pagos"
+  },
+  "paymentsGeneralSummaryTotalCost": "Coste total",
+  "@paymentsGeneralSummaryTotalCost": {
+    "description": "Etiqueta para el coste total del plan"
+  },
+  "paymentsGeneralSummaryTotalPaid": "Total pagado",
+  "@paymentsGeneralSummaryTotalPaid": {
+    "description": "Etiqueta para el total pagado"
+  },
+  "paymentsGeneralSummaryParticipants": "Participantes",
+  "@paymentsGeneralSummaryParticipants": {
+    "description": "Etiqueta para el número de participantes"
+  },
+  "paymentsGeneralSummaryBalanceTitle": "Balance general",
+  "@paymentsGeneralSummaryBalanceTitle": {
+    "description": "Título del bloque de balance general"
+  },
+  "paymentsBalancesSectionTitle": "Balances por participante",
+  "@paymentsBalancesSectionTitle": {
+    "description": "Título de la sección de balances por participante"
+  },
+  "paymentsBalanceAssignedCost": "Coste asignado",
+  "@paymentsBalanceAssignedCost": {
+    "description": "Etiqueta del coste asignado a un participante"
+  },
+  "paymentsBalanceTotalPaid": "Total pagado",
+  "@paymentsBalanceTotalPaid": {
+    "description": "Etiqueta del total pagado por un participante"
+  },
+  "paymentsBalancePaymentsTitle": "Pagos registrados:",
+  "@paymentsBalancePaymentsTitle": {
+    "description": "Título de la lista de pagos registrados por participante"
+  },
+  "paymentsTransferSuggestionsTitle": "Sugerencias de transferencias",
+  "@paymentsTransferSuggestionsTitle": {
+    "description": "Título de la sección de sugerencias de transferencias"
+  },
+  "paymentsBalanceChartTitle": "Distribución de balances",
+  "@paymentsBalanceChartTitle": {
+    "description": "Título del gráfico de distribución de balances"
+  },
+  "paymentsBalanceStatusCreditor": "Debe recibir {amount}",
+  "@paymentsBalanceStatusCreditor": {
+    "description": "Texto de estado cuando el participante es acreedor",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentsBalanceStatusDebtor": "Debe pagar {amount}",
+  "@paymentsBalanceStatusDebtor": {
+    "description": "Texto de estado cuando el participante es deudor",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paymentsBalanceStatusSettled": "Balance equilibrado",
+  "@paymentsBalanceStatusSettled": {
+    "description": "Texto de estado cuando el participante está equilibrado"
+  },
+  "paymentsAddExpense": "Añadir gasto",
+  "paymentsAddExpenseTitle": "Nuevo gasto (quién pagó, reparto)",
+  "paymentsExpensePayer": "Quién pagó",
+  "paymentsExpenseAmount": "Importe",
+  "paymentsExpenseConcept": "Concepto (opcional)",
+  "paymentsExpenseDate": "Fecha",
+  "paymentsExpenseSplitBetween": "Repartir entre",
+  "paymentsActivityTitle": "Actividad",
+  "paymentsExpenseSaved": "Gasto registrado",
+  "paymentsExpenseSaveError": "Error al guardar el gasto",
+  "paymentsExpenseSplitEqual": "Reparto igual",
+  "paymentsExpenseSplitCustom": "Reparto personalizado",
+  "paymentsExpensePerPerson": "Por persona",
+  "paymentsCalculator": "Calculadora",
+
   "loginSuccess": "¡Bienvenido!",
   "@loginSuccess": {
     "description": "Mensaje de login exitoso"

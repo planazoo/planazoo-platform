@@ -446,6 +446,252 @@ abstract class AppLocalizations {
   /// **'Debes aceptar los términos y condiciones'**
   String get termsRequired;
 
+  /// Título de la página de resumen de pagos
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen de pagos'**
+  String get paymentsSummaryTitle;
+
+  /// Tooltip/botón para registrar un pago
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar pago'**
+  String get paymentsRegisterPayment;
+
+  /// Mensaje de error al cargar el resumen de pagos
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar resumen de pagos'**
+  String get paymentsSummaryError;
+
+  /// Aviso legal corto sobre que la app no procesa cobros
+  ///
+  /// In es, this message translates to:
+  /// **'La app no procesa cobros; solo sirve para anotar pagos y cuadrar entre el grupo.'**
+  String get paymentsDisclaimerText;
+
+  /// Título de la sección de bote común
+  ///
+  /// In es, this message translates to:
+  /// **'Bote común'**
+  String get paymentsKittyTitle;
+
+  /// Etiqueta para el saldo del bote común
+  ///
+  /// In es, this message translates to:
+  /// **'Saldo'**
+  String get paymentsKittyBalanceLabel;
+
+  /// Botón para añadir aportación al bote
+  ///
+  /// In es, this message translates to:
+  /// **'Aportación'**
+  String get paymentsKittyAddContribution;
+
+  /// Botón para registrar un gasto del bote
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto del bote'**
+  String get paymentsKittyAddExpense;
+
+  /// Título de la lista de aportaciones al bote
+  ///
+  /// In es, this message translates to:
+  /// **'Aportaciones'**
+  String get paymentsKittyContributionsTitle;
+
+  /// Texto para indicar que hay más elementos en la lista
+  ///
+  /// In es, this message translates to:
+  /// **'+ {count} más'**
+  String paymentsKittyMoreItems(int count);
+
+  /// Título de la lista de gastos del bote
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos del bote'**
+  String get paymentsKittyExpensesTitle;
+
+  /// Mensaje de error al cargar los gastos del bote
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar gastos del bote: {error}'**
+  String paymentsKittyExpensesLoadError(String error);
+
+  /// Mensaje de error al cargar el bote común
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar bote: {error}'**
+  String paymentsKittyLoadError(String error);
+
+  /// Título de la sección de resumen general de pagos
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen general'**
+  String get paymentsGeneralSummaryTitle;
+
+  /// Etiqueta para el coste total del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Coste total'**
+  String get paymentsGeneralSummaryTotalCost;
+
+  /// Etiqueta para el total pagado
+  ///
+  /// In es, this message translates to:
+  /// **'Total pagado'**
+  String get paymentsGeneralSummaryTotalPaid;
+
+  /// Etiqueta para el número de participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes'**
+  String get paymentsGeneralSummaryParticipants;
+
+  /// Título del bloque de balance general
+  ///
+  /// In es, this message translates to:
+  /// **'Balance general'**
+  String get paymentsGeneralSummaryBalanceTitle;
+
+  /// Título de la sección de balances por participante
+  ///
+  /// In es, this message translates to:
+  /// **'Balances por participante'**
+  String get paymentsBalancesSectionTitle;
+
+  /// Etiqueta del coste asignado a un participante
+  ///
+  /// In es, this message translates to:
+  /// **'Coste asignado'**
+  String get paymentsBalanceAssignedCost;
+
+  /// Etiqueta del total pagado por un participante
+  ///
+  /// In es, this message translates to:
+  /// **'Total pagado'**
+  String get paymentsBalanceTotalPaid;
+
+  /// Título de la lista de pagos registrados por participante
+  ///
+  /// In es, this message translates to:
+  /// **'Pagos registrados:'**
+  String get paymentsBalancePaymentsTitle;
+
+  /// Título de la sección de sugerencias de transferencias
+  ///
+  /// In es, this message translates to:
+  /// **'Sugerencias de transferencias'**
+  String get paymentsTransferSuggestionsTitle;
+
+  /// Título del gráfico de distribución de balances
+  ///
+  /// In es, this message translates to:
+  /// **'Distribución de balances'**
+  String get paymentsBalanceChartTitle;
+
+  /// Texto de estado cuando el participante es acreedor
+  ///
+  /// In es, this message translates to:
+  /// **'Debe recibir {amount}'**
+  String paymentsBalanceStatusCreditor(String amount);
+
+  /// Texto de estado cuando el participante es deudor
+  ///
+  /// In es, this message translates to:
+  /// **'Debe pagar {amount}'**
+  String paymentsBalanceStatusDebtor(String amount);
+
+  /// Texto de estado cuando el participante está equilibrado
+  ///
+  /// In es, this message translates to:
+  /// **'Balance equilibrado'**
+  String get paymentsBalanceStatusSettled;
+
+  /// No description provided for @paymentsAddExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir gasto'**
+  String get paymentsAddExpense;
+
+  /// No description provided for @paymentsAddExpenseTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo gasto (quién pagó, reparto)'**
+  String get paymentsAddExpenseTitle;
+
+  /// No description provided for @paymentsExpensePayer.
+  ///
+  /// In es, this message translates to:
+  /// **'Quién pagó'**
+  String get paymentsExpensePayer;
+
+  /// No description provided for @paymentsExpenseAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Importe'**
+  String get paymentsExpenseAmount;
+
+  /// No description provided for @paymentsExpenseConcept.
+  ///
+  /// In es, this message translates to:
+  /// **'Concepto (opcional)'**
+  String get paymentsExpenseConcept;
+
+  /// No description provided for @paymentsExpenseDate.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha'**
+  String get paymentsExpenseDate;
+
+  /// No description provided for @paymentsExpenseSplitBetween.
+  ///
+  /// In es, this message translates to:
+  /// **'Repartir entre'**
+  String get paymentsExpenseSplitBetween;
+
+  /// No description provided for @paymentsActivityTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Actividad'**
+  String get paymentsActivityTitle;
+
+  /// No description provided for @paymentsExpenseSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto registrado'**
+  String get paymentsExpenseSaved;
+
+  /// No description provided for @paymentsExpenseSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al guardar el gasto'**
+  String get paymentsExpenseSaveError;
+
+  /// No description provided for @paymentsExpenseSplitEqual.
+  ///
+  /// In es, this message translates to:
+  /// **'Reparto igual'**
+  String get paymentsExpenseSplitEqual;
+
+  /// No description provided for @paymentsExpenseSplitCustom.
+  ///
+  /// In es, this message translates to:
+  /// **'Reparto personalizado'**
+  String get paymentsExpenseSplitCustom;
+
+  /// No description provided for @paymentsExpensePerPerson.
+  ///
+  /// In es, this message translates to:
+  /// **'Por persona'**
+  String get paymentsExpensePerPerson;
+
+  /// No description provided for @paymentsCalculator.
+  ///
+  /// In es, this message translates to:
+  /// **'Calculadora'**
+  String get paymentsCalculator;
+
   /// Mensaje de login exitoso
   ///
   /// In es, this message translates to:

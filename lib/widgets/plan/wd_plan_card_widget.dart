@@ -66,24 +66,20 @@ class PlanCardWidget extends ConsumerWidget {
     final textTertiary = isSelected ? Colors.white.withOpacity(0.85) : Colors.grey.shade500;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 0),
       decoration: BoxDecoration(
         color: isSelected
             ? AppColorScheme.color2
-            : Colors.grey.shade800,
+            : Colors.grey.shade900,
         borderRadius: BorderRadius.zero,
         border: hasPendingInvitation
             ? Border(
                 top: BorderSide(color: Colors.orange.shade400, width: 2),
-                bottom: BorderSide(color: Colors.orange.shade400, width: 2),
+                bottom: BorderSide(color: AppColorScheme.color2, width: 1),
               )
             : Border(
-                top: BorderSide(
-                  color: isSelected ? Colors.white.withOpacity(0.25) : Colors.grey.shade700.withOpacity(0.5),
-                  width: 1,
-                ),
                 bottom: BorderSide(
-                  color: isSelected ? Colors.white.withOpacity(0.25) : Colors.grey.shade700.withOpacity(0.5),
+                  color: isSelected ? Colors.white.withOpacity(0.25) : AppColorScheme.color2,
                   width: 1,
                 ),
               ),

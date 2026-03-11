@@ -2,6 +2,7 @@ import '../models/personal_payment.dart';
 import '../models/payment_summary.dart';
 import '../models/kitty_contribution.dart';
 import '../models/kitty_expense.dart';
+import '../models/plan_expense.dart';
 import '../../../../features/calendar/domain/models/event.dart';
 import '../../../../features/calendar/domain/models/accommodation.dart';
 import '../../../../features/calendar/domain/models/plan_participation.dart';
@@ -13,6 +14,7 @@ class BalanceService {
 
   /// Calcular resumen completo de pagos y balances
   /// T219: [kittyContributions] y [kittyExpenses] integran el bote común en balances
+  /// Gastos tipo Tricount: [planExpenses] añaden coste por participante (reparto) y lo pagado por el pagador
   PaymentSummary calculatePaymentSummary({
     required List<Event> events,
     required List<Accommodation> accommodations,
@@ -21,10 +23,14 @@ class BalanceService {
     required Map<String, String> userIdToName, // userId -> nombre para mostrar
     List<KittyContribution> kittyContributions = const [],
     List<KittyExpense> kittyExpenses = const [],
+    List<PlanExpense> planExpenses = const [],
+    bool includeEventBaseCosts = false,
   }) {
-    // Paso 1: Calcular coste por participante usando BudgetService
+    // Paso 1: Calcular coste por participante usando BudgetService.
+    // El coste base de los eventos puede incluirse o no en el cálculo de pagos según configuración.
+    final effectiveEvents = includeEventBaseCosts ? events : <Event>[];
     final budgetSummary = _budgetService.calculateBudgetSummary(
-      events: events,
+      events: effectiveEvents,
       accommodations: accommodations,
       participations: participations,
     );
@@ -45,6 +51,18 @@ class BalanceService {
           (kittyContributionsByUser[c.participantId] ?? 0.0) + c.amount;
     }
 
+    // Gastos tipo Tricount: coste por participante (su parte) y lo pagado por el pagador
+    final expenseCostByParticipant = <String, double>{};
+    final paidFromPlanExpensesByUser = <String, double>{};
+    for (final exp in planExpenses) {
+      paidFromPlanExpensesByUser[exp.payerId] =
+          (paidFromPlanExpensesByUser[exp.payerId] ?? 0.0) + exp.amount;
+      for (final uid in exp.participantIds) {
+        expenseCostByParticipant[uid] =
+            (expenseCostByParticipant[uid] ?? 0.0) + exp.shareFor(uid);
+      }
+    }
+
     // Paso 3: Calcular balances
     final balancesByParticipant = <String, ParticipantBalance>{};
     
@@ -58,18 +76,20 @@ class BalanceService {
     for (final participation in realParticipants) {
       final userId = participation.userId;
       final baseCost = budgetSummary.costByParticipant[userId] ?? 0.0;
-      final totalCost = baseCost + kittyExpensePerParticipant;
+      final expenseCost = expenseCostByParticipant[userId] ?? 0.0;
+      final totalCost = baseCost + kittyExpensePerParticipant + expenseCost;
       final participantPayments = paymentsByParticipant[userId] ?? [];
       final paidFromPayments = participantPayments.fold<double>(
         0.0,
         (sum, payment) => sum + payment.amount,
       );
       final paidFromKitty = kittyContributionsByUser[userId] ?? 0.0;
-      final totalPaid = paidFromPayments + paidFromKitty;
+      final paidFromExpenses = paidFromPlanExpensesByUser[userId] ?? 0.0;
+      final totalPaid = paidFromPayments + paidFromKitty + paidFromExpenses;
       
       final balance = totalPaid - totalCost;
       
-      // Convertir pagos a PaymentItems (incl. aportes al bote T219)
+      // Convertir pagos a PaymentItems (incl. aportes al bote T219 y gastos tipo Tricount)
       final paymentItems = <PaymentItem>[
         ...participantPayments.map((payment) {
           String? eventDescription;
@@ -101,6 +121,17 @@ class BalanceService {
                   paymentMethod: null,
                   concept: c.concept ?? 'Aporte al bote',
                 )),
+        ...planExpenses
+            .where((e) => e.payerId == userId)
+            .map((e) => PaymentItem(
+                  paymentId: 'expense_${e.id}',
+                  eventId: null,
+                  eventDescription: null,
+                  amount: e.amount,
+                  paymentDate: e.expenseDate,
+                  paymentMethod: null,
+                  concept: e.concept ?? 'Gasto',
+                )),
       ];
 
       // Determinar estado del pago
@@ -118,17 +149,20 @@ class BalanceService {
     }
 
     // Si hay participantes con coste pero sin entrada en participations,
-    // añadirlos también (T219: incluir bote en coste y pago)
+    // añadirlos también (T219: incluir bote en coste y pago; gastos Tricount)
     for (final entry in budgetSummary.costByParticipant.entries) {
       if (!balancesByParticipant.containsKey(entry.key)) {
-        final payments = paymentsByParticipant[entry.key] ?? [];
+        final uid = entry.key;
+        final payments = paymentsByParticipant[uid] ?? [];
         final paidFromPayments = payments.fold<double>(
           0.0,
           (sum, payment) => sum + payment.amount,
         );
-        final paidFromKitty = kittyContributionsByUser[entry.key] ?? 0.0;
-        final totalPaid = paidFromPayments + paidFromKitty;
-        final totalCost = entry.value + kittyExpensePerParticipant;
+        final paidFromKitty = kittyContributionsByUser[uid] ?? 0.0;
+        final paidFromExpenses = paidFromPlanExpensesByUser[uid] ?? 0.0;
+        final expenseCost = expenseCostByParticipant[uid] ?? 0.0;
+        final totalPaid = paidFromPayments + paidFromKitty + paidFromExpenses;
+        final totalCost = entry.value + kittyExpensePerParticipant + expenseCost;
         final balance = totalPaid - totalCost;
 
         final paymentItems = <PaymentItem>[
@@ -152,7 +186,7 @@ class BalanceService {
             );
           }),
           ...kittyContributions
-              .where((c) => c.participantId == entry.key)
+              .where((c) => c.participantId == uid)
               .map((c) => PaymentItem(
                     paymentId: 'kitty_${c.id}',
                     eventId: null,
@@ -162,11 +196,22 @@ class BalanceService {
                     paymentMethod: null,
                     concept: c.concept ?? 'Aporte al bote',
                   )),
+          ...planExpenses
+              .where((e) => e.payerId == uid)
+              .map((e) => PaymentItem(
+                    paymentId: 'expense_${e.id}',
+                    eventId: null,
+                    eventDescription: null,
+                    amount: e.amount,
+                    paymentDate: e.expenseDate,
+                    paymentMethod: null,
+                    concept: e.concept ?? 'Gasto',
+                  )),
         ];
 
-        balancesByParticipant[entry.key] = ParticipantBalance(
-          userId: entry.key,
-          userName: userIdToName[entry.key] ?? entry.key,
+        balancesByParticipant[uid] = ParticipantBalance(
+          userId: uid,
+          userName: userIdToName[uid] ?? uid,
           totalCost: totalCost,
           totalPaid: totalPaid,
           balance: balance,
@@ -174,6 +219,68 @@ class BalanceService {
           status: _determinePaymentStatus(balance, totalCost, totalPaid),
         );
       }
+    }
+
+    // Participantes que solo aparecen en gastos Tricount (pagador o en reparto)
+    final expenseParticipantIds = <String>{};
+    for (final e in planExpenses) {
+      expenseParticipantIds.add(e.payerId);
+      expenseParticipantIds.addAll(e.participantIds);
+    }
+    for (final uid in expenseParticipantIds) {
+      if (balancesByParticipant.containsKey(uid)) continue;
+      final paidFromPayments = (paymentsByParticipant[uid] ?? []).fold<double>(
+        0.0,
+        (sum, p) => sum + p.amount,
+      );
+      final paidFromKitty = kittyContributionsByUser[uid] ?? 0.0;
+      final paidFromExpenses = paidFromPlanExpensesByUser[uid] ?? 0.0;
+      final expenseCost = expenseCostByParticipant[uid] ?? 0.0;
+      final totalPaid = paidFromPayments + paidFromKitty + paidFromExpenses;
+      final totalCost = kittyExpensePerParticipant + expenseCost;
+      final balance = totalPaid - totalCost;
+      final paymentItems = <PaymentItem>[
+        ...(paymentsByParticipant[uid] ?? []).map((p) => PaymentItem(
+              paymentId: p.id ?? '',
+              eventId: p.eventId,
+              eventDescription: null,
+              amount: p.amount,
+              paymentDate: p.paymentDate,
+              paymentMethod: p.paymentMethod,
+              concept: p.concept,
+            )),
+        ...kittyContributions
+            .where((c) => c.participantId == uid)
+            .map((c) => PaymentItem(
+                  paymentId: 'kitty_${c.id}',
+                  eventId: null,
+                  eventDescription: null,
+                  amount: c.amount,
+                  paymentDate: c.contributionDate,
+                  paymentMethod: null,
+                  concept: c.concept ?? 'Aporte al bote',
+                )),
+        ...planExpenses
+            .where((e) => e.payerId == uid)
+            .map((e) => PaymentItem(
+                  paymentId: 'expense_${e.id}',
+                  eventId: null,
+                  eventDescription: null,
+                  amount: e.amount,
+                  paymentDate: e.expenseDate,
+                  paymentMethod: null,
+                  concept: e.concept ?? 'Gasto',
+                )),
+      ];
+      balancesByParticipant[uid] = ParticipantBalance(
+        userId: uid,
+        userName: userIdToName[uid] ?? uid,
+        totalCost: totalCost,
+        totalPaid: totalPaid,
+        balance: balance,
+        payments: paymentItems,
+        status: _determinePaymentStatus(balance, totalCost, totalPaid),
+      );
     }
 
     return PaymentSummary(

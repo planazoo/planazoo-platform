@@ -50,7 +50,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
       child: Container(
         width: columnWidth * 2,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade800),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Center(
           child: Text(
             AppLocalizations.of(context)!.dashboardLogo,
@@ -73,7 +73,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
       child: Container(
         width: columnWidth,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade800),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Center(
           child: GestureDetector(
             onTap: onCreatePlan,
@@ -120,7 +120,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
       child: Container(
         width: columnWidth,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade800),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Row(
           children: [
             Expanded(
@@ -156,7 +156,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
       child: Container(
         width: w5Width,
         height: w5Height,
-        decoration: BoxDecoration(color: Colors.grey.shade800),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Center(
           child: Container(
             width: circleSize,
@@ -221,7 +221,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
       child: Container(
         width: columnWidth * 5 + 1,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade800),
+        decoration: BoxDecoration(color: Colors.grey.shade900),
         child: selectedPlan != null
             ? _buildPlanInfoContent(context, ref)
             : _buildNoPlanSelectedInfo(context),

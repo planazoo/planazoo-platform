@@ -49,6 +49,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
   String _selectedStatus = 'paid';
   String? _paymentCurrency; // T153: Moneda local del pago
   String? _planCurrency; // T153: Moneda del plan
+  Map<String, String> _resolvedNames = {};
 
   final List<String> _paymentMethods = [
     'Efectivo',
@@ -62,10 +63,8 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
   @override
   void initState() {
     super.initState();
-    
-    // Cargar moneda del plan (T153)
     _loadPlanCurrency();
-    
+    WidgetsBinding.instance.addPostFrameCallback((_) => _resolveNames());
     if (widget.payment != null) {
       // Modo edición
       _amountController = TextEditingController(
@@ -113,6 +112,27 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     _descriptionController.dispose();
     super.dispose();
   }
+
+  Future<void> _resolveNames() async {
+    final participationsAsync = ref.read(planParticipantsProvider(widget.planId));
+    participationsAsync.whenData((list) async {
+      final userIds = list.where((p) => p.role != 'observer').map((p) => p.userId).toSet();
+      final userService = ref.read(userServiceProvider);
+      final map = <String, String>{};
+      for (final uid in userIds) {
+        try {
+          final user = await userService.getUser(uid);
+          final name = (user?.displayName?.trim().isNotEmpty == true ? user!.displayName : user?.email) ?? uid;
+          map[uid] = name;
+        } catch (_) {
+          map[uid] = uid;
+        }
+      }
+      if (mounted) setState(() => _resolvedNames = map);
+    });
+  }
+
+  String _userName(String userId) => _resolvedNames[userId] ?? userId;
 
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
@@ -394,109 +414,91 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       });
     }
 
-    return AlertDialog(
-      title: Text(
-        widget.payment == null ? 'Registrar Pago' : 'Editar Pago',
-        style: AppTypography.titleStyle,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          widget.payment == null ? 'Registrar pago' : 'Editar pago',
+          style: const TextStyle(fontSize: 18, color: Colors.white),
+        ),
+        backgroundColor: AppColorScheme.color2,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      content: SizedBox(
-        width: 450,
+      body: Form(
+        key: _formKey,
         child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Evento asociado (si aplica)
-                if (widget.event != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColorScheme.color1.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColorScheme.color1.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.event, color: AppColorScheme.color1),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Evento asociado:',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(widget.event!.description),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.event != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColorScheme.color1.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColorScheme.color1.withOpacity(0.3)),
                   ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Participante
-                Text(
-                  'Participante *',
-                  style: AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.bold),
+                  child: Row(
+                    children: [
+                      Icon(Icons.event, color: AppColorScheme.color1),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Evento:', style: AppTypography.bodyStyle.copyWith(fontSize: 12, fontWeight: FontWeight.bold)),
+                            Text(widget.event!.description, style: AppTypography.bodyStyle.copyWith(fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                if (!isOrganizer)
-                  InputDecorator(
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.person),
-                      border: const OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey.shade50,
-                    ),
-                    child: Text('Tú (yo pagué)', style: AppTypography.bodyStyle),
-                  )
-                else
-                  participationsAsync.when(
-                    data: (participations) {
-                      final realParticipants = participations
-                          .where((p) => p.role != 'observer')
-                          .toList();
-
-                      return DropdownButtonFormField<String>(
-                        value: _selectedParticipantId,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.person),
-                          border: const OutlineInputBorder(),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
-                        ),
-                        hint: const Text('Selecciona un participante'),
-                        items: realParticipants.map((p) {
-                          return DropdownMenuItem<String>(
-                            value: p.userId,
-                            child: Text(p.userId), // TODO: Usar nombre real
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedParticipantId = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Selecciona un participante';
-                          }
-                          return null;
-                        },
-                      );
-                    },
-                    loading: () => const CircularProgressIndicator(),
-                    error: (error, stack) => Text('Error: $error'),
-                  ),
                 const SizedBox(height: 16),
+              ],
+              Text('Quién pagó *', style: AppTypography.bodyStyle.copyWith(fontSize: 13, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              if (!isOrganizer)
+                InputDecorator(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.person),
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                  ),
+                  child: Text('Tú (yo pagué)', style: AppTypography.bodyStyle),
+                )
+              else
+                participationsAsync.when(
+                  data: (participations) {
+                    final realParticipants = participations.where((p) => p.role != 'observer').toList();
+                    return DropdownButtonFormField<String>(
+                      value: _selectedParticipantId,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.person),
+                        border: const OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                      ),
+                      hint: const Text('Selecciona'),
+                      items: realParticipants.map((p) => DropdownMenuItem<String>(
+                        value: p.userId,
+                        child: Text(_userName(p.userId), overflow: TextOverflow.ellipsis),
+                      )).toList(),
+                      onChanged: (value) => setState(() => _selectedParticipantId = value),
+                      validator: (value) => value == null ? 'Selecciona quién pagó' : null,
+                    );
+                  },
+                  loading: () => const CircularProgressIndicator(),
+                  error: (error, stack) => Text('Error: $error'),
+                ),
+              const SizedBox(height: 16),
 
                 // Monto con selector de moneda (T153)
                 if (_planCurrency != null) ...[
@@ -526,11 +528,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                   const SizedBox(height: 16),
                 ],
 
-                // Fecha de pago
-                Text(
-                  'Fecha de pago *',
-                  style: AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.bold),
-                ),
+                Text('Fecha *', style: AppTypography.bodyStyle.copyWith(fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: _selectDate,
@@ -549,11 +547,10 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Método de pago
                 DropdownButtonFormField<String>(
                   value: _selectedPaymentMethod,
                   decoration: InputDecoration(
-                    labelText: 'Método de pago',
+                    labelText: 'Método',
                     prefixIcon: const Icon(Icons.payment),
                     border: const OutlineInputBorder(),
                     filled: true,
@@ -588,11 +585,10 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Descripción
                 TextFormField(
                   controller: _descriptionController,
                   decoration: InputDecoration(
-                    labelText: 'Descripción',
+                    labelText: 'Descripción (opc.)',
                     prefixIcon: const Icon(Icons.description),
                     border: const OutlineInputBorder(),
                     filled: true,
@@ -603,7 +599,6 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Estado (solo si es edición o se quiere cambiar)
                 if (widget.payment != null) ...[
                   DropdownButtonFormField<String>(
                     value: _selectedStatus,
@@ -633,21 +628,32 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
             ),
           ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: _savePayment,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColorScheme.color2,
-            foregroundColor: Colors.white,
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancelar'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _savePayment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColorScheme.color2,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(widget.payment == null ? 'Registrar' : 'Guardar'),
+                ),
+              ),
+            ],
           ),
-          child: Text(widget.payment == null ? 'Registrar' : 'Guardar'),
         ),
-      ],
+      ),
     );
   }
 }

@@ -191,6 +191,140 @@ class AppLocalizationsEn extends AppLocalizations {
   String get termsRequired => 'You must accept the terms and conditions';
 
   @override
+  String get paymentsSummaryTitle => 'Payment summary';
+
+  @override
+  String get paymentsRegisterPayment => 'Register payment';
+
+  @override
+  String get paymentsSummaryError => 'Error loading payment summary';
+
+  @override
+  String get paymentsDisclaimerText =>
+      'The app does not process charges; it is only used to record payments and reconcile within the group.';
+
+  @override
+  String get paymentsKittyTitle => 'Shared kitty';
+
+  @override
+  String get paymentsKittyBalanceLabel => 'Balance';
+
+  @override
+  String get paymentsKittyAddContribution => 'Contribution';
+
+  @override
+  String get paymentsKittyAddExpense => 'Kitty expense';
+
+  @override
+  String get paymentsKittyContributionsTitle => 'Contributions';
+
+  @override
+  String paymentsKittyMoreItems(int count) {
+    return '+ $count more';
+  }
+
+  @override
+  String get paymentsKittyExpensesTitle => 'Kitty expenses';
+
+  @override
+  String paymentsKittyExpensesLoadError(String error) {
+    return 'Error loading kitty expenses: $error';
+  }
+
+  @override
+  String paymentsKittyLoadError(String error) {
+    return 'Error loading kitty: $error';
+  }
+
+  @override
+  String get paymentsGeneralSummaryTitle => 'General summary';
+
+  @override
+  String get paymentsGeneralSummaryTotalCost => 'Total cost';
+
+  @override
+  String get paymentsGeneralSummaryTotalPaid => 'Total paid';
+
+  @override
+  String get paymentsGeneralSummaryParticipants => 'Participants';
+
+  @override
+  String get paymentsGeneralSummaryBalanceTitle => 'Overall balance';
+
+  @override
+  String get paymentsBalancesSectionTitle => 'Balances by participant';
+
+  @override
+  String get paymentsBalanceAssignedCost => 'Assigned cost';
+
+  @override
+  String get paymentsBalanceTotalPaid => 'Total paid';
+
+  @override
+  String get paymentsBalancePaymentsTitle => 'Recorded payments:';
+
+  @override
+  String get paymentsTransferSuggestionsTitle => 'Transfer suggestions';
+
+  @override
+  String get paymentsBalanceChartTitle => 'Balance distribution';
+
+  @override
+  String paymentsBalanceStatusCreditor(String amount) {
+    return 'Should receive $amount';
+  }
+
+  @override
+  String paymentsBalanceStatusDebtor(String amount) {
+    return 'Should pay $amount';
+  }
+
+  @override
+  String get paymentsBalanceStatusSettled => 'Balance settled';
+
+  @override
+  String get paymentsAddExpense => 'Add expense';
+
+  @override
+  String get paymentsAddExpenseTitle => 'New expense (who paid, split)';
+
+  @override
+  String get paymentsExpensePayer => 'Who paid';
+
+  @override
+  String get paymentsExpenseAmount => 'Amount';
+
+  @override
+  String get paymentsExpenseConcept => 'Concept (optional)';
+
+  @override
+  String get paymentsExpenseDate => 'Date';
+
+  @override
+  String get paymentsExpenseSplitBetween => 'Split between';
+
+  @override
+  String get paymentsActivityTitle => 'Activity';
+
+  @override
+  String get paymentsExpenseSaved => 'Expense recorded';
+
+  @override
+  String get paymentsExpenseSaveError => 'Error saving expense';
+
+  @override
+  String get paymentsExpenseSplitEqual => 'Equal split';
+
+  @override
+  String get paymentsExpenseSplitCustom => 'Custom split';
+
+  @override
+  String get paymentsExpensePerPerson => 'Per person';
+
+  @override
+  String get paymentsCalculator => 'Calculator';
+
+  @override
   String get loginSuccess => 'Welcome!';
 
   @override
