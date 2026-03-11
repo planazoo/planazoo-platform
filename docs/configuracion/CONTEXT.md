@@ -43,6 +43,13 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - Commits deben ser atómicos y descriptivos (prefijo con código de tarea si aplica, p. ej. `T73:`).
 - Evitar dejar `print()` o logs ruidosos en producción; usar logger si se necesita.
 
+### 3.1) Uso de la IA y registro de errores
+- La IA forma parte del flujo normal de desarrollo y debe:
+  - Corregir cualquier error de compilación/runtime/linter que detecte relacionado con sus cambios.
+  - Registrar cada error corregido en `docs/configuracion/LOG_ERRORES_AUTOFIX.md` con:
+    - Contexto, extracto del error, causa raíz y solución aplicada.
+  - Consultar rápidamente `LOG_ERRORES_AUTOFIX.md` antes de tocar zonas de código similares para evitar repetir errores.
+
 ### 4) Persistencia y Decisiones de Datos
 - Persistencia local solo para prototipos rápidos; versión final debe ser global (Firestore) salvo indicación contraria.
 - Identificadores estables (p. ej., `participantId`) para persistir orden/configuración; evitar IDs efímeros.

@@ -1,7 +1,6 @@
 # Prompt: Trabajo autónomo de revisión y limpieza
 
-Usa este prompt cuando quieras que la IA trabaje sola durante unas horas en tareas de sincronización doc/código, limpieza de archivos, etc. Pégalo al inicio de un chat junto con el contexto del proyecto (o después de que la IA haya leído el repo).
-
+Usa este prompt cuando quieras que la IA trabaje sola durante unas horas en tareas de sincronización doc/código, limpieza de archivos, etc. Pégalo al inicio de un chat junto con el contexto del proyecto (o después de que la IA haya leído el repo)
 ---
 
 ## Paso 0 (obligatorio antes de empezar): Comprobar que este archivo está actualizado
@@ -71,6 +70,7 @@ Trabaja de forma sistemática en el repo **unp_calendario** (Planazoo) para mejo
 
 4. **Tests y calidad**
    - Ejecutar `flutter test` y `flutter analyze`; anotar fallos o warnings relevantes.
+   - Cada vez que se corrija un error de compilación/runtime/linter durante la sesión autónoma, añadir una entrada breve en `docs/configuracion/LOG_ERRORES_AUTOFIX.md` siguiendo el formato del propio archivo (contexto, error, causa raíz y solución aplicada).
    - Revisar que `docs/testing/` (REGISTRO_OBSERVACIONES_PRUEBAS.md, TESTING_OFFLINE_FIRST.md, etc.) describa cómo ejecutar pruebas y qué cubren; actualizar si el setup ha cambiado.
 
 5. **Configuración y dependencias**
