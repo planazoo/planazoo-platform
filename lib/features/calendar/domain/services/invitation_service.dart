@@ -44,18 +44,45 @@ class InvitationService {
       // Normalizar email a minúsculas
       final normalizedEmail = email.toLowerCase().trim();
 
-      // Verificar si el usuario ya es participante activo del plan
+      // Si el correo ya existe en la BD, invitar directamente (crear participación pending)
+      // para que aparezca en la lista de participantes y reciba notificación in-app.
       final existingUser = await _userService.getUserByEmail(normalizedEmail);
       if (existingUser != null) {
         final isAlreadyParticipant = await _participationService.isUserParticipant(planId, existingUser.id);
-        
         if (isAlreadyParticipant) {
           LoggerService.warning(
             'User $normalizedEmail already participates in plan $planId',
           );
-          // Retornar null para indicar que no se puede crear la invitación
-          // El código que llama debe manejar este caso y mostrar un error al usuario
           return null;
+        }
+        // Usuario registrado pero no participante: invitación directa (participación pending)
+        final participationId = await _participationService.createParticipation(
+          planId: planId,
+          userId: existingUser.id,
+          role: role,
+          invitedBy: invitedBy,
+          autoAccept: false,
+        );
+        if (participationId != null) {
+          String? inviterName;
+          if (invitedBy != null) {
+            final inviter = await _userService.getUser(invitedBy);
+            inviterName = inviter?.displayName ?? inviter?.email ?? 'Un usuario';
+          }
+          await NotificationHelper().notifyInvitationCreated(
+            planId: planId,
+            invitedUserId: existingUser.id,
+            invitedEmail: normalizedEmail,
+            inviterUserId: invitedBy ?? '',
+            invitationToken: '', // Direct invite: no link
+            planName: null,
+            inviterName: inviterName,
+          );
+          LoggerService.database(
+            'Direct invitation (participation pending): $participationId for $normalizedEmail',
+            operation: 'CREATE',
+          );
+          return 'direct:$participationId';
         }
       }
 
@@ -105,43 +132,6 @@ class InvitationService {
     } catch (e) {
       LoggerService.error(
         'Error creating invitation: $email, plan: $planId',
-        context: 'INVITATION_SERVICE',
-        error: e,
-      );
-      return null;
-    }
-  }
-
-  /// Obtener invitación por token
-  Future<PlanInvitation?> getInvitationByToken(String token) async {
-    try {
-      final querySnapshot = await _firestore
-          .collection(_collectionName)
-          .where('token', isEqualTo: token)
-          .where('status', isEqualTo: 'pending')
-          .limit(1)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        return null;
-      }
-
-      final invitation = PlanInvitation.fromFirestore(querySnapshot.docs.first);
-      
-      // Verificar si expiró
-      if (invitation.isExpired) {
-        // Marcar como expirada
-        await _firestore
-            .collection(_collectionName)
-            .doc(invitation.id!)
-            .update({'status': 'expired'});
-        return invitation.copyWith(status: 'expired');
-      }
-
-      return invitation;
-    } catch (e) {
-      LoggerService.error(
-        'Error getting invitation by token: $token',
         context: 'INVITATION_SERVICE',
         error: e,
       );
@@ -384,131 +374,6 @@ class InvitationService {
     } catch (e) {
       LoggerService.error(
         'Error rejecting invitation by planId: $planId, userId: $userId',
-        context: 'INVITATION_SERVICE',
-        error: e,
-      );
-      return false;
-    }
-  }
-
-  /// Aceptar invitación por token
-  /// 
-  /// Crea la participación si el usuario existe, o marca la invitación como aceptada
-  /// para que el usuario pueda crearse una cuenta después.
-  Future<bool> acceptInvitationByToken(String token, String userId) async {
-    try {
-      final invitation = await getInvitationByToken(token);
-      if (invitation == null || !invitation.isValid) {
-        LoggerService.warning('Invalid or expired invitation token: $token');
-        return false;
-      }
-
-      // Obtener el email del usuario desde Firestore para verificar que coincide con la invitación
-      final user = await _userService.getUser(userId);
-      if (user == null) {
-        LoggerService.warning('User not found: $userId');
-        return false;
-      }
-
-      // Verificar que el email del usuario coincide con el email de la invitación
-      final userEmail = user.email.toLowerCase().trim();
-      final invitationEmail = invitation.email?.toLowerCase().trim() ?? '';
-      
-      if (userEmail != invitationEmail) {
-        LoggerService.warning(
-          'User email ($userEmail) does not match invitation email ($invitationEmail). '
-          'This may cause permission issues when updating invitation status.',
-        );
-        // Continuar de todas formas, la participación se puede crear
-      }
-
-      // Crear participación
-      final participationId = await _participationService.createParticipation(
-        planId: invitation.planId,
-        userId: userId,
-        role: invitation.role ?? 'participant',
-        invitedBy: invitation.invitedBy,
-        autoAccept: true, // Aceptar directamente
-      );
-
-      if (participationId != null) {
-        // Marcar invitación como aceptada vía Cloud Function (Admin SDK evita reglas de Firestore)
-        if (kDebugMode) {
-          LoggerService.debug('Calling markInvitationAccepted Cloud Function for token (acceptByToken)', context: 'INVITATION_SERVICE');
-        }
-        try {
-          final result = await FirebaseFunctions.instance
-              .httpsCallable('markInvitationAccepted')
-              .call({'token': token});
-          final data = result.data as Map<String, dynamic>?;
-          if (data != null && data['success'] == true) {
-            LoggerService.database(
-              'Invitation accepted via Cloud Function: ${invitation.id}, participation: $participationId',
-              operation: 'UPDATE',
-            );
-          }
-        } catch (cfError) {
-          LoggerService.error(
-            'Cloud Function markInvitationAccepted failed (participation already created): $token. '
-            'Invitation may stay pending in Firestore.',
-            context: 'INVITATION_SERVICE',
-            error: cfError,
-          );
-        }
-        final respondedDisplay = user.displayName?.trim().isNotEmpty == true ? user.displayName! : (user.email);
-        await NotificationHelper().notifyInvitationResponded(
-          inviterUserId: invitation.invitedBy,
-          planId: invitation.planId,
-          respondedUserDisplay: respondedDisplay ?? invitation.email ?? '',
-          accepted: true,
-        );
-        return true;
-      }
-
-      return false;
-    } catch (e) {
-      LoggerService.error(
-        'Error accepting invitation by token: $token',
-        context: 'INVITATION_SERVICE',
-        error: e,
-      );
-      return false;
-    }
-  }
-
-  /// Rechazar invitación por token
-  Future<bool> rejectInvitationByToken(String token) async {
-    try {
-      final invitation = await getInvitationByToken(token);
-      if (invitation == null || !invitation.isValid) {
-        LoggerService.warning('Invalid or expired invitation token: $token');
-        return false;
-      }
-
-      // Marcar invitación como rechazada
-      await _firestore
-          .collection(_collectionName)
-          .doc(invitation.id!)
-          .update({
-        'status': 'rejected',
-        'respondedAt': Timestamp.fromDate(DateTime.now()),
-      });
-
-      LoggerService.database(
-        'Invitation rejected: ${invitation.id}',
-        operation: 'UPDATE',
-      );
-
-      await NotificationHelper().notifyInvitationResponded(
-        inviterUserId: invitation.invitedBy,
-        planId: invitation.planId,
-        respondedUserDisplay: invitation.email ?? '',
-        accepted: false,
-      );
-      return true;
-    } catch (e) {
-      LoggerService.error(
-        'Error rejecting invitation by token: $token',
         context: 'INVITATION_SERVICE',
         error: e,
       );

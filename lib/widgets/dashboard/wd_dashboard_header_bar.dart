@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
@@ -20,6 +21,8 @@ class WdDashboardHeaderBar extends ConsumerWidget {
   final VoidCallback onCreatePlan;
   /// T252: Si se proporciona, se muestra un enlace "Ver mi resumen" en la info del plan.
   final VoidCallback? onShowMySummary;
+  /// Si se proporciona, se usa para "Ver notificaciones" cuando hay invitación/participación pendiente.
+  final VoidCallback? onOpenNotifications;
 
   const WdDashboardHeaderBar({
     super.key,
@@ -28,6 +31,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     required this.selectedPlan,
     required this.onCreatePlan,
     this.onShowMySummary,
+    this.onOpenNotifications,
   });
 
   @override
@@ -231,10 +235,48 @@ class WdDashboardHeaderBar extends ConsumerWidget {
 
   Widget _buildPlanInfoContent(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context)!;
-    final roleLabel = _currentPlanRoleLabel(ref, loc);
     final currentUser = ref.watch(currentUserProvider);
     final handle = _formatUserHandle(currentUser);
     final plan = selectedPlan!;
+    final isOrganizer = currentUser != null && plan.userId == currentUser.id;
+
+    // Invitación pendiente (por email) para este plan
+    final pendingInvitations = ref.watch(userPendingInvitationsProvider);
+    final hasPendingInvitation = plan.id != null &&
+        pendingInvitations.maybeWhen(
+          data: (list) => list.any((inv) => inv.planId == plan.id),
+          orElse: () => false,
+        );
+
+    // Participación pendiente (invitación directa ya creada)
+    final hasPendingParticipation = plan.id != null &&
+        currentUser != null &&
+        ref.watch(planParticipantsProvider(plan.id!)).maybeWhen(
+              data: (participants) =>
+                  participants.any((p) =>
+                      p.userId == currentUser.id && (p.isPending || p.needsResponse)),
+              orElse: () => false,
+            );
+
+    String? statusLine;
+    bool showOpenNotifications = false;
+    if (isOrganizer) {
+      statusLine = [if (handle.isNotEmpty) handle, loc.planRoleOrganizer]
+          .where((s) => s.isNotEmpty)
+          .join(' • ');
+    } else if (hasPendingInvitation) {
+      statusLine = loc.statusInvitationPending;
+      showOpenNotifications = onOpenNotifications != null;
+    } else if (hasPendingParticipation) {
+      statusLine = loc.statusPendingToAccept;
+      showOpenNotifications = onOpenNotifications != null;
+    } else {
+      final roleLabel = _currentPlanRoleLabel(ref, loc);
+      statusLine = [
+        if (handle.isNotEmpty) handle,
+        if (roleLabel != null) loc.planRoleLabel(roleLabel),
+      ].where((s) => s.isNotEmpty).join(' • ');
+    }
 
     return Padding(
       padding: const EdgeInsets.all(3.0),
@@ -249,65 +291,81 @@ class WdDashboardHeaderBar extends ConsumerWidget {
             children: [
               Text(
                 plan.name,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              letterSpacing: 0.1,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 1),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${DateFormatter.formatDate(plan.startDate)} - ${DateFormatter.formatDate(plan.endDate)}',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  letterSpacing: 0.1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 1),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${DateFormatter.formatDate(plan.startDate)} - ${DateFormatter.formatDate(plan.endDate)}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              if (statusLine != null && statusLine.isNotEmpty) ...[
+                const SizedBox(height: 1),
+                Text(
+                  statusLine,
                   style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 11,
+                    color: (hasPendingInvitation || hasPendingParticipation)
+                        ? Colors.orange.shade200
+                        : Colors.white.withOpacity(0.75),
                     fontWeight: FontWeight.w500,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
+              ],
+              if (showOpenNotifications) ...[
+                const SizedBox(height: 2),
+                GestureDetector(
+                  onTap: onOpenNotifications,
+                  child: Text(
+                    loc.dashboardMessageCenterOpenNotifications,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: AppColorScheme.color2,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+              if (onShowMySummary != null && !hasPendingInvitation && !hasPendingParticipation) ...[
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: onShowMySummary,
+                  child: Text(
+                    loc.viewMySummaryLabel,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: AppColorScheme.color2,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 1),
-          Text(
-            [
-              if (handle.isNotEmpty) handle,
-              if (roleLabel != null) loc.planRoleLabel(roleLabel),
-            ].where((segment) => segment.isNotEmpty).join(' • '),
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: Colors.white.withOpacity(0.75),
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (onShowMySummary != null) ...[
-            const SizedBox(height: 4),
-            GestureDetector(
-              onTap: onShowMySummary,
-              child: Text(
-                loc.viewMySummaryLabel,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: AppColorScheme.color2,
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ],
-        ],
-            ),
-          ),
         ),
+      ),
     );
   }
 

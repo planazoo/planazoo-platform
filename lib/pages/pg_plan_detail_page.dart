@@ -10,11 +10,12 @@ import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/pages/pg_calendar_mobile_page.dart';
-import 'package:unp_calendario/pages/pg_plan_participants_page.dart';
+import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
 import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
 import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
+import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
@@ -123,7 +124,14 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       ),
       centerTitle: false,
       actions: [
-        // Estado del plan a la derecha solo cuando se está en la página Info del plan
+        // Mi estado en el plan (¿he aceptado participar?) — visible en todas las pestañas
+        Center(
+          child: PlanUserStatusLabel(
+            plan: widget.plan,
+            compact: true,
+          ),
+        ),
+        // Estado del plan (borrador/confirmado) solo en pestaña Info
         if (_selectedOption == 'planData')
           Padding(
             padding: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
@@ -158,8 +166,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         return _buildCalendarTabContent();
       
       case 'participants':
-        return PlanParticipantsPage(
+        return ParticipantsScreen(
           plan: widget.plan,
+          embedInScaffold: false,
         );
       
       case 'chat':

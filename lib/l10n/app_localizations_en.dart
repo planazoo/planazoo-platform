@@ -1159,11 +1159,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardMessageCenterOpenNotifications => 'View notifications';
 
   @override
-  String get dashboardInvitationTokenHint =>
-      'If you don\'t see your invitations above, you can use the link from the email or paste the token:';
+  String get statusInvitationPending => 'Invitation pending';
 
   @override
-  String get dashboardAcceptRejectByToken => 'Accept/Reject by token';
+  String get statusPendingToAccept => 'Pending to accept';
+
+  @override
+  String get statusAccepted => 'Accepted';
+
+  @override
+  String get statusRejected => 'Rejected';
+
+  @override
+  String get statusShortIn => 'in';
+
+  @override
+  String get statusShortOut => 'out';
+
+  @override
+  String get statusShortPending => 'pending';
+
+  @override
+  String get myStatusLabel => 'My status';
+
+  @override
+  String get planCardInvitationBadge => 'Invitation';
+
+  @override
+  String get planCardPendingBadge => 'Pending';
 
   @override
   String invitationPlanLabel(String planId) {
@@ -1174,6 +1197,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String invitationRoleLabel(String role) {
     return 'Role: $role';
   }
+
+  @override
+  String get invitationPendingEmailLabel =>
+      'Email invitation (pending sign-up)';
 
   @override
   String get invitationAcceptedParticipant =>
@@ -1203,36 +1230,11 @@ class AppLocalizationsEn extends AppLocalizations {
       '❌ You must sign in to accept invitations';
 
   @override
-  String get dashboardManageInvitationByToken => 'Manage invitation by token';
-
-  @override
-  String get dashboardInvitationLinkOrTokenLabel => 'Invitation link or token';
-
-  @override
-  String get dashboardInvitationLinkOrTokenHint =>
-      'Paste the full link or just the token';
-
-  @override
-  String get dashboardInvitationLinkOrTokenHelper =>
-      'Example: https://planazoo.app/invitation/abc123... or just abc123...';
-
-  @override
-  String get dashboardInvitationLinkOrTokenRequired =>
-      'Enter the link or token';
-
-  @override
   String get continueButton => 'Continue';
-
-  @override
-  String get invalidToken => '❌ Invalid token';
 
   @override
   String get invitationAcceptedAddedToPlan =>
       '✅ Invitation accepted. You have been added to the plan.';
-
-  @override
-  String get tokenProcessingFailed =>
-      '❌ Could not process token. Verify it is valid and has not expired.';
 
   @override
   String get invitationRejectedSuccess => 'Invitation rejected';

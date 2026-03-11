@@ -7,6 +7,9 @@ import 'package:unp_calendario/features/calendar/domain/services/image_service.d
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
 import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -53,6 +56,35 @@ class PlanCardWidget extends ConsumerWidget {
       orElse: () => false,
     );
 
+    // Participación pendiente o rechazada (invitación directa)
+    final currentUser = ref.watch(currentUserProvider);
+    final participantsAsync = plan.id != null ? ref.watch(planParticipantsProvider(plan.id!)) : const AsyncValue.data([]);
+    final hasPendingParticipation = plan.id != null &&
+        currentUser != null &&
+        participantsAsync.maybeWhen(
+              data: (participants) => participants.any((p) =>
+                  p.userId == currentUser.id && (p.isPending || p.needsResponse)),
+              orElse: () => false,
+            );
+    final hasRejectedParticipation = plan.id != null &&
+        currentUser != null &&
+        participantsAsync.maybeWhen(
+              data: (participants) => participants.any((p) => p.userId == currentUser.id && p.isRejected),
+              orElse: () => false,
+            );
+
+    // Estado usuario en el plan: in (verde), out (rojo), pending (naranja)
+    final isPending = hasPendingInvitation || hasPendingParticipation;
+    final isRejected = hasRejectedParticipation;
+    final isIn = currentUser != null && !isPending && !isRejected &&
+        (plan.userId == currentUser.id ||
+            participantsAsync.maybeWhen(
+                  data: (participants) => participants.any((p) => p.userId == currentUser.id && p.isAccepted),
+                  orElse: () => false,
+                ));
+
+    final hasAnyPending = isPending;
+
     // W28: iconos de notificaciones y mensajes no leídos por plan
     final notifUnread = plan.id != null
         ? ref.watch(planUnreadCountProvider(plan.id)).valueOrNull ?? 0
@@ -72,7 +104,7 @@ class PlanCardWidget extends ConsumerWidget {
             ? AppColorScheme.color2
             : Colors.grey.shade900,
         borderRadius: BorderRadius.zero,
-        border: hasPendingInvitation
+        border: hasAnyPending
             ? Border(
                 top: BorderSide(color: Colors.orange.shade400, width: 2),
                 bottom: BorderSide(color: AppColorScheme.color2, width: 1),
@@ -118,30 +150,9 @@ class PlanCardWidget extends ConsumerWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (hasPendingInvitation)
-                                Container(
-                                  margin: const EdgeInsets.only(left: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.shade400,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.mail_outline, size: 10, color: Colors.white),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        'Invitación',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 8,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                              // Estado en el plan: in (verde) / out (rojo) / pending (naranja)
+                              if (currentUser != null && plan.id != null && (isIn || isPending || isRejected))
+                                _buildStatusChip(context, isIn: isIn, isOut: isRejected, isPending: isPending),
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -257,6 +268,53 @@ class PlanCardWidget extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 2),
       child: Icon(icon, size: _badgeIconSize, color: color),
+    );
+  }
+
+  Widget _buildStatusChip(
+    BuildContext context, {
+    required bool isIn,
+    required bool isOut,
+    required bool isPending,
+  }) {
+    final loc = AppLocalizations.of(context)!;
+    String label;
+    Color bg;
+    Color textColor;
+    if (isPending) {
+      label = loc.statusShortPending;
+      bg = PlanUserStatusColors.pendingBg;
+      textColor = PlanUserStatusColors.pendingText;
+    } else if (isOut) {
+      label = loc.statusShortOut;
+      bg = PlanUserStatusColors.outBg;
+      textColor = PlanUserStatusColors.outText;
+    } else {
+      label = loc.statusShortIn;
+      bg = PlanUserStatusColors.inBg;
+      textColor = PlanUserStatusColors.inText;
+    }
+    return Container(
+      margin: const EdgeInsets.only(left: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isPending ? PlanUserStatusColors.pendingBorder : isOut ? PlanUserStatusColors.outBorder : PlanUserStatusColors.inBorder,
+          width: 1,
+        ),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 

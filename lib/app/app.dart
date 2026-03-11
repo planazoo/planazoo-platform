@@ -9,7 +9,6 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/shared/providers/fcm_providers.dart';
 import 'package:unp_calendario/shared/services/fcm_service.dart';
 import 'package:unp_calendario/pages/pg_dashboard_page.dart';
-import 'package:unp_calendario/pages/pg_invitation_page.dart';
 import 'package:unp_calendario/pages/pg_plans_list_page.dart';
 import 'package:unp_calendario/shared/utils/platform_utils.dart';
 
@@ -63,22 +62,8 @@ class _AppState extends ConsumerState<App> {
       // En iOS/móviles o web móvil, mostrar lista de planes. En web desktop, mostrar Dashboard completo
       // No usar 'home:' cuando hay rutas dinámicas, usar onGenerateRoute para todas las rutas
       onGenerateRoute: (settings) {
-        // Manejar URLs como /invitation/{token} (T104)
-        // Esta ruta NO requiere autenticación (puede ser accedida sin login)
-        final routeName = settings.name ?? '/';
-
-        if (routeName.startsWith('/invitation/')) {
-          // Extraer solo el token (sin query string: ?action=accept, etc.)
-          final raw = routeName.split('/invitation/').last;
-          final token = raw.split('?').first.trim();
-          if (token.isNotEmpty) {
-            return MaterialPageRoute(
-              builder: (context) => InvitationPage(token: token),
-              settings: settings,
-            );
-          }
-        }
-        // Ruta por defecto (requiere autenticación)
+        // Ruta por defecto (requiere autenticación).
+        // Invitaciones: solo por email (notificación) o directa a usuario registrado; no hay página por token.
         return MaterialPageRoute(
           builder: (context) => AuthGuard(
             child: Builder(

@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
@@ -504,6 +508,40 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
     final endDate = plan.endDate;
     final dateRange = '${DateFormatter.formatDate(startDate)} - ${DateFormatter.formatDate(endDate)}';
 
+    final currentUser = ref.watch(currentUserProvider);
+    final pendingInvitations = ref.watch(userPendingInvitationsProvider);
+    final hasPendingInvitation = plan.id != null &&
+        pendingInvitations.maybeWhen(
+          data: (list) => list.any((inv) => inv.planId == plan.id),
+          orElse: () => false,
+        );
+    final participantsAsync = plan.id != null
+        ? ref.watch(planParticipantsProvider(plan.id!))
+        : const AsyncValue.data(<PlanParticipation>[]);
+    final hasPendingParticipation = plan.id != null &&
+        currentUser != null &&
+        participantsAsync.maybeWhen(
+          data: (participants) => participants.any((p) =>
+              p.userId == currentUser.id && (p.isPending || p.needsResponse)),
+          orElse: () => false,
+        );
+    final hasRejectedParticipation = plan.id != null &&
+        currentUser != null &&
+        participantsAsync.maybeWhen(
+          data: (participants) => participants.any((p) => p.userId == currentUser.id && p.isRejected),
+          orElse: () => false,
+        );
+    final isPending = hasPendingInvitation || hasPendingParticipation;
+    final isRejected = hasRejectedParticipation;
+    final isIn = currentUser != null &&
+        !isPending &&
+        !isRejected &&
+        (plan.userId == currentUser.id ||
+            participantsAsync.maybeWhen(
+                  data: (participants) => participants.any((p) => p.userId == currentUser.id && p.isAccepted),
+                  orElse: () => false,
+                ));
+
     final notifUnread = plan.id != null
         ? ref.watch(planUnreadCountProvider(plan.id)).valueOrNull ?? 0
         : 0;
@@ -554,14 +592,24 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        plan.name,
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          letterSpacing: 0.1,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              plan.name,
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                letterSpacing: 0.1,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (currentUser != null && plan.id != null && (isIn || isPending || isRejected))
+                            _buildPlanCardStatusChip(context, isIn: isIn, isOut: isRejected, isPending: isPending),
+                        ],
                       ),
                       if (plan.description != null && plan.description!.isNotEmpty) ...[
                         const SizedBox(height: 8),
@@ -675,6 +723,54 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
 
   static const double _cardBadgeIconSize = 20.0;
   static const double _planCardImageSize = 48.0;
+
+  Widget _buildPlanCardStatusChip(
+    BuildContext context, {
+    required bool isIn,
+    required bool isOut,
+    required bool isPending,
+  }) {
+    final loc = AppLocalizations.of(context)!;
+    String label;
+    Color bg;
+    Color textColor;
+    Color borderColor;
+    if (isPending) {
+      label = loc.statusShortPending;
+      bg = PlanUserStatusColors.pendingBg;
+      textColor = PlanUserStatusColors.pendingText;
+      borderColor = PlanUserStatusColors.pendingBorder;
+    } else if (isOut) {
+      label = loc.statusShortOut;
+      bg = PlanUserStatusColors.outBg;
+      textColor = PlanUserStatusColors.outText;
+      borderColor = PlanUserStatusColors.outBorder;
+    } else {
+      label = loc.statusShortIn;
+      bg = PlanUserStatusColors.inBg;
+      textColor = PlanUserStatusColors.inText;
+      borderColor = PlanUserStatusColors.inBorder;
+    }
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor, width: 1),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
 
   Widget _buildPlanCardImage(Plan plan) {
     if (plan.imageUrl != null && ImageService.isValidImageUrl(plan.imageUrl)) {

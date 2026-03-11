@@ -2168,17 +2168,65 @@ abstract class AppLocalizations {
   /// **'Ver notificaciones'**
   String get dashboardMessageCenterOpenNotifications;
 
-  /// No description provided for @dashboardInvitationTokenHint.
+  /// Estado usuario en plan: tiene invitación pendiente
   ///
   /// In es, this message translates to:
-  /// **'Si no ves tus invitaciones arriba, puedes usar el link del correo o pegar el token:'**
-  String get dashboardInvitationTokenHint;
+  /// **'Invitación pendiente'**
+  String get statusInvitationPending;
 
-  /// No description provided for @dashboardAcceptRejectByToken.
+  /// Estado usuario en plan: participación pendiente de aceptar
   ///
   /// In es, this message translates to:
-  /// **'Aceptar/Rechazar por token'**
-  String get dashboardAcceptRejectByToken;
+  /// **'Pendiente de aceptar'**
+  String get statusPendingToAccept;
+
+  /// Estado usuario en plan: ya participa (aceptado)
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptado'**
+  String get statusAccepted;
+
+  /// Estado usuario en plan: rechazó participar
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazado'**
+  String get statusRejected;
+
+  /// Estado corto iOS: apuntado/aceptado
+  ///
+  /// In es, this message translates to:
+  /// **'in'**
+  String get statusShortIn;
+
+  /// Estado corto iOS: rechazado
+  ///
+  /// In es, this message translates to:
+  /// **'out'**
+  String get statusShortOut;
+
+  /// Estado corto iOS: pendiente de aceptar
+  ///
+  /// In es, this message translates to:
+  /// **'pending'**
+  String get statusShortPending;
+
+  /// Etiqueta W10: mi estado en el plan
+  ///
+  /// In es, this message translates to:
+  /// **'Mi estado'**
+  String get myStatusLabel;
+
+  /// Badge en card del plan: invitación pendiente
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación'**
+  String get planCardInvitationBadge;
+
+  /// Badge en card del plan: participación pendiente
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente'**
+  String get planCardPendingBadge;
 
   /// No description provided for @invitationPlanLabel.
   ///
@@ -2191,6 +2239,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Rol: {role}'**
   String invitationRoleLabel(String role);
+
+  /// Subtítulo en lista participantes: invitado por email aún no registrado
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación por email (pendiente de registro)'**
+  String get invitationPendingEmailLabel;
 
   /// No description provided for @invitationAcceptedParticipant.
   ///
@@ -2240,59 +2294,17 @@ abstract class AppLocalizations {
   /// **'❌ Debes iniciar sesión para aceptar invitaciones'**
   String get mustSignInToAcceptInvitations;
 
-  /// No description provided for @dashboardManageInvitationByToken.
-  ///
-  /// In es, this message translates to:
-  /// **'Gestionar invitación por token'**
-  String get dashboardManageInvitationByToken;
-
-  /// No description provided for @dashboardInvitationLinkOrTokenLabel.
-  ///
-  /// In es, this message translates to:
-  /// **'Link o token de invitación'**
-  String get dashboardInvitationLinkOrTokenLabel;
-
-  /// No description provided for @dashboardInvitationLinkOrTokenHint.
-  ///
-  /// In es, this message translates to:
-  /// **'Pega el link completo o solo el token'**
-  String get dashboardInvitationLinkOrTokenHint;
-
-  /// No description provided for @dashboardInvitationLinkOrTokenHelper.
-  ///
-  /// In es, this message translates to:
-  /// **'Ejemplo: https://planazoo.app/invitation/abc123... o solo abc123...'**
-  String get dashboardInvitationLinkOrTokenHelper;
-
-  /// No description provided for @dashboardInvitationLinkOrTokenRequired.
-  ///
-  /// In es, this message translates to:
-  /// **'Introduce el link o token'**
-  String get dashboardInvitationLinkOrTokenRequired;
-
   /// No description provided for @continueButton.
   ///
   /// In es, this message translates to:
   /// **'Continuar'**
   String get continueButton;
 
-  /// No description provided for @invalidToken.
-  ///
-  /// In es, this message translates to:
-  /// **'❌ Token inválido'**
-  String get invalidToken;
-
   /// No description provided for @invitationAcceptedAddedToPlan.
   ///
   /// In es, this message translates to:
   /// **'✅ Invitación aceptada. Has sido añadido al plan.'**
   String get invitationAcceptedAddedToPlan;
-
-  /// No description provided for @tokenProcessingFailed.
-  ///
-  /// In es, this message translates to:
-  /// **'❌ No se pudo procesar el token. Verifica que sea válido y no haya expirado.'**
-  String get tokenProcessingFailed;
 
   /// No description provided for @invitationRejectedSuccess.
   ///

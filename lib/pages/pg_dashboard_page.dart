@@ -51,6 +51,7 @@ import 'package:unp_calendario/widgets/dashboard/wd_dashboard_sidebar.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_header_bar.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_filters.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_header_placeholders.dart';
+import 'package:unp_calendario/widgets/dashboard/wd_dashboard_my_status_cell.dart';
 import 'package:unp_calendario/widgets/dialogs/wd_create_plan_modal.dart';
 import 'package:unp_calendario/widgets/notifications/wd_notification_list_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1405,11 +1406,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     selectedWidgetId = 'W15_MYSUMMARY';
                   });
                 },
+                onOpenNotifications: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const NotificationListDialog(),
+                  );
+                },
               ),
               // W7–W12: Celdas vacías header (C12–C17, R1)
               WdDashboardHeaderPlaceholders(
                 columnWidth: columnWidth,
                 rowHeight: rowHeight,
+              ),
+              // W10 (C15, R1): Mi estado en el plan
+              WdDashboardMyStatusCell(
+                columnWidth: columnWidth,
+                rowHeight: rowHeight,
+                selectedPlan: selectedPlan,
               ),
               // W13: Campo de búsqueda (C2-C5, R2)
               _buildW13(columnWidth, rowHeight),
@@ -1645,153 +1658,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         ],
       ),
     );
-  }
-
-  Future<void> _showAcceptRejectDialog() async {
-    final tokenController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    bool isAccept = true;
-    final user = ref.read(currentUserProvider);
-    
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.mustSignInToAcceptInvitations),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final l10n = AppLocalizations.of(context)!;
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: Text(l10n.dashboardManageInvitationByToken),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: tokenController,
-                  decoration: InputDecoration(
-                    labelText: l10n.dashboardInvitationLinkOrTokenLabel,
-                    hintText: l10n.dashboardInvitationLinkOrTokenHint,
-                    helperText: l10n.dashboardInvitationLinkOrTokenHelper,
-                  ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return l10n.dashboardInvitationLinkOrTokenRequired;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: RadioListTile<bool>(
-                        title: Text(l10n.accept),
-                        value: true,
-                        groupValue: isAccept,
-                        onChanged: (v) => setDialogState(() => isAccept = v ?? true),
-                      ),
-                    ),
-                    Expanded(
-                      child: RadioListTile<bool>(
-                        title: Text(l10n.reject),
-                        value: false,
-                        groupValue: isAccept,
-                        onChanged: (v) => setDialogState(() => isAccept = v ?? false),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (!formKey.currentState!.validate()) return;
-                Navigator.of(context).pop(true);
-              },
-              child: Text(l10n.continueButton),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (result == true) {
-      String input = tokenController.text.trim();
-      String token = input;
-      if (input.contains('/invitation/')) {
-        final parts = input.split('/invitation/');
-        if (parts.length > 1) {
-          token = parts[1].split('?').first;
-        }
-      }
-      
-      if (token.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!.invalidToken),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-      
-      bool ok = false;
-      if (isAccept) {
-        ok = await ref.read(invitationServiceProvider).acceptInvitationByToken(token, user.id);
-        if (ok && mounted) {
-          ref.invalidate(userPendingInvitationsProvider);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!.invitationAcceptedAddedToPlan),
-              backgroundColor: Colors.green,
-            ),
-          );
-          setState(() {}); // Refrescar para mostrar cambios
-        } else if (!ok && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!.tokenProcessingFailed),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } else {
-        ok = await ref.read(invitationServiceProvider).rejectInvitationByToken(token);
-        if (ok && mounted) {
-          ref.invalidate(userPendingInvitationsProvider);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!.invitationRejectedSuccess),
-              backgroundColor: Colors.orange,
-            ),
-          );
-          setState(() {}); // Refrescar para mostrar cambios
-        } else if (!ok && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!.tokenProcessingFailed),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
   }
 
   // NUEVO: Método para mostrar contenido según la pantalla seleccionada
