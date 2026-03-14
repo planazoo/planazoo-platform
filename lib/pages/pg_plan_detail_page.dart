@@ -40,8 +40,9 @@ class PlanDetailPage extends ConsumerStatefulWidget {
 class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   late String _selectedOption;
   bool _hasSetInitialTabForParticipant = false;
-  /// T252: Dentro de la pestaña Calendario, modo 'calendar' (rejilla) o 'summary' (mi itinerario).
-  String _calendarViewMode = 'calendar';
+  /// Estado del calendario embebido: días visibles (1/2/3) y grupo actual (barra unificada).
+  int _calendarVisibleDays = 1;
+  int _calendarDayGroup = 0;
 
   @override
   void initState() {
@@ -194,75 +195,156 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     }
   }
 
-  /// T252: Pestaña Calendario con selector "Ver como calendario" / "Ver mi resumen".
+  /// Pestaña Calendario con barra unificada (rango días + 1/2/3).
   Widget _buildCalendarTabContent() {
-    final loc = AppLocalizations.of(context)!;
+    final totalDays = widget.plan.durationInDays;
+    final startDay = _calendarDayGroup * _calendarVisibleDays + 1;
+    final endDay = startDay + _calendarVisibleDays - 1;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: _CalendarSegmentButton(
-                  label: loc.calendarViewModeCalendar,
-                  isSelected: _calendarViewMode == 'calendar',
-                  onTap: () => setState(() => _calendarViewMode = 'calendar'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _CalendarSegmentButton(
-                  label: loc.myPlanSummaryTab,
-                  isSelected: _calendarViewMode == 'summary',
-                  onTap: () => setState(() => _calendarViewMode = 'summary'),
-                ),
-              ),
-            ],
-          ),
-        ),
+        _buildUnifiedCalendarBar(totalDays, startDay, endDay),
         Expanded(
-          child: _calendarViewMode == 'calendar'
-              ? CalendarMobilePage(plan: widget.plan)
-              : MyPlanSummaryScreen(plan: widget.plan),
+          child: CalendarMobilePage(
+            plan: widget.plan,
+            hideAppBar: true,
+            visibleDays: _calendarVisibleDays,
+            currentDayGroup: _calendarDayGroup,
+            onVisibleDaysChanged: (days) {
+              setState(() {
+                _calendarVisibleDays = days;
+                final currentStart =
+                    _calendarDayGroup * _calendarVisibleDays + 1;
+                if (currentStart > totalDays) {
+                  _calendarDayGroup = 0;
+                }
+              });
+            },
+            onPreviousDayGroup: () {
+              if (_calendarDayGroup > 0) {
+                setState(() => _calendarDayGroup--);
+              }
+            },
+            onNextDayGroup: () {
+              if (endDay < totalDays) {
+                setState(() => _calendarDayGroup++);
+              }
+            },
+          ),
         ),
       ],
     );
   }
-}
 
-/// Botón de segmento para Calendario / Mi resumen (T252).
-class _CalendarSegmentButton extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _CalendarSegmentButton({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: isSelected ? AppColorScheme.color2 : Colors.grey.shade800,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Center(
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: isSelected ? Colors.white : Colors.grey.shade400,
-              ),
+  /// Barra única: rango D1-3/7 + botones 1/2/3 días.
+  Widget _buildUnifiedCalendarBar(int totalDays, int startDay, int endDay) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade900,
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey.shade700.withOpacity(0.5),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Centro: < D1-3/7 >
+          Expanded(
+            flex: 3,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, color: Colors.white),
+                  onPressed: _calendarDayGroup > 0
+                      ? () => setState(() => _calendarDayGroup--)
+                      : null,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'D$startDay-$endDay/$totalDays',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right, color: Colors.white),
+                  onPressed: endDay < totalDays
+                      ? () => setState(() => _calendarDayGroup++)
+                      : null,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                ),
+              ],
             ),
+          ),
+          const SizedBox(width: 8),
+          // Derecha: 1 | 2 | 3 días
+          Expanded(
+            flex: 2,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _buildUnifiedDayChip(1),
+                const SizedBox(width: 4),
+                _buildUnifiedDayChip(2),
+                const SizedBox(width: 4),
+                _buildUnifiedDayChip(3),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnifiedDayChip(int days) {
+    final isSelected = _calendarVisibleDays == days;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _calendarVisibleDays = days;
+          final currentStart = _calendarDayGroup * days + 1;
+          if (currentStart > widget.plan.durationInDays) {
+            _calendarDayGroup = 0;
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColorScheme.color2 : Colors.grey.shade800,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected
+                ? AppColorScheme.color2
+                : Colors.grey.shade700.withOpacity(0.5),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Text(
+          '$days',
+          style: GoogleFonts.poppins(
+            color: isSelected ? Colors.white : Colors.grey.shade400,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

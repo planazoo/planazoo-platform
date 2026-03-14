@@ -35,12 +35,35 @@ import 'package:unp_calendario/features/notifications/domain/services/notificati
 
 /// Página de calendario mobile completa
 /// Funciona como el calendario web pero adaptado para 1-3 días visibles
+///
+/// En modo embebido ([hideAppBar] true) la barra superior se dibuja en el padre
+/// (barra unificada Calendario|Mi resumen + rango de días + 1/2/3) y se pasan
+/// [visibleDays], [currentDayGroup] y los callbacks.
 class CalendarMobilePage extends ConsumerStatefulWidget {
   final Plan plan;
+
+  /// Si true, no se muestra AppBar (la barra va en el padre). Requiere pasar [visibleDays], [currentDayGroup] y callbacks.
+  final bool hideAppBar;
+
+  /// Días visibles (1, 2 o 3) cuando [hideAppBar] es true.
+  final int? visibleDays;
+
+  /// Grupo de días actual cuando [hideAppBar] es true.
+  final int? currentDayGroup;
+
+  final ValueChanged<int>? onVisibleDaysChanged;
+  final VoidCallback? onPreviousDayGroup;
+  final VoidCallback? onNextDayGroup;
 
   const CalendarMobilePage({
     super.key,
     required this.plan,
+    this.hideAppBar = false,
+    this.visibleDays,
+    this.currentDayGroup,
+    this.onVisibleDaysChanged,
+    this.onPreviousDayGroup,
+    this.onNextDayGroup,
   });
 
   @override
@@ -50,10 +73,19 @@ class CalendarMobilePage extends ConsumerStatefulWidget {
 class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   // Número de días visibles (1, 2 o 3)
   int _visibleDays = 1;
-  
+
   // Estado para la navegación de días
   int _currentDayGroup = 0;
-  
+
+  int get _effectiveVisibleDays =>
+      widget.hideAppBar && widget.visibleDays != null
+          ? widget.visibleDays!
+          : _visibleDays;
+  int get _effectiveCurrentDayGroup =>
+      widget.hideAppBar && widget.currentDayGroup != null
+          ? widget.currentDayGroup!
+          : _currentDayGroup;
+
   // Controladores para scroll vertical sincronizado
   final ScrollController _hoursScrollController = ScrollController();
   final ScrollController _dataScrollController = ScrollController();
@@ -173,8 +205,9 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   }
 
   List<dynamic> _getColumnsToShow() {
-    return List.generate(_visibleDays, (dayIndex) {
-      final actualDayIndex = _currentDayGroup * _visibleDays + dayIndex + 1;
+    return List.generate(_effectiveVisibleDays, (dayIndex) {
+      final actualDayIndex =
+          _effectiveCurrentDayGroup * _effectiveVisibleDays + dayIndex + 1;
       final totalDays = widget.plan.durationInDays;
       final isEmpty = actualDayIndex > totalDays;
       return {
@@ -361,8 +394,9 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   }
 
   List<Widget> _buildDaysEventsLayerWithSubColumns(double availableWidth) {
-    final startDayIndex = _currentDayGroup * _visibleDays + 1;
-    final endDayIndex = startDayIndex + _visibleDays - 1;
+    final startDayIndex =
+        _effectiveCurrentDayGroup * _effectiveVisibleDays + 1;
+    final endDayIndex = startDayIndex + _effectiveVisibleDays - 1;
     final totalDays = widget.plan.durationInDays;
     final actualEndDayIndex = endDayIndex > totalDays ? totalDays : endDayIndex;
     
@@ -761,32 +795,48 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   }
 
   void _previousDayGroup() {
-    if (_currentDayGroup > 0) {
-      setState(() {
-        _currentDayGroup--;
-      });
+    if (_effectiveCurrentDayGroup <= 0) return;
+    if (widget.onPreviousDayGroup != null) {
+      widget.onPreviousDayGroup!();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToFirstEvent();
       });
+      return;
     }
+    setState(() {
+      _currentDayGroup--;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToFirstEvent();
+    });
   }
 
   void _nextDayGroup() {
     final totalDays = widget.plan.durationInDays;
-    final startDay = _currentDayGroup * _visibleDays + 1;
-    final endDay = startDay + _visibleDays - 1;
-    
-    if (endDay < totalDays) {
-      setState(() {
-        _currentDayGroup++;
-      });
+    final startDay =
+        _effectiveCurrentDayGroup * _effectiveVisibleDays + 1;
+    final endDay = startDay + _effectiveVisibleDays - 1;
+    if (endDay >= totalDays) return;
+    if (widget.onNextDayGroup != null) {
+      widget.onNextDayGroup!();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToFirstEvent();
       });
+      return;
     }
+    setState(() {
+      _currentDayGroup++;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToFirstEvent();
+    });
   }
 
   void _changeVisibleDays(int days) {
+    if (widget.onVisibleDaysChanged != null) {
+      widget.onVisibleDaysChanged!(days);
+      return;
+    }
     setState(() {
       _visibleDays = days;
       final totalDays = widget.plan.durationInDays;
@@ -818,21 +868,36 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
 
     ref.watch(calendarNotifierProvider(calendarParams));
     
-    final startDay = _currentDayGroup * _visibleDays + 1;
-    final endDay = startDay + _visibleDays - 1;
+    final startDay =
+        _effectiveCurrentDayGroup * _effectiveVisibleDays + 1;
+    final endDay = startDay + _effectiveVisibleDays - 1;
     final totalDays = widget.plan.durationInDays;
-    
+
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
         backgroundColor: Colors.grey.shade900,
-        appBar: _buildAppBar(startDay, endDay, totalDays),
+        appBar: widget.hideAppBar
+            ? null
+            : _buildAppBar(startDay, endDay, totalDays),
         body: CalendarGrid(
           hoursScrollController: _hoursScrollController,
           dataScrollController: _dataScrollController,
           buildFixedRows: _buildFixedRows,
           buildDataRows: _buildDataRows,
           buildEventsLayer: _buildEventsLayer,
+          onAccommodationHeaderTap: () {
+            // Usar el mismo flujo móvil de creación de alojamientos.
+            final visibleDays = _getColumnsToShow();
+            if (visibleDays.isNotEmpty) {
+              final firstDay = visibleDays.first as Map<String, dynamic>;
+              final dayIndex = firstDay['index'] as int;
+              final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+              _showNewAccommodationDialog(date);
+            } else {
+              _showNewAccommodationDialog(widget.plan.startDate);
+            }
+          },
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
@@ -863,7 +928,8 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
-            onPressed: _currentDayGroup > 0 ? _previousDayGroup : null,
+            onPressed:
+                _effectiveCurrentDayGroup > 0 ? _previousDayGroup : null,
             icon: const Icon(Icons.chevron_left, color: Colors.white),
           ),
           Expanded(
@@ -912,7 +978,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   }
 
   Widget _buildDaySelectorButton(int days) {
-    final isSelected = _visibleDays == days;
+    final isSelected = _effectiveVisibleDays == days;
     return GestureDetector(
       onTap: () => _changeVisibleDays(days),
       child: Container(

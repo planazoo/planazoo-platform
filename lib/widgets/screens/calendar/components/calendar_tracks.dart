@@ -176,23 +176,32 @@ class CalendarTracks extends ConsumerWidget {
     final dayHeaderStyle = CalendarStyles.getDayHeaderStyle(isToday: isToday)
         .copyWith(fontSize: 11, fontWeight: FontWeight.w600);
     
-    // Generar iniciales de participantes (padding para legibilidad)
+    // Generar iniciales de participantes (padding para legibilidad).
+    // FittedBox evita overflow cuando la celda tiene menos altura (p. ej. móvil).
+    // SizedBox con ancho acotado para que el Row de participantes tenga tamaño finito.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Día $actualDayIndex - $dayOfWeek $formattedDate',
-            style: dayHeaderStyle,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: SizedBox(
+          width: 200,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Día $actualDayIndex - $dayOfWeek $formattedDate',
+                style: dayHeaderStyle,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              _buildMiniParticipantHeaders(participants),
+            ],
           ),
-          const SizedBox(height: 2),
-          // Mini headers de participantes
-          _buildMiniParticipantHeaders(participants),
-        ],
+        ),
       ),
     );
   }

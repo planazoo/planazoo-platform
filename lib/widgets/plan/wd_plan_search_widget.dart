@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme/color_scheme.dart';
 
-class PlanSearchWidget extends StatelessWidget {
+class PlanSearchWidget extends StatefulWidget {
   final String? searchQuery;
   final Function(String)? onSearchChanged;
   final VoidCallback? onSearchPressed;
@@ -13,6 +13,67 @@ class PlanSearchWidget extends StatelessWidget {
     this.onSearchChanged,
     this.onSearchPressed,
   });
+
+  @override
+  State<PlanSearchWidget> createState() => _PlanSearchWidgetState();
+}
+
+class _PlanSearchWidgetState extends State<PlanSearchWidget> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.searchQuery ?? '');
+    _controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void didUpdateWidget(PlanSearchWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchQuery != widget.searchQuery &&
+        _controller.text != (widget.searchQuery ?? '')) {
+      _controller.text = widget.searchQuery ?? '';
+    }
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _clearSearch() {
+    _controller.clear();
+    widget.onSearchChanged?.call('');
+    // Quitar foco del campo (cierra teclado en iOS, deselecciona en web)
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
+  /// Botón X para borrar: GestureDetector asegura que el tap se reciba en web e iOS.
+  /// Área mínima 44x44 para cumplir con las guías de accesibilidad (iOS).
+  Widget _buildClearButton() {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _clearSearch,
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: Center(
+          child: Icon(
+            Icons.close,
+            color: Colors.grey.shade400,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +110,7 @@ class PlanSearchWidget extends StatelessWidget {
         ],
       ),
       child: TextField(
+        controller: _controller,
         style: GoogleFonts.poppins(
           fontSize: 14,
           color: Colors.white,
@@ -64,6 +126,13 @@ class PlanSearchWidget extends StatelessWidget {
             Icons.search,
             color: Colors.grey.shade400,
             size: 22,
+          ),
+          suffixIcon: _controller.text.isEmpty
+              ? null
+              : _buildClearButton(),
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 44,
+            minHeight: 44,
           ),
           filled: true,
           fillColor: Colors.transparent,
@@ -88,8 +157,8 @@ class PlanSearchWidget extends StatelessWidget {
             vertical: 10,
           ),
         ),
-        onChanged: onSearchChanged,
-        onSubmitted: (_) => onSearchPressed?.call(),
+        onChanged: (value) => widget.onSearchChanged?.call(value),
+        onSubmitted: (_) => widget.onSearchPressed?.call(),
       ),
     );
   }
