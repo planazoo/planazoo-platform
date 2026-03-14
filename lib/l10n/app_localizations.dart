@@ -3829,6 +3829,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Error: {message}'**
   String genericErrorWithMessage(Object message);
+
+  /// Mensaje cuando el usuario no puede editar el evento
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes permisos para editar este evento'**
+  String get noPermissionEditEvent;
+
+  /// Mensaje cuando no se puede editar info personal de otros
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes permisos para editar la información personal de otros participantes.'**
+  String get noPermissionEditPersonalInfoOthers;
+
+  /// Título de aviso sin permisos
+  ///
+  /// In es, this message translates to:
+  /// **'Sin permisos'**
+  String get noPermissionTitle;
 }
 
 class _AppLocalizationsDelegate

@@ -14,7 +14,7 @@ class Plan {
   final double? budget;
   final int? participants;
   final String? imageUrl;
-  final String? state; // borrador, planificando, confirmado, en_curso, finalizado, cancelado
+  final String? state; // planificando, confirmado, en_curso, finalizado, cancelado (borrador unificado con planificando)
   final String? visibility; // private, public
   final String? timezone; // IANA timezone (ej: "Europe/Madrid")
   final String currency; // T153: Código ISO de moneda (EUR, USD, GBP, JPY, etc.) - default: EUR
@@ -69,7 +69,7 @@ class Plan {
       budget: data['budget']?.toDouble(),
       participants: data['participants'],
       imageUrl: data['imageUrl'],
-      state: data['state'] ?? 'borrador', // Default a borrador si no existe
+      state: data['state'] ?? 'planificando', // Default a planificando (borrador eliminado)
       visibility: data['visibility'] ?? 'private', // Default a privado
       timezone: data['timezone'],
       currency: data['currency'] ?? 'EUR', // T153: Default EUR para migración
@@ -94,7 +94,7 @@ class Plan {
       'budget': budget,
       'participants': participants,
       'imageUrl': imageUrl,
-      'state': state ?? 'borrador', // Default a borrador
+      'state': state ?? 'planificando', // Default a planificando
       'visibility': visibility ?? 'private', // Default a privado
       'timezone': timezone,
       'currency': currency, // T153

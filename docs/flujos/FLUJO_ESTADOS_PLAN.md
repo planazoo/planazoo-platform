@@ -4,8 +4,8 @@
 
 **Relacionado con:** T109 ✅ - Estados del Plan, T144 - Gestión del ciclo de vida al finalizar plan, T133 - Exportación PDF, T145 - Álbum digital, T147 - Valoraciones  
 **Completa CRUD de planes:** `FLUJO_CRUD_PLANES.md`  
-**Versión:** 1.4  
-**Fecha:** Enero 2025 (Actualizado - T109 completado con bloqueos funcionales)
+**Versión:** 1.5  
+**Fecha:** Marzo 2026 (Borrador unificado con Planificando: los planes nuevos empiezan en Planificando)
 
 ---
 
@@ -21,8 +21,7 @@ Documentar **solo las transiciones entre estados** de un plan, qué permisos/blo
 
 | Estado | Descripción | Permite Cambios | Permite Cancelar | Visible para | Nota |
 |--------|-------------|-----------------|------------------|--------------|------|
-| **Borrador** | Plan en creación inicial | ✅ Todo | ✅ Sí | Solo creador | Estado temporal |
-| **Planificando** | Organizador añadiendo contenido | ✅ Casi todo | ✅ Sí | Solo participantes | Estado principal de creación |
+| **Planificando** | Organizador añadiendo contenido; estado inicial al crear plan | ✅ Casi todo | ✅ Sí | Participantes (si invitados) | Se puede invitar desde el inicio |
 | **Confirmado** | Plan listo, esperando inicio | ⚠️ Ajustes menores | ⚠️ Con confirmación | Todos los participantes | Bloqueos parciales |
 | **En Curso** | Plan activo, ejecutándose | ⚠️ Urgencias | ❌ No | Todos los participantes | Solo cambios críticos |
 | **Finalizado** | Plan completado | ❌ No | ❌ No | Todos los participantes | Solo lectura |
@@ -32,35 +31,16 @@ Documentar **solo las transiciones entre estados** de un plan, qué permisos/blo
 
 ## 🔄 TRANSICIONES DE ESTADO
 
-### 1. NUEVO PLAN → BORRADOR
+### 1. NUEVO PLAN → PLANIFICANDO
 
-**Cuándo:** Al crear un plan por primera vez  
+**Cuándo:** Al crear y guardar un plan por primera vez  
 **Quién:** Automático por el sistema  
-**Duración:** Hasta que el usuario guarda o cierra el modal
-
-**Permisos:**
-- ✅ Creador puede modificar todo
-- ✅ Creador puede añadir eventos, alojamientos, participantes
-- ✅ Creador puede eliminar todo
-- ✅ Creador puede guardar o descartar cambios
-
-**Bloqueos:** Ninguno
-
-**UI:**
-- Badge "BORRADOR" en el plan
-- Aviso "Guardando en borrador..."
-
----
-
-### 2. BORRADOR → PLANIFICANDO
-
-**Cuándo:** Al guardar el plan por primera vez  
-**Quién:** Automático después de primer guardado  
-**Duración:** Hasta que el organizador considera que el plan está "listo"
+**Duración:** Hasta que el organizador marca el plan como "listo" (Confirmado)
 
 **Permisos:**
 - ✅ Organizador puede modificar todo
 - ✅ Organizador puede añadir/eliminar eventos y participantes
+- ✅ Se puede invitar a participantes desde el inicio
 - ✅ Participantes pueden ver el plan (si están invitados)
 - ⚠️ Participantes NO pueden editar contenido común
 - ✅ Participantes pueden editar su parte personal
@@ -81,7 +61,7 @@ Documentar **solo las transiciones entre estados** de un plan, qué permisos/blo
 
 ---
 
-### 3. PLANIFICANDO → CONFIRMADO
+### 2. PLANIFICANDO → CONFIRMADO
 
 **Cuándo:** Organizador marca plan como "listo"  
 **Quién:** Solo organizador (confirmación requerida)  
@@ -126,7 +106,7 @@ Modal: "¿Confirmar plan?"
 
 ---
 
-### 4. CONFIRMADO → EN CURSO
+### 3. CONFIRMADO → EN CURSO
 
 **Cuándo:** 
 1. Automático: Cuando llega la fecha de inicio del plan
@@ -178,7 +158,7 @@ Modal: "¿Confirmar plan?"
 
 ---
 
-### 5. EN CURSO → FINALIZADO
+### 4. EN CURSO → FINALIZADO
 
 **Cuándo:** 
 1. Automático: Cuando llega la fecha de fin del plan
@@ -248,7 +228,7 @@ Modal: "¿Confirmar plan?"
 
 ---
 
-### 6. CUALQUIER ESTADO → CANCELADO
+### 5. CUALQUIER ESTADO → CANCELADO
 
 **Cuándo:** Organizador cancela el plan  
 **Quién:** Solo organizador (confirmación crítica requerida)  
@@ -308,19 +288,19 @@ Modal: "¿Cancelar plan [nombre]?"
 
 ## 🔐 MATRIZ DE PERMISOS POR ESTADO
 
-| Acción | Borrador | Planificando | Confirmado | En Curso | Finalizado | Cancelado |
-|--------|----------|--------------|------------|----------|------------|-----------|
-| **Modificar fecha inicio/fin** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Añadir evento** | ✅ | ✅ | ⚠️ Con limitaciones | ⚠️ Solo urgente | ❌ | ❌ |
-| **Eliminar evento** | ✅ | ✅ | ⚠️ Con confirmación | ⚠️ Solo futuros | ❌ | ❌ |
-| **Modificar evento** | ✅ | ✅ | ⚠️ Ajustes menores | ⚠️ Solo urgente | ❌ | ❌ |
-| **Añadir participante** | ✅ | ✅ | ⚠️ Con confirmación | ❌ (solo excepcional) | ❌ | ❌ |
-| **Eliminar participante** | ✅ | ✅ | ⚠️ Con confirmación | ❌ (solo excepcional) | ❌ | ❌ |
-| **Modificar presupuesto** | ✅ | ✅ | ⚠️ <50% | ❌ | ❌ | ❌ |
-| **Añadir foto** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Añadir nota post-evento** | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
-| **Exportar PDF** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Cancelar plan** | ✅ | ✅ | ⚠️ Sí, con confirmación | ❌ | ❌ | ✅ (ya está) |
+| Acción | Planificando | Confirmado | En Curso | Finalizado | Cancelado |
+|--------|--------------|------------|----------|------------|-----------|
+| **Modificar fecha inicio/fin** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Añadir evento** | ✅ | ⚠️ Con limitaciones | ⚠️ Solo urgente | ❌ | ❌ |
+| **Eliminar evento** | ✅ | ⚠️ Con confirmación | ⚠️ Solo futuros | ❌ | ❌ |
+| **Modificar evento** | ✅ | ⚠️ Ajustes menores | ⚠️ Solo urgente | ❌ | ❌ |
+| **Añadir participante** | ✅ | ⚠️ Con confirmación | ❌ (solo excepcional) | ❌ | ❌ |
+| **Eliminar participante** | ✅ | ⚠️ Con confirmación | ❌ (solo excepcional) | ❌ | ❌ |
+| **Modificar presupuesto** | ✅ | ⚠️ <50% | ❌ | ❌ | ❌ |
+| **Añadir foto** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Añadir nota post-evento** | ❌ | ❌ | ✅ | ✅ | ❌ |
+| **Exportar PDF** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Cancelar plan** | ✅ | ⚠️ Sí, con confirmación | ❌ | ❌ | ✅ (ya está) |
 
 ---
 
@@ -328,9 +308,7 @@ Modal: "¿Cancelar plan [nombre]?"
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Borrador: Crear plan
-    Borrador --> Planificando: Guardar primera vez
-    Borrador --> [*]: Descartar
+    [*] --> Planificando: Crear plan
     
     Planificando --> Confirmado: Organizador confirma
     Planificando --> Cancelado: Organizador cancela
@@ -345,15 +323,10 @@ stateDiagram-v2
     Finalizado --> [*]: Archivado permanentemente
     Cancelado --> [*]: Archivado permanentemente
     
-    note right of Borrador
-        Estado temporal
-        Solo creador ve
-        Cambios sin guardar
-    end note
-    
     note right of Planificando
-        Creador añade contenido
-        Participantes invitados ven
+        Estado inicial
+        Organizador añade contenido
+        Se puede invitar
         Todo editable
     end note
     
@@ -429,39 +402,15 @@ stateDiagram-v2
 **Estado actual:** ✅ T109 COMPLETADO - Sistema funcional completo
 
 **Lo que está implementado:**
-- ✅ Campo `state` en modelo Plan con valores: borrador, planificando, confirmado, en_curso, finalizado, cancelado
+- ✅ Campo `state` en modelo Plan con valores: planificando, confirmado, en_curso, finalizado, cancelado (borrador unificado con planificando)
 - ✅ Campo `visibility` en modelo Plan (private, public)
 - ✅ Campo `timezone` en modelo Plan (IANA timezone)
-- ✅ Planes se crean con `state: 'borrador'` por defecto
-- ✅ Valores por defecto: `state='borrador'`, `visibility='private'`, `timezone=auto-detectada`
+- ✅ Planes se crean con `state: 'planificando'` por defecto
+- ✅ Valores por defecto: `state='planificando'`, `visibility='private'`, `timezone=auto-detectada`
 - ✅ Firestore rules valida valores válidos de `state` y `visibility`
 - ✅ Persistencia de estados en Firestore
 - ✅ Modelo soporta todos los estados definidos en el flujo
 - ✅ **Transiciones automáticas entre estados:**
-  - ✅ Borrador → Planificando (al guardar primera vez)
-  - ✅ Confirmado → En Curso (automático al llegar fecha inicio o manual)
-  - ✅ En Curso → Finalizado (automático al llegar fecha fin o manual)
-- ✅ **Servicio de gestión de transiciones** (`lib/features/calendar/domain/services/plan_state_service.dart`)
-- ✅ **Validaciones de transiciones** (permisos, validaciones previas)
-- ✅ **UI para cambiar estados:**
-  - ✅ Badges visuales de estado (`lib/features/calendar/presentation/widgets/plan_state_badge.dart`)
-  - ✅ Diálogos de confirmación para transiciones (`lib/features/calendar/presentation/widgets/state_transition_dialog.dart`)
-  - ✅ Controles de cambio de estado en UI (`PlanDataScreen`)
-  - ✅ Indicadores visuales de bloqueos (`lib/features/calendar/domain/services/plan_state_permissions.dart`)
-- ✅ **Lógica de permisos/bloqueos según estado**
-- ✅ **Auto-transición basada en fechas** integrada en dashboard
-
-**Lo que está implementado:**
-- ✅ Campo `state` en modelo Plan con valores: borrador, planificando, confirmado, en_curso, finalizado, cancelado
-- ✅ Campo `visibility` en modelo Plan (private, public)
-- ✅ Campo `timezone` en modelo Plan (IANA timezone)
-- ✅ Planes se crean con `state: 'borrador'` por defecto
-- ✅ Valores por defecto: `state='borrador'`, `visibility='private'`, `timezone=auto-detectada`
-- ✅ Firestore rules valida valores válidos de `state` y `visibility`
-- ✅ Persistencia de estados en Firestore
-- ✅ Modelo soporta todos los estados definidos en el flujo
-- ✅ **Transiciones automáticas entre estados:**
-  - ✅ Borrador → Planificando (al guardar primera vez)
   - ✅ Confirmado → En Curso (automático al llegar fecha inicio o manual)
   - ✅ En Curso → Finalizado (automático al llegar fecha fin o manual)
 - ✅ **Servicio de gestión de transiciones** (`lib/features/calendar/domain/services/plan_state_service.dart`)
@@ -502,5 +451,5 @@ stateDiagram-v2
 ---
 
 *Documento de flujo de estados del plan*  
-*Última actualización: Febrero 2026*
+*Última actualización: Marzo 2026*
 

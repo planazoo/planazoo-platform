@@ -2068,4 +2068,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String genericErrorWithMessage(Object message) {
     return 'Error: $message';
   }
+
+  @override
+  String get noPermissionEditEvent =>
+      'No tienes permisos para editar este evento';
+
+  @override
+  String get noPermissionEditPersonalInfoOthers =>
+      'No tienes permisos para editar la información personal de otros participantes.';
+
+  @override
+  String get noPermissionTitle => 'Sin permisos';
 }

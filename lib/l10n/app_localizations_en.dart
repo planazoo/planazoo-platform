@@ -2049,4 +2049,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String genericErrorWithMessage(Object message) {
     return 'Error: $message';
   }
+
+  @override
+  String get noPermissionEditEvent =>
+      'You don\'t have permission to edit this event.';
+
+  @override
+  String get noPermissionEditPersonalInfoOthers =>
+      'You don\'t have permission to edit other participants\' personal information.';
+
+  @override
+  String get noPermissionTitle => 'No permission';
 }

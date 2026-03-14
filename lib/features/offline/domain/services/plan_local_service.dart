@@ -63,7 +63,7 @@ class PlanLocalService extends LocalStorageService<Plan> {
       budget: map['budget']?.toDouble(),
       participants: map['participants'] as int?,
       imageUrl: map['imageUrl'] as String?,
-      state: map['state'] ?? 'borrador',
+      state: map['state'] ?? 'planificando',
       visibility: map['visibility'] ?? 'private',
       timezone: map['timezone'] as String?,
       currency: map['currency'] ?? 'EUR',

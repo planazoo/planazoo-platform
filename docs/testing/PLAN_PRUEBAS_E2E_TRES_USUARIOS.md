@@ -72,14 +72,14 @@ Transiciones válidas (`PlanStateService`):
 
 | Estado actual | Puede pasar a |
 |---------------|----------------|
-| borrador | planificando, cancelado |
+| planificando | confirmado, cancelado |
 | planificando | confirmado, cancelado |
 | confirmado | en_curso, cancelado, planificando |
 | en_curso | finalizado |
 | finalizado | — (terminal) |
 | cancelado | — (terminal) |
 
-**Nombres en UI (pueden variar):** Borrador, Planificando, Confirmado / Aprobado, En curso, Finalizado / Cerrado, Cancelado.
+**Nombres en UI (pueden variar):** Planificando, Confirmado / Aprobado, En curso, Finalizado / Cerrado, Cancelado.
 
 ---
 
@@ -87,7 +87,7 @@ Transiciones válidas (`PlanStateService`):
 
 Resumen según `PlanStatePermissions` (solo lectura en finalizado/cancelado):
 
-| Acción | borrador | planificando | confirmado | en_curso | finalizado / cancelado |
+| Acción | planificando | confirmado | en_curso | finalizado / cancelado |
 |--------|----------|--------------|------------|----------|------------------------|
 | Modificar fechas plan | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Añadir eventos | ✅ | ✅ | ✅ | ✅* | ❌ |
@@ -236,7 +236,7 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 | 1.4 | UA | Guardar/crear plan | Plan creado | Mensaje de éxito; vuelta al dashboard o al detalle del plan | | |
 | 1.5 | UA | Comprobar que el plan aparece en la lista (W28) | Plan visible en lista | Card del plan con nombre correcto; filtro "Todos" o "Estoy in" lo muestra | | |
 | 1.6 | UA | Abrir el plan (clic en card o doble clic) | Entra al detalle del plan | Pantalla con pestañas o secciones (Info plan, Calendario, Participantes, Chat, etc.) | ✅ | Se abre correctamente el detalle del plan con sus pestañas. |
-| 1.7 | UA | Ir a "Info plan" (o equivalente) y comprobar estado | Estado "Borrador" o "Es borrador" | Badge o texto que indique borrador | ✅ | Texto claro indicando que el plan está en borrador. |
+| 1.7 | UA | Ir a "Info plan" (o equivalente) y comprobar estado | Estado "Planificando" | Badge o texto que indique planificando | ✅ | Texto claro indicando que el plan está en planificación. |
 | 1.8 | UA | No crear eventos aún; ir a pestaña/sección "Participantes" | Lista de participantes visible | Solo UA como organizador (o lista vacía según implementación); opción "Invitar" visible | ✅ | Se ve solo UA como organizador y la acción para invitar. |
 | 1.9 | UA | Pulsar "Invitar" o "Añadir por email" | Se abre diálogo o campo para introducir email | Campo email y botón Enviar/Invitar | ✅ | Diálogo/bloque de invitación visible con campo email y botón. |
 | 1.10 | UA | Introducir email de **UB (no registrado):** Unplanazoo+marbat@gmail.com y enviar invitación | Invitación enviada | Mensaje de éxito; UB recibirá email; en Fase 2 se registrará con ese email y aceptará | ⚠️ | UB ya estaba invitada por correo de ejecuciones anteriores; se mantiene la invitación existente. |
@@ -244,7 +244,7 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 | 1.12 | UA | Comprobar lista de invitaciones pendientes (si existe en UI) | UB y UC aparecen como pendientes | Tabla o lista con 2 invitaciones en estado "pendiente" o "enviada" | | |
 | 1.13 | UA | Comprobar que no hay eventos en el plan (pestaña Calendario) | Calendario sin eventos o vacío | Vista calendario sin bloques de evento; o mensaje "Sin eventos" | | |
 
-**Postcondición:** 1 plan en borrador; 2 invitaciones pendientes (UB, UC). Anotar ID o nombre exacto del plan para siguientes fases.
+**Postcondición:** 1 plan en planificando; 2 invitaciones pendientes (UB, UC). Anotar ID o nombre exacto del plan para siguientes fases.
 
 ---
 
@@ -275,7 +275,7 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 
 **Objetivo:** Plan con 3 eventos: uno borrador en timezone UA, otro en otra timezone, otro con "solicitar que se apunten" (requiresConfirmation o similar). Verificar visualización en calendario y opción de apuntarse.
 
-**Precondición:** Fase 2; plan en borrador con UA y UB.
+**Precondición:** Fase 2; plan en planificando con UA y UB.
 
 | # | Actor | Acción detallada | Resultado esperado | Verificación concreta | Resultado | Notas |
 |---|--------|-------------------|--------------------|------------------------|-----------|--------|
@@ -286,7 +286,7 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 | 3.5 | UA | Crear Evento 2: título "Tour mañana", día 2, hora 10:00, timezone America/New_York (u otra distinta a UA) | Evento guardado; timezone guardada | En calendario de UA se muestra en hora local correcta (ej. 16:00 Madrid si 10:00 NY, según conversión); anotar hora mostrada | | |
 | 3.6 | UA | Crear Evento 3: título "Actividad opcional", día 3, activar opción "Solicitar confirmación / que los usuarios se apunten" (requiresConfirmation o equivalente) | Evento con solicitud de confirmación/apuntarse | Evento guardado; en detalle del evento o en lista se indica que requiere confirmación/inscripción | | |
 | 3.7 | UA | Guardar todos los eventos y cerrar diálogos | Tres eventos visibles en calendario | Calendario muestra 3 eventos; borrador con estilo diferenciado si aplica | | |
-| 3.8 | UA | Abrir Evento 1 (editar) y comprobar que se puede editar (plan en borrador) | Edición permitida | Cambiar título o hora; guardar; cambio persistido | | |
+| 3.8 | UA | Abrir Evento 1 (editar) y comprobar que se puede editar (plan en planificando) | Edición permitida | Cambiar título o hora; guardar; cambio persistido | | |
 | 3.9 | UB | Con UB, abrir el plan y ir a Calendario | Ve los eventos según permisos | UB ve los 3 eventos (o los que no sean solo borrador para organizador); anotar qué ve UB | | |
 | 3.10 | UB | Abrir Evento 3 (el de "apuntarse") | Opción de apuntarse/confirmar visible si está implementado | Botón "Apuntarme" / "Confirmar asistencia" o similar; si no existe, anotar en Huecos | | |
 | 3.11 | UA | Comprobar en calendario que Evento 2 muestra hora correcta para UA (Madrid) | Conversión timezone correcta | Ej.: si evento es 10:00 NY, en Madrid puede mostrarse 16:00 (o 15:00 según DST); anotar valor mostrado | | |
@@ -396,16 +396,16 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 
 ## 13. Fase 7 – Aprobar / confirmar el plan (UA)
 
-**Objetivo:** Cambiar estado del plan de borrador a confirmado (o planificando → confirmado); todos ven el nuevo estado.
+**Objetivo:** Cambiar estado del plan de planificando a confirmado; todos ven el nuevo estado.
 
-**Precondición:** Plan en borrador o planificando; UA organizador.
+**Precondición:** Plan en planificando; UA organizador.
 
 | # | Actor | Acción detallada | Resultado esperado | Verificación concreta | Resultado | Notas |
 |---|--------|-------------------|--------------------|------------------------|-----------|--------|
 | 7.1 | UA | Abrir plan → Info plan (o pantalla de datos del plan) | Sección de estado visible | Selector o botón "Cambiar estado" / "Estado del plan" (si existe) | | |
-| 7.2 | UA | Si el estado actual es "borrador", comprobar transición permitida a "planificando" o "confirmado" según implementación | Transición permitida | Lista desplegable o botones con estados permitidos; borrador → confirmado o borrador → planificando → confirmado | | |
+| 7.2 | UA | Comprobar transición permitida a "confirmado" desde "planificando" | Transición permitida | Lista desplegable o botones con estados permitidos; planificando → confirmado | | |
 | 7.3 | UA | Cambiar estado a "Confirmado" (o "Aprobado" / "Planificando" según UI) | Estado actualizado | Mensaje de éxito; badge o texto del plan muestra "Confirmado" (o equivalente) | | |
-| 7.4 | UA | Recargar o reabrir Info plan | Estado persistido | Sigue mostrando Confirmado; no vuelve a Borrador | | |
+| 7.4 | UA | Recargar o reabrir Info plan | Estado persistido | Sigue mostrando Confirmado; no vuelve a Planificando | | |
 | 7.5 | UB | Abrir el plan en su dashboard | Ve estado "Confirmado" | En cabecera o card del plan se indica estado confirmado | | |
 | 7.6 | UC | Abrir el plan | Ve estado "Confirmado" | Mismo comportamiento que UB | | |
 | 7.7 | UA | Intentar editar un evento (cambiar título o hora) | Según permisos: en confirmado suele permitirse editar eventos | Evento se puede editar y guardar; si no, anotar mensaje de bloqueo y comprobar con PlanStatePermissions | | |
@@ -431,7 +431,7 @@ Si algún texto aparece en el idioma equivocado o sin traducir, anotarlo en la s
 | 8.6 | UA | Si hay propuestas: ver lista de propuestas y aprobar o rechazar "Desayuno día 2" | Propuesta aprobada o rechazada; en caso aprobada, evento creado | Evento nuevo visible en calendario o mensaje claro de rechazo | | |
 | 8.7 | UA | Editar un evento existente (ej. cambiar hora del Evento 1 de 20:00 a 20:30) | Cambio guardado | Evento actualizado en calendario; UB y UC ven la nueva hora al abrir el plan | | |
 | 8.8 | UB | Intentar eliminar un evento (si tiene opción) | No permitido (solo organizador) | Botón eliminar oculto o deshabilitado; o mensaje de permisos | | |
-| 8.9 | UA | Comprobar estado del plan tras las ediciones | Sigue "Confirmado" o "En curso" | No ha vuelto a Borrador sin acción explícita | | |
+| 8.9 | UA | Comprobar estado del plan tras las ediciones | Sigue "Confirmado" o "En curso" | No ha vuelto a Planificando sin acción explícita | | |
 
 **Postcondición:** Chat con más mensajes; al menos un intento de propuesta de evento (o hueco anotado); permisos de edición/eliminación verificados.
 

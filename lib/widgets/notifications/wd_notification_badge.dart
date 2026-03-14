@@ -27,10 +27,38 @@ class NotificationBadge extends ConsumerWidget {
       data: (count) {
         final hasUnread = count > 0;
         return IconButton(
-          icon: Icon(
-            Icons.notifications_outlined,
-            color: hasUnread ? AppColorScheme.color3 : (iconColor ?? Colors.white),
-            size: iconSize,
+          icon: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                Icons.notifications_outlined,
+                color: hasUnread ? AppColorScheme.color3 : (iconColor ?? Colors.white),
+                size: iconSize,
+              ),
+              if (count > 0)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    decoration: BoxDecoration(
+                      color: AppColorScheme.color3,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColorScheme.color2, width: 1),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      count > 99 ? '99+' : '$count',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           onPressed: () {
             _showNotificationList(context, ref);

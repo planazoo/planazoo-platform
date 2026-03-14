@@ -51,7 +51,7 @@
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
 | **T204** | Info plan: imagen a media pantalla; nombre y descripción en layout acordado. | Media |
-| **T205** | Modal cambio de estado del plan: estilo básico, restricciones en borrador, mensaje explicando implicación. | Media |
+| **T205** | Modal cambio de estado del plan: estilo básico, mensaje explicando implicación. | Media |
 | **T208** | Modal evento: fecha fin por duración o manual; campo a la derecha de Duración. | Media |
 | **T210** | Calendario: revisar drag and drop y desplazamiento móvil. | Media |
 | **T211** | Calendario: copiar/pegar con Ctrl+mouse; corregir colocación a la altura correcta. Complementa T35. | Media |

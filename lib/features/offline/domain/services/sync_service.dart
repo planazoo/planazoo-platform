@@ -438,7 +438,7 @@ class SyncService {
       budget: data['budget']?.toDouble(),
       participants: data['participants'],
       imageUrl: data['imageUrl'],
-      state: data['state'] ?? 'borrador',
+      state: data['state'] ?? 'planificando',
       visibility: data['visibility'] ?? 'private',
       timezone: data['timezone'],
       currency: data['currency'] ?? 'EUR',

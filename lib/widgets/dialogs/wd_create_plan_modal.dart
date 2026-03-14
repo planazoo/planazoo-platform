@@ -107,7 +107,7 @@ class _WdCreatePlanModalState extends ConsumerState<WdCreatePlanModal> {
         endDate: endDate,
         columnCount: columnCount,
         description: null,
-        state: 'borrador',
+        state: 'planificando',
         visibility: 'private',
         timezone: TimezoneService.getSystemTimezone(),
         currency: 'EUR',

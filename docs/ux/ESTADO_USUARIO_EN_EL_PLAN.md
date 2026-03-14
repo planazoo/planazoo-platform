@@ -28,7 +28,7 @@ Flujos que mantenemos:
   - Línea tercera: `handle` (ej. @usuario o email) y **rol** (Organizador / Participante / Observador) si el usuario está en `planParticipantsProvider`; enlace “Ver mi resumen” (T252) si aplica.
 - **Qué no se muestra:**
   - **Estado de participación** del usuario actual (pendiente / aceptado / rechazado). Si el usuario solo tiene **invitación pendiente** (aún no participación), no aparece en participantes → en W6 solo se ve nombre del plan y fechas; no se indica “Invitación pendiente” ni “Tu estado: Pendiente”.
-  - Estado del plan (borrador, confirmado, etc.) en esta barra; en la última iteración se acordó mostrarlo en la **barra superior de Info del plan** (pestaña dentro del plan), no obligatoriamente en W6.
+  - Estado del plan (planificando, confirmado, etc.) en esta barra; en la última iteración se acordó mostrarlo en la **barra superior de Info del plan** (pestaña dentro del plan), no obligatoriamente en W6.
 
 **Resumen:** W6 muestra rol cuando ya hay participación aceptada; no distingue “invitación pendiente” ni “participación pendiente”.
 
@@ -41,7 +41,7 @@ Flujos que mantenemos:
 
 - **Ubicación:** Lista de planes (W28). Widget: `PlanCardWidget` (`wd_plan_card_widget.dart`).
 - **Qué se muestra hoy:**
-  - Nombre, fechas, “X días”, badge de **estado del plan** (borrador, confirmado, etc.), participantes, iconos (resumen, notificaciones, chat).
+  - Nombre, fechas, “X días”, badge de **estado del plan** (planificando, confirmado, etc.), participantes, iconos (resumen, notificaciones, chat).
   - **Badge “Invitación”** (naranja) cuando `userPendingInvitationsProvider` contiene una invitación pendiente para ese plan.
 - **Qué no se muestra:**
   - “Mi estado” como participante (ej. “Pendiente de aceptar”, “Aceptado”, “Solo invitación”) cuando ya hay **participación** con `status == 'pending'`. Hoy la card solo reacciona a *invitación* pendiente, no a participación pendiente.

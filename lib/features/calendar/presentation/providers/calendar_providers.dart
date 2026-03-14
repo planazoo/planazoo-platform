@@ -6,7 +6,6 @@ import '../../domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import '../../domain/services/event_service.dart';
 import '../../domain/services/plan_service.dart';
-import '../../domain/services/invitation_service.dart';
 import 'invitation_providers.dart';
 import 'plan_participation_providers.dart';
 import '../notifiers/calendar_notifier.dart';

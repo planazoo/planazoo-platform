@@ -56,3 +56,19 @@ Cada entrada nueva debe seguir esta estructura:
 - **Solución aplicada**: envolver ambos textos en `Expanded` y activar `overflow: TextOverflow.ellipsis`, además de alinear el texto derecho con `textAlign: TextAlign.right`, de forma que el espacio se reparta y el contenido sobrante se trunque en lugar de desbordar. La estructura de la fila queda `Expanded(Text izquierda) + Switch + Expanded(Text derecha)`.
 - **Notas para el futuro**: en filas con varios textos y controles (especialmente con traducciones largas) es preferible usar `Expanded`/`Flexible` y `TextOverflow.ellipsis` en lugar de depender de `SizedBox` fijos. Esto evita overflows sutiles en dispositivos pequeños o con fuentes grandes.
 
+### [2026-03-12] test/widget_test.dart (App necesita ProviderScope y Firebase)
+
+- **Contexto**: trabajo autónomo; arreglar test "App should build without errors" que fallaba con "No ProviderScope found".
+- **Error**: `Bad state: No ProviderScope found` y después `[core/no-app] No Firebase App '[DEFAULT]' has been created`.
+- **Causa raíz**: el test montaba `App()` directamente; `App` es un `ConsumerStatefulWidget` que usa `ref` en `initState` (languageNotifier, FCMService.getInitialMessage()), por lo que requiere `ProviderScope`; además los providers (p. ej. realtimeSyncInitializerProvider) y FCM usan Firebase.
+- **Solución aplicada**: en el test se envuelve `App()` en `ProviderScope`. Como en entorno de test no hay `Firebase.initializeApp()`, el test se deja con `skip: true` y comentario indicando que requiere Firebase en el setup. Para que el test pase sin skip haría falta llamar a `Firebase.initializeApp()` (con opciones de test o mock) antes de `pumpWidget`.
+- **Notas para el futuro**: tests que monten `App` o widgets que usen Riverpod/Firebase deben incluir `ProviderScope` y, si acceden a Firebase, inicializar Firebase en `setUpAll` o usar mocks.
+
+### [2026-03-13] CalendarGrid / pg_calendar_mobile_page (nuevo parámetro obligatorio onAccommodationHeaderTap)
+
+- **Contexto**: cambio de UI en el calendario para sustituir el texto fijo "Alojamiento" por un icono de casa con "+" que abre el diálogo de nuevo alojamiento desde la columna de horas.
+- **Error**: `Error: Required named parameter 'onAccommodationHeaderTap' must be provided. ... lib/pages/pg_calendar_mobile_page.dart:830:27`.
+- **Causa raíz**: se añadió un nuevo parámetro obligatorio `onAccommodationHeaderTap` al constructor de `CalendarGrid` y se actualizó su uso en `wd_calendar_screen.dart`, pero la versión móvil (`pg_calendar_mobile_page.dart`) seguía creando `CalendarGrid` sin pasar ese parámetro.
+- **Solución aplicada**: en `pg_calendar_mobile_page.dart`, al construir `CalendarGrid`, se añadió `onAccommodationHeaderTap`, que calcula una fecha visible (primer día del grupo actual si existe, o `plan.startDate`) y llama a `_showNewAccommodationDialog(date)`, reutilizando el flujo móvil ya existente para crear alojamientos.
+- **Notas para el futuro**: cuando se añadan parámetros `required` a widgets compartidos (como `CalendarGrid`), buscar todas las instancias (web + móvil) con `Grep` o búsqueda global y actualizarlas en bloque. Evitar introducir requisitos nuevos en constructores sin revisar sus usos en variantes de pantalla (web, móvil, tests).
+

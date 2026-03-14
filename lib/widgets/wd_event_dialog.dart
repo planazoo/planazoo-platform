@@ -3880,7 +3880,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'No tienes permisos para editar este evento',
+              loc.noPermissionEditEvent,
               style: GoogleFonts.poppins(color: Colors.white),
             ),
             backgroundColor: Colors.red.shade600,

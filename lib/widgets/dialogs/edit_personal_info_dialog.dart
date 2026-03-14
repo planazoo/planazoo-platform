@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/models/plan_permissions.dart';
@@ -108,13 +109,14 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
     }
 
     if (!_hasPermission) {
+      final loc = AppLocalizations.of(context)!;
       return AlertDialog(
-        title: const Text('Sin permisos'),
-        content: const Text('No tienes permisos para editar la información personal de otros participantes.'),
+        title: Text(loc.noPermissionTitle),
+        content: Text(loc.noPermissionEditPersonalInfoOthers),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cerrar'),
+            child: Text(loc.close),
           ),
         ],
       );

@@ -1416,7 +1416,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   Widget _buildStateManagementSection(AppLocalizations loc) {
     final currentUser = ref.read(currentUserProvider);
     final isOwner = currentUser?.id == currentPlan.userId;
-    final currentState = currentPlan.state ?? 'borrador';
+    final currentState = currentPlan.state ?? 'planificando';
     // Solo mostrar controles si es el organizador y el plan no está finalizado o cancelado
     if (!isOwner || currentState == 'finalizado' || currentState == 'cancelado') {
       return const SizedBox.shrink();
@@ -1426,13 +1426,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     List<Map<String, dynamic>> availableTransitions = [];
 
     switch (currentState) {
-      case 'borrador':
-        availableTransitions.add({
-          'state': 'planificando',
-          'label': 'Iniciar Planificación',
-          'icon': Icons.event_note,
-        });
-        break;
       case 'planificando':
         availableTransitions.add({
           'state': 'confirmado',

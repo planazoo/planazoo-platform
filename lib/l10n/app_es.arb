@@ -1781,5 +1781,11 @@
   "@invitationWrongUserWarning": { "placeholders": { "invitedEmail": { "type": "String" }, "currentEmail": { "type": "String" } } },
   "invitationExpiresOn": "Esta invitación expira el {date}",
   "@invitationExpiresOn": { "placeholders": { "date": { "type": "String" } } },
-  "genericErrorWithMessage": "Error: {message}"
+  "genericErrorWithMessage": "Error: {message}",
+  "noPermissionEditEvent": "No tienes permisos para editar este evento",
+  "@noPermissionEditEvent": { "description": "Mensaje cuando el usuario no puede editar el evento" },
+  "noPermissionEditPersonalInfoOthers": "No tienes permisos para editar la información personal de otros participantes.",
+  "@noPermissionEditPersonalInfoOthers": { "description": "Mensaje cuando no se puede editar info personal de otros" },
+  "noPermissionTitle": "Sin permisos",
+  "@noPermissionTitle": { "description": "Título de aviso sin permisos" }
 }

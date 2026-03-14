@@ -67,8 +67,7 @@ graph TB
 
 | Estado | Descripción | Editable | Eliminable | Visible Para |
 |--------|-------------|----------|------------|--------------|
-| **Borrador** | Plan en creación inicial | ✅ Todo | ✅ Sí | Solo creador |
-| **Planificando** | Organizador añadiendo contenido | ✅ Casi todo | ✅ Sí | Solo participantes |
+| **Planificando** | Estado inicial; organizador añadiendo contenido | ✅ Casi todo | ✅ Sí | Participantes (si invitados) |
 | **Confirmado** | Plan listo, esperando inicio | ⚠️ Ajustes menores | ⚠️ Con confirmación | Todos |
 | **En Curso** | Plan activo, ejecutándose | ⚠️ Urgencias | ❌ No | Todos |
 | **Finalizado** | Plan completado | ❌ No | ❌ No | Todos |
@@ -98,7 +97,7 @@ Modal rápido:
 Crear documento en Firestore:
 - name: Nombre proporcionado
 - organizerId: Usuario actual
-- state: "borrador"
+- state: "planificando"
 - visibility: "private"
 - currency: valor por defecto (por ahora EUR)
 - timezone: null (se establecerá más tarde) o `defaultTimezone` del organizador si existe
@@ -227,7 +226,7 @@ Usuario hace click en plan (W28 o W6)
   ↓
 Validar permisos de acceso:
 - ¿Existe PlanParticipation activa o plan público?
-- Si plan es "Borrador" y usuario no es organizador/coorganizador → sólo lectura
+- Si plan está en "Planificando" y usuario no es organizador/coorganizador → permisos según rol (solo lectura del contenido común si es participante)
   ↓
 Abrir `PlanDataScreen` con layout modular:
 - Cabecera: nombre, imagen, estado actual y enlace a `ParticipantsScreen`
@@ -806,10 +805,10 @@ Eventos aparecen en el calendario del plan
 **Estado:** ✅ Base funcional implementada, mejoras y características avanzadas pendientes
 
 **Lo que ya funciona:**
-- ✅ Crear planes básicos con `state: 'borrador'` por defecto
+- ✅ Crear planes básicos con `state: 'planificando'` por defecto
 - ✅ Configurar nombre, fechas, participantes, descripción, visibilidad
 - ✅ Campos `state`, `visibility`, `timezone`, `description` añadidos al modelo Plan
-- ✅ Valores por defecto: state='borrador', visibility='private', timezone=auto-detectada
+- ✅ Valores por defecto: state='planificando', visibility='private', timezone=auto-detectada
 - ✅ Sanitización de inputs (T127)
 - ✅ Rate limiting de creación (T126)
 - ✅ Validaciones de formulario (nombre 3-100 chars, descripción 0-1000 chars)

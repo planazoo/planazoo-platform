@@ -20,7 +20,7 @@ class StateTransitionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentState = plan.state ?? 'borrador';
+    final currentState = plan.state ?? 'planificando';
     final currentInfo = PlanStateService.getStateDisplayInfo(currentState);
     final newInfo = PlanStateService.getStateDisplayInfo(newState);
 
@@ -87,9 +87,7 @@ class StateTransitionDialog extends StatelessWidget {
             '¿Deseas cambiar el estado del plan de "${currentInfo['label']}" a "${newInfo['label']}"?';
     }
 
-    final implicationText = currentState == 'borrador' && newState != 'cancelado'
-        ? 'Implicación: Al salir de borrador, el plan podrá ser compartido y las restricciones de edición dependerán del nuevo estado.'
-        : null;
+    const String? implicationText = null;
 
     return AlertDialog(
       title: null,

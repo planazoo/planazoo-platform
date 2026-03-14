@@ -544,7 +544,7 @@ Cada caso de prueba debe incluir:
 
 - [x] **PLAN-C-001:** Crear plan básico
   - Pasos: Nombre, fechas, descripción, crear
-  - Esperado: Plan creado en estado "borrador"
+  - Esperado: Plan creado en estado "planificando"
   - Estado: 🔄
 
 - [x] **PLAN-C-002:** Crear plan sin nombre
@@ -1791,9 +1791,9 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ### 8.1 Transiciones de Estado (T109)
 
-- [ ] **STATE-001:** Borrador → Planificando (automático)
-  - Pasos: Guardar plan en estado borrador
-  - Esperado: Transición automática a "planificando"
+- [ ] **STATE-001:** Plan nuevo en Planificando
+  - Pasos: Crear y guardar plan
+  - Esperado: Plan en estado "planificando" desde el inicio
   - Estado: ✅
 
 - [ ] **STATE-002:** Planificando → Confirmado (manual)
@@ -1828,8 +1828,8 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ### 8.2 Permisos por Estado
 
-- [ ] **PERM-STATE-001:** Editar plan en estado borrador
-  - Pasos: Modificar plan borrador
+- [ ] **PERM-STATE-001:** Editar plan en estado planificando
+  - Pasos: Modificar plan en planificando
   - Esperado: Permitido
   - Estado: ✅
 

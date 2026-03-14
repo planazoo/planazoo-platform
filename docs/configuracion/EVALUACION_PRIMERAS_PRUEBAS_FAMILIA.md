@@ -45,8 +45,8 @@ No es necesario para esta fase: pagos, estadísticas avanzadas, offline completo
 
 | # | Ítem | Dónde | Acción |
 |---|------|--------|--------|
-| 1 | **Textos hardcodeados en español** | `pg_plans_list_page.dart`, `pg_invitation_page.dart` | **Hecho.** Sustituidos por AppLocalizations (claves en `app_es.arb` / `app_en.arb`). Incluye: “No tienes planes aún”, “Invitación a Plan”, “Iniciar sesión”, “Rechazar invitación”, SnackBars, etc. Ver `REVISION_IOS_VS_WEB.md` § 2.1. |
-| 2 | **Tras aceptar invitación en móvil: ir al plan** | `pg_invitation_page.dart` | **Hecho.** Tras aceptar, en móvil se navega a PlanDetailPage(plan); en web al dashboard. |
+| 1 | **Textos hardcodeados en español** | `pg_plans_list_page.dart`, pantallas de invitación/notificaciones | **Hecho.** Sustituidos por AppLocalizations (claves en `app_es.arb` / `app_en.arb`). Incluye: “No tienes planes aún”, “Invitación a Plan”, “Iniciar sesión”, “Rechazar invitación”, SnackBars, etc. Ver `REVISION_IOS_VS_WEB.md` § 2.1. |
+| 2 | **Tras aceptar invitación en móvil: ir al plan** | Notificaciones unificadas / flujo del plan | **Hecho.** La invitación se acepta desde la lista de notificaciones (wd_unified_notifications_screen) o flujo integrado; en móvil se navega a PlanDetailPage(plan); en web al dashboard. (`pg_invitation_page` eliminada.) |
 | 3 | **Safe area en PlanDetailPage (iOS)** | `pg_plan_detail_page.dart` | **Hecho.** Body envuelto en SafeArea. Revisar en dispositivo por si hubiera que afinar. |
 | 4 | **Timezones: Egipto + Londres** | TimezoneService, mapas de ciudad | Asegurar que **Africa/Cairo** (Egipto) esté en timezones comunes, en nombres legibles y en offsets; que el calendario y “Mi resumen” muestren bien eventos en hora local del plan y en la hora personal del participante (ej. Londres). Verificar vuelos/desplazamientos con salida/llegada en timezones distintas. Ver `GESTION_TIMEZONES.md`. |
 
@@ -89,7 +89,7 @@ Si algo de lo anterior falla, corregirlo antes de ampliar a más familiares.
 
 1. ~~Timezones: Africa/Cairo (Egipto) en la app~~ Hecho.
 2. **Navegación a PlanDetailPage tras aceptar invitación en móvil** (3.1.2) — cierra el ciclo “recibo link → acepto → estoy dentro del plan”.
-3. **Multi-idioma en `pg_plans_list_page` y `pg_invitation_page`** (3.1.1) — evita que la primera impresión sea “medio en inglés, medio en español”.
+3. **Multi-idioma en `pg_plans_list_page` y pantallas de invitación/notificaciones** (3.1.1) — evita que la primera impresión sea “medio en inglés, medio en español”.
 4. **Safe area en PlanDetailPage** (3.1.3) — una sola pasada en simulador/dispositivo.
 5. Ejecutar el **checklist “Día 1 con familia”** (sección 4), incluyendo la prueba de timezones Egipto + Londres.
 6. Si va bien, invitar a 2–3 personas y repetir el flujo invitación → aceptar → plan → chat con ellos.

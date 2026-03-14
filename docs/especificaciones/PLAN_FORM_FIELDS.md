@@ -15,7 +15,7 @@
 
 Definir todos los campos necesarios para formularios de creación y edición de planes, basándonos en:
 - Campos actuales del código
-- Estados del plan (Borrador, Planificando, Confirmado, En Curso, Finalizado, Cancelado)
+- Estados del plan (Planificando, Confirmado, En Curso, Finalizado, Cancelado)
 - Mejores prácticas de planificación de viajes
 - Necesidades específicas de coordinación grupal
 
@@ -120,18 +120,16 @@ Definir todos los campos necesarios para formularios de creación y edición de 
 - **Permisos**: Solo organizador
 
 ### Estado del Plan
-- **Campo**: `status` (requerido)
+- **Campo**: `state` (requerido)
 - **Tipo**: Enum
 - **Opciones**: 
-  - "borrador" (Borrador)
-  - "planificando" (Planificando)
+  - "planificando" (Planificando) — estado inicial al crear el plan
   - "confirmado" (Confirmado)
   - "en_curso" (En Curso)
   - "finalizado" (Finalizado)
   - "cancelado" (Cancelado)
-- **Default**: "borrador"
+- **Default**: "planificando"
 - **Auto-avance**: 
-  - "Borrador" → "Planificando": Cuando cumple validaciones (eventos, participantes)
   - "Planificando" → "Confirmado": Manual del organizador
   - "Confirmado" → "En Curso": Inicio automático en `startDate`
   - "En Curso" → "Finalizado": Final automático en `endDate`
@@ -236,7 +234,7 @@ Definir todos los campos necesarios para formularios de creación y edición de 
 
 ## 🔄 Estados y Transiciones
 
-### Estado: Borrador
+### Estado: Planificando (inicial)
 - **Editable**: Todo
 - **Visible para**: Solo creador
 - **Eliminable**: Sí

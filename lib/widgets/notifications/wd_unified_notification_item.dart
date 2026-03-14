@@ -122,7 +122,7 @@ class InvitationNotificationTile extends ConsumerWidget {
                     if (ok) {
                       onResponded();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(loc.invitationRejected), backgroundColor: Colors.orange),
+                        SnackBar(content: Text(loc.invitationRejected), backgroundColor: AppColorScheme.color4),
                       );
                     }
                   }
@@ -130,30 +130,30 @@ class InvitationNotificationTile extends ConsumerWidget {
                 icon: const Icon(Icons.close, size: 14),
                 label: Text(loc.reject, style: GoogleFonts.poppins(fontSize: 11)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColorScheme.color3,
-                  side: const BorderSide(color: AppColorScheme.color3, width: 1.5),
+                  foregroundColor: AppColorScheme.color4,
+                  side: const BorderSide(color: AppColorScheme.color4, width: 1.5),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   minimumSize: Size.zero,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(width: 8),
-              ElevatedButton.icon(
+              FilledButton.icon(
                 onPressed: () async {
                   final ok = await ref.read(invitationServiceProvider).acceptInvitationByPlanId(invitation.planId, userId);
                   if (context.mounted) {
                     if (ok) {
                       onResponded();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(loc.invitationAcceptedParticipant), backgroundColor: Colors.green),
+                        SnackBar(content: Text(loc.invitationAcceptedParticipant), backgroundColor: AppColorScheme.color3),
                       );
                     }
                   }
                 },
                 icon: const Icon(Icons.check, size: 14),
                 label: Text(loc.accept, style: GoogleFonts.poppins(fontSize: 11)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColorScheme.color2,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColorScheme.color3,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   minimumSize: Size.zero,

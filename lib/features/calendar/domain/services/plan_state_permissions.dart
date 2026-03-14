@@ -6,21 +6,20 @@ import '../models/plan.dart';
 class PlanStatePermissions {
   /// Verifica si se puede modificar fecha inicio/fin del plan
   static bool canModifyDates(Plan plan) {
-    final state = plan.state ?? 'borrador';
-    // Solo permitido en Borrador y Planificando
-    return state == 'borrador' || state == 'planificando';
+    final state = plan.state ?? 'planificando';
+    return state == 'planificando';
   }
 
   /// Verifica si se puede añadir eventos
   static bool canAddEvents(Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     // No permitido en Finalizado o Cancelado
     return state != 'finalizado' && state != 'cancelado';
   }
 
   /// Verifica si se puede eliminar eventos
   static bool canDeleteEvents(Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     // No permitido en Finalizado o Cancelado
     // En "En Curso" solo eventos futuros (lógica adicional necesaria)
     return state != 'finalizado' && state != 'cancelado';
@@ -28,7 +27,7 @@ class PlanStatePermissions {
 
   /// Verifica si se puede modificar eventos
   static bool canModifyEvents(Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     // No permitido en Finalizado o Cancelado
     // En "Confirmado" y "En Curso" hay restricciones adicionales (lógica adicional necesaria)
     return state != 'finalizado' && state != 'cancelado';
@@ -36,7 +35,7 @@ class PlanStatePermissions {
 
   /// Verifica si se puede añadir participantes
   static bool canAddParticipants(Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     // No permitido en Finalizado, Cancelado, o En Curso (solo excepciones)
     return state != 'finalizado' && 
            state != 'cancelado' && 
@@ -45,7 +44,7 @@ class PlanStatePermissions {
 
   /// Verifica si se puede eliminar participantes
   static bool canRemoveParticipants(Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     // No permitido en Finalizado, Cancelado, o En Curso (solo excepciones)
     return state != 'finalizado' && 
            state != 'cancelado' && 
@@ -54,7 +53,7 @@ class PlanStatePermissions {
 
   /// Verifica si se puede modificar presupuesto
   static bool canModifyBudget(Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     // No permitido en Finalizado, Cancelado, o En Curso
     // En "Confirmado" solo aumentos <50% (lógica adicional necesaria)
     return state != 'finalizado' && 
@@ -76,7 +75,7 @@ class PlanStatePermissions {
 
   /// Verifica si se puede cancelar el plan
   static bool canCancelPlan(Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     // No se puede cancelar desde "En Curso" o estados finales
     return state != 'en_curso' && 
            state != 'finalizado' && 
@@ -85,20 +84,20 @@ class PlanStatePermissions {
 
   /// Verifica si el plan es de solo lectura
   static bool isReadOnly(Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     return state == 'finalizado' || state == 'cancelado';
   }
 
   /// Verifica si se puede editar información básica (nombre, descripción, etc.)
   static bool canEditBasicInfo(Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     // No permitido en Finalizado o Cancelado
     return state != 'finalizado' && state != 'cancelado';
   }
 
   /// Obtiene un mensaje explicativo de por qué una acción está bloqueada
   static String? getBlockedReason(String action, Plan plan) {
-    final state = plan.state ?? 'borrador';
+    final state = plan.state ?? 'planificando';
     
     // Caso especial para 'view' (solo lectura)
     if (action == 'view') {

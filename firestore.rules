@@ -77,7 +77,7 @@ service cloud.firestore {
              request.resource.data.userId is string &&
              request.resource.data.userId == request.auth.uid &&
              // Validar campos opcionales si existen
-             (!('state' in request.resource.data) || request.resource.data.state in ['borrador', 'planificando', 'confirmado', 'en_curso', 'finalizado', 'cancelado']) &&
+             (!('state' in request.resource.data) || request.resource.data.state in ['planificando', 'confirmado', 'en_curso', 'finalizado', 'cancelado']) &&
              (!('visibility' in request.resource.data) || request.resource.data.visibility in ['private', 'public']) &&
              (!('timezone' in request.resource.data) || request.resource.data.timezone is string);
     }

@@ -22,7 +22,7 @@ Solo después de esta comprobación (y de actualizar este prompt si hace falta) 
 **Estructura principal:**
 - `lib/app/` – bootstrap y tema (Estilo Base oscuro, AppColorScheme, Poppins).
 - `lib/features/` – módulos por feature: auth, budget, calendar, **chat** (mensajes, reacciones, plan_messages), flights, language, notifications, offline, payments, places, security, stats, testing (demo_data_generator). Cada uno suele tener domain/, presentation/, providers.
-- `lib/pages/` – pantallas de nivel superior: pg_dashboard_page, pg_plans_list_page, pg_calendar_mobile_page, pg_plan_detail_page, pg_profile_page, etc.
+- `lib/pages/` – pantallas de nivel superior: pg_dashboard_page, pg_plans_list_page, pg_calendar_mobile_page, pg_plan_detail_page, pg_profile_page, pg_plan_participants_page, pg_participant_groups_page, etc. (no hay pg_invitation_page; invitación por notificaciones/directa).
 - `lib/widgets/` – UI reutilizable: screens/, dialogs/, plan/, event/, notifications/, etc. Incluye `wd_event_dialog.dart` (formulario de eventos con formato “título sobre el borde” y helper `_buildLabelOnBorderField`).
 - `lib/shared/` – servicios, utils, permisos, FCM.
 - `lib/l10n/` – localizaciones generadas (app_es.arb, app_en.arb). **Todos los textos visibles deben usar AppLocalizations** (CONTEXT.md §6).
@@ -37,7 +37,7 @@ Solo después de esta comprobación (y de actualizar este prompt si hace falta) 
 - **tareas/** – TASKS.md (pendientes, códigos T###), COMPLETED_TASKS.md, propuestas (T96, T225, T246, T247, T252, etc.).
 - **testing/** – INICIO_PRUEBAS_DIA1.md, REGISTRO_OBSERVACIONES_PRUEBAS.md, PLAN_PRUEBAS_E2E_TRES_USUARIOS.md, TESTING_OFFLINE_FIRST.md, SISTEMA_PRUEBAS_LOGICAS.md.
 - **arquitectura/** – ARCHITECTURE_DECISIONS.md, PLATFORM_STRATEGY.md (naming pg_*, wd_*).
-- **ux/**, **producto/**, **admin/**, **design/** – más especificaciones y guías.
+- **ux/** – ESTADO_USUARIO_EN_EL_PLAN.md, plan_image_management.md, pages/, layout/, estilos/, mejoras/. **producto/**, **admin/**, **design/** – más especificaciones y guías.
 
 **Tests:** Unit/widget en `test/` (calendar, auth, permissions); datos en `tests/*.json`. No hay `integration_test/`. `analysis_options.yaml` usa flutter_lints.
 
@@ -83,7 +83,18 @@ Trabaja de forma sistemática en el repo **unp_calendario** (Planazoo) para mejo
 
 ---
 
-## Última ejecución (7 mar 2026)
+## Última ejecución (12 mar 2026)
+
+- **Paso 0:** Verificado: estructura lib/ (app, features, pages, widgets) y docs/ (configuracion, guias, flujos, etc.) coincide con el repo. CONTEXT.md, EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md, REVISION_IOS_VS_WEB.md, DOCS_AUDIT.md presentes en configuracion/.
+- **Fase 1 (doc ↔ código):** Actualizado `docs/flujos/FLUJO_ESTADOS_PLAN.md`: eliminada la línea de "Migración legacy" (planes con state 'borrador'); los planes viven solo en Planificando → Confirmado → En curso → Finalizado/Cancelado. Fecha del documento: Marzo 2026. PROMPT_BASE.md ya usa `docs/configuracion/CONTEXT.md`. TASKS.md ya usa rutas correctas a CONTEXT y COMPLETED_TASKS.
+- **Fase 2–3:** No se eliminaron archivos ni se tocaron TODOs/FIXMEs (evitar cambios de lógica; limpieza de archivos requeriría revisión manual de referencias).
+- **Fase 4 (tests y calidad):** `flutter analyze`: 703 issues (warnings + info, sin errores de compilación). `flutter test`: 30 pasan, ~1 skip, 15 fallan; el fallo principal es `test/widget_test.dart` (App necesita ProviderScope; ya documentado en ejecución anterior). No se añadió entrada en LOG_ERRORES_AUTOFIX (no se corrigieron errores en esta sesión).
+- **Fase 5:** pubspec.yaml y README revisados; sin discrepancias detectadas.
+- **Pendiente / sugerido:** Arreglar `test/widget_test.dart` envolviendo `App()` en `ProviderScope` (o usar widget test que no dependa de Riverpod/Firebase); reducir warnings del analyzer por prioridad (unused_import, unnecessary_null_assertion, etc.); ejecutar checklist §4 de EVALUACION_PRIMERAS_PRUEBAS_FAMILIA antes de invitar a familia.
+
+---
+
+## Ejecución anterior (7 mar 2026)
 
 - **Paso 0:** Contexto actualizado: añadidos en configuracion/ `EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md` (checklist y estado para pruebas con familia) y `REVISION_IOS_VS_WEB.md` (iOS vs web, TestFlight); feature **chat** (mensajes, reacciones) en lib/features/; guias/ y tareas/ con referencias actuales.
 - **Fase 1 (doc ↔ código):** EVALUACION_PRIMERAS_PRUEBAS_FAMILIA refleja estado actual: ítems 3.1.1–3.1.4 marcados Hecho (l10n planes list e invitación, navegación al plan en móvil, Safe area, timezones Africa/Cairo). README enlaza a EVALUACION y REVISION_IOS_VS_WEB en Configuración.

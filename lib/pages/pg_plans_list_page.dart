@@ -899,7 +899,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
         endDate: endDate,
         columnCount: columnCount,
         description: null,
-        state: 'borrador',
+        state: 'planificando',
         visibility: 'private',
         timezone: TimezoneService.getSystemTimezone(),
         currency: 'EUR',

@@ -32,9 +32,8 @@ class PlanStateService {
         _eventService = eventService ?? EventService(),
         _participationService = participationService ?? PlanParticipationService();
 
-  /// Estados válidos según FLUJO_ESTADOS_PLAN.md
+  /// Estados válidos según FLUJO_ESTADOS_PLAN.md (borrador unificado con planificando)
   static const List<String> validStates = [
-    'borrador',
     'planificando',
     'confirmado',
     'en_curso',
@@ -46,20 +45,16 @@ class PlanStateService {
   /// 
   /// Retorna `true` si la transición es válida según el flujo definido.
   bool isValidTransition(String currentState, String newState) {
-    if (!validStates.contains(currentState) || !validStates.contains(newState)) {
+    final current = currentState.isEmpty ? 'planificando' : currentState;
+    if (!validStates.contains(current) || !validStates.contains(newState)) {
       return false;
     }
 
     // Mismo estado (permitido)
-    if (currentState == newState) return true;
+    if (current == newState) return true;
 
     // Transiciones válidas según FLUJO_ESTADOS_PLAN.md
-    switch (currentState) {
-      case 'borrador':
-        // Borrador → Planificando (automático al guardar)
-        // Borrador → Cancelado
-        return newState == 'planificando' || newState == 'cancelado';
-
+    switch (current) {
       case 'planificando':
         // Planificando → Confirmado (manual)
         // Planificando → Cancelado
@@ -122,7 +117,7 @@ class PlanStateService {
         return false;
       }
 
-      final currentState = plan.state ?? 'borrador';
+      final currentState = plan.state ?? 'planificando';
 
       // Validar transición
       if (!skipValidation && !isValidTransition(currentState, newState)) {
@@ -222,34 +217,6 @@ class PlanStateService {
     }
   }
 
-  /// Transición automática: Borrador → Planificando
-  /// 
-  /// Se ejecuta automáticamente cuando se guarda un plan por primera vez.
-  Future<bool> transitionToPlanningIfDraft({
-    required String planId,
-  }) async {
-    try {
-      final plan = await _planService.getPlanById(planId);
-      if (plan == null) return false;
-
-      // Solo transicionar si está en borrador
-      if (plan.state == 'borrador') {
-        return await changePlanState(
-          planId: planId,
-          newState: 'planificando',
-          userId: plan.userId,
-          skipValidation: true, // Transición automática, saltar validación de permisos
-        );
-      }
-
-      return true; // Ya está en otro estado, no hacer nada
-    } catch (e) {
-      LoggerService.error('Error in auto-transition to planning: $planId',
-          context: 'PLAN_STATE_SERVICE', error: e);
-      return false;
-    }
-  }
-
   /// Verifica y ejecuta transiciones automáticas basadas en fechas
   /// 
   /// - Confirmado → En Curso: si fecha inicio ya pasó
@@ -264,7 +231,7 @@ class PlanStateService {
       if (plan == null) return false;
 
       final now = DateTime.now();
-      final currentState = plan.state ?? 'borrador';
+      final currentState = plan.state ?? 'planificando';
 
       // Confirmado → En Curso (automático)
       if (currentState == 'confirmado' && 
@@ -301,19 +268,10 @@ class PlanStateService {
   }
 
   /// Obtiene el estado de visualización para el badge
-  /// 
-  /// Retorna un mapa con: label, color, icon
   static Map<String, dynamic> getStateDisplayInfo(String? state) {
-    final normalizedState = state ?? 'borrador';
+    final normalized = state ?? 'planificando';
 
-    switch (normalizedState) {
-      case 'borrador':
-        return {
-          'label': 'BORRADOR',
-          'color': 0xFF9E9E9E, // Grey
-          'icon': Icons.edit_outlined,
-        };
-
+    switch (normalized) {
       case 'planificando':
         return {
           'label': 'PLANIFICANDO',

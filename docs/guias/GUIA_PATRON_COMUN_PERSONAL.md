@@ -152,8 +152,8 @@ class AccommodationPersonalPart {
 
 | Estado | Parte Común Editable | Parte Personal Editable |
 |--------|----------------------|------------------------|
-| Borrador | ✅ Sí | ✅ Sí |
-| Planificando/Reservado | ⚠️ Limitado | ✅ Sí |
+| Planificando | ✅ Sí | ✅ Sí |
+| Confirmado/Reservado | ⚠️ Limitado | ✅ Sí |
 | En Curso/Check-in | ❌ No (solo urgente) | ⚠️ Solo actualizaciones |
 | Completado/Check-out | ❌ No | ❌ No |
 | Cancelado | ❌ No | ❌ No |
@@ -165,7 +165,7 @@ class AccommodationPersonalPart {
 ### Parte Común
 
 - **Auto-sincronización:** Cambios en parte común afectan a todos los participantes
-- **Estados:** Gestión de estados (Borrador, Confirmado, etc.) en parte común
+- **Estados:** Gestión de estados (Planificando, Confirmado, etc.) en parte común
 - **Notificaciones:** Cambios en parte común notifican a todos los participantes
 - **Permisos:** Solo organizador/coorganizadores pueden editar
 

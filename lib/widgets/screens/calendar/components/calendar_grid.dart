@@ -30,6 +30,9 @@ class CalendarGrid extends StatelessWidget {
   /// Builder para construir la capa de eventos
   final List<Widget> Function(double availableWidth) buildEventsLayer;
 
+  /// Callback para crear un nuevo alojamiento desde el header fijo de alojamientos.
+  final VoidCallback onAccommodationHeaderTap;
+
   const CalendarGrid({
     super.key,
     required this.hoursScrollController,
@@ -37,6 +40,7 @@ class CalendarGrid extends StatelessWidget {
     required this.buildFixedRows,
     required this.buildDataRows,
     required this.buildEventsLayer,
+    required this.onAccommodationHeaderTap,
   });
 
   @override
@@ -74,17 +78,51 @@ class CalendarGrid extends StatelessWidget {
             ),
           ),
           
-          // Fila de alojamientos FIJA
-          Container(
-            height: CalendarConstants.accommodationRowHeight,
-            decoration: CalendarStyles.getFixedAccommodationRowDecoration(),
-            child: Center(
-              child: Text(
-                'Alojamiento',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 10,
-                  color: Colors.white,
+          // Fila de alojamientos FIJA con icono interactivo para crear alojamiento
+          InkWell(
+            onTap: onAccommodationHeaderTap,
+            child: Container(
+              height: CalendarConstants.accommodationRowHeight,
+              decoration: CalendarStyles.getFixedAccommodationRowDecoration(),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Align(
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.home_rounded,
+                          size: 20,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: AppColorScheme.color3,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColorScheme.color2,
+                              width: 1,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.add,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

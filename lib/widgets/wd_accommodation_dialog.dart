@@ -314,27 +314,39 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final title = widget.accommodation == null ? loc.newAccommodation : loc.editAccommodation;
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final screenSize = MediaQuery.sizeOf(context);
+    final contentWidth = isMobile ? screenSize.width : null;
+    final contentHeight = isMobile ? screenSize.height - 64 : null;
     return Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
         backgroundColor: Colors.grey.shade800,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
         ),
+        insetPadding: isMobile
+            ? EdgeInsets.zero
+            : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
         title: null,
         contentPadding: EdgeInsets.zero,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // T240 / T226: Barra verde superior con título (UI estándar modales)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: const BoxDecoration(
-                color: Color(0xFF79A2A8),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-              ),
+        content: SizedBox(
+          width: contentWidth,
+          height: contentHeight,
+          child: Column(
+            mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // T240 / T226: Barra verde superior con título (UI estándar modales)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF79A2A8),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(isMobile ? 0 : 18),
+                  ),
+                ),
               child: Text(
                 title,
                 style: GoogleFonts.poppins(
@@ -673,6 +685,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
           ),
         ],
       ),
+        ),
       actions: [
         if (widget.accommodation != null)
           TextButton(

@@ -414,6 +414,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       buildFixedRows: _buildFixedRows,
       buildDataRows: _buildDataRows,
       buildEventsLayer: _buildEventsLayer,
+      onAccommodationHeaderTap: _handleAccommodationHeaderTap,
     );
   }
 
@@ -435,6 +436,25 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       border: Border.all(color: Colors.grey.shade700.withOpacity(0.3)),
       color: color,
     );
+  }
+
+  /// Maneja el tap en el header fijo de alojamientos (columna de horas).
+  /// Usa una fecha dentro del rango del plan (hoy si está en rango; si no, el inicio o fin del plan).
+  void _handleAccommodationHeaderTap() {
+    final now = DateTime.now();
+    final planStart = widget.plan.startDate;
+    final planEnd = widget.plan.startDate.add(Duration(days: widget.plan.durationInDays));
+
+    DateTime targetDate;
+    if (now.isBefore(planStart)) {
+      targetDate = planStart;
+    } else if (now.isAfter(planEnd)) {
+      targetDate = planEnd;
+    } else {
+      targetDate = now;
+    }
+
+    _showNewAccommodationDialog(targetDate);
   }
 
   // NOTA: _getAccommodationDayText() ha sido movido a CalendarTracks
