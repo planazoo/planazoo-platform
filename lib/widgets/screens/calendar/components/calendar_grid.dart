@@ -50,8 +50,11 @@ class CalendarGrid extends StatelessWidget {
         // Capa 1: Calendario base (fijo)
         Row(
           children: [
-            // Columna FIJO (horas) - fija
-            _buildFixedHoursColumn(context),
+            // Columna fija de horas
+            SizedBox(
+              width: CalendarConstants.hoursColumnWidth,
+              child: _buildFixedHoursColumn(context),
+            ),
             
             // Columnas de datos - 7 días fijos
             Expanded(
@@ -65,9 +68,7 @@ class CalendarGrid extends StatelessWidget {
 
   /// Construye la columna fija de horas
   Widget _buildFixedHoursColumn(BuildContext context) {
-    return Container(
-      width: 80.0, // Ancho fijo para mostrar "00:00"
-      child: Column(
+    return Column(
         children: [
           // Encabezado (primera celda)
           Container(
@@ -163,8 +164,7 @@ class CalendarGrid extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   /// Construye las columnas de datos (7 días)

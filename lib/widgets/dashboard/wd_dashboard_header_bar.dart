@@ -8,7 +8,6 @@ import 'package:unp_calendario/features/calendar/presentation/providers/plan_par
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
-import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_ui_showcase_page.dart';
@@ -303,56 +302,41 @@ class WdDashboardHeaderBar extends ConsumerWidget {
               const SizedBox(height: 1),
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      '${DateFormatter.formatDate(plan.startDate)} - ${DateFormatter.formatDate(plan.endDate)}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.9),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    '${_formatDateDDMMAA(plan.startDate)} - ${_formatDateDDMMAA(plan.endDate)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  if (statusLine != null && statusLine.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        statusLine,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: (hasPendingInvitation || hasPendingParticipation)
+                              ? Colors.orange.shade200
+                              : Colors.white.withOpacity(0.75),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ],
               ),
-              if (statusLine != null && statusLine.isNotEmpty) ...[
-                const SizedBox(height: 1),
-                Text(
-                  statusLine,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: (hasPendingInvitation || hasPendingParticipation)
-                        ? Colors.orange.shade200
-                        : Colors.white.withOpacity(0.75),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
               if (showOpenNotifications) ...[
                 const SizedBox(height: 2),
                 GestureDetector(
                   onTap: onOpenNotifications,
                   child: Text(
                     loc.dashboardMessageCenterOpenNotifications,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: AppColorScheme.color2,
-                      fontWeight: FontWeight.w600,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ],
-              if (onShowMySummary != null && !hasPendingInvitation && !hasPendingParticipation) ...[
-                const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: onShowMySummary,
-                  child: Text(
-                    loc.viewMySummaryLabel,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       color: AppColorScheme.color2,
@@ -427,5 +411,13 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     final displayName = user.displayName?.trim();
     if (displayName != null && displayName.isNotEmpty) return displayName;
     return '';
+  }
+
+  /// Formato DD/MM/AA para W6.
+  static String _formatDateDDMMAA(DateTime date) {
+    final d = date.day.toString().padLeft(2, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final a = (date.year % 100).toString().padLeft(2, '0');
+    return '$d/$m/$a';
   }
 }

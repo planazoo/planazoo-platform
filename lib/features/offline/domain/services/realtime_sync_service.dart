@@ -144,8 +144,13 @@ class RealtimeSyncService {
   }
 
   /// Maneja cambios en eventos
+  /// Solo sincroniza documentos que son eventos; ignora alojamientos (misma colección en Firestore).
   Future<void> _handleEventChange(DocumentChange change) async {
     try {
+      final data = change.doc.data() as Map<String, dynamic>?;
+      if (data != null && data['typeFamily'] == 'alojamiento') {
+        return; // No guardar alojamientos en la caja local de eventos
+      }
       final event = Event.fromFirestore(change.doc);
       
       switch (change.type) {

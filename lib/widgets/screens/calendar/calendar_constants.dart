@@ -6,8 +6,8 @@ class CalendarConstants {
   static const double headerHeight = 40.0;
   static const double miniHeaderHeight = 20.0;
   
-  // Anchos
-  static const double hoursColumnWidth = 80.0;
+  // Anchos (columna de horas reducida en iOS/móvil para más espacio a los días)
+  static const double hoursColumnWidth = 56.0;
   static const double lateralMargin = 16.0;
   
   // Opacidades
@@ -15,10 +15,10 @@ class CalendarConstants {
   static const double accommodationBackgroundOpacity = 0.3;
   static const double accommodationBorderOpacity = 0.5;
   
-  // Tamaños de fuente
-  static const double headerFontSize = 14.0;
-  static const double participantFontSize = 10.0;
-  static const double miniParticipantFontSize = 8.0;
+  // Tamaños de fuente (encabezados más grandes para mejor lectura en móvil)
+  static const double headerFontSize = 17.0;
+  static const double participantFontSize = 12.0;
+  static const double miniParticipantFontSize = 10.0;
   static const double eventFontSize = 10.0;
   static const double accommodationFontSize = 8.0;
   

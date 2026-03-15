@@ -618,11 +618,17 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     ];
   }
 
-  void _showEventDialog(Event event) {
+  void _showEventDialog(Event event) async {
+    Event eventToShow = event;
+    if (event.id != null) {
+      final fresh = await ref.read(eventServiceProvider).getEventByIdFromServer(event.id!);
+      if (fresh != null) eventToShow = fresh;
+    }
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) => EventDialog(
-        event: event,
+        event: eventToShow,
         planId: widget.plan.id ?? '',
         onSaved: (updatedEvent) async {
           // Guardar el evento actualizado

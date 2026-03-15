@@ -784,6 +784,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get planDetailsBudgetLabel => 'Presupuesto estimado';
 
   @override
+  String get planBudgetLabelShort => 'Presupuesto';
+
+  @override
   String get planDetailsBudgetInvalid =>
       'Introduce un número positivo válido (usa punto decimal)';
 
@@ -795,6 +798,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get planDetailsUnsavedChanges => 'Tienes cambios sin guardar.';
+
+  @override
+  String get planDetailsBarUnsavedShort => 'Sin guardar';
+
+  @override
+  String get planDetailsBarCancelShort => 'Cancelar';
+
+  @override
+  String get planDetailsBarSaveShort => 'Guardar';
 
   @override
   String get planDetailsNoAvailableParticipants =>
@@ -1455,6 +1467,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get eventAddressSingleHint => 'Lugar o dirección del evento';
 
   @override
+  String get eventUrlLabel => 'Enlace web';
+
+  @override
+  String get eventUrlHint => 'https://...';
+
+  @override
   String get eventLocationHint => 'Buscar lugar (dirección, sitio…)';
 
   @override
@@ -1890,16 +1908,48 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPlanSummaryFlights => 'Mis vuelos';
 
   @override
+  String get myPlanSummaryFlightsHint => 'Eventos de tipo Avión';
+
+  @override
   String get myPlanSummaryAccommodation => 'Mi alojamiento';
 
   @override
   String get myPlanSummaryImportant => 'Lo más importante';
 
   @override
+  String get myPlanSummaryResumenSection => 'Resumen';
+
+  @override
+  String get myPlanSummaryViewMine => 'Mi resumen';
+
+  @override
+  String get myPlanSummaryViewPlan => 'Resumen todos';
+
+  @override
+  String get myPlanSummaryLabelAll => 'Todos';
+
+  @override
   String get myPlanSummaryChronological => 'Itinerario completo';
 
   @override
   String get myPlanSummaryMyInfo => 'Mi información';
+
+  @override
+  String get myPlanSummaryEmpty =>
+      'Aún no tienes eventos ni alojamientos en este plan.';
+
+  @override
+  String get myPlanSummaryGoToCalendar => 'Ir al calendario';
+
+  @override
+  String get myPlanSummaryNoMyInfo =>
+      'No tienes datos personales en eventos de hoy o mañana.';
+
+  @override
+  String get myPlanSummarySeeMore => 'Ver más';
+
+  @override
+  String get myPlanSummarySeeLess => 'Ver menos';
 
   @override
   String get proposalsTab => 'Propuestas';

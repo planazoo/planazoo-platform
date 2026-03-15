@@ -48,6 +48,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _hotelNameController;
   late TextEditingController _addressController; // T225: dirección desde Places
+  late TextEditingController _urlController; // Enlace web del alojamiento
   PlaceDetails? _lastPlaceDetails; // T225: último lugar seleccionado (lat/lng en extraData)
   late TextEditingController _descriptionController;
   late TextEditingController _costController; // T101/T153
@@ -96,6 +97,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     );
     _addressController = TextEditingController(
       text: widget.accommodation?.commonPart?.address ?? '',
+    );
+    _urlController = TextEditingController(
+      text: widget.accommodation?.commonPart?.url ?? '',
     );
     _descriptionController = TextEditingController(
       text: widget.accommodation?.description ?? '',
@@ -189,6 +193,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   void dispose() {
     _hotelNameController.dispose();
     _addressController.dispose();
+    _urlController.dispose();
     _descriptionController.dispose();
     _costController.dispose(); // T101
     super.dispose();
@@ -481,6 +486,53 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                         ),
                       ),
                       _buildLocationDetailsCard(),
+                      const SizedBox(height: 16),
+                      // Enlace web
+                      Container(
+                        decoration: _buildLoginStyleDecoration(),
+                        child: TextFormField(
+                          controller: _urlController,
+                          keyboardType: TextInputType.url,
+                          maxLength: 500,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context)!.eventUrlLabel,
+                            hintText: AppLocalizations.of(context)!.eventUrlHint,
+                            labelStyle: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.grey.shade400,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            hintStyle: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                            prefixIcon: Icon(Icons.link, color: Colors.grey.shade400),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: AppColorScheme.color2,
+                                width: 2.5,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.transparent,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       // Tipo de alojamiento
                       Container(
@@ -1260,6 +1312,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       baseExtra['placeName'] = _lastPlaceDetails!.displayName;
     }
 
+    final url = _urlController.text.trim().isEmpty ? null : _urlController.text.trim();
     final commonPart = AccommodationCommonPart(
       hotelName: hotelName,
       checkIn: _selectedCheckIn,
@@ -1268,6 +1321,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       typeSubtype: normalizedType,
       customColor: _selectedColor,
       address: address,
+      url: url,
       participantIds: _selectedParticipantTrackIds,
       isForAllParticipants: _isForAllParticipants,
       extraData: baseExtra.isEmpty ? null : baseExtra,

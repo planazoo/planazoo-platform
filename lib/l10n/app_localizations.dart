@@ -1490,6 +1490,12 @@ abstract class AppLocalizations {
   /// **'Presupuesto estimado'**
   String get planDetailsBudgetLabel;
 
+  /// Etiqueta corta del campo presupuesto cuando está vacío
+  ///
+  /// In es, this message translates to:
+  /// **'Presupuesto'**
+  String get planBudgetLabelShort;
+
   /// No description provided for @planDetailsBudgetInvalid.
   ///
   /// In es, this message translates to:
@@ -1513,6 +1519,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Tienes cambios sin guardar.'**
   String get planDetailsUnsavedChanges;
+
+  /// No description provided for @planDetailsBarUnsavedShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin guardar'**
+  String get planDetailsBarUnsavedShort;
+
+  /// No description provided for @planDetailsBarCancelShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get planDetailsBarCancelShort;
+
+  /// No description provided for @planDetailsBarSaveShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get planDetailsBarSaveShort;
 
   /// No description provided for @planDetailsNoAvailableParticipants.
   ///
@@ -2666,6 +2690,18 @@ abstract class AppLocalizations {
   /// **'Lugar o dirección del evento'**
   String get eventAddressSingleHint;
 
+  /// Campo opcional URL del evento
+  ///
+  /// In es, this message translates to:
+  /// **'Enlace web'**
+  String get eventUrlLabel;
+
+  /// Placeholder URL en formulario evento
+  ///
+  /// In es, this message translates to:
+  /// **'https://...'**
+  String get eventUrlHint;
+
   /// Hint de búsqueda de lugar para evento
   ///
   /// In es, this message translates to:
@@ -3500,6 +3536,12 @@ abstract class AppLocalizations {
   /// **'Mis vuelos'**
   String get myPlanSummaryFlights;
 
+  /// Criterio sección vuelos en Mi resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Eventos de tipo Avión'**
+  String get myPlanSummaryFlightsHint;
+
   /// T252: Acceso rápido alojamiento
   ///
   /// In es, this message translates to:
@@ -3512,6 +3554,30 @@ abstract class AppLocalizations {
   /// **'Lo más importante'**
   String get myPlanSummaryImportant;
 
+  /// Título sección expandible Lo más importante + Hoy/Mañana
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen'**
+  String get myPlanSummaryResumenSection;
+
+  /// Selector vista: solo mis eventos
+  ///
+  /// In es, this message translates to:
+  /// **'Mi resumen'**
+  String get myPlanSummaryViewMine;
+
+  /// Selector vista: todos los participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen todos'**
+  String get myPlanSummaryViewPlan;
+
+  /// Etiqueta cuando evento es para todo el plan
+  ///
+  /// In es, this message translates to:
+  /// **'Todos'**
+  String get myPlanSummaryLabelAll;
+
   /// T252: Lista cronológica
   ///
   /// In es, this message translates to:
@@ -3523,6 +3589,36 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Mi información'**
   String get myPlanSummaryMyInfo;
+
+  /// Estado vacío Mi resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes eventos ni alojamientos en este plan.'**
+  String get myPlanSummaryEmpty;
+
+  /// CTA para ir al calendario desde resumen vacío
+  ///
+  /// In es, this message translates to:
+  /// **'Ir al calendario'**
+  String get myPlanSummaryGoToCalendar;
+
+  /// Lo más importante: cuando no hay mi información
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes datos personales en eventos de hoy o mañana.'**
+  String get myPlanSummaryNoMyInfo;
+
+  /// Expandir lista cronológica
+  ///
+  /// In es, this message translates to:
+  /// **'Ver más'**
+  String get myPlanSummarySeeMore;
+
+  /// Colapsar lista cronológica
+  ///
+  /// In es, this message translates to:
+  /// **'Ver menos'**
+  String get myPlanSummarySeeLess;
 
   /// T252: Pestaña propuestas pendientes
   ///

@@ -83,8 +83,13 @@ class AccommodationService {
           .doc(accommodation.id)
           .update(updatedAccommodation.toFirestore());
       return true;
-    } catch (e) {
-      // Error updating accommodation: $e
+    } catch (e, st) {
+      LoggerService.error(
+        'No se pudo actualizar el alojamiento: ${accommodation.id}',
+        context: 'ACCOMMODATION_SERVICE',
+        error: e,
+        stackTrace: st,
+      );
       return false;
     }
   }
@@ -124,6 +129,7 @@ class AccommodationService {
       if (success) {
         LoggerService.database('Alojamiento actualizado exitosamente: ${accommodation.id}', operation: 'UPDATE');
       } else {
+        // El detalle del error ya se registró en updateAccommodation
         LoggerService.error('No se pudo actualizar el alojamiento: ${accommodation.id}', context: 'ACCOMMODATION_SERVICE');
       }
       return success;

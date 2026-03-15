@@ -60,6 +60,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _descriptionController;
   late TextEditingController _locationController; // T225: lugar del evento (Places)
+  late TextEditingController _urlController; // Enlace web del evento
   PlaceDetails? _lastPlaceDetails; // T225: último lugar seleccionado (para lat/lng en extraData)
   late TextEditingController _typeFamilyController;
   late TextEditingController _typeSubtypeController;
@@ -210,6 +211,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
     _locationController = TextEditingController(
       text: widget.event?.commonPart?.location ?? '',
+    );
+    _urlController = TextEditingController(
+      text: widget.event?.commonPart?.url ?? '',
     );
     _typeFamilyController = TextEditingController(
       text: widget.event?.commonPart?.family ?? '',
@@ -561,6 +565,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   void dispose() {
     _descriptionController.dispose();
     _locationController.dispose();
+    _urlController.dispose();
     _typeFamilyController.dispose();
     _typeSubtypeController.dispose();
     _asientoController.dispose();
@@ -720,6 +725,25 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           onPressed: canOpenMaps ? _openLocationInGoogleMaps : null,
         ),
       ],
+    );
+  }
+
+  /// Campo opcional: enlace web del evento (p. ej. reserva, web del lugar).
+  Widget _buildUrlField() {
+    final loc = AppLocalizations.of(context)!;
+    return _buildLabelOnBorderField(
+      label: loc.eventUrlLabel,
+      child: TextFormField(
+        controller: _urlController,
+        readOnly: !_canEditGeneral,
+        decoration: InputDecoration(
+          hintText: loc.eventUrlHint,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+        ),
+        keyboardType: TextInputType.url,
+        maxLength: 500,
+      ),
     );
   }
 
@@ -2111,6 +2135,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 _typeSubtypeController.text.isNotEmpty &&
                 _typeSubtypeController.text != 'Avión')
               SizedBox(height: spacing),
+            _wrapReadOnlyIfNeeded(child: _buildUrlField()),
+            SizedBox(height: spacing),
             // 2. Cuándo: Fecha, Hora, Duración — cada campo con el mismo formato (título sobre el borde)
             Row(
               children: [
@@ -4038,6 +4064,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       family: _typeFamilyController.text.isEmpty ? null : _typeFamilyController.text,
       subtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
       location: locationSanitized,
+      url: _urlController.text.trim().isEmpty ? null : Sanitizer.sanitizePlainText(_urlController.text.trim(), maxLength: 500),
       isDraft: effectiveIsDraft,
       extraData: baseExtra.isEmpty ? null : baseExtra,
       connection: connection,

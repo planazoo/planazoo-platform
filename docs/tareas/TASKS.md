@@ -3,7 +3,7 @@
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
 
-**Siguiente código de tarea: T259**
+**Siguiente código de tarea: T260**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
@@ -14,7 +14,7 @@
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
 **Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
@@ -211,6 +211,7 @@
 | **T256** | **Implementar Fastlane** para publicar apps iOS y Android. Tras evaluación T255: `fastlane init` en `ios/` y `android/`, Appfile y credenciales, lanes beta (TestFlight + Play interna) y opcionalmente release; Gemfile en ambas carpetas; opcional CI (GitHub Actions). Ver `docs/tareas/T256_IMPLEMENTAR_FASTLANE.md`. | Media |
 | **T257** | **Revisión web vs iOS (prioridad iOS):** Identificar y cerrar diferencias entre versión web (más desarrollada) e iOS. La plataforma prioritaria es iOS. Checklist y hallazgos en `docs/configuracion/REVISION_IOS_VS_WEB.md`; tarea en `docs/tareas/T257_REVISION_WEB_VS_IOS.md`. | Alta |
 | **T258** | **Icono de la app Planazoo:** Configuración y mantenimiento del icono propio en iOS y Android (sin borde blanco, full bleed si aplica). Detalle en `docs/tareas/T258_ICONO_APP.md`. | Baja |
+| **T259** | **Deep link invitación en iOS:** Implementar Universal Links o custom URL scheme para que el link de invitación (p. ej. desde email) abra la app iOS directamente en la pantalla de invitación, en paridad con la experiencia web. Incluye: configuración Associated Domains (Universal Links) o URL scheme en Xcode, archivo apple-app-site-association en el servidor si aplica, y manejo de la URL en la app (WidgetsBinding / getInitialUri). Referencia: `docs/configuracion/REVISION_IOS_VS_WEB.md` §2.3 y §3 ítem 7. Detalle en `docs/tareas/T259_DEEP_LINK_INVITACION_IOS.md`. | Media |
 
 ---
 

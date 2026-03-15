@@ -8,6 +8,12 @@ import 'package:unp_calendario/widgets/plan/wd_plan_navigation_bar.dart';
 import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
+import 'package:unp_calendario/features/calendar/domain/models/event.dart';
+import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/widgets/wd_event_dialog.dart';
+import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
+import 'package:unp_calendario/widgets/dialogs/summary_preview_modals.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/pages/pg_calendar_mobile_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
@@ -161,7 +167,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         );
 
       case 'mySummary':
-        return MyPlanSummaryScreen(plan: widget.plan);
+        return MyPlanSummaryScreen(
+          plan: widget.plan,
+          onOpenEvent: _openEventFromSummary,
+          onOpenAccommodation: _openAccommodationFromSummary,
+          onGoToCalendar: () => setState(() => _selectedOption = 'calendar'),
+        );
       
       case 'calendar':
         return _buildCalendarTabContent();
@@ -193,6 +204,57 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
         );
     }
+  }
+
+  void _openEventFromSummary(Event event) {
+    if (widget.plan.id == null) return;
+    showEventSummaryPreviewModal(
+      context: context,
+      event: event,
+      onOpenFull: () => _showEventDialog(event),
+    );
+  }
+
+  void _showEventDialog(Event event) async {
+    Event eventToShow = event;
+    if (event.id != null) {
+      final fresh = await ref.read(eventServiceProvider).getEventByIdFromServer(event.id!);
+      if (fresh != null) eventToShow = fresh;
+    }
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (context) => EventDialog(
+        event: eventToShow,
+        planId: widget.plan.id!,
+        onSaved: (_) => setState(() {}),
+        onDeleted: (_) => setState(() {}),
+      ),
+    );
+  }
+
+  void _openAccommodationFromSummary(Accommodation accommodation) {
+    if (widget.plan.id == null) return;
+    showAccommodationSummaryPreviewModal(
+      context: context,
+      accommodation: accommodation,
+      onOpenFull: () => _showAccommodationDialog(accommodation),
+    );
+  }
+
+  void _showAccommodationDialog(Accommodation accommodation) {
+    final planEnd = widget.plan.startDate.add(Duration(days: widget.plan.durationInDays));
+    showDialog<void>(
+      context: context,
+      builder: (context) => AccommodationDialog(
+        accommodation: accommodation,
+        planId: widget.plan.id!,
+        planStartDate: widget.plan.startDate,
+        planEndDate: planEnd,
+        onSaved: (_) => setState(() {}),
+        onDeleted: (_) => setState(() {}),
+      ),
+    );
   }
 
   /// Pestaña Calendario con barra unificada (rango días + 1/2/3).

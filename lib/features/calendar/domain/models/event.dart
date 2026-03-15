@@ -583,6 +583,8 @@ class EventCommonPart {
   final int durationMinutes;
   final String? location;
   final String? notes;
+  /// Enlace web del evento (p. ej. reserva, web del lugar).
+  final String? url;
   final String? family;
   final String? subtype;
   final String? customColor;
@@ -601,6 +603,7 @@ class EventCommonPart {
     required this.durationMinutes,
     this.location,
     this.notes,
+    this.url,
     this.family,
     this.subtype,
     this.customColor,
@@ -626,6 +629,7 @@ class EventCommonPart {
       durationMinutes: map['durationMinutes'] ?? 60,
       location: map['location'],
       notes: map['notes'],
+      url: map['url']?.toString(),
       family: map['family'],
       subtype: map['subtype'],
       customColor: map['customColor'],
@@ -646,6 +650,7 @@ class EventCommonPart {
       'durationMinutes': durationMinutes,
       if (location != null) 'location': location,
       if (notes != null) 'notes': notes,
+      if (url != null) 'url': url,
       if (family != null) 'family': family,
       if (subtype != null) 'subtype': subtype,
       if (customColor != null) 'customColor': customColor,

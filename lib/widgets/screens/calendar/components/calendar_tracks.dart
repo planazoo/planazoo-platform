@@ -85,11 +85,11 @@ class CalendarTracks extends ConsumerWidget {
               return Expanded(
                 child: Column(
                   children: [
-                    // Encabezado de la columna
+                    // Encabezado de la columna (sin bordes, estilo limpio)
                     Container(
                       height: CalendarConstants.headerHeight,
+                      clipBehavior: Clip.hardEdge,
                       decoration: BoxDecoration(
-                        border: Border.all(color: AppColorScheme.gridLineColor),
                         color: _getHeaderColor(column),
                       ),
                       child: Center(
@@ -97,7 +97,7 @@ class CalendarTracks extends ConsumerWidget {
                       ),
                     ),
                     
-                    // Fila de alojamientos con tracks
+                    // Fila de alojamientos con tracks (sin bordes)
                     GestureDetector(
                       onTap: () {
                         // Crear nuevo alojamiento para este día
@@ -109,8 +109,6 @@ class CalendarTracks extends ConsumerWidget {
                       child: Container(
                         height: CalendarConstants.accommodationRowHeight,
                         decoration: BoxDecoration(
-                          border: Border.all(color: AppColorScheme.gridLineColor),
-                          // Estilo base: fondo oscuro, sin verde
                           color: Colors.grey.shade800,
                         ),
                         child: Center(
@@ -155,7 +153,7 @@ class CalendarTracks extends ConsumerWidget {
       return Text(
         'Vacío',
         style: GoogleFonts.poppins(
-          fontSize: 11,
+          fontSize: CalendarConstants.headerFontSize,
           fontWeight: FontWeight.w500,
           color: Colors.grey.shade400,
         ),
@@ -172,13 +170,14 @@ class CalendarTracks extends ConsumerWidget {
     
     // Obtener el nombre del día de la semana (traducible)
     final dayOfWeek = DateFormat.E().format(dayDate); // 'lun', 'mar', etc.
-    
+
+    // En vista de 1 día la fecha más pequeña para que no desborde y no domine
+    final isOneDayView = columns.length == 1;
+    final dateFontSize = isOneDayView ? 14.0 : CalendarConstants.headerFontSize;
     final dayHeaderStyle = CalendarStyles.getDayHeaderStyle(isToday: isToday)
-        .copyWith(fontSize: 11, fontWeight: FontWeight.w600);
-    
-    // Generar iniciales de participantes (padding para legibilidad).
+        .copyWith(fontSize: dateFontSize, fontWeight: FontWeight.w600);
+
     // FittedBox evita overflow cuando la celda tiene menos altura (p. ej. móvil).
-    // SizedBox con ancho acotado para que el Row de participantes tenga tamaño finito.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: FittedBox(
@@ -197,7 +196,7 @@ class CalendarTracks extends ConsumerWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: isOneDayView ? 1 : 2),
               _buildMiniParticipantHeaders(participants),
             ],
           ),
@@ -208,6 +207,10 @@ class CalendarTracks extends ConsumerWidget {
 
   /// Construye mini headers de participantes para el header principal
   Widget _buildMiniParticipantHeaders(List<ParticipantTrack> participants) {
+    // En vista de 3 días las iniciales un poco más grandes para mejor lectura
+    final isThreeDayView = columns.length == 3;
+    final initialsFontSize = isThreeDayView ? 13.0 : CalendarConstants.miniParticipantFontSize;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: participants.asMap().entries.map((entry) {
@@ -259,19 +262,16 @@ class CalendarTracks extends ConsumerWidget {
                                     )
                                   : createGridBorder()),
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              initial,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: isActiveTrack ? FontWeight.w900 : FontWeight.bold, // Más negrita si es activo
-                                color: Colors.white,
-                              ),
-                              textAlign: TextAlign.center,
+                        child: Center(
+                          child: Text(
+                            initial,
+                            style: TextStyle(
+                              fontSize: initialsFontSize,
+                              fontWeight: isActiveTrack ? FontWeight.w900 : FontWeight.bold,
+                              color: Colors.white,
                             ),
-                          ],
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ),
                       // Barra lateral de color para timezone (T100)

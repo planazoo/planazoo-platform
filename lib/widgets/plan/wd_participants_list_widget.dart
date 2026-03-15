@@ -11,11 +11,14 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 class ParticipantsListWidget extends ConsumerWidget {
   final String planId;
   final bool showActions;
+  /// Menos altura por tarjeta (padding y avatar más pequeños)
+  final bool compact;
 
   const ParticipantsListWidget({
     super.key,
     required this.planId,
     this.showActions = true,
+    this.compact = false,
   });
 
   @override
@@ -66,10 +69,13 @@ class ParticipantsListWidget extends ConsumerWidget {
                     : AppColorScheme.color2.withOpacity(0.2);
                 final organizerFg = isDarkMode ? Colors.white : AppColorScheme.color2;
 
+                final padding = compact ? const EdgeInsets.symmetric(horizontal: 12, vertical: 4) : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+                final radius = compact ? 14.0 : 18.0;
+                final iconSize = compact ? 14.0 : 18.0;
                 return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
+                  margin: EdgeInsets.only(bottom: compact ? 4 : 8),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    contentPadding: padding,
                     leading: CircleAvatar(
                       backgroundColor: isOrganizer
                           ? organizerBg
@@ -79,14 +85,14 @@ class ParticipantsListWidget extends ConsumerWidget {
                         color: isOrganizer
                             ? organizerFg
                             : (isDarkMode ? Colors.grey.shade300 : Colors.grey.shade700),
-                        size: 18,
+                        size: iconSize,
                       ),
-                      radius: 18,
+                      radius: radius,
                     ),
                     title: Text(
                       '$displayName $username',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: compact ? 11 : 12,
                         color: textColor,
                         fontWeight: isCurrentUser ? FontWeight.w600 : FontWeight.w500,
                       ),

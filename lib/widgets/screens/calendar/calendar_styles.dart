@@ -67,42 +67,24 @@ class CalendarStyles {
     );
   }
 
-  /// Obtiene la decoración del header de días
+  /// Obtiene la decoración del header de días (sin bordes, estilo limpio)
   static BoxDecoration getDayHeaderDecoration() {
     return BoxDecoration(
-      color: Colors.grey.shade800, // Color sólido, sin gradiente
-      border: Border(
-        bottom: BorderSide(
-          color: Colors.grey.shade700.withOpacity(CalendarConstants.gridLineOpacity),
-          width: 0.5,
-        ),
-      ),
+      color: Colors.grey.shade800,
     );
   }
 
-  /// Obtiene la decoración del header de participantes
+  /// Obtiene la decoración del header de participantes (sin bordes)
   static BoxDecoration getParticipantHeaderDecoration() {
     return BoxDecoration(
-      color: Colors.grey.shade800, // Color sólido, sin gradiente
-      border: Border(
-        bottom: BorderSide(
-          color: Colors.grey.shade700.withOpacity(0.3),
-          width: 0.5,
-        ),
-      ),
+      color: Colors.grey.shade800,
     );
   }
 
-  /// Obtiene la decoración del header mini de participantes
+  /// Obtiene la decoración del header mini de participantes (sin bordes)
   static BoxDecoration getMiniParticipantHeaderDecoration() {
     return BoxDecoration(
-      color: Colors.grey.shade800.withOpacity(0.5), // Color sólido, sin gradiente
-      border: Border(
-        bottom: BorderSide(
-          color: Colors.grey.shade700.withOpacity(0.2),
-          width: 0.5,
-        ),
-      ),
+      color: Colors.grey.shade800.withOpacity(0.5),
     );
   }
 
@@ -127,14 +109,10 @@ class CalendarStyles {
     );
   }
 
-  /// Obtiene la decoración de la columna fija de horas
+  /// Obtiene la decoración de la columna fija de horas (sin bordes)
   static BoxDecoration getFixedHoursColumnDecoration() {
     return BoxDecoration(
-      color: Colors.grey.shade800, // Color sólido, sin gradiente
-      border: Border.all(
-        color: Colors.grey.shade700.withOpacity(0.3),
-        width: 0.5,
-      ),
+      color: Colors.grey.shade800,
     );
   }
 
@@ -149,14 +127,10 @@ class CalendarStyles {
     );
   }
 
-  /// Obtiene la decoración de la fila fija de alojamientos
+  /// Obtiene la decoración de la fila fija de alojamientos (sin bordes)
   static BoxDecoration getFixedAccommodationRowDecoration() {
     return BoxDecoration(
-      color: Colors.grey.shade800, // Color sólido, sin gradiente
-      border: Border.all(
-        color: Colors.grey.shade700.withOpacity(0.3),
-        width: 0.5,
-      ),
+      color: Colors.grey.shade800,
     );
   }
 

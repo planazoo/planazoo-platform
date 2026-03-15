@@ -13,11 +13,14 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 class AnnouncementTimeline extends ConsumerWidget {
   final String planId;
   final VoidCallback? onPublishTap;
+  /// En true (p. ej. iOS): fondo oscuro y menos altura por ítem
+  final bool compact;
 
   const AnnouncementTimeline({
     super.key,
     required this.planId,
     this.onPublishTap,
+    this.compact = false,
   });
 
   IconData _getTypeIcon(String? type) {
@@ -125,126 +128,146 @@ class AnnouncementTimeline extends ConsumerWidget {
               builder: (context, userSnapshot) {
                 final authorName = userSnapshot.data?.displayIdentifier ?? announcement.userId.substring(0, 8);
 
+            final bgColor = compact ? Colors.grey.shade800 : Colors.white;
+            final textColor = compact ? Colors.white : AppColorScheme.color4;
+            final secondaryColor = compact ? Colors.grey.shade400 : Colors.grey.shade600;
+            final padding = compact ? 10.0 : 16.0;
+            final spacing = compact ? 6.0 : 12.0;
+            final marginBottom = compact ? 8.0 : 16.0;
+            final iconSize = compact ? 14.0 : 16.0;
+
             return Container(
-              margin: const EdgeInsets.only(bottom: 16),
+              margin: EdgeInsets.only(bottom: marginBottom),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                color: bgColor,
+                borderRadius: BorderRadius.circular(compact ? 10 : 12),
                 border: Border.all(
-                  color: typeColor.withOpacity(0.3),
-                  width: 1.5,
+                  color: typeColor.withOpacity(compact ? 0.5 : 0.3),
+                  width: compact ? 1 : 1.5,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                boxShadow: compact
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(padding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header con usuario y tipo
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: EdgeInsets.all(compact ? 4 : 6),
                           decoration: BoxDecoration(
-                            color: typeColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
+                            color: typeColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(compact ? 4 : 6),
                           ),
                           child: Icon(
                             typeIcon,
-                            size: 16,
+                            size: iconSize,
                             color: typeColor,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: compact ? 6 : 8),
                         Expanded(
                           child: Text(
                             authorName,
                             style: AppTypography.bodyStyle.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: AppColorScheme.color4,
+                              color: textColor,
+                              fontSize: compact ? 13 : null,
                             ),
                           ),
                         ),
-                        if (announcement.type == 'urgent')
+                        Text(
+                          _formatRelativeTime(announcement.createdAt),
+                          style: TextStyle(
+                            fontSize: compact ? 11 : 12,
+                            color: secondaryColor,
+                          ),
+                        ),
+                        if (announcement.type == 'urgent') ...[
+                          SizedBox(width: compact ? 6 : 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: compact ? 6 : 8,
+                              vertical: compact ? 1 : 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.orange.shade100,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(compact ? 6 : 8),
                             ),
                             child: Text(
                               'URGENTE',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: compact ? 9 : 10,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.orange.shade700,
                               ),
                             ),
-                          )
-                        else if (announcement.type == 'important')
+                          ),
+                        ],
+                        if (announcement.type == 'important') ...[
+                          SizedBox(width: compact ? 6 : 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: compact ? 6 : 8,
+                              vertical: compact ? 1 : 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red.shade100,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(compact ? 6 : 8),
                             ),
                             child: Text(
                               'IMPORTANTE',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: compact ? 9 : 10,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.red.shade700,
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    // Mensaje
+                    SizedBox(height: spacing),
                     Text(
                       announcement.message,
-                      style: AppTypography.bodyStyle,
+                      style: AppTypography.bodyStyle.copyWith(
+                        color: textColor,
+                        fontSize: compact ? 13 : null,
+                      ),
+                      maxLines: compact ? 3 : null,
+                      overflow: compact ? TextOverflow.ellipsis : null,
                     ),
-                    const SizedBox(height: 12),
-                    // Footer con timestamp y opción de eliminar
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: Colors.grey.shade500,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatRelativeTime(announcement.createdAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        const Spacer(),
-                        if (isOwn)
-                          TextButton.icon(
-                            onPressed: () {
-                              _showDeleteConfirmation(context, ref, announcement.id!);
-                            },
-                            icon: const Icon(Icons.delete_outline, size: 16),
-                            label: const Text('Eliminar'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              minimumSize: const Size(0, 32),
+                    if (isOwn)
+                      Padding(
+                        padding: EdgeInsets.only(top: compact ? 4 : 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton.icon(
+                              onPressed: () {
+                                _showDeleteConfirmation(context, ref, announcement.id!);
+                              },
+                              icon: Icon(Icons.delete_outline, size: compact ? 14 : 16),
+                              label: Text('Eliminar', style: TextStyle(fontSize: compact ? 12 : null)),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                                padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8),
+                                minimumSize: Size(0, compact ? 28 : 32),
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),

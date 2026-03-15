@@ -8,6 +8,11 @@ class EventSyncService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final EventNotificationService _notificationService = EventNotificationService();
 
+  static bool _isEventDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>?;
+    return data == null || data['typeFamily'] != 'alojamiento';
+  }
+
   /// Propaga cambios en la parte común de un evento a todas sus copias
   /// 
   /// [eventId] - ID del evento original (base)
@@ -23,8 +28,8 @@ class EventSyncService {
     try {
       // 1. Obtener el evento original
       final baseEventDoc = await _firestore.collection(_collectionName).doc(eventId).get();
-      if (!baseEventDoc.exists) {
-        return false; // No existe el evento
+      if (!baseEventDoc.exists || !_isEventDoc(baseEventDoc)) {
+        return false; // No existe o es alojamiento
       }
       
       final baseEvent = Event.fromFirestore(baseEventDoc);
@@ -160,7 +165,7 @@ class EventSyncService {
     try {
       // 1. Obtener el evento original
       final baseEventDoc = await _firestore.collection(_collectionName).doc(baseEventId).get();
-      if (!baseEventDoc.exists) {
+      if (!baseEventDoc.exists || !_isEventDoc(baseEventDoc)) {
         return false;
       }
       
@@ -223,6 +228,7 @@ class EventSyncService {
           .get();
 
       return snapshot.docs
+          .where(_isEventDoc)
           .map((doc) => Event.fromFirestore(doc))
           .toList();
     } catch (e) {
@@ -240,7 +246,7 @@ class EventSyncService {
     try {
       // Obtener evento base
       final baseEventDoc = await _firestore.collection(_collectionName).doc(baseEventId).get();
-      if (!baseEventDoc.exists) {
+      if (!baseEventDoc.exists || !_isEventDoc(baseEventDoc)) {
         return {'base': [], 'copies': []};
       }
 

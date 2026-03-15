@@ -314,6 +314,10 @@ class SyncService {
           .get();
 
       for (var doc in remoteSnapshot.docs) {
+        final data = doc.data();
+        if (data != null && data['typeFamily'] == 'alojamiento') {
+          continue; // No sincronizar alojamientos a la caja local de eventos
+        }
         final remoteEvent = Event.fromFirestore(doc);
         final localEvent = await _eventLocalService.getEventById(doc.id);
 

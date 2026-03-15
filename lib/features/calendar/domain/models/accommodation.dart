@@ -217,6 +217,8 @@ class AccommodationCommonPart {
   final String? customColor;
   final String? address;
   final String? contactInfo;
+  /// Enlace web del alojamiento (p. ej. web del hotel, reserva).
+  final String? url;
   final Map<String, dynamic>? amenities;
   final int? maxCapacity;
   final List<String> participantIds; // participantes incluidos en la parte común
@@ -234,6 +236,7 @@ class AccommodationCommonPart {
     this.customColor,
     this.address,
     this.contactInfo,
+    this.url,
     this.amenities,
     this.maxCapacity,
     this.participantIds = const [],
@@ -257,6 +260,7 @@ class AccommodationCommonPart {
       customColor: map['customColor'],
       address: map['address'],
       contactInfo: map['contactInfo'],
+      url: map['url']?.toString(),
       amenities: map['amenities'] as Map<String, dynamic>?,
       maxCapacity: map['maxCapacity'],
       participantIds: (map['participantIds'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
@@ -277,6 +281,7 @@ class AccommodationCommonPart {
       if (customColor != null) 'customColor': customColor,
       if (address != null) 'address': address,
       if (contactInfo != null) 'contactInfo': contactInfo,
+      if (url != null) 'url': url,
       if (amenities != null) 'amenities': amenities,
       if (maxCapacity != null) 'maxCapacity': maxCapacity,
       'participantIds': participantIds,

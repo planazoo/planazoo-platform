@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
+import 'package:unp_calendario/features/calendar/domain/models/event.dart';
+import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
@@ -43,6 +45,9 @@ import 'package:unp_calendario/widgets/screens/wd_unified_notifications_screen.d
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_summary_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
+import 'package:unp_calendario/widgets/wd_event_dialog.dart';
+import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
+import 'package:unp_calendario/widgets/dialogs/summary_preview_modals.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_timezone_banner.dart';
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_nav_tabs.dart';
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
@@ -1669,7 +1674,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         break;
       case 'mySummary':
         content = selectedPlan != null
-            ? MyPlanSummaryScreen(plan: selectedPlan!)
+            ? MyPlanSummaryScreen(
+                plan: selectedPlan!,
+                onOpenEvent: _openEventFromSummary,
+                onOpenAccommodation: _openAccommodationFromSummary,
+                onGoToCalendar: () => setState(() {
+                  currentScreen = 'calendar';
+                  selectedWidgetId = 'W15';
+                }),
+              )
             : _buildNoPlanSelected();
         break;
       case 'stats':
@@ -1740,6 +1753,61 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           selectedWidgetId = 'W16';
         });
       },
+    );
+  }
+
+  /// Abrir evento desde Mi resumen (paridad con iOS): modal resumen → diálogo completo.
+  void _openEventFromSummary(Event event) {
+    if (selectedPlan == null || selectedPlan!.id == null) return;
+    showEventSummaryPreviewModal(
+      context: context,
+      event: event,
+      onOpenFull: () => _showEventDialog(event),
+    );
+  }
+
+  void _showEventDialog(Event event) async {
+    if (selectedPlan == null || selectedPlan!.id == null) return;
+    Event eventToShow = event;
+    if (event.id != null) {
+      final fresh = await ref.read(eventServiceProvider).getEventByIdFromServer(event.id!);
+      if (fresh != null) eventToShow = fresh;
+    }
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (context) => EventDialog(
+        event: eventToShow,
+        planId: selectedPlan!.id!,
+        onSaved: (_) => setState(() {}),
+        onDeleted: (_) => setState(() {}),
+      ),
+    );
+  }
+
+  /// Abrir alojamiento desde Mi resumen (paridad con iOS).
+  void _openAccommodationFromSummary(Accommodation accommodation) {
+    if (selectedPlan == null || selectedPlan!.id == null) return;
+    showAccommodationSummaryPreviewModal(
+      context: context,
+      accommodation: accommodation,
+      onOpenFull: () => _showAccommodationDialog(accommodation),
+    );
+  }
+
+  void _showAccommodationDialog(Accommodation accommodation) {
+    if (selectedPlan == null || selectedPlan!.id == null) return;
+    final planEnd = selectedPlan!.startDate.add(Duration(days: selectedPlan!.durationInDays));
+    showDialog<void>(
+      context: context,
+      builder: (context) => AccommodationDialog(
+        accommodation: accommodation,
+        planId: selectedPlan!.id!,
+        planStartDate: selectedPlan!.startDate,
+        planEndDate: planEnd,
+        onSaved: (_) => setState(() {}),
+        onDeleted: (_) => setState(() {}),
+      ),
     );
   }
 

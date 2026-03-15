@@ -2796,7 +2796,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Offset _calculateConsistentPosition(Event event, Offset dragOffset) {
     // Obtener dimensiones de celda
     final screenWidth = MediaQuery.of(context).size.width;
-    final availableWidth = screenWidth - 80.0;
+    final availableWidth = screenWidth - CalendarConstants.hoursColumnWidth;
     final cellWidth = availableWidth / _visibleDays;
     
     // Calcular posición actual del evento
@@ -2944,7 +2944,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     try {
       // Obtener el ancho de una celda
       final screenWidth = MediaQuery.of(context).size.width;
-      final availableWidth = screenWidth - 80.0; // Restar columna de horas
+      final availableWidth = screenWidth - CalendarConstants.hoursColumnWidth;
       final cellWidth = availableWidth / _visibleDays;
       final cellHeight = AppConstants.cellHeight;
       
@@ -3078,12 +3078,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     };
   }
 
-  /// Muestra el diálogo para editar un evento existente
-  void _showEventDialog(Event event) {
+  /// Muestra el diálogo para editar un evento existente.
+  /// Obtiene el evento desde el servidor para mostrar datos actualizados (evita caché en iOS/web).
+  void _showEventDialog(Event event) async {
+    Event eventToShow = event;
+    if (event.id != null) {
+      final fresh = await ref.read(eventServiceProvider).getEventByIdFromServer(event.id!);
+      if (fresh != null) eventToShow = fresh;
+    }
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) => EventDialog(
-        event: event,
+        event: eventToShow,
         planId: widget.plan.id ?? '',
         onSaved: (updatedEvent) async {
           // VALIDAR: ¿Crearía conflicto de participante?

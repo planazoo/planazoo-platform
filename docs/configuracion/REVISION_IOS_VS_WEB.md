@@ -173,3 +173,24 @@ La decisión de qué mostrar (mobile vs desktop) se hace en `app.dart` con `Plat
 - Después de cambios, volver a probar en simulador y, si es posible, en dispositivo real antes de subir a TestFlight.
 
 Si quieres, podemos bajar al detalle de uno en uno (por ejemplo: primero multi-idioma en las dos páginas, luego invitación y deep link, luego FCM/Info.plist).
+
+---
+
+## 6. Revisión diferencias una a una (Marzo 2026)
+
+Decisión por diferencia: **mantener distinto (A)** o **igualar (B)**.
+
+| # | Diferencia | Decisión | Notas |
+|---|------------|----------|--------|
+| 1 | Pantalla de entrada (Dashboard web vs PlansListPage iOS) | **A** | Mantener: estrategia por plataforma (PLATFORM_STRATEGY). |
+| 2 | Detalle de plan (panel web vs página con pestañas iOS) | **A** | Mantener: consecuencia de la entrada. |
+| 3 | Vista calendario (CalendarScreen vs CalendarMobilePage) | **A** | Mantener: adaptación por tamaño. |
+| 4 | Offline / Hive / sync (solo móvil) | **A** | Mantener: web siempre online. |
+| 5 | FCM push (solo móvil) | **A** | Mantener. |
+| 6 | Google Places (Cloud Function web vs API directa móvil) | **A** | Mantener: misma UX, distinta implementación. |
+| 7 | Invitación por link / deep link en iOS | **B** | Igualar: implementar deep link. **T259** creada. |
+| 8 | Barra de pestañas del plan (7 tabs, scroll en iPhone pequeño) | **A** | Mantener: aceptar scroll. |
+| 9 | Diálogos evento/alojamiento (fullscreen vs modal por ancho) | **A** | Mantener: adaptación responsive. |
+| 10 | ConnectivityService (web sin plugin vs móvil con plugin) | **A** | Mantener. |
+
+**Pendiente de implementación:** T259 – Deep link invitación iOS (Universal Links o URL scheme).

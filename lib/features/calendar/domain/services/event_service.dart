@@ -14,6 +14,12 @@ class EventService {
   final EventParticipantService _eventParticipantService = EventParticipantService();
   final EventSyncService _eventSyncService = EventSyncService();
 
+  /// Excluye documentos de la colección 'events' que son alojamientos (typeFamily == 'alojamiento').
+  static bool _isEventDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>?;
+    return data == null || data['typeFamily'] != 'alojamiento';
+  }
+
   // Obtener todos los eventos de un plan (solo para participantes)
   Stream<List<Event>> getEventsByPlanId(String planId, String userId) {
     return _participationService.isUserParticipant(planId, userId).asStream().asyncExpand((isParticipant) async* {
@@ -26,8 +32,10 @@ class EventService {
             .orderBy('hour')
             .snapshots()
             .map((snapshot) {
-              final events = snapshot.docs.map((doc) => Event.fromFirestore(doc)).toList();
-
+              final events = snapshot.docs
+                  .where(_isEventDoc)
+                  .map((doc) => Event.fromFirestore(doc))
+                  .toList();
               return events;
             });
       } else {
@@ -49,6 +57,24 @@ class EventService {
         .get();
     
     return snapshot.docs
+        .where(_isEventDoc)
+        .map((doc) => Event.fromFirestore(doc))
+        .toList();
+  }
+
+  /// Obtiene los eventos del plan desde el servidor (evita caché local).
+  /// Útil tras guardar cambios para que la UI muestre datos actualizados en iOS/web.
+  Future<List<Event>> getEventsByPlanIdFromServer(String planId, String userId) async {
+    final isParticipant = await _participationService.isUserParticipant(planId, userId);
+    if (!isParticipant) return <Event>[];
+    final snapshot = await _firestore
+        .collection(_collectionName)
+        .where('planId', isEqualTo: planId)
+        .orderBy('date')
+        .orderBy('hour')
+        .get(const GetOptions(source: Source.server));
+    return snapshot.docs
+        .where(_isEventDoc)
         .map((doc) => Event.fromFirestore(doc))
         .toList();
   }
@@ -68,6 +94,7 @@ class EventService {
             .orderBy('hour')
             .snapshots()
             .map((snapshot) => snapshot.docs
+                .where(_isEventDoc)
                 .map((doc) => Event.fromFirestore(doc))
                 .toList());
       } else {
@@ -89,6 +116,7 @@ class EventService {
         .get();
     
     return snapshot.docs
+        .where(_isEventDoc)
         .map((doc) => Event.fromFirestore(doc))
         .toList();
   }
@@ -97,12 +125,29 @@ class EventService {
   Future<Event?> getEventById(String eventId) async {
     try {
       final doc = await _firestore.collection(_collectionName).doc(eventId).get();
-      if (doc.exists) {
+      if (doc.exists && _isEventDoc(doc)) {
         return Event.fromFirestore(doc);
       }
       return null;
     } catch (e) {
       LoggerService.error('Error getting event by id', context: 'EVENT_SERVICE', error: e);
+      return null;
+    }
+  }
+
+  /// Obtiene un evento por ID desde el servidor (evita caché).
+  Future<Event?> getEventByIdFromServer(String eventId) async {
+    try {
+      final doc = await _firestore
+          .collection(_collectionName)
+          .doc(eventId)
+          .get(const GetOptions(source: Source.server));
+      if (doc.exists && _isEventDoc(doc)) {
+        return Event.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      LoggerService.error('Error getting event by id from server', context: 'EVENT_SERVICE', error: e);
       return null;
     }
   }
@@ -286,6 +331,7 @@ class EventService {
             .orderBy('hour')
             .snapshots()
             .map((snapshot) => snapshot.docs
+                .where(_isEventDoc)
                 .map((doc) => Event.fromFirestore(doc))
                 .toList());
       } else {
@@ -307,6 +353,7 @@ class EventService {
         .get();
     
     return snapshot.docs
+        .where(_isEventDoc)
         .map((doc) => Event.fromFirestore(doc))
         .toList();
   }
@@ -323,6 +370,7 @@ class EventService {
             .orderBy('hour')
             .snapshots()
             .map((snapshot) => snapshot.docs
+                .where(_isEventDoc)
                 .map((doc) => Event.fromFirestore(doc))
                 .toList());
       } else {
@@ -342,8 +390,9 @@ class EventService {
         .orderBy('date')
         .orderBy('hour')
         .get();
-    
+
     return snapshot.docs
+        .where(_isEventDoc)
         .map((doc) => Event.fromFirestore(doc))
         .toList();
   }
@@ -366,12 +415,13 @@ class EventService {
           .where('planId', isEqualTo: planId)
           .get();
 
-      if (querySnapshot.docs.isEmpty) {
-        return true; // No hay eventos, no hay nada que eliminar
+      final eventDocs = querySnapshot.docs.where(_isEventDoc).toList();
+      if (eventDocs.isEmpty) {
+        return true; // No hay eventos (solo alojamientos u otros), no hay nada que eliminar
       }
 
       // Eliminar datos relacionados de cada evento antes de eliminar los eventos
-      for (final doc in querySnapshot.docs) {
+      for (final doc in eventDocs) {
         final eventId = doc.id;
         final eventData = doc.data();
         final isBaseEvent = eventData['isBaseEvent'] as bool? ?? false;
@@ -385,14 +435,14 @@ class EventService {
         }
       }
 
-      // 3. Eliminar todos los eventos en batch
+      // 3. Eliminar todos los eventos en batch (no alojamientos)
       final batch = _firestore.batch();
-      for (final doc in querySnapshot.docs) {
+      for (final doc in eventDocs) {
         batch.delete(doc.reference);
       }
       await batch.commit();
       
-      LoggerService.database('All events deleted for plan: $planId (${querySnapshot.docs.length} events)', operation: 'DELETE');
+      LoggerService.database('All events deleted for plan: $planId (${eventDocs.length} events)', operation: 'DELETE');
       return true;
     } catch (e) {
       LoggerService.error('Error deleting events by planId', context: 'EVENT_SERVICE', error: e);
@@ -412,8 +462,9 @@ class EventService {
         return true; // No hay eventos para migrar
       }
 
-      // Filtrar eventos que no tienen userId o tienen userId vacío
+      // Filtrar eventos que no tienen userId o tienen userId vacío (excluir alojamientos)
       final eventsToMigrate = querySnapshot.docs.where((doc) {
+        if (!_isEventDoc(doc)) return false;
         final data = doc.data();
         final eventUserId = data['userId'];
         return eventUserId == null || eventUserId == '';

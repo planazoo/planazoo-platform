@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import '../../domain/models/plan_participation.dart';
 import '../../domain/services/plan_participation_service.dart';
 import '../notifiers/plan_participation_notifier.dart';
@@ -47,4 +48,33 @@ final isUserParticipantProvider = FutureProvider.family<bool, ({String planId, S
 final userParticipationProvider = FutureProvider.family<PlanParticipation?, ({String planId, String userId})>((ref, params) async {
   final participationService = ref.read(planParticipationServiceProvider);
   return await participationService.getParticipation(params.planId, params.userId);
+});
+
+/// Mapa userId -> nombre para mostrar (Resumen del plan). Resuelve displayName/username/email.
+final planParticipantDisplayNamesProvider = FutureProvider.family<Map<String, String>, String>((ref, planId) async {
+  final participantsAsync = ref.watch(planParticipantsProvider(planId));
+  final list = participantsAsync.valueOrNull ?? [];
+  final userService = ref.read(userServiceProvider);
+  final map = <String, String>{};
+  for (final p in list) {
+    try {
+      final user = await userService.getUser(p.userId);
+      if (user != null) {
+        if (user.displayName != null && user.displayName!.trim().isNotEmpty) {
+          map[p.userId] = user.displayName!.trim();
+        } else if (user.username != null && user.username!.trim().isNotEmpty) {
+          map[p.userId] = '@${user.username!.trim()}';
+        } else if (user.email != null && user.email!.trim().isNotEmpty) {
+          map[p.userId] = user.email!.trim();
+        } else {
+          map[p.userId] = p.userId;
+        }
+      } else {
+        map[p.userId] = p.userId;
+      }
+    } catch (_) {
+      map[p.userId] = p.userId;
+    }
+  }
+  return map;
 });

@@ -482,9 +482,20 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
     }
   }
 
-  /// Refrescar eventos desde Firestore
+  /// Refrescar eventos desde Firestore.
+  /// Usa Source.server para que iOS y web muestren datos actualizados tras guardar (evita caché local).
   Future<void> refreshEvents() async {
-    await _loadEvents();
+    try {
+      final events = await _eventService.getEventsByPlanIdFromServer(planId, userId);
+      state = state.copyWith(
+        events: events,
+        loadingState: LoadingState.success,
+        lastSyncTime: DateTime.now(),
+        clearError: true,
+      );
+    } catch (_) {
+      // Si falla (ej. sin red), mantener estado actual; el stream seguirá emitiendo cuando haya conexión
+    }
   }
 
   /// Cambiar el estado de borrador de un evento
