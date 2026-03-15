@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
@@ -8,11 +9,13 @@ import 'package:unp_calendario/widgets/notifications/wd_notification_badge.dart'
 import 'package:unp_calendario/widgets/dialogs/wd_plans_with_unread_chat_modal.dart';
 
 /// Barra lateral izquierda del dashboard (W1: C1, R1–R13).
-/// Incluye badge de notificaciones, icono de chat (modal con planes con no leídos) y botón de perfil.
+/// Incluye badge de notificaciones, icono de chat (modal con planes con no leídos), icono admin (solo si isAdmin) y botón de perfil.
 class WdDashboardSidebar extends ConsumerWidget {
   final double columnWidth;
   final double gridHeight;
   final VoidCallback onProfileTap;
+  /// Si el usuario es admin, se muestra un icono que llama a este callback.
+  final VoidCallback? onAdminTap;
   /// Lista de planes del usuario (para modal de chats no leídos y badge global).
   final List<Plan> plans;
   /// Al seleccionar un plan en el modal de chat: abrir ese plan y pestaña chat.
@@ -23,6 +26,7 @@ class WdDashboardSidebar extends ConsumerWidget {
     required this.columnWidth,
     required this.gridHeight,
     required this.onProfileTap,
+    this.onAdminTap,
     this.plans = const [],
     this.onOpenChatForPlan,
   });
@@ -30,6 +34,8 @@ class WdDashboardSidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context)!;
+    final user = ref.watch(currentUserProvider);
+    final isAdmin = user?.isAdmin ?? false;
     int totalChatUnread = 0;
     for (final p in plans) {
       if (p.id != null) {
@@ -73,6 +79,16 @@ class WdDashboardSidebar extends ConsumerWidget {
                             onPlanSelected: onOpenChatForPlan!,
                           );
                         },
+                      ),
+                    ),
+                  ],
+                  if (isAdmin && onAdminTap != null) ...[
+                    const SizedBox(height: 8),
+                    Tooltip(
+                      message: 'Administración',
+                      child: IconButton(
+                        icon: const Icon(Icons.admin_panel_settings, color: Colors.white, size: 24),
+                        onPressed: onAdminTap,
                       ),
                     ),
                   ],

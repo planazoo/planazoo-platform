@@ -11,6 +11,7 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_ui_showcase_page.dart';
+import 'package:unp_calendario/shared/providers/help_text_providers.dart';
 
 /// Barra superior del dashboard (W2–W6): logo, botón crear plan, showcase, imagen e info del plan.
 class WdDashboardHeaderBar extends ConsumerWidget {
@@ -37,7 +38,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
       children: [
-        _buildW2(context, columnWidth, rowHeight),
+        _buildW2(context, ref, columnWidth, rowHeight),
         _buildW3(columnWidth, rowHeight),
         _buildW4(context, columnWidth, rowHeight),
         _buildW5(columnWidth, rowHeight),
@@ -46,7 +47,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildW2(BuildContext context, double columnWidth, double rowHeight) {
+  Widget _buildW2(BuildContext context, WidgetRef ref, double columnWidth, double rowHeight) {
     return Positioned(
       left: columnWidth,
       top: 0,
@@ -117,6 +118,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
   }
 
   Widget _buildW4(BuildContext context, double columnWidth, double rowHeight) {
+    // UI Showcase movido a página Admin (solo accesible para admin desde W1).
     return Positioned(
       left: columnWidth * 4,
       top: 0,
@@ -126,21 +128,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
         decoration: BoxDecoration(color: Colors.grey.shade900),
         child: Row(
           children: [
-            Expanded(
-              child: Center(
-                child: IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const UIShowcasePage(),
-                ),
-              );
-            },
-            icon: Icon(Icons.palette, color: AppColorScheme.color2),
-                  tooltip: AppLocalizations.of(context)!.dashboardUiShowcaseTooltip,
-                ),
-              ),
-            ),
+            const Expanded(child: SizedBox.shrink()),
             Container(width: 4, color: AppColorScheme.color2),
           ],
         ),

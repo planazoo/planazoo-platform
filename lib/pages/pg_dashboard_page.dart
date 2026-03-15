@@ -34,7 +34,7 @@ import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/plan_calendar_view.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
-import 'package:unp_calendario/pages/pg_ui_showcase_page.dart';
+import 'package:unp_calendario/pages/pg_admin_page.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
@@ -342,8 +342,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // NUEVO: Método para cambiar la pantalla mostrada en W31
   void _changeScreen(String screen) {
     setState(() {
-      if (screen == 'profile') {
-        if (currentScreen != 'profile') {
+      if (screen == 'profile' || screen == 'admin') {
+        if (currentScreen != screen) {
           _previousScreen = currentScreen;
         }
       } else {
@@ -353,10 +353,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       if (screen == 'calendar') _calendarPanelView = 'calendar';
     });
   }
-  
+
   void _closeProfileScreen() {
     setState(() {
       final target = _previousScreen == 'profile' ? 'calendar' : _previousScreen;
+      currentScreen = target;
+    });
+  }
+
+  void _closeAdminScreen() {
+    setState(() {
+      final target = _previousScreen == 'admin' ? 'calendar' : _previousScreen;
       currentScreen = target;
     });
   }
@@ -1394,6 +1401,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 columnWidth: columnWidth,
                 gridHeight: gridHeight,
                 onProfileTap: () => _changeScreen('profile'),
+                onAdminTap: () => _changeScreen('admin'),
                 plans: filteredPlanazoos,
                 onOpenChatForPlan: (plan) {
                   if (plan.id != null) _openPlanTab(plan, 'chat', 'W19');
@@ -1592,6 +1600,24 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           height: overlayHeight,
           color: AppColorScheme.color0,
           child: _buildProfileScreen(),
+        ),
+      );
+    }
+
+    if (currentScreen == 'admin') {
+      final overlayLeft = columnWidth;
+      final overlayTop = 0.0;
+      final overlayWidth = columnWidth * 16;
+      final overlayHeight = rowHeight * 13;
+
+      return Positioned(
+        left: overlayLeft,
+        top: overlayTop,
+        child: Container(
+          width: overlayWidth,
+          height: overlayHeight,
+          color: AppColorScheme.color0,
+          child: _buildAdminScreen(),
         ),
       );
     }
@@ -1816,6 +1842,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return ProfilePage(
       onClose: _closeProfileScreen,
     );
+  }
+
+  Widget _buildAdminScreen() {
+    return AdminPage(onClose: _closeAdminScreen);
   }
 
   // NUEVO: Pantalla de email (temporal)
