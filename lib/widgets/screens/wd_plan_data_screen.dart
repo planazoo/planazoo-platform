@@ -30,6 +30,9 @@ import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state
 import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
+import 'package:unp_calendario/shared/constants/help_context_ids.dart';
+import 'package:unp_calendario/shared/providers/help_text_providers.dart';
+import 'package:unp_calendario/widgets/help/help_icon_button.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -2518,13 +2521,10 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Tooltip(
-                      message: AppLocalizations.of(context)!.planDetailsAnnouncementsHelp,
-                      child: Icon(
-                        Icons.help_outline,
-                        size: 18,
-                        color: Colors.grey.shade400,
-                      ),
+                    HelpIconButton(
+                      helpId: HelpContextIds.planDetailsAviso,
+                      contextLabel: AppLocalizations.of(context)!.planDetailsAnnouncementsTitle,
+                      defaultBody: AppLocalizations.of(context)!.planDetailsAnnouncementsHelp,
                     ),
                   ],
                 ),

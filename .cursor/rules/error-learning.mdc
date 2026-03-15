@@ -1,0 +1,24 @@
+---
+description: Registro y aprendizaje de errores corregidos por la IA
+alwaysApply: true
+---
+
+# Bucle de mejora automática para errores
+
+- Siempre que aparezca un **error de compilación, runtime o linter** relacionado con cambios que haga la IA:
+  - **1) Leer el mensaje de error completo** (terminal, logs o analyzer).
+  - **2) Corregir el problema en el código** hasta que el analizador/tests vuelvan a pasar.
+  - **3) Registrar el error y su solución** en `docs/configuracion/LOG_ERRORES_AUTOFIX.md`:
+    - Fecha y contexto (tarea/pantalla).
+    - Extracto del mensaje de error.
+    - Causa raíz identificada.
+    - Cambio concreto aplicado para arreglarlo.
+
+- El registro debe ser **breve y accionable**, pensado para evitar repetir el mismo error:
+  - Si el error viene de una mala estructura de `when/async`, anotar el patrón correcto.
+  - Si es un problema de imports, anotar la convención de imports correcta.
+  - Si es un patrón de UI (por ejemplo, safe areas en iOS), anotar la solución estándar.
+
+- Antes de tocar una zona de código similar en el futuro:
+  - Consultar rápidamente `LOG_ERRORES_AUTOFIX.md` para reaprovechar soluciones previas.
+

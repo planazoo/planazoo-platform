@@ -1484,6 +1484,12 @@ abstract class AppLocalizations {
   /// **'Mensajes del organizador y participantes visibles para todos en el plan. Aquí puedes publicar avisos y ver el historial.'**
   String get planDetailsAnnouncementsHelp;
 
+  /// T157: Enlace en el modal de ayuda contextual
+  ///
+  /// In es, this message translates to:
+  /// **'Más información'**
+  String get helpMoreInfo;
+
   /// No description provided for @planDetailsBudgetLabel.
   ///
   /// In es, this message translates to:

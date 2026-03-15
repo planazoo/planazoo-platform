@@ -1,0 +1,4 @@
+# Fastlane para publicar en App Store / TestFlight
+# Uso: bundle install && bundle exec fastlane beta
+source "https://rubygems.org"
+gem "fastlane"

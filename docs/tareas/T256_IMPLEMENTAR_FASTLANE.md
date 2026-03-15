@@ -3,7 +3,7 @@
 **Objetivo:** Integrar Fastlane en el proyecto Planazoo para automatizar builds y publicación en App Store (iOS) y Google Play (Android), siguiendo la evaluación realizada en T255.
 
 **Referencia en lista:** `docs/tareas/TASKS.md` (T256).  
-**Evaluación previa:** `docs/tareas/T255_EVALUACION_FASTLANE.md`.
+**Evaluación previa:** `docs/tareas/archivo/T255_EVALUACION_FASTLANE.md`.
 
 ---
 
@@ -45,7 +45,7 @@
 
 ## Referencias
 
-- T255: `docs/tareas/T255_EVALUACION_FASTLANE.md`
+- T255: `docs/tareas/archivo/T255_EVALUACION_FASTLANE.md`
 - Flutter CD: https://docs.flutter.dev/deployment/cd
 - Fastlane Flutter: https://docs.fastlane.tools/getting-started/cross-platform/flutter/
 - Fastlane iOS setup: https://docs.fastlane.tools/getting-started/ios/setup/

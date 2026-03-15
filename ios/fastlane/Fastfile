@@ -1,0 +1,51 @@
+# Fastlane para unp_calendario (iOS)
+# Ejecutar desde la raíz del proyecto o desde ios/:
+#   cd ios && bundle exec fastlane beta
+#   cd ios && bundle exec fastlane release
+
+default_platform(:ios)
+
+# Ruta al IPA generado por Flutter (flutter build ipa desde la raíz del proyecto)
+FLUTTER_IPA_PATH = File.expand_path("../../build/ios/ipa/unp_calendario.ipa", __dir__)
+
+platform :ios do
+  desc "Solo compilar IPA (sin subir). Útil para comprobar que el build funciona sin tener cuenta Apple activa."
+  lane :build_only do
+    project_root = File.expand_path("../..", __dir__)
+    sh("cd #{project_root} && flutter build ipa")
+    unless File.exist?(FLUTTER_IPA_PATH)
+      UI.user_error!("El build no generó el IPA. Ruta esperada: #{FLUTTER_IPA_PATH}")
+    end
+    UI.success("IPA generado correctamente: #{FLUTTER_IPA_PATH}")
+  end
+
+  desc "Subir build a TestFlight (beta)"
+  lane :beta do
+    # Opción 1: Asumir que ya corriste `flutter build ipa` desde la raíz del proyecto
+    # Opción 2: Descomenta la siguiente línea para que la lane ejecute el build
+    # sh("cd #{File.expand_path('../..', __dir__)} && flutter build ipa")
+
+    unless File.exist?(FLUTTER_IPA_PATH)
+      UI.user_error!("No se encontró el IPA. Ejecuta desde la raíz: flutter build ipa. Ruta esperada: #{FLUTTER_IPA_PATH}")
+    end
+
+    upload_to_testflight(
+      ipa: FLUTTER_IPA_PATH,
+      skip_waiting_for_build_processing: true,
+      # changelog: "Cambios en esta versión beta"
+    )
+  end
+
+  desc "Subir build a App Store (release)"
+  lane :release do
+    unless File.exist?(FLUTTER_IPA_PATH)
+      UI.user_error!("No se encontró el IPA. Ejecuta desde la raíz: flutter build ipa. Ruta esperada: #{FLUTTER_IPA_PATH}")
+    end
+
+    upload_to_app_store(
+      ipa: FLUTTER_IPA_PATH,
+      submit_for_review: false,
+      force: true
+    )
+  end
+end

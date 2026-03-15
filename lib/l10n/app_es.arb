@@ -899,6 +899,10 @@
   "@planDetailsAnnouncementsHelp": {
     "description": "Texto de ayuda o tooltip para la sección Avisos (T207)"
   },
+  "helpMoreInfo": "Más información",
+  "@helpMoreInfo": {
+    "description": "T157: Enlace en el modal de ayuda contextual"
+  },
   "planDetailsBudgetLabel": "Presupuesto estimado",
   "@planDetailsBudgetLabel": {},
   "planBudgetLabelShort": "Presupuesto",

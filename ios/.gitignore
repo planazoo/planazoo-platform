@@ -27,6 +27,10 @@ Flutter/flutter_export_environment.sh
 ServiceDefinitions.json
 Runner/GeneratedPluginRegistrant.*
 
+# Bundler (instalación local de Fastlane, sin sudo)
+vendor/bundle
+.bundle/
+
 # Exceptions to above rules.
 !default.mode1v3
 !default.mode2v3

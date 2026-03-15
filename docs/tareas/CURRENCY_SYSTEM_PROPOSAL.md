@@ -1,10 +1,11 @@
-# 💱 Propuesta: Sistema de Monedas Multi-moneda
+# 💱 T260 – Sistema multi-moneda (especificación)
 
-> Propuesta para implementar soporte de múltiples monedas y conversión de tipos de cambio en Planazoo
+> **Tarea:** T260 en `docs/tareas/TASKS.md`.  
+> Objetivo: soporte de múltiples monedas por plan y conversión de tipos de cambio en Planazoo.
 
 **Fecha:** Enero 2025  
-**Prioridad:** 🟡 Media  
-**Relacionado con:** T101, T102
+**Prioridad:** Media  
+**Relacionado con:** T101 (presupuesto), T102 (pagos)
 
 ---
 

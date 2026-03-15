@@ -899,6 +899,10 @@
   "@planDetailsAnnouncementsHelp": {
     "description": "Help text or tooltip for Announcements section (T207)"
   },
+  "helpMoreInfo": "More information",
+  "@helpMoreInfo": {
+    "description": "T157: Link in contextual help modal"
+  },
   "planDetailsBudgetLabel": "Estimated budget",
   "@planDetailsBudgetLabel": {},
   "planBudgetLabelShort": "Budget",

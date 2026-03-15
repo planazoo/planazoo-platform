@@ -1,9 +1,10 @@
 # 📋 Lista de Tareas - Planazoo
 
 > Consulta las normas y flujo de trabajo en `docs/configuracion/CONTEXT.md`.  
-> **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.
+> **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
+> **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T260**
+**Siguiente código de tarea: T261**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
@@ -14,7 +15,7 @@
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), T260 (sistema multi-moneda), etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
 **Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
@@ -31,6 +32,12 @@
 - **Aprobación:** confirmación del usuario antes de marcar completada.
 - **Grupos:** tareas relacionadas se implementan y prueban juntas cuando tiene sentido.
 - **Arquitectura:** Offline First y Plan Frankenstein según `CONTEXT.md`.
+
+### Documentos de especificación / plan
+
+- **Crear tarea:** Se puede crear un documento de especificación o plan (`Txxx_NOMBRE.md` o nombre descriptivo) en `docs/tareas/`. Si existe, **hay que documentarlo en la fila de la tarea** en este archivo (ej.: «Especificación en `docs/tareas/Txxx_*.md`» o «Plan en …»).
+- **Durante la tarea:** Actualizar el documento de especificación cuando cambien criterios, fases o decisiones.
+- **Al completar la tarea:** Mover la entrada a `COMPLETED_TASKS.md` y **mover el documento de especificación** a `docs/tareas/archivo/` (conservar el nombre del archivo para trazabilidad). Así la carpeta `docs/tareas/` solo contiene especificaciones de tareas pendientes o en curso.
 
 ---
 
@@ -75,7 +82,7 @@
 | **T37** | Gestión de eventos en borrador: visualización, filtro mostrar/ocultar, diferenciación respecto a confirmados. | Media |
 | **T38** | Eliminar opción "Alojamiento" del diálogo de eventos; alojamientos en su propio diálogo. | Media |
 | **T88** | Rediseño arquitectura del calendario en capas (Base → Tracks → Eventos → Interacciones). | Media |
-| **T96** | Refactoring CalendarScreen (en progreso parcial). Completar componentes pendientes. | Media |
+| **T96** | Refactoring CalendarScreen (en progreso parcial). Completar componentes pendientes. Plan en `docs/tareas/T96_REFACTORING_PLAN.md`. | Media |
 | **T97** | Tests de integración para funcionalidades críticas del calendario. | Media |
 | **T98** | Plan de pruebas detallado del calendario. | Baja |
 | **T99** | Documentación de API del calendario. | Baja |
@@ -202,7 +209,7 @@
 | **T135** | Gestión de cookies (web). | Alta (MVP web) |
 | **T136** | App Tracking Transparency (iOS). | Alta (MVP iOS) |
 | **T150** | Definición de MVP y roadmap de lanzamiento. | Alta |
-| **T157** | Sistema de ayuda contextual. | Baja |
+| **T157** | **Sistema de ayuda contextual multi-idioma:** Textos de ayuda en base de datos (Firestore); icono «?» en los lugares que lo necesiten; al pulsar, modal con explicación y enlace a web con contenido ampliado; soporte para personas invidentes (accesibilidad, lectores de pantalla). Especificación en `docs/tareas/T157_AYUDA_MULTIIDIOMA.md`. Relacionado: T158 (multi-idioma app), T192 (accesibilidad). | Baja |
 | **T158** | Completar sistema multi-idioma. | Media |
 | **T165** | Definir y crear usuarios de administración (modelo, Firestore, documentación). | Media |
 | **T192** | Adaptar la app a personas con discapacidad (accesibilidad). | Media |
@@ -212,6 +219,7 @@
 | **T257** | **Revisión web vs iOS (prioridad iOS):** Identificar y cerrar diferencias entre versión web (más desarrollada) e iOS. La plataforma prioritaria es iOS. Checklist y hallazgos en `docs/configuracion/REVISION_IOS_VS_WEB.md`; tarea en `docs/tareas/T257_REVISION_WEB_VS_IOS.md`. | Alta |
 | **T258** | **Icono de la app Planazoo:** Configuración y mantenimiento del icono propio en iOS y Android (sin borde blanco, full bleed si aplica). Detalle en `docs/tareas/T258_ICONO_APP.md`. | Baja |
 | **T259** | **Deep link invitación en iOS:** Implementar Universal Links o custom URL scheme para que el link de invitación (p. ej. desde email) abra la app iOS directamente en la pantalla de invitación, en paridad con la experiencia web. Incluye: configuración Associated Domains (Universal Links) o URL scheme en Xcode, archivo apple-app-site-association en el servidor si aplica, y manejo de la URL en la app (WidgetsBinding / getInitialUri). Referencia: `docs/configuracion/REVISION_IOS_VS_WEB.md` §2.3 y §3 ítem 7. Detalle en `docs/tareas/T259_DEEP_LINK_INVITACION_IOS.md`. | Media |
+| **T260** | **Sistema multi-moneda:** Soporte de múltiples monedas por plan (EUR, USD, GBP, etc.), formateo automático en UI según moneda del plan y, opcionalmente, conversión de tipos de cambio al visualizar o registrar. Relacionado con T101 (presupuesto) y T102 (pagos). Especificación en `docs/tareas/CURRENCY_SYSTEM_PROPOSAL.md`. | Media |
 
 ---
 

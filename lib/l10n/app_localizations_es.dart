@@ -781,6 +781,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Mensajes del organizador y participantes visibles para todos en el plan. Aquí puedes publicar avisos y ver el historial.';
 
   @override
+  String get helpMoreInfo => 'Más información';
+
+  @override
   String get planDetailsBudgetLabel => 'Presupuesto estimado';
 
   @override
