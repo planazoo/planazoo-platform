@@ -4,5 +4,89 @@
     "es": "Mensajes del organizador y participantes visibles para todos en el plan. Aquí puedes publicar avisos y ver el historial.",
     "en": "Messages from the organizer and participants visible to everyone in the plan. You can post announcements and see the history here.",
     "url": ""
+  },
+  "plan_details.info": {
+    "context": "Info del plan, información detallada: fechas, moneda, presupuesto, visibilidad, zona horaria",
+    "es": "Fechas de inicio y fin del plan, moneda para gastos, presupuesto estimado, visibilidad (privado o público) y zona horaria. Solo el organizador puede editar estos datos cuando el plan está en estado planificación o confirmado.",
+    "en": "Plan start and end dates, currency for expenses, estimated budget, visibility (private or public) and timezone. Only the organizer can edit these when the plan is in planning or confirmed state.",
+    "url": ""
+  },
+  "plan_details.participants": {
+    "context": "Info del plan, sección Participantes",
+    "es": "Lista de personas que forman parte del plan. El organizador puede invitar, asignar roles (organizador, participante, observador) y quitar participantes. Gestionar participantes abre la pantalla completa de administración.",
+    "en": "List of people in the plan. The organizer can invite, assign roles (organizer, participant, observer) and remove participants. Manage participants opens the full administration screen.",
+    "url": ""
+  },
+  "plan_details.leave": {
+    "context": "Info del plan, botón Salir del plan",
+    "es": "Si eres participante (no organizador), puedes salir del plan. Dejarás de ver eventos, chat y participantes. El organizador no puede \"salir\"; debe eliminar el plan si ya no lo necesita.",
+    "en": "If you are a participant (not the organizer), you can leave the plan. You will no longer see events, chat or participants. The organizer cannot \"leave\"; they must delete the plan if no longer needed.",
+    "url": ""
+  },
+  "plan_details.header": {
+    "context": "Info del plan, barra superior (título de la pantalla)",
+    "es": "Pantalla principal del plan: datos básicos, imagen, estado, fechas, participantes, avisos. Usa Guardar para aplicar cambios. El estado del plan (planificando, confirmado, en curso, finalizado) lo cambia solo el organizador desde el menú junto a la foto.",
+    "en": "Main plan screen: basic data, image, state, dates, participants, announcements. Use Save to apply changes. Plan state (planning, confirmed, in progress, finished) is changed only by the organizer from the menu next to the photo.",
+    "url": ""
+  },
+  "create_plan.general": {
+    "context": "Modal Crear plan (wd_create_plan_modal)",
+    "es": "Crea un nuevo plan con un nombre. Las fechas y el resto de la configuración se pueden completar después en la pantalla Info del plan. Solo necesitas un nombre para continuar.",
+    "en": "Create a new plan with a name. Dates and the rest of the configuration can be completed later on the Plan info screen. You only need a name to continue.",
+    "url": ""
+  },
+  "dashboard.tabs": {
+    "context": "Dashboard, pestañas de navegación (Info, Mi resumen, Calendario, etc.)",
+    "es": "Pestañas para cambiar de vista: Info del plan (datos y configuración), Mi resumen (tus eventos y alojamientos), Calendario (vista por días), Participantes, Chat, Notificaciones. Estadísticas y Pagos solo para el organizador.",
+    "en": "Tabs to switch views: Plan info (data and settings), My summary (your events and accommodations), Calendar (day view), Participants, Chat, Notifications. Stats and Payments only for the organizer.",
+    "url": ""
+  },
+  "dashboard.plan_list": {
+    "context": "Dashboard, lista de planes (columna izquierda)",
+    "es": "Lista de todos tus planes. Selecciona uno para ver su calendario y opciones. Puedes filtrar (todos, en los que participo, pendientes, cerrados) y alternar entre vista lista y vista calendario.",
+    "en": "List of all your plans. Select one to see its calendar and options. You can filter (all, where I participate, pending, closed) and switch between list and calendar view.",
+    "url": ""
+  },
+  "calendar.view": {
+    "context": "Vista de calendario del plan",
+    "es": "Vista por días con pistas (participantes o categorías). Aquí ves eventos y alojamientos. El organizador puede crear y editar; los participantes según permisos. Los colores indican tipo o participante.",
+    "en": "Day view with tracks (participants or categories). Here you see events and accommodations. The organizer can create and edit; participants according to permissions. Colors indicate type or participant.",
+    "url": ""
+  },
+  "my_summary": {
+    "context": "Mi resumen del plan",
+    "es": "Resumen de tus eventos y alojamientos en este plan. Puedes abrir cada uno para ver detalles o editarlo si tienes permiso. Útil para ver rápido qué tienes reservado o planificado.",
+    "en": "Summary of your events and accommodations in this plan. You can open each to see details or edit if you have permission. Useful to quickly see what you have booked or planned.",
+    "url": ""
+  },
+  "chat.plan": {
+    "context": "Chat del plan",
+    "es": "Conversación del plan: mensajes visibles para todos los participantes. Útil para coordinar sin salir de la app. Las notificaciones te avisan de mensajes nuevos.",
+    "en": "Plan conversation: messages visible to all participants. Useful to coordinate without leaving the app. Notifications alert you to new messages.",
+    "url": ""
+  },
+  "notifications": {
+    "context": "Notificaciones",
+    "es": "Invitaciones a planes, mensajes de chat, avisos del organizador y otras alertas. Abre el centro de notificaciones para ver pendientes y aceptar o rechazar invitaciones.",
+    "en": "Plan invitations, chat messages, organizer announcements and other alerts. Open the notification center to see pending items and accept or decline invitations.",
+    "url": ""
+  },
+  "profile.timezone": {
+    "context": "Perfil, zona horaria",
+    "es": "Configura tu zona horaria para que las fechas y horas se muestren correctamente. Recomendado si viajas o vives en otra zona. La app puede sugerirte la del dispositivo.",
+    "en": "Set your timezone so dates and times display correctly. Recommended if you travel or live in another zone. The app can suggest the device timezone.",
+    "url": ""
+  },
+  "admin.update_help": {
+    "context": "Página Admin, Actualizar ayuda",
+    "es": "Sube los textos de ayuda del archivo seed (assets/help_texts_seed.json) a Firestore. Solo usuarios administradores pueden escribir en la colección help_texts. Útil tras cambiar textos en el repo para que la app los use sin publicar nueva versión.",
+    "en": "Upload help texts from the seed file (assets/help_texts_seed.json) to Firestore. Only admin users can write to the help_texts collection. Useful after changing texts in the repo so the app uses them without releasing a new version.",
+    "url": ""
+  },
+  "admin.ui_showcase": {
+    "context": "Página Admin, UI Showcase",
+    "es": "Abre la página de demostración del diseño de la app: componentes, colores y estilos en modo oscuro y claro. Sirve para revisar la guía de estilo sin afectar datos reales.",
+    "en": "Opens the app design showcase: components, colours and styles in dark and light mode. Use it to review the style guide without affecting real data.",
+    "url": ""
   }
 }

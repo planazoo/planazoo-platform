@@ -26,16 +26,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Planazoo usa la galería para elegir la imagen del plan o de tu perfil.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Planazoo puede usar la cámara para tomar una foto del plan o de perfil.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Planazoo puede usar la cámara para tomar una foto del plan o de perfil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Planazoo usa la galería para elegir la imagen del plan o de tu perfil.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -59,6 +55,10 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

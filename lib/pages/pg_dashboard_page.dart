@@ -39,6 +39,7 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_state_serv
 import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_pending_email_events_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_unified_notifications_screen.dart';
@@ -75,7 +76,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   String? selectedPlanId;
   Plan? selectedPlan;
   List<Plan> planazoos = [];
-  List<Plan> filteredPlanazoos = [];
   bool isLoading = true;
   bool _isCalendarView = false;
   // ignore: unused_field
@@ -88,6 +88,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // NUEVO: Estado para trackear qué widget de W14-W25 está seleccionado
   String? selectedWidgetId; // 'W14', 'W15', 'W16', etc.
   String selectedFilter = 'todos'; // 'todos', 'estoy_in', 'pendientes', 'cerrados'
+  String _searchQuery = ''; // Texto de búsqueda W13; la lista mostrada se calcula en build (filtro + búsqueda)
   /// En pestaña Calendario: 'calendar' = cuadrícula, 'summary' = resumen del plan (solo en W31).
   String _calendarPanelView = 'calendar';
 
@@ -134,7 +135,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       
       setState(() {
         planazoos = plans;
-        filteredPlanazoos = List.from(plans);
         isLoading = false;
         
         // Seleccionar automáticamente el primer plan si no hay ninguno seleccionado
@@ -312,29 +312,64 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   void _filterPlanazoos(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        filteredPlanazoos = List.from(planazoos);
-      } else {
-        final searchQuery = query.toLowerCase();
-        filteredPlanazoos = planazoos.where((planazoo) {
-          final nameMatch = planazoo.name.toLowerCase().contains(searchQuery);
-          final stateMatch = (planazoo.state ?? '').toLowerCase().contains(searchQuery);
-          final startMatch = DateFormatter.formatDate(planazoo.startDate).toLowerCase().contains(searchQuery);
-          final endMatch = DateFormatter.formatDate(planazoo.endDate).toLowerCase().contains(searchQuery);
-          final participantNames = _planParticipantNames[planazoo.id] ?? const <String>[];
-          final participantsMatch = participantNames.any((name) => name.toLowerCase().contains(searchQuery));
-          final participantsCountMatch = (planazoo.participants?.toString() ?? '').contains(searchQuery);
+    setState(() => _searchQuery = query);
+  }
 
-          return nameMatch ||
-              stateMatch ||
-              startMatch ||
-              endMatch ||
-              participantsMatch ||
-              participantsCountMatch;
-        }).toList();
+  /// Lista mostrada en W28 (lista/calendario) y sidebar: filtro W26 (todos/estoy_in/pendientes/cerrados) + búsqueda W13.
+  /// Se calcula en build para que al cambiar filtro o cargar participaciones se actualice (iOS y web).
+  List<Plan> _computeDisplayedPlans(WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final pendingInvs = ref.watch(userPendingInvitationsProvider).valueOrNull ?? [];
+    List<Plan> byTab = [];
+    for (final plan in planazoos) {
+      if (plan.id == null) {
+        if (selectedFilter == 'todos') byTab.add(plan);
+        continue;
       }
-    });
+      final participants = ref.watch(planParticipantsProvider(plan.id!)).valueOrNull ?? [];
+      final hasPendingInv = pendingInvs.any((inv) => inv.planId == plan.id);
+      final hasPendingPart = user != null &&
+          participants.any((p) => p.userId == user.id && (p.isPending || p.needsResponse));
+      final isIn = user != null &&
+          (plan.userId == user.id ||
+              participants.any((p) => p.userId == user.id && p.isAccepted));
+      final isClosed = plan.state == 'finalizado' || plan.state == 'cancelado';
+      bool keep = false;
+      switch (selectedFilter) {
+        case 'todos':
+          keep = true;
+          break;
+        case 'estoy_in':
+          keep = isIn;
+          break;
+        case 'pendientes':
+          keep = hasPendingInv || hasPendingPart;
+          break;
+        case 'cerrados':
+          keep = isClosed;
+          break;
+        default:
+          keep = true;
+      }
+      if (keep) byTab.add(plan);
+    }
+    if (_searchQuery.isEmpty) return byTab;
+    final q = _searchQuery.toLowerCase();
+    return byTab.where((plan) {
+      final nameMatch = plan.name.toLowerCase().contains(q);
+      final stateMatch = (plan.state ?? '').toLowerCase().contains(q);
+      final startMatch = DateFormatter.formatDate(plan.startDate).toLowerCase().contains(q);
+      final endMatch = DateFormatter.formatDate(plan.endDate).toLowerCase().contains(q);
+      final participantNames = _planParticipantNames[plan.id] ?? const <String>[];
+      final participantsMatch = participantNames.any((name) => name.toLowerCase().contains(q));
+      final participantsCountMatch = (plan.participants?.toString() ?? '').contains(q);
+      return nameMatch ||
+          stateMatch ||
+          startMatch ||
+          endMatch ||
+          participantsMatch ||
+          participantsCountMatch;
+    }).toList();
   }
 
 
@@ -413,7 +448,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     final index = planazoos.indexWhere((p) => p.id == planId);
                     if (index != -1) {
                       planazoos[index] = updatedPlan;
-                      filteredPlanazoos = List.from(planazoos);
                     }
                   });
                 }
@@ -695,9 +729,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 // Seleccionar el plan Mini-Frank generado
                 setState(() {
                   selectedPlanId = plan.id;
-                  selectedPlan = filteredPlanazoos.firstWhere(
+                  selectedPlan = planazoos.firstWhere(
                     (p) => p.id == plan.id,
-                    orElse: () => filteredPlanazoos.first,
+                    orElse: () => planazoos.first,
                   );
                   currentScreen = 'calendar';
                   selectedWidgetId = 'W15';
@@ -1345,9 +1379,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 // Seleccionar el plan Frankenstein generado
                 setState(() {
                   selectedPlanId = planId;
-                  selectedPlan = filteredPlanazoos.firstWhere(
+                  selectedPlan = planazoos.firstWhere(
                     (p) => p.id == planId,
-                    orElse: () => filteredPlanazoos.first,
+                    orElse: () => planazoos.first,
                   );
                   currentScreen = 'calendar';
                   selectedWidgetId = 'W15';
@@ -1373,6 +1407,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
 
   Widget _buildGrid() {
+    final displayedPlans = _computeDisplayedPlans(ref);
     return LayoutBuilder(
       builder: (context, constraints) {
         final gridWidth = constraints.maxWidth;
@@ -1402,7 +1437,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 gridHeight: gridHeight,
                 onProfileTap: () => _changeScreen('profile'),
                 onAdminTap: () => _changeScreen('admin'),
-                plans: filteredPlanazoos,
+                plans: displayedPlans,
                 onOpenChatForPlan: (plan) {
                   if (plan.id != null) _openPlanTab(plan, 'chat', 'W19');
                 },
@@ -1509,7 +1544,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final w28Y = rowHeight * 4; // Empieza en la fila R5 (índice 4)
     final w28Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
     final w28Height = rowHeight * 8; // Alto de 8 filas (R5-R12)
-    
+    final displayedPlans = _computeDisplayedPlans(ref);
+
     return Positioned(
       left: w28X,
       top: w28Y,
@@ -1527,7 +1563,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           child: _isCalendarView
               ? PlanCalendarView(
                   key: const ValueKey('plan-calendar-view'),
-                  plans: filteredPlanazoos,
+                  plans: displayedPlans,
                   isLoading: isLoading,
                   onPlanSelected: (plan) {
                     if (plan.id != null) {
@@ -1537,7 +1573,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 )
               : PlanListWidget(
                   key: const ValueKey('plan-list-view'),
-                  plans: filteredPlanazoos,
+                  plans: displayedPlans,
                   selectedPlanId: selectedPlanId,
                   isLoading: isLoading,
                   onPlanSelected: _selectPlanazoo,
@@ -1767,7 +1803,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       onPlanDeleted: () {
         setState(() {
           planazoos.removeWhere((p) => p.id == selectedPlan!.id);
-          filteredPlanazoos = List.from(planazoos);
           selectedPlan = null;
           selectedPlanId = null;
           currentScreen = 'calendar';

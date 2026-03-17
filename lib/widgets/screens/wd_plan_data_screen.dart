@@ -399,6 +399,12 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                           letterSpacing: 0.1,
                         ),
                       ),
+                      const SizedBox(width: 6),
+                      HelpIconButton(
+                        helpId: HelpContextIds.planDetailsParticipants,
+                        contextLabel: loc.planDetailsParticipantsTitle,
+                        defaultBody: 'Lista de personas que forman parte del plan. El organizador puede invitar, asignar roles (organizador, participante, observador) y quitar participantes. Gestionar participantes abre la pantalla completa de administración.',
+                      ),
                     ],
                   ),
                 ],
@@ -631,8 +637,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                           _buildPlanImageSection(isCompact: isCompact),
                           const SizedBox(height: cardSpacing),
                           _buildPlanSummarySection(loc, participantsCount, currentRoleLabel, currentUserHandle, isCompact: isCompact),
-                          const SizedBox(height: cardSpacing),
-                          _buildStateManagementSection(loc),
                           const SizedBox(height: cardSpacing),
                           _buildInfoSection(loc, showBaseInfo: true, isCompact: isCompact),
                           const SizedBox(height: cardSpacing),
@@ -937,27 +941,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           ],
         ],
     );
-    if (isCompact) {
-      return child;
-    }
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_cardBackgroundStart, _cardBackgroundEnd],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _cardBorder, width: 1),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 6), spreadRadius: 0),
-          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 2), spreadRadius: -4),
-        ],
-      ),
-      child: child,
-    );
+    // Misma estructura en web y móvil: fechas, moneda, presupuesto, visibilidad, zona horaria sin card extra.
+    return child;
   }
 
   Widget _buildReadOnlyTile(String label, String value) {
@@ -1354,159 +1339,26 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     );
   }
 
-  Widget _buildStateManagementSection(AppLocalizations loc) {
-    final currentUser = ref.read(currentUserProvider);
-    final isOwner = currentUser?.id == currentPlan.userId;
+  /// Transiciones de estado permitidas para el plan actual (solo para organizador).
+  List<Map<String, dynamic>> _getAvailableStateTransitions() {
     final currentState = currentPlan.state ?? 'planificando';
-    // Solo mostrar controles si es el organizador y el plan no está finalizado o cancelado
-    if (!isOwner || currentState == 'finalizado' || currentState == 'cancelado') {
-      return const SizedBox.shrink();
-    }
-
-    // Determinar qué transiciones son válidas
-    List<Map<String, dynamic>> availableTransitions = [];
-
+    if (currentState == 'finalizado' || currentState == 'cancelado') return [];
+    final List<Map<String, dynamic>> list = [];
     switch (currentState) {
       case 'planificando':
-        availableTransitions.add({
-          'state': 'confirmado',
-          'label': 'Confirmar Plan',
-          'icon': Icons.check_circle_outline,
-        });
-        availableTransitions.add({
-          'state': 'cancelado',
-          'label': 'Cancelar Plan',
-          'icon': Icons.cancel_outlined,
-        });
+        list.add({'state': 'confirmado', 'label': 'Confirmar Plan', 'icon': Icons.check_circle_outline});
+        list.add({'state': 'cancelado', 'label': 'Cancelar Plan', 'icon': Icons.cancel_outlined});
         break;
       case 'confirmado':
-        availableTransitions.add({
-          'state': 'en_curso',
-          'label': 'Marcar como En Curso',
-          'icon': Icons.play_circle_outline,
-        });
-        availableTransitions.add({
-          'state': 'planificando',
-          'label': 'Volver a Planificación',
-          'icon': Icons.undo,
-        });
-        availableTransitions.add({
-          'state': 'cancelado',
-          'label': 'Cancelar Plan',
-          'icon': Icons.cancel_outlined,
-        });
+        list.add({'state': 'en_curso', 'label': 'Marcar como En Curso', 'icon': Icons.play_circle_outline});
+        list.add({'state': 'planificando', 'label': 'Volver a Planificación', 'icon': Icons.undo});
+        list.add({'state': 'cancelado', 'label': 'Cancelar Plan', 'icon': Icons.cancel_outlined});
         break;
       case 'en_curso':
-        availableTransitions.add({
-          'state': 'finalizado',
-          'label': 'Finalizar Plan',
-          'icon': Icons.check_circle,
-        });
+        list.add({'state': 'finalizado', 'label': 'Finalizar Plan', 'icon': Icons.check_circle});
         break;
     }
-
-    if (availableTransitions.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _cardBackgroundStart,
-            _cardBackgroundEnd,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: _cardBorder,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-            spreadRadius: -4,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.sync_alt, color: AppColorScheme.color2),
-              const SizedBox(width: 8),
-              Text(
-                loc.planDetailsStateTitle,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.1,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Estado actual: ${PlanStateService.getStateDisplayInfo(currentState)['label']}',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: _textSecondary,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.1,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: availableTransitions
-                .map(
-                  (transition) => OutlinedButton.icon(
-                    onPressed: () => _changePlanState(transition['state'] as String),
-                    icon: Icon(transition['icon'] as IconData, size: 16),
-                    label: Text(
-                      transition['label'] as String,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      minimumSize: const Size(0, 40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      side: BorderSide(
-                        color: AppColorScheme.color2.withOpacity(0.7),
-                        width: 2,
-                      ),
-                      foregroundColor: AppColorScheme.color2,
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-      ),
-    );
+    return list;
   }
 
   Future<void> _changePlanState(String newState) async {
@@ -2069,15 +1921,71 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
   }
 
   Widget _buildPlanImageSection({bool isCompact = false}) {
-    final currentUser = ref.read(currentUserProvider);
+    final currentUser = ref.watch(currentUserProvider);
     final showLeaveButton = currentUser != null && currentPlan.userId != currentUser.id;
+    final isOwner = currentUser?.id == currentPlan.userId;
+    final stateTransitions = _getAvailableStateTransitions();
+    final showStateMenu = isOwner && stateTransitions.isNotEmpty;
 
     Widget buildRightColumn() {
-      return Column(
+      final column = Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           PlanStateBadge(plan: currentPlan, onColoredBackground: true),
+          if (showStateMenu) ...[
+            const SizedBox(height: 10),
+            PopupMenuButton<String>(
+              tooltip: 'Cambiar estado del plan',
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              color: Colors.grey.shade800,
+              onSelected: (newState) => _changePlanState(newState),
+              itemBuilder: (context) => stateTransitions
+                  .map(
+                    (t) => PopupMenuItem<String>(
+                      value: t['state'] as String,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(t['icon'] as IconData, size: 20, color: AppColorScheme.color2),
+                          const SizedBox(width: 12),
+                          Text(
+                            t['label'] as String,
+                            style: GoogleFonts.poppins(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+              child: isCompact
+                  ? Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(Icons.sync_alt, color: AppColorScheme.color2, size: 28),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.sync_alt, size: 18, color: AppColorScheme.color2),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Cambiar estado',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColorScheme.color2,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.arrow_drop_down, color: AppColorScheme.color2, size: 22),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
           if (showLeaveButton) ...[
             const SizedBox(height: 12),
             TextButton.icon(
@@ -2098,41 +2006,18 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
           ],
         ],
       );
+      // En compact (iOS/móvil) dar ancho mínimo a la columna derecha para que el menú de estado no se pise
+      if (isCompact) {
+        return ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 80),
+          child: column,
+        );
+      }
+      return column;
     }
 
-    if (isCompact) {
-      const double avatarSize = 88.0;
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [_cardBackgroundStart, _cardBackgroundEnd],
-          ),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: _cardBorder, width: 1),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 6), spreadRadius: 0),
-            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 2), spreadRadius: -4),
-          ],
-        ),
-        child: Row(
-          children: [
-            _buildPlanAvatar(avatarSize),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: buildRightColumn(),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    const double imageHeight = 200;
+    // Misma estructura en móvil y web: una sola card, foto a la izquierda, estado + Salir del plan a la derecha.
+    final double avatarSize = isCompact ? 88.0 : 140.0;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -2140,41 +2025,24 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            _cardBackgroundStart,
-            _cardBackgroundEnd,
-          ],
+          colors: [_cardBackgroundStart, _cardBackgroundEnd],
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: _cardBorder,
-          width: 1,
-        ),
+        border: Border.all(color: _cardBorder, width: 1),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-            spreadRadius: -4,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 6), spreadRadius: 0),
+          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 2), spreadRadius: -4),
         ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _buildPlanImage(imageHeight),
-          ),
+          _buildPlanAvatar(avatarSize),
           const SizedBox(width: 16),
-          Align(
-            alignment: Alignment.topRight,
-            child: buildRightColumn(),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: buildRightColumn(),
+            ),
           ),
         ],
       ),
@@ -2229,27 +2097,8 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       ],
     );
 
-    if (isCompact) {
-      return content;
-    }
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_cardBackgroundStart, _cardBackgroundEnd],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _cardBorder, width: 1),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 6), spreadRadius: 0),
-          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 2), spreadRadius: -4),
-        ],
-      ),
-      child: content,
-    );
+    // Misma estructura en web y móvil: nombre y descripción sin card extra (paridad con Info del plan móvil).
+    return content;
   }
 
   Widget _buildPlanImage(double height) {

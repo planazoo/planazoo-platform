@@ -631,22 +631,20 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         event: eventToShow,
         planId: widget.plan.id ?? '',
         onSaved: (updatedEvent) async {
-          // Guardar el evento actualizado
           final eventService = ref.read(eventServiceProvider);
           await eventService.updateEvent(updatedEvent);
-          
-          // Cerrar el diálogo
           if (context.mounted) {
             Navigator.of(context).pop();
           }
-          
-          // Esperar un poco para que se actualicen los providers
-          await Future.delayed(const Duration(milliseconds: 100));
-          
-          // Forzar actualización del estado
-          if (mounted) {
-            setState(() {});
+          _invalidateEventProviders();
+        },
+        onDeleted: (eventId) async {
+          final eventService = ref.read(eventServiceProvider);
+          await eventService.deleteEvent(eventId);
+          if (context.mounted) {
+            Navigator.of(context).pop();
           }
+          _invalidateEventProviders();
         },
       ),
     );
@@ -660,7 +658,6 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         initialDate: date,
         initialHour: hour,
         onSaved: (newEvent) async {
-          // Guardar el evento
           final eventService = ref.read(eventServiceProvider);
           final eventId = await eventService.createEvent(newEvent);
           
@@ -679,17 +676,30 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
           if (context.mounted) {
             Navigator.of(context).pop();
           }
-          
-          // Esperar un poco para que se actualicen los providers
-          await Future.delayed(const Duration(milliseconds: 100));
-          
-          // Forzar actualización del estado
-          if (mounted) {
-            setState(() {});
-          }
+          _invalidateEventProviders();
         },
       ),
     );
+  }
+
+  /// Invalida los providers de eventos/estadísticas para refrescar calendario, resumen, etc. en mobile.
+  void _invalidateEventProviders() {
+    if (widget.plan.id == null) {
+      if (mounted) setState(() {});
+      return;
+    }
+    final calendarParams = CalendarNotifierParams(
+      planId: widget.plan.id!,
+      userId: widget.plan.userId,
+      initialDate: widget.plan.startDate,
+      initialColumnCount: widget.plan.columnCount,
+    );
+    final calendarNotifier = ref.read(calendarNotifierProvider(calendarParams).notifier);
+    calendarNotifier.refreshEvents();
+    ref.invalidate(planStatsProvider(widget.plan.id!));
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _showNewAccommodationDialog(DateTime dayDate) {

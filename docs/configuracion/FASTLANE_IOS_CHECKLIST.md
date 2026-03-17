@@ -56,10 +56,10 @@ Si hasta ahora solo has trabajado en local, es posible que falte:
 ---
 
 ### Paso 1: Cuenta Apple y app en App Store Connect
-- [ ] Tengo cuenta Apple Developer ($99/año) activa
-- [ ] He entrado en [App Store Connect](https://appstoreconnect.apple.com)
-- [ ] La app está creada en App Store Connect (o la creo ahora) con el mismo Bundle ID que el proyecto
-- [ ] He anotado **Apple ID**, **Team ID** y **App Store Connect Team ID** en la tabla de arriba
+- [x] Tengo cuenta Apple Developer ($99/año) activa
+- [x] He entrado en [App Store Connect](https://appstoreconnect.apple.com)
+- [x] La app está creada en App Store Connect (o la creo ahora) con el mismo Bundle ID que el proyecto
+- [x] He anotado **Apple ID**, **Team ID** y **App Store Connect Team ID** en la tabla de arriba
 
 **Notas:**  
 *(escribe aquí si cambiaste el Bundle ID o cualquier incidencia)*
@@ -67,48 +67,48 @@ Si hasta ahora solo has trabajado en local, es posible que falte:
 ---
 
 ### Paso 2: Rellenar Appfile de Fastlane
-- [ ] He editado `ios/fastlane/Appfile` con mi Apple ID, team_id e itc_team_id  
+- [x] He editado `ios/fastlane/Appfile` con mi Apple ID, team_id e itc_team_id  
   **O** he definido las variables de entorno: `FASTLANE_APPLE_ID`, `FASTLANE_TEAM_ID`, `FASTLANE_ITC_TEAM_ID`
-- [ ] He comprobado que `app_identifier` coincide con el Bundle ID de la app en App Store Connect
+- [x] He comprobado que `app_identifier` coincide con el Bundle ID de la app en App Store Connect
 
 **Notas:**
 
 ---
 
 ### Paso 3: Firma y certificados en Xcode
-- [ ] He abierto `ios/Runner.xcworkspace` en Xcode
-- [ ] En **Runner** → **Signing & Capabilities** tengo **Automatically manage signing** activado
-- [ ] He seleccionado mi **Team** y Xcode ha creado/usa un perfil de distribución (App Store / TestFlight)
-- [ ] No hay errores de firma en el proyecto
+- [x] He abierto `ios/Runner.xcworkspace` en Xcode
+- [x] En **Runner** → **Signing & Capabilities** tengo **Automatically manage signing** activado
+- [x] He seleccionado mi **Team** y Xcode ha creado/usa un perfil de distribución (App Store / TestFlight)
+- [x] No hay errores de firma en el proyecto
 
 **Notas:**
 
 ---
 
 ### Paso 4: Instalar Fastlane (bundle install)
-- [ ] He ido a la carpeta del proyecto y ejecutado: `cd ios` (desde la raíz del repo)
-- [ ] He ejecutado: `bundle install --path vendor/bundle` (instala en el proyecto, sin usar sudo)
-- [ ] La instalación termina sin error y existe `ios/Gemfile.lock`
-- [ ] He comprobado: `bundle exec fastlane --version` (sale la versión)
+- [x] He ido a la carpeta del proyecto y ejecutado: `cd ios` (desde la raíz del repo)
+- [x] He ejecutado: `bundle install --path vendor/bundle` (instala en el proyecto, sin usar sudo)
+- [x] La instalación termina sin error y existe `ios/Gemfile.lock`
+- [x] He comprobado: `bundle exec fastlane --version` (sale la versión)
 
 **Notas:** Si `bundle install` pide contraseña para instalar en el sistema, usa `bundle install --path vendor/bundle` para instalar las gemas dentro de `ios/vendor/bundle` y no tocar el Ruby del sistema.
 
 ---
 
 ### Paso 5: Generar el IPA con Flutter
-- [ ] He ejecutado desde la **raíz del proyecto**: `flutter build ipa`
-- [ ] El build termina correctamente
-- [ ] Existe el archivo `build/ios/ipa/unp_calendario.ipa`
+- [x] He ejecutado desde la **raíz del proyecto**: `flutter build ipa`
+- [x] El build termina correctamente
+- [x] Existe el archivo `build/ios/ipa/unp_calendario.ipa` (o el .ipa en build/ios/ipa/)
 
 **Notas:**
 
 ---
 
 ### Paso 6: Subir a TestFlight (beta)
-- [ ] He creado una App-specific password en [appleid.apple.com](https://appleid.apple.com) (opcional pero recomendado)
-- [ ] He ejecutado: `cd ios && bundle exec fastlane beta`
-- [ ] Fastlane ha subido el IPA a TestFlight sin error
-- [ ] Veo el build en App Store Connect → TestFlight
+- [x] He creado una App-specific password en [appleid.apple.com](https://appleid.apple.com) (opcional pero recomendado)
+- [x] He ejecutado: `cd ios && bundle exec fastlane beta` (con FASTLANE_PASSWORD=app-specific-password)
+- [x] Fastlane ha subido el IPA a TestFlight sin error
+- [x] Veo el build en App Store Connect → TestFlight
 
 **Notas:**
 

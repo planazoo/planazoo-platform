@@ -78,7 +78,21 @@ Reglas de Firestore: lectura pública (solo lectura) para la colección de texto
 
 | helpId (constante) | Uso | Pantalla / contexto |
 |--------------------|-----|----------------------|
-| `HelpContextIds.planDetailsAviso` → `plan_details.aviso` | Ayuda sobre la sección Avisos del plan | Info del plan (wd_plan_data_screen) |
+| `planDetailsAviso` → `plan_details.aviso` | Sección Avisos | Info del plan (wd_plan_data_screen) |
+| `planDetailsInfo` → `plan_details.info` | Fechas, moneda, presupuesto, visibilidad, zona horaria | Info del plan |
+| `planDetailsParticipants` → `plan_details.participants` | Participantes del plan | Info del plan |
+| `planDetailsLeave` → `plan_details.leave` | Salir del plan | Info del plan |
+| `planDetailsHeader` → `plan_details.header` | Barra superior Info del plan | Info del plan |
+| `createPlanGeneral` → `create_plan.general` | Modal Crear plan | wd_create_plan_modal |
+| `dashboardTabs` → `dashboard.tabs` | Pestañas del dashboard | Dashboard |
+| `dashboardPlanList` → `dashboard.plan_list` | Lista de planes | Dashboard |
+| `calendarView` → `calendar.view` | Vista calendario | Calendario del plan |
+| `mySummary` → `my_summary` | Mi resumen | Mi resumen del plan |
+| `chatPlan` → `chat.plan` | Chat del plan | Chat |
+| `notifications` → `notifications` | Notificaciones | Centro de notificaciones |
+| `profileTimezone` → `profile.timezone` | Zona horaria | Perfil |
+| `adminUpdateHelp` → `admin.update_help` | Actualizar ayuda | Página Admin |
+| `adminUiShowcase` → `admin.ui_showcase` | UI Showcase | Página Admin |
 
 Para añadir un nuevo contexto: (1) añadir la constante en `help_context_ids.dart` con comentario de pantalla; (2) crear documento en Firestore `help_texts/{helpId}` con `es`, `en`, `url` y opcionalmente `context`; (3) usar `<HelpIconButton helpId: HelpContextIds.xxx ... />` en la UI; (4) añadir la entrada al seed (assets + docs) con campo `context`.
 

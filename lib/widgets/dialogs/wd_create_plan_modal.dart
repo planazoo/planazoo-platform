@@ -6,7 +6,9 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/shared/constants/help_context_ids.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/widgets/help/help_icon_button.dart';
 
 /// Modal para crear un plan con nombre y UNP ID.
 /// Al crear, llama a [onPlanCreated] con el plan creado.
@@ -149,7 +151,16 @@ class _WdCreatePlanModalState extends ConsumerState<WdCreatePlanModal> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: Text(loc.createPlan),
+      title: Row(
+        children: [
+          Expanded(child: Text(loc.createPlan)),
+          HelpIconButton(
+            helpId: HelpContextIds.createPlanGeneral,
+            contextLabel: loc.createPlan,
+            defaultBody: 'Crea un nuevo plan con un nombre. Las fechas y el resto de la configuración se pueden completar después en la pantalla Info del plan. Solo necesitas un nombre para continuar.',
+          ),
+        ],
+      ),
       content: SizedBox(
         width: 420,
         child: Form(

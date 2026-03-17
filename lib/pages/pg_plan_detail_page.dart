@@ -20,11 +20,11 @@ import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
 import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
 import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
-import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/pages/pg_plans_list_page.dart';
 
 /// Página de detalle del plan para mobile
 /// Incluye barra de navegación horizontal y contenido según la opción seleccionada
@@ -109,14 +109,24 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  /// Barra superior: solo nombre del plan. Estado del plan a la derecha solo en pestaña Info.
+  /// Barra superior: solo nombre del plan y "in/out". El icono de estado del plan no va aquí
+  /// (solo en el contenido de Info del plan, a la derecha de la foto / encima de Salir del plan).
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: AppColorScheme.color2,
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () {
+          // Si al hacer pop no queda nada debajo (pantalla negra), aseguramos volver a la lista de planes.
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          } else {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const PlansListPage()),
+            );
+          }
+        },
       ),
       title: Text(
         widget.plan.name,
@@ -131,25 +141,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       ),
       centerTitle: false,
       actions: [
-        // Mi estado en el plan (¿he aceptado participar?) — visible en todas las pestañas
+        // Mi estado en el plan (in/out/pending) — visible en todas las pestañas
         Center(
           child: PlanUserStatusLabel(
             plan: widget.plan,
             compact: true,
           ),
         ),
-        // Estado del plan (borrador/confirmado) solo en pestaña Info
-        if (_selectedOption == 'planData')
-          Padding(
-            padding: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
-            child: Center(
-              child: PlanStateBadgeCompact(
-                plan: widget.plan,
-                fontSize: 10,
-                onColoredBackground: true,
-              ),
-            ),
-          ),
       ],
     );
   }
