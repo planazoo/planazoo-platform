@@ -26,6 +26,9 @@ class HelpContextIds {
   /// Lista de planes (columna izquierda)
   static const String dashboardPlanList = 'dashboard.plan_list';
 
+  /// Detalle del plan (móvil): chip **in/out/pend.** en la AppBar — qué significa y cómo actuar
+  static const String planDetailMyStatus = 'plan_detail.my_status';
+
   // ----- Calendario -----
   /// Vista de calendario (pistas, eventos, alojamientos)
   static const String calendarView = 'calendar.view';

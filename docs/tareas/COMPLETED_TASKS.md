@@ -2485,7 +2485,7 @@ Implementación de la base funcional del sistema de invitaciones y confirmación
 **Implementación completada:**
 1. ✅ **Campo `status` en PlanParticipation**
    - Valores: `pending`, `accepted`, `rejected`, `expired`
-   - Campo opcional con getters útiles (isPending, isAccepted, isRejected, isExpired, needsResponse)
+   - Campo opcional con getters útiles (isPending, isAccepted, isRejected, isExpired); `needsResponse` eliminado en favor de `isPending` solo.
    - Compatibilidad hacia atrás (null = aceptado por defecto)
 
 2. ✅ **Métodos acceptInvitation y rejectInvitation**

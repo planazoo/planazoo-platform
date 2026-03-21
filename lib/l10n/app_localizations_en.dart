@@ -843,6 +843,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planDeleteError => 'Error deleting plan';
 
   @override
+  String get planInfoDangerZoneTitle => 'Danger zone';
+
+  @override
+  String get planInfoDangerZoneSubtitle =>
+      'Deleting the plan will remove all related events. This cannot be undone.';
+
+  @override
   String planRoleLabel(String role) {
     return 'Role: $role';
   }
@@ -1202,6 +1209,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planCardPendingBadge => 'Pending';
+
+  @override
+  String get planCardChipInvitationQuestion => 'Do you want to join this plan?';
+
+  @override
+  String planCardLeavePlanConfirmBody(String planName) {
+    return 'If you leave \"$planName\", you will no longer see this plan in your list or receive notifications.\n\nTo rejoin later, the organizer must invite you again.';
+  }
+
+  @override
+  String get planMyStatusHelpTitle => 'My status in the plan';
+
+  @override
+  String get planMyStatusHelpDefault =>
+      'The chip summarizes your relationship with this plan:\n\n• pending — You have an invitation or participation awaiting a response. Tap the chip to accept or decline.\n\n• in — You already participate (or you are the organizer). If you are not the organizer, tap to leave the plan.\n\n• out — You declined the invitation. If the organizer invites you again, you will see it in Notifications.\n\nEmail invitations are also handled from Notifications.';
+
+  @override
+  String get planStatusRejectedSnackbar =>
+      'You declined to join this plan. A new invitation will appear in Notifications.';
+
+  @override
+  String get planStatusSemanticsPending =>
+      'Pending: accept or decline the plan invitation';
+
+  @override
+  String get planStatusSemanticsIn => 'You participate in this plan';
+
+  @override
+  String get planStatusSemanticsOut => 'You declined to join this plan';
+
+  @override
+  String get planCardOrganizerChipMessage =>
+      'As organizer, manage the plan from its detail screen.';
+
+  @override
+  String get planCardLeavePlanTitle => 'Leave plan';
+
+  @override
+  String get planCardLeavePlanButton => 'Leave';
+
+  @override
+  String get planCardLeftPlanSuccess => 'You left the plan';
+
+  @override
+  String get planCardLeftPlanError => 'Could not leave the plan';
 
   @override
   String invitationPlanLabel(String planId) {
@@ -1570,6 +1622,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get duration => 'Duration';
+
+  @override
+  String eventDurationFormatMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get eventDurationFormatOneHour => '1 hour';
+
+  @override
+  String eventDurationFormatHoursOnly(int hours) {
+    return '$hours h';
+  }
+
+  @override
+  String eventDurationFormatHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
 
   @override
   String get timezone => 'Timezone';
@@ -2113,4 +2183,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noPermissionTitle => 'No permission';
+
+  @override
+  String get helpManualOpenFromLogin => 'Quick guide (beta)';
+
+  @override
+  String get helpManualTitle => 'Quick guide for new users';
+
+  @override
+  String get helpManualIntro =>
+      'Short guide for the testing phase. It helps you get started and understand Planazoo\'s key flows.';
+
+  @override
+  String get helpManualSectionGettingStartedTitle => '1) Getting started';
+
+  @override
+  String get helpManualGettingStarted1 =>
+      'If you already have an account, sign in with email/username and password, or with Google.';
+
+  @override
+  String get helpManualGettingStarted2 =>
+      'If you do not have an account, sign up and verify your email before continuing.';
+
+  @override
+  String get helpManualGettingStarted3 =>
+      'Choose language from the top-right corner on the login screen.';
+
+  @override
+  String get helpManualSectionPlanAndCalendarTitle => '2) Plans and calendar';
+
+  @override
+  String get helpManualPlanCalendar1 =>
+      'Create a plan and define dates; then add events and accommodations.';
+
+  @override
+  String get helpManualPlanCalendar2 =>
+      'On mobile, main editing is via tap and dialog; on web you have more advanced actions.';
+
+  @override
+  String get helpManualPlanCalendar3 =>
+      'Use the summary view to quickly review events, flights, and accommodations.';
+
+  @override
+  String get helpManualSectionInvitationsTitle =>
+      '3) Invitations and participants';
+
+  @override
+  String get helpManualInvitations1 =>
+      'Invite by email or username depending on the flow available in your participants screen.';
+
+  @override
+  String get helpManualInvitations2 =>
+      'When invited, you will see pending/in/out status and can respond from status chips.';
+
+  @override
+  String get helpManualInvitations3 =>
+      'If a user does not appear, verify the invited email and registration status.';
+
+  @override
+  String get helpManualSectionNotificationsTitle => '4) Notifications';
+
+  @override
+  String get helpManualNotifications1 =>
+      'Open the bell icon to review plan notifications and pending actions.';
+
+  @override
+  String get helpManualNotifications2 =>
+      'Unread items are highlighted; opening details marks them as read.';
+
+  @override
+  String get helpManualNotifications3 =>
+      'If expected alerts are missing, open the plan and check the notifications tab too.';
+
+  @override
+  String get helpManualSectionTipsTitle => '5) Testing tips';
+
+  @override
+  String get helpManualTips1 =>
+      'Prioritize validating event create/edit, invitations, and notification flows.';
+
+  @override
+  String get helpManualTips2 =>
+      'Always test both web and iOS to detect behavior differences.';
+
+  @override
+  String get helpManualTips3 =>
+      'If something fails, record exact steps, test user, and screen for fast reproduction.';
 }

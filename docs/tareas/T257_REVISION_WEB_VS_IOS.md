@@ -10,7 +10,7 @@
 ## Contexto
 
 - **Entrada autenticada:** Web → `DashboardPage` (grid, sidebar W1, pestañas W14–W20, lista de planes, panel de contenido). iOS → `PlansListPage` (lista de planes, barra inferior notificaciones/chat/perfil).
-- **Detalle de plan:** Web → contenido en panel W31 (mismas pantallas). iOS → `PlanDetailPage` con `PlanNavigationBar` (Info, Mi resumen, Calendario, Participantes, Stats, Pagos, Chat).
+- **Detalle de plan:** Web → contenido en panel W31 (mismas pantallas). iOS → `PlanDetailPage` con `PlanNavigationBar` (Info, Mi resumen, Calendario, Participantes, Chat, Pagos, Stats, Notificaciones; ver `wd_plan_navigation_bar.dart`).
 - **Calendario:** Web → `CalendarScreen` (desktop). iOS → `CalendarMobilePage` (vista adaptada 1–3 días).
 - La decisión de qué UI mostrar se toma en `app.dart` con `PlatformUtils.shouldShowMobileUI(context)`.
 
@@ -31,12 +31,12 @@
 ## Áreas a revisar (checklist) – rellenado Marzo 2026
 
 - [x] **Lista de planes:** Filtros, búsqueda, creación, card (imagen, iconos, navegación). **Paridad:** iOS tiene filtros (todos, estoy in, pendientes, cerrados), búsqueda, crear plan, card con imagen e iconos; navegación a detalle. Igual que web.
-- [x] **Detalle del plan / pestañas:** Info, Mi resumen, Calendario, Participantes, Estadísticas, Pagos, Chat. **Paridad:** Las 7 pestañas existen en iOS con las mismas pantallas (PlanDataScreen, MyPlanSummaryScreen, CalendarMobilePage, Participants, Chat, Stats, Payments).
+- [x] **Detalle del plan / pestañas:** Info, Mi resumen, Calendario, Participantes, Chat, Pagos, Estadísticas, Notificaciones del plan. **Paridad:** Las pestañas existen en iOS con las mismas pantallas (PlanDataScreen, MyPlanSummaryScreen, CalendarMobilePage, Participants, Chat, Payments, Stats, WdPlanNotificationsScreen).
 - [x] **Calendario:** Crear/editar evento, arrastrar, ver alojamientos, tracks. **Paridad funcional:** CalendarMobilePage tiene tracks, eventos, alojamientos y diálogos; vista adaptada a 1–3 días.
 - [x] **Notificaciones e invitaciones:** Aceptar/rechazar, navegación tras aceptar. **Paridad + 1 pendiente:** Tras aceptar en móvil ya se navega a `PlanDetailPage(plan)`. Pendiente: deep link (Universal Links o URL scheme) para abrir app desde link.
 - [x] **Perfil y ajustes:** **Paridad:** Perfil accesible desde barra inferior en iOS; misma ProfilePage (edición, idioma, zona horaria, eliminar cuenta).
 - [x] **Multi-idioma:** **OK.** PlansListPage e InvitationPage usan solo AppLocalizations. Sustituidos en InvitationPage todos los textos visibles (header, detalles del plan, aviso email incorrecto, fecha expiración) por claves ES/EN.
-- [x] **Safe area y navegación:** **OK:** PlansListPage y PlanDetailPage usan SafeArea. Barra de pestañas: 7 opciones; en iPhone pequeño puede hacer falta scroll (prueba manual pendiente).
+- [x] **Safe area y navegación:** **OK:** PlansListPage y PlanDetailPage usan SafeArea. Barra de pestañas: varias opciones (incl. notificaciones del plan); en iPhone pequeño puede hacer falta scroll (prueba manual pendiente, ver P3 lista de puntos).
 - [x] **Consistencia visual:** **OK:** Cards, iconos naranja para no leídos, estilo ancho completo y bordes aplicado en web e iOS.
 
 ---

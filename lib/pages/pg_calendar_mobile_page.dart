@@ -182,16 +182,22 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   void _syncScrollFromHours() {
     if (_isAutoScrolling) return;
     if (_hoursScrollController.hasClients && _dataScrollController.hasClients) {
-      _dataScrollController.jumpTo(_hoursScrollController.offset);
-      setState(() {});
+      final target = _hoursScrollController.offset;
+      if ((_dataScrollController.offset - target).abs() < 0.5) return;
+      _isAutoScrolling = true;
+      _dataScrollController.jumpTo(target);
+      _isAutoScrolling = false;
     }
   }
 
   void _syncScrollFromData() {
     if (_isAutoScrolling) return;
     if (_dataScrollController.hasClients && _hoursScrollController.hasClients) {
-      _hoursScrollController.jumpTo(_dataScrollController.offset);
-      setState(() {});
+      final target = _dataScrollController.offset;
+      if ((_hoursScrollController.offset - target).abs() < 0.5) return;
+      _isAutoScrolling = true;
+      _hoursScrollController.jumpTo(target);
+      _isAutoScrolling = false;
     }
   }
 

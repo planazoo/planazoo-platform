@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
@@ -32,6 +31,9 @@ class CalendarGrid extends StatelessWidget {
 
   /// Callback para crear un nuevo alojamiento desde el header fijo de alojamientos.
   final VoidCallback onAccommodationHeaderTap;
+  
+  /// Cuando es true, bloquea el scroll vertical para priorizar gestos de drag en eventos.
+  final bool lockVerticalScroll;
 
   const CalendarGrid({
     super.key,
@@ -41,6 +43,7 @@ class CalendarGrid extends StatelessWidget {
     required this.buildDataRows,
     required this.buildEventsLayer,
     required this.onAccommodationHeaderTap,
+    this.lockVerticalScroll = false,
   });
 
   @override
@@ -141,7 +144,9 @@ class CalendarGrid extends StatelessWidget {
               ),
               child: SingleChildScrollView(
                 controller: hoursScrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
+                physics: lockVerticalScroll
+                    ? const NeverScrollableScrollPhysics()
+                    : const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   children: List.generate(AppConstants.defaultRowCount, (index) {
                     return Container(
@@ -191,7 +196,9 @@ class CalendarGrid extends StatelessWidget {
                     ),
                     child: SingleChildScrollView(
                       controller: dataScrollController,
-                      physics: const AlwaysScrollableScrollPhysics(),
+                      physics: lockVerticalScroll
+                          ? const NeverScrollableScrollPhysics()
+                          : const AlwaysScrollableScrollPhysics(),
                       child: Stack(
                         children: [
                           buildDataRows(),

@@ -184,54 +184,91 @@ class InformativeNotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // Las de acción se consideran no leídas hasta que se realiza la acción.
     final isUnread = notification.requiresAction || !notification.isRead;
-    return InkWell(
-      onTap: onMarkRead,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        margin: const EdgeInsets.only(bottom: 4),
-        decoration: BoxDecoration(
-          color: isUnread ? Colors.grey.shade800.withOpacity(0.5) : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          border: Border(bottom: BorderSide(color: Colors.grey.shade700, width: 0.5)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              Icons.notifications_none,
-              color: AppColorScheme.color2,
-              size: 18,
+    final bg = isUnread ? Colors.grey.shade800 : Colors.transparent;
+    final borderColor = isUnread ? AppColorScheme.color2.withOpacity(0.6) : Colors.grey.shade700.withOpacity(0.6);
+    final iconColor = isUnread ? AppColorScheme.color2 : Colors.grey.shade500;
+    final titleColor = isUnread ? Colors.white : Colors.grey.shade300;
+    final bodyColor = isUnread ? Colors.grey.shade300 : Colors.grey.shade500;
+    final timeColor = isUnread ? Colors.grey.shade400 : Colors.grey.shade600;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onMarkRead,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          margin: const EdgeInsets.only(bottom: 6),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border(
+              left: BorderSide(color: borderColor, width: isUnread ? 3 : 1),
+              bottom: BorderSide(color: Colors.grey.shade700, width: 0.5),
+              top: BorderSide(color: Colors.grey.shade900.withOpacity(0.2), width: 0.5),
+              right: BorderSide(color: Colors.grey.shade900.withOpacity(0.2), width: 0.5),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    notification.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: isUnread ? FontWeight.w600 : FontWeight.w500,
-                      color: Colors.white,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                isUnread ? Icons.notifications_active_outlined : Icons.notifications_none,
+                color: iconColor,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      notification.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: isUnread ? FontWeight.w700 : FontWeight.w500,
+                        color: titleColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      notification.body,
+                      style: GoogleFonts.poppins(fontSize: 11, color: bodyColor),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormatter.formatDateTime(notification.createdAt),
+                      style: GoogleFonts.poppins(fontSize: 9, color: timeColor),
+                    ),
+                  ],
+                ),
+              ),
+              if (isUnread) ...[
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColorScheme.color3,
+                      borderRadius: BorderRadius.circular(99),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColorScheme.color3.withOpacity(0.35),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    notification.body,
-                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade400),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    DateFormatter.formatDateTime(notification.createdAt),
-                    style: GoogleFonts.poppins(fontSize: 9, color: Colors.grey.shade500),
-                  ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

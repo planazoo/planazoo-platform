@@ -20,6 +20,8 @@ class WdDashboardSidebar extends ConsumerWidget {
   final List<Plan> plans;
   /// Al seleccionar un plan en el modal de chat: abrir ese plan y pestaña chat.
   final void Function(Plan plan)? onOpenChatForPlan;
+  /// Abrir manual rápido de ayuda.
+  final VoidCallback? onHelpTap;
 
   const WdDashboardSidebar({
     super.key,
@@ -29,6 +31,7 @@ class WdDashboardSidebar extends ConsumerWidget {
     this.onAdminTap,
     this.plans = const [],
     this.onOpenChatForPlan,
+    this.onHelpTap,
   });
 
   @override
@@ -89,6 +92,16 @@ class WdDashboardSidebar extends ConsumerWidget {
                       child: IconButton(
                         icon: const Icon(Icons.admin_panel_settings, color: Colors.white, size: 24),
                         onPressed: onAdminTap,
+                      ),
+                    ),
+                  ],
+                  if (onHelpTap != null) ...[
+                    const SizedBox(height: 8),
+                    Tooltip(
+                      message: loc.helpManualOpenFromLogin,
+                      child: IconButton(
+                        icon: const Icon(Icons.help_outline, color: Colors.white, size: 24),
+                        onPressed: onHelpTap,
                       ),
                     ),
                   ],

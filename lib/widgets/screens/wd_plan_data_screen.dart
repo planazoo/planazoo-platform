@@ -72,6 +72,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   double? _budget;
   bool _hasUnsavedChanges = false;
   bool _isSavingPlan = false;
+  // P12: secciones Info colapsables (Participantes / Avisos / Zona de peligro)
+  bool _infoSectionParticipantsExpanded = true;
+  bool _infoSectionAnnouncementsExpanded = true;
+  bool _infoSectionDangerExpanded = false;
 
   // Helper para detectar modo oscuro
   bool get _isDarkMode {
@@ -350,7 +354,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       data: (participants) {
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -381,68 +384,86 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             ],
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+              // P11/P12: título dentro del recuadro + plegable
+              InkWell(
+                onTap: () => setState(() => _infoSectionParticipantsExpanded = !_infoSectionParticipantsExpanded),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(20, 18, 12, _infoSectionParticipantsExpanded ? 10 : 18),
+                  child: Row(
                     children: [
                       Icon(Icons.group_outlined, color: Colors.white),
                       const SizedBox(width: 8),
-                      Text(
-                        loc.planDetailsParticipantsTitle,
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.1,
+                      Expanded(
+                        child: Text(
+                          loc.planDetailsParticipantsTitle,
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.1,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 6),
                       HelpIconButton(
                         helpId: HelpContextIds.planDetailsParticipants,
                         contextLabel: loc.planDetailsParticipantsTitle,
                         defaultBody: 'Lista de personas que forman parte del plan. El organizador puede invitar, asignar roles (organizador, participante, observador) y quitar participantes. Gestionar participantes abre la pantalla completa de administración.',
                       ),
+                      Icon(
+                        _infoSectionParticipantsExpanded ? Icons.expand_less : Icons.expand_more,
+                        color: Colors.grey.shade400,
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
-              if (widget.onManageParticipants != null) ...[
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: widget.onManageParticipants,
-                    icon: const Icon(Icons.open_in_new),
-                    label: Text(loc.planDetailsParticipantsManageLink),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColorScheme.color2,
-                      textStyle: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
+              if (_infoSectionParticipantsExpanded) ...[
+                Divider(height: 1, thickness: 1, color: Colors.grey.shade700.withOpacity(0.5)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.onManageParticipants != null) ...[
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: widget.onManageParticipants,
+                            icon: const Icon(Icons.open_in_new),
+                            label: Text(loc.planDetailsParticipantsManageLink),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColorScheme.color2,
+                              textStyle: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      if (participants.isEmpty)
+                        Text(
+                          loc.planDetailsNoParticipants,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: _textSecondary,
+                          ),
+                        )
+                      else
+                        ParticipantsListWidget(
+                          planId: currentPlan.id!,
+                          showActions: false,
+                          compact: isCompact,
+                        ),
+                    ],
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
-              if (participants.isEmpty)
-                Text(
-                  loc.planDetailsNoParticipants,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: _textSecondary,
-                  ),
-                )
-              else
-                ParticipantsListWidget(
-                  planId: currentPlan.id!,
-                  showActions: false,
-                  compact: isCompact,
-                ),
             ],
           ),
         );
@@ -638,6 +659,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                           const SizedBox(height: cardSpacing),
                           _buildPlanSummarySection(loc, participantsCount, currentRoleLabel, currentUserHandle, isCompact: isCompact),
                           const SizedBox(height: cardSpacing),
+                          // P10: en detalle del plan (móvil) la zona de eliminar quedaba al final del scroll; subirla para que sea visible.
+                          if (!widget.showAppBar) ...[
+                            _buildDeleteButton(),
+                            const SizedBox(height: cardSpacing),
+                          ],
                           _buildInfoSection(loc, showBaseInfo: true, isCompact: isCompact),
                           const SizedBox(height: cardSpacing),
                           _buildParticipantsSection(loc, participantsAsync, isCompact: isCompact),
@@ -954,7 +980,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           Text(
             label,
             style: AppTypography.bodyStyle.copyWith(
-              fontSize: 13,
+              fontSize: 14,
               color: Colors.grey.shade600,
               fontWeight: FontWeight.w600,
             ),
@@ -1010,7 +1036,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         decoration: InputDecoration(
           labelText: loc.planTimezoneLabel,
           labelStyle: GoogleFonts.poppins(
-            fontSize: 13,
+            fontSize: 14,
             color: Colors.grey.shade400,
             fontWeight: FontWeight.w500,
           ),
@@ -1124,7 +1150,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: GoogleFonts.poppins(
-            fontSize: 13,
+            fontSize: 14,
             color: Colors.grey.shade400,
             fontWeight: FontWeight.w500,
           ),
@@ -1192,7 +1218,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               ? loc.planBudgetLabelShort
               : loc.planDetailsBudgetLabel,
           labelStyle: GoogleFonts.poppins(
-            fontSize: 13,
+            fontSize: 14,
             color: Colors.grey.shade400,
             fontWeight: FontWeight.w500,
           ),
@@ -1273,7 +1299,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           decoration: InputDecoration(
             labelText: label,
             labelStyle: GoogleFonts.poppins(
-              fontSize: 13,
+              fontSize: 14,
               color: Colors.grey.shade400,
               fontWeight: FontWeight.w500,
             ),
@@ -1523,7 +1549,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
           ),
           content: Text(
-            '¿Estás seguro de que quieres salir de "${currentPlan.name}"? Dejarás de ver eventos y participantes.',
+            'Si sales de "${currentPlan.name}", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\n'
+            'Para volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.',
             style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
           ),
           actions: [
@@ -1560,6 +1587,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   Widget _buildDeleteButton() {
+    final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
     final isOwner = currentUser?.id == currentPlan.userId;
     if (!isOwner) {
@@ -1568,48 +1596,75 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.grey.shade800,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.red.shade700, width: 1),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Zona de Peligro',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.red.shade200,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Eliminar este plan eliminará todos los eventos asociados y no se puede deshacer.',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: Colors.red.shade200,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _showDeleteConfirmation(context),
-              icon: const Icon(Icons.delete, size: 18),
-              label: Text('Eliminar Plan', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade700,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+          // P12: zona de peligro plegable
+          InkWell(
+            onTap: () => setState(() => _infoSectionDangerExpanded = !_infoSectionDangerExpanded),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 14, 12, _infoSectionDangerExpanded ? 10 : 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      loc.planInfoDangerZoneTitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.red.shade200,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _infoSectionDangerExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.red.shade200,
+                  ),
+                ],
               ),
             ),
           ),
+          if (_infoSectionDangerExpanded) ...[
+            Divider(height: 1, thickness: 1, color: Colors.red.shade900.withOpacity(0.5)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    loc.planInfoDangerZoneSubtitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.red.shade200,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showDeleteConfirmation(context),
+                      icon: const Icon(Icons.delete, size: 18),
+                      label: Text(loc.planDeleteDialogConfirm, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1699,7 +1754,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       LoggerService.error('Error deleting plan', context: 'PLAN_DATA_SCREEN', error: e);
       if (!context.mounted) return false;
       final loc = AppLocalizations.of(context)!;
-      _showSnackBarError(loc.planDeleteError);
+      _showSnackBarError(_mapDeleteErrorMessage(e.toString().replaceFirst('Exception: ', ''), loc));
       return false;
     }
   }
@@ -1815,53 +1870,7 @@ class _DeletePlanDialogState extends State<_DeletePlanDialog> {
   }
 }
 
-// Método _deletePlan debe estar en _PlanDataScreenState
 extension _PlanDataScreenStateExtension on _PlanDataScreenState {
-  Future<bool> _deletePlan(String password) async {
-    if (currentPlan.id == null) return false;
-
-    try {
-      final loc = AppLocalizations.of(context)!;
-      final authService = ref.read(authServiceProvider);
-      final planService = ref.read(planServiceProvider);
-      final eventService = ref.read(eventServiceProvider);
-
-      final planId = currentPlan.id!;
-
-      final success = await authService.deletePlan(
-        planId: planId,
-        reauthenticate: true,
-        password: password,
-      );
-
-      if (!success) {
-        return false;
-      }
-
-      if (currentPlan.imageUrl != null) {
-        await ImageService.deletePlanImage(currentPlan.imageUrl!);
-      }
-
-      await eventService.deleteEventsByPlanId(planId);
-
-      final deleted = await planService.deletePlan(planId);
-      if (!context.mounted) return deleted;
-
-      if (!deleted) {
-        _showSnackBarError(loc.planDeleteError);
-        return false;
-      }
-
-      _showSnackBarSuccess(loc.planDeleteSuccess(currentPlan.name));
-      return true;
-    } catch (e) {
-      if (context.mounted) {
-        _showSnackBarError(_mapDeleteErrorMessage(e.toString().replaceFirst('Exception: ', ''), AppLocalizations.of(context)!));
-      }
-      return false;
-    }
-  }
-
   String _mapDeleteErrorMessage(String errorCode, AppLocalizations loc) {
     String normalized = errorCode.trim();
     if (normalized.startsWith('Exception: ')) {
@@ -1920,6 +1929,58 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     }
   }
 
+  /// P6: posición correcta del menú respecto al badge (showMenu con RelativeRect fijo rompía el tap en móvil).
+  Future<void> _openPlanStateTransitionMenu(
+    BuildContext anchorContext,
+    List<Map<String, dynamic>> stateTransitions,
+  ) async {
+    if (stateTransitions.isEmpty) return;
+    if (stateTransitions.length == 1) {
+      await _changePlanState(stateTransitions.first['state'] as String);
+      return;
+    }
+    final RenderBox? button = anchorContext.findRenderObject() as RenderBox?;
+    final overlayState = Overlay.of(anchorContext);
+    final RenderBox overlay = overlayState.context.findRenderObject() as RenderBox;
+    if (button == null || !button.hasSize) return;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+    final selected = await showMenu<String>(
+      context: anchorContext,
+      position: position,
+      color: Colors.grey.shade800,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      items: stateTransitions
+          .map(
+            (t) => PopupMenuItem<String>(
+              value: t['state'] as String,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(t['icon'] as IconData, size: 20, color: AppColorScheme.color2),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      t['label'] as String,
+                      style: GoogleFonts.poppins(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+    if (selected != null && mounted) {
+      await _changePlanState(selected);
+    }
+  }
+
   Widget _buildPlanImageSection({bool isCompact = false}) {
     final currentUser = ref.watch(currentUserProvider);
     final showLeaveButton = currentUser != null && currentPlan.userId != currentUser.id;
@@ -1932,7 +1993,23 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          PlanStateBadge(plan: currentPlan, onColoredBackground: true),
+          Builder(
+            builder: (badgeContext) {
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: showStateMenu
+                      ? () => _openPlanStateTransitionMenu(badgeContext, stateTransitions)
+                      : null,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: PlanStateBadge(plan: currentPlan, onColoredBackground: true),
+                  ),
+                ),
+              );
+            },
+          ),
           if (showStateMenu) ...[
             const SizedBox(height: 10),
             PopupMenuButton<String>(
@@ -2053,7 +2130,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     // Estilo tipo form de evento: sin recuadro común, campos con borde sutil
     final inputDecoration = (String label) => InputDecoration(
       labelText: label,
-      labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
+      labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
       contentPadding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 18, vertical: isCompact ? 12 : 18),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -2308,9 +2385,12 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       return const SizedBox.shrink();
     }
 
+    final loc = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 400),
+      constraints: _infoSectionAnnouncementsExpanded
+          ? const BoxConstraints(minHeight: 400)
+          : const BoxConstraints(),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -2341,27 +2421,19 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // T231: Apartado Avisos — decisión mantener/simplificar/quitar: docs/ux/plan_info_aviso_t231.md
-          // Header con título y botón
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: _isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.planDetailsAnnouncementsTitle,
+          // P12: cabecera plegable (T231: docs/ux/plan_info_aviso_t231.md)
+          InkWell(
+            onTap: () => setState(() => _infoSectionAnnouncementsExpanded = !_infoSectionAnnouncementsExpanded),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 12, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      loc.planDetailsAnnouncementsTitle,
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         color: Colors.white,
@@ -2369,15 +2441,27 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                         letterSpacing: 0.1,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    HelpIconButton(
-                      helpId: HelpContextIds.planDetailsAviso,
-                      contextLabel: AppLocalizations.of(context)!.planDetailsAnnouncementsTitle,
-                      defaultBody: AppLocalizations.of(context)!.planDetailsAnnouncementsHelp,
-                    ),
-                  ],
-                ),
-                Container(
+                  ),
+                  HelpIconButton(
+                    helpId: HelpContextIds.planDetailsAviso,
+                    contextLabel: loc.planDetailsAnnouncementsTitle,
+                    defaultBody: loc.planDetailsAnnouncementsHelp,
+                  ),
+                  Icon(
+                    _infoSectionAnnouncementsExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.grey.shade400,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_infoSectionAnnouncementsExpanded) ...[
+            Divider(height: 1, thickness: 1, color: Colors.grey.shade700.withOpacity(0.5)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -2431,17 +2515,16 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-          // Timeline de avisos (compact en iOS: menos altura por ítem, fondo oscuro)
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 200, maxHeight: 420),
-            child: AnnouncementTimeline(
-              planId: currentPlan.id!,
-              compact: isCompact,
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 200, maxHeight: 420),
+              child: AnnouncementTimeline(
+                planId: currentPlan.id!,
+                compact: isCompact,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

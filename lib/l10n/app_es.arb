@@ -957,6 +957,10 @@
   },
   "planDeleteError": "Error al eliminar el plan",
   "@planDeleteError": {},
+  "planInfoDangerZoneTitle": "Zona de peligro",
+  "@planInfoDangerZoneTitle": {},
+  "planInfoDangerZoneSubtitle": "Eliminar el plan borrará todos los eventos asociados. Esta acción no se puede deshacer.",
+  "@planInfoDangerZoneSubtitle": {},
   "planRoleLabel": "Rol: {role}",
   "@planRoleLabel": {
     "placeholders": {
@@ -1123,11 +1127,11 @@
   "@statusAccepted": { "description": "Estado usuario en plan: ya participa (aceptado)" },
   "statusRejected": "Rechazado",
   "@statusRejected": { "description": "Estado usuario en plan: rechazó participar" },
-  "statusShortIn": "in",
+  "statusShortIn": "dentro",
   "@statusShortIn": { "description": "Estado corto iOS: apuntado/aceptado" },
-  "statusShortOut": "out",
+  "statusShortOut": "fuera",
   "@statusShortOut": { "description": "Estado corto iOS: rechazado" },
-  "statusShortPending": "pending",
+  "statusShortPending": "pend.",
   "@statusShortPending": { "description": "Estado corto iOS: pendiente de aceptar" },
   "myStatusLabel": "Mi estado",
   "@myStatusLabel": { "description": "Etiqueta W10: mi estado en el plan" },
@@ -1135,6 +1139,30 @@
   "@planCardInvitationBadge": { "description": "Badge en card del plan: invitación pendiente" },
   "planCardPendingBadge": "Pendiente",
   "@planCardPendingBadge": { "description": "Badge en card del plan: participación pendiente" },
+  "planCardChipInvitationQuestion": "¿Quieres unirte a este plan?",
+  "@planCardChipInvitationQuestion": { "description": "Diálogo al pulsar chip pending en card" },
+  "planCardLeavePlanConfirmBody": "Si sales de \"{planName}\", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\nPara volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.",
+  "@planCardLeavePlanConfirmBody": { "placeholders": { "planName": { "type": "String" } } },
+  "planMyStatusHelpTitle": "Mi estado en el plan",
+  "@planMyStatusHelpTitle": { "description": "Título ayuda chip in/out/pend. en barra del plan" },
+  "planMyStatusHelpDefault": "El chip resume tu relación con este plan:\n\n• pend. — Tienes una invitación o una participación pendiente de aceptar. Pulsa el chip para aceptar o rechazar.\n\n• dentro — Ya participas (o eres organizador). Si no eres organizador, pulsa para salir del plan.\n\n• fuera — Declinaste la invitación. Si el organizador te invita de nuevo, lo verás en Notificaciones.\n\nLas invitaciones por correo también se gestionan desde Notificaciones.",
+  "@planMyStatusHelpDefault": { "description": "Cuerpo ayuda por defecto si no hay Firestore" },
+  "planStatusRejectedSnackbar": "Indicaste que no te unías a este plan. Si recibes una nueva invitación, aparecerá en Notificaciones.",
+  "@planStatusRejectedSnackbar": { "description": "Al pulsar chip fuera cuando rechazaste" },
+  "planStatusSemanticsPending": "Pendiente de aceptar o rechazar invitación al plan",
+  "@planStatusSemanticsPending": { "description": "Accesibilidad chip pend." },
+  "planStatusSemanticsIn": "Participas en el plan",
+  "@planStatusSemanticsIn": { "description": "Accesibilidad chip dentro" },
+  "planStatusSemanticsOut": "Rechazaste unirte a este plan",
+  "@planStatusSemanticsOut": { "description": "Accesibilidad chip fuera" },
+  "planCardOrganizerChipMessage": "Como organizador, gestiona el plan desde su ficha.",
+  "@planCardOrganizerChipMessage": { "description": "SnackBar al pulsar chip in siendo organizador" },
+  "planCardLeavePlanTitle": "Salir del plan",
+  "@planCardLeavePlanTitle": { "description": "Título diálogo salir desde chip in" },
+  "planCardLeavePlanButton": "Salir",
+  "@planCardLeavePlanButton": { "description": "Botón confirmar salir plan desde card" },
+  "planCardLeftPlanSuccess": "Has salido del plan",
+  "planCardLeftPlanError": "No se pudo salir del plan",
   "invitationPlanLabel": "Plan: {planId}",
   "@invitationPlanLabel": { "placeholders": { "planId": { "type": "String" } } },
   "invitationRoleLabel": "Rol: {role}",
@@ -1430,6 +1458,40 @@
   "duration": "Duración",
   "@duration": {
     "description": "Label de duración"
+  },
+  "eventDurationFormatMinutes": "{minutes} min",
+  "@eventDurationFormatMinutes": {
+    "description": "Duración en minutos (menos de 1 h)",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "eventDurationFormatOneHour": "1 hora",
+  "@eventDurationFormatOneHour": {
+    "description": "Duración exacta 60 minutos"
+  },
+  "eventDurationFormatHoursOnly": "{hours} h",
+  "@eventDurationFormatHoursOnly": {
+    "description": "Solo horas enteras",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "eventDurationFormatHoursMinutes": "{hours} h {minutes} min",
+  "@eventDurationFormatHoursMinutes": {
+    "description": "Horas y minutos",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
   },
   "timezone": "Timezone",
   "@timezone": {
@@ -1825,5 +1887,29 @@
   "noPermissionEditPersonalInfoOthers": "No tienes permisos para editar la información personal de otros participantes.",
   "@noPermissionEditPersonalInfoOthers": { "description": "Mensaje cuando no se puede editar info personal de otros" },
   "noPermissionTitle": "Sin permisos",
-  "@noPermissionTitle": { "description": "Título de aviso sin permisos" }
+  "@noPermissionTitle": { "description": "Título de aviso sin permisos" },
+  "helpManualOpenFromLogin": "Manual rápido (beta)",
+  "@helpManualOpenFromLogin": { "description": "Enlace desde login al manual web de ayuda" },
+  "helpManualTitle": "Manual rápido para nuevos usuarios",
+  "helpManualIntro": "Guía breve para la fase de pruebas. Te ayuda a empezar y entender los flujos más importantes de Planazoo.",
+  "helpManualSectionGettingStartedTitle": "1) Primeros pasos",
+  "helpManualGettingStarted1": "Si ya tienes cuenta, inicia sesión con email/usuario y contraseña, o con Google.",
+  "helpManualGettingStarted2": "Si no tienes cuenta, regístrate y verifica tu email antes de continuar.",
+  "helpManualGettingStarted3": "Selecciona idioma en la esquina superior derecha cuando estés en login.",
+  "helpManualSectionPlanAndCalendarTitle": "2) Planes y calendario",
+  "helpManualPlanCalendar1": "Crea un plan y define fechas; luego añade eventos y alojamientos.",
+  "helpManualPlanCalendar2": "En móvil, la edición principal es por tap y diálogo; en web hay más acciones avanzadas.",
+  "helpManualPlanCalendar3": "Usa la vista de resumen para revisar rápidamente eventos, vuelos y alojamientos.",
+  "helpManualSectionInvitationsTitle": "3) Invitaciones y participantes",
+  "helpManualInvitations1": "Invita por email o usuario según el flujo disponible en tu pantalla de participantes.",
+  "helpManualInvitations2": "Cuando te inviten, verás estado pending/in/out y podrás responder desde los chips.",
+  "helpManualInvitations3": "Si un usuario no aparece, revisa que el email invitado sea correcto y que esté registrado.",
+  "helpManualSectionNotificationsTitle": "4) Notificaciones",
+  "helpManualNotifications1": "Consulta la campana para ver notificaciones del plan y elementos pendientes de acción.",
+  "helpManualNotifications2": "Las no leídas aparecen destacadas; al entrar en detalle se marcan como leídas.",
+  "helpManualNotifications3": "Si no ves avisos esperados, abre el plan y revisa también la pestaña de notificaciones.",
+  "helpManualSectionTipsTitle": "5) Consejos para pruebas",
+  "helpManualTips1": "Prioriza validar creación/edición de evento, invitaciones y flujo de notificaciones.",
+  "helpManualTips2": "Comprueba siempre web e iOS para detectar diferencias de comportamiento.",
+  "helpManualTips3": "Si algo falla, anota pasos exactos, usuario usado y pantalla para reproducirlo rápido."
 }

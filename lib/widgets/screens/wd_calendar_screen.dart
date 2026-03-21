@@ -415,6 +415,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       buildDataRows: _buildDataRows,
       buildEventsLayer: _buildEventsLayer,
       onAccommodationHeaderTap: _handleAccommodationHeaderTap,
+      lockVerticalScroll: _isDragging,
     );
   }
 

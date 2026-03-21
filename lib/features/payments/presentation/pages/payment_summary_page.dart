@@ -23,10 +23,13 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 /// T102: Página de resumen de pagos y balances del plan
 class PaymentSummaryPage extends ConsumerWidget {
   final Plan plan;
+  /// En [PlanDetailPage] evita la flecha del AppBar que hace pop de todo el detalle (P16).
+  final bool embedInPlanDetail;
 
   const PaymentSummaryPage({
     super.key,
     required this.plan,
+    this.embedInPlanDetail = false,
   });
 
   BoxDecoration _darkCardDecoration() {
@@ -72,6 +75,7 @@ class PaymentSummaryPage extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: Colors.grey.shade900,
         appBar: AppBar(
+          automaticallyImplyLeading: !embedInPlanDetail,
           title: Text(
             loc.paymentsSummaryTitle,
             style: GoogleFonts.poppins(

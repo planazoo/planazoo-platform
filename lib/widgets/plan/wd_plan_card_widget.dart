@@ -16,6 +16,7 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
+import 'package:unp_calendario/widgets/plan/plan_status_chip_actions.dart';
 
 class PlanCardWidget extends ConsumerWidget {
   final Plan plan;
@@ -63,7 +64,7 @@ class PlanCardWidget extends ConsumerWidget {
         currentUser != null &&
         participantsAsync.maybeWhen(
               data: (participants) => participants.any((p) =>
-                  p.userId == currentUser.id && (p.isPending || p.needsResponse)),
+                  p.userId == currentUser.id && p.isPending),
               orElse: () => false,
             );
     final hasRejectedParticipation = plan.id != null &&
@@ -116,16 +117,15 @@ class PlanCardWidget extends ConsumerWidget {
                 ),
               ),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.zero,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Zona principal: imagen + nombre, fechas, estado, participantes
-              Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.zero,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -136,24 +136,15 @@ class PlanCardWidget extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  plan.name,
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              // Estado en el plan: in (verde) / out (rojo) / pending (naranja)
-                              if (currentUser != null && plan.id != null && (isIn || isPending || isRejected))
-                                _buildStatusChip(context, isIn: isIn, isOut: isRejected, isPending: isPending),
-                            ],
+                          Text(
+                            plan.name,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -199,11 +190,24 @@ class PlanCardWidget extends ConsumerWidget {
                   ],
                 ),
               ),
-              // Columna vertical estrecha: iconos resumen, notificaciones, chat
-              if (plan.id != null) ...[
+            ),
+            if (currentUser != null && plan.id != null && (isIn || isPending || isRejected)) ...[
+              const SizedBox(width: 4),
+              _buildInteractiveStatusChip(
+                context,
+                ref,
+                isIn: isIn,
+                isOut: isRejected,
+                isPending: isPending,
+                hasPendingInvitation: hasPendingInvitation,
+                hasPendingParticipation: hasPendingParticipation,
+              ),
+            ],
+            // Columna vertical estrecha: iconos resumen, notificaciones, chat
+            if (plan.id != null) ...[
                 Container(
                   width: 1,
-                  height: 40,
+                  height: 72,
                   margin: const EdgeInsets.only(left: 8, right: 8),
                   color: (isSelected ? Colors.white : Colors.grey.shade600).withOpacity(0.3),
                 ),
@@ -212,7 +216,7 @@ class PlanCardWidget extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       PlanSummaryButton(
                       plan: plan,
@@ -220,6 +224,7 @@ class PlanCardWidget extends ConsumerWidget {
                       foregroundColor: isSelected ? Colors.white : Colors.white70,
                       onShowInPanel: onSummaryInPanel,
                     ),
+                    const SizedBox(height: 8),
                     GestureDetector(
                       onTap: onNotificationsTap != null ? () => onNotificationsTap!(plan) : null,
                       child: _buildBadgeIcon(
@@ -228,6 +233,7 @@ class PlanCardWidget extends ConsumerWidget {
                         isSelected: isSelected,
                       ),
                     ),
+                    const SizedBox(height: 8),
                     GestureDetector(
                       onTap: onChatTap != null ? () => onChatTap!(plan) : null,
                       child: _buildBadgeIcon(
@@ -240,8 +246,7 @@ class PlanCardWidget extends ConsumerWidget {
                 ),
                 ),
               ],
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -265,13 +270,10 @@ class PlanCardWidget extends ConsumerWidget {
     final color = hasUnread
         ? AppColorScheme.color3
         : (isSelected ? Colors.white.withOpacity(0.9) : Colors.grey.shade400);
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: Icon(icon, size: _badgeIconSize, color: color),
-    );
+    return Icon(icon, size: _badgeIconSize, color: color);
   }
 
-  Widget _buildStatusChip(
+  Widget _buildStatusChipVisual(
     BuildContext context, {
     required bool isIn,
     required bool isOut,
@@ -316,6 +318,71 @@ class PlanCardWidget extends ConsumerWidget {
         overflow: TextOverflow.ellipsis,
       ),
     );
+  }
+
+  Widget _buildInteractiveStatusChip(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool isIn,
+    required bool isOut,
+    required bool isPending,
+    required bool hasPendingInvitation,
+    required bool hasPendingParticipation,
+  }) {
+    final chip = _buildStatusChipVisual(context, isIn: isIn, isOut: isOut, isPending: isPending);
+    final uid = ref.read(currentUserProvider)?.id;
+    final pid = plan.id;
+
+    if (isPending && pid != null && uid != null) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => planStatusChipShowPendingActions(
+          context,
+          ref,
+          planId: pid,
+          userId: uid,
+          hasPendingInvitation: hasPendingInvitation,
+          hasPendingParticipation: hasPendingParticipation,
+        ),
+        child: chip,
+      );
+    }
+
+    if (isIn && pid != null && uid != null) {
+      final isOrganizer = plan.userId == uid;
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          if (isOrganizer) {
+            final loc = AppLocalizations.of(context)!;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(loc.planCardOrganizerChipMessage)),
+            );
+          } else {
+            planStatusChipShowLeavePlan(context, ref, plan: plan, userId: uid);
+          }
+        },
+        child: chip,
+      );
+    }
+
+    if (isOut && pid != null && uid != null) {
+      final loc = AppLocalizations.of(context)!;
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(loc.planStatusRejectedSnackbar, style: GoogleFonts.poppins(color: Colors.white)),
+              backgroundColor: Colors.grey.shade800,
+            ),
+          );
+        },
+        child: chip,
+      );
+    }
+
+    return chip;
   }
 
   Widget _buildPlanImage() {

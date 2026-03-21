@@ -145,7 +145,11 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
   String _getLanguageCode() {
     final locale = Localizations.localeOf(context);
     final country = locale.countryCode;
-    return '${locale.languageCode}_${(country != null && country.isNotEmpty) ? country : locale.languageCode.toUpperCase()}';
+    if (country != null && country.isNotEmpty) {
+      // Places API espera BCP-47 (ej: es-ES, en-US), no formato con guion bajo.
+      return '${locale.languageCode}-$country';
+    }
+    return locale.languageCode;
   }
 
   void _showOverlay() {

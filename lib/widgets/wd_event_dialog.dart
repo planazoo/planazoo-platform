@@ -861,44 +861,44 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 }).toList(),
               ),
             ] else ...[
-              Row(
+              // P19: Wrap evita que Expanded recorte el tipo cuando hay subtipo
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Expanded(
-                    child: _buildTypeSubtypeChip(
-                      label: _typeFamilyController.text,
-                      icon: _typeIcons[_typeFamilyController.text] ?? Icons.category,
+                  _buildTypeSubtypeChip(
+                    label: _typeFamilyController.text,
+                    icon: _typeIcons[_typeFamilyController.text] ?? Icons.category,
+                    selected: true,
+                    showPlus: true,
+                    onTap: () {
+                      setState(() {
+                        _typePickerExpanded = true;
+                        _subtypePickerExpanded = false;
+                      });
+                    },
+                  ),
+                  if (hasSubtype)
+                    _buildTypeSubtypeChip(
+                      label: _typeSubtypeController.text,
+                      icon: _subtypeIcons['${_typeFamilyController.text}|${_typeSubtypeController.text}'] ?? Icons.label,
                       selected: true,
                       showPlus: true,
                       onTap: () {
-                        setState(() {
-                          _typePickerExpanded = true;
-                          _subtypePickerExpanded = false;
-                        });
+                        setState(() => _subtypePickerExpanded = true);
+                      },
+                    )
+                  else
+                    _buildTypeSubtypeChip(
+                      label: loc.chooseSubtypeLabel,
+                      icon: Icons.add,
+                      selected: false,
+                      showPlus: false,
+                      onTap: () {
+                        setState(() => _subtypePickerExpanded = true);
                       },
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: hasSubtype
-                        ? _buildTypeSubtypeChip(
-                            label: _typeSubtypeController.text,
-                            icon: _subtypeIcons['${_typeFamilyController.text}|${_typeSubtypeController.text}'] ?? Icons.label,
-                            selected: true,
-                            showPlus: true,
-                            onTap: () {
-                              setState(() => _subtypePickerExpanded = true);
-                            },
-                          )
-                        : _buildTypeSubtypeChip(
-                            label: loc.chooseSubtypeLabel,
-                            icon: Icons.add,
-                            selected: false,
-                            showPlus: false,
-                            onTap: () {
-                              setState(() => _subtypePickerExpanded = true);
-                            },
-                          ),
-                  ),
                 ],
               ),
             ],
@@ -934,12 +934,16 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             children: [
               Icon(icon, size: 20, color: selected ? AppColorScheme.color2 : Colors.grey.shade400),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: selected ? Colors.white : Colors.grey.shade300,
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: selected ? Colors.white : Colors.grey.shade300,
+                  ),
                 ),
               ),
               if (showPlus) ...[
@@ -1200,49 +1204,71 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Dropdown de timezone para el bloque vuelo (salida/llegada).
-  /// En el futuro se podría calcular desde las coordenadas del aeropuerto (PlaceDetails.lat/lng)
-  /// usando p. ej. Google Time Zone API o un paquete que resuelva IANA por lat/lng.
+  /// P13: Timezone con el mismo patrón que el resto de campos (título sobre el borde).
+  /// [compact] para la columna estrecha junto a aeropuertos en vuelos.
+  Widget _buildTimezoneFieldOnBorder({
+    required String label,
+    required String value,
+    required void Function(String?)? onChanged,
+    bool compact = false,
+    IconData? leadingIcon,
+  }) {
+    final fs = compact ? 11.0 : 13.0;
+    final pad = compact
+        ? const EdgeInsets.only(top: 8, left: 4, right: 4, bottom: 8)
+        : const EdgeInsets.only(top: 10, left: 6, right: 8, bottom: 10);
+    final dropdown = DropdownButtonFormField<String>(
+      value: value,
+      isExpanded: true,
+      dropdownColor: Colors.grey.shade800,
+      style: GoogleFonts.poppins(fontSize: fs, color: Colors.white, fontWeight: FontWeight.w500),
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        isDense: true,
+        contentPadding: EdgeInsets.zero,
+        filled: false,
+      ),
+      icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade400, size: compact ? 20 : 24),
+      items: TimezoneService.getCommonTimezones().map((tz) {
+        return DropdownMenuItem<String>(
+          value: tz,
+          child: Text(
+            TimezoneService.getUtcOffsetFormatted(tz),
+            style: GoogleFonts.poppins(fontSize: fs, color: Colors.white, fontWeight: FontWeight.w500),
+            overflow: TextOverflow.ellipsis,
+          ),
+        );
+      }).toList(),
+      onChanged: onChanged,
+    );
+
+    return _buildLabelOnBorderField(
+      label: label,
+      contentPadding: pad,
+      child: leadingIcon != null
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(leadingIcon, size: compact ? 18 : 20, color: Colors.grey.shade400),
+                const SizedBox(width: 8),
+                Expanded(child: dropdown),
+              ],
+            )
+          : dropdown,
+    );
+  }
+
+  /// Dropdown de timezone para el bloque vuelo (columna estrecha junto al aeropuerto).
   Widget _buildFlightTimezoneDropdown({
     required String value,
     required String label,
     required void Function(String?)? onChanged,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade700.withOpacity(0.5), width: 1),
-      ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        dropdownColor: Colors.grey.shade800,
-        style: GoogleFonts.poppins(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
-          ),
-          fillColor: Colors.transparent,
-          filled: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        ),
-        items: TimezoneService.getCommonTimezones().map((tz) {
-          return DropdownMenuItem(
-            value: tz,
-            child: Text(
-              TimezoneService.getUtcOffsetFormatted(tz),
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white),
-              overflow: TextOverflow.ellipsis,
-            ),
-          );
-        }).toList(),
-        onChanged: onChanged,
-      ),
+    return _buildTimezoneFieldOnBorder(
+      label: label,
+      value: value,
+      onChanged: onChanged,
+      compact: true,
     );
   }
 
@@ -2153,7 +2179,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 Expanded(
                   child: _buildWhenField(
                     label: AppLocalizations.of(context)!.time,
-                    value: '${_selectedHour.toString().padLeft(2, '0')}:${_selectedStartMinute.toString().padLeft(2, '0')}',
+                    value: DateFormatter.formatTimeOnly(
+                      DateTime(2000, 1, 1, _selectedHour, _selectedStartMinute),
+                    ),
                     onTap: _canEditGeneral ? _selectStartTime : _showReadOnlySnackBar,
                     isMobile: isMobile,
                     fsBody: fsBody,
@@ -2176,135 +2204,38 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             // Timezone (oculto para Desplazamiento/Avión: se muestra en el bloque vuelo)
             if (!(_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión'))
               _wrapReadOnlyIfNeeded(
-                child: Container(
-                decoration: _buildLoginStyleDecoration(),
-                child: DropdownButtonFormField<String>(
+                child: _buildTimezoneFieldOnBorder(
+                  label: AppLocalizations.of(context)!.timezone,
                   value: _selectedTimezone,
-                dropdownColor: Colors.grey.shade800,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
+                  leadingIcon: Icons.public,
+                  onChanged: _canEditGeneral
+                      ? (value) {
+                          setState(() {
+                            _selectedTimezone = value ?? 'Europe/Madrid';
+                          });
+                        }
+                      : null,
                 ),
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.timezone,
-                  labelStyle: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.grey.shade400,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  prefixIcon: Icon(Icons.public, color: Colors.grey.shade400),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: AppColorScheme.color2,
-                      width: 2.5,
-                    ),
-                  ),
-                  fillColor: Colors.transparent,
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                ),
-                items: TimezoneService.getCommonTimezones().map((tz) {
-                  return DropdownMenuItem(
-                    value: tz,
-                    child: Text(
-                      TimezoneService.getUtcOffsetFormatted(tz),
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: _canEditGeneral ? (value) {
-                  setState(() {
-                    _selectedTimezone = value ?? 'Europe/Madrid';
-                  });
-                } : null,
               ),
-            ),
-            ),
             if (!(_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión'))
               const SizedBox(height: 12),
             
-            // Timezone de llegada (solo para vuelos: se muestra en el bloque vuelo; aquí no se muestra para Avión)
+            // Timezone de llegada (solo desplazamiento no avión)
             if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text != 'Avión')
               _wrapReadOnlyIfNeeded(
-                child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade800, // Color sólido, sin gradiente
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.grey.shade700.withOpacity(0.5),
-                    width: 1,
-                  ),
-                ),
-                child: DropdownButtonFormField<String>(
+                child: _buildTimezoneFieldOnBorder(
+                  label: AppLocalizations.of(context)!.arrivalTimezone,
                   value: _selectedArrivalTimezone,
-                  dropdownColor: Colors.grey.shade800,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.arrivalTimezone,
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.grey.shade400,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    prefixIcon: Icon(Icons.flight_land, color: Colors.grey.shade400),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: AppColorScheme.color2,
-                        width: 2.5,
-                      ),
-                    ),
-                    fillColor: Colors.transparent,
-                    filled: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                  ),
-                  items: TimezoneService.getCommonTimezones().map((tz) {
-                    return DropdownMenuItem(
-                      value: tz,
-                      child: Text(
-                        TimezoneService.getUtcOffsetFormatted(tz),
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: _canEditGeneral ? (value) {
-                    setState(() {
-                      _selectedArrivalTimezone = value ?? 'Europe/Madrid';
-                    });
-                  } : null,
+                  leadingIcon: Icons.flight_land,
+                  onChanged: _canEditGeneral
+                      ? (value) {
+                          setState(() {
+                            _selectedArrivalTimezone = value ?? 'Europe/Madrid';
+                          });
+                        }
+                      : null,
                 ),
               ),
-                ),
             const SizedBox(height: 16),
             // 3. Opciones: Límite, Confirmación, Coste
             // Límite de participantes (T117)
@@ -3211,19 +3142,19 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   String _formatDuration(int minutes) {
+    final loc = AppLocalizations.of(context)!;
     if (minutes < 60) {
-      return '${minutes} min';
-    } else if (minutes == 60) {
-      return '1 hora';
-    } else {
-      final hours = minutes ~/ 60;
-      final remainingMinutes = minutes % 60;
-      if (remainingMinutes == 0) {
-        return '${hours}h';
-      } else {
-        return '${hours}h ${remainingMinutes}min';
-      }
+      return loc.eventDurationFormatMinutes(minutes);
     }
+    if (minutes == 60) {
+      return loc.eventDurationFormatOneHour;
+    }
+    final hours = minutes ~/ 60;
+    final remainingMinutes = minutes % 60;
+    if (remainingMinutes == 0) {
+      return loc.eventDurationFormatHoursOnly(hours);
+    }
+    return loc.eventDurationFormatHoursMinutes(hours, remainingMinutes);
   }
 
   Color _getColorFromName(String colorName) {

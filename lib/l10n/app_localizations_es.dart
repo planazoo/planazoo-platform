@@ -853,6 +853,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get planDeleteError => 'Error al eliminar el plan';
 
   @override
+  String get planInfoDangerZoneTitle => 'Zona de peligro';
+
+  @override
+  String get planInfoDangerZoneSubtitle =>
+      'Eliminar el plan borrará todos los eventos asociados. Esta acción no se puede deshacer.';
+
+  @override
   String planRoleLabel(String role) {
     return 'Rol: $role';
   }
@@ -1197,13 +1204,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get statusRejected => 'Rechazado';
 
   @override
-  String get statusShortIn => 'in';
+  String get statusShortIn => 'dentro';
 
   @override
-  String get statusShortOut => 'out';
+  String get statusShortOut => 'fuera';
 
   @override
-  String get statusShortPending => 'pending';
+  String get statusShortPending => 'pend.';
 
   @override
   String get myStatusLabel => 'Mi estado';
@@ -1213,6 +1220,51 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get planCardPendingBadge => 'Pendiente';
+
+  @override
+  String get planCardChipInvitationQuestion => '¿Quieres unirte a este plan?';
+
+  @override
+  String planCardLeavePlanConfirmBody(String planName) {
+    return 'Si sales de \"$planName\", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\nPara volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.';
+  }
+
+  @override
+  String get planMyStatusHelpTitle => 'Mi estado en el plan';
+
+  @override
+  String get planMyStatusHelpDefault =>
+      'El chip resume tu relación con este plan:\n\n• pend. — Tienes una invitación o una participación pendiente de aceptar. Pulsa el chip para aceptar o rechazar.\n\n• dentro — Ya participas (o eres organizador). Si no eres organizador, pulsa para salir del plan.\n\n• fuera — Declinaste la invitación. Si el organizador te invita de nuevo, lo verás en Notificaciones.\n\nLas invitaciones por correo también se gestionan desde Notificaciones.';
+
+  @override
+  String get planStatusRejectedSnackbar =>
+      'Indicaste que no te unías a este plan. Si recibes una nueva invitación, aparecerá en Notificaciones.';
+
+  @override
+  String get planStatusSemanticsPending =>
+      'Pendiente de aceptar o rechazar invitación al plan';
+
+  @override
+  String get planStatusSemanticsIn => 'Participas en el plan';
+
+  @override
+  String get planStatusSemanticsOut => 'Rechazaste unirte a este plan';
+
+  @override
+  String get planCardOrganizerChipMessage =>
+      'Como organizador, gestiona el plan desde su ficha.';
+
+  @override
+  String get planCardLeavePlanTitle => 'Salir del plan';
+
+  @override
+  String get planCardLeavePlanButton => 'Salir';
+
+  @override
+  String get planCardLeftPlanSuccess => 'Has salido del plan';
+
+  @override
+  String get planCardLeftPlanError => 'No se pudo salir del plan';
 
   @override
   String invitationPlanLabel(String planId) {
@@ -1587,6 +1639,24 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get duration => 'Duración';
+
+  @override
+  String eventDurationFormatMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get eventDurationFormatOneHour => '1 hora';
+
+  @override
+  String eventDurationFormatHoursOnly(int hours) {
+    return '$hours h';
+  }
+
+  @override
+  String eventDurationFormatHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
 
   @override
   String get timezone => 'Timezone';
@@ -2132,4 +2202,90 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noPermissionTitle => 'Sin permisos';
+
+  @override
+  String get helpManualOpenFromLogin => 'Manual rápido (beta)';
+
+  @override
+  String get helpManualTitle => 'Manual rápido para nuevos usuarios';
+
+  @override
+  String get helpManualIntro =>
+      'Guía breve para la fase de pruebas. Te ayuda a empezar y entender los flujos más importantes de Planazoo.';
+
+  @override
+  String get helpManualSectionGettingStartedTitle => '1) Primeros pasos';
+
+  @override
+  String get helpManualGettingStarted1 =>
+      'Si ya tienes cuenta, inicia sesión con email/usuario y contraseña, o con Google.';
+
+  @override
+  String get helpManualGettingStarted2 =>
+      'Si no tienes cuenta, regístrate y verifica tu email antes de continuar.';
+
+  @override
+  String get helpManualGettingStarted3 =>
+      'Selecciona idioma en la esquina superior derecha cuando estés en login.';
+
+  @override
+  String get helpManualSectionPlanAndCalendarTitle => '2) Planes y calendario';
+
+  @override
+  String get helpManualPlanCalendar1 =>
+      'Crea un plan y define fechas; luego añade eventos y alojamientos.';
+
+  @override
+  String get helpManualPlanCalendar2 =>
+      'En móvil, la edición principal es por tap y diálogo; en web hay más acciones avanzadas.';
+
+  @override
+  String get helpManualPlanCalendar3 =>
+      'Usa la vista de resumen para revisar rápidamente eventos, vuelos y alojamientos.';
+
+  @override
+  String get helpManualSectionInvitationsTitle =>
+      '3) Invitaciones y participantes';
+
+  @override
+  String get helpManualInvitations1 =>
+      'Invita por email o usuario según el flujo disponible en tu pantalla de participantes.';
+
+  @override
+  String get helpManualInvitations2 =>
+      'Cuando te inviten, verás estado pending/in/out y podrás responder desde los chips.';
+
+  @override
+  String get helpManualInvitations3 =>
+      'Si un usuario no aparece, revisa que el email invitado sea correcto y que esté registrado.';
+
+  @override
+  String get helpManualSectionNotificationsTitle => '4) Notificaciones';
+
+  @override
+  String get helpManualNotifications1 =>
+      'Consulta la campana para ver notificaciones del plan y elementos pendientes de acción.';
+
+  @override
+  String get helpManualNotifications2 =>
+      'Las no leídas aparecen destacadas; al entrar en detalle se marcan como leídas.';
+
+  @override
+  String get helpManualNotifications3 =>
+      'Si no ves avisos esperados, abre el plan y revisa también la pestaña de notificaciones.';
+
+  @override
+  String get helpManualSectionTipsTitle => '5) Consejos para pruebas';
+
+  @override
+  String get helpManualTips1 =>
+      'Prioriza validar creación/edición de evento, invitaciones y flujo de notificaciones.';
+
+  @override
+  String get helpManualTips2 =>
+      'Comprueba siempre web e iOS para detectar diferencias de comportamiento.';
+
+  @override
+  String get helpManualTips3 =>
+      'Si algo falla, anota pasos exactos, usuario usado y pantalla para reproducirlo rápido.';
 }

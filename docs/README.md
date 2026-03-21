@@ -134,7 +134,7 @@ Configuración y contexto del proyecto:
 - ✅ Resumen del plan en texto (T193) — card e Info: icono/botón abre diálogo con copiar; pestaña Calendario: "Ver resumen" en barra muestra vista resumen en W31, "Calendario" vuelve
 - ✅ Sistema de tracks (multi-participante)
 - ✅ Eventos multi-día (hasta 24h) con EventSegment
-- ✅ Drag & Drop con magnetismo
+- ✅ Drag & Drop con magnetismo (solo Web/Dashboard; en móvil no aplica por decisión de producto)
 - ✅ Parte común + parte personal por participante
 - ✅ Detección de eventos solapados (máximo 3 simultáneos)
 - ✅ Estados del plan con bloqueos funcionales (T109)
@@ -190,6 +190,7 @@ Configuración y contexto del proyecto:
 - ✅ Multi-idioma (Español/Inglés) - ~65% completado
 - ✅ Responsive design
 - ✅ Gestión de imágenes de planes (Firebase Storage)
+- ✅ Manual de ayuda beta (`/help`) accesible desde login y desde la app (web/iOS)
 
 **Infraestructura:**
 - ✅ Optimización de índices de Firestore (T152)

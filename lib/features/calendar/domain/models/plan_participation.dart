@@ -102,8 +102,7 @@ class PlanParticipation {
   bool get isAccepted => status == 'accepted' || status == null; // null = aceptado por defecto (compatibilidad)
   bool get isRejected => status == 'rejected';
   bool get isExpired => status == 'expired';
-  bool get needsResponse => status == 'pending' || status == null; // null = antiguos, necesitan aceptar por retrocompatibilidad
-  
+
   // Comparación y hash
   @override
   bool operator ==(Object other) {

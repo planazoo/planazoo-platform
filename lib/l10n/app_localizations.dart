@@ -1610,6 +1610,18 @@ abstract class AppLocalizations {
   /// **'Error al eliminar el plan'**
   String get planDeleteError;
 
+  /// No description provided for @planInfoDangerZoneTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Zona de peligro'**
+  String get planInfoDangerZoneTitle;
+
+  /// No description provided for @planInfoDangerZoneSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar el plan borrará todos los eventos asociados. Esta acción no se puede deshacer.'**
+  String get planInfoDangerZoneSubtitle;
+
   /// No description provided for @planRoleLabel.
   ///
   /// In es, this message translates to:
@@ -2225,19 +2237,19 @@ abstract class AppLocalizations {
   /// Estado corto iOS: apuntado/aceptado
   ///
   /// In es, this message translates to:
-  /// **'in'**
+  /// **'dentro'**
   String get statusShortIn;
 
   /// Estado corto iOS: rechazado
   ///
   /// In es, this message translates to:
-  /// **'out'**
+  /// **'fuera'**
   String get statusShortOut;
 
   /// Estado corto iOS: pendiente de aceptar
   ///
   /// In es, this message translates to:
-  /// **'pending'**
+  /// **'pend.'**
   String get statusShortPending;
 
   /// Etiqueta W10: mi estado en el plan
@@ -2257,6 +2269,84 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Pendiente'**
   String get planCardPendingBadge;
+
+  /// Diálogo al pulsar chip pending en card
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quieres unirte a este plan?'**
+  String get planCardChipInvitationQuestion;
+
+  /// No description provided for @planCardLeavePlanConfirmBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Si sales de \"{planName}\", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\nPara volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.'**
+  String planCardLeavePlanConfirmBody(String planName);
+
+  /// Título ayuda chip in/out/pend. en barra del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Mi estado en el plan'**
+  String get planMyStatusHelpTitle;
+
+  /// Cuerpo ayuda por defecto si no hay Firestore
+  ///
+  /// In es, this message translates to:
+  /// **'El chip resume tu relación con este plan:\n\n• pend. — Tienes una invitación o una participación pendiente de aceptar. Pulsa el chip para aceptar o rechazar.\n\n• dentro — Ya participas (o eres organizador). Si no eres organizador, pulsa para salir del plan.\n\n• fuera — Declinaste la invitación. Si el organizador te invita de nuevo, lo verás en Notificaciones.\n\nLas invitaciones por correo también se gestionan desde Notificaciones.'**
+  String get planMyStatusHelpDefault;
+
+  /// Al pulsar chip fuera cuando rechazaste
+  ///
+  /// In es, this message translates to:
+  /// **'Indicaste que no te unías a este plan. Si recibes una nueva invitación, aparecerá en Notificaciones.'**
+  String get planStatusRejectedSnackbar;
+
+  /// Accesibilidad chip pend.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente de aceptar o rechazar invitación al plan'**
+  String get planStatusSemanticsPending;
+
+  /// Accesibilidad chip dentro
+  ///
+  /// In es, this message translates to:
+  /// **'Participas en el plan'**
+  String get planStatusSemanticsIn;
+
+  /// Accesibilidad chip fuera
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazaste unirte a este plan'**
+  String get planStatusSemanticsOut;
+
+  /// SnackBar al pulsar chip in siendo organizador
+  ///
+  /// In es, this message translates to:
+  /// **'Como organizador, gestiona el plan desde su ficha.'**
+  String get planCardOrganizerChipMessage;
+
+  /// Título diálogo salir desde chip in
+  ///
+  /// In es, this message translates to:
+  /// **'Salir del plan'**
+  String get planCardLeavePlanTitle;
+
+  /// Botón confirmar salir plan desde card
+  ///
+  /// In es, this message translates to:
+  /// **'Salir'**
+  String get planCardLeavePlanButton;
+
+  /// No description provided for @planCardLeftPlanSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Has salido del plan'**
+  String get planCardLeftPlanSuccess;
+
+  /// No description provided for @planCardLeftPlanError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo salir del plan'**
+  String get planCardLeftPlanError;
 
   /// No description provided for @invitationPlanLabel.
   ///
@@ -2929,6 +3019,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Duración'**
   String get duration;
+
+  /// Duración en minutos (menos de 1 h)
+  ///
+  /// In es, this message translates to:
+  /// **'{minutes} min'**
+  String eventDurationFormatMinutes(int minutes);
+
+  /// Duración exacta 60 minutos
+  ///
+  /// In es, this message translates to:
+  /// **'1 hora'**
+  String get eventDurationFormatOneHour;
+
+  /// Solo horas enteras
+  ///
+  /// In es, this message translates to:
+  /// **'{hours} h'**
+  String eventDurationFormatHoursOnly(int hours);
+
+  /// Horas y minutos
+  ///
+  /// In es, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String eventDurationFormatHoursMinutes(int hours, int minutes);
 
   /// Label de timezone
   ///
@@ -3949,6 +4063,144 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Sin permisos'**
   String get noPermissionTitle;
+
+  /// Enlace desde login al manual web de ayuda
+  ///
+  /// In es, this message translates to:
+  /// **'Manual rápido (beta)'**
+  String get helpManualOpenFromLogin;
+
+  /// No description provided for @helpManualTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Manual rápido para nuevos usuarios'**
+  String get helpManualTitle;
+
+  /// No description provided for @helpManualIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Guía breve para la fase de pruebas. Te ayuda a empezar y entender los flujos más importantes de Planazoo.'**
+  String get helpManualIntro;
+
+  /// No description provided for @helpManualSectionGettingStartedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'1) Primeros pasos'**
+  String get helpManualSectionGettingStartedTitle;
+
+  /// No description provided for @helpManualGettingStarted1.
+  ///
+  /// In es, this message translates to:
+  /// **'Si ya tienes cuenta, inicia sesión con email/usuario y contraseña, o con Google.'**
+  String get helpManualGettingStarted1;
+
+  /// No description provided for @helpManualGettingStarted2.
+  ///
+  /// In es, this message translates to:
+  /// **'Si no tienes cuenta, regístrate y verifica tu email antes de continuar.'**
+  String get helpManualGettingStarted2;
+
+  /// No description provided for @helpManualGettingStarted3.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona idioma en la esquina superior derecha cuando estés en login.'**
+  String get helpManualGettingStarted3;
+
+  /// No description provided for @helpManualSectionPlanAndCalendarTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'2) Planes y calendario'**
+  String get helpManualSectionPlanAndCalendarTitle;
+
+  /// No description provided for @helpManualPlanCalendar1.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea un plan y define fechas; luego añade eventos y alojamientos.'**
+  String get helpManualPlanCalendar1;
+
+  /// No description provided for @helpManualPlanCalendar2.
+  ///
+  /// In es, this message translates to:
+  /// **'En móvil, la edición principal es por tap y diálogo; en web hay más acciones avanzadas.'**
+  String get helpManualPlanCalendar2;
+
+  /// No description provided for @helpManualPlanCalendar3.
+  ///
+  /// In es, this message translates to:
+  /// **'Usa la vista de resumen para revisar rápidamente eventos, vuelos y alojamientos.'**
+  String get helpManualPlanCalendar3;
+
+  /// No description provided for @helpManualSectionInvitationsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'3) Invitaciones y participantes'**
+  String get helpManualSectionInvitationsTitle;
+
+  /// No description provided for @helpManualInvitations1.
+  ///
+  /// In es, this message translates to:
+  /// **'Invita por email o usuario según el flujo disponible en tu pantalla de participantes.'**
+  String get helpManualInvitations1;
+
+  /// No description provided for @helpManualInvitations2.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuando te inviten, verás estado pending/in/out y podrás responder desde los chips.'**
+  String get helpManualInvitations2;
+
+  /// No description provided for @helpManualInvitations3.
+  ///
+  /// In es, this message translates to:
+  /// **'Si un usuario no aparece, revisa que el email invitado sea correcto y que esté registrado.'**
+  String get helpManualInvitations3;
+
+  /// No description provided for @helpManualSectionNotificationsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'4) Notificaciones'**
+  String get helpManualSectionNotificationsTitle;
+
+  /// No description provided for @helpManualNotifications1.
+  ///
+  /// In es, this message translates to:
+  /// **'Consulta la campana para ver notificaciones del plan y elementos pendientes de acción.'**
+  String get helpManualNotifications1;
+
+  /// No description provided for @helpManualNotifications2.
+  ///
+  /// In es, this message translates to:
+  /// **'Las no leídas aparecen destacadas; al entrar en detalle se marcan como leídas.'**
+  String get helpManualNotifications2;
+
+  /// No description provided for @helpManualNotifications3.
+  ///
+  /// In es, this message translates to:
+  /// **'Si no ves avisos esperados, abre el plan y revisa también la pestaña de notificaciones.'**
+  String get helpManualNotifications3;
+
+  /// No description provided for @helpManualSectionTipsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'5) Consejos para pruebas'**
+  String get helpManualSectionTipsTitle;
+
+  /// No description provided for @helpManualTips1.
+  ///
+  /// In es, this message translates to:
+  /// **'Prioriza validar creación/edición de evento, invitaciones y flujo de notificaciones.'**
+  String get helpManualTips1;
+
+  /// No description provided for @helpManualTips2.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprueba siempre web e iOS para detectar diferencias de comportamiento.'**
+  String get helpManualTips2;
+
+  /// No description provided for @helpManualTips3.
+  ///
+  /// In es, this message translates to:
+  /// **'Si algo falla, anota pasos exactos, usuario usado y pantalla para reproducirlo rápido.'**
+  String get helpManualTips3;
 }
 
 class _AppLocalizationsDelegate

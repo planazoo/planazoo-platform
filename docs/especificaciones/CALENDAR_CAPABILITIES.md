@@ -166,8 +166,10 @@ Estado: **Funciona** (revisar refresco inmediato de UI en todos los casos).
 - **Arrastre vertical**: ajusta la hora de inicio; magnetismo a intervalos de 15 minutos.
 - **Arrastre horizontal**: mueve entre días; magnetismo a columnas.
 - **Visual**: feedback con sombra y traslación suave durante el arrastre; al soltar, se persiste y refresca la UI.
+- **Ámbito de plataforma**: esta interacción está habilitada **solo en Web/Dashboard**.
+- **Móvil (iOS/Android)**: **sin drag & drop** por decisión de producto; en móvil se edita por tap y diálogo.
 
-Estado: **Funciona** (drag & drop completamente operativo tras optimizaciones de código).
+Estado: **Funciona en Web** / **No aplica en móvil** (decisión explícita).
 
 ---
 
@@ -201,6 +203,7 @@ Estado: **Funciona**.
 - Eliminar evento y validar desaparición inmediata.
 - Drag vertical con magnetismo a 15 min, incluyendo mover a 00:00.
 - Drag horizontal entre columnas contiguas (sin medio desplazamiento visual).
+- En móvil, validar que no hay drag accidental y que tap abre edición correctamente.
 - Multi-día: que ambas partes se dibujen y no desborden.
 - Auto-scroll al primer evento del plan (y re-navegación de grupos de días).
 - Alojamientos: crear/editar/eliminar/mostrar (estado actual a confirmar).

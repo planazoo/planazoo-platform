@@ -21,10 +21,16 @@ import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page
 import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
+import 'package:unp_calendario/widgets/help/help_icon_button.dart';
+import 'package:unp_calendario/shared/constants/help_context_ids.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_plans_list_page.dart';
+import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
+import 'package:unp_calendario/widgets/dialogs/payment_dialog.dart';
+import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
+import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
 
 /// Página de detalle del plan para mobile
 /// Incluye barra de navegación horizontal y contenido según la opción seleccionada
@@ -85,6 +91,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       child: Scaffold(
         backgroundColor: Colors.grey.shade900,
         appBar: _buildAppBar(),
+        bottomNavigationBar: _buildQuickActionsBar(),
         body: SafeArea(
           child: Column(
             children: [
@@ -109,9 +116,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  /// Barra superior: solo nombre del plan y "in/out". El icono de estado del plan no va aquí
-  /// (solo en el contenido de Info del plan, a la derecha de la foto / encima de Salir del plan).
+  /// Barra superior: nombre del plan, chip mi estado (dentro/fuera/pend.) y ayuda P18.
   PreferredSizeWidget _buildAppBar() {
+    final loc = AppLocalizations.of(context)!;
     return AppBar(
       backgroundColor: AppColorScheme.color2,
       elevation: 0,
@@ -141,14 +148,173 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       ),
       centerTitle: false,
       actions: [
-        // Mi estado en el plan (in/out/pending) — visible en todas las pestañas
-        Center(
-          child: PlanUserStatusLabel(
-            plan: widget.plan,
-            compact: true,
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: PlanUserStatusLabel(
+                  plan: widget.plan,
+                  compact: true,
+                ),
+              ),
+              HelpIconButton(
+                helpId: HelpContextIds.planDetailMyStatus,
+                contextLabel: loc.planMyStatusHelpTitle,
+                defaultBody: loc.planMyStatusHelpDefault,
+                iconSize: 18,
+                iconColor: Colors.white.withValues(alpha: 0.9),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildQuickActionsBar() {
+    final loc = AppLocalizations.of(context)!;
+    final planId = widget.plan.id;
+    final unreadChat = planId != null
+        ? (ref.watch(unreadMessagesCountProvider(planId)).valueOrNull ?? 0)
+        : 0;
+    final unreadNotifications = planId != null
+        ? (ref.watch(planUnreadCountProvider(planId)).valueOrNull ?? 0)
+        : 0;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 72,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.grey.shade900,
+              const Color(0xFF171717),
+            ],
+          ),
+          border: Border(
+            top: BorderSide(color: Colors.grey.shade700.withOpacity(0.4), width: 1),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.35),
+              blurRadius: 16,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildQuickActionButton(
+              icon: Icons.add_circle_outline,
+              onTap: _quickCreateEvent,
+              tooltip: 'Crear evento',
+              isActive: _selectedOption == 'calendar',
+            ),
+            _buildQuickActionButton(
+              icon: Icons.hotel_outlined,
+              onTap: _quickCreateAccommodation,
+              tooltip: 'Crear alojamiento',
+              isActive: _selectedOption == 'calendar',
+            ),
+            _buildQuickActionButton(
+              icon: _selectedOption == 'chat' ? Icons.chat_bubble : Icons.chat_bubble_outline,
+              onTap: _quickOpenChat,
+              tooltip: loc.dashboardTabChat,
+              isActive: _selectedOption == 'chat',
+              badgeCount: unreadChat,
+            ),
+            _buildQuickActionButton(
+              icon: Icons.payment_outlined,
+              onTap: _quickCreatePayment,
+              tooltip: loc.paymentsRegisterPayment,
+              isActive: _selectedOption == 'payments',
+            ),
+            _buildQuickActionButton(
+              icon: _selectedOption == 'planNotifications' ? Icons.notifications : Icons.notifications_outlined,
+              onTap: _quickOpenNotifications,
+              tooltip: loc.notificationsTitle,
+              isActive: _selectedOption == 'planNotifications',
+              badgeCount: unreadNotifications,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required String tooltip,
+    required bool isActive,
+    int badgeCount = 0,
+  }) {
+    final iconColor = isActive ? Colors.white : AppColorScheme.color2;
+    final bg = isActive ? AppColorScheme.color2 : Colors.transparent;
+    final borderColor = isActive ? AppColorScheme.color2 : Colors.grey.shade700.withOpacity(0.7);
+
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor, width: isActive ? 1.6 : 1),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: AppColorScheme.color2.withOpacity(0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Center(
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              if (badgeCount > 0)
+                Positioned(
+                  top: 7,
+                  right: 7,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: AppColorScheme.color3,
+                      borderRadius: BorderRadius.circular(99),
+                      border: Border.all(color: Colors.black.withOpacity(0.2), width: 0.5),
+                    ),
+                    child: Text(
+                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -185,21 +351,32 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         return PlanChatScreen(
           planId: widget.plan.id!,
           planName: widget.plan.name,
+          embedInPlanDetail: true,
         );
-      
+
+      case 'planNotifications':
+        return WdPlanNotificationsScreen(plan: widget.plan);
+
       case 'stats':
         return PlanStatsPage(
           plan: widget.plan,
+          embedInPlanDetail: true,
         );
       
       case 'payments':
-        return PaymentSummaryPage(plan: widget.plan);
+        return PaymentSummaryPage(
+          plan: widget.plan,
+          embedInPlanDetail: true,
+        );
       
       default:
         return PlanDataScreen(
           plan: widget.plan,
           showAppBar: false,
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
+          onPlanDeleted: () {
+            Navigator.of(context).pop();
+          },
         );
     }
   }
@@ -253,6 +430,67 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         onDeleted: (_) => setState(() {}),
       ),
     );
+  }
+
+  void _quickCreateEvent() {
+    if (widget.plan.id == null) return;
+    setState(() => _selectedOption = 'calendar');
+    showDialog<void>(
+      context: context,
+      builder: (context) => EventDialog(
+        planId: widget.plan.id!,
+        initialDate: widget.plan.startDate,
+        onSaved: (_) {
+          if (!mounted) return;
+          setState(() => _selectedOption = 'calendar');
+        },
+      ),
+    );
+  }
+
+  void _quickCreateAccommodation() {
+    if (widget.plan.id == null) return;
+    final planEnd = widget.plan.startDate.add(Duration(days: widget.plan.durationInDays));
+    setState(() => _selectedOption = 'calendar');
+    showDialog<void>(
+      context: context,
+      builder: (context) => AccommodationDialog(
+        planId: widget.plan.id!,
+        planStartDate: widget.plan.startDate,
+        planEndDate: planEnd,
+        initialCheckIn: widget.plan.startDate,
+        onSaved: (_) {
+          if (!mounted) return;
+          setState(() => _selectedOption = 'calendar');
+        },
+      ),
+    );
+  }
+
+  void _quickOpenChat() {
+    setState(() => _selectedOption = 'chat');
+  }
+
+  void _quickCreatePayment() {
+    if (widget.plan.id == null) return;
+    setState(() => _selectedOption = 'payments');
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (ctx) => PaymentDialog(
+          planId: widget.plan.id!,
+          plan: widget.plan,
+          onSaved: () {
+            if (!mounted) return;
+            setState(() => _selectedOption = 'payments');
+          },
+        ),
+      ),
+    );
+  }
+
+  void _quickOpenNotifications() {
+    setState(() => _selectedOption = 'planNotifications');
   }
 
   /// Pestaña Calendario con barra unificada (rango días + 1/2/3).

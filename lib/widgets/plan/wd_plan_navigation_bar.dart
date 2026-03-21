@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
@@ -47,15 +46,21 @@ class PlanNavigationBar extends StatelessWidget {
         icon: Icons.chat_bubble_outline,
         label: 'Chat',
       ),
+      // P17: Pagos entre Chat y Estadística (lista de puntos a corregir)
+      NavigationOption(
+        id: 'payments',
+        icon: Icons.payment,
+        label: 'Pagos',
+      ),
       NavigationOption(
         id: 'stats',
         icon: Icons.bar_chart,
         label: 'Stats',
       ),
       NavigationOption(
-        id: 'payments',
-        icon: Icons.payment,
-        label: 'Pagos',
+        id: 'planNotifications',
+        icon: Icons.notifications_outlined,
+        label: loc.notificationsTitle,
       ),
     ];
   }
@@ -65,8 +70,15 @@ class PlanNavigationBar extends StatelessWidget {
     final options = _allOptions(context)
         .where((o) => o.id != 'stats' || showStatsTab)
         .toList();
+    // P3: pantallas muy estrechas (p. ej. iPhone SE) — menos padding e iconos algo más pequeños
+    final w = MediaQuery.sizeOf(context).width;
+    final compact = w < 360;
+    final barHeight = compact ? 52.0 : 56.0;
+    final hPad = compact ? 6.0 : 12.0;
+    final vPad = compact ? 6.0 : 8.0;
+    final tabPad = compact ? 2.0 : 4.0;
     return Container(
-      height: 56,
+      height: barHeight,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -92,17 +104,18 @@ class PlanNavigationBar extends StatelessWidget {
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
         itemCount: options.length,
         itemBuilder: (context, index) {
           final option = options[index];
           final isSelected = selectedOption == option.id;
           
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: EdgeInsets.symmetric(horizontal: tabPad),
             child: _NavigationButton(
               option: option,
               isSelected: isSelected,
+              compact: compact,
               onTap: () => onOptionSelected(option.id),
             ),
           );
@@ -128,22 +141,27 @@ class _NavigationButton extends StatelessWidget {
   final NavigationOption option;
   final bool isSelected;
   final VoidCallback onTap;
+  /// P3: modo compacto para pantallas estrechas
+  final bool compact;
 
   const _NavigationButton({
     required this.option,
     required this.isSelected,
     required this.onTap,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final side = compact ? 42.0 : 48.0;
+    final iconSize = compact ? 20.0 : 24.0;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        width: 48,
-        height: 48,
+        width: side,
+        height: side,
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(
@@ -191,10 +209,15 @@ class _NavigationButton extends StatelessWidget {
                 ],
         ),
         child: Center(
-          child: Icon(
-            option.icon,
-            color: isSelected ? Colors.white : AppColorScheme.color2,
-            size: 24,
+          child: Semantics(
+            label: option.label,
+            button: true,
+            selected: isSelected,
+            child: Icon(
+              option.icon,
+              color: isSelected ? Colors.white : AppColorScheme.color2,
+              size: iconSize,
+            ),
           ),
         ),
       ),

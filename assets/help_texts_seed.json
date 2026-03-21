@@ -29,6 +29,12 @@
     "en": "Main plan screen: basic data, image, state, dates, participants, announcements. Use Save to apply changes. Plan state (planning, confirmed, in progress, finished) is changed only by the organizer from the menu next to the photo.",
     "url": ""
   },
+  "plan_detail.my_status": {
+    "context": "Detalle del plan (móvil), chip mi estado en la AppBar (dentro/fuera/pend.)",
+    "es": "El chip resume tu relación con este plan: pend. = invitación o participación pendiente de aceptar (pulsa para aceptar o rechazar); dentro = ya participas o eres organizador (pulsa para salir si no eres organizador); fuera = declinaste unirte (una nueva invitación llegará por Notificaciones). Las invitaciones por correo se gestionan también desde Notificaciones.",
+    "en": "The chip summarizes your status: pending = invitation or participation awaiting your response (tap to accept or decline); in = you already participate or you are the organizer (tap to leave if you are not the organizer); out = you declined (a new invitation will appear in Notifications). Email invitations are handled from Notifications too.",
+    "url": ""
+  },
   "create_plan.general": {
     "context": "Modal Crear plan (wd_create_plan_modal)",
     "es": "Crea un nuevo plan con un nombre. Las fechas y el resto de la configuración se pueden completar después en la pantalla Info del plan. Solo necesitas un nombre para continuar.",

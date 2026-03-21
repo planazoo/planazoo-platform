@@ -30,6 +30,7 @@ import 'package:unp_calendario/features/chat/presentation/providers/chat_provide
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
 import 'package:unp_calendario/widgets/dialogs/wd_plans_with_unread_chat_modal.dart';
+import 'package:unp_calendario/widgets/plan/plan_status_chip_actions.dart';
 
 /// Página de lista de planes para móviles (iOS/Android)
 /// Incluye: barra superior con botón crear plan, búsqueda, filtros, lista y navegación inferior
@@ -424,6 +425,18 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                     tooltip: loc.dashboardTabChat,
                   ),
                   const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.help_outline,
+                      size: 28,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/help');
+                    },
+                    tooltip: loc.helpManualOpenFromLogin,
+                  ),
+                  const SizedBox(width: 8),
                   // Icono de perfil
                   IconButton(
                     icon: Icon(
@@ -522,7 +535,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
         currentUser != null &&
         participantsAsync.maybeWhen(
           data: (participants) => participants.any((p) =>
-              p.userId == currentUser.id && (p.isPending || p.needsResponse)),
+              p.userId == currentUser.id && p.isPending),
           orElse: () => false,
         );
     final hasRejectedParticipation = plan.id != null &&
@@ -570,32 +583,31 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
       ),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => PlanDetailPage(plan: plan),
-              ),
-            );
-          },
-          borderRadius: BorderRadius.zero,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Imagen del plan (thumbnail)
-                _buildPlanCardImage(plan),
-                const SizedBox(width: 16),
-                // Zona principal: nombre, descripción, fechas
-                Expanded(
-                  child: Column(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => PlanDetailPage(plan: plan),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.zero,
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
+                      _buildPlanCardImage(plan),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
                               plan.name,
                               style: GoogleFonts.poppins(
                                 fontSize: 18,
@@ -606,55 +618,67 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          if (currentUser != null && plan.id != null && (isIn || isPending || isRejected))
-                            _buildPlanCardStatusChip(context, isIn: isIn, isOut: isRejected, isPending: isPending),
-                        ],
-                      ),
-                      if (plan.description != null && plan.description!.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          plan.description!,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.grey.shade400,
-                            letterSpacing: 0.1,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 16,
-                            color: Colors.grey.shade400,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              dateRange,
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: Colors.grey.shade400,
-                                letterSpacing: 0.1,
+                            if (plan.description != null && plan.description!.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                plan.description!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade400,
+                                  letterSpacing: 0.1,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            ],
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 16,
+                                  color: Colors.grey.shade400,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    dateRange,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade400,
+                                      letterSpacing: 0.1,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                // Columna vertical estrecha: iconos resumen, notificaciones, chat
+              ),
+              if (currentUser != null && plan.id != null && (isIn || isPending || isRejected)) ...[
+                const SizedBox(width: 8),
+                _buildInteractivePlanCardStatusChip(
+                  context,
+                  ref,
+                  plan: plan,
+                  isIn: isIn,
+                  isOut: isRejected,
+                  isPending: isPending,
+                  hasPendingInvitation: hasPendingInvitation,
+                  hasPendingParticipation: hasPendingParticipation,
+                ),
+              ],
+              // Columna vertical estrecha: iconos resumen, notificaciones, chat (P8: espaciado y centrado vertical)
                 if (plan.id != null) ...[
                   Container(
                     width: 1,
-                    height: 44,
+                    height: 72,
                     margin: const EdgeInsets.only(left: 8, right: 8),
                     color: Colors.grey.shade600.withOpacity(0.5),
                   ),
@@ -663,7 +687,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         PlanSummaryButton(
                         plan: plan,
@@ -677,6 +701,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                           );
                         },
                       ),
+                      const SizedBox(height: 8),
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).push(
@@ -696,6 +721,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                           color: notifIconColor,
                         ),
                       ),
+                      const SizedBox(height: 8),
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).push(
@@ -715,10 +741,73 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                 ],
               ],
             ),
-          ),
         ),
       ),
     );
+  }
+
+  Widget _buildInteractivePlanCardStatusChip(
+    BuildContext context,
+    WidgetRef ref, {
+    required Plan plan,
+    required bool isIn,
+    required bool isOut,
+    required bool isPending,
+    required bool hasPendingInvitation,
+    required bool hasPendingParticipation,
+  }) {
+    final chip = _buildPlanCardStatusChip(context, isIn: isIn, isOut: isOut, isPending: isPending);
+    final uid = ref.read(currentUserProvider)?.id;
+    final pid = plan.id;
+    if (pid == null || uid == null) return chip;
+
+    if (isPending) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => planStatusChipShowPendingActions(
+          context,
+          ref,
+          planId: pid,
+          userId: uid,
+          hasPendingInvitation: hasPendingInvitation,
+          hasPendingParticipation: hasPendingParticipation,
+        ),
+        child: chip,
+      );
+    }
+    if (isIn) {
+      final isOrganizer = plan.userId == uid;
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          if (isOrganizer) {
+            final loc = AppLocalizations.of(context)!;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(loc.planCardOrganizerChipMessage)),
+            );
+          } else {
+            planStatusChipShowLeavePlan(context, ref, plan: plan, userId: uid);
+          }
+        },
+        child: chip,
+      );
+    }
+    if (isOut) {
+      final loc = AppLocalizations.of(context)!;
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(loc.planStatusRejectedSnackbar, style: GoogleFonts.poppins(color: Colors.white)),
+              backgroundColor: Colors.grey.shade800,
+            ),
+          );
+        },
+        child: chip,
+      );
+    }
+    return chip;
   }
 
   static const double _cardBadgeIconSize = 20.0;

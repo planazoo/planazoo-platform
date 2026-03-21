@@ -215,7 +215,7 @@ Las pantallas son componentes que se muestran dentro del `DashboardPage` según 
 ### Navegación Mobile
 - **`PlanNavigationBar`** (`lib/widgets/plan/wd_plan_navigation_bar.dart`)
   - Barra de navegación horizontal para opciones del plan en móviles - **Mobile (iOS/Android)**
-  - Muestra iconos para acceder a diferentes secciones del plan (datos, calendario, participantes, estadísticas, pagos)
+  - Muestra iconos para acceder a diferentes secciones del plan (Info, Mi resumen, calendario, participantes, chat, pagos, estadísticas, notificaciones del plan)
   - Referencia en chat: "barra de navegación del plan" o "PlanNavigationBar"
 
 ### Anuncios
@@ -251,12 +251,15 @@ En móviles, la navegación funciona de forma diferente:
   
 - **`PlanDetailPage`** → Página principal de un plan seleccionado
   - Contiene `PlanNavigationBar` para cambiar entre vistas
-  - Vistas disponibles:
+  - Vistas disponibles (orden en barra, ver `wd_plan_navigation_bar.dart`):
     - `'planData'` → Muestra `PlanDataScreen`
+    - `'mySummary'` → Mi resumen del plan
     - `'calendar'` → Muestra `CalendarMobilePage`
-    - `'participants'` → Muestra `PlanParticipantsPage`
-    - `'stats'` → Muestra `PlanStatsPage`
-    - `'payments'` → Muestra `PaymentSummaryPage` (placeholder)
+    - `'participants'` → Muestra `PlanParticipantsPage` / participantes
+    - `'chat'` → Chat del plan
+    - `'payments'` → Muestra `PaymentSummaryPage` / pagos
+    - `'stats'` → Muestra `PlanStatsPage` (solo organizador según permisos)
+    - `'planNotifications'` → Notificaciones del plan
 
 ---
 

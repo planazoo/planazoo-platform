@@ -57,7 +57,7 @@ class PlacesApiService {
     final trimmed = input.trim();
     if (trimmed.length < 2) return [];
 
-    if (kIsWeb) {
+    if (kIsWeb || apiKey.isEmpty) {
       return _autocompleteViaFunction(
         input: trimmed,
         sessionToken: sessionToken,
@@ -65,8 +65,6 @@ class PlacesApiService {
         languageCode: languageCode,
       );
     }
-
-    if (apiKey.isEmpty) return [];
     final body = <String, dynamic>{
       'input': trimmed,
       if (sessionToken != null) 'sessionToken': sessionToken,
@@ -158,15 +156,13 @@ class PlacesApiService {
   }) async {
     if (placeId.isEmpty) return null;
 
-    if (kIsWeb) {
+    if (kIsWeb || apiKey.isEmpty) {
       return _detailsViaFunction(
         placeId: placeId,
         sessionToken: sessionToken,
         languageCode: languageCode,
       );
     }
-
-    if (apiKey.isEmpty) return null;
     var uri = Uri.parse('$_baseUrl/places/$placeId').replace(
       queryParameters: {
         'fields': 'displayName,formattedAddress,location',

@@ -17,6 +17,7 @@ import 'package:unp_calendario/features/security/utils/validator.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
+import 'package:unp_calendario/widgets/plan/plan_status_chip_actions.dart';
 
 class ParticipantsScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -1175,12 +1176,20 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         ? '@${user.username!}'
         : null;
     final loc = AppLocalizations.of(context)!;
+    final currentUser = ref.watch(currentUserProvider);
+    final planId = widget.plan.id;
+    final pendingInvitations = ref.watch(userPendingInvitationsProvider);
+    final hasPendingInvitation = planId != null &&
+        pendingInvitations.maybeWhen(
+          data: (list) => list.any((inv) => inv.planId == planId),
+          orElse: () => false,
+        );
     // Estado in/out/pending
     String statusLabel;
     Color statusBg;
     Color statusBorder;
     Color statusText;
-    if (participation.isPending || participation.needsResponse) {
+    if (participation.isPending) {
       statusLabel = loc.statusShortPending;
       statusBg = PlanUserStatusColors.pendingBg;
       statusBorder = PlanUserStatusColors.pendingBorder;
@@ -1195,6 +1204,89 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       statusBg = PlanUserStatusColors.inBg;
       statusBorder = PlanUserStatusColors.inBorder;
       statusText = PlanUserStatusColors.inText;
+    }
+
+    Widget statusChipWidget = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: statusBg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: statusBorder, width: 1),
+      ),
+      child: Text(
+        statusLabel,
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: statusText,
+        ),
+      ),
+    );
+
+    final isMe = currentUser != null && participation.userId == currentUser.id && planId != null;
+    if (isMe) {
+      if (participation.isPending) {
+        statusChipWidget = Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => planStatusChipShowPendingActions(
+              context,
+              ref,
+              planId: planId,
+              userId: currentUser.id,
+              hasPendingInvitation: hasPendingInvitation,
+              hasPendingParticipation: participation.isPending,
+            ),
+            borderRadius: BorderRadius.circular(6),
+            child: statusChipWidget,
+          ),
+        );
+      } else if (participation.isAccepted) {
+        if (widget.plan.userId == currentUser.id) {
+          statusChipWidget = Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(loc.planCardOrganizerChipMessage)),
+                );
+              },
+              borderRadius: BorderRadius.circular(6),
+              child: statusChipWidget,
+            ),
+          );
+        } else {
+          statusChipWidget = Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => planStatusChipShowLeavePlan(
+                context,
+                ref,
+                plan: widget.plan,
+                userId: currentUser.id,
+              ),
+              borderRadius: BorderRadius.circular(6),
+              child: statusChipWidget,
+            ),
+          );
+        }
+      } else if (participation.isRejected) {
+        statusChipWidget = Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(loc.planStatusRejectedSnackbar, style: GoogleFonts.poppins(color: Colors.white)),
+                  backgroundColor: Colors.grey.shade800,
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(6),
+            child: statusChipWidget,
+          ),
+        );
+      }
     }
 
     return Container(
@@ -1298,22 +1390,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: statusBg,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: statusBorder, width: 1),
-                        ),
-                        child: Text(
-                          statusLabel,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: statusText,
-                          ),
-                        ),
-                      ),
+                      statusChipWidget,
                     ],
                   ),
                   PopupMenuButton<String>(
@@ -1504,7 +1581,8 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
           ),
           content: Text(
-            '¿Estás seguro de que quieres salir de "${widget.plan.name}"? Dejarás de ver eventos y participantes.',
+            'Si sales de "${widget.plan.name}", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\n'
+            'Para volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.',
             style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
           ),
           actions: [
@@ -2198,7 +2276,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         },
       );
 
-      return Container(
+      final gradientBox = Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -2219,6 +2297,19 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 ],
               ),
       );
+
+      // P15: misma barra verde que otras pestañas cuando está embebido en PlanDetailPage (iOS).
+      if (isCompact && !widget.embedInScaffold) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildParticipantsHeader(),
+            Expanded(child: gradientBox),
+          ],
+        );
+      }
+
+      return gradientBox;
     }
 
     final body = content();

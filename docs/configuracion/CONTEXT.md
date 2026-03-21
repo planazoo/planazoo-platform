@@ -57,6 +57,8 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 ### 5) UI/UX y Calidad
 - **⚠️ Estilo Base:** La aplicación Planazoo utiliza una UI oscura por defecto. No es un "modo oscuro" opcional, sino el diseño estándar de la app. Consultar `docs/ux/estilos/ESTILO_SOFISTICADO.md` (renombrado a "Estilo Base") para detalles.
 - **⚠️ Consistencia Web e iOS:** Todos los cambios de UI y flujos han de aplicarse y verse de forma coherente en web y en iOS (ver sección 6, norma "Consistencia Web e iOS").
+- **⚠️ Excepción documentada (Calendario):** El **drag & drop de eventos** se mantiene **solo en Web/Dashboard**. En iOS/Android (móvil) la edición de eventos se realiza por tap + diálogo. Tratar esta diferencia como decisión de producto explícita.
+- **⚡ Regla de proximidad de acciones (obligatoria):** Diseñar navegación y accesos para que las opciones más usadas estén a **1 click/tap** desde la pantalla actual; el resto de acciones relevantes deben estar, como máximo, a **2 clicks/taps**. Antes de añadir pasos extra, priorizar accesos rápidos, acciones contextuales y reducción de fricción.
 - Mantener UI consistente: tamaños, tipografías, colores según `AppColorScheme` y el Estilo Base.
 - Evitar regresiones de interacción (tap, drag&drop, dobles clics).
 - Revisar lints tras cada cambio en archivos modificados.
@@ -144,5 +146,5 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 Mantenemos este documento corto y de alto impacto. Cualquier nueva norma estable se añade aquí.
 
-*Última actualización: Marzo 2026 (norma: consistencia obligatoria web e iOS en todos los cambios).*
+*Última actualización: Marzo 2026 (normas: consistencia obligatoria web e iOS + regla 1 click/2 clicks para accesos).*
 

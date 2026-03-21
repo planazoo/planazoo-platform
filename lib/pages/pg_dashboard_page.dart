@@ -329,7 +329,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       final participants = ref.watch(planParticipantsProvider(plan.id!)).valueOrNull ?? [];
       final hasPendingInv = pendingInvs.any((inv) => inv.planId == plan.id);
       final hasPendingPart = user != null &&
-          participants.any((p) => p.userId == user.id && (p.isPending || p.needsResponse));
+          participants.any((p) => p.userId == user.id && p.isPending);
       final isIn = user != null &&
           (plan.userId == user.id ||
               participants.any((p) => p.userId == user.id && p.isAccepted));
@@ -1437,6 +1437,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 gridHeight: gridHeight,
                 onProfileTap: () => _changeScreen('profile'),
                 onAdminTap: () => _changeScreen('admin'),
+                onHelpTap: () => Navigator.of(context).pushNamed('/help'),
                 plans: displayedPlans,
                 onOpenChatForPlan: (plan) {
                   if (plan.id != null) _openPlanTab(plan, 'chat', 'W19');
@@ -1466,7 +1467,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 columnWidth: columnWidth,
                 rowHeight: rowHeight,
               ),
-              // W10 (C15, R1): Mi estado en el plan
+              // W10 (C15, R1): Mi estado — mismo widget que AppBar móvil (taps: aceptar/rechazar / salir)
               WdDashboardMyStatusCell(
                 columnWidth: columnWidth,
                 rowHeight: rowHeight,

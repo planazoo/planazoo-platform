@@ -12,10 +12,13 @@ import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 /// T113: Página de estadísticas del plan
 class PlanStatsPage extends ConsumerWidget {
   final Plan plan;
+  /// Misma lógica que Chat/Pagos (P16): en [PlanDetailPage] evita flecha que hace pop del detalle.
+  final bool embedInPlanDetail;
 
   const PlanStatsPage({
     super.key,
     required this.plan,
+    this.embedInPlanDetail = false,
   });
 
   @override
@@ -24,6 +27,7 @@ class PlanStatsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: !embedInPlanDetail,
         title: const Text('Estadísticas del Plan'),
         backgroundColor: AppColorScheme.color2,
         foregroundColor: Colors.white,

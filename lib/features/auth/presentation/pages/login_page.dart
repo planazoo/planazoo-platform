@@ -163,6 +163,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 ],
                               ),
                               const SizedBox(height: 24),
+                              Align(
+                                alignment: Alignment.center,
+                                child: TextButton.icon(
+                                  onPressed: () => Navigator.of(context).pushNamed('/help'),
+                                  icon: Icon(Icons.help_outline, color: AppColorScheme.color2, size: 18),
+                                  label: Text(
+                                    AppLocalizations.of(context)!.helpManualOpenFromLogin,
+                                    style: GoogleFonts.poppins(
+                                      color: AppColorScheme.color2,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
                               // Botón de Google Sign-In
                               _buildGoogleSignInButton(authNotifier, authState.isLoading),
                               const SizedBox(height: 24),

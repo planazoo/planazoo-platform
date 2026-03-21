@@ -23,7 +23,9 @@ Solo después de esta comprobación (y de actualizar este prompt si hace falta) 
 - `lib/app/` – bootstrap y tema (Estilo Base oscuro, AppColorScheme, Poppins).
 - `lib/features/` – módulos por feature: auth, budget, calendar, **chat** (mensajes, reacciones, plan_messages), flights, language, notifications, offline, payments, places, security, stats, testing (demo_data_generator). Cada uno suele tener domain/, presentation/, providers.
 - `lib/pages/` – pantallas de nivel superior: pg_dashboard_page, pg_plans_list_page, pg_calendar_mobile_page, pg_plan_detail_page, pg_profile_page, pg_plan_participants_page, pg_participant_groups_page, etc. (no hay pg_invitation_page; invitación por notificaciones/directa).
+- Manual de ayuda beta público: `features/help/presentation/pages/help_manual_page.dart`, ruta `'/help'` accesible desde login y también desde dentro de la app (web/iOS).
 - `lib/widgets/` – UI reutilizable: screens/, dialogs/, plan/, event/, notifications/, etc. Incluye `wd_event_dialog.dart` (formulario de eventos con formato “título sobre el borde” y helper `_buildLabelOnBorderField`).
+- Calendario: drag & drop de eventos se mantiene en `wd_calendar_screen.dart` (web/dashboard). En móvil (`pg_calendar_mobile_page.dart`) edición por tap + diálogo (sin DnD), decisión de producto documentada.
 - `lib/shared/` – servicios, utils, permisos, FCM.
 - `lib/l10n/` – localizaciones generadas (app_es.arb, app_en.arb). **Todos los textos visibles deben usar AppLocalizations** (CONTEXT.md §6).
 

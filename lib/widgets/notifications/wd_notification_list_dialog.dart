@@ -21,14 +21,18 @@ class NotificationListDialog extends ConsumerWidget {
     final currentUser = ref.watch(currentUserProvider);
     final loc = AppLocalizations.of(context)!;
 
+    final size = MediaQuery.of(context).size;
+    final isCompactWidth = size.width < 420;
+
     return Dialog(
       backgroundColor: Colors.grey.shade900,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+      insetPadding: EdgeInsets.zero,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
       ),
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+        width: size.width,
+        height: size.height,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -44,16 +48,19 @@ class NotificationListDialog extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  Text(
-                    loc.notificationsTitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                  Expanded(
+                    child: Text(
+                      loc.notificationsTitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
-                  if (currentUser != null)
+                  if (currentUser != null && !isCompactWidth)
                     TextButton(
                       onPressed: () async {
                         final notificationService = ref.read(notificationServiceProvider);
@@ -90,22 +97,28 @@ class NotificationListDialog extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Row(
                 children: [
-                  _FilterChip(
-                    label: loc.notificationsFilterAll,
-                    selected: filterIndex == 0,
-                    onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 0,
+                  Expanded(
+                    child: _FilterChip(
+                      label: loc.notificationsFilterAll,
+                      selected: filterIndex == 0,
+                      onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 0,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  _FilterChip(
-                    label: loc.notificationsFilterAction,
-                    selected: filterIndex == 1,
-                    onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 1,
+                  Expanded(
+                    child: _FilterChip(
+                      label: loc.notificationsFilterAction,
+                      selected: filterIndex == 1,
+                      onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 1,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  _FilterChip(
-                    label: loc.notificationsFilterInfo,
-                    selected: filterIndex == 2,
-                    onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 2,
+                  Expanded(
+                    child: _FilterChip(
+                      label: loc.notificationsFilterInfo,
+                      selected: filterIndex == 2,
+                      onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 2,
+                    ),
                   ),
                 ],
               ),
@@ -191,44 +204,6 @@ class NotificationListDialog extends ConsumerWidget {
                 ),
               ),
             ),
-            // Botón generar datos de prueba
-            if (currentUser != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final authUid = ref.read(authServiceProvider).currentUser?.uid;
-                    if (authUid == null) return;
-                    final generator = TestNotificationGenerator();
-                    final result = await generator.generate(
-                      userId: currentUser!.id,
-                      authUid: authUid,
-                      userEmail: currentUser.email ?? '',
-                    );
-                    if (!context.mounted) return;
-                    ref.invalidate(userPendingInvitationsProvider);
-                    ref.invalidate(globalNotificationsListProvider);
-                    ref.invalidate(globalUnreadCountProvider);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          loc.notificationsTestDataGenerated(
-                            result.invitations,
-                            result.pendingEvents,
-                            result.appNotifications,
-                          ),
-                        ),
-                        backgroundColor: Colors.green.shade800,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.add_circle_outline, size: 18),
-                  label: Text(loc.notificationsGenerateTestData),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColorScheme.color2,
-                  ),
-                ),
-              ),
           ],
         ),
       ),

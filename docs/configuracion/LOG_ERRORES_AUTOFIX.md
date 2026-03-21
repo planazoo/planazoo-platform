@@ -72,3 +72,43 @@ Cada entrada nueva debe seguir esta estructura:
 - **Solución aplicada**: en `pg_calendar_mobile_page.dart`, al construir `CalendarGrid`, se añadió `onAccommodationHeaderTap`, que calcula una fecha visible (primer día del grupo actual si existe, o `plan.startDate`) y llama a `_showNewAccommodationDialog(date)`, reutilizando el flujo móvil ya existente para crear alojamientos.
 - **Notas para el futuro**: cuando se añadan parámetros `required` a widgets compartidos (como `CalendarGrid`), buscar todas las instancias (web + móvil) con `Grep` o búsqueda global y actualizarlas en bloque. Evitar introducir requisitos nuevos en constructores sin revisar sus usos en variantes de pantalla (web, móvil, tests).
 
+### [2026-03-12] Chips estado plan / diálogos no aparecían
+
+- **Contexto**: chips pending/in con `GestureDetector` dentro de card; lista iOS (`pg_plans_list_page`) y barra “Mi estado” (`WdDashboardMyStatusCell`).
+- **Error**: al pulsar el chip no se abría el diálogo (a veces se abría el detalle del plan).
+- **Causa raíz**: (1) El `InkWell` de toda la card capturaba el gesto frente al hijo. (2) La lista móvil no usa `PlanCardWidget`, tenía chips sin lógica. (3) La celda del header no tenía `onTap`.
+- **Solución aplicada**: sacar el chip **fuera** del `InkWell` (solo la zona imagen+texto es clicable para abrir el plan); misma acción en `PlanCardWidget`; lógica compartida en `plan_status_chip_actions.dart`; tap en `WdDashboardMyStatusCell`.
+- **Notas**: acciones secundarias en cards con `InkWell` → colocar el control **hermano** del `Expanded(InkWell(...))`, no hijo dentro del área del `InkWell`.
+
+### [2026-03-12] MyPlanSummaryScreen (acciones 3 iconos: aserciones nulas innecesarias)
+
+- **Contexto**: implementación de accesos rápidos por fila en resumen de plan (detalle, Maps, URL) en `wd_my_plan_summary_screen.dart`.
+- **Error**: warning de linter `unnecessary_non_null_assertion` en callbacks (`mapsQuery!`, `webUrl!`) tras validación previa con flags booleanos.
+- **Causa raíz**: el analizador no aceptó la promoción de nullabilidad dentro de closures; mantener `!` generó warning.
+- **Solución aplicada**: introducir variables seguras (`safeMapsQuery`, `safeWebUrl`) con fallback y usarlas en callbacks, eliminando `!`.
+- **Notas para el futuro**: cuando se usen valores opcionales en closures condicionadas por `if (x != null)`, preferir copiar a una variable local no nula antes del callback para evitar warnings de promoción.
+
+### [2026-03-12] EventDialog (overflow horizontal en chips de subtipo)
+
+- **Contexto**: pruebas en iOS durante edición/creación de evento (`wd_event_dialog.dart`).
+- **Error**: `A RenderFlex overflowed by 10 pixels on the right` en la fila del chip de subtipo (`Row ... wd_event_dialog.dart`).
+- **Causa raíz**: el `Text(label)` del chip no era flexible; en anchos pequeños, icono + texto + icono “+” superaban el ancho disponible.
+- **Solución aplicada**: envolver el texto del chip en `Flexible` + `maxLines: 1` + `TextOverflow.ellipsis` para que el contenido se ajuste sin desbordar.
+- **Notas para el futuro**: en chips/filas compactas con iconos laterales, usar siempre `Flexible/Expanded` en textos dinámicos para evitar overflows en iOS y traducciones largas.
+
+### [2026-03-12] P18 / `PlanParticipation.needsResponse` — participantes legacy como “pendientes”
+
+- **Contexto**: chips in/out/pend. en lista y detalle; modelo `PlanParticipation`.
+- **Error / síntoma**: usuarios con `status == null` (legacy) aparecían como **pendiente** en la UI.
+- **Causa raíz**: el getter `needsResponse` hacía `status == 'pending' || status == null`, y en varios sitios se usaba `isPending || needsResponse`, duplicando además la condición con `isPending`.
+- **Solución aplicada**: eliminar `needsResponse`; tratar solo `status == 'pending'` como pendiente; `null` sigue como aceptado vía `isAccepted`. Sustituir usos por `isPending` donde aplicaba.
+- **Notas**: alinear con `isAccepted` (`status == null` ⇒ aceptado).
+
+### [2026-03-12] `wd_plan_data_screen` — `const EdgeInsets` con valor no constante
+
+- **Contexto**: cabecera plegable de la zona de peligro (padding inferior según `_infoSectionDangerExpanded`).
+- **Error**: `Invalid constant value` en `EdgeInsets.fromLTRB(16, 14, 12, _infoSectionDangerExpanded ? 10 : 14)` marcado como `const`.
+- **Causa raíz**: el operador ternario depende de estado; no puede formar parte de una expresión `const`.
+- **Solución aplicada**: quitar `const` del `EdgeInsets.fromLTRB(...)`.
+- **Notas para el futuro**: si un padding depende de `setState`/campos, no usar `const` delante del `EdgeInsets`/`BoxDecoration` que lo incluya.
+

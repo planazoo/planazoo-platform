@@ -91,13 +91,20 @@ Flujos que mantenemos:
 
 ## 5. iOS / móvil (PlanDetailPage)
 
-En la **AppBar** de la página del plan (iOS/Android) se muestra **mi estado en el plan** en todas las pestañas: chip compacto con "Aceptado" | "Pendiente de aceptar" | "Invitación pendiente". Widget: `PlanUserStatusLabel` en `lib/widgets/plan/wd_plan_user_status_label.dart`, usado en `lib/pages/pg_plan_detail_page.dart` (`_buildAppBar` → `actions`).
+En la **AppBar** de la página del plan (iOS/Android) se muestra **mi estado en el plan** en todas las pestañas: chip compacto **dentro** / **fuera** / **pend.** (l10n; antes in/out/pending en inglés). Al lado, botón de ayuda (**?**) con id `plan_detail.my_status` (`HelpContextIds.planDetailMyStatus`) y texto en `assets/help_texts_seed.json`. Widget: `PlanUserStatusLabel` + `HelpIconButton` en `lib/pages/pg_plan_detail_page.dart` (`_buildAppBar` → `actions`).
+
+- **Pulsa chip pend.** → aceptar/rechazar (mismo flujo que card/lista).
+- **Pulsa dentro** (no organizador) → salir del plan; **dentro** como organizador → mensaje informativo.
+- **Pulsa fuera** → SnackBar recordando que declinaste y que una nueva invitación irá a Notificaciones.
+
+La participación solo cuenta como pendiente si `status == 'pending'` en Firestore; `status == null` se trata como aceptado (`PlanParticipation.isAccepted`), para no marcar en falso positivo a participantes antiguos.
 
 ## 6. Referencias de código
 
 - W6: `lib/widgets/dashboard/wd_dashboard_header_bar.dart` (`_buildW6`, `_buildPlanInfoContent`, `_currentPlanRoleLabel`).
 - W10: `lib/widgets/dashboard/wd_dashboard_my_status_cell.dart`; etiqueta reutilizable: `lib/widgets/plan/wd_plan_user_status_label.dart`.
-- iOS AppBar: `lib/pages/pg_plan_detail_page.dart`, `lib/widgets/plan/wd_plan_user_status_label.dart`.
+- iOS AppBar: `lib/pages/pg_plan_detail_page.dart`, `lib/widgets/plan/wd_plan_user_status_label.dart`, ayuda `HelpContextIds.planDetailMyStatus`.
+- Chips interactivos también: `wd_plan_card_widget.dart`, `pg_plans_list_page.dart`, `wd_participants_screen.dart` (estado **fuera** con SnackBar unificado).
 - W7–W12 (placeholders): `lib/widgets/dashboard/wd_dashboard_header_placeholders.dart`.
 - Lista de planes / card: `lib/widgets/plan/wd_plan_card_widget.dart` (badge “Invitación” con `userPendingInvitationsProvider`).
 - Lista de notificaciones e invitación: `lib/widgets/notifications/wd_notification_list_dialog.dart`, `wd_unified_notification_item.dart` (`InvitationNotificationTile`).

@@ -12,6 +12,7 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// T252: Vista "Mi resumen" / "Mi itinerario" para participantes del plan.
 /// Muestra: lo más importante del plan, hoy/mañana, accesos rápidos (vuelos, alojamiento), lista cronológica.
@@ -442,7 +443,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           const SizedBox(height: 4),
           ...myInfoLines.map((item) => _buildSummaryLinkRow(
                 text: item.line,
-                onTap: widget.onOpenEvent != null ? () => widget.onOpenEvent!(item.event) : null,
+                onOpenDetail: widget.onOpenEvent != null ? () => widget.onOpenEvent!(item.event) : null,
+                mapsQuery: item.event.commonPart?.location,
+                webUrl: item.event.commonPart?.url,
               )),
         ],
       ],
@@ -471,7 +474,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               padding: const EdgeInsets.only(bottom: 4),
               child: _buildSummaryLinkRow(
                 text: '${_formatEventTime(e)} ${e.description}',
-                onTap: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
+                onOpenDetail: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
+                mapsQuery: e.commonPart?.location,
+                webUrl: e.commonPart?.url,
                 leadingIcon: _eventTypeIcon(e),
                 subtitle: subtitle,
               ),
@@ -510,13 +515,23 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     return startStr;
   }
 
-  /// Fila de texto con enlace opcional (icono abrir) al evento/alojamiento.
-  /// [leadingIcon] opcional: icono de tipo de evento. [subtitle] opcional: línea secundaria (ej. noches, dirección).
-  Widget _buildSummaryLinkRow({required String text, VoidCallback? onTap, IconData? leadingIcon, String? subtitle}) {
+  /// Fila de resumen con hasta 3 acciones: detalle interno, Maps y URL.
+  Widget _buildSummaryLinkRow({
+    required String text,
+    VoidCallback? onOpenDetail,
+    String? mapsQuery,
+    String? webUrl,
+    IconData? leadingIcon,
+    String? subtitle,
+  }) {
+    final hasMaps = mapsQuery != null && mapsQuery.trim().isNotEmpty;
+    final hasWebUrl = webUrl != null && webUrl.trim().isNotEmpty;
+    final safeMapsQuery = mapsQuery ?? '';
+    final safeWebUrl = webUrl ?? '';
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: InkWell(
-        onTap: onTap,
+        onTap: onOpenDetail,
         borderRadius: BorderRadius.circular(4),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 2),
@@ -534,7 +549,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                   children: [
                     Text(
                       text,
-                      style: GoogleFonts.poppins(fontSize: 12, color: onTap != null ? AppColorScheme.color2 : Colors.white70),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: onOpenDetail != null ? AppColorScheme.color2 : Colors.white70,
+                      ),
                     ),
                     if (subtitle != null && subtitle.isNotEmpty) ...[
                       const SizedBox(height: 2),
@@ -546,16 +564,80 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                   ],
                 ),
               ),
-              if (onTap != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 6),
-                  child: Icon(Icons.open_in_new, size: 14, color: AppColorScheme.color2),
-                ),
+              const SizedBox(width: 6),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onOpenDetail != null)
+                    _buildTinyActionIcon(
+                      icon: Icons.open_in_new,
+                      onTap: onOpenDetail,
+                    ),
+                  if (hasMaps)
+                    _buildTinyActionIcon(
+                      icon: Icons.map_outlined,
+                      onTap: () => _openMapsQuery(safeMapsQuery),
+                    ),
+                  if (hasWebUrl)
+                    _buildTinyActionIcon(
+                      icon: Icons.link,
+                      onTap: () => _openWebUrl(safeWebUrl),
+                    ),
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildTinyActionIcon({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade900,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade700, width: 1),
+          ),
+          child: Icon(icon, size: 14, color: AppColorScheme.color2),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openMapsQuery(String rawQuery) async {
+    final query = rawQuery.trim();
+    if (query.isEmpty) return;
+    final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _openWebUrl(String rawUrl) async {
+    final normalized = _normalizeUrl(rawUrl);
+    if (normalized == null) return;
+    final uri = Uri.tryParse(normalized);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  String? _normalizeUrl(String? raw) {
+    if (raw == null) return null;
+    final value = raw.trim();
+    if (value.isEmpty) return null;
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+    return 'https://$value';
   }
 
   Widget _buildQuickAccessSection(
@@ -593,7 +675,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: _buildSummaryLinkRow(
                     text: '${DateFormatter.formatDate(e.date)} ${_formatEventTime(e)} ${e.description}',
-                    onTap: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
+                    onOpenDetail: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
+                    mapsQuery: e.commonPart?.location,
+                    webUrl: e.commonPart?.url,
                     subtitle: subtitle,
                   ),
                 );
@@ -626,7 +710,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: _buildSummaryLinkRow(
                     text: '${a.hotelName} (${DateFormatter.formatDate(a.checkIn)} – ${DateFormatter.formatDate(a.checkOut)})',
-                    onTap: widget.onOpenAccommodation != null ? () => widget.onOpenAccommodation!(a) : null,
+                    onOpenDetail: widget.onOpenAccommodation != null ? () => widget.onOpenAccommodation!(a) : null,
+                    mapsQuery: a.commonPart?.address,
+                    webUrl: a.commonPart?.url,
                     subtitle: subtitle,
                   ),
                 );
@@ -751,11 +837,27 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                       ],
                     ),
                   ),
-                  if (widget.onOpenEvent != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: Icon(Icons.open_in_new, size: 14, color: AppColorScheme.color2),
-                    ),
+                  const SizedBox(width: 6),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.onOpenEvent != null)
+                        _buildTinyActionIcon(
+                          icon: Icons.open_in_new,
+                          onTap: () => widget.onOpenEvent!(e),
+                        ),
+                      if (e.commonPart?.location != null && e.commonPart!.location!.trim().isNotEmpty)
+                        _buildTinyActionIcon(
+                          icon: Icons.map_outlined,
+                          onTap: () => _openMapsQuery(e.commonPart!.location!),
+                        ),
+                      if (e.commonPart?.url != null && e.commonPart!.url!.trim().isNotEmpty)
+                        _buildTinyActionIcon(
+                          icon: Icons.link,
+                          onTap: () => _openWebUrl(e.commonPart!.url!),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),

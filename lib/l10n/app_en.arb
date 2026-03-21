@@ -957,6 +957,10 @@
   },
   "planDeleteError": "Error deleting plan",
   "@planDeleteError": {},
+  "planInfoDangerZoneTitle": "Danger zone",
+  "@planInfoDangerZoneTitle": {},
+  "planInfoDangerZoneSubtitle": "Deleting the plan will remove all related events. This cannot be undone.",
+  "@planInfoDangerZoneSubtitle": {},
   "planRoleLabel": "Role: {role}",
   "@planRoleLabel": {
     "placeholders": {
@@ -1135,6 +1139,30 @@
   "@planCardInvitationBadge": { "description": "Plan card badge: pending invitation" },
   "planCardPendingBadge": "Pending",
   "@planCardPendingBadge": { "description": "Plan card badge: pending participation" },
+  "planCardChipInvitationQuestion": "Do you want to join this plan?",
+  "@planCardChipInvitationQuestion": { "description": "Dialog when tapping pending chip on plan card" },
+  "planCardLeavePlanConfirmBody": "If you leave \"{planName}\", you will no longer see this plan in your list or receive notifications.\n\nTo rejoin later, the organizer must invite you again.",
+  "@planCardLeavePlanConfirmBody": { "placeholders": { "planName": { "type": "String" } } },
+  "planMyStatusHelpTitle": "My status in the plan",
+  "@planMyStatusHelpTitle": { "description": "Help title for in/out/pending chip on plan bar" },
+  "planMyStatusHelpDefault": "The chip summarizes your relationship with this plan:\n\n• pending — You have an invitation or participation awaiting a response. Tap the chip to accept or decline.\n\n• in — You already participate (or you are the organizer). If you are not the organizer, tap to leave the plan.\n\n• out — You declined the invitation. If the organizer invites you again, you will see it in Notifications.\n\nEmail invitations are also handled from Notifications.",
+  "@planMyStatusHelpDefault": { "description": "Default help body when Firestore offline" },
+  "planStatusRejectedSnackbar": "You declined to join this plan. A new invitation will appear in Notifications.",
+  "@planStatusRejectedSnackbar": { "description": "When tapping out chip after declining" },
+  "planStatusSemanticsPending": "Pending: accept or decline the plan invitation",
+  "@planStatusSemanticsPending": { "description": "A11y pending chip" },
+  "planStatusSemanticsIn": "You participate in this plan",
+  "@planStatusSemanticsIn": { "description": "A11y in chip" },
+  "planStatusSemanticsOut": "You declined to join this plan",
+  "@planStatusSemanticsOut": { "description": "A11y out chip" },
+  "planCardOrganizerChipMessage": "As organizer, manage the plan from its detail screen.",
+  "@planCardOrganizerChipMessage": { "description": "SnackBar when organizer taps in chip" },
+  "planCardLeavePlanTitle": "Leave plan",
+  "@planCardLeavePlanTitle": { "description": "Title for leave dialog from in chip" },
+  "planCardLeavePlanButton": "Leave",
+  "@planCardLeavePlanButton": { "description": "Confirm leave plan from card" },
+  "planCardLeftPlanSuccess": "You left the plan",
+  "planCardLeftPlanError": "Could not leave the plan",
   "invitationPlanLabel": "Plan: {planId}",
   "@invitationPlanLabel": { "placeholders": { "planId": { "type": "String" } } },
   "invitationRoleLabel": "Role: {role}",
@@ -1430,6 +1458,40 @@
   "duration": "Duration",
   "@duration": {
     "description": "Duration label"
+  },
+  "eventDurationFormatMinutes": "{minutes} min",
+  "@eventDurationFormatMinutes": {
+    "description": "Duration in minutes (under 1 h)",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "eventDurationFormatOneHour": "1 hour",
+  "@eventDurationFormatOneHour": {
+    "description": "Exactly 60 minutes"
+  },
+  "eventDurationFormatHoursOnly": "{hours} h",
+  "@eventDurationFormatHoursOnly": {
+    "description": "Whole hours only",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "eventDurationFormatHoursMinutes": "{hours} h {minutes} min",
+  "@eventDurationFormatHoursMinutes": {
+    "description": "Hours and minutes",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
   },
   "timezone": "Timezone",
   "@timezone": {
@@ -1825,5 +1887,29 @@
   "noPermissionEditPersonalInfoOthers": "You don't have permission to edit other participants' personal information.",
   "@noPermissionEditPersonalInfoOthers": { "description": "Message when cannot edit others' personal info" },
   "noPermissionTitle": "No permission",
-  "@noPermissionTitle": { "description": "No permission notice title" }
+  "@noPermissionTitle": { "description": "No permission notice title" },
+  "helpManualOpenFromLogin": "Quick guide (beta)",
+  "@helpManualOpenFromLogin": { "description": "Link from login to help manual web page" },
+  "helpManualTitle": "Quick guide for new users",
+  "helpManualIntro": "Short guide for the testing phase. It helps you get started and understand Planazoo's key flows.",
+  "helpManualSectionGettingStartedTitle": "1) Getting started",
+  "helpManualGettingStarted1": "If you already have an account, sign in with email/username and password, or with Google.",
+  "helpManualGettingStarted2": "If you do not have an account, sign up and verify your email before continuing.",
+  "helpManualGettingStarted3": "Choose language from the top-right corner on the login screen.",
+  "helpManualSectionPlanAndCalendarTitle": "2) Plans and calendar",
+  "helpManualPlanCalendar1": "Create a plan and define dates; then add events and accommodations.",
+  "helpManualPlanCalendar2": "On mobile, main editing is via tap and dialog; on web you have more advanced actions.",
+  "helpManualPlanCalendar3": "Use the summary view to quickly review events, flights, and accommodations.",
+  "helpManualSectionInvitationsTitle": "3) Invitations and participants",
+  "helpManualInvitations1": "Invite by email or username depending on the flow available in your participants screen.",
+  "helpManualInvitations2": "When invited, you will see pending/in/out status and can respond from status chips.",
+  "helpManualInvitations3": "If a user does not appear, verify the invited email and registration status.",
+  "helpManualSectionNotificationsTitle": "4) Notifications",
+  "helpManualNotifications1": "Open the bell icon to review plan notifications and pending actions.",
+  "helpManualNotifications2": "Unread items are highlighted; opening details marks them as read.",
+  "helpManualNotifications3": "If expected alerts are missing, open the plan and check the notifications tab too.",
+  "helpManualSectionTipsTitle": "5) Testing tips",
+  "helpManualTips1": "Prioritize validating event create/edit, invitations, and notification flows.",
+  "helpManualTips2": "Always test both web and iOS to detect behavior differences.",
+  "helpManualTips3": "If something fails, record exact steps, test user, and screen for fast reproduction."
 }

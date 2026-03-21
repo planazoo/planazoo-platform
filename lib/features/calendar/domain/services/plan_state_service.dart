@@ -269,7 +269,10 @@ class PlanStateService {
 
   /// Obtiene el estado de visualización para el badge
   static Map<String, dynamic> getStateDisplayInfo(String? state) {
-    final normalized = state ?? 'planificando';
+    // Normalizar estados nulos o legacy (ej. 'borrador') a 'planificando'
+    final normalized = (state == null || state.isEmpty || state == 'borrador')
+        ? 'planificando'
+        : state;
 
     switch (normalized) {
       case 'planificando':

@@ -241,7 +241,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
         ref.watch(planParticipantsProvider(plan.id!)).maybeWhen(
               data: (participants) =>
                   participants.any((p) =>
-                      p.userId == currentUser.id && (p.isPending || p.needsResponse)),
+                      p.userId == currentUser.id && p.isPending),
               orElse: () => false,
             );
 

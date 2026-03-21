@@ -15,11 +15,15 @@ import '../../shared/services/logger_service.dart';
 class PlanChatScreen extends ConsumerStatefulWidget {
   final String planId;
   final String planName;
+  /// En [PlanDetailPage] el stack puede hacer pop; si no se oculta el leading, el AppBar
+  /// muestra una flecha que cierra todo el detalle del plan (P16).
+  final bool embedInPlanDetail;
 
   const PlanChatScreen({
     super.key,
     required this.planId,
     required this.planName,
+    this.embedInPlanDetail = false,
   });
 
   @override
@@ -131,6 +135,7 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
+        automaticallyImplyLeading: !widget.embedInPlanDetail,
         title: Text(
           'Chat del plan',
           style: GoogleFonts.poppins(

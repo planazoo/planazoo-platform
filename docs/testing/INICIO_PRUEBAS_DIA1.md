@@ -49,9 +49,11 @@ Contraseña la misma para todos. Más opciones en [USUARIOS_PRUEBA](../configura
 **Objetivo:** Confirmar que lo básico funciona antes del ciclo largo. Todo con **UA** en **una** pestaña.
 
 1. **Login:** Cerrar sesión si había una abierta. Ir a la URL de la app → Iniciar sesión con UA (email + contraseña o Google si lo usas).
-2. **Dashboard:** Tras login, debe verse la pantalla principal (lista de planes vacía o con planes existentes).
-3. **Crear plan:** Pulsar crear plan (o equivalente). Rellenar nombre y rango de fechas; guardar.
-4. **Ver plan en lista:** El plan nuevo debe aparecer en la lista. Abrirlo y ver la vista del plan (calendario o pestañas).
+2. **Manual de ayuda (público):** Desde login, abrir "Manual de ayuda" y verificar que carga la ruta `/help`.
+3. **Dashboard:** Tras login, debe verse la pantalla principal (lista de planes vacía o con planes existentes).
+4. **Ayuda dentro de app:** Abrir el acceso a ayuda desde dentro de la app y comprobar que también navega a `/help`.
+5. **Crear plan:** Pulsar crear plan (o equivalente). Rellenar nombre y rango de fechas; guardar.
+6. **Ver plan en lista:** El plan nuevo debe aparecer en la lista. Abrirlo y ver la vista del plan (calendario o pestañas).
 
 **Anotar:** ¿Todo ✅ o algo ❌/⚠️? Si algo falla, anótalo y corrige antes de seguir al Paso 4.
 
