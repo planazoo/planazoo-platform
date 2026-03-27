@@ -10,16 +10,14 @@ import 'package:unp_calendario/features/calendar/presentation/providers/invitati
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
-import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
-import 'package:unp_calendario/widgets/plan/wd_plan_list_widget.dart';
+import 'package:unp_calendario/widgets/plan/plan_calendar_view.dart';
+import 'package:unp_calendario/widgets/plan/wd_plan_card_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
-import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
@@ -49,6 +47,8 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _unpIdController = TextEditingController();
   bool _isCreating = false;
+  /// Vista lista vs calendario mensual (paridad con web / lista puntos P8).
+  bool _useCalendarView = false;
 
   @override
   void dispose() {
@@ -238,25 +238,113 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                 onSearchChanged: _filterPlans,
               ),
             ),
-            // Botones de filtro
+            // Una fila: [Filtros ▼] | [Lista | Calendario]
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
-                    child: _buildFilterButton('todos', loc.plansListFilterAll, isDarkMode),
+                    child: PopupMenuButton<String>(
+                      tooltip: loc.plansListFiltersButton,
+                      initialValue: _selectedFilter,
+                      color: Colors.grey.shade900,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: AppColorScheme.color2.withValues(alpha: 0.7), width: 1.5),
+                      ),
+                      onSelected: (value) {
+                        setState(() => _selectedFilter = value);
+                        _applyFilters();
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem<String>(
+                          value: 'todos',
+                          child: _filterMenuRow(loc.plansListFilterAll, 'todos'),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'estoy_in',
+                          child: _filterMenuRow(loc.plansListFilterIn, 'estoy_in'),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'pendientes',
+                          child: _filterMenuRow(loc.plansListFilterPending, 'pendientes'),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'cerrados',
+                          child: _filterMenuRow(loc.plansListFilterClosed, 'cerrados'),
+                        ),
+                      ],
+                      child: Container(
+                        height: 44,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade800,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColorScheme.color2.withValues(alpha: 0.7),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.filter_list, color: AppColorScheme.color2, size: 22),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    loc.plansListFiltersButton,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade500,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    _filterLabelForSelected(loc),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.arrow_drop_down, color: Colors.grey.shade400, size: 22),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildFilterButton('estoy_in', loc.plansListFilterIn, isDarkMode),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildFilterButton('pendientes', loc.plansListFilterPending, isDarkMode),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildFilterButton('cerrados', loc.plansListFilterClosed, isDarkMode),
+                  Tooltip(
+                    message: loc.plansListViewModeTooltip,
+                    child: ToggleButtons(
+                      isSelected: [!_useCalendarView, _useCalendarView],
+                      onPressed: (i) => setState(() => _useCalendarView = i == 1),
+                      borderRadius: BorderRadius.circular(12),
+                      selectedColor: Colors.white,
+                      fillColor: AppColorScheme.color2,
+                      color: Colors.grey.shade400,
+                      constraints: const BoxConstraints(minHeight: 44, minWidth: 48),
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          child: Icon(Icons.view_list, size: 22),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          child: Icon(Icons.calendar_month, size: 22),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -322,6 +410,19 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                     );
                   }
 
+                  if (_useCalendarView) {
+                    return PlanCalendarView(
+                      plans: _filteredPlans,
+                      baseDate: DateTime.now(),
+                      onPlanSelected: (plan) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => PlanDetailPage(plan: plan),
+                          ),
+                        );
+                      },
+                    );
+                  }
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     itemCount: _filteredPlans.length,
@@ -462,287 +563,81 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
     );
   }
 
-  Widget _buildFilterButton(String filterValue, String label, bool isDarkMode) {
-    final isSelected = _selectedFilter == filterValue;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedFilter = filterValue;
-        });
-        _applyFilters();
-      },
-      child: Container(
-        height: 36,
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ],
-                )
-              : null,
-          color: isSelected ? null : Colors.grey.shade800,
-          border: Border.all(
-            color: AppColorScheme.color2.withOpacity(0.7),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColorScheme.color2.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
+  String _filterLabelForSelected(AppLocalizations loc) {
+    switch (_selectedFilter) {
+      case 'estoy_in':
+        return loc.plansListFilterIn;
+      case 'pendientes':
+        return loc.plansListFilterPending;
+      case 'cerrados':
+        return loc.plansListFilterClosed;
+      case 'todos':
+      default:
+        return loc.plansListFilterAll;
+    }
+  }
+
+  Widget _filterMenuRow(String label, String filterValue) {
+    final selected = _selectedFilter == filterValue;
+    return Row(
+      children: [
+        SizedBox(
+          width: 28,
+          child: selected
+              ? Icon(Icons.check, size: 20, color: AppColorScheme.color2)
+              : const SizedBox.shrink(),
         ),
-        child: Center(
+        Expanded(
           child: Text(
             label,
             style: GoogleFonts.poppins(
-              color: isSelected ? Colors.white : Colors.grey.shade400,
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              letterSpacing: 0.2,
+              fontSize: 14,
+              color: Colors.white,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             ),
-            textAlign: TextAlign.center,
           ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildPlanCard(BuildContext context, WidgetRef ref, Plan plan, bool isDarkMode) {
-    final startDate = plan.startDate;
-    final endDate = plan.endDate;
-    final dateRange = '${DateFormatter.formatDate(startDate)} - ${DateFormatter.formatDate(endDate)}';
-
-    final currentUser = ref.watch(currentUserProvider);
-    final pendingInvitations = ref.watch(userPendingInvitationsProvider);
-    final hasPendingInvitation = plan.id != null &&
-        pendingInvitations.maybeWhen(
-          data: (list) => list.any((inv) => inv.planId == plan.id),
-          orElse: () => false,
+    return PlanCardWidget(
+      plan: plan,
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PlanDetailPage(plan: plan),
+          ),
         );
-    final participantsAsync = plan.id != null
-        ? ref.watch(planParticipantsProvider(plan.id!))
-        : const AsyncValue.data(<PlanParticipation>[]);
-    final hasPendingParticipation = plan.id != null &&
-        currentUser != null &&
-        participantsAsync.maybeWhen(
-          data: (participants) => participants.any((p) =>
-              p.userId == currentUser.id && p.isPending),
-          orElse: () => false,
+      },
+      onSummaryInPanel: (_) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PlanDetailPage(plan: plan, initialTab: 'mySummary'),
+          ),
         );
-    final hasRejectedParticipation = plan.id != null &&
-        currentUser != null &&
-        participantsAsync.maybeWhen(
-          data: (participants) => participants.any((p) => p.userId == currentUser.id && p.isRejected),
-          orElse: () => false,
-        );
-    final isPending = hasPendingInvitation || hasPendingParticipation;
-    final isRejected = hasRejectedParticipation;
-    final isIn = currentUser != null &&
-        !isPending &&
-        !isRejected &&
-        (plan.userId == currentUser.id ||
-            participantsAsync.maybeWhen(
-                  data: (participants) => participants.any((p) => p.userId == currentUser.id && p.isAccepted),
-                  orElse: () => false,
-                ));
-
-    final notifUnread = plan.id != null
-        ? ref.watch(planUnreadCountProvider(plan.id)).valueOrNull ?? 0
-        : 0;
-    final chatUnread = plan.id != null
-        ? ref.watch(unreadMessagesCountProvider(plan.id!)).valueOrNull ?? 0
-        : 0;
-    final iconColor = Colors.grey.shade400;
-    final notifIconColor = notifUnread > 0 ? AppColorScheme.color3 : iconColor;
-    final chatIconColor = chatUnread > 0 ? AppColorScheme.color3 : iconColor;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 0),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade900,
-            const Color(0xFF1E1E1E),
-          ],
-        ),
-        borderRadius: BorderRadius.zero,
-        border: Border(
-          bottom: BorderSide(color: AppColorScheme.color2, width: 1),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => PlanDetailPage(plan: plan),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.zero,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildPlanCardImage(plan),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              plan.name,
-                              style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                                letterSpacing: 0.1,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (plan.description != null && plan.description!.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                plan.description!,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade400,
-                                  letterSpacing: 0.1,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_today,
-                                  size: 16,
-                                  color: Colors.grey.shade400,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    dateRange,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade400,
-                                      letterSpacing: 0.1,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      },
+      onNotificationsTap: (_) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppBar(
+                title: Text(plan.name),
+                backgroundColor: AppColorScheme.color2,
               ),
-              if (currentUser != null && plan.id != null && (isIn || isPending || isRejected)) ...[
-                const SizedBox(width: 8),
-                _buildInteractivePlanCardStatusChip(
-                  context,
-                  ref,
-                  plan: plan,
-                  isIn: isIn,
-                  isOut: isRejected,
-                  isPending: isPending,
-                  hasPendingInvitation: hasPendingInvitation,
-                  hasPendingParticipation: hasPendingParticipation,
-                ),
-              ],
-              // Columna vertical estrecha: iconos resumen, notificaciones, chat (P8: espaciado y centrado vertical)
-                if (plan.id != null) ...[
-                  Container(
-                    width: 1,
-                    height: 72,
-                    margin: const EdgeInsets.only(left: 8, right: 8),
-                    color: Colors.grey.shade600.withOpacity(0.5),
-                  ),
-                  SizedBox(
-                    width: 40,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        PlanSummaryButton(
-                        plan: plan,
-                        iconOnly: true,
-                        foregroundColor: iconColor,
-                        onShowInPanel: (_) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => PlanDetailPage(plan: plan, initialTab: 'mySummary'),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => Scaffold(
-                                appBar: AppBar(
-                                  title: Text(plan.name),
-                                  backgroundColor: AppColorScheme.color2,
-                                ),
-                                body: WdPlanNotificationsScreen(plan: plan),
-                              ),
-                            ),
-                          );
-                        },
-                        child: _buildPlanCardBadgeIcon(
-                          icon: notifUnread > 0 ? Icons.notifications : Icons.notifications_outlined,
-                          color: notifIconColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => PlanDetailPage(plan: plan, initialTab: 'chat'),
-                            ),
-                          );
-                        },
-                        child: _buildPlanCardBadgeIcon(
-                          icon: chatUnread > 0 ? Icons.chat_bubble : Icons.chat_bubble_outline,
-                          color: chatIconColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  ),
-                ],
-              ],
+              body: WdPlanNotificationsScreen(plan: plan),
             ),
-        ),
-      ),
+          ),
+        );
+      },
+      onChatTap: (_) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => PlanDetailPage(plan: plan, initialTab: 'chat'),
+          ),
+        );
+      },
     );
   }
 
@@ -819,29 +714,27 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
     required bool isOut,
     required bool isPending,
   }) {
-    final loc = AppLocalizations.of(context)!;
     String label;
     Color bg;
     Color textColor;
     Color borderColor;
     if (isPending) {
-      label = loc.statusShortPending;
+      label = '?';
       bg = PlanUserStatusColors.pendingBg;
       textColor = PlanUserStatusColors.pendingText;
       borderColor = PlanUserStatusColors.pendingBorder;
     } else if (isOut) {
-      label = loc.statusShortOut;
+      label = 'out';
       bg = PlanUserStatusColors.outBg;
       textColor = PlanUserStatusColors.outText;
       borderColor = PlanUserStatusColors.outBorder;
     } else {
-      label = loc.statusShortIn;
+      label = 'in';
       bg = PlanUserStatusColors.inBg;
       textColor = PlanUserStatusColors.inText;
       borderColor = PlanUserStatusColors.inBorder;
     }
     return Container(
-      margin: const EdgeInsets.only(left: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: bg,
@@ -977,7 +870,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
       final sanitizedUnpId = Sanitizer.sanitizePlainText(widget.unpIdController.text, maxLength: 40);
       final startDate = DateTime(now.year, now.month, now.day);
       final endDate = startDate.add(const Duration(days: 6));
-      final columnCount = endDate.difference(startDate).inDays + 1;
+      final columnCount = Plan.calendarDaysInclusive(startDate, endDate);
 
       final plan = Plan(
         name: sanitizedName,

@@ -28,6 +28,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>Planazoo puede usar la cámara para tomar una foto del plan o de perfil.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

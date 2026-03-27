@@ -73,13 +73,19 @@ class ProfilePage extends ConsumerWidget {
                         ),
                       ),
                       const Spacer(),
-                      Text(
-                        currentUser.username != null && currentUser.username!.isNotEmpty
-                            ? '@${currentUser.username!}'
-                            : currentUser.displayIdentifier,
-                        style: AppTypography.largeTitle.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                      Flexible(
+                        child: Text(
+                          currentUser.username != null && currentUser.username!.isNotEmpty
+                              ? '@${currentUser.username!}'
+                              : currentUser.displayIdentifier,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
+                          style: AppTypography.mediumTitle.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ],

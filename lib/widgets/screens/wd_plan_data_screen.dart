@@ -8,6 +8,7 @@ import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/state_transition_dialog.dart';
@@ -33,6 +34,7 @@ import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/constants/help_context_ids.dart';
 import 'package:unp_calendario/shared/providers/help_text_providers.dart';
 import 'package:unp_calendario/widgets/help/help_icon_button.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -41,6 +43,8 @@ class PlanDataScreen extends ConsumerStatefulWidget {
   /// Si se proporciona, el botón resumen abre la página de resumen en lugar del diálogo.
   final VoidCallback? onOpenSummary;
   final bool showAppBar;
+  /// Tras guardar datos del plan (sin invalidar el stream global: evita ciclos de dispose en web).
+  final ValueChanged<Plan>? onPlanUpdated;
 
   const PlanDataScreen({
     super.key,
@@ -49,6 +53,7 @@ class PlanDataScreen extends ConsumerStatefulWidget {
     this.onManageParticipants,
     this.onOpenSummary,
     this.showAppBar = true,
+    this.onPlanUpdated,
   });
 
   @override
@@ -60,9 +65,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   XFile? _selectedImage;
   Uint8List? _selectedImageBytes;
   bool _isUploadingImage = false;
+  bool _isUploadingAttachment = false;
   final _planFormKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
+  late TextEditingController _referenceNotesController;
   late TextEditingController _budgetController;
   late String _selectedVisibility;
   late String _selectedCurrency;
@@ -72,10 +79,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   double? _budget;
   bool _hasUnsavedChanges = false;
   bool _isSavingPlan = false;
-  // P12: secciones Info colapsables (Participantes / Avisos / Zona de peligro)
-  bool _infoSectionParticipantsExpanded = true;
-  bool _infoSectionAnnouncementsExpanded = true;
+  List<PlanAttachment> _planAttachments = [];
+  // P12: secciones Info colapsables (Participantes / Avisos / Eliminar plan)
+  bool _infoSectionParticipantsExpanded = false;
+  bool _infoSectionAnnouncementsExpanded = false;
   bool _infoSectionDangerExpanded = false;
+  /// Descripción del plan: bloque expandible (cerrado por defecto).
+  bool _planDescriptionExpanded = false;
 
   // Helper para detectar modo oscuro
   bool get _isDarkMode {
@@ -109,6 +119,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   void _initializeFormState() {
     _nameController = TextEditingController(text: currentPlan.name);
     _descriptionController = TextEditingController(text: currentPlan.description ?? '');
+    _referenceNotesController = TextEditingController(text: currentPlan.referenceNotes ?? '');
     _budget = currentPlan.budget;
     _budgetController = TextEditingController(
       text: _budget != null ? _formatBudgetForInput(_budget!) : '',
@@ -118,26 +129,45 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     _startDate = currentPlan.startDate;
     _endDate = currentPlan.endDate;
     _selectedTimezone = currentPlan.timezone ?? TimezoneService.getSystemTimezone();
+    _planAttachments = List<PlanAttachment>.from(currentPlan.attachments);
+    _hasUnsavedChanges = false;
+  }
+
+  /// Aplica al formulario el plan recibido (p. ej. desde el padre o tras refresco).
+  void _applyPlanToFormFields(Plan plan) {
+    currentPlan = plan;
+    _nameController.text = plan.name;
+    _descriptionController.text = plan.description ?? '';
+    _referenceNotesController.text = plan.referenceNotes ?? '';
+    _budget = plan.budget;
+    _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
+    _selectedVisibility = plan.visibility ?? 'private';
+    _selectedCurrency = plan.currency;
+    _startDate = plan.startDate;
+    _endDate = plan.endDate;
+    _selectedTimezone = plan.timezone ?? TimezoneService.getSystemTimezone();
+    _planAttachments = List<PlanAttachment>.from(plan.attachments);
     _hasUnsavedChanges = false;
   }
 
   @override
   void didUpdateWidget(covariant PlanDataScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.plan.id != oldWidget.plan.id ||
-        widget.plan.updatedAt != oldWidget.plan.updatedAt ||
-        widget.plan != oldWidget.plan) {
-      currentPlan = widget.plan;
-      _nameController.text = currentPlan.name;
-      _descriptionController.text = currentPlan.description ?? '';
-      _budget = currentPlan.budget;
-      _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
-      _selectedVisibility = currentPlan.visibility ?? 'private';
-      _selectedCurrency = currentPlan.currency;
-      _startDate = currentPlan.startDate;
-      _endDate = currentPlan.endDate;
-      _selectedTimezone = currentPlan.timezone ?? TimezoneService.getSystemTimezone();
-      _hasUnsavedChanges = false;
+    if (widget.plan.id != oldWidget.plan.id) {
+      _applyPlanToFormFields(widget.plan);
+      return;
+    }
+    // No pisar el formulario con un plan del padre más antiguo que el que ya tenemos:
+    // tras guardar, `currentPlan` queda con el `updatedAt` del servidor; el provider
+    // puede emitir todavía una pasada con el documento previo y devolvía la fecha fin anterior.
+    if (_hasUnsavedChanges) {
+      return;
+    }
+    final incomingAttachments = widget.plan.attachments.map((a) => a.url).join('|');
+    final localAttachments = currentPlan.attachments.map((a) => a.url).join('|');
+    final attachmentsChanged = incomingAttachments != localAttachments;
+    if (widget.plan.updatedAt.isAfter(currentPlan.updatedAt) || attachmentsChanged) {
+      _applyPlanToFormFields(widget.plan);
     }
   }
 
@@ -145,6 +175,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _referenceNotesController.dispose();
     _budgetController.dispose();
     super.dispose();
   }
@@ -154,6 +185,56 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       setState(() {
         _hasUnsavedChanges = true;
       });
+    }
+  }
+
+  /// P10: al salir con cambios sin guardar, preguntar guardar / descartar / seguir editando.
+  Future<void> _handleExitRequest() async {
+    if (!_hasUnsavedChanges) {
+      if (context.mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.grey.shade900,
+        title: Text(
+          'Cambios sin guardar',
+          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          '¿Quieres guardar los cambios en la información del plan?',
+          style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'cancel'),
+            child: Text('Seguir editando', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'discard'),
+            child: Text('Descartar', style: GoogleFonts.poppins(color: Colors.orange.shade200)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, 'save'),
+            style: FilledButton.styleFrom(backgroundColor: AppColorScheme.color3),
+            child: Text('Guardar', style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (choice == 'save') {
+      await _savePlanDetails();
+      if (mounted && !_hasUnsavedChanges && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    } else if (choice == 'discard') {
+      _applyPlanToFormFields(widget.plan);
+      setState(() => _hasUnsavedChanges = false);
+      if (Navigator.of(context).canPop()) Navigator.of(context).pop();
     }
   }
 
@@ -295,11 +376,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       final sanitizedDescription = _descriptionController.text.trim();
       final normalizedStart = DateTime(_startDate.year, _startDate.month, _startDate.day);
       final normalizedEnd = DateTime(_endDate.year, _endDate.month, _endDate.day);
-      final newColumnCount = normalizedEnd.difference(normalizedStart).inDays + 1;
+      final newColumnCount = Plan.calendarDaysInclusive(normalizedStart, normalizedEnd);
 
+      final refNotes = _referenceNotesController.text.trim();
       final updatedPlan = currentPlan.copyWith(
         name: sanitizedName,
         description: sanitizedDescription.isEmpty ? null : sanitizedDescription,
+        referenceNotes: refNotes.isEmpty ? null : refNotes,
         baseDate: normalizedStart,
         startDate: normalizedStart,
         endDate: normalizedEnd,
@@ -308,6 +391,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         currency: _selectedCurrency,
         timezone: _selectedTimezone,
         budget: _budget,
+        attachments: _planAttachments,
       );
 
       final planService = ref.read(planServiceProvider);
@@ -322,8 +406,14 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           currentPlan = refreshedPlan ?? updatedPlan;
           _budget = currentPlan.budget;
           _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
+          _startDate = currentPlan.startDate;
+          _endDate = currentPlan.endDate;
           _hasUnsavedChanges = false;
         });
+        // No usar ref.invalidate(plansStreamProvider): re-suscribe el StreamProvider y en Chrome puede
+        // provocar "disposed EngineFlutterView" + errores en cascada del WidgetInspector al reportar.
+        // El stream de Firestore (getPlansForUser) ya emite al actualizar el documento.
+        widget.onPlanUpdated?.call(currentPlan);
         _showSnackBarSuccess(loc.planDetailsSaveSuccess);
       } else {
         _showSnackBarError(loc.planDetailsSaveError);
@@ -540,6 +630,16 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       allParticipantsAsync,
       loc,
     );
+    final canManagePlanAttachments = allParticipantsAsync.maybeWhen(
+      data: (participants) {
+        if (currentUser == null) return false;
+        if (currentUser.id == currentPlan.userId) return true;
+        return participants.any(
+          (p) => p.userId == currentUser.id && (p.role == 'admin' || p.role == 'organizer'),
+        );
+      },
+      orElse: () => currentUser?.id == currentPlan.userId,
+    );
     final currentUserHandle = _formatUserHandle(currentUser);
 
     final isCompact = MediaQuery.of(context).size.width < 900;
@@ -586,6 +686,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         onPressed: _isSavingPlan ? null : () {
                           _nameController.text = currentPlan.name;
                           _descriptionController.text = currentPlan.description ?? '';
+                          _referenceNotesController.text = currentPlan.referenceNotes ?? '';
                           _budget = currentPlan.budget;
                           _budgetController.text = _budget != null ? _formatBudgetForInput(_budget!) : '';
                           _selectedVisibility = currentPlan.visibility ?? 'private';
@@ -593,6 +694,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                           _startDate = currentPlan.startDate;
                           _endDate = currentPlan.endDate;
                           _selectedTimezone = currentPlan.timezone ?? TimezoneService.getSystemTimezone();
+                          _planAttachments = List<PlanAttachment>.from(currentPlan.attachments);
                           setState(() => _hasUnsavedChanges = false);
                         },
                         style: TextButton.styleFrom(
@@ -605,8 +707,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                       FilledButton(
                         onPressed: _isSavingPlan || PlanStatePermissions.isReadOnly(currentPlan) ? null : _savePlanDetails,
                         style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          backgroundColor: AppColorScheme.color3,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          elevation: 2,
                         ),
                         child: _isSavingPlan
                             ? SizedBox(
@@ -647,7 +752,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                   key: _planFormKey,
                   child: Builder(
                     builder: (context) {
-                      const double cardSpacing = 24;
+                      const double cardSpacing = 28;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -655,21 +760,27 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                             _buildReadOnlyWarning(),
                             const SizedBox(height: cardSpacing),
                           ],
+                          _buildPlanNameField(loc, isCompact),
+                          const SizedBox(height: cardSpacing),
                           _buildPlanImageSection(isCompact: isCompact),
                           const SizedBox(height: cardSpacing),
-                          _buildPlanSummarySection(loc, participantsCount, currentRoleLabel, currentUserHandle, isCompact: isCompact),
+                          _buildPlanSummarySection(
+                            loc,
+                            participantsCount,
+                            currentRoleLabel,
+                            currentUserHandle,
+                            isCompact: isCompact,
+                            canManagePlanAttachments: canManagePlanAttachments,
+                          ),
                           const SizedBox(height: cardSpacing),
-                          // P10: en detalle del plan (móvil) la zona de eliminar quedaba al final del scroll; subirla para que sea visible.
-                          if (!widget.showAppBar) ...[
-                            _buildDeleteButton(),
-                            const SizedBox(height: cardSpacing),
-                          ],
                           _buildInfoSection(loc, showBaseInfo: true, isCompact: isCompact),
                           const SizedBox(height: cardSpacing),
                           _buildParticipantsSection(loc, participantsAsync, isCompact: isCompact),
                           const SizedBox(height: cardSpacing),
-                          _buildAnnouncementsSection(isCompact: isCompact),
-                          const SizedBox(height: cardSpacing),
+                          if (isOrganizer) ...[
+                            _buildAnnouncementsSection(isCompact: isCompact),
+                            const SizedBox(height: cardSpacing),
+                          ],
                           _buildLeavePlanButton(),
                           const SizedBox(height: cardSpacing),
                           _buildDeleteButton(),
@@ -693,7 +804,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     if (isCompact && widget.showAppBar) {
       final canPop = Navigator.of(context).canPop();
-      return Theme(
+      return PopScope(
+        canPop: !_hasUnsavedChanges,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          await _handleExitRequest();
+        },
+        child: Theme(
         data: AppTheme.darkTheme,
         child: Scaffold(
         appBar: AppBar(
@@ -701,7 +818,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           leading: canPop
               ? IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.of(context).maybePop(),
+                  onPressed: _handleExitRequest,
                 )
               : null,
           actions: [
@@ -716,6 +833,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         backgroundColor: Colors.grey.shade900,
         body: body,
         ),
+      ),
       );
     }
 
@@ -1612,6 +1730,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               padding: EdgeInsets.fromLTRB(16, 14, 12, _infoSectionDangerExpanded ? 10 : 14),
               child: Row(
                 children: [
+                  Icon(Icons.delete_outline, color: Colors.red.shade200, size: 22),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       loc.planInfoDangerZoneTitle,
@@ -1793,17 +1913,24 @@ class _DeletePlanDialogState extends State<_DeletePlanDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return AlertDialog(
-      title: Text(widget.loc.planDeleteDialogTitle),
+      backgroundColor: cs.surface,
+      surfaceTintColor: cs.surfaceTint,
+      title: Text(
+        widget.loc.planDeleteDialogTitle,
+        style: theme.textTheme.titleLarge?.copyWith(color: cs.onSurface),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             widget.loc.planDeleteDialogMessage,
-            style: AppTypography.bodyStyle.copyWith(
-              fontSize: 13,
-              color: Colors.grey.shade800,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: cs.onSurfaceVariant,
+              height: 1.45,
             ),
           ),
           const SizedBox(height: 16),
@@ -1811,10 +1938,19 @@ class _DeletePlanDialogState extends State<_DeletePlanDialog> {
             controller: _passwordController,
             obscureText: true,
             enabled: !_isDeleting,
+            style: TextStyle(color: cs.onSurface),
             decoration: InputDecoration(
               labelText: widget.loc.planDeleteDialogPasswordLabel,
               errorText: _errorText,
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: cs.outline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: cs.outline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: cs.primary, width: 2),
+              ),
             ),
           ),
         ],
@@ -1982,6 +2118,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
   }
 
   Widget _buildPlanImageSection({bool isCompact = false}) {
+    final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
     final showLeaveButton = currentUser != null && currentPlan.userId != currentUser.id;
     final isOwner = currentUser?.id == currentPlan.userId;
@@ -2013,7 +2150,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
           if (showStateMenu) ...[
             const SizedBox(height: 10),
             PopupMenuButton<String>(
-              tooltip: 'Cambiar estado del plan',
+              tooltip: loc.tooltipChangePlanState,
               padding: EdgeInsets.zero,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               color: Colors.grey.shade800,
@@ -2126,10 +2263,9 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     );
   }
 
-  Widget _buildPlanSummarySection(AppLocalizations loc, int participantsCount, String? roleLabel, String userHandle, {bool isCompact = false}) {
-    // Estilo tipo form de evento: sin recuadro común, campos con borde sutil
-    final inputDecoration = (String label) => InputDecoration(
-      labelText: label,
+  InputDecoration _planInfoInputDecoration(String label, bool isCompact, {bool showLabel = true}) {
+    return InputDecoration(
+      labelText: showLabel ? label : null,
       labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
       contentPadding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 18, vertical: isCompact ? 12 : 18),
       border: OutlineInputBorder(
@@ -2147,35 +2283,317 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       filled: true,
       fillColor: _inputBackground,
     );
+  }
 
+  Widget _buildPlanNameField(AppLocalizations loc, bool isCompact) {
+    return TextFormField(
+      controller: _nameController,
+      style: GoogleFonts.poppins(fontSize: isCompact ? 14 : 15, color: _textPrimary, letterSpacing: 0.1),
+      decoration: _planInfoInputDecoration(loc.createPlanNameLabel, isCompact),
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onChanged: (_) => _markDirty(),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) return loc.createPlanNameRequiredError;
+        return null;
+      },
+    );
+  }
+
+  Widget _buildPlanDescriptionExpandable(AppLocalizations loc, bool isCompact) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _inputBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade700.withOpacity(0.5)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => setState(() => _planDescriptionExpanded = !_planDescriptionExpanded),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 16, vertical: 14),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        loc.createPlanDescriptionLabel,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.grey.shade400,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      _planDescriptionExpanded ? Icons.expand_less : Icons.expand_more,
+                      color: AppColorScheme.color2,
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
+              child: TextFormField(
+                controller: _descriptionController,
+                style: GoogleFonts.poppins(fontSize: isCompact ? 14 : 15, color: _textPrimary, letterSpacing: 0.1),
+                decoration: _planInfoInputDecoration(loc.createPlanDescriptionLabel, isCompact, showLabel: false).copyWith(
+                  hintText: loc.createPlanDescriptionHint,
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
+                ),
+                minLines: isCompact ? 10 : 14,
+                maxLines: isCompact ? 22 : 28,
+                onChanged: (_) => _markDirty(),
+              ),
+            ),
+            crossFadeState: _planDescriptionExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+            sizeCurve: Curves.easeInOut,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanSummarySection(
+    AppLocalizations loc,
+    int participantsCount,
+    String? roleLabel,
+    String userHandle, {
+    bool isCompact = false,
+    bool canManagePlanAttachments = false,
+  }) {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextFormField(
-          controller: _nameController,
-          style: GoogleFonts.poppins(fontSize: isCompact ? 14 : 15, color: _textPrimary, letterSpacing: 0.1),
-          decoration: inputDecoration(loc.createPlanNameLabel),
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          onChanged: (_) => _markDirty(),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) return loc.createPlanNameRequiredError;
-            return null;
-          },
+        _buildPlanDescriptionExpandable(loc, isCompact),
+        SizedBox(height: isCompact ? 14 : 18),
+        _buildPlanAttachmentsBar(
+          loc,
+          canManage: canManagePlanAttachments,
+          isCompact: isCompact,
         ),
-        SizedBox(height: isCompact ? 12 : 16),
+        SizedBox(height: isCompact ? 14 : 18),
         TextFormField(
-          controller: _descriptionController,
-          style: GoogleFonts.poppins(fontSize: isCompact ? 14 : 15, color: _textPrimary, letterSpacing: 0.1),
-          decoration: inputDecoration(loc.createPlanDescriptionLabel),
-          minLines: 2,
-          maxLines: 4,
+          controller: _referenceNotesController,
+          style: GoogleFonts.poppins(fontSize: isCompact ? 13 : 14, color: _textPrimary),
+          decoration: _planInfoInputDecoration(loc.planReferenceNotesTitle, isCompact).copyWith(
+            hintText: loc.planReferenceNotesHint,
+            alignLabelWithHint: true,
+          ),
+          minLines: 3,
+          maxLines: 8,
           onChanged: (_) => _markDirty(),
         ),
       ],
     );
 
-    // Misma estructura en web y móvil: nombre y descripción sin card extra (paridad con Info del plan móvil).
     return content;
+  }
+
+  Widget _buildPlanAttachmentsBar(AppLocalizations loc, {required bool canManage, required bool isCompact}) {
+    final files = _planAttachments;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 10 : 12, vertical: isCompact ? 10 : 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade900,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade700.withOpacity(0.55)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.attach_file, size: 16, color: Colors.grey.shade300),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  loc.entityAttachmentsPlanTitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: isCompact ? 12 : 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade200,
+                  ),
+                ),
+              ),
+              if (canManage)
+                TextButton.icon(
+                  onPressed: (_isUploadingAttachment || currentPlan.id == null) ? null : _pickAndUploadPlanAttachment,
+                  icon: _isUploadingAttachment
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.upload_file, size: 16),
+                  label: Text(
+                    _isUploadingAttachment ? loc.entityAttachmentsUploading : loc.entityAttachmentsUpload,
+                    style: GoogleFonts.poppins(fontSize: isCompact ? 11 : 12),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (files.isEmpty)
+            Text(
+              loc.entityAttachmentsEmpty,
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: files.map((file) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _openPlanAttachment(file.url),
+                          child: Text(
+                            file.name,
+                            style: GoogleFonts.poppins(
+                              color: AppColorScheme.color2,
+                              fontSize: isCompact ? 12 : 13,
+                              decoration: TextDecoration.underline,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatFileSize(file.size),
+                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade400),
+                      ),
+                      if (canManage) ...[
+                        const SizedBox(width: 4),
+                        IconButton(
+                          tooltip: loc.entityAttachmentsDeleteTitle,
+                          onPressed: _isUploadingAttachment ? null : () => _deletePlanAttachment(file),
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          color: Colors.red.shade300,
+                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadPlanAttachment() async {
+    final planId = currentPlan.id;
+    if (planId == null) return;
+    final picked = await PlanFileService.pickAttachment();
+    if (picked == null) {
+      if (!mounted) return;
+      _showSnackBarError(AppLocalizations.of(context)!.entityAttachmentsReadError);
+      return;
+    }
+
+    final validationError = PlanFileService.validateAttachment(picked);
+    if (validationError != null) {
+      _showSnackBarError(validationError);
+      return;
+    }
+
+    setState(() {
+      _isUploadingAttachment = true;
+    });
+
+    try {
+      final uploaded = await PlanFileService.uploadAttachment(planId: planId, file: picked);
+      if (!mounted) return;
+      setState(() {
+        _planAttachments = [..._planAttachments, uploaded];
+      });
+      _markDirty();
+      _showSnackBarSuccess(AppLocalizations.of(context)!.entityAttachmentsSnackbarAdded);
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is Exception ? e.toString().replaceFirst('Exception: ', '') : '$e';
+      _showSnackBarError(AppLocalizations.of(context)!.entityAttachmentsUploadError(message));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingAttachment = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deletePlanAttachment(PlanAttachment attachment) async {
+    final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) {
+            final loc = AppLocalizations.of(ctx)!;
+            return AlertDialog(
+              backgroundColor: Colors.grey.shade900,
+              title: Text(loc.entityAttachmentsDeleteTitle, style: GoogleFonts.poppins(color: Colors.white)),
+              content: Text(
+                loc.entityAttachmentsDeleteConfirm(attachment.name),
+                style: GoogleFonts.poppins(color: Colors.grey.shade300),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(loc.cancel)),
+                TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(loc.delete)),
+              ],
+            );
+          },
+        ) ??
+        false;
+    if (!confirm) return;
+
+    setState(() {
+      _isUploadingAttachment = true;
+    });
+    try {
+      await PlanFileService.deleteAttachment(attachment.url);
+      if (!mounted) return;
+      setState(() {
+        _planAttachments = _planAttachments.where((f) => f.url != attachment.url).toList();
+      });
+      _markDirty();
+      _showSnackBarSuccess(AppLocalizations.of(context)!.entityAttachmentsSnackbarRemoved);
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBarError(AppLocalizations.of(context)!.entityAttachmentsDeleteError);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingAttachment = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _openPlanAttachment(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '${bytes}B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
   }
 
   Widget _buildPlanImage(double height) {
@@ -2431,6 +2849,8 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
               padding: const EdgeInsets.fromLTRB(20, 18, 12, 16),
               child: Row(
                 children: [
+                  Icon(Icons.campaign_outlined, color: Colors.white),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       loc.planDetailsAnnouncementsTitle,

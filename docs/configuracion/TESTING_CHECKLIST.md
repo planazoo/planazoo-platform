@@ -2248,6 +2248,85 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: W31 muestra mensaje "Aún no tienes planes • Crea tu primer plan con el botón +"
   - Estado: 🔄
 
+### 12.3 Regresión funcional (puntos cerrados 2026-03)
+
+> Cobertura de regresión para ítems marcados como hechos en `LISTA_PUNTOS_CORREGIR_APP.md` y `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md`.
+
+- [ ] **REG-2026-001:** Info del plan — secciones plegadas y bloque eliminar
+  - Pasos: Abrir Info del plan en iOS/web; verificar estado inicial de secciones Participantes/Avisos/Eliminar plan; abrir/cerrar cada una.
+  - Esperado: Secciones indicadas cerradas por defecto; iconografía visible en Avisos y Eliminar plan; copy coherente.
+  - Estado: 🔄
+
+- [ ] **REG-2026-002:** Info del plan — guardar/cancelar y confirmación al salir con cambios
+  - Pasos: Modificar campos en Info del plan y salir por back/navegación.
+  - Esperado: Botones Guardar/Cancelar visibles; aparece diálogo para guardar o descartar antes de salir.
+  - Estado: 🔄
+
+- [ ] **REG-2026-003:** Info del plan — descripción ampliada y notas de referencia
+  - Pasos: Abrir acción de ampliar descripción; editar texto largo; validar sección de notas/referencias del plan.
+  - Esperado: Modal de edición larga operativo; datos persistidos tras guardar y recarga.
+  - Estado: 🔄
+
+- [ ] **REG-2026-004:** Login — snackbar de error autocierra
+  - Pasos: Forzar error de login y no cerrar manualmente el snackbar.
+  - Esperado: El mensaje desaparece automáticamente tras unos segundos.
+  - Estado: 🔄
+
+- [ ] **REG-2026-005:** Perfil iOS — cabecera con userId legible
+  - Pasos: Abrir perfil con userId largo en iPhone pequeño.
+  - Esperado: Texto de cabecera no rompe layout (ellipsis/flexible), tamaño de fuente consistente.
+  - Estado: 🔄
+
+- [ ] **REG-2026-006:** Admin — auditoría de registros huérfanos
+  - Pasos: Abrir pantalla de administración y ejecutar tarjeta/botón de auditoría.
+  - Esperado: Se muestra resultado de auditoría sin borrar datos por defecto.
+  - Estado: 🔄
+
+- [ ] **REG-2026-007:** Lista de planes móvil — toggle lista/calendario
+  - Pasos: En móvil, alternar vista lista/calendario y abrir un plan desde ambas vistas.
+  - Esperado: Cambio de vista estable; navegación a detalle correcta.
+  - Estado: 🔄
+
+- [ ] **REG-2026-008:** Calendario web — FAB de alta rápida de evento
+  - Pasos: En calendario web, pulsar FAB "+".
+  - Esperado: Se crea/abre alta de evento con fecha/hora inicial válidas sin errores.
+  - Estado: 🔄
+
+- [ ] **REG-2026-009:** Modal de evento web — no cerrar al clic fuera
+  - Pasos: Abrir alta/edición de evento, introducir datos y hacer clic fuera del modal.
+  - Esperado: El modal no se cierra por clic externo; no se pierden datos.
+  - Estado: 🔄
+
+- [ ] **REG-2026-010:** Evento vuelo — timezone por ciudad en menú y GMT en seleccionado
+  - Pasos: En Desplazamiento/Avión, abrir dropdown de timezone en salida/llegada.
+  - Esperado: El menú muestra ciudades; el valor seleccionado muestra GMT±N.
+  - Estado: 🔄
+
+- [ ] **REG-2026-011:** Evento vuelo — autocalcular timezone por localización
+  - Pasos: Seleccionar aeropuerto origen/destino por Places y revisar timezone aplicada.
+  - Esperado: Se propone timezone según coordenadas (normalizada a lista soportada), tanto en salida como llegada.
+  - Estado: 🔄
+
+- [ ] **REG-2026-012:** Formulario de evento — catálogo actualizado
+  - Pasos: Revisar tipos/subtipos: Acción (Embarque/Recogida/Entrega/Otro), Actividad→Tour, Desplazamiento→Shuttle/Transfer; en alojamiento, tipo Crucero.
+  - Esperado: Opciones visibles y guardables; persistencia correcta al reabrir.
+  - Estado: 🔄
+
+- [ ] **REG-2026-013:** Resumen del plan — separador por día y estado no confirmado
+  - Pasos: Abrir resumen con eventos en días distintos y eventos no confirmados.
+  - Esperado: Línea separadora entre días; indicación visual de estado no confirmado coherente con flujo actual (sin dependencia de "borrador").
+  - Estado: 🔄
+
+- [ ] **REG-2026-014:** Calendario — opción "Todos los días del plan"
+  - Pasos: En menú de opciones del calendario, activar "Todos los días del plan".
+  - Esperado: Se muestran los días hasta el límite configurado (`maxVisibleDays`) sin degradación grave de UX.
+  - Estado: 🔄
+
+- [ ] **REG-2026-015:** Calendario/resumen refrescan tras CRUD de evento
+  - Pasos: Crear, editar y eliminar evento; volver a calendario y resumen.
+  - Esperado: Los cambios se reflejan de inmediato sin recargar manualmente.
+  - Estado: 🔄
+
 ---
 
 ## 13. TIMEZONES

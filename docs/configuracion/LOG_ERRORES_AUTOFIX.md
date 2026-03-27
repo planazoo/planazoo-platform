@@ -16,6 +16,173 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-03-27] `AppTheme` — `IconThemeData` sin parámetro `fontFamily` (Flutter 3.41+)
+
+- **Contexto:** Añadir `iconTheme: IconThemeData(fontFamily: 'MaterialIcons')` para iconos en web.
+- **Error:** `No named parameter with the name 'fontFamily'` en `IconThemeData`.
+- **Causa raíz:** En Flutter reciente, `IconThemeData` ya no expone `fontFamily`; usa variantes M3 (`fill`, `weight`, `opticalSize`, etc.).
+- **Solución aplicada:** Quitar ese `iconTheme`. Si hace falta reforzar iconos en web, mantener `fonts/MaterialIcons-Regular.otf` declarada en `pubspec.yaml`.
+- **Notas para el futuro:** No usar APIs antiguas de `IconThemeData` para la familia de fuente.
+
+### [2026-03-27] Plan adjuntos (iOS) — botón de subir sin efecto / `MissingPluginException`
+
+- **Contexto:** Subida de adjuntos en `Info del plan` en iOS (`flutter run` en dispositivo).
+- **Error:** `MissingPluginException(No implementation found for method custom on channel miguelruivo.flutter.plugins.filepicker)` y, en algunos casos, selección sin feedback visible.
+- **Causa raíz:** El método `custom` de `file_picker` no estaba disponible en ese runtime iOS; además, en iOS puede devolverse `bytes` vacíos y la UI salía silenciosamente.
+- **Solución aplicada:** En `plan_file_picker_io.dart` cambiar a `FileType.any` y validar extensión en `PlanFileService`; añadir fallback de lectura por `file.path` con `dart:io` cuando `bytes` venga vacío; en `wd_plan_data_screen.dart` mostrar mensaje si el archivo no pudo leerse.
+- **Notas para el futuro:** En iOS, no confiar solo en `bytes` de `file_picker`; usar fallback con `path` y evitar depender de `FileType.custom` si hay builds/pods desalineados.
+
+### [2026-03-27] Plan adjuntos — Firebase Storage “sin permiso / permission denied”
+
+- **Contexto:** Subir PDF/JPG/PNG en Info del plan; la app usa path `plan_files/{planId}/{fileName}`.
+- **Error:** Mensaje de falta de derechos al guardar en Firebase (upload rechazado).
+- **Causa raíz:** `storage.rules` solo permitía `plan_images/`; el bloque catch-all `/{allPaths=**}` denegaba `plan_files/`.
+- **Solución aplicada:** Añadir `match /plan_files/{planId}/{fileName}` con `read: true` y `write: if request.auth != null` (misma filosofía que `plan_images`). **Desplegar reglas:** `firebase deploy --only storage` en el proyecto correcto.
+- **Notas para el futuro:** Cualquier carpeta nueva en Storage necesita regla explícita antes del match que niega todo.
+
+### [2026-03-25] Plan adjuntos (web) — `LateInitializationError` en `file_picker`
+
+- **Contexto:** Subida de adjuntos en `Info del plan` desde web (`flutter run -d chrome`).
+- **Error:** `LateInitializationError: Field '_instance' has not been initialized` al invocar `FilePicker.platform`.
+- **Causa raíz:** Dependencia del plugin `file_picker` en web sin instancia inicializada en runtime del proyecto.
+- **Solución aplicada:** Separar selector de archivos por plataforma con import condicional: en web usar `FileUploadInputElement` (`dart:html`), en móvil/escritorio mantener `file_picker`.
+- **Notas para el futuro:** Para pickers críticos en web, tener fallback nativo web evita bloqueos por registro de plugin.
+
+### [2026-03-25] Calendario (iOS/Web) — alojamiento visible en un solo track tras crear/editar
+
+- **Contexto:** En la fila de alojamientos del calendario, al guardar un alojamiento nuevo o editado solo aparecía en un participante.
+- **Error:** Regresión de visibilidad por track en render/filtros de alojamientos.
+- **Causa raíz:** La lógica de calendario evaluaba solo `participantTrackIds`; ignoraba `commonPart.isForAllParticipants` / `commonPart.participantIds` en casos mixtos.
+- **Solución aplicada:** Unificar la lógica en `calendar_accommodation_logic.dart` con regla “para todos” y unión de participantes (`commonPart.participantIds` + `participantTrackIds`), respetar `commonPart.isForAllParticipants` en `calendar_tracks.dart`, y en `wd_accommodation_dialog.dart` sincronizar ambos campos al abrir/guardar para evitar desalineación legacy. Además, corregir cálculo de ancho en `calendar_tracks.dart` (`availableWidth` ya era ancho de día; se estaba dividiendo otra vez por `columns.length`) que generaba bloques minúsculos en el primer track.
+- **Notas para el futuro:** En alojamientos/eventos con modelo híbrido (legacy + commonPart), evitar leer una sola fuente de participantes en la UI.
+
+### [2026-03-25] `AccommodationDialog` — cálculo de noches incorrecto al cruzar DST
+
+- **Contexto:** En edición/creación de alojamiento, tramo 28/3 → 1/4 mostraba 3 noches en vez de 4.
+- **Error:** Conteo visual de noches con `checkOut.difference(checkIn).inDays` devolvía un día menos en cambio horario.
+- **Causa raíz:** `DateTime.difference` en local usa horas reales; al cruzar DST puede haber días de 23/25 horas y truncar `inDays`.
+- **Solución aplicada:** Calcular noches por fecha civil: normalizar ambas fechas a `DateTime.utc(año, mes, día)` y restar esas medianoches UTC.
+- **Notas para el futuro:** Para días/noches de calendario, evitar `difference` directo entre `DateTime` locales con hora.
+
+### [2026-03-25] `EventDialog` — overflow horizontal en selector de moneda del coste
+
+- **Contexto:** Edición de evento en iOS/web; bloque de coste con moneda + importe en la misma fila (`wd_event_dialog.dart`).
+- **Error:** `A RenderFlex overflowed by 17 pixels on the right` en `DropdownButtonFormField<String>` del selector de moneda.
+- **Causa raíz:** El valor seleccionado del `DropdownButtonFormField` mostraba texto largo (`CODE - símbolo nombre`) dentro de un ancho reducido (~124 px), provocando desborde horizontal del `InputDecorator`.
+- **Solución aplicada:** Configurar `isExpanded: true` y `selectedItemBuilder` para renderizar versión corta del valor seleccionado (`CODE símbolo`), manteniendo el texto largo solo en el menú desplegable.
+- **Notas para el futuro:** En `DropdownButtonFormField` embebidos en layouts compactos, usar etiqueta corta para el valor seleccionado y dejar la descripción extensa en `items`.
+
+### [2026-03-25] `AccommodationDialog` (editar) — Guardar no cerraba y Eliminar sin persistencia
+
+- **Contexto:** Edición de alojamientos desde `pg_plan_detail_page` (iOS) y revisión de paridad en `pg_dashboard_page`.
+- **Error:** Al pulsar **Guardar** se persistía el alojamiento pero el modal seguía abierto; al pulsar **Eliminar** parecía no hacer nada en algunas rutas.
+- **Causa raíz:** Los callbacks `onSaved`/`onDeleted` del `AccommodationDialog` no implementaban el contrato completo en todas las pantallas: faltaba `Navigator.pop()` tras éxito y, en una ruta, `onDeleted` no llamaba al servicio de borrado.
+- **Solución aplicada:** En `pg_plan_detail_page` y `pg_dashboard_page`, los callbacks ahora persisten/borran explícitamente, cierran el diálogo y muestran `SnackBar` de error si falla la operación.
+- **Notas para el futuro:** Cualquier `showDialog(AccommodationDialog(...))` debe seguir el mismo patrón que `EventDialog`: persistir en callback + cerrar modal + feedback de error.
+
+### [2026-03-25] `MyPlanSummaryScreen` — overflow horizontal en barra superior
+
+- **Contexto:** Ajustes de tipografía y chips en la barra de `Mi resumen`.
+- **Error:** `A RenderFlex overflowed by 9.0 pixels on the right` en `wd_my_plan_summary_screen.dart` (fila superior con título + chips).
+- **Causa raíz:** La `Row` tenía elementos de ancho fijo (título + 2 chips con padding) y en ancho móvil reducido no cabían en los `358px` disponibles.
+- **Solución aplicada:** Convertir el título en `Flexible` con `ellipsis` y encapsular los chips en `Expanded + SingleChildScrollView(horizontal)` para evitar desbordes.
+- **Notas para el futuro:** En barras compactas con texto dinámico (l10n), evitar sumar widgets de ancho fijo en una sola `Row` sin flex/scroll.
+
+### [2026-03-25] Calendario eventos — overflow vertical en tarjetas
+
+- **Contexto:** Tras hot reload en iOS aparecieron varios `RenderFlex overflowed ... on the bottom` en celdas de eventos del calendario.
+- **Error:** Overflows verticales de pocos píxeles (2.5 / 5.0) en tarjetas de evento dentro de `pg_calendar_mobile_page` y `wd_calendar_screen`.
+- **Causa raíz:** Las reglas de contenido (título + líneas extra de detalle) dependían más del tipo/duración que de la **altura real renderizada**, provocando exceso de líneas en celdas bajas.
+- **Solución aplicada:** Ajustar render adaptativo por altura: limitar título a 1 línea en alturas bajas, y mostrar participantes/hora/detalles de vuelo solo con umbrales más altos.
+- **Notas para el futuro:** En celdas con altura dinámica, condicionar texto secundario por `constraints/height` real, no solo por `durationMinutes`.
+
+### [2026-03-25] `MyPlanSummaryScreen` — `invalid_constant` en `EdgeInsets`
+
+- **Contexto:** Ajustes visuales del resumen del plan (secciones sin marco + tipografía/acciones).
+- **Error:** `Invalid constant value` en `wd_my_plan_summary_screen.dart` al usar `const EdgeInsets.symmetric(horizontal: framed ? 16 : 4, ...)`.
+- **Causa raíz:** Se declaró `const` en una expresión que depende de una variable de runtime (`framed`), por lo que no es constante de compilación.
+- **Solución aplicada:** Cambiar a `EdgeInsets.symmetric(...)` sin `const` en el `Padding` del header expandible.
+- **Notas para el futuro:** Si un literal incluye condiciones/variables, evitar `const` aunque el constructor admita constantes en otros casos.
+
+### [2026-03-24] Chat: badge no leídos no se actualizaba al abrir el chat
+
+- **Contexto:** `PlanChatScreen` llamaba `await ref.read(markAllMessagesAsReadProvider(...).future)` al abrir.
+- **Causa raíz:** `FutureProvider.family` **cachea** el resultado; al reabrir el chat o al depender del mismo provider, **no se vuelve a ejecutar** `markAllMessagesAsRead`, así que los mensajes nuevos seguían sin `readBy` y el contador no bajaba.
+- **Solución aplicada:** Llamar a `ChatService.markAllMessagesAsRead` **directamente** desde el `ref.read(chatServiceProvider)` y luego `invalidate` de `planMessagesProvider` / `unreadMessagesCountProvider`.
+- **Notas:** Para efectos secundarios que deben repetirse (marcar leído al entrar), no depender solo del `.future` de un `FutureProvider` sin invalidar ese provider antes o sin usar el servicio.
+
+### [2026-03-23] `wd_event_dialog` (notas largas expandibles) — símbolos inexistentes
+
+- **Contexto:** Ajuste UX en formulario de eventos (notas largas expandibles, reordenar campos y compactar enlace web).
+- **Error:** `The getter 'shade850' isn't defined for the type 'MaterialColor'` y `The getter 'expandDescription' isn't defined for the type 'AppLocalizations'`.
+- **Causa raíz:** Uso de una tonalidad no disponible en `Colors.grey` (`shade850`) y de una clave de l10n inexistente (`expandDescription`) sin regenerar localizaciones.
+- **Solución aplicada:** Sustituir `Colors.grey.shade850` por `Colors.grey.shade900` y usar tooltip literal estable (`'Ampliar'`) en el icono de expandir notas.
+- **Notas para el futuro:** Verificar getters válidos (`shade50..shade900`) y claves l10n existentes antes de compilar; si se añade una clave nueva, actualizar `.arb` y regenerar `app_localizations*`.
+
+### [2026-03-12] `Plan.copyWith` sin parámetro `referenceNotes`
+
+- **Contexto:** Añadir campo `referenceNotes` al modelo `Plan` y usar `copyWith` en `wd_plan_data_screen`.
+- **Error:** `The named parameter 'referenceNotes' isn't defined`.
+- **Causa raíz:** Se añadió `referenceNotes` al constructor/`Plan(...)` dentro de `copyWith` pero **no** a la firma del método `copyWith`.
+- **Solución aplicada:** Declarar `String? referenceNotes` en los parámetros de `copyWith`.
+
+### [2026-03-12] Calendario: un día menos que inicio–fin del plan (DST / `DateTime.difference`)
+
+- **Contexto:** Info del plan 27/3–5/4; columnas del calendario solo hasta 4/4.
+- **Causa raíz:** `endDate.difference(startDate).inDays + 1` y `startDate.add(Duration(days: k))` **no** coinciden siempre con días civiles cuando el rango cruza el **cambio de hora de verano** (p. ej. último domingo de marzo en EU): `Duration.inDays` usa horas/24 y puede quedar corto en 1.
+- **Solución aplicada:** en `Plan`: `calendarDaysInclusive` con medianoches **UTC** a partir de año/mes/día; `durationInDays` y `dateForPlanDayIndex` / `planDayIndexForDate`; sustituir sumas con `Duration(days:)` en calendario y `Plan.calendarDaysInclusive` al guardar/crear plan. `planEndDate` en diálogos usa `endDate` normalizado.
+- **Notas:** Para “días de calendario” no usar solo `difference` entre `DateTime` locales medianoche.
+
+### [2026-03-12] Web: `Trying to render a disposed EngineFlutterView` + `LegacyJavaScriptObject` vs `DiagnosticsNode` (Info)
+
+- **Contexto:** Chrome; al guardar el plan, asserts repetidos y `TypeError: LegacyJavaScriptObject is not a subtype of DiagnosticsNode` en `widget_inspector.dart` al volcar errores en consola.
+- **Causa raíz:** `ref.invalidate(plansStreamProvider)` **re-suscribe** el `StreamProvider` y reconstruye gran parte del dashboard; en web el motor puede renderizar sobre una vista ya dispuesta. El error secundario sale del **WidgetInspector** al intentar reportar el primero (bug conocido DDC/web en debug).
+- **Solución aplicada:** **no** invalidar `plansStreamProvider` tras guardar: el stream de Firestore (`getPlansForUser` → snapshots) ya emite al cambiar el documento. Para que calendario/lista vean el plan al instante, `PlanDataScreen` expone `onPlanUpdated(Plan)` y el dashboard actualiza `planazoos` + `selectedPlan` en `setState` sin tocar el provider.
+- **Notas:** Evitar `invalidate` de streams globales tras mutaciones locales si el backend ya notifica por snapshot; reduce churn y errores en Chrome.
+
+### [2026-03-12] Dashboard: calendario con menos/más columnas que las fechas en Info del plan
+
+- **Contexto:** fechas correctas en Info; cuadrícula del calendario (W31) seguía con N días antiguos.
+- **Causa raíz:** (1) `CalendarScreen` usaba `selectedPlan` del estado local, que podía ir **por detrás** del documento en Firestore hasta la siguiente emisión del stream. (2) `CalendarNotifierParams.initialColumnCount` usaba `plan.columnCount`, pudiendo **desalinearse** de `startDate`/`endDate` si el campo no coincidía. (3) `_listsEqual(planazoos)` solo miraba `updatedAt` → si el stream no disparaba cambio perceptible, no se refrescaba `selectedPlan`.
+- **Solución aplicada:** `pg_dashboard_page.dart`: `_selectedPlanResolvedFromStream()` + pasar ese `plan` a `CalendarScreen`, `PlanDataScreen` y `MyPlanSummaryScreen`; `ValueKey` con rango `start`–`end` para forzar árbol coherente; `_listsEqual` también compara `startDate`, `endDate`, `columnCount`. `CalendarNotifierParams`: `initialColumnCount: plan.durationInDays` (alineado con la cuadrícula). `wd_plan_data_screen.dart`: tras guardar, `ref.invalidate(plansStreamProvider)`.
+
+### [2026-03-12] Calendario no reflejaba nueva duración del plan (detalle plan + grupo de días)
+
+- **Contexto:** cambiar duración/fechas en Info del plan y volver al calendario; seguía mostrando el número de días antiguo.
+- **Causa raíz:** `PlanDetailPage` pasaba siempre `widget.plan` del constructor (no se actualiza al guardar). El calendario usaba `plan.durationInDays` de ese objeto obsoleto. En dashboard, al acortar duración, `_currentDayGroup` podía quedar fuera de rango.
+- **Solución aplicada:** en `pg_plan_detail_page.dart`, resolver el plan con `ref.watch(plansStreamProvider)` (`_planFromStreamWatch` / `_planFromStreamRead`) y usarlo en todas las pestañas; `CalendarMobilePage` con `ValueKey` por rango `startDate`–`endDate`; clamp del grupo de días si `currentStart > totalDays`. En `wd_calendar_screen.dart`, `didUpdateWidget` en `CalendarScreen` para resetear grupo y refrescar cuando cambian `startDate`/`endDate`/`columnCount`.
+- **Notas:** Pantallas con `Plan plan` fijo del `Navigator` deben enlazar al stream o a un callback post-guardado para no quedar desincronizadas de Firestore.
+
+### [2026-03-12] `EventDialog` edición: Guardar/Eliminar “no hacían nada” (detalle plan / dashboard)
+
+- **Contexto:** editar evento desde Mi resumen u otras rutas que abren `EventDialog` vía `pg_plan_detail_page` o `pg_dashboard_page`; crear evento desde el calendario sí funcionaba.
+- **Causa raíz:** `EventDialog` no llama a `EventService.updateEvent` / `deleteEvent`; delega en `onSaved` / `onDeleted`. Esas páginas pasaban solo `setState(() {})` → no persistía y no se cerraba el modal (a diferencia de `wd_calendar_screen` / `pg_calendar_mobile_page`, que sí persisten y hacen `Navigator.pop`).
+- **Solución aplicada:** en `_showEventDialog` de `pg_plan_detail_page.dart` y `pg_dashboard_page.dart`, llamar a `updateEvent` / `deleteEvent`, invalidar/refrescar calendario y estadísticas (`CalendarNotifierParams` + `planStatsProvider`), y `Navigator.pop` del contexto del diálogo.
+- **Notas:** Cualquier `showDialog(EventDialog(...))` debe implementar el mismo contrato que el calendario o el guardado nunca llega a Firestore.
+
+### [2026-03-12] Modal evento: Guardar / Eliminar no respondían (Chrome estrecho / móvil)
+
+- **Contexto:** edición de evento existente; al cambiar datos, los botones de la barra de acciones parecían no hacer nada.
+- **Causa raíz:** `AlertDialog` con `content` casi a pantalla completa (`height ≈ screen - 64`) más la fila `actions` hacía que el total superara la altura útil; la fila de acciones quedaba fuera de vista o no recibía bien los toques. Además, si `Form.validate()` fallaba, no había feedback y parecía que Guardar “no hacía nada”.
+- **Solución aplicada:** `scrollable: true` en el `AlertDialog`; reservar altura (~112 px + safe area) para la fila de acciones al calcular `contentHeight` en móvil; SnackBar naranja si falla `validate()` (`eventDialogFixValidationErrors` en l10n).
+- **Notas:** En diálogos fullscreen, descontar siempre espacio para `actions` o integrar la barra de botones dentro del área con scroll controlado.
+
+### [2026-03-12] Info plan / fecha fin no persistía en UI (`wd_plan_data_screen` + `Plan.fromFirestore`)
+
+- **Contexto:** al cambiar fecha fin de un plan ya creado y guardar, la pantalla volvía a mostrar la fecha anterior.
+- **Error / síntoma:** valor mostrado tras “Guardar” = fecha fin previa; Firestore podía estar bien.
+- **Causa raíz:** (1) `didUpdateWidget` sincronizaba siempre desde `widget.plan` cuando el `Plan` cambiaba, y el provider aún emitía **un plan antiguo** una pasada tras guardar, pisando `currentPlan` y `_endDate`. (2) `Plan.fromFirestore` **ignoraba** `startDate`/`endDate` del documento y recalculaba el fin solo con `baseDate` + `columnCount`, pudiendo desalinear lectura respecto a lo guardado.
+- **Solución aplicada:** en `PlanDataScreen`, solo aplicar plan del padre si `widget.plan.updatedAt.isAfter(currentPlan.updatedAt)` (y no con cambios sin guardar); tras guardar, asignar `_startDate`/`_endDate` desde `currentPlan`; extraer `_applyPlanToFormFields`. En `Plan.fromFirestore`, si existen timestamps `startDate` y `endDate`, usarlos (normalizados a fecha local); si no, mantener fallback por `columnCount`.
+- **Notas para el futuro:** tras mutaciones locales con `updatedAt` más nuevo que el stream, **no** rebajar el estado desde `widget.plan` sin comparar `updatedAt`.
+
+### [2026-03-12] `wd_participants_screen.dart` (cierre de `showDialog` + `Theme` tras l10n)
+
+- **Contexto**: sustituir textos por `AppLocalizations` en el diálogo de confirmar eliminación de participante (`builder: (dialogContext) { return Theme( ... AlertDialog( ... ), ); }`).
+- **Error**: `Expected to find ';'`, `A try block must be followed by an 'on', 'catch', or 'finally'`, `Missing concrete implementation of 'State.build'` (cascada por sintaxis rota).
+- **Causa raíz**: un paréntesis de más al cerrar: `AlertDialog` → `Theme` quedó como `),` `),` `);` en lugar de `),` `);` antes de `},` que cierra el `builder`.
+- **Solución aplicada**: un solo `);` para cerrar `return Theme( ... );`, luego `},` del `builder` y `);` del `showDialog`.
+- **Notas para el futuro**: al convertir `builder: (context) => Widget(...)` en `builder: (context) { return Widget(...); }`, contar cierres: **un** `);` por cada `return` de widget raíz del builder, no duplicar el cierre del hijo del `Theme`.
+
 ### [2026-03-07] T102 / `PaymentSummaryPage` (estructura de `when` anidados)
 
 - **Contexto**: refactor de la UI de la página de pagos para usar tema oscuro y mejorar experiencia en iOS.

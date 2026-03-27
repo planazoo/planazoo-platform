@@ -7,6 +7,7 @@ import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/widgets/dialogs/invite_group_dialog.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 
 class PlanParticipantsPage extends ConsumerStatefulWidget {
   final Plan plan;
@@ -43,6 +44,7 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
     final participantsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
+    final pendingInvitationsAsync = ref.watch(pendingInvitationsProvider(widget.plan.id!));
     
     final participantCount = participantsAsync.when(
       data: (participants) => participants.where((p) => p.role == 'participant' && p.isActive).length,
@@ -84,49 +86,115 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Estadísticas
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            color: Colors.blue.shade50,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatCard(
-                  'Total',
-                  participantCount.toString(),
-                  Icons.people,
-                  Colors.blue,
-                ),
-                _buildStatCard(
-                  'Organizadores',
-                  organizerCount.toString(),
-                  Icons.admin_panel_settings,
-                  Colors.orange,
-                ),
-                _buildStatCard(
-                  'Participantes',
-                  (participantCount - organizerCount).toString(),
-                  Icons.person,
-                  Colors.green,
-                ),
-              ],
-            ),
-          ),
-          
-          // Lista de participantes
-          Expanded(
-            child: Padding(
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Estadísticas
+            Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(16),
+              color: Colors.blue.shade50,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatCard(
+                    'Total',
+                    participantCount.toString(),
+                    Icons.people,
+                    Colors.blue,
+                  ),
+                  _buildStatCard(
+                    'Organizadores',
+                    organizerCount.toString(),
+                    Icons.admin_panel_settings,
+                    Colors.orange,
+                  ),
+                  _buildStatCard(
+                    'Participantes',
+                    (participantCount - organizerCount).toString(),
+                    Icons.person,
+                    Colors.green,
+                  ),
+                ],
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+              child: Text(
+                'Registrados',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: ParticipantsListWidget(
                 planId: widget.plan.id!,
                 showActions: currentUser?.id == widget.plan.userId, // Solo el creador puede gestionar
+                compact: true,
               ),
             ),
-          ),
-        ],
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                'Invitaciones pendientes',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            pendingInvitationsAsync.when(
+              data: (invites) {
+                if (invites.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, 20),
+                    child: Text(
+                      'No hay invitaciones pendientes',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: invites.length,
+                    itemBuilder: (context, index) {
+                      final invite = invites[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.mail_outline, color: Colors.blue),
+                          title: Text(
+                            invite.email,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            'Pendiente · expira ${invite.expiresAt.day}/${invite.expiresAt.month}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (err, _) => Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: Text(
+                  'Error al cargar invitaciones: $err',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -156,63 +224,68 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
   }
 
   void _showInviteDialog() {
+    final loc = AppLocalizations.of(context)!;
     // T109: Verificar si se puede añadir participantes según el estado del plan
     if (!PlanStatePermissions.canAddParticipants(widget.plan)) {
       final blockedReason = PlanStatePermissions.getBlockedReason('add_participants', widget.plan);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(blockedReason ?? 'No se pueden añadir participantes en el estado actual del plan.'),
+          content: Text(blockedReason ?? loc.snackCannotAddParticipantsCurrentState),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 3),
         ),
       );
       return;
     }
-    
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Invitar usuario'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Ingresa el email del usuario que quieres invitar:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'usuario@ejemplo.com',
-                border: OutlineInputBorder(),
+      builder: (dialogContext) {
+        final dloc = AppLocalizations.of(dialogContext)!;
+        return AlertDialog(
+          title: Text(dloc.inviteUserDialogTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(dloc.inviteUserDialogDescription),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: dloc.emailLabel,
+                  hintText: dloc.emailHint,
+                  border: const OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
               ),
-              keyboardType: TextInputType.emailAddress,
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _emailController.clear();
+              },
+              child: Text(dloc.cancel),
+            ),
+            ElevatedButton(
+              onPressed: _inviteUser,
+              child: Text(dloc.inviteUserInvite),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _emailController.clear();
-            },
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: _inviteUser,
-            child: const Text('Invitar'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   void _showInviteGroupDialog() {
+    final loc = AppLocalizations.of(context)!;
     // T109: Verificar si se puede añadir participantes según el estado del plan
     if (!PlanStatePermissions.canAddParticipants(widget.plan)) {
       final blockedReason = PlanStatePermissions.getBlockedReason('add_participants', widget.plan);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(blockedReason ?? 'No se pueden añadir participantes en el estado actual del plan.'),
+          content: Text(blockedReason ?? loc.snackCannotAddParticipantsCurrentState),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 3),
         ),
@@ -233,10 +306,11 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
   }
 
   void _inviteUser() async {
+    final loc = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor ingresa un email')),
+        SnackBar(content: Text(loc.snackPleaseEnterEmail)),
       );
       return;
     }
@@ -244,7 +318,7 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
     final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.[A-Za-z]{2,}$');
     if (!emailRegex.hasMatch(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email inválido')),
+        SnackBar(content: Text(loc.snackInvalidEmailShort)),
       );
       return;
     }
@@ -266,15 +340,15 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
       
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invitación enviada'), backgroundColor: Colors.green),
+          SnackBar(content: Text(loc.snackInvitationSentSuccess), backgroundColor: Colors.green),
         );
       } else {
         // El error ya está manejado por el notifier, pero mostramos un mensaje genérico si no hay detalle
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al enviar invitación. Verifica que no hayas alcanzado el límite de invitaciones diarias (50/día).'),
+          SnackBar(
+            content: Text(loc.snackInviteDailyLimitReached),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 4),
+            duration: const Duration(seconds: 4),
           ),
         );
       }

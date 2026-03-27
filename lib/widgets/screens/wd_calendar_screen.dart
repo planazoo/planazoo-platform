@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event_segment.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
@@ -166,6 +168,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant CalendarScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.plan.id != widget.plan.id) return;
+    // Misma ruta del plan pero fechas/duración/columnas cambiaron (p. ej. guardar en Info del plan).
+    if (oldWidget.plan.startDate == widget.plan.startDate &&
+        oldWidget.plan.endDate == widget.plan.endDate) {
+      return;
+    }
+    final totalDays = widget.plan.durationInDays;
+    if (totalDays <= 0) return;
+    final currentStart = _currentDayGroup * _visibleDays + 1;
+    if (currentStart > totalDays) {
+      setState(() {
+        _currentDayGroup = 0;
+      });
+    }
+    _eventRefreshCounter++;
+  }
+
   /// Inicializa los tracks basándose en los participantes reales del plan
   void _initializeTracks() {
     // Si no hay plan ID, crear tracks ficticios como fallback
@@ -244,9 +266,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   double _getSubColumnWidth(double availableWidth) {
     final columns = _getColumnsToShow();
     final columnWidth = availableWidth / columns.length;
+    final inner = CalendarUtils.innerDayColumnWidth(columnWidth);
     final filteredTracks = _getFilteredTracks();
     final participantCount = filteredTracks.length;
-    return CalendarUtils.getSubColumnWidth(columnWidth, participantCount);
+    return CalendarUtils.getSubColumnWidth(inner, participantCount);
   }
 
   /// Sincroniza el scroll desde la columna de horas hacia los datos
@@ -303,7 +326,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       planId: widget.plan.id!,
       userId: currentUser.id,
       initialDate: widget.plan.startDate,
-      initialColumnCount: widget.plan.columnCount,
+      initialColumnCount: widget.plan.durationInDays,
     );
 
     ref.watch(calendarNotifierProvider(calendarParams));
@@ -313,6 +336,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: Scaffold(
         backgroundColor: Colors.grey.shade900,
         appBar: _buildAppBar(),
+        floatingActionButton: kIsWeb && PlanStatePermissions.canAddEvents(widget.plan)
+            ? FloatingActionButton(
+                onPressed: () => _showNewEventDialog(widget.plan.startDate, 10),
+                backgroundColor: AppColorScheme.color3,
+                foregroundColor: Colors.white,
+                tooltip: AppLocalizations.of(context)!.createEvent,
+                child: const Icon(Icons.add),
+              )
+            : null,
         body: Container(
           decoration: BoxDecoration(
             color: Colors.grey.shade800, // Color sólido, sin gradiente
@@ -443,16 +475,25 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Usa una fecha dentro del rango del plan (hoy si está en rango; si no, el inicio o fin del plan).
   void _handleAccommodationHeaderTap() {
     final now = DateTime.now();
-    final planStart = widget.plan.startDate;
-    final planEnd = widget.plan.startDate.add(Duration(days: widget.plan.durationInDays));
+    final today = DateTime(now.year, now.month, now.day);
+    final planStart = DateTime(
+      widget.plan.startDate.year,
+      widget.plan.startDate.month,
+      widget.plan.startDate.day,
+    );
+    final planLastDay = DateTime(
+      widget.plan.endDate.year,
+      widget.plan.endDate.month,
+      widget.plan.endDate.day,
+    );
 
     DateTime targetDate;
-    if (now.isBefore(planStart)) {
+    if (today.isBefore(planStart)) {
       targetDate = planStart;
-    } else if (now.isAfter(planEnd)) {
-      targetDate = planEnd;
+    } else if (today.isAfter(planLastDay)) {
+      targetDate = planLastDay;
     } else {
-      targetDate = now;
+      targetDate = today;
     }
 
     _showNewAccommodationDialog(targetDate);
@@ -600,7 +641,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onDoubleTap: () {
-              final date = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
+              final date = widget.plan.dateForPlanDayIndex(actualDayIndex);
               _showNewEventDialogForParticipant(date, hourIndex, participant);
             },
             child: Stack(
@@ -655,7 +696,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Construye la celda de alojamiento
   Widget _buildAccommodationCell(int dayIndex) {
     // Obtener la fecha de este día
-    final dayDate = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+    final dayDate = widget.plan.dateForPlanDayIndex(dayIndex);
     
     // Obtener alojamientos del plan
     final accommodationState = ref.watch(accommodationStateProvider(
@@ -776,7 +817,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Obtener eventos para cada día en el rango actual
     for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
       final currentDay = startDayIndex + dayOffset;
-      final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+      final eventDate = widget.plan.dateForPlanDayIndex(currentDay);
       
       // Obtener eventos para esta fecha usando ref.watch para reaccionar a cambios
       final eventsForDate = ref.watch(eventsForDateProvider(
@@ -785,7 +826,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             planId: widget.plan.id ?? '',
             userId: widget.plan.userId,
             initialDate: widget.plan.startDate,
-            initialColumnCount: widget.plan.columnCount,
+            initialColumnCount: widget.plan.durationInDays,
           ),
           date: eventDate,
         ),
@@ -848,7 +889,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Renderizar eventos
     for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
       final currentDay = startDayIndex + dayOffset;
-      final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+      final eventDate = widget.plan.dateForPlanDayIndex(currentDay);
       
       // Obtener eventos para esta fecha
       final eventsForDate = ref.watch(eventsForDateProvider(
@@ -857,7 +898,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             planId: widget.plan.id ?? '',
             userId: widget.plan.userId,
             initialDate: widget.plan.startDate,
-            initialColumnCount: widget.plan.columnCount,
+            initialColumnCount: widget.plan.durationInDays,
           ),
           date: eventDate,
         ),
@@ -918,7 +959,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Obtener eventos para cada día en el rango actual
     for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
       final currentDay = startDayIndex + dayOffset;
-      final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+      final eventDate = widget.plan.dateForPlanDayIndex(currentDay);
       
       // Obtener eventos para esta fecha usando ref.watch para reaccionar a cambios
       final eventsForDate = ref.watch(eventsForDateProvider(
@@ -927,7 +968,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             planId: widget.plan.id ?? '',
             userId: widget.plan.userId,
             initialDate: widget.plan.startDate,
-            initialColumnCount: widget.plan.columnCount,
+            initialColumnCount: widget.plan.durationInDays,
           ),
           date: eventDate,
         ),
@@ -1014,7 +1055,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  event.description,
+                  _eventTitleWithTransportCode(event),
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -1227,7 +1268,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           planId: widget.plan.id ?? '',
           userId: widget.plan.userId,
           initialDate: widget.plan.startDate,
-          initialColumnCount: widget.plan.columnCount,
+          initialColumnCount: widget.plan.durationInDays,
         ),
         date: targetDate,
       ),
@@ -1281,7 +1322,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           planId: widget.plan.id ?? '',
           userId: widget.plan.userId,
           initialDate: widget.plan.startDate,
-          initialColumnCount: widget.plan.columnCount,
+          initialColumnCount: widget.plan.durationInDays,
         ),
         date: targetDate,
       ),
@@ -1299,7 +1340,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             planId: widget.plan.id ?? '',
             userId: widget.plan.userId,
             initialDate: widget.plan.startDate,
-            initialColumnCount: widget.plan.columnCount,
+            initialColumnCount: widget.plan.durationInDays,
           ),
           date: previousDate,
         ),
@@ -1394,7 +1435,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final cellWidth = availableWidth / _visibleDays;
     final cellHeight = AppConstants.cellHeight;
     
-    final x = (dayOffset * cellWidth) + (cellWidth * 0.025);
+    final x = CalendarUtils.dayColumnContentLeft(cellWidth, dayOffset);
     final scrollOffset = _dataScrollController.hasClients ? _dataScrollController.offset : 0.0;
     
     // Calcular la parte del evento que está en el día siguiente
@@ -1412,7 +1453,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final baseY = totalFixedHeight + (nextDayStartMinutes * cellHeight / 60);
     final y = baseY - scrollOffset;
     
-    final width = cellWidth * 0.95;
+    final width = CalendarUtils.innerDayColumnWidth(cellWidth);
     final height = (nextDayDurationMinutes * cellHeight / 60).clamp(0.0, 1440.0); // Limitar altura máxima
     
     return Positioned(
@@ -1506,7 +1547,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   // Título del evento
                   Flexible(
                     child: Text(
-                      event.description,
+                      _eventTitleWithTransportCode(event),
                       style: TextStyle(
                         color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
                         fontSize: fontSize,
@@ -1541,14 +1582,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   if (height > 30 && participantInfo['showIndicator'] == true) ...[
                     const SizedBox(height: 2),
                     _buildParticipantIndicator(participantInfo, fontSize - 3, event, isMultiTrack: isMultiTrack),
-                  ],
-                  
-                  // Debug logs para vuelos
-                  if (event.description.contains('Vuelo')) ...[
-                    Text(
-                      'DEBUG: Altura=$height, Detalles=${_getFlightDetails(event).isNotEmpty}',
-                      style: const TextStyle(fontSize: 8, color: Colors.red),
-                    ),
                   ],
                   
                   // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
@@ -1599,13 +1632,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Obtener todos los eventos del plan
     final allEvents = <Event>[];
     for (int i = 0; i < widget.plan.durationInDays; i++) {
-      final date = widget.plan.startDate.add(Duration(days: i));
+      final date = widget.plan.dateForPlanDayIndex(i + 1);
       try {
         final events = ref.read(eventsForDateProvider(EventsForDateParams(
           calendarParams: CalendarNotifierParams(
             planId: widget.plan.id!,
             userId: widget.plan.userId,
             initialDate: widget.plan.startDate,
+            initialColumnCount: widget.plan.durationInDays,
           ),
           date: date,
         )));
@@ -1751,11 +1785,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final widgets = <Widget>[];
     
     // Calcular ancho para cada segmento solapado
-    final segmentWidth = (cellWidth * 0.95) / group.segments.length;
+    final innerW = CalendarUtils.innerDayColumnWidth(cellWidth);
+    final segmentWidth = innerW / group.segments.length;
     
     for (int i = 0; i < group.segments.length; i++) {
       final segment = group.segments[i];
-      final x = (dayOffset * cellWidth) + (cellWidth * 0.025) + (i * segmentWidth);
+      final x = CalendarUtils.dayColumnContentLeft(cellWidth, dayOffset) + (i * segmentWidth);
       
       final totalFixedHeight = 0.0;
       widgets.add(Positioned(
@@ -1776,7 +1811,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final cellWidth = availableWidth / _visibleDays;
     final subColumnWidth = _getSubColumnWidth(availableWidth);
     final cellHeight = AppConstants.cellHeight;
-    final dayX = dayOffset * cellWidth;
+    final dayX = CalendarUtils.dayColumnContentLeft(cellWidth, dayOffset);
     final totalFixedHeight = 0.0;
     final y = totalFixedHeight + (segment.startMinute * cellHeight / 60);
     final height = (segment.durationMinutes * cellHeight / 60).clamp(0.0, 1440.0);
@@ -1878,7 +1913,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Para cada segmento en el grupo (ordenados por número de participantes)
     for (int i = 0; i < sortedSegments.length; i++) {
       final segment = sortedSegments[i];
-      final dayX = dayOffset * cellWidth;
+      final dayX = CalendarUtils.dayColumnContentLeft(cellWidth, dayOffset);
       final totalFixedHeight = 0.0;
       final y = totalFixedHeight + (segment.startMinute * AppConstants.cellHeight / 60);
       final height = (segment.durationMinutes * AppConstants.cellHeight / 60).clamp(0.0, 1440.0);
@@ -2018,13 +2053,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Calcula la posición individual de un evento en un track específico
   /// Retorna un Map con 'startX' y 'width' para el track individual
   Map<String, double> _calculateEventPosition(Event event, int trackIndex, double subColumnWidth) {
-    // Para eventos multi-participante, cada instancia ocupa solo su track individual
-    // El ancho es siempre el ancho de una subcolumna
-    final startX = trackIndex * subColumnWidth;
+    // Tarjetas un poco más estrechas que la subcolumna (lista puntos P31).
+    final inset = subColumnWidth * 0.08;
+    final w = (subColumnWidth - inset).clamp(8.0, subColumnWidth);
+    final startX = trackIndex * subColumnWidth + inset / 2;
     
     return {
       'startX': startX,
-      'width': subColumnWidth,
+      'width': w,
     };
   }
 
@@ -2212,8 +2248,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final cellWidth = availableWidth / _visibleDays;
     final cellHeight = AppConstants.cellHeight;
     
-    final x = (dayOffset * cellWidth) + (cellWidth * 0.025);
-    final width = cellWidth * 0.95;
+    final x = CalendarUtils.dayColumnContentLeft(cellWidth, dayOffset);
+    final width = CalendarUtils.innerDayColumnWidth(cellWidth);
     
     // NO restar scrollOffset porque los eventos están dentro del SingleChildScrollView
     final totalFixedHeight = 0.0;
@@ -2342,18 +2378,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   // Descripción del evento
                   Flexible(
                     child: Text(
-                      segment.description,
+                      _eventTitleWithTransportCode(segment.originalEvent),
                       style: TextStyle(
                         color: ColorUtils.getEventTextColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
                         fontSize: fontSize,
                         fontWeight: FontWeight.bold,
                       ),
-                      maxLines: 1,
+                      maxLines: segment.durationMinutes < CalendarConstants.shortEventTitleOnlyMaxMinutes
+                          ? 1
+                          : 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  // T239: Texto "modo borrador" cuando el evento es borrador
-                  if (segment.isDraft && height > 14)
+                  // T239: Texto "modo borrador" cuando hay altura suficiente
+                  if (segment.isDraft &&
+                      height > 20 &&
+                      segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes)
                     Padding(
                       padding: const EdgeInsets.only(top: 1),
                       child: Text(
@@ -2369,7 +2409,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                     ),
                   // Hora
-                  if (height > 15)
+                  if (height > 26 &&
+                      segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes)
                     Flexible(
                       child: Text(
                         _formatSegmentTime(segment),
@@ -2385,21 +2426,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ),
                   
                   // Indicador de participantes (T50/T89) - solo si hay espacio suficiente
-                  if (height > 30 && participantInfo['showIndicator'] == true) ...[
+                  if (height > 40 &&
+                      participantInfo['showIndicator'] == true &&
+                      segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes) ...[
                     const SizedBox(height: 2),
                     _buildParticipantIndicator(participantInfo, fontSize - 3, segment.originalEvent, isMultiTrack: isMultiTrack),
                   ],
                   
-                  // Debug logs para vuelos - REMOVIDO PARA PRODUCCIÓN
-                  // if (segment.description.contains('Vuelo')) ...[
-                  //   Text(
-                  //     'DEBUG: Altura=$height, Detalles=${_getFlightDetails(segment.originalEvent).isNotEmpty}',
-                  //     style: const TextStyle(fontSize: 8, color: Colors.red),
-                  //   ),
-                  // ],
-                  
                   // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
-                  if (height > 10 && _getFlightDetails(segment.originalEvent).isNotEmpty) ...[
+                  if (height > 48 &&
+                      _getFlightDetails(segment.originalEvent).isNotEmpty &&
+                      segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes) ...[
                     const SizedBox(height: 2),
                     
                     Flexible(
@@ -2499,7 +2536,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final localEvent = _convertEventFromUtc(event);
     
     final startDayIndex = _currentDayGroup * _visibleDays + 1;
-    final eventDayIndex = localEvent.date.difference(widget.plan.startDate).inDays + 1;
+    final eventDayIndex = widget.plan.planDayIndexForDate(localEvent.date);
     final dayIndex = eventDayIndex - startDayIndex;
     
     // Si el evento no está en el rango de días actual, no lo mostramos
@@ -2518,7 +2555,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final cellHeight = AppConstants.cellHeight;
     
     
-    final x = (dayIndex * cellWidth) + (cellWidth * 0.025); // Centrado: 2.5% de margen a cada lado
+    final x = CalendarUtils.dayColumnContentLeft(cellWidth, dayIndex);
     final scrollOffset = _dataScrollController.hasClients ? _dataScrollController.offset : 0.0;
     
     // Posición Y: ahora que los eventos están dentro del SingleChildScrollView,
@@ -2534,7 +2571,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       y = totalFixedHeight + (_getPerspectiveStartMinutes(localEvent) * cellHeight / 60);
     }
     
-    final width = cellWidth * 0.95; // 5% más estrecho que la columna
+    final width = CalendarUtils.innerDayColumnWidth(cellWidth);
     
     // Calcular altura del evento - si cruza medianoche o tiene timezones diferentes, mostrar solo la parte del día actual
     double height;
@@ -2574,6 +2611,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     
     // Calcular altura del evento para ajustar el tamaño de fuente
     final eventHeight = (event.durationMinutes * AppConstants.cellHeight / 60);
+    final showEventDetailLines =
+        event.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes;
     
     // Calcular tamaño de fuente basado en la altura del evento
     double fontSize;
@@ -2648,19 +2687,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     // Título del evento
                     Flexible(
                       child: Text(
-                        event.description,
+                        _eventTitleWithTransportCode(event),
                         style: TextStyle(
                           color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
                           fontSize: fontSize,
                           fontWeight: FontWeight.bold,
                         ),
-                        maxLines: eventHeight < 30 ? 1 : 2, // Líneas adaptativas
+                        maxLines: !showEventDetailLines
+                            ? 1
+                            : (eventHeight < 36 ? 1 : 2),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     
                     // Mostrar horas solo si hay espacio suficiente
-                    if (eventHeight > 25) ...[
+                    if (showEventDetailLines && eventHeight > 34) ...[
                       const SizedBox(height: 2),
                       
                       // Horas en una sola línea
@@ -2680,21 +2721,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ],
                     
                     // Indicador de participantes (T50/T89) - solo si hay espacio suficiente
-                    if (eventHeight > 30 && participantInfo['showIndicator'] == true) ...[
+                    if (showEventDetailLines &&
+                        eventHeight > 42 &&
+                        participantInfo['showIndicator'] == true) ...[
                       const SizedBox(height: 2),
                       _buildParticipantIndicator(participantInfo, fontSize - 3, event, isMultiTrack: isMultiTrack),
                     ],
                     
-                    // Debug logs para vuelos
-                    if (event.description.contains('Vuelo')) ...[
-                      Text(
-                        'DEBUG: Altura=$eventHeight, Detalles=${_getFlightDetails(event).isNotEmpty}',
-                        style: const TextStyle(fontSize: 8, color: Colors.red),
-                      ),
-                    ],
-                    
                     // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
-                    if (eventHeight > 10 && _getFlightDetails(event).isNotEmpty) ...[
+                    if (showEventDetailLines &&
+                        eventHeight > 48 &&
+                        _getFlightDetails(event).isNotEmpty) ...[
                       const SizedBox(height: 2),
                       
                       Flexible(
@@ -2733,15 +2770,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     
     // Si el evento tiene timezone configurada
     if (event.timezone != null && event.timezone!.isNotEmpty) {
-      final timezoneDisplay = TimezoneService.getTimezoneDisplayName(event.timezone!);
-      tooltipParts.add('Salida: $timezoneDisplay');
+      final isPlane = event.typeFamily == 'Desplazamiento' && event.typeSubtype == 'Avión';
+      final departureLine = isPlane
+          ? '${_flightDepartureLabel(event)} (${TimezoneService.getUtcOffsetFormatted(event.timezone!)})'
+          : TimezoneService.getTimezoneDisplayName(event.timezone!);
+      tooltipParts.add('Salida: $departureLine');
       
       // Si tiene timezone de llegada diferente, añadirla
       if (event.arrivalTimezone != null && 
           event.arrivalTimezone!.isNotEmpty && 
           event.arrivalTimezone != event.timezone) {
-        final arrivalDisplay = TimezoneService.getTimezoneDisplayName(event.arrivalTimezone!);
-        tooltipParts.add('Llegada: $arrivalDisplay');
+        final arrivalLine = isPlane
+            ? '${_flightArrivalLabel(event)} (${TimezoneService.getUtcOffsetFormatted(event.arrivalTimezone!)})'
+            : TimezoneService.getTimezoneDisplayName(event.arrivalTimezone!);
+        tooltipParts.add('Llegada: $arrivalLine');
         
         // Añadir icono de avión si es un desplazamiento
         if (event.typeFamily == 'Desplazamiento') {
@@ -2801,7 +2843,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final cellWidth = availableWidth / _visibleDays;
     
     // Calcular posición actual del evento
-    final currentDayIndex = event.date.difference(widget.plan.startDate).inDays + 1;
+    final currentDayIndex = widget.plan.planDayIndexForDate(event.date);
     final startDayIndex = _currentDayGroup * _visibleDays + 1;
     final currentColumnIndex = currentDayIndex - startDayIndex;
     
@@ -2920,7 +2962,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               planId: widget.plan.id ?? '',
               userId: widget.plan.userId,
               initialDate: widget.plan.startDate,
-              initialColumnCount: widget.plan.columnCount,
+              initialColumnCount: widget.plan.durationInDays,
             ),
           ));
           
@@ -2953,7 +2995,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       final consistentPosition = _calculateConsistentPosition(event, dragOffset);
       
       // Calcular nueva columna (día) basada en la posición consistente
-      final currentDayIndex = event.date.difference(widget.plan.startDate).inDays + 1;
+      final currentDayIndex = widget.plan.planDayIndexForDate(event.date);
       final startDayIndex = _currentDayGroup * _visibleDays + 1;
       final currentColumnIndex = currentDayIndex - startDayIndex;
       
@@ -2993,7 +3035,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       
       // Calcular nueva fecha
       final newDayIndex = startDayIndex + newColumnIndex;
-      final newDate = widget.plan.startDate.add(Duration(days: (newDayIndex - 1).toInt()));
+      final newDate = widget.plan.dateForPlanDayIndex(newDayIndex.toInt());
       
       return {
         'date': newDate,
@@ -3009,7 +3051,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _buildEventCell(int hourIndex, dynamic column) {
     final dayData = column as Map<String, dynamic>;
     final dayIndex = dayData['index'] as int;
-    final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+    final date = widget.plan.dateForPlanDayIndex(dayIndex);
     
     // T109: Verificar si se puede crear eventos según el estado del plan
     final canCreateEvents = PlanStatePermissions.canAddEvents(widget.plan);
@@ -3090,6 +3132,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (!mounted) return;
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => EventDialog(
         event: eventToShow,
         planId: widget.plan.id ?? '',
@@ -3180,6 +3223,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => EventDialog(
         event: null,
         planId: widget.plan.id ?? '',
@@ -3267,7 +3311,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Verifica si hay un evento en la posición especificada
   bool _hasEventAtPosition(int dayIndex, int hourIndex) {
-    final eventDate = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+    final eventDate = widget.plan.dateForPlanDayIndex(dayIndex);
     
     try {
       final eventsForDate = ref.read(eventsForDateProvider(
@@ -3276,7 +3320,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             planId: widget.plan.id ?? '',
             userId: widget.plan.userId,
             initialDate: widget.plan.startDate,
-            initialColumnCount: widget.plan.columnCount,
+            initialColumnCount: widget.plan.durationInDays,
           ),
           date: eventDate,
         ),
@@ -3308,7 +3352,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       planId: widget.plan.id!,
       userId: widget.plan.userId,
       initialDate: widget.plan.startDate,
-      initialColumnCount: widget.plan.columnCount,
+      initialColumnCount: widget.plan.durationInDays,
     );
     
     // Refrescar eventos usando el método del notifier existente
@@ -3348,7 +3392,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         accommodation: accommodation,
         planId: widget.plan.id ?? '',
         planStartDate: widget.plan.startDate,
-        planEndDate: widget.plan.startDate.add(Duration(days: widget.plan.durationInDays)),
+        planEndDate: DateTime(
+          widget.plan.endDate.year,
+          widget.plan.endDate.month,
+          widget.plan.endDate.day,
+        ),
         onSaved: (updatedAccommodation) async {
           final accommodationService = ref.read(accommodationServiceProvider);
           final success = await accommodationService.saveAccommodation(updatedAccommodation);
@@ -3421,7 +3469,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         accommodation: null,
         planId: widget.plan.id ?? '',
         planStartDate: widget.plan.startDate,
-        planEndDate: widget.plan.startDate.add(Duration(days: widget.plan.durationInDays)),
+        planEndDate: DateTime(
+          widget.plan.endDate.year,
+          widget.plan.endDate.month,
+          widget.plan.endDate.day,
+        ),
         initialCheckIn: checkInDate,
         onSaved: (newAccommodation) async {
           final accommodationService = ref.read(accommodationServiceProvider);
@@ -3536,7 +3588,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     
     // Calcular el ancho de cada subcolumna (igual que los eventos)
     final subColumnWidth = _getSubColumnWidth(availableWidth);
-    
+    final columns = _getColumnsToShow();
+    final columnWidth = availableWidth / columns.length;
+    final dayInset = columnWidth * CalendarConstants.dayColumnHorizontalInsetFraction;
     
     return Stack(
       children: allGroups.map((groupData) {
@@ -3545,9 +3599,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         final startTrack = group.first;
         final groupWidth = group.length;
         
-        // Calcular posición y ancho (igual que los eventos)
-        // Para alojamientos, no hay dayX porque están en la fila fija
-        final left = startTrack * subColumnWidth;
+        // Calcular posición y ancho (igual que los eventos; margen día alineado con la capa de eventos)
+        final left = dayInset + startTrack * subColumnWidth;
         final width = subColumnWidth * groupWidth;
         
         
@@ -3559,7 +3612,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           child: GestureDetector(
             onTap: () => _showAccommodationDialog(accommodation),
             child: Container(
-              margin: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: 0),
+              margin: EdgeInsets.symmetric(horizontal: width * 0.04, vertical: 0),
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               decoration: BoxDecoration(
                 color: accommodation.displayColor.withOpacity(0.3),
@@ -3882,6 +3935,49 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return displayNames[timezone] ?? timezone.split('/').last;
   }
 
+  /// Texto corto desde aeropuerto (Places/Amadeus); prioriza la parte antes de la primera coma.
+  String? _shortAirportLabelFromExtra(String? primary, String? fallback) {
+    var raw = primary?.trim();
+    if (raw == null || raw.isEmpty) raw = fallback?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    final comma = raw.indexOf(',');
+    if (comma > 0) {
+      return raw.substring(0, comma).trim();
+    }
+    if (raw.length > 40) {
+      return '${raw.substring(0, 37)}…';
+    }
+    return raw;
+  }
+
+  /// Origen del vuelo en celdas: nombre de aeropuerto/lugar guardado; si no, ciudad IANA del timezone.
+  String _flightDepartureLabel(Event event) {
+    final extra = event.commonPart?.extraData;
+    final fromAirport = _shortAirportLabelFromExtra(
+      extra?['departureAirport'] as String?,
+      extra?['originName'] as String?,
+    );
+    if (fromAirport != null && fromAirport.isNotEmpty) return fromAirport;
+    if (event.timezone != null && event.timezone!.isNotEmpty) {
+      return _getCityName(event.timezone!);
+    }
+    return '';
+  }
+
+  /// Destino del vuelo en celdas: mismo criterio que salida.
+  String _flightArrivalLabel(Event event) {
+    final extra = event.commonPart?.extraData;
+    final fromAirport = _shortAirportLabelFromExtra(
+      extra?['arrivalAirport'] as String?,
+      extra?['destinationName'] as String?,
+    );
+    if (fromAirport != null && fromAirport.isNotEmpty) return fromAirport;
+    if (event.arrivalTimezone != null && event.arrivalTimezone!.isNotEmpty) {
+      return _getCityName(event.arrivalTimezone!);
+    }
+    return '';
+  }
+
   /// Determina si un evento debe mostrarse en un día específico
   bool _shouldShowEventInDay(Event event, int dayIndex) {
     // Si el evento no tiene timezones diferentes, usar lógica normal
@@ -3894,13 +3990,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Para eventos con timezones diferentes, verificar si debe mostrarse en este día
     final startDayIndex = _currentDayGroup * _visibleDays + 1;
     final currentDay = startDayIndex + dayIndex;
-    final eventDay = event.date.difference(widget.plan.startDate).inDays + 1;
+    final eventDay = widget.plan.planDayIndexForDate(event.date);
     
     // Calcular el día de llegada (usar fecha sin timezone para evitar problemas de cálculo)
     final arrivalTime = _calculateArrivalTimeInArrivalTimezone(event);
     final arrivalDate = DateTime(arrivalTime.year, arrivalTime.month, arrivalTime.day);
-    final startDate = DateTime(widget.plan.startDate.year, widget.plan.startDate.month, widget.plan.startDate.day);
-    final arrivalDay = arrivalDate.difference(startDate).inDays + 1;
+    final arrivalDay = widget.plan.planDayIndexForDate(arrivalDate);
     
     
     // Mostrar en el día de salida
@@ -4098,7 +4193,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   double _calculateEventHeightForTimezoneDay(Event event, int dayIndex, double cellHeight) {
     final startDayIndex = _currentDayGroup * _visibleDays + 1;
     final currentDay = startDayIndex + dayIndex;
-    final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+    final eventDate = widget.plan.dateForPlanDayIndex(currentDay);
     
     // Usar los nuevos métodos helper que consideran timezones
     final startMinutes = _getRealStartMinutes(event, eventDate);
@@ -4112,7 +4207,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   double _calculateEventYForTimezoneDay(Event event, int dayIndex, double cellHeight, double totalFixedHeight) {
     final startDayIndex = _currentDayGroup * _visibleDays + 1;
     final currentDay = startDayIndex + dayIndex;
-    final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+    final eventDate = widget.plan.dateForPlanDayIndex(currentDay);
     
     // Usar los nuevos métodos helper que consideran timezones
     final startMinutes = _getRealStartMinutes(event, eventDate);
@@ -4299,9 +4394,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       // Formatear hora de llegada (timezone de destino)
       final endTime = '${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}';
       
-      // Obtener nombres de ciudades
-      final departureCity = _getCityName(event.timezone!);
-      final arrivalCity = _getCityName(event.arrivalTimezone!);
+      // Origen/destino: aeropuertos guardados (extraData), no solo ciudad IANA del timezone (punto 19).
+      final departureCity = _flightDepartureLabel(event);
+      final arrivalCity = _flightArrivalLabel(event);
       
       // Si cruza medianoche, mostrar con +1
       if (arrivalTime.day > event.date.day) {
@@ -4369,9 +4464,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Formatear hora de llegada
     final endTime = '${perspective.displayEndTime.hour.toString().padLeft(2, '0')}:${perspective.displayEndTime.minute.toString().padLeft(2, '0')}';
 
-    // Obtener nombres de ciudades
-    final departureCity = _getCityName(event.timezone!);
-    final arrivalCity = _getCityName(event.arrivalTimezone!);
+    final departureCity = _flightDepartureLabel(event);
+    final arrivalCity = _flightArrivalLabel(event);
     final displayCity = _getCityName(perspective.displayTimezone);
 
     // Construir información detallada
@@ -4393,20 +4487,35 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return details;
   }
 
+  String? _transportCodeLabel(Event event) {
+    final extra = event.commonPart?.extraData;
+    if (extra == null) return null;
+    for (final key in const ['flightNumber', 'trainNumber', 'transportNumber']) {
+      final value = extra[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  String _eventTitleWithTransportCode(Event event) {
+    final code = _transportCodeLabel(event);
+    return code != null ? '$code · ${event.description}' : event.description;
+  }
+
   /// Obtiene eventos multi-día que deberían aparecer en un día específico
   List<Event> _getMultiDayEventsForDay(int currentDay, int dayOffset) {
     final multiDayEvents = <Event>[];
     
     // Buscar eventos de días anteriores que tengan timezones diferentes
     for (int prevDay = 1; prevDay < currentDay; prevDay++) {
-      final prevEventDate = widget.plan.startDate.add(Duration(days: prevDay - 1));
+      final prevEventDate = widget.plan.dateForPlanDayIndex(prevDay);
       final prevEvents = ref.watch(eventsForDateProvider(
         EventsForDateParams(
           calendarParams: CalendarNotifierParams(
             planId: widget.plan.id ?? '',
             userId: widget.plan.userId,
             initialDate: widget.plan.startDate,
-            initialColumnCount: widget.plan.columnCount,
+            initialColumnCount: widget.plan.durationInDays,
           ),
           date: prevEventDate,
         ),

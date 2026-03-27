@@ -78,7 +78,7 @@ class CalendarCalculations {
 
   /// Calcula la duración de un alojamiento en días
   static int calculateAccommodationDurationInDays(Accommodation accommodation) {
-    return accommodation.checkOut.difference(accommodation.checkIn).inDays;
+    return accommodation.duration;
   }
 
   /// Calcula el porcentaje de progreso del plan

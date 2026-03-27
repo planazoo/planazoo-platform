@@ -126,22 +126,23 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final loc = AppLocalizations.of(context)!;
     final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Importe inválido')),
+        SnackBar(content: Text(loc.snackInvalidMonetaryAmount)),
       );
       return;
     }
     if (_selectedPayerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona quién pagó')),
+        SnackBar(content: Text(loc.snackSelectWhoPaid)),
       );
       return;
     }
     if (_selectedParticipantIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona al menos un participante en el reparto')),
+        SnackBar(content: Text(loc.snackSelectAtLeastOneForSplit)),
       );
       return;
     }
@@ -154,7 +155,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
         final v = double.tryParse(c?.text.replaceAll(',', '.') ?? '');
         if (v == null || v < 0) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Comprueba los importes del reparto personalizado')),
+            SnackBar(content: Text(loc.snackCheckCustomSplitAmounts)),
           );
           return;
         }
@@ -163,7 +164,11 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       }
       if ((sum - amount).abs() > 0.01) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('La suma del reparto ($sum) debe coincidir con el importe total ($amount)')),
+          SnackBar(
+            content: Text(
+              loc.snackExpenseSplitSumMismatch(sum.toStringAsFixed(2), amount.toStringAsFixed(2)),
+            ),
+          ),
         );
         return;
       }

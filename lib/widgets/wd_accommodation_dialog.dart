@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
+import 'package:unp_calendario/features/calendar/domain/models/event.dart' show EventDocument;
+import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
+import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/places/data/places_api_service.dart';
 import 'package:unp_calendario/features/places/presentation/widgets/place_autocomplete_field.dart';
@@ -82,10 +85,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     'Casa',
     'Resort',
     'Camping',
+    'Crucero',
     'Otro',
   ];
 
   late String _selectedType;
+
+  List<EventDocument> _accommodationDocuments = [];
+  bool _uploadingAccAttachment = false;
 
   @override
   void initState() {
@@ -118,10 +125,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     _selectedType = _normalizeType(typeFromDB);
     
     // Inicializar participantes seleccionados y checkbox "Para todos" (igual que eventos)
-    final existingParticipantTrackIds = widget.accommodation?.participantTrackIds ?? [];
-    // Si el alojamiento existente tiene participantTrackIds, no está "para todos"
-    _isForAllParticipants = existingParticipantTrackIds.isEmpty;
-    _selectedParticipantTrackIds = List.from(existingParticipantTrackIds);
+    final existingParticipantIds = <String>{
+      ...(widget.accommodation?.participantTrackIds ?? const <String>[]),
+      ...(widget.accommodation?.commonPart?.participantIds ?? const <String>[]),
+    };
+    final existingIsForAll = widget.accommodation?.commonPart?.isForAllParticipants;
+    // Priorizar bandera explícita de commonPart y, si no existe, usar compatibilidad legacy.
+    _isForAllParticipants = existingIsForAll ?? existingParticipantIds.isEmpty;
+    _selectedParticipantTrackIds = existingParticipantIds.toList();
     
     // Si es un alojamiento nuevo, por defecto está marcado "para todos" (no necesitamos seleccionar participantes)
     // Si es un alojamiento existente y no está marcado "para todos" pero no hay participantes,
@@ -129,6 +140,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     
     // Cargar moneda del plan (T153)
     _loadPlanCurrency();
+
+    _accommodationDocuments = List<EventDocument>.from(widget.accommodation?.documents ?? const []);
   }
   
   /// Cargar moneda del plan (T153) y plan completo (T109)
@@ -197,6 +210,103 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     _descriptionController.dispose();
     _costController.dispose(); // T101
     super.dispose();
+  }
+
+  Future<void> _pickAccommodationAttachment() async {
+    final picked = await PlanFileService.pickAttachment();
+    if (picked == null) {
+      if (!mounted) return;
+      final loc = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            loc.entityAttachmentsReadError,
+            style: GoogleFonts.poppins(color: Colors.white),
+          ),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+      return;
+    }
+    final validationError = PlanFileService.validateAttachment(picked);
+    if (validationError != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(validationError, style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.orange.shade700,
+        ),
+      );
+      return;
+    }
+    setState(() => _uploadingAccAttachment = true);
+    try {
+      final uploaded = await PlanFileService.uploadAttachment(
+        planId: widget.planId,
+        file: picked,
+        filenamePrefix: 'acc',
+      );
+      if (!mounted) return;
+      setState(() {
+        _accommodationDocuments = [..._accommodationDocuments, EventDocument.fromPlanAttachment(uploaded)];
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final loc = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.entityAttachmentsUploadError('$e'), style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingAccAttachment = false);
+    }
+  }
+
+  Future<void> _deleteAccommodationAttachment(EventDocument doc) async {
+    final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) {
+            final loc = AppLocalizations.of(ctx)!;
+            return Theme(
+              data: AppTheme.darkTheme,
+              child: AlertDialog(
+                backgroundColor: Colors.grey.shade900,
+                title: Text(loc.entityAttachmentsDeleteTitle, style: GoogleFonts.poppins(color: Colors.white)),
+                content: Text(
+                  loc.entityAttachmentsDeleteConfirm(doc.name),
+                  style: GoogleFonts.poppins(color: Colors.grey.shade300),
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(loc.cancel)),
+                  TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(loc.delete)),
+                ],
+              ),
+            );
+          },
+        ) ??
+        false;
+    if (!confirm) return;
+    setState(() => _uploadingAccAttachment = true);
+    try {
+      await PlanFileService.deleteAttachment(doc.url);
+      if (!mounted) return;
+      setState(() {
+        _accommodationDocuments = _accommodationDocuments.where((d) => d.url != doc.url).toList();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      final loc = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.entityAttachmentsDeleteError, style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingAccAttachment = false);
+    }
   }
 
   /// Decoración tipo login (estética unificada con evento y login).
@@ -633,6 +743,15 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      EntityAttachmentsSection(
+                        title: AppLocalizations.of(context)!.entityAttachmentsAccommodationTitle,
+                        files: _accommodationDocuments,
+                        canManage: _canSaveAccommodation(),
+                        isUploading: _uploadingAccAttachment,
+                        onUpload: _canSaveAccommodation() ? _pickAccommodationAttachment : null,
+                        onDelete: _deleteAccommodationAttachment,
+                      ),
+                      const SizedBox(height: 16),
             
             // Coste del alojamiento (T101/T153)
             if (_planCurrency != null) _buildCostFieldWithCurrency(),
@@ -676,7 +795,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                   Icon(Icons.nights_stay, size: 20, color: AppColorScheme.color2),
                   const SizedBox(width: 8),
                   Text(
-                    AppLocalizations.of(context)!.nights(_selectedCheckOut.difference(_selectedCheckIn).inDays),
+                    AppLocalizations.of(context)!.nights(
+                      _calculateNights(_selectedCheckIn, _selectedCheckOut),
+                    ),
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -810,6 +931,13 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
 
   Color _getColorFromName(String colorName) {
     return ColorUtils.colorFromName(colorName);
+  }
+
+  /// Cálculo por fecha civil para evitar desajustes por cambio horario (DST).
+  int _calculateNights(DateTime checkIn, DateTime checkOut) {
+    final checkInUtcDate = DateTime.utc(checkIn.year, checkIn.month, checkIn.day);
+    final checkOutUtcDate = DateTime.utc(checkOut.year, checkOut.month, checkOut.day);
+    return checkOutUtcDate.difference(checkInUtcDate).inDays;
   }
 
   /// Construye la sección de selección de participantes
@@ -1313,6 +1441,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     }
 
     final url = _urlController.text.trim().isEmpty ? null : _urlController.text.trim();
+    final selectedParticipantIds = _selectedParticipantTrackIds.toSet().toList();
     final commonPart = AccommodationCommonPart(
       hotelName: hotelName,
       checkIn: _selectedCheckIn,
@@ -1322,7 +1451,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       customColor: _selectedColor,
       address: address,
       url: url,
-      participantIds: _selectedParticipantTrackIds,
+      participantIds: _isForAllParticipants ? [] : selectedParticipantIds,
       isForAllParticipants: _isForAllParticipants,
       extraData: baseExtra.isEmpty ? null : baseExtra,
     );
@@ -1337,11 +1466,12 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       color: _selectedColor,
       typeFamily: 'alojamiento',
       typeSubtype: normalizedType,
-      participantTrackIds: _isForAllParticipants ? [] : _selectedParticipantTrackIds,
+      participantTrackIds: _isForAllParticipants ? [] : selectedParticipantIds,
       cost: costValue,
       createdAt: widget.accommodation?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
       commonPart: commonPart,
+      documents: _accommodationDocuments.isEmpty ? null : List<EventDocument>.from(_accommodationDocuments),
     );
 
     if (widget.onSaved != null) {

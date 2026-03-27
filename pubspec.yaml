@@ -81,6 +81,7 @@ dependencies:
 
   # Open URLs (e.g. Google Maps) from the app
   url_launcher: ^6.2.5
+  file_picker: ^10.3.10
 
 dev_dependencies:
   flutter_test:
@@ -118,6 +119,12 @@ flutter:
   assets:
     - assets/
   #   - images/a_dot_burr.jpeg
+
+  # Material Icons embebidas: en web evita iconos como “cuadrados” si la fuente del engine no carga bien.
+  fonts:
+    - family: MaterialIcons
+      fonts:
+        - asset: fonts/MaterialIcons-Regular.otf
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

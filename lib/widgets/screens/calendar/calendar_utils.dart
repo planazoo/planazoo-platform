@@ -2,9 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/participant_track.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
 
 /// Clase con utilidades y cálculos para el calendario
 class CalendarUtils {
+  /// Ancho interior de una columna-día tras márgenes izquierdo/derecho (eventos más estrechos → mejor lectura del grid).
+  static double innerDayColumnWidth(double columnWidth) {
+    final f = CalendarConstants.dayColumnHorizontalInsetFraction;
+    return columnWidth * (1.0 - 2.0 * f);
+  }
+
+  /// Origen X del contenido (eventos / tracks) para el día `dayOffset` (0 … días visibles − 1).
+  static double dayColumnContentLeft(double columnWidth, int dayOffset) {
+    final f = CalendarConstants.dayColumnHorizontalInsetFraction;
+    return dayOffset * columnWidth + columnWidth * f;
+  }
+
   /// Calcula el ancho de una subcolumna (track de participante)
   static double getSubColumnWidth(double availableWidth, int trackCount) {
     if (trackCount == 0) return 0;

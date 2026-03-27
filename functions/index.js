@@ -516,6 +516,43 @@ exports.placesDetails = functions.https.onCall(async (data, context) => {
   return json;
 });
 
+exports.placesTimezone = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+  if (!PLACES_API_KEY) {
+    throw new functions.https.HttpsError('failed-precondition', 'Places API key no configurada.');
+  }
+  const { lat, lng, timestamp } = data || {};
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    throw new functions.https.HttpsError('invalid-argument', 'lat y lng son requeridos.');
+  }
+
+  const ts = Number.isFinite(timestamp) ? Math.floor(timestamp) : Math.floor(Date.now() / 1000);
+  const params = new URLSearchParams({
+    location: `${lat},${lng}`,
+    timestamp: `${ts}`,
+    key: PLACES_API_KEY,
+  });
+  const url = `https://maps.googleapis.com/maps/api/timezone/json?${params.toString()}`;
+  const res = await fetch(url);
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.status !== 'OK') {
+    const errMsg = json.errorMessage || json.status || `HTTP ${res.status}`;
+    console.warn('Places timezone error', errMsg, json);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error al obtener timezone (${res.status}): ${errMsg}`,
+    );
+  }
+  return {
+    timeZoneId: json.timeZoneId || null,
+    timeZoneName: json.timeZoneName || null,
+    rawOffset: json.rawOffset ?? null,
+    dstOffset: json.dstOffset ?? null,
+  };
+});
+
 // T246: Amadeus On-Demand Flight Status — rellenar evento desplazamiento por número de vuelo
 const AMADEUS_CLIENT_ID = functions.config().amadeus?.client_id || process.env.AMADEUS_CLIENT_ID;
 const AMADEUS_CLIENT_SECRET = functions.config().amadeus?.client_secret || process.env.AMADEUS_CLIENT_SECRET;

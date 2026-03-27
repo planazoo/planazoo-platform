@@ -76,7 +76,12 @@ class CalendarGrid extends StatelessWidget {
           // Encabezado (primera celda)
           Container(
             height: CalendarConstants.headerHeight,
-            decoration: CalendarStyles.getFixedHoursColumnDecoration(),
+            decoration: CalendarStyles.getFixedHoursColumnDecoration().copyWith(
+              border: Border(
+                top: BorderSide(color: Colors.grey.shade600, width: 1),
+                bottom: BorderSide(color: Colors.grey.shade600, width: 1),
+              ),
+            ),
             child: const Center(
               child: SizedBox.shrink(), // Celda vacía
             ),

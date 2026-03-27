@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:unp_calendario/features/calendar/domain/models/event.dart' show EventDocument;
 
 class Accommodation {
   final String? id;
@@ -19,6 +20,8 @@ class Accommodation {
   final Map<String, AccommodationPersonalPart>? personalParts; // key: participantId
   // T101: sistema de presupuesto
   final double? cost; // Coste total del alojamiento (opcional)
+  /// Archivos adjuntos (PDF/JPG/PNG), mismo esquema que en eventos.
+  final List<EventDocument>? documents;
 
   const Accommodation({
     this.id,
@@ -36,6 +39,7 @@ class Accommodation {
     this.commonPart,
     this.personalParts,
     this.cost, // null por defecto (sin coste definido)
+    this.documents,
   });
 
   /// Crear desde un documento de Firestore
@@ -62,6 +66,9 @@ class Accommodation {
           ? (data['personalParts'] as Map<String, dynamic>).map((k, v) => MapEntry(k, AccommodationPersonalPart.fromMap(v as Map<String, dynamic>)))
           : null,
       cost: data['cost'] != null ? (data['cost'] as num).toDouble() : null, // T101
+      documents: (data['documents'] as List<dynamic>?)
+          ?.map((e) => EventDocument.fromMap(Map<String, dynamic>.from(e as Map)))
+          .toList(),
     );
   }
 
@@ -88,6 +95,9 @@ class Accommodation {
     if (personalParts != null && personalParts!.isNotEmpty) {
       map['personalParts'] = personalParts!.map((k, v) => MapEntry(k, v.toMap()));
     }
+    if (documents != null && documents!.isNotEmpty) {
+      map['documents'] = documents!.map((d) => d.toMap()).toList();
+    }
     return map;
   }
 
@@ -108,6 +118,7 @@ class Accommodation {
     AccommodationCommonPart? commonPart,
     Map<String, AccommodationPersonalPart>? personalParts,
     double? cost,
+    List<EventDocument>? documents,
   }) {
     return Accommodation(
       id: id ?? this.id,
@@ -125,12 +136,15 @@ class Accommodation {
       commonPart: commonPart ?? this.commonPart,
       personalParts: personalParts ?? this.personalParts,
       cost: cost ?? this.cost,
+      documents: documents ?? this.documents,
     );
   }
 
   /// Obtener la duración en días
   int get duration {
-    return checkOut.difference(checkIn).inDays;
+    final checkInUtcDate = DateTime.utc(checkIn.year, checkIn.month, checkIn.day);
+    final checkOutUtcDate = DateTime.utc(checkOut.year, checkOut.month, checkOut.day);
+    return checkOutUtcDate.difference(checkInUtcDate).inDays;
   }
 
   /// Verificar si una fecha está dentro del rango de alojamiento

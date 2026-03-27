@@ -8,6 +8,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/pages/pg_ui_showcase_page.dart';
 import 'package:unp_calendario/shared/providers/help_text_providers.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 
 /// Página de administración: solo accesible para usuarios admin (icono en W1).
 /// Contiene: Actualizar ayuda (sync seed → Firestore), UI Showcase.
@@ -48,7 +50,94 @@ class AdminPage extends ConsumerWidget {
           _SectionTitle(title: 'UI Showcase'),
           const SizedBox(height: 8),
           _UIShowcaseSection(),
+          const SizedBox(height: 32),
+          _SectionTitle(title: 'Integridad de datos'),
+          const SizedBox(height: 8),
+          const _OrphanParticipationsSection(),
         ],
+      ),
+    );
+  }
+}
+
+class _OrphanParticipationsSection extends StatefulWidget {
+  const _OrphanParticipationsSection();
+
+  @override
+  State<_OrphanParticipationsSection> createState() => _OrphanParticipationsSectionState();
+}
+
+class _OrphanParticipationsSectionState extends State<_OrphanParticipationsSection> {
+  bool _loading = false;
+  String? _lastResult;
+
+  Future<void> _runAudit(AppLocalizations loc) async {
+    setState(() {
+      _loading = true;
+      _lastResult = null;
+    });
+    try {
+      final svc = PlanParticipationService();
+      final r = await svc.auditParticipations(deleteOrphans: false);
+      if (mounted) {
+        setState(() {
+          _lastResult = loc.adminOrphanScanResult(r.totalRecords, r.orphanCount);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _lastResult = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc.adminOrphanScanTitle,
+              style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: AppColorScheme.titleColor),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Busca documentos en la colección de participaciones cuyo planId ya no existe en Firestore. No borra nada; solo informa.',
+              style: GoogleFonts.poppins(fontSize: 14, color: AppColorScheme.bodyColor),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _loading ? null : () => _runAudit(loc),
+              icon: _loading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.search, size: 20),
+              label: Text(loc.adminOrphanScanButton),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColorScheme.color2,
+                foregroundColor: Colors.white,
+              ),
+            ),
+            if (_lastResult != null) ...[
+              const SizedBox(height: 12),
+              SelectableText(
+                _lastResult!,
+                style: GoogleFonts.poppins(fontSize: 13, color: AppColorScheme.bodyColor),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -147,15 +236,17 @@ Future<void> _syncHelpTexts(BuildContext context, WidgetRef ref) async {
     final service = ref.read(helpTextServiceProvider);
     final count = await service.syncHelpTextsToFirestore(seed);
     if (context.mounted) {
+      final l = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ayuda actualizada: $count textos')),
+        SnackBar(content: Text(l.snackHelpUpdatedCount(count))),
       );
     }
   } catch (e) {
     if (context.mounted) {
+      final l = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al actualizar ayuda: $e'),
+          content: Text(l.snackHelpSyncFailedDetail(e.toString())),
           backgroundColor: Colors.red,
         ),
       );

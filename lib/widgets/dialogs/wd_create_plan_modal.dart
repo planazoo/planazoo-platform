@@ -98,7 +98,7 @@ class _WdCreatePlanModalState extends ConsumerState<WdCreatePlanModal> {
       );
       final startDate = DateTime(now.year, now.month, now.day);
       final endDate = startDate.add(const Duration(days: 6));
-      final columnCount = endDate.difference(startDate).inDays + 1;
+      final columnCount = Plan.calendarDaysInclusive(startDate, endDate);
 
       final plan = Plan(
         name: sanitizedName,

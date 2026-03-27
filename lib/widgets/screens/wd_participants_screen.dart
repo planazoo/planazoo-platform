@@ -182,11 +182,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       if (invitationId == null) {
         final existingInv = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(widget.plan.id!, email);
         if (mounted) {
+          final loc = AppLocalizations.of(context)!;
+          final display = user.displayName ?? user.email ?? email;
           _showSnackBarWarning(
             context,
             existingInv != null
-                ? 'Ya existe una invitación pendiente para ${user.displayName ?? user.email}'
-                : '${user.displayName ?? user.email} ya es participante o no se pudo crear la invitación',
+                ? loc.invitePendingExistsForEmail(display)
+                : loc.snackInviteUserBlockedOrFailed(display),
           );
         }
         return;
@@ -198,7 +200,9 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         ref.invalidate(planParticipantsProvider(widget.plan.id!));
         ref.invalidate(planRealParticipantsProvider(widget.plan.id!));
         if (mounted) {
-          _showSnackBarSuccess(context, 'Invitación enviada a ${user.displayName ?? user.email}. Aparecerá como pendiente.');
+          final loc = AppLocalizations.of(context)!;
+          final display = user.displayName ?? user.email ?? email;
+          _showSnackBarSuccess(context, loc.snackInviteSentWillAppearPending(display));
           setState(() {});
         }
         return;
@@ -206,6 +210,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
 
       final invitation = await ref.read(invitationServiceProvider).getInvitationById(invitationId);
       if (invitation != null) {
+        final loc = AppLocalizations.of(context)!;
         final notificationHelper = NotificationHelper();
         await notificationHelper.notifyInvitationCreated(
           planId: widget.plan.id!,
@@ -214,7 +219,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
           inviterUserId: currentUser.id,
           invitationToken: invitation.token,
           planName: widget.plan.name,
-          inviterName: currentUser.displayName ?? currentUser.email ?? 'Un usuario',
+          inviterName: currentUser.displayName ?? currentUser.email ?? loc.inviterNameFallback,
         );
       }
 
@@ -224,13 +229,18 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       ref.invalidate(pendingInvitationsProvider(widget.plan.id!));
 
       if (mounted) {
-        _showSnackBarSuccess(context, 'Invitación enviada a ${user.displayName ?? user.email}. Puede aceptar o rechazar.');
+        final loc = AppLocalizations.of(context)!;
+        _showSnackBarSuccess(
+          context,
+          loc.snackInviteSentToUserDisplay(user.displayName ?? user.email ?? ''),
+        );
         setState(() {});
       }
     } catch (e) {
       LoggerService.error('Error inviting user', context: 'ParticipantsScreen', error: e);
       if (mounted) {
-        _showSnackBarError(context, 'Error al enviar invitación: $e');
+        final loc = AppLocalizations.of(context)!;
+        _showSnackBarError(context, loc.snackInviteSendError(e.toString()));
       }
     }
   }
@@ -241,14 +251,15 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       if (inv == null || inv.token == null) return;
       final link = ref.read(invitationServiceProvider).generateInvitationLink(inv.token!);
       if (!mounted) return;
+      final loc = AppLocalizations.of(context)!;
       await showDialog<void>(
         context: context,
-        builder: (context) => Theme(
+        builder: (dialogContext) => Theme(
           data: AppTheme.darkTheme,
           child: AlertDialog(
             backgroundColor: Colors.grey.shade800,
             title: Text(
-              'Invitación creada',
+              loc.invitationCreatedTitle,
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -260,7 +271,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Comparte este enlace con la persona invitada:',
+                  loc.invitationShareLinkHint,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     color: Colors.grey.shade400,
@@ -289,9 +300,9 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(dialogContext).pop(),
                 child: Text(
-                  'Cerrar',
+                  loc.close,
                   style: GoogleFonts.poppins(
                     color: Colors.grey.shade400,
                     fontSize: 14,
@@ -322,9 +333,9 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 child: ElevatedButton(
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: link));
-                    if (mounted) Navigator.of(context).pop();
+                    if (mounted) Navigator.of(dialogContext).pop();
                     if (mounted) {
-                      _showSnackBarSuccess(context, 'Enlace copiado al portapapeles');
+                      _showSnackBarSuccess(context, loc.linkCopiedToClipboard);
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -337,7 +348,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     ),
                   ),
                   child: Text(
-                    'Copiar enlace',
+                    loc.tooltipCopyInviteLink,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -362,11 +373,11 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     bool isLoading = false;
     bool showPendingOptions = false;
     PlanInvitation? pendingInvitation;
-    final loc = AppLocalizations.of(context);
 
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
+        final loc = AppLocalizations.of(dialogContext)!;
         return Theme(
           data: AppTheme.darkTheme,
           child: StatefulBuilder(
@@ -374,7 +385,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
               return AlertDialog(
                 backgroundColor: Colors.grey.shade800,
                 title: Text(
-                  'Invitar por email',
+                  loc.inviteByEmailTitle,
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -388,7 +399,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     children: [
                       if (showPendingOptions && pendingInvitation != null) ...[
                         Text(
-                          'Ya existe una invitación pendiente para ${emailController.text.trim()}.\n\n¿Qué deseas hacer?',
+                          loc.invitePendingExistsForEmail(emailController.text.trim()),
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             color: Colors.white,
@@ -444,13 +455,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                             decoration: InputDecoration(
-                              labelText: 'Email',
+                              labelText: loc.emailLabel,
                               labelStyle: GoogleFonts.poppins(
                                 fontSize: 13,
                                 color: Colors.grey.shade400,
                                 fontWeight: FontWeight.w500,
                               ),
-                              hintText: 'usuario@correo.com',
+                              hintText: loc.emailHint,
                               hintStyle: GoogleFonts.poppins(
                                 fontSize: 14,
                                 color: Colors.grey.shade500,
@@ -498,7 +509,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                               DropdownMenuItem(
                                 value: 'participant',
                                 child: Text(
-                                  'Participante',
+                                  loc.participantRoleLabel,
                                   style: GoogleFonts.poppins(
                                     fontSize: 15,
                                     color: Colors.white,
@@ -509,7 +520,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                               DropdownMenuItem(
                                 value: 'observer',
                                 child: Text(
-                                  'Observador',
+                                  loc.observerRoleLabel,
                                   style: GoogleFonts.poppins(
                                     fontSize: 15,
                                     color: Colors.white,
@@ -520,7 +531,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             ],
                             onChanged: isLoading ? null : (v) => role = v ?? 'participant',
                             decoration: InputDecoration(
-                              labelText: 'Rol',
+                              labelText: loc.roleFieldLabel,
                               labelStyle: GoogleFonts.poppins(
                                 fontSize: 13,
                                 color: Colors.grey.shade400,
@@ -567,7 +578,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                             decoration: InputDecoration(
-                              labelText: 'Mensaje (opcional)',
+                              labelText: loc.inviteOptionalMessageLabel,
                               labelStyle: GoogleFonts.poppins(
                                 fontSize: 13,
                                 color: Colors.grey.shade400,
@@ -603,7 +614,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                         TextButton(
                           onPressed: () => Navigator.of(dialogContext).pop(false),
                           child: Text(
-                            'Cerrar',
+                            loc.close,
                             style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 14),
                           ),
                         ),
@@ -612,7 +623,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             final cancelled = await ref.read(invitationServiceProvider).cancelInvitation(pendingInvitation!.id!);
                             if (!context.mounted) return;
                             if (cancelled) {
-                              _showSnackBarWarning(dialogContext, 'Invitación anterior cancelada');
+                              _showSnackBarWarning(dialogContext, loc.snackPreviousInvitationCancelled);
                             }
                             setInnerState(() {
                               showPendingOptions = false;
@@ -621,13 +632,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             });
                           },
                           child: Text(
-                            'Cancelar invitación anterior',
+                            loc.tooltipCancelPreviousInvitation,
                             style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
                           ),
                         ),
                         ElevatedButton(
                           onPressed: () async {
-                            _showSnackBarSuccess(dialogContext, 'Re-enviando invitación a ${emailController.text.trim()}');
+                            _showSnackBarSuccess(dialogContext, loc.participantsInviteResending(emailController.text.trim()));
                             Navigator.of(dialogContext).pop(true);
                             await _showInvitationLink(pendingInvitation!.id!);
                             if (mounted) setState(() {});
@@ -636,14 +647,14 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             backgroundColor: AppColorScheme.color2,
                             foregroundColor: Colors.white,
                           ),
-                          child: Text('Re-enviar invitación', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                          child: Text(loc.participantsInviteResendButton, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
                         ),
                       ]
                     : [
                         TextButton(
                           onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(false),
                           child: Text(
-                            'Cancelar',
+                            loc.cancel,
                             style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 14),
                           ),
                         ),
@@ -674,13 +685,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                     final email = emailController.text.trim();
                                     if (email.isEmpty) {
                                       setInnerState(() {
-                                        errorMessage = loc?.emailRequired ?? 'El email es obligatorio';
+                                        errorMessage = loc.emailRequired;
                                       });
                                       return;
                                     }
                                     if (!Validator.isValidEmail(email)) {
                                       setInnerState(() {
-                                        errorMessage = loc?.emailInvalid ?? 'El formato del email no es válido';
+                                        errorMessage = loc.emailInvalid;
                                       });
                                       return;
                                     }
@@ -698,7 +709,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                         final isAlreadyParticipant = await participationService.isUserParticipant(widget.plan.id!, existingUser.id);
                                         if (isAlreadyParticipant) {
                                           setInnerState(() {
-                                            errorMessage = 'Este usuario ya es participante del plan';
+                                            errorMessage = loc.snackUserAlreadyParticipant;
                                             isLoading = false;
                                           });
                                           return;
@@ -725,8 +736,8 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                         final existingCheck = await ref.read(invitationServiceProvider).getPendingInvitationByEmail(widget.plan.id!, email);
                                         setInnerState(() {
                                           errorMessage = existingCheck != null
-                                              ? 'Ya existe una invitación pendiente para este email'
-                                              : 'No se pudo crear la invitación';
+                                              ? loc.snackPendingInviteExists
+                                              : loc.snackCouldNotCreateInvitation;
                                           isLoading = false;
                                         });
                                         return;
@@ -736,7 +747,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                         ref.invalidate(planParticipantsProvider(widget.plan.id!));
                                         ref.invalidate(planRealParticipantsProvider(widget.plan.id!));
                                         ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
-                                        _showSnackBarSuccess(dialogContext, 'Invitación enviada a $email. Aparecerá en la lista como pendiente.');
+                                        _showSnackBarSuccess(dialogContext, loc.snackInviteSentWillAppearPending(email));
                                         Navigator.of(dialogContext).pop(true);
                                         if (mounted) setState(() {});
                                         return;
@@ -753,16 +764,16 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                             inviterUserId: currentUser?.id ?? '',
                                             invitationToken: invitation.token,
                                             planName: widget.plan.name,
-                                            inviterName: currentUser?.displayName ?? currentUser?.email ?? 'Un usuario',
+                                            inviterName: currentUser?.displayName ?? currentUser?.email ?? loc.inviterNameFallback,
                                           );
                                         }
                                         ref.invalidate(pendingInvitationsProvider(widget.plan.id!));
-                                        _showSnackBarSuccess(dialogContext, 'Invitación creada para $email');
+                                        _showSnackBarSuccess(dialogContext, loc.snackInviteCreatedForEmail(email));
                                         Navigator.of(dialogContext).pop(true);
                                         await _showInvitationLink(invitationId);
                                         if (mounted) setState(() {});
                                       } else {
-                                        _showSnackBarSuccess(dialogContext, 'Usuario $email añadido al plan');
+                                        _showSnackBarSuccess(dialogContext, loc.snackUserAddedToPlan(email));
                                         Navigator.of(dialogContext).pop(true);
                                         if (mounted) setState(() {});
                                       }
@@ -793,16 +804,16 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                     ),
                                   )
                                 : Text(
-                                    'Enviar invitación',
+                                    loc.inviteSendInvitation,
                                     style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
                                   ),
                           ),
                         ),
                       ],
                 );
-          },
-        )
-      );
+            },
+          ),
+        );
       },
     );
 
@@ -813,37 +824,39 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     try {
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (context) => Theme(
-          data: AppTheme.darkTheme,
-          child: AlertDialog(
-            backgroundColor: Colors.grey.shade800,
-            title: Text(
-              'Confirmar eliminación',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            content: Text(
-              '¿Estás seguro de que quieres eliminar a este participante del plan?',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey.shade400,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: Text(
-                  'Cancelar',
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey.shade400,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+        builder: (dialogContext) {
+          final loc = AppLocalizations.of(dialogContext)!;
+          return Theme(
+            data: AppTheme.darkTheme,
+            child: AlertDialog(
+              backgroundColor: Colors.grey.shade800,
+              title: Text(
+                loc.confirmDeleteTitle,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
               ),
+              content: Text(
+                loc.participantRemoveConfirmMessage,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.grey.shade400,
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text(
+                    loc.cancel,
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey.shade400,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -865,7 +878,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: () => Navigator.of(context).pop(true),
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
@@ -876,7 +889,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     ),
                   ),
                   child: Text(
-                    'Eliminar',
+                    loc.delete,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -886,8 +899,9 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
               ),
             ],
           ),
-        ),
-      );
+        );
+      },
+    );
 
       if (confirmed == true) {
         final participationService = ref.read(planParticipationServiceProvider);
@@ -899,13 +913,15 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
           ..invalidate(planRealParticipantsProvider(widget.plan.id!));
 
         if (mounted) {
-          _showSnackBarSuccess(context, 'Participante eliminado del plan');
+          final loc = AppLocalizations.of(context)!;
+          _showSnackBarSuccess(context, loc.snackParticipantRemovedFromPlan);
         }
       }
     } catch (e) {
       LoggerService.error('Error removing participant', context: 'ParticipantsScreen', error: e);
       if (mounted) {
-        _showSnackBarError(context, 'Error al eliminar participante: $e');
+        final loc = AppLocalizations.of(context)!;
+        _showSnackBarError(context, loc.snackParticipantRemoveError(e.toString()));
       }
     }
   }
@@ -1572,31 +1588,33 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     if (currentUser == null || widget.plan.id == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => Theme(
-        data: AppTheme.darkTheme,
-        child: AlertDialog(
-          backgroundColor: Colors.grey.shade800,
-          title: Text(
-            'Salir del plan',
-            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          content: Text(
-            'Si sales de "${widget.plan.name}", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\n'
-            'Para volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.',
-            style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+      builder: (dialogContext) {
+        final loc = AppLocalizations.of(dialogContext)!;
+        return Theme(
+          data: AppTheme.darkTheme,
+          child: AlertDialog(
+            backgroundColor: Colors.grey.shade800,
+            title: Text(
+              loc.planCardLeavePlanTitle,
+              style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Salir', style: GoogleFonts.poppins(color: Colors.orange.shade300)),
+            content: Text(
+              loc.planCardLeavePlanConfirmBody(widget.plan.name),
+              style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
             ),
-          ],
-        ),
-      ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(loc.cancel, style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(loc.planCardLeavePlanButton, style: GoogleFonts.poppins(color: Colors.orange.shade300)),
+              ),
+            ],
+          ),
+        );
+      },
     );
     if (confirmed != true || !mounted) return;
     try {
@@ -1608,14 +1626,17 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         ref.invalidate(planParticipantsProvider(widget.plan.id!));
         ref.invalidate(planRealParticipantsProvider(widget.plan.id!));
         widget.onBack?.call();
-        _showSnackBarSuccess(context, 'Has salido del plan');
+        final loc = AppLocalizations.of(context)!;
+        _showSnackBarSuccess(context, loc.planCardLeftPlanSuccess);
       } else {
-        _showSnackBarError(context, 'No se pudo salir del plan');
+        final loc = AppLocalizations.of(context)!;
+        _showSnackBarError(context, loc.planCardLeftPlanError);
       }
     } catch (e) {
       LoggerService.error('Error leaving plan', context: 'ParticipantsScreen', error: e);
       if (mounted) {
-        _showSnackBarError(context, 'Error al salir del plan: $e');
+        final loc = AppLocalizations.of(context)!;
+        _showSnackBarError(context, '${loc.planCardLeftPlanError}: $e');
       }
     }
   }
@@ -2018,6 +2039,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             child: LinearProgressIndicator(),
           );
         }
+        final loc = AppLocalizations.of(context)!;
         final items = snapshot.data ?? [];
         if (items.isEmpty) return const SizedBox.shrink();
         return Padding(
@@ -2026,7 +2048,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Invitaciones',
+                loc.invitationsSectionTitle,
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -2092,21 +2114,21 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                       children: [
                         if (isPending && inv.token != null)
                           IconButton(
-                            tooltip: 'Copiar enlace',
+                            tooltip: loc.tooltipCopyInviteLink,
                             icon: Icon(Icons.link, color: Colors.grey.shade400),
                             onPressed: () async {
                               if (inv.token != null) {
                                 final link = ref.read(invitationServiceProvider).generateInvitationLink(inv.token!);
                                 await Clipboard.setData(ClipboardData(text: link));
                                 if (mounted) {
-                                  _showSnackBarSuccess(context, 'Enlace copiado');
+                                  _showSnackBarSuccess(context, loc.snackLinkCopiedShort);
                                 }
                               }
                             },
                           ),
                         if (isOwner && inv.id != null && isPending)
                           IconButton(
-                            tooltip: 'Cancelar',
+                            tooltip: loc.tooltipCancelAction,
                             icon: Icon(Icons.cancel, color: Colors.red.shade400),
                             onPressed: () async {
                               final ok = await ref.read(invitationServiceProvider).cancelInvitation(inv.id!);
@@ -2114,11 +2136,11 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                 ref.invalidate(invitationsForPlanProvider(widget.plan.id!));
                                 if (mounted) setState(() {});
                                 if (mounted) {
-                                  _showSnackBarSuccess(context, 'Invitación cancelada');
+                                  _showSnackBarSuccess(context, loc.snackInvitationCancelledShort);
                                 }
                               } else {
                                 if (mounted) {
-                                  _showSnackBarError(context, 'No se pudo cancelar');
+                                  _showSnackBarError(context, loc.snackInvitationCancelFailed);
                                 }
                               }
                             },

@@ -6,6 +6,20 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 
 /// Clase que maneja la lógica específica de alojamientos
 class CalendarAccommodationLogic {
+  static bool _isForAllParticipants(Accommodation accommodation) {
+    final commonPart = accommodation.commonPart;
+    if (commonPart != null) {
+      return commonPart.isForAllParticipants || commonPart.participantIds.isEmpty;
+    }
+    return accommodation.participantTrackIds.isEmpty;
+  }
+
+  static List<String> _effectiveParticipantIds(Accommodation accommodation) {
+    final commonPartIds = accommodation.commonPart?.participantIds ?? const <String>[];
+    final merged = <String>{...commonPartIds, ...accommodation.participantTrackIds};
+    return merged.toList(growable: false);
+  }
+
   /// Filtra alojamientos según el modo de vista y tracks
   static List<Accommodation> filterAccommodationsByTracks(
     List<Accommodation> accommodations,
@@ -23,13 +37,14 @@ class CalendarAccommodationLogic {
     if (viewMode == CalendarViewMode.personal) {
       if (currentUserId == null) return accommodations;
       return accommodations.where((acc) => 
-        acc.participantTrackIds.contains(currentUserId)
+        _isForAllParticipants(acc) || _effectiveParticipantIds(acc).contains(currentUserId)
       ).toList();
     }
     
     if (viewMode == CalendarViewMode.custom) {
       return accommodations.where((acc) => 
-        acc.participantTrackIds.any((id) => filteredParticipantIds.contains(id))
+        _isForAllParticipants(acc) ||
+        _effectiveParticipantIds(acc).any((id) => filteredParticipantIds.contains(id))
       ).toList();
     }
     
@@ -38,7 +53,8 @@ class CalendarAccommodationLogic {
 
   /// Verifica si un alojamiento debe mostrarse en un track específico
   static bool shouldShowAccommodationInTrack(Accommodation accommodation, ParticipantTrack track) {
-    return accommodation.participantTrackIds.contains(track.participantId);
+    return _isForAllParticipants(accommodation) ||
+        _effectiveParticipantIds(accommodation).contains(track.participantId);
   }
 
   /// Obtiene grupos consecutivos de tracks para un alojamiento
@@ -168,7 +184,7 @@ class CalendarAccommodationLogic {
 
   /// Calcula la duración del alojamiento en días
   static int getAccommodationDuration(Accommodation accommodation) {
-    return accommodation.checkOut.difference(accommodation.checkIn).inDays;
+    return accommodation.duration;
   }
 
   /// Verifica si un alojamiento está activo en un día específico

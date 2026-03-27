@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -71,8 +72,9 @@ class CalendarMobilePage extends ConsumerStatefulWidget {
 }
 
 class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
-  // Número de días visibles (1, 2 o 3)
-  int _visibleDays = 1;
+  // Número de días visibles (1, 2 o 3); iOS por defecto 3 (ID 51).
+  int _visibleDays =
+      (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? 3 : 1;
 
   // Estado para la navegación de días
   int _currentDayGroup = 0;
@@ -236,9 +238,10 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   double _getSubColumnWidth(double availableWidth) {
     final columns = _getColumnsToShow();
     final columnWidth = availableWidth / columns.length;
+    final inner = CalendarUtils.innerDayColumnWidth(columnWidth);
     final filteredTracks = _getFilteredTracks();
     final participantCount = filteredTracks.length;
-    return CalendarUtils.getSubColumnWidth(columnWidth, participantCount);
+    return CalendarUtils.getSubColumnWidth(inner, participantCount);
   }
 
   Border _createGridBorder({bool includeRight = true}) {
@@ -289,11 +292,11 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     );
   }
 
-  Color _getDataCellColor(dynamic column) {
+  Color _getDataCellColor(dynamic column, int visibleDayIndex) {
     final dayData = column as Map<String, dynamic>;
     final isEmpty = dayData['isEmpty'] as bool;
     if (isEmpty) return Colors.grey.shade100;
-    return Colors.grey.shade900;
+    return visibleDayIndex % 2 == 0 ? const Color(0xFF1E1E1E) : const Color(0xFF161616);
   }
 
   bool _isActiveTrack(ParticipantTrack track) {
@@ -321,7 +324,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onDoubleTap: () {
-              final date = widget.plan.startDate.add(Duration(days: actualDayIndex - 1));
+              final date = widget.plan.dateForPlanDayIndex(actualDayIndex);
               _showNewEventDialogForParticipant(date, hourIndex, participant);
             },
             child: Stack(
@@ -373,10 +376,12 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     final columns = _getColumnsToShow();
     
     return Row(
-      children: columns.map((column) {
+      children: columns.asMap().entries.map((entry) {
+        final visibleDayIndex = entry.key;
+        final column = entry.value;
         final dayData = column as Map<String, dynamic>;
         final participants = dayData['participants'] as List<ParticipantTrack>;
-        
+
         return Expanded(
           child: Column(
             children: List.generate(AppConstants.defaultRowCount, (hourIndex) {
@@ -384,7 +389,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
                 height: AppConstants.cellHeight,
                 decoration: BoxDecoration(
                   border: Border.all(color: AppColorScheme.gridLineColor.withOpacity(CalendarConstants.gridLineOpacity)),
-                  color: _getDataCellColor(column),
+                  color: _getDataCellColor(column, visibleDayIndex),
                 ),
                 child: _buildEventCellWithSubColumns(hourIndex, column, participants),
               );
@@ -413,7 +418,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     
     for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
       final currentDay = startDayIndex + dayOffset;
-      final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+      final eventDate = widget.plan.dateForPlanDayIndex(currentDay);
       
       final eventsForDate = ref.watch(eventsForDateProvider(
         EventsForDateParams(
@@ -421,7 +426,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
             planId: widget.plan.id ?? '',
             userId: widget.plan.userId,
             initialDate: widget.plan.startDate,
-            initialColumnCount: widget.plan.columnCount,
+            initialColumnCount: widget.plan.durationInDays,
           ),
           date: eventDate,
         ),
@@ -465,7 +470,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     
     for (int dayOffset = 0; dayOffset < (actualEndDayIndex - startDayIndex + 1); dayOffset++) {
       final currentDay = startDayIndex + dayOffset;
-      final eventDate = widget.plan.startDate.add(Duration(days: (currentDay - 1).toInt()));
+      final eventDate = widget.plan.dateForPlanDayIndex(currentDay);
       
       final eventsForDate = ref.watch(eventsForDateProvider(
         EventsForDateParams(
@@ -473,7 +478,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
             planId: widget.plan.id ?? '',
             userId: widget.plan.userId,
             initialDate: widget.plan.startDate,
-            initialColumnCount: widget.plan.columnCount,
+            initialColumnCount: widget.plan.durationInDays,
           ),
           date: eventDate,
         ),
@@ -570,11 +575,17 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     final startTrack = eventTracks.first;
     final trackSpan = eventTracks.length;
     
-    final left = (dayOffset * columnWidth) + (startTrack.position * subColumnWidth);
+    final left = CalendarUtils.dayColumnContentLeft(columnWidth, dayOffset) + (startTrack.position * subColumnWidth);
     final width = subColumnWidth * trackSpan;
     
     final top = (segment.startMinute / 60.0) * AppConstants.cellHeight;
     final height = (segment.durationMinutes / 60.0) * AppConstants.cellHeight;
+    final showDetailLines =
+        segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes;
+    final showParticipantsLine = showDetailLines && eventTracks.length > 1 && height >= 28;
+    final titleMaxLines = (!showDetailLines || showParticipantsLine) ? 1 : 2;
+    final innerPadding = height < 16 ? 1.0 : (height < 24 ? 2.0 : 4.0);
+    final tinyHeight = height < 18;
     
     return [
       Positioned(
@@ -592,31 +603,46 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
               border: Border.all(color: Colors.white, width: 0.5),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    event.description,
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (eventTracks.length > 1)
-                    Text(
-                      '${eventTracks.length} participantes',
-                      style: GoogleFonts.poppins(
-                        fontSize: 8,
-                        color: Colors.white.withOpacity(0.8),
+              padding: EdgeInsets.all(innerPadding),
+              child: tinyHeight
+                  ? Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _eventTitleWithTransportCode(event),
+                        style: GoogleFonts.poppins(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          _eventTitleWithTransportCode(event),
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                          maxLines: titleMaxLines,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (showParticipantsLine)
+                          Text(
+                            '${eventTracks.length} participantes',
+                            style: GoogleFonts.poppins(
+                              fontSize: 8,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
             ),
           ),
         ),
@@ -633,6 +659,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     if (!mounted) return;
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => EventDialog(
         event: eventToShow,
         planId: widget.plan.id ?? '',
@@ -656,9 +683,25 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     );
   }
 
+  String? _transportCodeLabel(Event event) {
+    final extra = event.commonPart?.extraData;
+    if (extra == null) return null;
+    for (final key in const ['flightNumber', 'trainNumber', 'transportNumber']) {
+      final value = extra[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  String _eventTitleWithTransportCode(Event event) {
+    final code = _transportCodeLabel(event);
+    return code != null ? '$code · ${event.description}' : event.description;
+  }
+
   void _showNewEventDialogForParticipant(DateTime date, int hour, ParticipantTrack track) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => EventDialog(
         planId: widget.plan.id ?? '',
         initialDate: date,
@@ -698,7 +741,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
       planId: widget.plan.id!,
       userId: widget.plan.userId,
       initialDate: widget.plan.startDate,
-      initialColumnCount: widget.plan.columnCount,
+      initialColumnCount: widget.plan.durationInDays,
     );
     final calendarNotifier = ref.read(calendarNotifierProvider(calendarParams).notifier);
     calendarNotifier.refreshEvents();
@@ -715,7 +758,11 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
       builder: (context) => AccommodationDialog(
         planId: widget.plan.id!,
         planStartDate: widget.plan.startDate,
-        planEndDate: widget.plan.startDate.add(Duration(days: widget.plan.durationInDays)),
+        planEndDate: DateTime(
+          widget.plan.endDate.year,
+          widget.plan.endDate.month,
+          widget.plan.endDate.day,
+        ),
         initialCheckIn: dayDate,
         onSaved: (newAccommodation) async {
           final notifier = ref.read(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id!)).notifier);
@@ -755,7 +802,11 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         accommodation: accommodation,
         planId: widget.plan.id!,
         planStartDate: widget.plan.startDate,
-        planEndDate: widget.plan.startDate.add(Duration(days: widget.plan.durationInDays)),
+        planEndDate: DateTime(
+          widget.plan.endDate.year,
+          widget.plan.endDate.month,
+          widget.plan.endDate.day,
+        ),
         onSaved: (updatedAccommodation) async {
           final notifier = ref.read(accommodationNotifierProvider(AccommodationNotifierParams(planId: widget.plan.id!)).notifier);
           final success = await notifier.saveAccommodation(updatedAccommodation);
@@ -885,7 +936,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
       planId: widget.plan.id!,
       userId: currentUser.id,
       initialDate: widget.plan.startDate,
-      initialColumnCount: widget.plan.columnCount,
+      initialColumnCount: widget.plan.durationInDays,
     );
 
     ref.watch(calendarNotifierProvider(calendarParams));
@@ -914,7 +965,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
             if (visibleDays.isNotEmpty) {
               final firstDay = visibleDays.first as Map<String, dynamic>;
               final dayIndex = firstDay['index'] as int;
-              final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+              final date = widget.plan.dateForPlanDayIndex(dayIndex);
               _showNewAccommodationDialog(date);
             } else {
               _showNewAccommodationDialog(widget.plan.startDate);
@@ -927,7 +978,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
             if (visibleDays.isNotEmpty) {
               final firstDay = visibleDays.first as Map<String, dynamic>;
               final dayIndex = firstDay['index'] as int;
-              final date = widget.plan.startDate.add(Duration(days: dayIndex - 1));
+              final date = widget.plan.dateForPlanDayIndex(dayIndex);
               _showNewEventDialogForParticipant(date, 12, _getFilteredTracks().first);
             }
           },

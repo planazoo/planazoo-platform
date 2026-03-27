@@ -60,13 +60,13 @@ class PlanUserStatusLabel extends ConsumerWidget {
     String label;
     _AcceptanceState state;
     if (hasPendingInvitation || hasPendingParticipation) {
-      label = compact ? loc.statusShortPending : (hasPendingInvitation ? loc.statusInvitationPending : loc.statusPendingToAccept);
+      label = compact ? '?' : (hasPendingInvitation ? loc.statusInvitationPending : loc.statusPendingToAccept);
       state = _AcceptanceState.pending;
     } else if (hasRejectedParticipation) {
-      label = compact ? loc.statusShortOut : loc.statusRejected;
+      label = compact ? 'out' : loc.statusRejected;
       state = _AcceptanceState.rejected;
     } else {
-      label = compact ? loc.statusShortIn : loc.statusAccepted;
+      label = compact ? 'in' : loc.statusAccepted;
       state = _AcceptanceState.accepted;
     }
 

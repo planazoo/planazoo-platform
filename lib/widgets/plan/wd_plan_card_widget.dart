@@ -129,7 +129,25 @@ class PlanCardWidget extends ConsumerWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildPlanImage(),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildPlanImage(),
+                        if (currentUser != null && plan.id != null && (isIn || isPending || isRejected)) ...[
+                          const SizedBox(height: 6),
+                          _buildInteractiveStatusChip(
+                            context,
+                            ref,
+                            isIn: isIn,
+                            isOut: isRejected,
+                            isPending: isPending,
+                            hasPendingInvitation: hasPendingInvitation,
+                            hasPendingParticipation: hasPendingParticipation,
+                          ),
+                        ],
+                      ],
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -164,10 +182,33 @@ class PlanCardWidget extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          PlanStateBadgeCompact(
-                            plan: plan,
-                            fontSize: 8,
-                            onColoredBackground: isSelected,
+                          Row(
+                            children: [
+                              PlanStateBadgeCompact(
+                                plan: plan,
+                                fontSize: 8,
+                                onColoredBackground: isSelected,
+                              ),
+                              const SizedBox(width: 6),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.groups_2_outlined,
+                                    size: 13,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '$participantsCount',
+                                    style: GoogleFonts.poppins(
+                                      color: textTertiary,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 2),
                           DaysRemainingIndicator(
@@ -176,14 +217,6 @@ class PlanCardWidget extends ConsumerWidget {
                             compact: true,
                             showIcon: false,
                           ),
-                          Text(
-                            'Participantes: $participantsCount',
-                            style: GoogleFonts.poppins(
-                              color: textTertiary,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -191,18 +224,6 @@ class PlanCardWidget extends ConsumerWidget {
                 ),
               ),
             ),
-            if (currentUser != null && plan.id != null && (isIn || isPending || isRejected)) ...[
-              const SizedBox(width: 4),
-              _buildInteractiveStatusChip(
-                context,
-                ref,
-                isIn: isIn,
-                isOut: isRejected,
-                isPending: isPending,
-                hasPendingInvitation: hasPendingInvitation,
-                hasPendingParticipation: hasPendingParticipation,
-              ),
-            ],
             // Columna vertical estrecha: iconos resumen, notificaciones, chat
             if (plan.id != null) ...[
                 Container(
@@ -279,25 +300,23 @@ class PlanCardWidget extends ConsumerWidget {
     required bool isOut,
     required bool isPending,
   }) {
-    final loc = AppLocalizations.of(context)!;
     String label;
     Color bg;
     Color textColor;
     if (isPending) {
-      label = loc.statusShortPending;
+      label = '?';
       bg = PlanUserStatusColors.pendingBg;
       textColor = PlanUserStatusColors.pendingText;
     } else if (isOut) {
-      label = loc.statusShortOut;
+      label = 'out';
       bg = PlanUserStatusColors.outBg;
       textColor = PlanUserStatusColors.outText;
     } else {
-      label = loc.statusShortIn;
+      label = 'in';
       bg = PlanUserStatusColors.inBg;
       textColor = PlanUserStatusColors.inText;
     }
     return Container(
-      margin: const EdgeInsets.only(left: 4),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: bg,

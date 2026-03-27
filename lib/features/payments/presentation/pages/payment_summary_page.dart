@@ -90,7 +90,7 @@ class PaymentSummaryPage extends ConsumerWidget {
           actions: [
             PopupMenuButton<String>(
               icon: const Icon(Icons.add),
-              tooltip: 'Añadir',
+              tooltip: loc.tooltipPaymentAdd,
               onSelected: (value) {
                 if (value == 'expense') {
                   Navigator.of(context).push(

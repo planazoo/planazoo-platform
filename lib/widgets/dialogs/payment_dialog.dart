@@ -13,14 +13,62 @@ import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
-/// T102: Diálogo para registrar o editar un pago
+/// Valores estables guardados en Firestore; etiquetas localizadas en UI.
+const _paymentMethodIds = [
+  'cash',
+  'transfer',
+  'card',
+  'bizum',
+  'paypal',
+  'other'
+];
+
+const _legacyPaymentMethodToId = {
+  'Efectivo': 'cash',
+  'Transferencia': 'transfer',
+  'Tarjeta': 'card',
+  'Bizum': 'bizum',
+  'PayPal': 'paypal',
+  'Otro': 'other',
+};
+
+String? _normalizePaymentMethodFromStorage(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  if (_legacyPaymentMethodToId.containsKey(raw)) {
+    return _legacyPaymentMethodToId[raw];
+  }
+  if (_paymentMethodIds.contains(raw)) return raw;
+  return 'other';
+}
+
+String _paymentMethodLabel(AppLocalizations loc, String id) {
+  switch (id) {
+    case 'cash':
+      return loc.paymentsMethodCash;
+    case 'transfer':
+      return loc.paymentsMethodTransfer;
+    case 'card':
+      return loc.paymentsMethodCard;
+    case 'bizum':
+      return loc.paymentsMethodBizum;
+    case 'paypal':
+      return loc.paymentsMethodPayPal;
+    case 'other':
+      return loc.paymentsMethodOther;
+    default:
+      return loc.paymentsMethodOther;
+  }
+}
+
+/// T102: Pantalla a pantalla completa para registrar o editar un pago (misma línea que AddExpenseDialog).
 class PaymentDialog extends ConsumerStatefulWidget {
   final String planId;
-  final Plan? plan; // Opcional: para T218 permisos (organizador vs participante)
-  final String? eventId; // Opcional: si el pago está asociado a un evento
-  final PersonalPayment? payment; // Si se proporciona, es edición
-  final Event? event; // Evento asociado (opcional)
+  final Plan? plan;
+  final String? eventId;
+  final PersonalPayment? payment;
+  final Event? event;
   final Function()? onSaved;
 
   const PaymentDialog({
@@ -42,23 +90,14 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
   late TextEditingController _amountController;
   late TextEditingController _conceptController;
   late TextEditingController _descriptionController;
-  
+
   String? _selectedParticipantId;
   DateTime _selectedDate = DateTime.now();
   String? _selectedPaymentMethod;
   String _selectedStatus = 'paid';
-  String? _paymentCurrency; // T153: Moneda local del pago
-  String? _planCurrency; // T153: Moneda del plan
+  String? _paymentCurrency;
+  String? _planCurrency;
   Map<String, String> _resolvedNames = {};
-
-  final List<String> _paymentMethods = [
-    'Efectivo',
-    'Transferencia',
-    'Tarjeta',
-    'Bizum',
-    'PayPal',
-    'Otro',
-  ];
 
   @override
   void initState() {
@@ -66,25 +105,25 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     _loadPlanCurrency();
     WidgetsBinding.instance.addPostFrameCallback((_) => _resolveNames());
     if (widget.payment != null) {
-      // Modo edición
       _amountController = TextEditingController(
         text: widget.payment!.amount.toStringAsFixed(2),
       );
-      _conceptController = TextEditingController(text: widget.payment!.concept ?? '');
-      _descriptionController = TextEditingController(text: widget.payment!.description ?? '');
+      _conceptController =
+          TextEditingController(text: widget.payment!.concept ?? '');
+      _descriptionController =
+          TextEditingController(text: widget.payment!.description ?? '');
       _selectedParticipantId = widget.payment!.participantId;
       _selectedDate = widget.payment!.paymentDate;
-      _selectedPaymentMethod = widget.payment!.paymentMethod;
+      _selectedPaymentMethod =
+          _normalizePaymentMethodFromStorage(widget.payment!.paymentMethod);
       _selectedStatus = widget.payment!.status;
     } else {
-      // Modo creación
       _amountController = TextEditingController();
       _conceptController = TextEditingController();
       _descriptionController = TextEditingController();
     }
   }
-  
-  /// Cargar moneda del plan (T153)
+
   Future<void> _loadPlanCurrency() async {
     try {
       final planService = ref.read(planServiceProvider);
@@ -114,15 +153,20 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
   }
 
   Future<void> _resolveNames() async {
-    final participationsAsync = ref.read(planParticipantsProvider(widget.planId));
+    final participationsAsync =
+        ref.read(planParticipantsProvider(widget.planId));
     participationsAsync.whenData((list) async {
-      final userIds = list.where((p) => p.role != 'observer').map((p) => p.userId).toSet();
+      final userIds =
+          list.where((p) => p.role != 'observer').map((p) => p.userId).toSet();
       final userService = ref.read(userServiceProvider);
       final map = <String, String>{};
       for (final uid in userIds) {
         try {
           final user = await userService.getUser(uid);
-          final name = (user?.displayName?.trim().isNotEmpty == true ? user!.displayName : user?.email) ?? uid;
+          final name = (user?.displayName?.trim().isNotEmpty == true
+                  ? user!.displayName
+                  : user?.email) ??
+              uid;
           map[uid] = name;
         } catch (_) {
           map[uid] = uid;
@@ -148,27 +192,26 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     }
   }
 
-  /// T153: Construir campo de monto con selector de moneda
-  Widget _buildAmountFieldWithCurrency() {
+  Widget _buildAmountFieldWithCurrency(AppLocalizations loc) {
     final exchangeRateService = ExchangeRateService();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Selector de moneda local
         DropdownButtonFormField<String>(
           value: _paymentCurrency ?? _planCurrency ?? 'EUR',
           decoration: InputDecoration(
-            labelText: 'Moneda del pago',
-            prefixIcon: Icon(_getCurrencyIcon(_paymentCurrency ?? _planCurrency ?? 'EUR')),
+            labelText: loc.paymentsPersonalPaymentCurrency,
+            prefixIcon: Icon(
+                _getCurrencyIcon(_paymentCurrency ?? _planCurrency ?? 'EUR')),
             border: const OutlineInputBorder(),
             filled: true,
-            fillColor: Colors.grey.shade50,
           ),
           items: Currency.supportedCurrencies.map((currency) {
             return DropdownMenuItem<String>(
               value: currency.code,
-              child: Text('${currency.code} - ${currency.symbol} ${currency.name}'),
+              child: Text(
+                  '${currency.code} - ${currency.symbol} ${currency.name}'),
             );
           }).toList(),
           onChanged: (value) {
@@ -176,60 +219,62 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
             setState(() => _paymentCurrency = value);
           },
         ),
-        const SizedBox(height: 12),
-        
-        // Campo de monto
+        const SizedBox(height: 16),
         TextFormField(
           controller: _amountController,
           decoration: InputDecoration(
-            labelText: 'Monto *',
-            prefixIcon: Icon(_getCurrencyIcon(_paymentCurrency ?? _planCurrency ?? 'EUR')),
+            labelText: '${loc.paymentsExpenseAmount} *',
+            prefixIcon: Icon(
+                _getCurrencyIcon(_paymentCurrency ?? _planCurrency ?? 'EUR')),
             border: const OutlineInputBorder(),
             filled: true,
-            fillColor: Colors.grey.shade50,
           ),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           validator: (value) {
             if (value == null || value.isEmpty) {
-              return 'Ingresa un monto';
+              return loc.paymentsPersonalAmountValidationRequired;
             }
             final amount = double.tryParse(value.replaceAll(',', '.'));
             if (amount == null || amount <= 0) {
-              return 'Monto inválido';
+              return loc.paymentsPersonalAmountValidationInvalid;
             }
             if (amount > 1000000) {
-              return 'Monto muy alto (máximo 1.000.000)';
+              return loc.paymentsPersonalAmountValidationTooHigh;
             }
             return null;
           },
         ),
-        
-        // Mostrar conversión si la moneda local es diferente a la del plan
-        if (_paymentCurrency != null && 
-            _planCurrency != null && 
+        if (_paymentCurrency != null &&
+            _planCurrency != null &&
             _paymentCurrency != _planCurrency &&
             _amountController.text.trim().isNotEmpty) ...[
           const SizedBox(height: 8),
           FutureBuilder<double?>(
             future: exchangeRateService.convertAmount(
-              double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0,
+              double.tryParse(_amountController.text.replaceAll(',', '.')) ??
+                  0.0,
               _paymentCurrency!,
               _planCurrency!,
             ),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                      SizedBox(width: 8),
-                      Text('Calculando...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2)),
+                      const SizedBox(width: 8),
+                      Text(loc.paymentsPersonalCalculating,
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade700)),
                     ],
                   ),
                 );
               }
-              
+
               if (snapshot.hasData && snapshot.data != null) {
                 final convertedAmount = snapshot.data!;
                 return Container(
@@ -244,10 +289,11 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                          Icon(Icons.info_outline,
+                              size: 16, color: Colors.blue.shade700),
                           const SizedBox(width: 4),
                           Text(
-                            'Convertido a ${_planCurrency}:',
+                            loc.paymentsPersonalConvertedTo(_planCurrency!),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -258,7 +304,8 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        CurrencyFormatterService.formatAmount(convertedAmount, _planCurrency!),
+                        CurrencyFormatterService.formatAmount(
+                            convertedAmount, _planCurrency!),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -267,7 +314,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '⚠️ Los tipos de cambio son orientativos. El valor real será el aplicado por tu banco o tarjeta de crédito al momento del pago.',
+                        loc.paymentsPersonalExchangeDisclaimer,
                         style: TextStyle(
                           fontSize: 10,
                           color: Colors.grey.shade700,
@@ -278,7 +325,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                   ),
                 );
               }
-              
+
               return const SizedBox.shrink();
             },
           ),
@@ -287,7 +334,6 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     );
   }
 
-  /// T153: Obtener icono según moneda
   IconData _getCurrencyIcon(String currencyCode) {
     switch (currencyCode.toUpperCase()) {
       case 'EUR':
@@ -303,17 +349,19 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     }
   }
 
-  /// T153: Obtener monto convertido a la moneda del plan
   Future<double?> _getConvertedAmount() async {
     if (_amountController.text.trim().isEmpty) return null;
-    
-    final localAmount = double.tryParse(_amountController.text.replaceAll(',', '.'));
+
+    final localAmount =
+        double.tryParse(_amountController.text.replaceAll(',', '.'));
     if (localAmount == null) return null;
-    
-    if (_paymentCurrency == null || _planCurrency == null || _paymentCurrency == _planCurrency) {
+
+    if (_paymentCurrency == null ||
+        _planCurrency == null ||
+        _paymentCurrency == _planCurrency) {
       return localAmount;
     }
-    
+
     final exchangeRateService = ExchangeRateService();
     try {
       return await exchangeRateService.convertAmount(
@@ -331,43 +379,48 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       return;
     }
 
+    final loc = AppLocalizations.of(context)!;
     final currentUser = ref.read(currentUserProvider);
     if (currentUser?.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario no autenticado')),
+        SnackBar(content: Text(loc.snackUserNotAuthenticated)),
       );
       return;
     }
 
-    final isOrganizer = widget.plan == null || currentUser!.id == widget.plan!.userId;
+    final isOrganizer =
+        widget.plan == null || currentUser!.id == widget.plan!.userId;
     final participantId = isOrganizer ? _selectedParticipantId : currentUser.id;
     if (participantId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona un participante')),
+        SnackBar(content: Text(loc.snackSelectParticipant)),
       );
       return;
     }
 
     final amount = await _getConvertedAmount();
+    if (!mounted) return;
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Monto inválido')),
+        SnackBar(content: Text(loc.snackInvalidMonetaryAmount)),
       );
       return;
     }
 
     final paymentService = ref.read(paymentServiceProvider);
-    
+
     final payment = PersonalPayment(
       id: widget.payment?.id,
       planId: widget.planId,
       participantId: participantId,
       eventId: widget.eventId ?? widget.event?.id,
-      amount: amount, // T153: Ya convertido a moneda del plan
+      amount: amount,
       paymentDate: _selectedDate,
       paymentMethod: _selectedPaymentMethod,
       concept: _conceptController.text.isEmpty ? null : _conceptController.text,
-      description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text,
       status: _selectedStatus,
       registeredBy: currentUser!.id,
       createdAt: widget.payment?.createdAt ?? DateTime.now(),
@@ -381,7 +434,9 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.payment == null ? 'Pago registrado' : 'Pago actualizado'),
+          content: Text(widget.payment == null
+              ? loc.paymentsPersonalPaymentSaved
+              : loc.paymentsPersonalPaymentUpdated),
           backgroundColor: Colors.green,
         ),
       );
@@ -389,8 +444,8 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error al guardar el pago'),
+        SnackBar(
+          content: Text(loc.paymentsPersonalPaymentSaveError),
           backgroundColor: Colors.red,
         ),
       );
@@ -399,14 +454,18 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final scheme = Theme.of(context).colorScheme;
     final participationsAsync = ref.watch(
       planParticipantsProvider(widget.planId),
     );
     final currentUser = ref.watch(currentUserProvider);
-    // T218: organizador = dueño del plan; participante solo puede registrar "yo pagué"
-    final isOrganizer = widget.plan == null || currentUser?.id == widget.plan!.userId;
+    final isOrganizer =
+        widget.plan == null || currentUser?.id == widget.plan!.userId;
 
-    if (!isOrganizer && currentUser?.id != null && _selectedParticipantId == null) {
+    if (!isOrganizer &&
+        currentUser?.id != null &&
+        _selectedParticipantId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _selectedParticipantId == null) {
           setState(() => _selectedParticipantId = currentUser!.id);
@@ -417,7 +476,9 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.payment == null ? 'Registrar pago' : 'Editar pago',
+          widget.payment == null
+              ? loc.paymentsRegisterPayment
+              : loc.paymentsEditPayment,
           style: const TextStyle(fontSize: 18, color: Colors.white),
         ),
         backgroundColor: AppColorScheme.color2,
@@ -439,20 +500,26 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColorScheme.color1.withOpacity(0.1),
+                    color: scheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColorScheme.color1.withOpacity(0.3)),
+                    border: Border.all(color: scheme.outlineVariant),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.event, color: AppColorScheme.color1),
+                      Icon(Icons.event, color: scheme.primary),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Evento:', style: AppTypography.bodyStyle.copyWith(fontSize: 12, fontWeight: FontWeight.bold)),
-                            Text(widget.event!.description, style: AppTypography.bodyStyle.copyWith(fontSize: 13)),
+                            Text(
+                              '${loc.paymentsPersonalEventLabel}:',
+                              style: AppTypography.bodyStyle.copyWith(
+                                  fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            Text(widget.event!.description,
+                                style: AppTypography.bodyStyle
+                                    .copyWith(fontSize: 13)),
                           ],
                         ),
                       ),
@@ -461,173 +528,181 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                 ),
                 const SizedBox(height: 16),
               ],
-              Text('Quién pagó *', style: AppTypography.bodyStyle.copyWith(fontSize: 13, fontWeight: FontWeight.bold)),
+              Text(
+                '${loc.paymentsExpensePayer} *',
+                style: AppTypography.bodyStyle
+                    .copyWith(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               if (!isOrganizer)
                 InputDecorator(
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.person),
-                    border: const OutlineInputBorder(),
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
                   ),
-                  child: Text('Tú (yo pagué)', style: AppTypography.bodyStyle),
+                  child: Text(loc.paymentsPersonalYouPaid,
+                      style: AppTypography.bodyStyle),
                 )
               else
                 participationsAsync.when(
                   data: (participations) {
-                    final realParticipants = participations.where((p) => p.role != 'observer').toList();
+                    final realParticipants = participations
+                        .where((p) => p.role != 'observer')
+                        .toList();
                     return DropdownButtonFormField<String>(
                       value: _selectedParticipantId,
                       isExpanded: true,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.person),
-                        border: const OutlineInputBorder(),
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.person),
+                        border: OutlineInputBorder(),
                         filled: true,
-                        fillColor: Colors.grey.shade50,
                       ),
-                      hint: const Text('Selecciona'),
-                      items: realParticipants.map((p) => DropdownMenuItem<String>(
-                        value: p.userId,
-                        child: Text(_userName(p.userId), overflow: TextOverflow.ellipsis),
-                      )).toList(),
-                      onChanged: (value) => setState(() => _selectedParticipantId = value),
-                      validator: (value) => value == null ? 'Selecciona quién pagó' : null,
+                      hint: Text(loc.kittySelectParticipantHint),
+                      items: realParticipants
+                          .map(
+                            (p) => DropdownMenuItem<String>(
+                              value: p.userId,
+                              child: Text(_userName(p.userId),
+                                  overflow: TextOverflow.ellipsis),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _selectedParticipantId = value),
+                      validator: (value) =>
+                          value == null ? loc.snackSelectWhoPaid : null,
                     );
                   },
                   loading: () => const CircularProgressIndicator(),
-                  error: (error, stack) => Text('Error: $error'),
+                  error: (error, stack) =>
+                      Text(loc.kittyLoadParticipantsError(error.toString())),
                 ),
               const SizedBox(height: 16),
-
-                // Monto con selector de moneda (T153)
-                if (_planCurrency != null) ...[
-                  _buildAmountFieldWithCurrency(),
-                  const SizedBox(height: 16),
-                ] else ...[
-                  // Fallback mientras carga la moneda
-                  TextFormField(
-                    controller: _amountController,
-                    decoration: const InputDecoration(
-                      labelText: 'Monto *',
-                      prefixIcon: Icon(Icons.money),
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingresa un monto';
-                      }
-                      final amount = double.tryParse(value.replaceAll(',', '.'));
-                      if (amount == null || amount <= 0) {
-                        return 'Monto inválido';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                Text('Fecha *', style: AppTypography.bodyStyle.copyWith(fontSize: 13, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: _selectDate,
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.calendar_today),
-                      border: const OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey.shade50,
-                    ),
-                    child: Text(
-                      DateFormat('dd/MM/yyyy').format(_selectedDate),
-                      style: AppTypography.bodyStyle,
-                    ),
-                  ),
-                ),
+              if (_planCurrency != null) ...[
+                _buildAmountFieldWithCurrency(loc),
                 const SizedBox(height: 16),
-
-                DropdownButtonFormField<String>(
-                  value: _selectedPaymentMethod,
+              ] else ...[
+                TextFormField(
+                  controller: _amountController,
                   decoration: InputDecoration(
-                    labelText: 'Método',
-                    prefixIcon: const Icon(Icons.payment),
+                    labelText: '${loc.paymentsExpenseAmount} *',
+                    prefixIcon: const Icon(Icons.money),
                     border: const OutlineInputBorder(),
                     filled: true,
-                    fillColor: Colors.grey.shade50,
                   ),
-                  hint: const Text('Selecciona un método'),
-                  items: _paymentMethods.map((method) {
-                    return DropdownMenuItem<String>(
-                      value: method,
-                      child: Text(method),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedPaymentMethod = value;
-                    });
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return loc.paymentsPersonalAmountValidationRequired;
+                    }
+                    final amount = double.tryParse(value.replaceAll(',', '.'));
+                    if (amount == null || amount <= 0) {
+                      return loc.paymentsPersonalAmountValidationInvalid;
+                    }
+                    return null;
                   },
                 ),
                 const SizedBox(height: 16),
-
-                // Concepto
-                TextFormField(
-                  controller: _conceptController,
-                  decoration: InputDecoration(
-                    labelText: 'Concepto',
-                    prefixIcon: const Icon(Icons.label),
-                    border: const OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                  ),
-                  maxLength: 100,
-                ),
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: InputDecoration(
-                    labelText: 'Descripción (opc.)',
-                    prefixIcon: const Icon(Icons.description),
-                    border: const OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                  ),
-                  maxLines: 3,
-                  maxLength: 500,
-                ),
-                const SizedBox(height: 16),
-
-                if (widget.payment != null) ...[
-                  DropdownButtonFormField<String>(
-                    value: _selectedStatus,
-                    decoration: InputDecoration(
-                      labelText: 'Estado',
-                      prefixIcon: const Icon(Icons.info),
-                      border: const OutlineInputBorder(),
-                      filled: true,
-                      fillColor: Colors.grey.shade50,
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'pending', child: Text('Pendiente')),
-                      DropdownMenuItem(value: 'paid', child: Text('Pagado')),
-                      DropdownMenuItem(value: 'refunded', child: Text('Reembolsado')),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedStatus = value;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
               ],
-            ),
+              InkWell(
+                onTap: _selectDate,
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: '${loc.paymentsExpenseDate} *',
+                    prefixIcon: const Icon(Icons.calendar_today),
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                  ),
+                  child: Text(
+                    DateFormat('dd/MM/yyyy').format(_selectedDate),
+                    style: AppTypography.bodyStyle,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedPaymentMethod,
+                decoration: InputDecoration(
+                  labelText: loc.paymentsPersonalMethod,
+                  prefixIcon: const Icon(Icons.payment),
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                ),
+                hint: Text(loc.paymentsPersonalMethodHint),
+                items: _paymentMethodIds
+                    .map(
+                      (id) => DropdownMenuItem<String>(
+                        value: id,
+                        child: Text(_paymentMethodLabel(loc, id)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedPaymentMethod = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _conceptController,
+                decoration: InputDecoration(
+                  labelText: loc.paymentsExpenseConcept,
+                  prefixIcon: const Icon(Icons.label),
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                ),
+                maxLength: 100,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: loc.paymentsPersonalDescriptionOptional,
+                  prefixIcon: const Icon(Icons.description),
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                ),
+                maxLines: 3,
+                maxLength: 500,
+              ),
+              const SizedBox(height: 16),
+              if (widget.payment != null) ...[
+                DropdownButtonFormField<String>(
+                  value: _selectedStatus,
+                  decoration: InputDecoration(
+                    labelText: loc.paymentsPersonalStatus,
+                    prefixIcon: const Icon(Icons.info_outline),
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                        value: 'pending',
+                        child: Text(loc.paymentsPersonalStatusPending)),
+                    DropdownMenuItem(
+                        value: 'paid',
+                        child: Text(loc.paymentsPersonalStatusPaid)),
+                    DropdownMenuItem(
+                        value: 'refunded',
+                        child: Text(loc.paymentsPersonalStatusRefunded)),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedStatus = value;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            ],
           ),
         ),
+      ),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -636,18 +711,16 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancelar'),
+                  child: Text(loc.cancel),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: _savePayment,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColorScheme.color2,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: Text(widget.payment == null ? 'Registrar' : 'Guardar'),
+                  child: Text(widget.payment == null
+                      ? loc.paymentsPersonalRegister
+                      : loc.save),
                 ),
               ),
             ],
@@ -657,5 +730,3 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
     );
   }
 }
-
-

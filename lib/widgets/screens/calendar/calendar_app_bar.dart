@@ -10,6 +10,7 @@ import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
 
 /// Clase que maneja la construcción del AppBar del calendario
 class CalendarAppBar {
@@ -240,6 +241,18 @@ class CalendarAppBar {
         entries.add(PopupMenuItem<String>(value: 'days_1', child: Row(children: [Icon(Icons.calendar_view_day, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDays1)])));
         entries.add(PopupMenuItem<String>(value: 'days_3', child: Row(children: [Icon(Icons.calendar_view_week, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDays3)])));
         entries.add(PopupMenuItem<String>(value: 'days_7', child: Row(children: [Icon(Icons.calendar_view_month, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDays7)])));
+        if (plan.durationInDays > 7) {
+          entries.add(PopupMenuItem<String>(
+            value: 'days_all_plan',
+            child: Row(
+              children: [
+                Icon(Icons.calendar_month, size: 18, color: AppColorScheme.color2),
+                const SizedBox(width: 8),
+                Expanded(child: Text(loc.calendarMenuDaysAllPlan)),
+              ],
+            ),
+          ));
+        }
         entries.add(const PopupMenuDivider());
         entries.add(PopupMenuItem<String>(value: 'participants', child: Row(children: [Icon(Icons.people, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuManageParticipants)])));
         entries.add(PopupMenuItem<String>(value: 'fullscreen', child: Row(children: [Icon(Icons.fullscreen, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuFullscreen)])));

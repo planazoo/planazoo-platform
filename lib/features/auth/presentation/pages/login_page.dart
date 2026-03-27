@@ -253,16 +253,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: AppLocalizations.of(context)!.close,
-            textColor: Colors.white,
-            onPressed: () {
-              if (mounted) {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              }
-            },
-          ),
+          duration: const Duration(seconds: 5),
         ),
       );
     } else if (!next.hasError) {

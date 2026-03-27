@@ -65,6 +65,9 @@ Gestión de tareas del proyecto:
 - [Paleta de colores de eventos](./design/EVENT_COLOR_PALETTE.md)
 
 ### 🧪 [Testing](./testing/)
+- **[Lista de puntos a corregir (app)](./testing/LISTA_PUNTOS_CORREGIR_APP.md)** – Tabla viva de nuevos hallazgos en pruebas
+- **[Acciones pendientes (app)](./testing/ACCIONES_PENDIENTES_APP.md)** – Seguimiento de infra iOS (push / deep links) fuera de la lista viva
+- [Archivo lista puntos cerrados (2026-03)](./testing/ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md) – histórico P3–P20; se puede borrar cuando no haga falta
 - **[Inicio pruebas – Día 1](./testing/INICIO_PRUEBAS_DIA1.md)** – Por dónde empezar: arrancar app, usuarios, smoke manual, luego ciclo E2E
 - [Sistema de pruebas lógicas (JSON + reportes)](./testing/SISTEMA_PRUEBAS_LOGICAS.md) - Casos por datos, evaluadores, reportes para IA
 - [Sistema Nocturno de QA Distribuido](./testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md) - E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac), capas A/B/C, alertas y fases de implementación
@@ -93,6 +96,7 @@ Configuración y contexto del proyecto:
 - [Migración Mac / iOS](./configuracion/MIGRACION_MAC_PLAYBOOK.md) - Playbook para desarrollo en Mac
 - [Evaluación primeras pruebas con familia](./configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md) - Checklist y estado (listo para invitar a familia)
 - [Revisión iOS vs Web (TestFlight)](./configuracion/REVISION_IOS_VS_WEB.md) - Diferencias web/iOS, checklist pre-TestFlight
+- [Checklist push iOS + deep links](./configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md) - FCM/APNs (A1) y Universal Links / invitación (A2)
 
 ---
 

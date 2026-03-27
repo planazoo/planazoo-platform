@@ -4,6 +4,7 @@ import 'package:unp_calendario/features/calendar/domain/models/participant_group
 import 'package:unp_calendario/features/calendar/presentation/providers/participant_group_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/dialogs/group_edit_dialog.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// T123: Página para gestionar grupos de participantes
 class ParticipantGroupsPage extends ConsumerWidget {
@@ -37,7 +38,7 @@ class ParticipantGroupsPage extends ConsumerWidget {
           IconButton(
             onPressed: () => _showCreateGroupDialog(context, ref, currentUser.id),
             icon: const Icon(Icons.add),
-            tooltip: 'Crear grupo',
+            tooltip: loc.tooltipCreateParticipantGroup,
           ),
         ],
       ),

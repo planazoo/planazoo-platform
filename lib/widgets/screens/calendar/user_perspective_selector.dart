@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
@@ -20,9 +21,10 @@ class UserPerspectiveSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return PopupMenuButton<String>(
       icon: _buildSelectorIcon(),
-      tooltip: 'Cambiar perspectiva de usuario',
+      tooltip: loc.tooltipChangeUserPerspective,
       onSelected: onUserSelected,
       itemBuilder: (context) => _buildMenuItems(),
     );

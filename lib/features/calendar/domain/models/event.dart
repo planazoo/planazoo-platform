@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan.dart' show PlanAttachment;
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 
 class Event {
@@ -517,6 +518,16 @@ class EventDocument {
       size: map['size'] ?? 0,
       uploadedAt: uploadedAt,
       description: map['description'],
+    );
+  }
+
+  factory EventDocument.fromPlanAttachment(PlanAttachment p) {
+    return EventDocument(
+      name: p.name,
+      url: p.url,
+      type: p.type,
+      size: p.size,
+      uploadedAt: p.uploadedAt,
     );
   }
 

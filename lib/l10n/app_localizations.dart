@@ -692,6 +692,168 @@ abstract class AppLocalizations {
   /// **'Calculadora'**
   String get paymentsCalculator;
 
+  /// No description provided for @paymentsEditPayment.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar pago'**
+  String get paymentsEditPayment;
+
+  /// No description provided for @paymentsPersonalPaymentCurrency.
+  ///
+  /// In es, this message translates to:
+  /// **'Moneda del pago'**
+  String get paymentsPersonalPaymentCurrency;
+
+  /// No description provided for @paymentsPersonalAmountValidationRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce un importe'**
+  String get paymentsPersonalAmountValidationRequired;
+
+  /// No description provided for @paymentsPersonalAmountValidationInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Importe no válido'**
+  String get paymentsPersonalAmountValidationInvalid;
+
+  /// No description provided for @paymentsPersonalAmountValidationTooHigh.
+  ///
+  /// In es, this message translates to:
+  /// **'Importe demasiado alto (máx. 1.000.000)'**
+  String get paymentsPersonalAmountValidationTooHigh;
+
+  /// No description provided for @paymentsPersonalConvertedTo.
+  ///
+  /// In es, this message translates to:
+  /// **'Convertido a {currency}:'**
+  String paymentsPersonalConvertedTo(String currency);
+
+  /// No description provided for @paymentsPersonalExchangeDisclaimer.
+  ///
+  /// In es, this message translates to:
+  /// **'Los tipos de cambio son orientativos. El valor real será el aplicado por tu banco o tarjeta en el momento del pago.'**
+  String get paymentsPersonalExchangeDisclaimer;
+
+  /// No description provided for @paymentsPersonalCalculating.
+  ///
+  /// In es, this message translates to:
+  /// **'Calculando…'**
+  String get paymentsPersonalCalculating;
+
+  /// No description provided for @paymentsPersonalMethod.
+  ///
+  /// In es, this message translates to:
+  /// **'Método'**
+  String get paymentsPersonalMethod;
+
+  /// No description provided for @paymentsPersonalMethodHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un método'**
+  String get paymentsPersonalMethodHint;
+
+  /// No description provided for @paymentsPersonalDescriptionOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción (opcional)'**
+  String get paymentsPersonalDescriptionOptional;
+
+  /// No description provided for @paymentsPersonalStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Estado'**
+  String get paymentsPersonalStatus;
+
+  /// No description provided for @paymentsPersonalStatusPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente'**
+  String get paymentsPersonalStatusPending;
+
+  /// No description provided for @paymentsPersonalStatusPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagado'**
+  String get paymentsPersonalStatusPaid;
+
+  /// No description provided for @paymentsPersonalStatusRefunded.
+  ///
+  /// In es, this message translates to:
+  /// **'Reembolsado'**
+  String get paymentsPersonalStatusRefunded;
+
+  /// No description provided for @paymentsPersonalEventLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Evento'**
+  String get paymentsPersonalEventLabel;
+
+  /// No description provided for @paymentsPersonalYouPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'Tú (yo pagué)'**
+  String get paymentsPersonalYouPaid;
+
+  /// No description provided for @paymentsPersonalRegister.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar'**
+  String get paymentsPersonalRegister;
+
+  /// No description provided for @paymentsPersonalPaymentSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago registrado'**
+  String get paymentsPersonalPaymentSaved;
+
+  /// No description provided for @paymentsPersonalPaymentUpdated.
+  ///
+  /// In es, this message translates to:
+  /// **'Pago actualizado'**
+  String get paymentsPersonalPaymentUpdated;
+
+  /// No description provided for @paymentsPersonalPaymentSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar el pago'**
+  String get paymentsPersonalPaymentSaveError;
+
+  /// No description provided for @paymentsMethodCash.
+  ///
+  /// In es, this message translates to:
+  /// **'Efectivo'**
+  String get paymentsMethodCash;
+
+  /// No description provided for @paymentsMethodTransfer.
+  ///
+  /// In es, this message translates to:
+  /// **'Transferencia'**
+  String get paymentsMethodTransfer;
+
+  /// No description provided for @paymentsMethodCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarjeta'**
+  String get paymentsMethodCard;
+
+  /// No description provided for @paymentsMethodBizum.
+  ///
+  /// In es, this message translates to:
+  /// **'Bizum'**
+  String get paymentsMethodBizum;
+
+  /// No description provided for @paymentsMethodPayPal.
+  ///
+  /// In es, this message translates to:
+  /// **'PayPal'**
+  String get paymentsMethodPayPal;
+
+  /// No description provided for @paymentsMethodOther.
+  ///
+  /// In es, this message translates to:
+  /// **'Otro'**
+  String get paymentsMethodOther;
+
   /// Mensaje de login exitoso
   ///
   /// In es, this message translates to:
@@ -1613,7 +1775,7 @@ abstract class AppLocalizations {
   /// No description provided for @planInfoDangerZoneTitle.
   ///
   /// In es, this message translates to:
-  /// **'Zona de peligro'**
+  /// **'Eliminar plan'**
   String get planInfoDangerZoneTitle;
 
   /// No description provided for @planInfoDangerZoneSubtitle.
@@ -1819,6 +1981,60 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'7 días'**
   String get calendarMenuDays7;
+
+  /// No description provided for @calendarMenuDaysAllPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los días del plan'**
+  String get calendarMenuDaysAllPlan;
+
+  /// No description provided for @eventSelectTypeFirstHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige primero un tipo de evento para ver el resto de campos.'**
+  String get eventSelectTypeFirstHint;
+
+  /// No description provided for @planReferenceNotesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Notas y referencias del plan'**
+  String get planReferenceNotesTitle;
+
+  /// No description provided for @planReferenceNotesHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Correos con agencias, proveedores, texto que quieras tener a mano (solo texto).'**
+  String get planReferenceNotesHint;
+
+  /// No description provided for @myPlanSummaryParticipantsSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes'**
+  String get myPlanSummaryParticipantsSection;
+
+  /// No description provided for @eventLongNotesLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Notas largas / texto de agencia'**
+  String get eventLongNotesLabel;
+
+  /// No description provided for @adminOrphanScanTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Registros huérfanos (participaciones)'**
+  String get adminOrphanScanTitle;
+
+  /// No description provided for @adminOrphanScanButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Analizar participaciones sin plan'**
+  String get adminOrphanScanButton;
+
+  /// No description provided for @adminOrphanScanResult.
+  ///
+  /// In es, this message translates to:
+  /// **'Total documentos: {total}. Huérfanos: {orphans}.'**
+  String adminOrphanScanResult(int total, int orphans);
 
   /// No description provided for @calendarMenuManageParticipants.
   ///
@@ -2978,6 +3194,12 @@ abstract class AppLocalizations {
   /// **'Subtipo inválido para el tipo seleccionado'**
   String get invalidSubtype;
 
+  /// SnackBar cuando el formulario del evento no pasa validate()
+  ///
+  /// In es, this message translates to:
+  /// **'Revisa los campos marcados o incompletos antes de guardar.'**
+  String get eventDialogFixValidationErrors;
+
   /// No description provided for @eventStatusDraft.
   ///
   /// In es, this message translates to:
@@ -3818,6 +4040,18 @@ abstract class AppLocalizations {
   /// **'Error al cargar planes'**
   String get plansListLoadError;
 
+  /// No description provided for @plansListFiltersButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Filtros'**
+  String get plansListFiltersButton;
+
+  /// No description provided for @plansListViewModeTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Vista lista o calendario'**
+  String get plansListViewModeTooltip;
+
   /// No description provided for @plansListFilterAll.
   ///
   /// In es, this message translates to:
@@ -4201,6 +4435,558 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Si algo falla, anota pasos exactos, usuario usado y pantalla para reproducirlo rápido.'**
   String get helpManualTips3;
+
+  /// Barra acciones rápidas detalle plan
+  ///
+  /// In es, this message translates to:
+  /// **'Crear alojamiento'**
+  String get tooltipCreateAccommodation;
+
+  /// Info plan badge estado
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar estado del plan'**
+  String get tooltipChangePlanState;
+
+  /// Grupos de participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Crear grupo'**
+  String get tooltipCreateParticipantGroup;
+
+  /// No description provided for @tooltipAddEmailToGroup.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir email'**
+  String get tooltipAddEmailToGroup;
+
+  /// No description provided for @tooltipManageParticipantsCalendar.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestionar participantes'**
+  String get tooltipManageParticipantsCalendar;
+
+  /// No description provided for @tooltipChangeUserPerspective.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar perspectiva de usuario'**
+  String get tooltipChangeUserPerspective;
+
+  /// No description provided for @tooltipPaymentAdd.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir'**
+  String get tooltipPaymentAdd;
+
+  /// No description provided for @tooltipCopyInviteLink.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar enlace'**
+  String get tooltipCopyInviteLink;
+
+  /// No description provided for @tooltipCancelAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get tooltipCancelAction;
+
+  /// No description provided for @snackUserNotAuthenticated.
+  ///
+  /// In es, this message translates to:
+  /// **'Usuario no autenticado'**
+  String get snackUserNotAuthenticated;
+
+  /// No description provided for @snackSelectParticipant.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un participante'**
+  String get snackSelectParticipant;
+
+  /// No description provided for @snackInvalidMonetaryAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Importe no válido'**
+  String get snackInvalidMonetaryAmount;
+
+  /// No description provided for @snackSelectWhoPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona quién pagó'**
+  String get snackSelectWhoPaid;
+
+  /// No description provided for @snackSelectAtLeastOneForSplit.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona al menos un participante en el reparto'**
+  String get snackSelectAtLeastOneForSplit;
+
+  /// No description provided for @snackCheckCustomSplitAmounts.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprueba los importes del reparto personalizado'**
+  String get snackCheckCustomSplitAmounts;
+
+  /// No description provided for @snackExpenseSplitSumMismatch.
+  ///
+  /// In es, this message translates to:
+  /// **'La suma del reparto ({splitSum}) debe coincidir con el importe total ({totalAmount})'**
+  String snackExpenseSplitSumMismatch(String splitSum, String totalAmount);
+
+  /// No description provided for @snackInvalidEmailShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Email inválido'**
+  String get snackInvalidEmailShort;
+
+  /// No description provided for @snackEmailAlreadyInGroup.
+  ///
+  /// In es, this message translates to:
+  /// **'Este email ya está en el grupo'**
+  String get snackEmailAlreadyInGroup;
+
+  /// No description provided for @snackHelpUpdatedCount.
+  ///
+  /// In es, this message translates to:
+  /// **'Ayuda actualizada: {count} textos'**
+  String snackHelpUpdatedCount(int count);
+
+  /// No description provided for @snackContributionSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Aportación registrada'**
+  String get snackContributionSaved;
+
+  /// No description provided for @snackExpenseRegistered.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto registrado'**
+  String get snackExpenseRegistered;
+
+  /// No description provided for @snackSaveFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al guardar'**
+  String get snackSaveFailed;
+
+  /// No description provided for @snackExpenseConceptRequired.
+  ///
+  /// In es, this message translates to:
+  /// **'Indica el concepto del gasto'**
+  String get snackExpenseConceptRequired;
+
+  /// No description provided for @snackPleaseEnterEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Por favor ingresa un email'**
+  String get snackPleaseEnterEmail;
+
+  /// No description provided for @snackInvitationSentSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación enviada'**
+  String get snackInvitationSentSuccess;
+
+  /// No description provided for @snackUserPromotedToOrganizer.
+  ///
+  /// In es, this message translates to:
+  /// **'Usuario promovido a organizador'**
+  String get snackUserPromotedToOrganizer;
+
+  /// No description provided for @snackUserRemovedFromPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Usuario removido del plan'**
+  String get snackUserRemovedFromPlan;
+
+  /// Diálogo reordenar pistas calendario
+  ///
+  /// In es, this message translates to:
+  /// **'Debes seleccionar al menos un participante'**
+  String get calendarSelectAtLeastOneParticipant;
+
+  /// Admin subir seed ayuda
+  ///
+  /// In es, this message translates to:
+  /// **'Error al sincronizar la ayuda'**
+  String get snackHelpSyncFailed;
+
+  /// Invitación plan participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Error al enviar invitación. Verifica que no hayas alcanzado el límite de invitaciones diarias (50/día).'**
+  String get snackInviteDailyLimitReached;
+
+  /// Fallback cuando no hay motivo de bloqueo
+  ///
+  /// In es, this message translates to:
+  /// **'No se pueden añadir participantes en el estado actual del plan.'**
+  String get snackCannotAddParticipantsCurrentState;
+
+  /// No description provided for @inviteUserDialogTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitar usuario'**
+  String get inviteUserDialogTitle;
+
+  /// No description provided for @inviteUserDialogDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa el email del usuario que quieres invitar:'**
+  String get inviteUserDialogDescription;
+
+  /// No description provided for @inviteUserInvite.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitar'**
+  String get inviteUserInvite;
+
+  /// No description provided for @snackHelpSyncFailedDetail.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al sincronizar la ayuda: {error}'**
+  String snackHelpSyncFailedDetail(String error);
+
+  /// No description provided for @kittyAddContributionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir aportación al bote'**
+  String get kittyAddContributionTitle;
+
+  /// No description provided for @kittyRegisterExpenseTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrar gasto del bote'**
+  String get kittyRegisterExpenseTitle;
+
+  /// No description provided for @kittyYourOwnContribution.
+  ///
+  /// In es, this message translates to:
+  /// **'Tú (mi aportación)'**
+  String get kittyYourOwnContribution;
+
+  /// No description provided for @kittySelectParticipantHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona participante'**
+  String get kittySelectParticipantHint;
+
+  /// No description provided for @kittyAmountLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Monto *'**
+  String get kittyAmountLabel;
+
+  /// No description provided for @kittyConceptOptionalLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Concepto (opcional)'**
+  String get kittyConceptOptionalLabel;
+
+  /// No description provided for @kittyDateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Fecha *'**
+  String get kittyDateLabel;
+
+  /// No description provided for @kittyExpenseConceptLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Concepto *'**
+  String get kittyExpenseConceptLabel;
+
+  /// No description provided for @kittyValidationEnterAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Ingresa un monto'**
+  String get kittyValidationEnterAmount;
+
+  /// No description provided for @kittyValidationSelectParticipant.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona un participante'**
+  String get kittyValidationSelectParticipant;
+
+  /// No description provided for @kittyLoadParticipantsError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error: {error}'**
+  String kittyLoadParticipantsError(String error);
+
+  /// No description provided for @kittyExpenseNotAllowedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No permitido'**
+  String get kittyExpenseNotAllowedTitle;
+
+  /// No description provided for @kittyExpenseOrganizerOnlyBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo el organizador del plan puede registrar gastos del bote.'**
+  String get kittyExpenseOrganizerOnlyBody;
+
+  /// No description provided for @participantRemoveConfirmMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Estás seguro de que quieres eliminar a este participante del plan?'**
+  String get participantRemoveConfirmMessage;
+
+  /// No description provided for @participantsInviteResending.
+  ///
+  /// In es, this message translates to:
+  /// **'Re-enviando invitación a {email}'**
+  String participantsInviteResending(String email);
+
+  /// No description provided for @participantsInviteResendButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Re-enviar invitación'**
+  String get participantsInviteResendButton;
+
+  /// No description provided for @snackPreviousInvitationCancelled.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación anterior cancelada'**
+  String get snackPreviousInvitationCancelled;
+
+  /// No description provided for @snackInvitationCancelledShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación cancelada'**
+  String get snackInvitationCancelledShort;
+
+  /// No description provided for @snackInvitationCancelFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cancelar'**
+  String get snackInvitationCancelFailed;
+
+  /// No description provided for @tooltipCancelPreviousInvitation.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar invitación anterior'**
+  String get tooltipCancelPreviousInvitation;
+
+  /// No description provided for @snackLinkCopiedShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Enlace copiado'**
+  String get snackLinkCopiedShort;
+
+  /// No description provided for @invitationCreatedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación creada'**
+  String get invitationCreatedTitle;
+
+  /// No description provided for @invitationShareLinkHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Comparte este enlace con la persona invitada:'**
+  String get invitationShareLinkHint;
+
+  /// No description provided for @inviteOptionalMessageLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Mensaje (opcional)'**
+  String get inviteOptionalMessageLabel;
+
+  /// No description provided for @snackInviteSentToUserDisplay.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación enviada a {userDisplay}. Puede aceptar o rechazar.'**
+  String snackInviteSentToUserDisplay(String userDisplay);
+
+  /// No description provided for @snackInviteSendError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al enviar invitación: {error}'**
+  String snackInviteSendError(String error);
+
+  /// No description provided for @inviteByEmailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitar por email'**
+  String get inviteByEmailTitle;
+
+  /// No description provided for @invitePendingExistsForEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya existe una invitación pendiente para {email}.\n\n¿Qué deseas hacer?'**
+  String invitePendingExistsForEmail(String email);
+
+  /// No description provided for @roleFieldLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Rol'**
+  String get roleFieldLabel;
+
+  /// No description provided for @participantRoleLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Participante'**
+  String get participantRoleLabel;
+
+  /// No description provided for @observerRoleLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Observador'**
+  String get observerRoleLabel;
+
+  /// No description provided for @inviteSendInvitation.
+  ///
+  /// In es, this message translates to:
+  /// **'Enviar invitación'**
+  String get inviteSendInvitation;
+
+  /// No description provided for @snackUserAlreadyParticipant.
+  ///
+  /// In es, this message translates to:
+  /// **'Este usuario ya es participante del plan'**
+  String get snackUserAlreadyParticipant;
+
+  /// No description provided for @snackPendingInviteExists.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya existe una invitación pendiente para este email'**
+  String get snackPendingInviteExists;
+
+  /// No description provided for @snackCouldNotCreateInvitation.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo crear la invitación'**
+  String get snackCouldNotCreateInvitation;
+
+  /// No description provided for @snackInviteSentWillAppearPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación enviada a {email}. Aparecerá en la lista como pendiente.'**
+  String snackInviteSentWillAppearPending(String email);
+
+  /// No description provided for @snackInviteCreatedForEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación creada para {email}'**
+  String snackInviteCreatedForEmail(String email);
+
+  /// No description provided for @snackUserAddedToPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Usuario {email} añadido al plan'**
+  String snackUserAddedToPlan(String email);
+
+  /// No description provided for @snackCreateInviteError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al crear invitación: {detail}'**
+  String snackCreateInviteError(String detail);
+
+  /// No description provided for @inviterNameFallback.
+  ///
+  /// In es, this message translates to:
+  /// **'Un usuario'**
+  String get inviterNameFallback;
+
+  /// No description provided for @snackInviteUserBlockedOrFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'{userDisplay} ya es participante o no se pudo crear la invitación'**
+  String snackInviteUserBlockedOrFailed(String userDisplay);
+
+  /// No description provided for @snackParticipantRemovedFromPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Participante eliminado del plan'**
+  String get snackParticipantRemovedFromPlan;
+
+  /// No description provided for @snackParticipantRemoveError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al eliminar participante: {error}'**
+  String snackParticipantRemoveError(String error);
+
+  /// No description provided for @invitationsSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitaciones'**
+  String get invitationsSectionTitle;
+
+  /// Título del bloque de adjuntos en Info del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Archivos del plan'**
+  String get entityAttachmentsPlanTitle;
+
+  /// Título del bloque de adjuntos en diálogo de evento
+  ///
+  /// In es, this message translates to:
+  /// **'Archivos del evento'**
+  String get entityAttachmentsEventTitle;
+
+  /// Título del bloque de adjuntos en diálogo de alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Archivos del alojamiento'**
+  String get entityAttachmentsAccommodationTitle;
+
+  /// No description provided for @entityAttachmentsUpload.
+  ///
+  /// In es, this message translates to:
+  /// **'Subir'**
+  String get entityAttachmentsUpload;
+
+  /// No description provided for @entityAttachmentsUploading.
+  ///
+  /// In es, this message translates to:
+  /// **'Subiendo...'**
+  String get entityAttachmentsUploading;
+
+  /// No description provided for @entityAttachmentsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin archivos adjuntos'**
+  String get entityAttachmentsEmpty;
+
+  /// No description provided for @entityAttachmentsDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar archivo'**
+  String get entityAttachmentsDeleteTitle;
+
+  /// Cuerpo del diálogo confirmar borrado de adjunto
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar \"{name}\"?'**
+  String entityAttachmentsDeleteConfirm(String name);
+
+  /// No description provided for @entityAttachmentsReadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo leer el archivo seleccionado.'**
+  String get entityAttachmentsReadError;
+
+  /// No description provided for @entityAttachmentsUploadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo subir el archivo: {error}'**
+  String entityAttachmentsUploadError(String error);
+
+  /// No description provided for @entityAttachmentsDeleteError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo eliminar el archivo.'**
+  String get entityAttachmentsDeleteError;
+
+  /// No description provided for @entityAttachmentsSnackbarAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'Archivo adjuntado. Pulsa Guardar para confirmar cambios.'**
+  String get entityAttachmentsSnackbarAdded;
+
+  /// No description provided for @entityAttachmentsSnackbarRemoved.
+  ///
+  /// In es, this message translates to:
+  /// **'Archivo eliminado. Pulsa Guardar para confirmar cambios.'**
+  String get entityAttachmentsSnackbarRemoved;
 }
 
 class _AppLocalizationsDelegate

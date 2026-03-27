@@ -1,8 +1,8 @@
 # Checklist iOS: push (FCM/APNs) y deep links de invitación
 
-Referencia para **P1** (notificaciones) y **P2** (links de invitación) de `docs/testing/LISTA_PUNTOS_CORREGIR_APP.md`.
+Referencia para **A1** (notificaciones) y **A2** (links de invitación) de `docs/testing/ACCIONES_PENDIENTES_APP.md` (antes P1/P2 de la lista histórica).
 
-## P1 — Notificaciones push (FCM + APNs)
+## A1 — Notificaciones push (FCM + APNs)
 
 1. **Firebase / Apple**
    - En Firebase Console: proyecto correcto, app iOS con bundle ID coincidente con Xcode.
@@ -23,7 +23,7 @@ Referencia para **P1** (notificaciones) y **P2** (links de invitación) de `docs
 
 *Documentación relacionada:* `docs/configuracion/REVISION_IOS_VS_WEB.md` (§ notificaciones), guías FCM de FlutterFire.
 
-## P2 — Deep link / Universal Links de invitación
+## A2 — Deep link / Universal Links de invitación
 
 1. **Dominio y Apple**
    - Dominio HTTPS con archivo **apple-app-site-association** (AASA) servido sin redirect y con `Content-Type` correcto.

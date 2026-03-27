@@ -325,6 +325,91 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentsCalculator => 'Calculator';
 
   @override
+  String get paymentsEditPayment => 'Edit payment';
+
+  @override
+  String get paymentsPersonalPaymentCurrency => 'Payment currency';
+
+  @override
+  String get paymentsPersonalAmountValidationRequired => 'Enter an amount';
+
+  @override
+  String get paymentsPersonalAmountValidationInvalid => 'Invalid amount';
+
+  @override
+  String get paymentsPersonalAmountValidationTooHigh =>
+      'Amount too high (max 1,000,000)';
+
+  @override
+  String paymentsPersonalConvertedTo(String currency) {
+    return 'Converted to $currency:';
+  }
+
+  @override
+  String get paymentsPersonalExchangeDisclaimer =>
+      'Exchange rates are indicative. The actual rate will be the one applied by your bank or card.';
+
+  @override
+  String get paymentsPersonalCalculating => 'Calculating…';
+
+  @override
+  String get paymentsPersonalMethod => 'Method';
+
+  @override
+  String get paymentsPersonalMethodHint => 'Select a method';
+
+  @override
+  String get paymentsPersonalDescriptionOptional => 'Description (optional)';
+
+  @override
+  String get paymentsPersonalStatus => 'Status';
+
+  @override
+  String get paymentsPersonalStatusPending => 'Pending';
+
+  @override
+  String get paymentsPersonalStatusPaid => 'Paid';
+
+  @override
+  String get paymentsPersonalStatusRefunded => 'Refunded';
+
+  @override
+  String get paymentsPersonalEventLabel => 'Event';
+
+  @override
+  String get paymentsPersonalYouPaid => 'You (I paid)';
+
+  @override
+  String get paymentsPersonalRegister => 'Register';
+
+  @override
+  String get paymentsPersonalPaymentSaved => 'Payment recorded';
+
+  @override
+  String get paymentsPersonalPaymentUpdated => 'Payment updated';
+
+  @override
+  String get paymentsPersonalPaymentSaveError => 'Could not save payment';
+
+  @override
+  String get paymentsMethodCash => 'Cash';
+
+  @override
+  String get paymentsMethodTransfer => 'Bank transfer';
+
+  @override
+  String get paymentsMethodCard => 'Card';
+
+  @override
+  String get paymentsMethodBizum => 'Bizum';
+
+  @override
+  String get paymentsMethodPayPal => 'PayPal';
+
+  @override
+  String get paymentsMethodOther => 'Other';
+
+  @override
   String get loginSuccess => 'Welcome!';
 
   @override
@@ -843,7 +928,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planDeleteError => 'Error deleting plan';
 
   @override
-  String get planInfoDangerZoneTitle => 'Danger zone';
+  String get planInfoDangerZoneTitle => 'Delete plan';
 
   @override
   String get planInfoDangerZoneSubtitle =>
@@ -951,6 +1036,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calendarMenuDays7 => '7 days';
+
+  @override
+  String get calendarMenuDaysAllPlan => 'All plan days';
+
+  @override
+  String get eventSelectTypeFirstHint =>
+      'Choose an event type first to see the remaining fields.';
+
+  @override
+  String get planReferenceNotesTitle => 'Plan notes and references';
+
+  @override
+  String get planReferenceNotesHint =>
+      'Emails with agencies, providers, plain text you want handy.';
+
+  @override
+  String get myPlanSummaryParticipantsSection => 'Participants';
+
+  @override
+  String get eventLongNotesLabel => 'Long notes / agency text';
+
+  @override
+  String get adminOrphanScanTitle => 'Orphan records (participations)';
+
+  @override
+  String get adminOrphanScanButton => 'Scan participations without plan';
+
+  @override
+  String adminOrphanScanResult(int total, int orphans) {
+    return 'Total documents: $total. Orphans: $orphans.';
+  }
 
   @override
   String get calendarMenuManageParticipants => 'Manage participants';
@@ -1603,6 +1719,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidSubtype => 'Invalid subtype for selected type';
 
   @override
+  String get eventDialogFixValidationErrors =>
+      'Check highlighted or incomplete fields before saving.';
+
+  @override
   String get eventStatusDraft => 'Draft';
 
   @override
@@ -2048,6 +2168,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get plansListLoadError => 'Error loading plans';
 
   @override
+  String get plansListFiltersButton => 'Filters';
+
+  @override
+  String get plansListViewModeTooltip => 'List or calendar view';
+
+  @override
   String get plansListFilterAll => 'All';
 
   @override
@@ -2269,4 +2395,327 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get helpManualTips3 =>
       'If something fails, record exact steps, test user, and screen for fast reproduction.';
+
+  @override
+  String get tooltipCreateAccommodation => 'Create accommodation';
+
+  @override
+  String get tooltipChangePlanState => 'Change plan state';
+
+  @override
+  String get tooltipCreateParticipantGroup => 'Create group';
+
+  @override
+  String get tooltipAddEmailToGroup => 'Add email';
+
+  @override
+  String get tooltipManageParticipantsCalendar => 'Manage participants';
+
+  @override
+  String get tooltipChangeUserPerspective => 'Change user perspective';
+
+  @override
+  String get tooltipPaymentAdd => 'Add';
+
+  @override
+  String get tooltipCopyInviteLink => 'Copy link';
+
+  @override
+  String get tooltipCancelAction => 'Cancel';
+
+  @override
+  String get snackUserNotAuthenticated => 'User not signed in';
+
+  @override
+  String get snackSelectParticipant => 'Select a participant';
+
+  @override
+  String get snackInvalidMonetaryAmount => 'Invalid amount';
+
+  @override
+  String get snackSelectWhoPaid => 'Select who paid';
+
+  @override
+  String get snackSelectAtLeastOneForSplit =>
+      'Select at least one participant for the split';
+
+  @override
+  String get snackCheckCustomSplitAmounts =>
+      'Check the amounts in the custom split';
+
+  @override
+  String snackExpenseSplitSumMismatch(String splitSum, String totalAmount) {
+    return 'Split total ($splitSum) must match the expense amount ($totalAmount)';
+  }
+
+  @override
+  String get snackInvalidEmailShort => 'Invalid email';
+
+  @override
+  String get snackEmailAlreadyInGroup => 'This email is already in the group';
+
+  @override
+  String snackHelpUpdatedCount(int count) {
+    return 'Help updated: $count text(s)';
+  }
+
+  @override
+  String get snackContributionSaved => 'Contribution saved';
+
+  @override
+  String get snackExpenseRegistered => 'Expense saved';
+
+  @override
+  String get snackSaveFailed => 'Could not save';
+
+  @override
+  String get snackExpenseConceptRequired => 'Enter an expense description';
+
+  @override
+  String get snackPleaseEnterEmail => 'Please enter an email';
+
+  @override
+  String get snackInvitationSentSuccess => 'Invitation sent';
+
+  @override
+  String get snackUserPromotedToOrganizer => 'User promoted to organizer';
+
+  @override
+  String get snackUserRemovedFromPlan => 'User removed from plan';
+
+  @override
+  String get calendarSelectAtLeastOneParticipant =>
+      'You must select at least one participant';
+
+  @override
+  String get snackHelpSyncFailed => 'Could not sync help texts';
+
+  @override
+  String get snackInviteDailyLimitReached =>
+      'Could not send invitation. You may have reached the daily invitation limit (50/day).';
+
+  @override
+  String get snackCannotAddParticipantsCurrentState =>
+      'Participants cannot be added in the plan\'s current state.';
+
+  @override
+  String get inviteUserDialogTitle => 'Invite user';
+
+  @override
+  String get inviteUserDialogDescription =>
+      'Enter the email of the user you want to invite:';
+
+  @override
+  String get inviteUserInvite => 'Invite';
+
+  @override
+  String snackHelpSyncFailedDetail(String error) {
+    return 'Could not sync help texts: $error';
+  }
+
+  @override
+  String get kittyAddContributionTitle => 'Add kitty contribution';
+
+  @override
+  String get kittyRegisterExpenseTitle => 'Register kitty expense';
+
+  @override
+  String get kittyYourOwnContribution => 'You (my contribution)';
+
+  @override
+  String get kittySelectParticipantHint => 'Select participant';
+
+  @override
+  String get kittyAmountLabel => 'Amount *';
+
+  @override
+  String get kittyConceptOptionalLabel => 'Description (optional)';
+
+  @override
+  String get kittyDateLabel => 'Date *';
+
+  @override
+  String get kittyExpenseConceptLabel => 'Description *';
+
+  @override
+  String get kittyValidationEnterAmount => 'Enter an amount';
+
+  @override
+  String get kittyValidationSelectParticipant => 'Select a participant';
+
+  @override
+  String kittyLoadParticipantsError(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get kittyExpenseNotAllowedTitle => 'Not allowed';
+
+  @override
+  String get kittyExpenseOrganizerOnlyBody =>
+      'Only the plan organizer can register kitty expenses.';
+
+  @override
+  String get participantRemoveConfirmMessage =>
+      'Remove this participant from the plan?';
+
+  @override
+  String participantsInviteResending(String email) {
+    return 'Re-sending invitation to $email';
+  }
+
+  @override
+  String get participantsInviteResendButton => 'Re-send invitation';
+
+  @override
+  String get snackPreviousInvitationCancelled =>
+      'Previous invitation cancelled';
+
+  @override
+  String get snackInvitationCancelledShort => 'Invitation cancelled';
+
+  @override
+  String get snackInvitationCancelFailed => 'Could not cancel';
+
+  @override
+  String get tooltipCancelPreviousInvitation => 'Cancel previous invitation';
+
+  @override
+  String get snackLinkCopiedShort => 'Link copied';
+
+  @override
+  String get invitationCreatedTitle => 'Invitation created';
+
+  @override
+  String get invitationShareLinkHint =>
+      'Share this link with the invited person:';
+
+  @override
+  String get inviteOptionalMessageLabel => 'Message (optional)';
+
+  @override
+  String snackInviteSentToUserDisplay(String userDisplay) {
+    return 'Invitation sent to $userDisplay. They can accept or decline.';
+  }
+
+  @override
+  String snackInviteSendError(String error) {
+    return 'Could not send invitation: $error';
+  }
+
+  @override
+  String get inviteByEmailTitle => 'Invite by email';
+
+  @override
+  String invitePendingExistsForEmail(String email) {
+    return 'There is already a pending invitation for $email.\n\nWhat would you like to do?';
+  }
+
+  @override
+  String get roleFieldLabel => 'Role';
+
+  @override
+  String get participantRoleLabel => 'Participant';
+
+  @override
+  String get observerRoleLabel => 'Observer';
+
+  @override
+  String get inviteSendInvitation => 'Send invitation';
+
+  @override
+  String get snackUserAlreadyParticipant =>
+      'This user is already a participant in the plan';
+
+  @override
+  String get snackPendingInviteExists =>
+      'There is already a pending invitation for this email';
+
+  @override
+  String get snackCouldNotCreateInvitation => 'Could not create the invitation';
+
+  @override
+  String snackInviteSentWillAppearPending(String email) {
+    return 'Invitation sent to $email. It will appear as pending in the list.';
+  }
+
+  @override
+  String snackInviteCreatedForEmail(String email) {
+    return 'Invitation created for $email';
+  }
+
+  @override
+  String snackUserAddedToPlan(String email) {
+    return 'User $email added to the plan';
+  }
+
+  @override
+  String snackCreateInviteError(String detail) {
+    return 'Could not create invitation: $detail';
+  }
+
+  @override
+  String get inviterNameFallback => 'A user';
+
+  @override
+  String snackInviteUserBlockedOrFailed(String userDisplay) {
+    return '$userDisplay is already a participant or the invitation could not be created';
+  }
+
+  @override
+  String get snackParticipantRemovedFromPlan =>
+      'Participant removed from the plan';
+
+  @override
+  String snackParticipantRemoveError(String error) {
+    return 'Could not remove participant: $error';
+  }
+
+  @override
+  String get invitationsSectionTitle => 'Invitations';
+
+  @override
+  String get entityAttachmentsPlanTitle => 'Plan files';
+
+  @override
+  String get entityAttachmentsEventTitle => 'Event files';
+
+  @override
+  String get entityAttachmentsAccommodationTitle => 'Accommodation files';
+
+  @override
+  String get entityAttachmentsUpload => 'Upload';
+
+  @override
+  String get entityAttachmentsUploading => 'Uploading...';
+
+  @override
+  String get entityAttachmentsEmpty => 'No attachments';
+
+  @override
+  String get entityAttachmentsDeleteTitle => 'Delete file';
+
+  @override
+  String entityAttachmentsDeleteConfirm(String name) {
+    return 'Delete \"$name\"?';
+  }
+
+  @override
+  String get entityAttachmentsReadError => 'Could not read the selected file.';
+
+  @override
+  String entityAttachmentsUploadError(String error) {
+    return 'Could not upload the file: $error';
+  }
+
+  @override
+  String get entityAttachmentsDeleteError => 'Could not delete the file.';
+
+  @override
+  String get entityAttachmentsSnackbarAdded =>
+      'File attached. Tap Save to confirm changes.';
+
+  @override
+  String get entityAttachmentsSnackbarRemoved =>
+      'File removed. Tap Save to confirm changes.';
 }

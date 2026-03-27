@@ -81,38 +81,44 @@ class CalendarTracks extends ConsumerWidget {
             // GestureDetector para capturar taps en toda la fila
           },
           child: Row(
-            children: columns.map((column) {
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: columns.asMap().entries.map((entry) {
+              final visibleDayIndex = entry.key;
+              final column = entry.value;
+              final colW = columns.isEmpty ? 0.0 : constraints.maxWidth / columns.length;
               return Expanded(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Encabezado de la columna (sin bordes, estilo limpio)
+                    // Encabezado: líneas sup/inf + franjas alternas por día (ID 52, 54)
                     Container(
                       height: CalendarConstants.headerHeight,
                       clipBehavior: Clip.hardEdge,
                       decoration: BoxDecoration(
-                        color: _getHeaderColor(column),
+                        color: _getHeaderColor(column, visibleDayIndex),
+                        border: Border(
+                          top: BorderSide(color: Colors.grey.shade600, width: 1),
+                          bottom: BorderSide(color: Colors.grey.shade600, width: 1),
+                        ),
                       ),
                       child: Center(
                         child: _buildHeaderContent(column),
                       ),
                     ),
-                    
-                    // Fila de alojamientos con tracks (sin bordes)
                     GestureDetector(
                       onTap: () {
-                        // Crear nuevo alojamiento para este día
                         final dayData = column as Map<String, dynamic>;
                         final actualDayIndex = dayData['index'] as int;
-                        final dayDate = plan.startDate.add(Duration(days: actualDayIndex - 1));
+                        final dayDate = plan.dateForPlanDayIndex(actualDayIndex);
                         onShowNewAccommodationDialog(dayDate);
                       },
                       child: Container(
                         height: CalendarConstants.accommodationRowHeight,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade800,
+                          color: _accommodationStripColor(visibleDayIndex),
                         ),
                         child: Center(
-                          child: _buildAccommodationTracks(ref, column, constraints.maxWidth),
+                          child: _buildAccommodationTracks(ref, column, colW),
                         ),
                       ),
                     ),
@@ -126,20 +132,28 @@ class CalendarTracks extends ConsumerWidget {
     );
   }
 
-  /// Obtiene el color del header según el tipo de columna
-  Color _getHeaderColor(dynamic column) {
+  Color _stripeBase(int visibleDayIndex) =>
+      visibleDayIndex % 2 == 0 ? const Color(0xFF2E2E2E) : const Color(0xFF242424);
+
+  Color _accommodationStripColor(int visibleDayIndex) =>
+      visibleDayIndex % 2 == 0 ? const Color(0xFF333333) : const Color(0xFF282828);
+
+  /// Obtiene el color del header según columna visible, vacío y “hoy”.
+  Color _getHeaderColor(dynamic column, int visibleDayIndex) {
     final dayData = column as Map<String, dynamic>;
     final isEmpty = dayData['isEmpty'] as bool;
     final actualDayIndex = dayData['index'] as int;
-    final dayDate = plan.startDate.add(Duration(days: actualDayIndex - 1));
+    final dayDate = plan.dateForPlanDayIndex(actualDayIndex);
     final now = DateTime.now();
     final isToday = dayDate.year == now.year &&
         dayDate.month == now.month &&
         dayDate.day == now.day;
-    // Hoy: fondo un poco más claro para mejor contraste; vacío: más tenue
     if (isEmpty) return Colors.grey.shade800.withOpacity(0.3);
-    if (isToday) return Colors.grey.shade700;
-    return Colors.grey.shade800;
+    Color base = _stripeBase(visibleDayIndex);
+    if (isToday) {
+      base = Color.lerp(base, Colors.grey.shade600, 0.22) ?? base;
+    }
+    return base;
   }
 
   /// Construye el contenido del header
@@ -161,7 +175,7 @@ class CalendarTracks extends ConsumerWidget {
     }
     
     // Calcular la fecha de este día del plan
-    final dayDate = plan.startDate.add(Duration(days: actualDayIndex - 1));
+    final dayDate = plan.dateForPlanDayIndex(actualDayIndex);
     final formattedDate = '${dayDate.day}/${dayDate.month}';
     final now = DateTime.now();
     final isToday = dayDate.year == now.year &&
@@ -376,7 +390,7 @@ class CalendarTracks extends ConsumerWidget {
       AccommodationNotifierParams(planId: plan.id ?? ''),
     ));
     
-    final dayDate = plan.startDate.add(Duration(days: actualDayIndex - 1));
+    final dayDate = plan.dateForPlanDayIndex(actualDayIndex);
     final accommodationsForDay = accommodations.where((acc) => acc.isDateInRange(dayDate)).toList();
     
     if (accommodationsForDay.isEmpty) {
@@ -519,9 +533,11 @@ class CalendarTracks extends ConsumerWidget {
     // Ordenar grupos por el primer track
     allGroups.sort((a, b) => (a['group'] as List<int>).first.compareTo((b['group'] as List<int>).first));
     
-    // Calcular el ancho de cada subcolumna
-    final columnWidth = availableWidth / columns.length;
-    final subColumnWidth = CalendarUtils.getSubColumnWidth(columnWidth, visibleTracks.length);
+    // `availableWidth` ya es el ancho de la columna (día) actual.
+    // No dividir otra vez por `columns.length` o los bloques quedan minúsculos.
+    final inset = availableWidth * CalendarConstants.dayColumnHorizontalInsetFraction;
+    final innerW = CalendarUtils.innerDayColumnWidth(availableWidth);
+    final subColumnWidth = CalendarUtils.getSubColumnWidth(innerW, visibleTracks.length);
     
     return Stack(
       children: allGroups.map((groupData) {
@@ -530,9 +546,9 @@ class CalendarTracks extends ConsumerWidget {
         final startTrack = group.first;
         final groupWidth = group.length;
         
-        // Calcular posición y ancho
-        final left = (startTrack * subColumnWidth).toDouble();
-        final width = (subColumnWidth * groupWidth).toDouble();
+        // Calcular posición y ancho (alineado con márgenes de eventos por día)
+        final left = inset + startTrack * subColumnWidth;
+        final width = subColumnWidth * groupWidth;
         
         return Positioned(
           left: left,
@@ -542,7 +558,7 @@ class CalendarTracks extends ConsumerWidget {
           child: GestureDetector(
             onTap: () => onShowAccommodationDialog(accommodation),
             child: Container(
-              margin: EdgeInsets.symmetric(horizontal: width * 0.025, vertical: 0),
+              margin: EdgeInsets.symmetric(horizontal: width * 0.04, vertical: 0),
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               decoration: BoxDecoration(
                 color: accommodation.displayColor.withOpacity(0.3),
@@ -589,8 +605,10 @@ class CalendarTracks extends ConsumerWidget {
     final groups = <List<int>>[];
     final currentGroup = <int>[];
     
-    // Si el alojamiento no tiene participantTrackIds asignados, mostrarlo en todos los tracks
-    final shouldShowInAllTracks = accommodation.participantTrackIds.isEmpty;
+    // Mostrar en todos los tracks si está marcado "para todos" o no trae lista específica.
+    final shouldShowInAllTracks =
+        accommodation.commonPart?.isForAllParticipants == true ||
+        accommodation.participantTrackIds.isEmpty;
     
     for (int i = 0; i < visibleTracks.length; i++) {
       final track = visibleTracks[i];

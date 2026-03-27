@@ -7,6 +7,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/plan_par
 import '../../domain/models/kitty_contribution.dart';
 import '../providers/payment_providers.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// T219: Diálogo para registrar un aporte al bote común
 class KittyContributionDialog extends ConsumerStatefulWidget {
@@ -85,18 +86,19 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
   }
 
   Future<void> _save() async {
+    final loc = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
     final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Monto inválido')),
+        SnackBar(content: Text(loc.snackInvalidMonetaryAmount)),
       );
       return;
     }
     final currentUser = ref.read(currentUserProvider);
     if (currentUser?.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario no autenticado')),
+        SnackBar(content: Text(loc.snackUserNotAuthenticated)),
       );
       return;
     }
@@ -104,7 +106,7 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
     final participantId = isOrganizer ? _selectedParticipantId : currentUser.id;
     if (participantId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona un participante')),
+        SnackBar(content: Text(loc.snackSelectParticipant)),
       );
       return;
     }
@@ -136,6 +138,7 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
     final isOrganizer = currentUser?.id == widget.plan.userId;
     final participationsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
@@ -149,9 +152,9 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
     }
 
     return AlertDialog(
-      title: Text('Añadir aportación al bote', style: AppTypography.titleStyle),
-      content: SizedBox(
-        width: 400,
+      title: Text(loc.kittyAddContributionTitle, style: AppTypography.titleStyle),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -159,7 +162,7 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Participante *', style: AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.bold)),
+                Text('${loc.participant} *', style: AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 if (!isOrganizer)
                   InputDecorator(
@@ -168,7 +171,7 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
                       border: OutlineInputBorder(),
                       filled: true,
                     ),
-                    child: Text('Tú (mi aportación)', style: AppTypography.bodyStyle),
+                    child: Text(loc.kittyYourOwnContribution, style: AppTypography.bodyStyle),
                   )
                 else
                   participationsAsync.when(
@@ -182,7 +185,7 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
                           border: OutlineInputBorder(),
                           filled: true,
                         ),
-                        hint: const Text('Selecciona participante'),
+                        hint: Text(loc.kittySelectParticipantHint),
                         items: real
                             .map((p) => DropdownMenuItem<String>(
                                   value: p.userId,
@@ -193,45 +196,45 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
                                 ))
                             .toList(),
                         onChanged: (v) => setState(() => _selectedParticipantId = v),
-                        validator: (v) => v == null ? 'Selecciona un participante' : null,
+                        validator: (v) => v == null ? loc.kittyValidationSelectParticipant : null,
                       );
                     },
                     loading: () => const CircularProgressIndicator(),
-                    error: (e, _) => Text('Error: $e'),
+                    error: (e, _) => Text(loc.kittyLoadParticipantsError(e.toString())),
                   ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _amountController,
-                  decoration: const InputDecoration(
-                    labelText: 'Monto *',
-                    prefixIcon: Icon(Icons.money),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.kittyAmountLabel,
+                    prefixIcon: const Icon(Icons.money),
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Ingresa un monto';
+                    if (v == null || v.isEmpty) return loc.kittyValidationEnterAmount;
                     final n = double.tryParse(v.replaceAll(',', '.'));
-                    if (n == null || n <= 0) return 'Monto inválido';
+                    if (n == null || n <= 0) return loc.snackInvalidMonetaryAmount;
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _conceptController,
-                  decoration: const InputDecoration(
-                    labelText: 'Concepto (opcional)',
-                    prefixIcon: Icon(Icons.description),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.kittyConceptOptionalLabel,
+                    prefixIcon: const Icon(Icons.description),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
                 InkWell(
                   onTap: _selectDate,
                   child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Fecha *',
-                      prefixIcon: Icon(Icons.calendar_today),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: loc.kittyDateLabel,
+                      prefixIcon: const Icon(Icons.calendar_today),
+                      border: const OutlineInputBorder(),
                     ),
                     child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate), style: AppTypography.bodyStyle),
                   ),
@@ -242,8 +245,8 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-        FilledButton(onPressed: _save, child: const Text('Guardar')),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(loc.cancel)),
+        FilledButton(onPressed: _save, child: Text(loc.save)),
       ],
     );
   }

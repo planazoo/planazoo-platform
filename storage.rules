@@ -12,6 +12,13 @@ service firebase.storage {
       allow write: if request.auth != null;
     }
 
+    // Adjuntos del plan (PDF/JPG/PNG): Info del plan → `plan_files/{planId}/{fileName}`.
+    // Lectura pública para abrir enlaces; escritura solo usuarios autenticados.
+    match /plan_files/{planId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
     // Denegar todo lo demás por defecto
     match /{allPaths=**} {
       allow read, write: if false;

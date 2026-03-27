@@ -6,6 +6,7 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import '../../domain/models/kitty_expense.dart';
 import '../providers/payment_providers.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// T219: Diálogo para registrar un gasto del bote común (solo organizador)
 class KittyExpenseDialog extends ConsumerWidget {
@@ -20,15 +21,16 @@ class KittyExpenseDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
     if (currentUser?.id != plan.userId) {
       return AlertDialog(
-        title: Text('No permitido', style: AppTypography.titleStyle),
-        content: const Text('Solo el organizador del plan puede registrar gastos del bote.'),
+        title: Text(loc.kittyExpenseNotAllowedTitle, style: AppTypography.titleStyle),
+        content: Text(loc.kittyExpenseOrganizerOnlyBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cerrar'),
+            child: Text(loc.close),
           ),
         ],
       );
@@ -71,18 +73,19 @@ class _KittyExpenseFormState extends ConsumerState<_KittyExpenseForm> {
   }
 
   Future<void> _save() async {
+    final loc = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
     final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Monto inválido')),
+        SnackBar(content: Text(loc.snackInvalidMonetaryAmount)),
       );
       return;
     }
     final concept = _conceptController.text.trim();
     if (concept.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Indica el concepto del gasto')),
+        SnackBar(content: Text(loc.snackExpenseConceptRequired)),
       );
       return;
     }
@@ -99,23 +102,24 @@ class _KittyExpenseFormState extends ConsumerState<_KittyExpenseForm> {
     if (!mounted) return;
     if (id != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gasto registrado'), backgroundColor: Colors.green),
+        SnackBar(content: Text(loc.snackExpenseRegistered), backgroundColor: Colors.green),
       );
       widget.onSaved?.call();
       Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al guardar')),
+        SnackBar(content: Text(loc.snackSaveFailed)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: Text('Registrar gasto del bote', style: AppTypography.titleStyle),
-      content: SizedBox(
-        width: 400,
+      title: Text(loc.kittyRegisterExpenseTitle, style: AppTypography.titleStyle),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -125,26 +129,27 @@ class _KittyExpenseFormState extends ConsumerState<_KittyExpenseForm> {
               children: [
                 TextFormField(
                   controller: _conceptController,
-                  decoration: const InputDecoration(
-                    labelText: 'Concepto *',
-                    prefixIcon: Icon(Icons.description),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.kittyExpenseConceptLabel,
+                    prefixIcon: const Icon(Icons.description),
+                    border: const OutlineInputBorder(),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Indica el concepto' : null,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? loc.snackExpenseConceptRequired : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _amountController,
-                  decoration: const InputDecoration(
-                    labelText: 'Monto *',
-                    prefixIcon: Icon(Icons.money),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.kittyAmountLabel,
+                    prefixIcon: const Icon(Icons.money),
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Ingresa un monto';
+                    if (v == null || v.isEmpty) return loc.kittyValidationEnterAmount;
                     final n = double.tryParse(v.replaceAll(',', '.'));
-                    if (n == null || n <= 0) return 'Monto inválido';
+                    if (n == null || n <= 0) return loc.snackInvalidMonetaryAmount;
                     return null;
                   },
                 ),
@@ -152,10 +157,10 @@ class _KittyExpenseFormState extends ConsumerState<_KittyExpenseForm> {
                 InkWell(
                   onTap: _selectDate,
                   child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Fecha *',
-                      prefixIcon: Icon(Icons.calendar_today),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: loc.kittyDateLabel,
+                      prefixIcon: const Icon(Icons.calendar_today),
+                      border: const OutlineInputBorder(),
                     ),
                     child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate), style: AppTypography.bodyStyle),
                   ),
@@ -166,8 +171,8 @@ class _KittyExpenseFormState extends ConsumerState<_KittyExpenseForm> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-        FilledButton(onPressed: _save, child: const Text('Guardar')),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(loc.cancel)),
+        FilledButton(onPressed: _save, child: Text(loc.save)),
       ],
     );
   }

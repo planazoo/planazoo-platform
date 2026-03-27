@@ -165,6 +165,52 @@ class TimezoneService {
     return '$cityName ($offset)';
   }
 
+  /// Obtiene solo el nombre de ciudad legible de una timezone.
+  static String getTimezoneCityName(String timezone) {
+    final displayNames = {
+      'Europe/Madrid': 'Madrid',
+      'Europe/London': 'Londres',
+      'Europe/Paris': 'París',
+      'Europe/Berlin': 'Berlín',
+      'Europe/Rome': 'Roma',
+      'Africa/Cairo': 'El Cairo',
+      'America/New_York': 'Nueva York',
+      'America/Los_Angeles': 'Los Ángeles',
+      'America/Chicago': 'Chicago',
+      'America/Toronto': 'Toronto',
+      'America/Argentina/Buenos_Aires': 'Buenos Aires',
+      'Asia/Tokyo': 'Tokio',
+      'Asia/Shanghai': 'Shanghái',
+      'Asia/Kolkata': 'Nueva Delhi',
+      'Asia/Dubai': 'Dubái',
+      'Australia/Sydney': 'Sídney',
+      'Pacific/Auckland': 'Auckland',
+    };
+
+    return displayNames[timezone] ?? timezone.split('/').last;
+  }
+
+  /// Devuelve una timezone soportada por la UI.
+  /// Si la timezone no está en la lista común, se aproxima por offset UTC.
+  static String normalizeToCommonTimezone(String timezone) {
+    final common = getCommonTimezones();
+    if (common.contains(timezone)) return timezone;
+    if (!isValidTimezone(timezone)) return 'Europe/Madrid';
+
+    final targetOffset = getUtcOffset(timezone);
+    String best = common.first;
+    double minDelta = (getUtcOffset(best) - targetOffset).abs();
+
+    for (final tz in common.skip(1)) {
+      final delta = (getUtcOffset(tz) - targetOffset).abs();
+      if (delta < minDelta) {
+        minDelta = delta;
+        best = tz;
+      }
+    }
+    return best;
+  }
+
   /// Obtiene la timezone por defecto del sistema
   /// 
   /// Retorna: IANA timezone del sistema

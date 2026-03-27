@@ -4,6 +4,7 @@ import 'package:unp_calendario/features/calendar/domain/models/participant_group
 import 'package:unp_calendario/features/calendar/presentation/providers/participant_group_providers.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// T123: Diálogo para crear o editar grupos de participantes
 class GroupEditDialog extends ConsumerStatefulWidget {
@@ -94,6 +95,7 @@ class _GroupEditDialogState extends ConsumerState<GroupEditDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return AlertDialog(
       title: Text(widget.group == null ? 'Crear Grupo' : 'Editar Grupo'),
       content: SizedBox(
@@ -207,7 +209,7 @@ class _GroupEditDialogState extends ConsumerState<GroupEditDialog> {
                     IconButton(
                       onPressed: _addEmail,
                       icon: const Icon(Icons.add),
-                      tooltip: 'Añadir email',
+                      tooltip: loc.tooltipAddEmailToGroup,
                     ),
                   ],
                 ),
@@ -311,20 +313,21 @@ class _GroupEditDialogState extends ConsumerState<GroupEditDialog> {
   }
 
   void _addEmail() {
+    final loc = AppLocalizations.of(context)!;
     final email = _emailController.text.trim();
     if (email.isEmpty) return;
 
     final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.[A-Za-z]{2,}$');
     if (!emailRegex.hasMatch(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email inválido')),
+        SnackBar(content: Text(loc.snackInvalidEmailShort)),
       );
       return;
     }
 
     if (_memberEmails.contains(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Este email ya está en el grupo')),
+        SnackBar(content: Text(loc.snackEmailAlreadyInGroup)),
       );
       return;
     }

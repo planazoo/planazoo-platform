@@ -47,10 +47,10 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
     final currentUser = ref.read(currentUserProvider);
     if (currentUser == null) return;
     _hasMarkedAsRead = true;
-    await ref.read(markAllMessagesAsReadProvider((
-      planId: widget.planId,
-      userId: currentUser.id,
-    )).future);
+    // Llamar al servicio directamente: `markAllMessagesAsReadProvider` (FutureProvider)
+    // cachea el resultado y no vuelve a ejecutarse al reabrir el chat, dejando el badge.
+    final chatService = ref.read(chatServiceProvider);
+    await chatService.markAllMessagesAsRead(widget.planId, currentUser.id);
     if (!mounted) return;
     ref.invalidate(planMessagesProvider(widget.planId));
     ref.invalidate(unreadMessagesCountProvider(widget.planId));

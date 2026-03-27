@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,7 +6,6 @@ import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_navigation_bar.dart';
-import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
@@ -14,7 +14,6 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
 import 'package:unp_calendario/widgets/dialogs/summary_preview_modals.dart';
-import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/pages/pg_calendar_mobile_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
 import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
@@ -31,6 +30,9 @@ import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart
 import 'package:unp_calendario/widgets/dialogs/payment_dialog.dart';
 import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
+import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
+import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
 
 /// Página de detalle del plan para mobile
 /// Incluye barra de navegación horizontal y contenido según la opción seleccionada
@@ -53,8 +55,45 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   late String _selectedOption;
   bool _hasSetInitialTabForParticipant = false;
   /// Estado del calendario embebido: días visibles (1/2/3) y grupo actual (barra unificada).
-  int _calendarVisibleDays = 1;
+  /// iOS: 3 días por defecto (lista §3.1 / ID 51).
+  int _calendarVisibleDays =
+      (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? 3 : 1;
   int _calendarDayGroup = 0;
+
+  /// [widget.plan] solo refleja el plan al abrir la pantalla; al guardar fechas/duración en Info,
+  /// el documento en Firestore cambia pero el constructor no. Usamos [plansStreamProvider] para
+  /// que calendario, resumen y demás pestañas vean el plan actualizado.
+  Plan _planFromStreamWatch() {
+    final id = widget.plan.id;
+    if (id == null) return widget.plan;
+    final async = ref.watch(plansStreamProvider);
+    return async.when(
+      data: (plans) {
+        for (final p in plans) {
+          if (p.id == id) return p;
+        }
+        return widget.plan;
+      },
+      loading: () => widget.plan,
+      error: (_, __) => widget.plan,
+    );
+  }
+
+  Plan _planFromStreamRead() {
+    final id = widget.plan.id;
+    if (id == null) return widget.plan;
+    final async = ref.read(plansStreamProvider);
+    return async.when(
+      data: (plans) {
+        for (final p in plans) {
+          if (p.id == id) return p;
+        }
+        return widget.plan;
+      },
+      loading: () => widget.plan,
+      error: (_, __) => widget.plan,
+    );
+  }
 
   @override
   void initState() {
@@ -64,9 +103,10 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final plan = _planFromStreamWatch();
     final currentUser = ref.watch(currentUserProvider);
-    final planId = widget.plan.id;
-    final isOrganizer = currentUser?.id == widget.plan.userId;
+    final planId = plan.id;
+    final isOrganizer = currentUser?.id == plan.userId;
     // Si no es organizador y está en Estadísticas, redirigir a Info
     if (!isOrganizer && _selectedOption == 'stats') {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -74,7 +114,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       });
     }
     // T252: Si el usuario es participante (no organizador), abrir por defecto en "Mi resumen"
-    if (widget.initialTab == null && planId != null && currentUser != null && widget.plan.userId != currentUser.id && !_hasSetInitialTabForParticipant) {
+    if (widget.initialTab == null && planId != null && currentUser != null && plan.userId != currentUser.id && !_hasSetInitialTabForParticipant) {
       final participantsAsync = ref.watch(planParticipantsProvider(planId));
       participantsAsync.whenData((participants) {
         final isParticipant = participants.any((p) => p.userId == currentUser.id);
@@ -90,8 +130,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       data: AppTheme.darkTheme,
       child: Scaffold(
         backgroundColor: Colors.grey.shade900,
-        appBar: _buildAppBar(),
-        bottomNavigationBar: _buildQuickActionsBar(),
+        appBar: _buildAppBar(plan),
+        bottomNavigationBar: _buildQuickActionsBar(plan),
         body: SafeArea(
           child: Column(
             children: [
@@ -107,7 +147,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
               ),
               // Contenido según la opción seleccionada
               Expanded(
-                child: _buildContent(),
+                child: _buildContent(plan),
               ),
             ],
           ),
@@ -117,7 +157,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   /// Barra superior: nombre del plan, chip mi estado (dentro/fuera/pend.) y ayuda P18.
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(Plan plan) {
     final loc = AppLocalizations.of(context)!;
     return AppBar(
       backgroundColor: AppColorScheme.color2,
@@ -136,10 +176,10 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         },
       ),
       title: Text(
-        widget.plan.name,
+        plan.name,
         style: GoogleFonts.poppins(
           color: Colors.white,
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
         ),
@@ -155,7 +195,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             children: [
               Center(
                 child: PlanUserStatusLabel(
-                  plan: widget.plan,
+                  plan: plan,
                   compact: true,
                 ),
               ),
@@ -173,9 +213,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  Widget _buildQuickActionsBar() {
+  Widget _buildQuickActionsBar(Plan plan) {
     final loc = AppLocalizations.of(context)!;
-    final planId = widget.plan.id;
+    final planId = plan.id;
     final unreadChat = planId != null
         ? (ref.watch(unreadMessagesCountProvider(planId)).valueOrNull ?? 0)
         : 0;
@@ -213,13 +253,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             _buildQuickActionButton(
               icon: Icons.add_circle_outline,
               onTap: _quickCreateEvent,
-              tooltip: 'Crear evento',
+              tooltip: loc.createEvent,
               isActive: _selectedOption == 'calendar',
             ),
             _buildQuickActionButton(
               icon: Icons.hotel_outlined,
               onTap: _quickCreateAccommodation,
-              tooltip: 'Crear alojamiento',
+              tooltip: loc.tooltipCreateAccommodation,
               isActive: _selectedOption == 'calendar',
             ),
             _buildQuickActionButton(
@@ -318,11 +358,11 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(Plan plan) {
     switch (_selectedOption) {
       case 'planData':
         return PlanDataScreen(
-          plan: widget.plan,
+          plan: plan,
           showAppBar: false,
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
           onPlanDeleted: () {
@@ -332,46 +372,48 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
 
       case 'mySummary':
         return MyPlanSummaryScreen(
-          plan: widget.plan,
+          plan: plan,
           onOpenEvent: _openEventFromSummary,
           onOpenAccommodation: _openAccommodationFromSummary,
           onGoToCalendar: () => setState(() => _selectedOption = 'calendar'),
+          onRequestCreateEvent: () => _openCreateEventDialog(switchToCalendar: false),
+          onRequestCreateAccommodation: () => _openCreateAccommodationDialog(switchToCalendar: false),
         );
       
       case 'calendar':
-        return _buildCalendarTabContent();
+        return _buildCalendarTabContent(plan);
       
       case 'participants':
         return ParticipantsScreen(
-          plan: widget.plan,
+          plan: plan,
           embedInScaffold: false,
         );
       
       case 'chat':
         return PlanChatScreen(
-          planId: widget.plan.id!,
-          planName: widget.plan.name,
+          planId: plan.id!,
+          planName: plan.name,
           embedInPlanDetail: true,
         );
 
       case 'planNotifications':
-        return WdPlanNotificationsScreen(plan: widget.plan);
+        return WdPlanNotificationsScreen(plan: plan);
 
       case 'stats':
         return PlanStatsPage(
-          plan: widget.plan,
+          plan: plan,
           embedInPlanDetail: true,
         );
       
       case 'payments':
         return PaymentSummaryPage(
-          plan: widget.plan,
+          plan: plan,
           embedInPlanDetail: true,
         );
       
       default:
         return PlanDataScreen(
-          plan: widget.plan,
+          plan: plan,
           showAppBar: false,
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
           onPlanDeleted: () {
@@ -382,12 +424,52 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   void _openEventFromSummary(Event event) {
-    if (widget.plan.id == null) return;
+    final p = _planFromStreamRead();
+    if (p.id == null) return;
     showEventSummaryPreviewModal(
       context: context,
       event: event,
       onOpenFull: () => _showEventDialog(event),
     );
+  }
+
+  /// Paridad con `pg_calendar_mobile_page` / `wd_calendar_screen`: `EventDialog` solo construye
+  /// el modelo; hay que persistir en Firestore y cerrar el diálogo aquí.
+  void _invalidateEventProviders() {
+    final p = _planFromStreamRead();
+    if (p.id == null) {
+      if (mounted) setState(() {});
+      return;
+    }
+    final calendarParams = CalendarNotifierParams(
+      planId: p.id!,
+      userId: p.userId,
+      initialDate: p.startDate,
+      initialColumnCount: p.durationInDays,
+    );
+    ref.read(calendarNotifierProvider(calendarParams).notifier).refreshEvents();
+    ref.invalidate(planStatsProvider(p.id!));
+    ref.invalidate(planEventsStreamProvider(p.id!));
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _persistEventFromDialog(Event event) async {
+    final eventService = ref.read(eventServiceProvider);
+    final p = _planFromStreamRead();
+    if (event.id == null) {
+      final eventId = await eventService.createEvent(event);
+      if (event.isDraft && p.userId != null && event.userId != p.userId && p.id != null) {
+        await NotificationHelper().notifyEventProposed(
+          organizerUserId: p.userId!,
+          planId: p.id!,
+          planName: p.name,
+          eventId: eventId,
+          eventDescription: event.description,
+        );
+      }
+    } else {
+      await eventService.updateEvent(event);
+    }
   }
 
   void _showEventDialog(Event event) async {
@@ -397,19 +479,35 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       if (fresh != null) eventToShow = fresh;
     }
     if (!mounted) return;
+    final p = _planFromStreamRead();
+    if (p.id == null) return;
     showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => EventDialog(
         event: eventToShow,
-        planId: widget.plan.id!,
-        onSaved: (_) => setState(() {}),
-        onDeleted: (_) => setState(() {}),
+        planId: p.id!,
+        onSaved: (updatedEvent) async {
+          await _persistEventFromDialog(updatedEvent);
+          _invalidateEventProviders();
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+        },
+        onDeleted: (eventId) async {
+          final eventService = ref.read(eventServiceProvider);
+          await eventService.deleteEvent(eventId);
+          _invalidateEventProviders();
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+        },
       ),
     );
   }
 
   void _openAccommodationFromSummary(Accommodation accommodation) {
-    if (widget.plan.id == null) return;
+    if (_planFromStreamRead().id == null) return;
     showAccommodationSummaryPreviewModal(
       context: context,
       accommodation: accommodation,
@@ -418,50 +516,124 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   void _showAccommodationDialog(Accommodation accommodation) {
-    final planEnd = widget.plan.startDate.add(Duration(days: widget.plan.durationInDays));
+    final p = _planFromStreamRead();
+    if (p.id == null) return;
     showDialog<void>(
       context: context,
       builder: (context) => AccommodationDialog(
         accommodation: accommodation,
-        planId: widget.plan.id!,
-        planStartDate: widget.plan.startDate,
-        planEndDate: planEnd,
-        onSaved: (_) => setState(() {}),
-        onDeleted: (_) => setState(() {}),
+        planId: p.id!,
+        planStartDate: p.startDate,
+        planEndDate: p.endDate,
+        onSaved: (acc) async {
+          final notifier = ref.read(
+            accommodationNotifierProvider(AccommodationNotifierParams(planId: p.id!)).notifier,
+          );
+          final success = await notifier.saveAccommodation(acc);
+          _invalidateEventProviders();
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          if (!success && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          if (mounted) setState(() {});
+        },
+        onDeleted: (accommodationId) async {
+          final notifier = ref.read(
+            accommodationNotifierProvider(AccommodationNotifierParams(planId: p.id!)).notifier,
+          );
+          final success = await notifier.deleteAccommodation(accommodationId);
+          _invalidateEventProviders();
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          if (!success && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Error al eliminar el alojamiento. Por favor, inténtalo de nuevo.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          if (mounted) setState(() {});
+        },
       ),
     );
   }
 
   void _quickCreateEvent() {
-    if (widget.plan.id == null) return;
-    setState(() => _selectedOption = 'calendar');
+    final stayOnSummary = _selectedOption == 'mySummary';
+    _openCreateEventDialog(switchToCalendar: !stayOnSummary);
+  }
+
+  void _openCreateEventDialog({required bool switchToCalendar}) {
+    final p = _planFromStreamRead();
+    if (p.id == null) return;
+    if (switchToCalendar) {
+      setState(() => _selectedOption = 'calendar');
+    }
     showDialog<void>(
       context: context,
-      builder: (context) => EventDialog(
-        planId: widget.plan.id!,
-        initialDate: widget.plan.startDate,
-        onSaved: (_) {
+      barrierDismissible: false,
+      builder: (dialogContext) => EventDialog(
+        planId: p.id!,
+        initialDate: p.startDate,
+        onSaved: (ev) async {
+          await _persistEventFromDialog(ev);
+          _invalidateEventProviders();
           if (!mounted) return;
-          setState(() => _selectedOption = 'calendar');
+          if (switchToCalendar) {
+            setState(() => _selectedOption = 'calendar');
+          } else {
+            setState(() {});
+          }
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
         },
       ),
     );
   }
 
   void _quickCreateAccommodation() {
-    if (widget.plan.id == null) return;
-    final planEnd = widget.plan.startDate.add(Duration(days: widget.plan.durationInDays));
-    setState(() => _selectedOption = 'calendar');
+    final stayOnSummary = _selectedOption == 'mySummary';
+    _openCreateAccommodationDialog(switchToCalendar: !stayOnSummary);
+  }
+
+  void _openCreateAccommodationDialog({required bool switchToCalendar}) {
+    final p = _planFromStreamRead();
+    if (p.id == null) return;
+    if (switchToCalendar) {
+      setState(() => _selectedOption = 'calendar');
+    }
     showDialog<void>(
       context: context,
-      builder: (context) => AccommodationDialog(
-        planId: widget.plan.id!,
-        planStartDate: widget.plan.startDate,
-        planEndDate: planEnd,
-        initialCheckIn: widget.plan.startDate,
-        onSaved: (_) {
+      builder: (dialogContext) => AccommodationDialog(
+        planId: p.id!,
+        planStartDate: p.startDate,
+        planEndDate: p.endDate,
+        initialCheckIn: p.startDate,
+        onSaved: (acc) async {
+          final notifier = ref.read(
+            accommodationNotifierProvider(AccommodationNotifierParams(planId: p.id!)).notifier,
+          );
+          await notifier.saveAccommodation(acc);
+          _invalidateEventProviders();
           if (!mounted) return;
-          setState(() => _selectedOption = 'calendar');
+          if (switchToCalendar) {
+            setState(() => _selectedOption = 'calendar');
+          } else {
+            setState(() {});
+          }
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
         },
       ),
     );
@@ -472,14 +644,15 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   void _quickCreatePayment() {
-    if (widget.plan.id == null) return;
+    final p = _planFromStreamRead();
+    if (p.id == null) return;
     setState(() => _selectedOption = 'payments');
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         fullscreenDialog: true,
         builder: (ctx) => PaymentDialog(
-          planId: widget.plan.id!,
-          plan: widget.plan,
+          planId: p.id!,
+          plan: p,
           onSaved: () {
             if (!mounted) return;
             setState(() => _selectedOption = 'payments');
@@ -494,18 +667,30 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   /// Pestaña Calendario con barra unificada (rango días + 1/2/3).
-  Widget _buildCalendarTabContent() {
-    final totalDays = widget.plan.durationInDays;
+  Widget _buildCalendarTabContent(Plan plan) {
+    final totalDays = plan.durationInDays;
+    final currentStart = _calendarDayGroup * _calendarVisibleDays + 1;
+    if (totalDays > 0 && currentStart > totalDays) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_calendarDayGroup * _calendarVisibleDays + 1 > plan.durationInDays) {
+          setState(() => _calendarDayGroup = 0);
+        }
+      });
+    }
     final startDay = _calendarDayGroup * _calendarVisibleDays + 1;
     final endDay = startDay + _calendarVisibleDays - 1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildUnifiedCalendarBar(totalDays, startDay, endDay),
+        _buildUnifiedCalendarBar(plan, totalDays, startDay, endDay),
         Expanded(
           child: CalendarMobilePage(
-            plan: widget.plan,
+            key: ValueKey(
+              'cal-${plan.id}-${plan.startDate.toIso8601String()}-${plan.endDate.toIso8601String()}',
+            ),
+            plan: plan,
             hideAppBar: true,
             visibleDays: _calendarVisibleDays,
             currentDayGroup: _calendarDayGroup,
@@ -536,7 +721,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   /// Barra única: rango D1-3/7 + botones 1/2/3 días.
-  Widget _buildUnifiedCalendarBar(int totalDays, int startDay, int endDay) {
+  Widget _buildUnifiedCalendarBar(Plan plan, int totalDays, int startDay, int endDay) {
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -600,11 +785,11 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _buildUnifiedDayChip(1),
+                _buildUnifiedDayChip(plan, 1),
                 const SizedBox(width: 4),
-                _buildUnifiedDayChip(2),
+                _buildUnifiedDayChip(plan, 2),
                 const SizedBox(width: 4),
-                _buildUnifiedDayChip(3),
+                _buildUnifiedDayChip(plan, 3),
               ],
             ),
           ),
@@ -613,14 +798,14 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  Widget _buildUnifiedDayChip(int days) {
+  Widget _buildUnifiedDayChip(Plan plan, int days) {
     final isSelected = _calendarVisibleDays == days;
     return GestureDetector(
       onTap: () {
         setState(() {
           _calendarVisibleDays = days;
           final currentStart = _calendarDayGroup * days + 1;
-          if (currentStart > widget.plan.durationInDays) {
+          if (currentStart > plan.durationInDays) {
             _calendarDayGroup = 0;
           }
         });

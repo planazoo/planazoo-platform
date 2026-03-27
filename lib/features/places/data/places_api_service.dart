@@ -38,6 +38,7 @@ class PlaceDetails {
 /// API key: pasar por --dart-define=PLACES_API_KEY=xxx (nunca commitear).
 class PlacesApiService {
   static const _baseUrl = 'https://places.googleapis.com/v1';
+  static const _timezoneBaseUrl = 'https://maps.googleapis.com/maps/api/timezone/json';
 
   final String apiKey;
 
@@ -45,6 +46,18 @@ class PlacesApiService {
       : apiKey = apiKey ?? const String.fromEnvironment('PLACES_API_KEY', defaultValue: '');
 
   bool get isConfigured => apiKey.isNotEmpty;
+
+  Map<String, dynamic>? _asStringDynamicMap(Object? value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      try {
+        return Map<String, dynamic>.from(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
 
   /// Autocomplete para lugares. [input] es el texto que escribe el usuario.
   /// En web se usa Cloud Function (proxy) por CORS; en móvil se llama a la API directa.
@@ -80,7 +93,10 @@ class PlacesApiService {
       },
       body: jsonEncode(body),
     );
-    if (response.statusCode != 200) return [];
+    if (response.statusCode != 200) {
+      debugPrint('PLACES[autocomplete][direct]: status=${response.statusCode} body=${response.body}');
+      return [];
+    }
     return _parseSuggestions(response.body);
   }
 
@@ -100,10 +116,11 @@ class PlacesApiService {
         if (includedPrimaryTypes != null && includedPrimaryTypes.isNotEmpty)
           'includedPrimaryTypes': includedPrimaryTypes,
       });
-      final data = result.data as Map<String, dynamic>?;
+      final data = _asStringDynamicMap(result.data);
       final suggestions = data?['suggestions'] as List<dynamic>? ?? [];
       return _predictionsFromList(suggestions);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('PLACES[autocomplete][function]: error=$e');
       return [];
     }
   }
@@ -113,7 +130,8 @@ class PlacesApiService {
       final data = jsonDecode(body) as Map<String, dynamic>;
       final suggestions = data['suggestions'] as List<dynamic>? ?? [];
       return _predictionsFromList(suggestions);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('PLACES[autocomplete][parse]: error=$e');
       return [];
     }
   }
@@ -121,18 +139,19 @@ class PlacesApiService {
   List<PlacePrediction> _predictionsFromList(List<dynamic> suggestions) {
     final results = <PlacePrediction>[];
     for (final s in suggestions) {
-      final map = s as Map<String, dynamic>;
-      final placePred = map['placePrediction'] as Map<String, dynamic>?;
+      final map = _asStringDynamicMap(s);
+      if (map == null) continue;
+      final placePred = _asStringDynamicMap(map['placePrediction']);
       if (placePred == null) continue;
       final placeId = placePred['placeId'] as String? ?? '';
-      final text = placePred['text'] as Map<String, dynamic>?;
+      final text = _asStringDynamicMap(placePred['text']);
       final fullText = text?['text'] as String?;
-      final structured = placePred['structuredFormat'] as Map<String, dynamic>?;
+      final structured = _asStringDynamicMap(placePred['structuredFormat']);
       String mainText = '';
       String secondaryText = '';
       if (structured != null) {
-        final main = structured['mainText'] as Map<String, dynamic>?;
-        final secondary = structured['secondaryText'] as Map<String, dynamic>?;
+        final main = _asStringDynamicMap(structured['mainText']);
+        final secondary = _asStringDynamicMap(structured['secondaryText']);
         mainText = main?['text'] as String? ?? '';
         secondaryText = secondary?['text'] as String? ?? '';
       }
@@ -174,7 +193,10 @@ class PlacesApiService {
       uri,
       headers: {'X-Goog-Api-Key': apiKey},
     );
-    if (response.statusCode != 200) return null;
+    if (response.statusCode != 200) {
+      debugPrint('PLACES[details][direct]: status=${response.statusCode} body=${response.body}');
+      return null;
+    }
     return _parsePlaceDetails(response.body);
   }
 
@@ -191,10 +213,11 @@ class PlacesApiService {
         if (sessionToken != null) 'sessionToken': sessionToken,
         if (languageCode != null) 'languageCode': languageCode,
       });
-      final data = result.data as Map<String, dynamic>?;
+      final data = _asStringDynamicMap(result.data);
       if (data == null) return null;
       return _detailsFromMap(data);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('PLACES[details][function]: error=$e');
       return null;
     }
   }
@@ -203,7 +226,8 @@ class PlacesApiService {
     try {
       final data = jsonDecode(body) as Map<String, dynamic>;
       return _detailsFromMap(data);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('PLACES[details][parse]: error=$e');
       return null;
     }
   }
@@ -211,8 +235,9 @@ class PlacesApiService {
   PlaceDetails? _detailsFromMap(Map<String, dynamic> data) {
     String displayName = '';
     final displayNameRaw = data['displayName'];
-    if (displayNameRaw is Map<String, dynamic>) {
-      displayName = displayNameRaw['text'] as String? ?? '';
+    final displayNameMap = _asStringDynamicMap(displayNameRaw);
+    if (displayNameMap != null) {
+      displayName = displayNameMap['text'] as String? ?? '';
     } else if (displayNameRaw is String) {
       displayName = displayNameRaw;
     }
@@ -224,7 +249,7 @@ class PlacesApiService {
     final formattedAddress = data['formattedAddress'] as String?;
     double? lat;
     double? lng;
-    final loc = data['location'] as Map<String, dynamic>?;
+    final loc = _asStringDynamicMap(data['location']);
     if (loc != null) {
       lat = (loc['latitude'] as num?)?.toDouble();
       lng = (loc['longitude'] as num?)?.toDouble();
@@ -235,5 +260,58 @@ class PlacesApiService {
       lat: lat,
       lng: lng,
     );
+  }
+
+  /// Obtiene la timezone IANA para unas coordenadas.
+  ///
+  /// En web (o sin API key en cliente), usa Cloud Function para evitar CORS/exposición.
+  Future<String?> getTimezoneForCoordinates({
+    required double lat,
+    required double lng,
+    DateTime? dateTime,
+  }) async {
+    final timestamp = ((dateTime ?? DateTime.now()).millisecondsSinceEpoch / 1000).floor();
+
+    if (kIsWeb || apiKey.isEmpty) {
+      return _timezoneViaFunction(lat: lat, lng: lng, timestamp: timestamp);
+    }
+
+    final uri = Uri.parse(_timezoneBaseUrl).replace(
+      queryParameters: {
+        'location': '$lat,$lng',
+        'timestamp': '$timestamp',
+        'key': apiKey,
+      },
+    );
+    try {
+      final response = await http.get(uri);
+      if (response.statusCode != 200) return null;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final status = data['status'] as String?;
+      if (status != 'OK') return null;
+      return data['timeZoneId'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> _timezoneViaFunction({
+    required double lat,
+    required double lng,
+    required int timestamp,
+  }) async {
+    try {
+      final result = await FirebaseFunctions.instance
+          .httpsCallable('placesTimezone')
+          .call(<String, dynamic>{
+        'lat': lat,
+        'lng': lng,
+        'timestamp': timestamp,
+      });
+      final data = result.data as Map<String, dynamic>?;
+      return data?['timeZoneId'] as String?;
+    } catch (_) {
+      return null;
+    }
   }
 }

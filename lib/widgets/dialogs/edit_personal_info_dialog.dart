@@ -36,6 +36,9 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
   late TextEditingController _numeroReservaController;
   late TextEditingController _gateController;
   late TextEditingController _notasPersonalesController;
+  // T49: información para eventos tipo "Actividad" (código / documento).
+  late TextEditingController _ticketCodeController;
+  late TextEditingController _ticketDocUrlController;
   late bool _tarjetaObtenida;
   
   PlanPermissions? _userPermissions;
@@ -60,6 +63,8 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
     _numeroReservaController = TextEditingController(text: personalFields['numeroReserva'] ?? '');
     _gateController = TextEditingController(text: personalFields['gate'] ?? '');
     _notasPersonalesController = TextEditingController(text: personalFields['notasPersonales'] ?? '');
+    _ticketCodeController = TextEditingController(text: personalFields['ticketCode'] ?? '');
+    _ticketDocUrlController = TextEditingController(text: personalFields['ticketDocUrl'] ?? '');
     _tarjetaObtenida = personalFields['tarjetaObtenida'] ?? false;
   }
 
@@ -91,6 +96,8 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
     _numeroReservaController.dispose();
     _gateController.dispose();
     _notasPersonalesController.dispose();
+    _ticketCodeController.dispose();
+    _ticketDocUrlController.dispose();
     super.dispose();
   }
 
@@ -205,6 +212,8 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
               
               // Campos de información personal
               _buildField('Asiento', _asientoController, Icons.chair),
+              _buildField('Código de entrada (Actividad)', _ticketCodeController, Icons.confirmation_number),
+              _buildField('URL ticket/archivo (opcional)', _ticketDocUrlController, Icons.insert_drive_file),
               _buildField('Menú', _menuController, Icons.restaurant_menu),
               _buildField('Preferencias', _preferenciasController, Icons.favorite),
               _buildField('Número de reserva', _numeroReservaController, Icons.confirmation_number),
@@ -269,6 +278,8 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
         'numeroReserva': _numeroReservaController.text.trim(),
         'gate': _gateController.text.trim(),
         'notasPersonales': _notasPersonalesController.text.trim(),
+        'ticketCode': _ticketCodeController.text.trim(),
+        'ticketDocUrl': _ticketDocUrlController.text.trim(),
         'tarjetaObtenida': _tarjetaObtenida,
       };
 

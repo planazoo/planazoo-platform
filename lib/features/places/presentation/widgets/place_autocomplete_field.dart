@@ -98,6 +98,7 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
   }
 
   void _onTextChanged() {
+    if (!_focusNode.hasFocus) return;
     if (_skipNextFetch) {
       _skipNextFetch = false;
       _debounce?.cancel();
@@ -111,8 +112,7 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
   }
 
   Future<void> _fetchPredictions(String input) async {
-    // En web usamos Cloud Function (no hace falta API key); en móvil sí
-    if (!kIsWeb && _apiKey.isEmpty) return;
+    // Si no hay API key en cliente, PlacesApiService hace fallback a Cloud Function.
     if (input.trim().length < 2) {
       setState(() {
         _predictions = [];
@@ -129,6 +129,10 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
       sessionToken: _sessionToken,
       includedPrimaryTypes: widget.lodgingOnly ? ['lodging'] : null,
       languageCode: _getLanguageCode(),
+    );
+    debugPrint(
+      'PLACES[autocomplete]: input="${input.trim()}" '
+      'predictions=${list.length} apiKeyConfigured=${_apiKey.isNotEmpty} kIsWeb=$kIsWeb',
     );
     if (!mounted) return;
     setState(() {
@@ -195,7 +199,12 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
         ),
       ),
     );
-    Overlay.of(context).insert(_overlayEntry!);
+    final overlay = Overlay.of(context, rootOverlay: true);
+    if (overlay == null) {
+      debugPrint('PLACES[overlay]: No Overlay disponible para mostrar sugerencias');
+      return;
+    }
+    overlay.insert(_overlayEntry!);
   }
 
   double _getFieldWidth() {
@@ -214,9 +223,14 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
   }
 
   Future<void> _selectPlace(String placeId) async {
+    // Evita que un debounce pendiente (del texto previo) reabra sugerencias
+    // justo después de seleccionar una opción.
+    _debounce?.cancel();
+    _skipNextFetch = true;
+    _predictions = [];
+    _focusNode.unfocus();
     _removeOverlay();
     widget.onPlaceIdSelected?.call(placeId);
-    if (!kIsWeb && _apiKey.isEmpty) return;
     setState(() => _loading = true);
     final service = PlacesApiService(apiKey: _apiKey.isEmpty ? null : _apiKey);
     final details = await service.getPlaceDetails(

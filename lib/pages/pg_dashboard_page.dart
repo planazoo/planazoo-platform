@@ -6,6 +6,7 @@ import 'package:unp_calendario/features/calendar/domain/models/plan_participatio
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
@@ -29,6 +30,7 @@ import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_admin_insights_screen.dart';
 import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
+import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
 import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
 import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/plan_calendar_view.dart';
@@ -115,6 +117,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     super.dispose();
   }
 
+  /// Plan coherente con Firestore para el seleccionado (evita calendario con N días desactualizado).
+  Plan? _selectedPlanResolvedFromStream() {
+    final id = selectedPlanId;
+    if (id == null || selectedPlan == null) return selectedPlan;
+    final async = ref.watch(plansStreamProvider);
+    return async.when(
+      data: (plans) {
+        for (final p in plans) {
+          if (p.id == id) return p;
+        }
+        return selectedPlan;
+      },
+      loading: () => selectedPlan,
+      error: (_, __) => selectedPlan,
+    );
+  }
+
   // Método helper para procesar cambios en la lista de planes
   void _processPlansUpdate(List<Plan> plans, {bool forceUpdate = false}) {
     if (!mounted) return;
@@ -190,7 +209,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (identical(list1, list2)) return true; // Misma referencia
     
     for (int i = 0; i < list1.length; i++) {
-      if (list1[i].id != list2[i].id || list1[i].updatedAt != list2[i].updatedAt) {
+      if (list1[i].id != list2[i].id ||
+          list1[i].updatedAt != list2[i].updatedAt ||
+          list1[i].startDate != list2[i].startDate ||
+          list1[i].endDate != list2[i].endDate ||
+          list1[i].columnCount != list2[i].columnCount) {
         return false; // Diferentes
       }
     }
@@ -709,7 +732,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           planId: plan.id!,
           userId: plan.userId,
           initialDate: plan.startDate,
-          initialColumnCount: plan.columnCount,
+          initialColumnCount: plan.durationInDays,
         );
         ref.invalidate(calendarNotifierProvider(calendarParams));
       }
@@ -1486,7 +1509,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   _changeScreen(screen);
                 },
               ),
-              // W26–W27: Filtros y toggle lista/calendario (C2-C5, R3–R4)
+              // W26–W27: Filtros (menú) + vista lista/calendario en una fila (C2-C5, R3); W28 sube una fila
               WdDashboardFilters(
                 columnWidth: columnWidth,
                 rowHeight: rowHeight,
@@ -1540,11 +1563,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildW28(double columnWidth, double rowHeight) {
-    // W28: C2-C5 (R5-R12) - Lista de planazoos con imagen, información e iconos
+    // W28: C2-C5 (R4-R12) - Lista de planazoos (sube 1 fila: filtros ocupan solo R3)
     final w28X = columnWidth; // Empieza en la columna C2 (índice 1)
-    final w28Y = rowHeight * 4; // Empieza en la fila R5 (índice 4)
+    final w28Y = rowHeight * 3;
     final w28Width = columnWidth * 4; // Ancho de 4 columnas (C2-C5)
-    final w28Height = rowHeight * 8; // Alto de 8 filas (R5-R12)
+    final w28Height = rowHeight * 9;
     final displayedPlans = _computeDisplayedPlans(ref);
 
     return Positioned(
@@ -1738,7 +1761,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       case 'mySummary':
         content = selectedPlan != null
             ? MyPlanSummaryScreen(
-                plan: selectedPlan!,
+                plan: _selectedPlanResolvedFromStream() ?? selectedPlan!,
                 onOpenEvent: _openEventFromSummary,
                 onOpenAccommodation: _openAccommodationFromSummary,
                 onGoToCalendar: () => setState(() {
@@ -1798,8 +1821,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // NUEVO: Pantalla de datos principales del plan
   Widget _buildPlanDataScreen() {
     if (selectedPlan == null) return const SizedBox.shrink();
+    final plan = _selectedPlanResolvedFromStream() ?? selectedPlan!;
     return PlanDataScreen(
-      plan: selectedPlan!,
+      plan: plan,
+      onPlanUpdated: (Plan updated) {
+        if (!mounted) return;
+        setState(() {
+          planazoos = [
+            for (final p in planazoos)
+              if (p.id == updated.id) updated else p,
+          ];
+          if (selectedPlanId == updated.id) {
+            selectedPlan = updated;
+          }
+        });
+      },
       onOpenSummary: () => _openPlanTab(selectedPlan!, 'mySummary', 'W15_MYSUMMARY'),
       onPlanDeleted: () {
         setState(() {
@@ -1830,6 +1866,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   void _showEventDialog(Event event) async {
     if (selectedPlan == null || selectedPlan!.id == null) return;
+    final plan = selectedPlan!;
     Event eventToShow = event;
     if (event.id != null) {
       final fresh = await ref.read(eventServiceProvider).getEventByIdFromServer(event.id!);
@@ -1838,11 +1875,42 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (!mounted) return;
     showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => EventDialog(
         event: eventToShow,
-        planId: selectedPlan!.id!,
-        onSaved: (_) => setState(() {}),
-        onDeleted: (_) => setState(() {}),
+        planId: plan.id!,
+        onSaved: (updatedEvent) async {
+          final eventService = ref.read(eventServiceProvider);
+          await eventService.updateEvent(updatedEvent);
+          final calendarParams = CalendarNotifierParams(
+            planId: plan.id!,
+            userId: plan.userId,
+            initialDate: plan.startDate,
+            initialColumnCount: plan.durationInDays,
+          );
+          ref.invalidate(calendarNotifierProvider(calendarParams));
+          ref.invalidate(planStatsProvider(plan.id!));
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          if (mounted) setState(() {});
+        },
+        onDeleted: (eventId) async {
+          final eventService = ref.read(eventServiceProvider);
+          await eventService.deleteEvent(eventId);
+          final calendarParams = CalendarNotifierParams(
+            planId: plan.id!,
+            userId: plan.userId,
+            initialDate: plan.startDate,
+            initialColumnCount: plan.durationInDays,
+          );
+          ref.invalidate(calendarNotifierProvider(calendarParams));
+          ref.invalidate(planStatsProvider(plan.id!));
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          if (mounted) setState(() {});
+        },
       ),
     );
   }
@@ -1859,16 +1927,47 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   void _showAccommodationDialog(Accommodation accommodation) {
     if (selectedPlan == null || selectedPlan!.id == null) return;
-    final planEnd = selectedPlan!.startDate.add(Duration(days: selectedPlan!.durationInDays));
+    final p = selectedPlan!;
+    final planEndDate = DateTime(p.endDate.year, p.endDate.month, p.endDate.day);
     showDialog<void>(
       context: context,
       builder: (context) => AccommodationDialog(
         accommodation: accommodation,
-        planId: selectedPlan!.id!,
-        planStartDate: selectedPlan!.startDate,
-        planEndDate: planEnd,
-        onSaved: (_) => setState(() {}),
-        onDeleted: (_) => setState(() {}),
+        planId: p.id!,
+        planStartDate: p.startDate,
+        planEndDate: planEndDate,
+        onSaved: (updatedAccommodation) async {
+          final accommodationService = ref.read(accommodationServiceProvider);
+          final success = await accommodationService.saveAccommodation(updatedAccommodation);
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          if (!success && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {});
+        },
+        onDeleted: (accommodationId) async {
+          final accommodationService = ref.read(accommodationServiceProvider);
+          final success = await accommodationService.deleteAccommodation(accommodationId);
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          if (!success && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Error al eliminar el alojamiento. Por favor, inténtalo de nuevo.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {});
+        },
       ),
     );
   }
@@ -1983,19 +2082,28 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (selectedPlan == null) {
       return _buildNoPlanSelected();
     }
+    final plan = _selectedPlanResolvedFromStream() ?? selectedPlan!;
+    final calendarKey =
+        '${plan.id}-${plan.startDate.toIso8601String()}-${plan.endDate.toIso8601String()}';
     if (_calendarPanelView == 'summary') {
       final user = ref.watch(currentUserProvider);
-      if (user == null) return CalendarScreen(key: ValueKey(selectedPlan!.id), plan: selectedPlan!, onShowSummary: _showSummaryInPanel);
+      if (user == null) {
+        return CalendarScreen(
+          key: ValueKey(calendarKey),
+          plan: plan,
+          onShowSummary: _showSummaryInPanel,
+        );
+      }
       return WdPlanSummaryScreen(
-        key: ValueKey('summary-${selectedPlan!.id}'),
-        plan: selectedPlan!,
+        key: ValueKey('summary-${plan.id}'),
+        plan: plan,
         userId: user.id,
         onShowCalendar: () => setState(() => _calendarPanelView = 'calendar'),
       );
     }
     return CalendarScreen(
-      key: ValueKey(selectedPlan!.id),
-      plan: selectedPlan!,
+      key: ValueKey(calendarKey),
+      plan: plan,
       onShowSummary: _showSummaryInPanel,
     );
   }

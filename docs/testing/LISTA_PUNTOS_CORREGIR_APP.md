@@ -1,15 +1,15 @@
 ## Lista de puntos a corregir en la app
 
-**Objetivo:** tener en un único sitio todos los temas de la app que vamos detectando (bugs, mejoras de UX, textos, diferencias iOS/web) para ir cerrándolos iteración a iteración.
+**Objetivo:** un único sitio para **nuevos** hallazgos en pruebas (bugs, UX, copy, iOS/web).
 
-**Última actualización de este documento:** 2026-03-12 (P18 estado personal; P3, P11–P13, P19–P20; checklist P1/P2).
+**Última limpieza:** 2026-03-12 — ítems cerrados **P3–P20** archivados; acciones abiertas **P1/P2 (infra)** en [`ACCIONES_PENDIENTES_APP.md`](./ACCIONES_PENDIENTES_APP.md). Histórico: [`ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md`](./ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md) *(borrable cuando no haga falta).* **Backlog nuevo:** §3.1 **2026-03-24** (IDs **34–61**).
 
 ---
 
-### 1. Información del build
+### 1. Información del build (rellenar en cada ronda)
 
-- **Versión de la app**: `1.0.0`
-- **Origen**: TestFlight / Web
+- **Versión de la app**: 
+- **Origen**: TestFlight / Web / Android / …
 - **Fecha de la ronda de pruebas**: 
 - **Build ID (si aplica)**: 
 
@@ -17,337 +17,192 @@
 
 ### 2. Cómo anotar cada punto
 
-Para cada tema de la app que veas (bug o mejora), intenta rellenar:
+Para cada tema nuevo:
 
-- **Plataforma**: iOS / Web / Ambas
-- **Pantalla / flujo**: (ej. Lista de planes, Detalle del plan → Calendario, Invitación, Perfil…)
-- **Descripción breve**: 1 línea que resuma el problema.
-- **Pasos para reproducir**:
-  1. …
-  2. …
-  3. …
-- **Resultado esperado**: qué esperabas que pasara.
-- **Resultado real**: qué pasa ahora.
-- **Notas / capturas**: opcional (enlace o referencia).
+- **ID**: número secuencial (siguiente libre **62** tras §3.1; el histórico en archivo llegó hasta **20**, lista larga en este doc hasta **33**).
+- **Plataforma**: iOS / Web / Ambas / …
+- **Pantalla / flujo**: (ej. Lista de planes, Detalle → Calendario, …)
+- **Tipo**: bug / mejora / copy
+- **Gravedad**: alta / media / baja
+- **Descripción breve**: una línea.
+- **Pasos para reproducir** (opcional pero recomendable).
+- **Resultado esperado** / **resultado real**.
+- **Estado**: pendiente → en curso → hecho (o mover a archivo al cerrar si quieres historial).
 
 ---
 
 ### 3. Puntos detectados
 
-Usa esta tabla para tener visión rápida del estado de cada tema (los ítems **hecho** se mantienen para trazabilidad).
+| ID | Plataforma | Pantalla / flujo | Tipo | Gravedad | Descripción breve | Estado |
+|----|------------|------------------|------|----------|---------------------|--------|
+| — | | | | | *Filas detalladas en §3.1 (34–61) y histórico/archivo.* | |
 
-**Resumen rápido (2026-03-12):** **hecho** 18 · **parcial** 2 · **pendiente** 0 — *hechos: 3–20 salvo 1, 2; parcial: 1, 2 (checklist infra).*
+**Resumen:** *actualizar a mano:* pendiente **·** en curso **·** hecho **.**
 
-| ID | Plataforma | Pantalla / flujo | Tipo (bug / mejora / copy) | Gravedad (alta / media / baja) | Descripción breve | Estado (pendiente / en curso / hecho / parcial) |
-|----|-----------|------------------|-----------------------------|---------------------------------|-------------------|----------------------------------------|
-| 1  | iOS       | Notificaciones push / fondo | mejora               | alta                            | Configurar bien APNs y comportamiento de notificaciones push en iOS (FCM) | parcial (checklist `CHECKLIST_IOS_PUSH_DEEPLINKS.md`) |
-| 2  | iOS       | Invitación por link        | mejora               | media                           | Implementar deep link en iOS para que los links de invitación abran la app en la pantalla correcta | parcial (mismo checklist)              |
-| 3  | iOS       | Barra de pestañas del plan | mejora UX           | baja                            | Revisar barra de pestañas del plan en iPhone pequeño (scroll, legibilidad) | hecho                                  |
-| 4  | iOS       | Crear plan / volver        | bug                  | alta                            | Tras crear un plan nuevo, al pulsar atrás se queda pantalla en blanco | hecho                                  |
-| 5  | iOS       | Estado inicial del plan    | bug                  | media                           | El estado por defecto de un plan nuevo no es “Planificando” | hecho                                  |
-| 6  | iOS       | Cambio de estado del plan  | mejora UX           | media                           | Permitir cambiar el estado desde el icono de estado en Info del plan (derecha de la foto) | hecho                                  |
-| 7  | iOS       | Calendario – scroll        | bug / rendimiento    | alta                            | Desplazamiento vertical del calendario muy lento o casi nulo | hecho                                  |
-| 8  | iOS       | Card de plan – iconos      | mejora UX           | media                           | Alinear los iconos de la derecha de la card de plan verticalmente | hecho                                  |
-| 9  | iOS       | Info plan – títulos campos | mejora visual        | baja                            | Aumentar tamaño de letra de los títulos en el recuadro de Info del plan | hecho                                  |
-| 10 | iOS       | Eliminar plan              | mejora funcional     | media                           | Añadir opción visible para eliminar un plan en Info del plan | hecho                                  |
-| 11 | iOS       | Info plan – participantes  | mejora visual        | baja                            | Llevar “Participantes” al título del recuadro y eliminar el título extra | hecho                                  |
-| 12 | iOS       | Secciones Info (expansibles) | mejora UX         | media                           | Hacer expansibles las secciones Participantes, Avisos y Zona de peligro | hecho                                  |
-| 13 | iOS       | Formulario evento – UI     | mejora UX           | media                           | Unificar la UI de todos los campos (descripciones, timezone, localización, etc.) | hecho                                  |
-| 14 | iOS       | Eventos → refresco vistas  | bug                  | alta                            | Al crear/editar/borrar evento no se actualizan calendario, resumen, etc. | hecho                                  |
-| 15 | iOS       | Página Participantes – barra superior | mejora UX | baja                       | Añadir barra superior verde con título como en el resto de páginas | hecho                                  |
-| 16 | iOS       | Chat y Pagos – navegación  | mejora UX           | baja                            | Quitar la flecha que navega a la página inicial en las páginas de Chat y Pagos | hecho                                  |
-| 17 | iOS       | Orden de pestañas          | mejora UX           | baja                            | Mover pestaña de Pagos entre Chat y Estadística | hecho                                  |
-| 18 | iOS / Web | Estado personal en el plan | mejora funcional     | media                           | Aclarar y exponer cómo cambiar el estado personal (pending → aceptar/rechazar; in → salir); pulir “out” / copy | hecho                                  |
-| 19 | iOS       | Form evento – tipo/subtipo | bug / UX           | media                           | Al seleccionar subtipo de evento desaparece el tipo; alinear con lógica de la web | hecho                                  |
-| 20 | iOS       | Form evento – formato fecha/hora/duración | mejora UX | media                  | Mejorar contenido / formato visible de campos fecha, hora y duración | hecho                                  |
+### 3.1 Ronda 2026-03-24 — nuevos hallazgos (IDs 34–61)
 
-Puedes añadir más filas a medida que aparezcan nuevos puntos.
+**Orden sugerido para implementar** (mismo archivo / dependencias juntos; ajustar si una rama bloquea otra):
 
-**Mejoras recientes fuera de la tabla (referencia):** manual de ayuda en ruta pública `/help` (`HelpManualPage`) accesible desde login y desde dentro de la app (web e iOS); pestaña **Notificaciones del plan** y barra de accesos rápidos en `PlanDetailPage`; diferenciación visual notificaciones leídas/no leídas; en **Mi resumen**, iconos enlace detalle / Maps / URL por evento y alojamiento. *Documentación:* `docs/configuracion/CONTEXT.md` (regla de proximidad de acciones), `docs/especificaciones/CALENDAR_CAPABILITIES.md` (drag & drop solo web).
+| Paso | IDs | Bloque | Por qué este orden |
+|------|-----|--------|---------------------|
+| 1 | **57** | Barra superior (nombre plan) | Cambio localizado; baja riesgo. |
+| 2 | **34** | Chat iOS | Aislado (badge no leídos). |
+| 3 | **35–38** | Info del plan | Misma pantilla/formulario; cerrar duplicados iOS antes de pulir copy. |
+| 4 | **51–56** | Calendario | Constantes/vista días; base visual antes de refinar textos en celdas. |
+| 5 | **45–50** | Formulario evento + modelo/datos | Timezone, localización, participantes, “mi información”, número vuelo/tren persistido (afecta calendario y resumen). |
+| 6 | **39–44** | Resumen del plan | UI + FAB/CRUD/refresh; conviene tras datos de evento (p. ej. 50) si el resumen muestra vuelo/tren. |
+| 7 | **59–60** | Resumen pagos / bote | Pantallas de pagos. |
+| 8 | **61** | Participantes | Lista/invitaciones. |
+| 9 | **58** | General | Verificación **offline first** (manual/QA; no codifica comportamiento hasta confirmar). |
+
+| ID | Plataforma | Pantalla / flujo | Tipo | Gravedad | Descripción breve | Estado |
+|----|------------|------------------|------|----------|---------------------|--------|
+| 34 | iOS | Chat / badge no leídos | bug | media | Al leer el chat, el icono de “no leído” no se actualiza. | hecho (2026-03-24: `markAll` vía `ChatService` directo; `FutureProvider` cacheaba y no re-ejecutaba) |
+| 35 | Ambas | Info del plan | mejora | media | Revisar **orden** de campos y dejar **espacio** entre campos. | hecho (2026-03-24: más aire entre bloques `cardSpacing` 28; nombre/desc/notas) |
+| 36 | Ambas | Info del plan → descripción | mejora | media | Descripción a **ancho completo**; control “ampliar” **dentro** del campo (p. ej. esquina superior derecha), no botón aparte. | hecho (2026-03-24: `Stack` + `IconButton` esquina sup. dcha, padding derecho al texto) |
+| 37 | iOS | Info del plan | bug | media | Hay **dos** secciones “Eliminar plan”; dejar **solo** la del **final** del formulario. | hecho (2026-03-24: eliminado duplicado cuando `showAppBar: false`) |
+| 38 | Ambas | Info del plan → Avisos | mejora | media | Sección **Avisos** solo visible para **admin**. | hecho (2026-03-24: solo organizador `isOrganizer`) |
+| 39 | Ambas | Resumen del plan | mejora | baja | Aumentar un poco el **tamaño de texto** general. | hecho (2026-03-24: tipografías de cabecera, subtítulos, enlaces y cronológico subidas en `MyPlanSummaryScreen`) |
+| 40 | Ambas | Resumen del plan → evento | mejora | baja | Quitar **icono** de acceso al evento si el acceso ya va por **texto enlazado**. | hecho (2026-03-24: eliminado icono `open_in_new`; acceso queda en texto clicable) |
+| 41 | Ambas | Resumen → “Mis vuelos” | copy | baja | No mostrar el texto **“Eventos de tipo avión”** (u equivalente). | hecho (2026-03-24: eliminado `myPlanSummaryFlightsHint`) |
+| 42 | Ambas | Resumen (links web / mapa) | mejora | media | Iconos más **grandes** y visibles: enlace con estilo **“www”**; mapas con **marcador de ubicación**. | hecho (2026-03-24: chips grandes `www` y marcador en filas de resumen + cronológico) |
+| 43 | Ambas | Resumen (itinerario / vuelos / alojamientos) | mejora | media | Secciones **expandibles** **sin** recuadro/enmarcado. | hecho (2026-03-24: secciones expandibles con modo `framed: false`) |
+| 44 | Ambas | Resumen del plan | feature | alta | **FAB “+”** para crear evento o alojamiento desde resumen; **no** navegar al calendario al usar “+” / crear alojamiento en **barra inferior** si ya estamos en resumen; tras **crear/editar/borrar** evento o alojamiento desde resumen, **refrescar** la pantalla de resumen. **Criterio:** mismo flujo que en calendario (mismos modales/diálogos); solo evitar el salto de pestaña. | hecho (2026-03-24: FAB de alta rápida en resumen + persistencia create/update y refresco con invalidación de providers sin salto de pestaña) |
+| 45 | Ambas | Evento (no desplazamiento) | mejora | media | Campo **hora**: selector de **timezone** con el **mismo patrón** que aeropuerto de salida (vuelos). | hecho (2026-03-25: selector rápido con chip/círculo de zona horaria en eventos no desplazamiento, reutilizando picker de vuelos) |
+| 46 | Ambas | Evento → localización | mejora | media | Localización a **ancho completo**, estética estándar; **solo** icono **marcador**; sin otros iconos extra. | hecho (2026-03-25: campo único de localización a ancho completo + acceso Maps con icono marcador) |
+| 47 | Ambas | Evento → participantes | mejora + tarea | media | Mover **límite de participantes** y **requiere confirmación** al **final** del formulario. **Acción aparte:** revisar **lógica de participantes** (coherencia con reglas del plan). | en curso (2026-03-25: reubicados al final del formulario; queda pendiente la revisión funcional profunda de reglas) |
+| 48 | Ambas | Evento | mejora | media | **“Este evento es para todos los participantes”** debajo de **Notas largas**. **Moneda + coste** en **una línea**, debajo de ese selector. | hecho (2026-03-25: selector movido bajo notas largas y fila única moneda+coste justo debajo) |
+| 49 | Ambas | Evento → “Mi información” | feature | media | Contenido según **tipo de evento** (p. ej. actividad: **código o archivo** de entrada). | hecho (2026-03-25: Actividad muestra `ticketCode` + `ticketDocUrl` en Mi información; persistidos en `EventPersonalPart.fields`) |
+| 50 | Ambas | Evento / calendario / resumen | bug/mejora | media | **Número de vuelo, tren, etc.:** persistir y mostrar en **vista calendario** y **vista resumen**. | hecho (2026-03-24: persistencia en `extraData.flightNumber` desde `EventDialog`; render en resumen y título de tarjetas en calendario web/móvil) |
+| 51 | iOS | Calendario | mejora | media | Abrir por defecto vista **3 días**. | hecho (2026-03-24: `PlanDetailPage` + `CalendarMobilePage` con `defaultTargetPlatform == iOS`) |
+| 52 | Ambas | Calendario | mejora | media | Columnas de días con fondos **intercalados** (claro/oscuro) incl. **cabeceras** para separar días. | hecho (2026-03-24: `CalendarTracks` + rejilla `pg_calendar_mobile_page`) |
+| 53 | Ambas | Calendario | QA | media | **Probar scroll horizontal** (regresión). | pendiente (manual; layout sin cambio estructural) |
+| 54 | Ambas | Calendario → cabeceras | mejora | baja | **Línea superior e inferior** en la fila de encabezados de días. | hecho (2026-03-24: borde sup/inf cabecera + columna horas en `CalendarTracks` / `calendar_grid`) |
+| 55 | Ambas | Calendario | mejora | baja | Reducir ~**10%** la altura de la **fila de horas** (slot). | hecho (2026-03-24: `AppConstants.cellHeight` 50→45, `eventRowHeight` 60→54) |
+| 56 | Ambas | Calendario → celdas evento | mejora | media | Eventos **&lt; 45 min**: mostrar **solo el título** (sin texto extra que no quepa). | hecho (2026-03-24: `CalendarConstants.shortEventTitleOnlyMaxMinutes` + móvil y `wd_calendar_screen`) |
+| 57 | Ambas | Barra superior global | mejora | baja | Reducir tamaño de fuente del **nombre del plan** en AppBar. | hecho (2026-03-24: `PlanDetailPage` título 18→16 px) |
+| 58 | Ambas | App / datos | verificación | ? | **Confirmar si offline first funciona** (comportamiento esperado + casos de prueba). Persistencia Firestore no desactivada en código; falta QA en dispositivo. | pendiente |
+| 59 | Ambas | Resumen pagos → registrar pago | mejora | media | Formulario **registrar pago** alineado con **UI estándar** de la app. | hecho (2026-04-04: `PaymentDialog` — mismos patrones que `AddExpenseDialog`, l10n, `FilledButton`, fechas con etiqueta, métodos de pago por id + legacy) |
+| 60 | Ambas | Resumen pagos → bote común | bug | media | Campos **desalineados**; contenido se **sale por la derecha**. | hecho (2026-03-25: `KittyContributionDialog`/`KittyExpenseDialog` eliminar `width: 400` rígido y usar `maxWidth` responsivo) |
+| 61 | Ambas | Participantes | mejora | media | Diferenciar más claro **quienes ya participan** vs **zona de invitación**; lista de **usuarios registrados** más visible. | hecho (2026-03-25: `pg_plan_participants_page` añade sección “Invitaciones pendientes” usando `pendingInvitationsProvider`) |
+
+**Agrupación rápida por zona (misma tabla 34–61):** Chat **34** · Info plan **35–38** · Resumen **39–44** · Eventos **45–50** · Calendario **51–56** · General **57–58** · Pagos **59–60** · Participantes **61**.
 
 ---
 
-### 4. Detalle de cada punto
+### Referencias
 
-#### P1. Notificaciones push iOS (APNs / FCM)
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Notificaciones push (recepción en segundo plano y al abrir la app)
-- **Descripción**: Asegurar que las notificaciones push funcionen bien en iOS (app en primer y segundo plano), con configuración correcta de APNs y FCM.
-- **Pasos para reproducir**:
-  1. Configurar APNs en Firebase Console para la app iOS (certificado o APNs Auth Key).
-  2. Verificar que `GoogleService-Info.plist` está en `ios/Runner/` y apuntando al proyecto correcto.
-  3. Probar envío de notificación desde Firebase a un dispositivo con la app en segundo plano y en primer plano.
-  4. Observar comportamiento en distintas situaciones (app abierta, en background, cerrada).
-- **Resultado esperado**: Las notificaciones llegan de forma fiable en iOS, muestran el contenido correcto y al tocar la notificación se navega al lugar adecuado en la app.
-- **Resultado real**: Pendiente de validar en dispositivo real; hay configuración base pero falta revisión completa (ver `REVISION_IOS_VS_WEB.md` § 2.7).
-- **Notas / capturas**: Ver también `docs/guias/GESTION_TIMEZONES.md` y `docs/configuracion/REVISION_IOS_VS_WEB.md` para contexto general de iOS. **Checklist de verificación:** `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` (sección P1).
-- **Estado**: parcial — checklist documentado; falta validación completa en dispositivo y proyecto Firebase/APNs.
-
-#### P2. Deep link de invitación en iOS
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Invitación por link → aceptación de invitación → entrar al plan
-- **Descripción**: Permitir que, al abrir un link de invitación en iOS (por ejemplo desde un correo), se abra directamente la app en el flujo correcto de invitación/plan.
-- **Pasos para reproducir**:
-  1. Enviar una invitación a un usuario de pruebas con dispositivo iOS.
-  2. Abrir el link desde Mail u otra app en el iPhone.
-  3. Observar si abre solo Safari/web o si abre la app nativa.
-- **Resultado esperado**: El link abre la app Planazoo en iOS y lleva al usuario a la pantalla de invitación / plan correspondiente (similar a la experiencia en web).
-- **Resultado real**: Actualmente el flujo de invitación funciona, pero los links no abren la app nativa en iOS (falta configurar Universal Links o URL scheme). Ver `REVISION_IOS_VS_WEB.md` § 2.3 y § 2.9.
-- **Notas / capturas**: Tarea relacionada T259 (deep link invitación iOS). **Checklist:** `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` (sección P2).
-- **Estado**: parcial — checklist documentado; falta configurar dominio/AASA y Associated Domains en Xcode.
-
-#### P3. Barra de pestañas del plan en iPhone pequeño
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: `PlanDetailPage` → barra de pestañas (Info, Mi resumen, Calendario, Participantes, Chat, Pagos, Stats, Notificaciones)
-- **Descripción**: En iPhones pequeños (ej. SE) las **8** pestañas (incl. notificaciones del plan) pueden estar muy apretadas o requerir demasiado scroll horizontal.
-- **Pasos para reproducir**:
-  1. Abrir la app en un iPhone de pantalla pequeña o simulador equivalente.
-  2. Entrar en el detalle de un plan y revisar la barra de pestañas en vertical.
-  3. Probar el scroll horizontal, tap en cada pestaña y legibilidad de las etiquetas.
-- **Resultado esperado**: Las pestañas son legibles y usables (aunque haya algo de scroll), sin que el usuario se pierda o tenga que hacer demasiados gestos para cambiar de sección.
-- **Resultado real**: Pendiente de prueba manual; se sospecha que puede quedar justo de espacio y merecer un ajuste de diseño (solo iconos, pestaña “Más”, etc.). Ver `REVISION_IOS_VS_WEB.md` § 2.5.
-- **Notas / capturas**: Documentar con capturas de pantalla en distintos dispositivos para decidir el ajuste de UI.
-- **Estado**: pendiente
-
-#### P4. Crear plan y volver deja pantalla en blanco
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Crear plan → finalizar → volver atrás
-- **Descripción**: Al crear un plan nuevo y pulsar la flecha de volver, la pantalla se queda en blanco, mientras que con un plan ya existente funciona bien.
-- **Pasos para reproducir**:
-  1. Desde la lista de planes en iOS, crear un plan nuevo.
-  2. Completar el formulario y guardar.
-  3. Pulsar la flecha de volver.
-- **Resultado esperado**: Volver a la lista de planes o a la pantalla anterior mostrando el nuevo plan sin pantallas en blanco.
-- **Resultado real**: La pantalla se queda en blanco tras crear el plan y pulsar volver.
-- **Notas / capturas**: Revisar navegación tras creación de plan en iOS y estado inicial de la ruta.
-- **Estado**: hecho  
-  **Solución aplicada**: en `PlanDetailPage`, la flecha de volver ahora hace `Navigator.pop()` si la pila puede hacer pop y, si no (`canPop == false`), hace `pushReplacement` a `PlansListPage`. Así, tras crear un plan nuevo, volver nunca deja la app en pantalla negra sino en la lista de planes.
-
-#### P5. Estado inicial del plan = “Planificando”
-
-- **Plataforma**: iOS (afecta al dominio compartido)
-- **Pantalla / flujo**: Crear plan → estado del plan
-- **Descripción**: El estado por defecto de un plan nuevo no es “Planificando” y aparece como “desconocido”.
-- **Pasos para reproducir**:
-  1. Crear un plan nuevo en la app iOS.
-  2. Ir a Info del plan y revisar el estado.
-- **Resultado esperado**: Los planes nuevos se crean con estado “Planificando”.
-- **Resultado real**: El estado aparece como “desconocido” u otro valor no deseado.
-- **Notas / capturas**: Revisar valor por defecto en modelo `Plan` y flujo de creación en iOS.
-- **Estado**: hecho  
-  **Solución aplicada**: se confirmó que los flujos de creación (`PlansListPage` en móvil y `WdCreatePlanModal` en dashboard) crean planes con `state: 'planificando'` y que el modelo `Plan` aplica por defecto `'planificando'` cuando `state` viene nulo. Además, `PlanStateService.getStateDisplayInfo` normaliza estados nulos/vacíos o legacy (`'borrador'`) a `'planificando'`, evitando “DESCONOCIDO” en planes nuevos o antiguos.
-
-#### P6. Cambio de estado desde icono en Info del plan
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Detalle del plan → pestaña Info
-- **Descripción**: Se quiere poder cambiar el estado del plan tocando el icono de estado que está a la derecha de la foto en Info del plan.
-- **Pasos para reproducir**:
-  1. Abrir un plan en iOS y entrar en Info del plan.
-  2. Tocar el icono de estado a la derecha de la foto.
-- **Resultado esperado**: Al tocar el icono se abre el flujo de cambio de estado del plan.
-- **Resultado real**: El menú usaba `RelativeRect` fijo y no posicionaba bien el `showMenu` en móvil.
-- **Notas / capturas**: `InkWell` + `Builder` sobre el badge; `_openPlanStateTransitionMenu` con `RelativeRect.fromRect` respecto al `Overlay`.
-- **Estado**: hecho  
-  **Solución aplicada**: `wd_plan_data_screen.dart` — helper `_openPlanStateTransitionMenu`; una sola transición llama a `_changePlanState`; varias abren menú contextual anclado al badge.
-
-#### P7. Scroll vertical del calendario muy lento
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Calendario del plan en iOS
-- **Descripción**: El desplazamiento vertical en el calendario es extremadamente lento o casi inexistente.
-- **Pasos para reproducir**:
-  1. Abrir un plan con varios eventos en el calendario.
-  2. Intentar desplazarse verticalmente por la vista de calendario.
-- **Resultado esperado**: El scroll vertical debe ser fluido y responder al gesto del usuario.
-- **Resultado real**: El scroll apenas se mueve o va muy lento.
-- **Notas / capturas**: Posible conflicto con `NeverScrollableScrollPhysics`, `NestedScrollView` o listeners de gestos.
-- **Estado**: hecho  
-  **Solución aplicada**: en `CalendarMobilePage` se ajustó la sincronización entre `_hoursScrollController` y `_dataScrollController` usando `_isAutoScrolling` y comprobando la diferencia de offsets antes de hacer `jumpTo`, eliminando `setState()` en los listeners. Así se evitan “peleas” entre scrolls y el desplazamiento vertical es más fluido en iOS.
-
-#### P8. Iconos de la card de plan alineados verticalmente
-
-- **Plataforma**: iOS (pero afecta al widget compartido de cards)
-- **Pantalla / flujo**: Lista de planes (cards de plan)
-- **Descripción**: Los iconos de la derecha de la card de plan deben distribuirse verticalmente, no apelotonados.
-- **Pasos para reproducir**:
-  1. Abrir la lista de planes en iOS.
-  2. Observar la disposición de los iconos en la parte derecha de cada card.
-- **Resultado esperado**: Iconos alineados verticalmente con espaciado consistente y buena legibilidad.
-- **Resultado real**: Corregido: fila de card con `CrossAxisAlignment.center`, separador y columna de iconos con espacio fijo.
-- **Notas / capturas**: `wd_plan_card_widget.dart` y `pg_plans_list_page.dart` (lista iOS).
-- **Estado**: hecho  
-  **Solución aplicada**: `SizedBox` entre iconos, altura del separador ~72, `mainAxisAlignment: spaceEvenly` en la columna de acciones.
-
-#### P9. Tamaño de títulos en Info del plan
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Detalle del plan → Info
-- **Descripción**: Los títulos de los campos dentro del recuadro de Info del plan tienen un tamaño de letra algo pequeño.
-- **Pasos para reproducir**:
-  1. Entrar en Info de un plan.
-  2. Observar los títulos de cada campo dentro del recuadro (fechas, destino, etc.).
-- **Resultado esperado**: Títulos con tamaño de fuente ligeramente superior para mejor legibilidad.
-- **Resultado real**: Subidos de 13 → 14 px en labels de campos Info y resumen del plan.
-- **Notas / capturas**: `_buildDateTile`, `_buildDropdownTile`, `_buildBudgetField`, timezone, resumen nombre/descripción, tiles solo lectura (organizador).
-- **Estado**: hecho  
-  **Solución aplicada**: `wd_plan_data_screen.dart` — `labelStyle` / títulos de bloque a **14** donde aplica.
-
-#### P10. Añadir opción de eliminar plan en Info
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Detalle del plan → Info
-- **Descripción**: La “Zona de peligro” existía pero **al final** del scroll en móvil; muchos usuarios no la veían.
-- **Pasos para reproducir**:
-  1. Abrir Info de un plan en iOS como organizador.
-  2. Sin hacer scroll largo, localizar eliminar plan.
-- **Resultado esperado**: Opción visible con confirmación (contraseña, mismo flujo que antes).
-- **Resultado real**: Bloque de peligro visible **arriba** del contenido de Info cuando `PlanDataScreen` va embebido en `PlanDetailPage` (`showAppBar: false`); en dashboard web (`showAppBar: true`) se mantiene al final como antes.
-- **Notas / capturas**: Textos con `planInfoDangerZoneTitle` / `planInfoDangerZoneSubtitle` (l10n). Limpieza: un solo `_deletePlan` en estado y mapeo de errores en extensión.
-- **Estado**: hecho  
-  **Solución aplicada**: `wd_plan_data_screen.dart` — si `!showAppBar`, insertar `_buildDeleteButton()` justo después del resumen del plan; si `showAppBar`, solo al final. `pg_plan_detail_page` (default): `onPlanDeleted` para volver a la lista.
-
-#### P11. Recuadro de participantes en Info
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Detalle del plan → Info → bloque de participantes
-- **Descripción**: En Info del plan, el recuadro de participantes debería llevar el título “Participantes” dentro del propio recuadro, eliminando un título duplicado encima.
-- **Pasos para reproducir**:
-  1. Entrar en Info del plan.
-  2. Observar el bloque de participantes y sus títulos.
-- **Resultado esperado**: Título “Participantes” integrado en el recuadro, consistente con el resto de campos.
-- **Resultado real**: Título externo + recuadro sin título propio.
-- **Notas / capturas**: Cabecera del recuadro con título + ayuda + chevron; cuerpo con lista / vacío.
-- **Estado**: hecho  
-  **Solución aplicada**: `wd_plan_data_screen.dart` — bloque Participantes con título dentro del card y patrón alineado con el resto de secciones Info.
-
-#### P12. Secciones Participantes / Avisos / Zona de peligro expansibles
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Detalle del plan → Info
-- **Descripción**: Hacer que las secciones “Participantes”, “Avisos” y “Zona de peligro” sean expansibles/plegables para reducir ruido visual.
-- **Pasos para reproducir**:
-  1. Entrar en Info del plan.
-  2. Revisar bloques de Participantes, Avisos y Zona de peligro.
-- **Resultado esperado**: Cada bloque se puede expandir/plegar, mostrando solo títulos cuando están contraídos.
-- **Resultado real**: Todas las secciones están siempre abiertas.
-- **Notas / capturas**: Posible uso de `ExpansionTile` o similar.
-- **Estado**: pendiente
-
-#### P13. Formulario de evento – unificar UI de campos
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Formulario de creación/edición de evento
-- **Descripción**: Algunos campos (ej. timezone, localización) no siguen la misma UI/UX que otros campos del formulario (descripción, ayudas, layout).
-- **Pasos para reproducir**:
-  1. Abrir formulario de evento en iOS.
-  2. Comparar el aspecto de campos como descripción, timezone y localización.
-- **Resultado esperado**: Todos los campos del formulario comparten patrón visual y de interacción (labels, helper text, etc.).
-- **Resultado real**: Hay campos que usan una UI distinta o menos clara.
-- **Notas / capturas**: Helper `_buildTimezoneFieldOnBorder` (título sobre borde como `_buildLabelOnBorderField`); bloque vuelo reutiliza el mismo patrón en columna estrecha.
-- **Estado**: hecho  
-  **Solución aplicada**: `wd_event_dialog.dart` — timezones de evento general y de llegada (no avión) con el mismo estilo que descripción/límite; dropdown sin `Container` duplicado tipo login.
-
-#### P14. Refresco del calendario y resumen tras cambios de eventos
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Calendario / Mi resumen / Info tras crear/editar/borrar evento
-- **Descripción**: Al crear, modificar o eliminar un evento en iOS, el calendario, el resumen y otras vistas relacionadas no se actualizan automáticamente.
-- **Pasos para reproducir**:
-  1. Crear/editar/borrar un evento en iOS.
-  2. Volver al calendario o a Mi resumen.
-- **Resultado esperado**: Las vistas se actualizan inmediatamente reflejando el cambio.
-- **Resultado real**: No se ve actualizado hasta que se fuerza un refresco más fuerte (salir y volver, etc.).
-- **Notas / capturas**: Revisar providers/streams y notificación de cambios en iOS.
-- **Estado**: hecho  
-  **Solución aplicada**: en `CalendarMobilePage` se añadió `_invalidateEventProviders()` y se usa en `onSaved`/`onDeleted` de los diálogos de eventos y alojamientos. Este helper llama a `calendarNotifier.refreshEvents()`, invalida `planStatsProvider` y hace `setState()`, de forma que calendario, resumen y vistas relacionadas se actualizan inmediatamente tras crear/editar/eliminar eventos en iOS.
-
-#### P15. Barra superior verde en página Participantes
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Página de participantes del plan
-- **Descripción**: La página de participantes no tiene la misma barra superior verde con título que otras pantallas.
-- **Pasos para reproducir**:
-  1. Navegar a la página de participantes en iOS.
-  2. Comparar encabezado con otras páginas (Info, Calendario, etc.).
-- **Resultado esperado**: Barra superior consistente (verde con título) como el resto de secciones del plan.
-- **Resultado real**: En pestaña Participantes embebida no había barra; ahora sí.
-- **Notas / capturas**: Mismo estilo que `_buildParticipantsHeader()` (color2, 48px).
-- **Estado**: hecho  
-  **Solución aplicada**: `ParticipantsScreen` — si `isCompact && !embedInScaffold`, `Column(_buildParticipantsHeader(), Expanded(gradientBox))`.
-
-#### P16. Flecha de navegación en Chat y Pagos
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Pestañas Chat y Pagos del plan (`PlanDetailPage`)
-- **Descripción**: En la barra superior de Chat y Pagos aparecía una flecha (leading implícito del `AppBar`) que hacía **pop** de toda la ruta y sacaba a la lista de planes, en lugar de limitarse al cambio de pestaña.
-- **Pasos para reproducir**:
-  1. Entrar en Chat y luego en Pagos desde el detalle de un plan.
-  2. Observar la barra superior y la flecha de navegación.
-- **Resultado esperado**: No debería haber una flecha que saque fuera del flujo del plan; navegación consistente con el resto de pestañas.
-- **Resultado real**: Corregido al desactivar el leading implícito cuando el contenido está embebido en el detalle.
-- **Notas / capturas**: Causa: `Navigator.canPop` es true bajo `PlanDetailPage`, y el `AppBar` interno mostraba back. **Dashboard web** no pasa el flag (sigue el comportamiento por defecto).
-- **Estado**: hecho  
-  **Solución aplicada**: parámetro `embedInPlanDetail: true` en `PlanChatScreen`, `PaymentSummaryPage` y `PlanStatsPage` (misma causa en Estadísticas); con `automaticallyImplyLeading: false` en esos `AppBar` cuando aplica. `PlanDetailPage` pasa el flag al incrustar esas pestañas.
-
-#### P17. Orden de pestañas: colocar Pagos entre Chat y Estadística
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Barra de pestañas de `PlanDetailPage`
-- **Descripción**: Se desea que la pestaña de Pagos esté situada entre Chat y Estadística.
-- **Pasos para reproducir**:
-  1. Abrir detalle de un plan en iOS.
-  2. Revisar el orden actual de pestañas.
-- **Resultado esperado**: Orden: Info, Mi resumen, Calendario, Participantes, Chat, Pagos, Stats (y Notificaciones del plan al final del bloque; ver solución).
-- **Resultado real**: ~~Pagos al final del todo~~ → **corregido** (ver solución).
-- **Notas / capturas**: `PlanNavigationBar` (`wd_plan_navigation_bar.dart`).
-- **Estado**: hecho  
-  **Solución aplicada**: en `lib/widgets/plan/wd_plan_navigation_bar.dart` el orden de `NavigationOption` es: Info, Mi resumen, Calendario, Participantes, Chat, **Pagos**, **Stats**, Notificaciones.
-
-#### P18. Cómo cambiar mi estado en el plan (in / out)
-
-- **Plataforma**: iOS (y mismo patrón en web donde aplique el chip)
-- **Pantalla / flujo**: Estado personal dentro de un plan (lista de planes, card de plan, barra superior del plan, participantes)
-- **Descripción**: Aclarar pending / dentro / fuera y unificar feedback al pulsar **fuera** (rechazado).
-- **Pasos para reproducir**:
-  1. Entrar en un plan como participante con invitación pendiente o ya dentro del plan.
-  2. Pulsar el chip de estado en card, barra superior o lista de planes.
-- **Resultado esperado**: Textos comprensibles en español en chips compactos; ayuda contextual; al pulsar **fuera**, mensaje coherente con Notificaciones.
-- **Resultado real**: Cumplido (ver solución).
-- **Notas / capturas**: `plan_status_chip_actions.dart`; chips en `PlanCardWidget`, `PlansListPage`, `PlanUserStatusLabel`, `ParticipantsScreen`. Ayuda: `HelpContextIds.planDetailMyStatus`, seed `plan_detail.my_status`. Doc: `docs/ux/ESTADO_USUARIO_EN_EL_PLAN.md`.
-- **Estado**: hecho  
-  **Solución aplicada**: etiquetas cortas ES (**dentro** / **fuera** / **pend.**); **?** en AppBar del plan con texto de ayuda; `Semantics` en el chip; SnackBar `planStatusRejectedSnackbar` al pulsar **fuera** en AppBar, card, lista iOS y fila “yo” en participantes; corrección lógica: solo `status == 'pending'` cuenta como pendiente (eliminado `needsResponse` ambiguo que incluía `null` y duplicaba con `isPending`).
-
-#### P19. Formulario de evento – tipo y subtipo
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Formulario de evento (tipo/subtipo)
-- **Descripción**: Al seleccionar un subtipo de evento, el tipo deja de mostrarse o desaparece de la UI; debería comportarse como en web.
-- **Pasos para reproducir**:
-  1. Abrir formulario de evento en iOS.
-  2. Seleccionar un tipo de evento y luego un subtipo.
-- **Resultado esperado**: Tipo y subtipo se muestran de forma coherente, manteniendo el contexto.
-- **Resultado real**: El tipo parece desaparecer al elegir subtipo.
-- **Notas / capturas**: Sustituido `Row`+`Expanded` por `Wrap` para que tipo y subtipo no compitan por ancho.
-- **Estado**: hecho  
-  **Solución aplicada**: `wd_event_dialog.dart` — `_buildTypeSubtypeSelector`: chips de tipo y subtipo en `Wrap` cuando la selección está colapsada.
-
-#### P20. Formulario de evento – contenido de fecha, hora y duración
-
-- **Plataforma**: iOS
-- **Pantalla / flujo**: Formulario de evento (campos fecha, hora, duración)
-- **Descripción**: El contenido visible en los campos de fecha, hora y duración debería ser más claro/consistente (formato, placeholders, etc.).
-- **Pasos para reproducir**:
-  1. Abrir formulario de evento en iOS.
-  2. Observar campos fecha, hora y duración antes y después de seleccionar valores.
-- **Resultado esperado**: Valores legibles, con formato consistente y fácil de entender.
-- **Resultado real**: Formato y contenido mejorables.
-- **Notas / capturas**: Claves l10n `eventDurationFormatMinutes`, `eventDurationFormatOneHour`, `eventDurationFormatHoursOnly`, `eventDurationFormatHoursMinutes` en `app_es.arb` / `app_en.arb`.
-- **Estado**: hecho  
-  **Solución aplicada**: hora con `DateFormatter.formatTimeOnly`; duración con `_formatDuration` usando `AppLocalizations` (es/en coherentes).
+- Infra iOS (push / deep links): [`docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md`](../configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md) y [`ACCIONES_PENDIENTES_APP.md`](./ACCIONES_PENDIENTES_APP.md).
+- Normas generales: [`docs/configuracion/CONTEXT.md`](../configuracion/CONTEXT.md).
 
 
+### Puntos 22-3-2026 — agrupación por zona (prioridad iOS)
+
+| Zona | IDs | Notas |
+|------|-----|--------|
+| **Info del plan** (`wd_plan_data_screen` y relacionados) | 1, 4, 10, 11, 20, 24 | Incluye modal eliminar, guardar/cancelar, descripción, docs (9 solo diseño) |
+| **Resumen del plan / Mi resumen** | 2, 27, 28 | Lista participantes, separadores día, borradores |
+| **Formulario y modal de eventos** | 3, 14–17, 19, 21–23, 26, 30, 32, 33 | Tipos/subtipos, timezone vuelos, duración, texto largo, localizaciones |
+| **Calendario web** | 13, 16, 18 (opinión), 29 | FAB, modal que no se cierra al click fuera, vista días |
+| **Lista de planes / vista calendario iOS** | 8 | Calendario en iOS |
+| **Login** | 6 | Snackbars error/info |
+| **Perfil iOS** | 5 | Tamaño userid en AppBar |
+| **Administrador** | 7 | Huérfanos Firestore |
+| **Invitaciones / participantes** | 12 | Añadir sin invitar, asignar antes de invitar |
+| **Catálogo tipos de evento / alojamiento** | 25, 31 | Crucero, ancho cards |
+| **UX transversal** | 9 | Anexar documentos (solo conversación) |
+
+**Progreso (implementado en código, 2026-03-12 ronda amplia):**
+
+| Punto | Qué se hizo |
+|-------|-------------|
+| **1, 4, 6** | (ronda anterior) Secciones plegadas, iconos, “Eliminar plan”, modal eliminar con tema, snackbar login. |
+| **2** | Mi resumen: sección **Participantes** con `ParticipantsListWidget` (compacto, sin acciones); **todas las secciones plegadas por defecto** (`_importantExpanded`, hoy/mañana, participantes, cronológico). |
+| **3** | Form evento: `hasSubtype` por texto de subtipo (no solo si está en la lista de subtipos) para que tipo + subtipo sigan visibles. |
+| **5** | Perfil: usuario en cabecera con `mediumTitle` 16px, `Flexible` + ellipsis (ya no `largeTitle` 32px). |
+| **7** | Admin: tarjeta **“Registros huérfanos”** → `PlanParticipationService.auditParticipations(deleteOrphans: false)` + resultado. |
+| **8** | Lista de planes (móvil): **toggle lista / calendario** con `PlanCalendarView` y apertura de `PlanDetailPage`. |
+| **10** | Info plan: botones Guardar/Cancelar más visibles (`color3`, padding); **PopScope** + diálogo al salir con cambios; back llama a confirmación. |
+| **11** | Descripción: botón **ampliar** (`Icons.open_in_full`) abre modal de edición larga. |
+| **13** | Web calendario: **FAB** `+` (solo `kIsWeb` y si el plan permite crear eventos) → nuevo evento inicio plan 10:00. |
+| **16** | `EventDialog`: `barrierDismissible: false` en `showDialog` (plan detalle, calendario web/móvil, dashboard). |
+| **20** | Campo Firestore `referenceNotes` en `Plan` + formulario “Notas y referencias del plan” en Info. |
+| **21** | Nuevo evento: hasta elegir tipo válido solo selector + hint; pestaña General oculta el resto; validación al guardar sin tipo. |
+| **24** | Al cargar plan en evento nuevo, **timezone por defecto** = `plan.timezone` (salida y llegada). |
+| **15** | Evento vuelo: al seleccionar origen/destino con Places, se intenta **autocalcular timezone** por coordenadas (normalizada a la lista común del selector). |
+| **25** | Alojamiento: tipo **Crucero** en desplegable. |
+| **26** | Evento: campo **Notas largas** (`commonPart.notes`, hasta 8000 chars sanitizado). |
+| **27** | Resumen cronológico: **línea fina** entre días distintos. |
+| **28** | Resumen: chip **“Borrador”** si `isDraft` o `commonPart.isDraft`. |
+| **29** | Calendario: menú opciones → **“Todos los días del plan”** (hasta `maxVisibleDays` 45); `calendar_constants` actualizado. |
+| **30** | Subtipo **Tour** en Actividad. |
+| **31** | Ancho de tarjeta de evento: ~**94%** de subcolumna (`_calculateEventPosition`). |
+| **32** | Subtipos **Shuttle** y **Transfer** en Desplazamiento. |
+| **23** | Nueva familia **Acción** (Embarque, Recogida, Entrega, Otro) con iconos. |
+
+**Sin código / pendiente / solo diseño:** **9** (documentos en descripción), **12**, **14–15**, **17–19**, **22**, **33**; **18** opinión UX modal vs página.
+
+### 4. Pendientes activos (prioridad iOS)
+
+Nuevo backlog detallado y orden de trabajo: **§3.1 (IDs 34–61)**.
+
+| ID | Estado | Próximo paso sugerido |
+|----|--------|------------------------|
+| 12 | Pendiente | Definir flujo final “añadir sin invitar” + permisos de asignación antes de invitar. |
+| 14 | Hecho (2026-04-04) | Desplazamiento **no avión**: `showCityInMenuAndGmtSelected` + filas ciudad + GMT en el desplegable; cerrado solo GMT. Vuelos ya usaban bottom sheet con ciudad + GMT. |
+| 15 | En curso | Implementado en app (autodetección por coordenadas); pendiente desplegar Cloud Function `placesTimezone` y validar en iOS/web. |
+| 17 | Pendiente | Revisar integración de autocompletado/importación de datos de vuelos en web. |
+| 18 | Decisión UX pendiente | Decidir si “Nuevo evento” web sigue en modal o pasa a página completa tipo W31. |
+| 19 | Hecho (2026-04-04) | Calendario web: `departureAirport`/`arrivalAirport` (y `originName`/`destinationName`) para etiquetas de vuelo; fallback ciudad IANA. Tooltip avión alineado. |
+| 22 | Pendiente | Rediseñar duración personalizada con UI más clara/consistente. |
+| 33 | Pendiente | Selector de localizaciones: combinar nuevas + existentes del plan con iconografía diferenciada. |
+
+### 5. Notas de consistencia funcional
+
+- El flujo vigente del plan ya no contempla estado **Borrador**.  
+- El punto **28** se considera resuelto a nivel histórico, pero su copy/semántica deberá migrarse a “no confirmado” o equivalente si vuelve a tocarse esa zona.
+
+### 6. Cobertura en plan de testing
+
+- Se añadió cobertura explícita en `docs/configuracion/TESTING_CHECKLIST.md` (sección **12.3 Regresión funcional (puntos cerrados 2026-03)**, casos `REG-2026-001` a `REG-2026-015`).
+- Esta batería cubre los cierres funcionales con impacto de UX/comportamiento en iOS/web de esta lista y del archivo histórico.
+
+*Instrucción original:* ordenar por páginas/tareas antes de codificar; prioridad **iOS**.
+
+Recuerda que le damos prioridad a la app iOS
+
+
+
+1. en la pagoina info, las secciones Participantes, Avisos, y zona de peligro han nde estar cerradas por defecto. añadir un icono a la de Avisos y la de de Zona de peligro. Cambiar el nombre Zona de peligro por "Eliminar plan". Hacer la zona
+2. En Mi Resumen, añadir la lista de participantes.
+3. En el form de evento, revisar esto porque ya funcionaba: al seleccionar un tipo de evento, aparecen los subtipos. Al seleccionar un subtipo solo se que queda visible el subtipo 
+4. El modal "Eliminar plan": los textos no se ven bien. Ajustar a la UI standard. 
+5. En iOS: la pagina de perfil de usuario no sigue completamente la UI standard. En la barra superior, el userid es muy grande
+6. En la pagina de login, si se produce un erorr aparece una barra roja en la parte inferior. si el usuario no la cierra, hacerla desaparece en unos segundos
+7. En la página administrador_ crear un botón que analice la base de datos de firestore  y busque registros "huérfanos". Creo que ya tenemos algún código que hace eso, revisarlo. 
+8. En iOS, en la página de planes, no podemos ver los planes en formato calendario (en web si)
+9. En la info del plan, en el campo descripción, quiero poder anexar documnentos. No codifiques. Hablemos de como hacerlo
+10. Info del plan, al lhgacer modificaciones aparecen los botones de Guardar y Cancelar. Son poco visibles. Hemos de añadir que al salir de esa página, si hay cambios, el sistema pregunte si queremos guardarlos o cancelarlos
+11. Info del plan. El campo descrpcion, poner un incono de "+" para ampliarlo, bien en el mismo form o con un  modal, como prefieras. 
+12. Invitaciones al plan. Quiero poder añadir participantes al plan sin invitarlos. A la hora de planificar el plan, quiero poder asignar eventos a participantes. Una vez lo tenga todo planificado los invito. 
+13. En la página calenario en la web, añadir un botón "+" flotante para crear eventos.
+14. En el modal eventos, el campo timezone de los vuelos, solo muestra GMt+n... como opciones debería mostrar los nomhres de las ciudades en el selector y solo GMT+n al mostrar la opción sleeccionada.
+15. Modal de eventos. Calcular la timezone en base a la dirección seleccionada
+16. Web: modal nuevo evento. Desaparece al clickar fuera del modal y se pierden los datos. 
+17. Web: al seleccionar un vuelo y descargar los datos del vuelo no los localiza.
+18. Web: el form de creación de enveto, es mejor que no sea un modal y que ocupe W31 como las otras páginas. ¿Qué opinas? 
+19. El evento vuelo que se muestra en el calenadrio: Muestra las ciudades de origen y salida en base a la timezone. Debería ser en base a la ciudad del aeropuerto. 
+20. En info del plan, necesito una sección para guardar informaciones del plan. Ejemplo: correos con la agencia, correos con los proveedores de servicio. De momento copio y pego la información en texto plano. 
+21. Nuevo evento. Si no se selecciona el tipo de evento, no se muestra el resto de campo
+22. El selector de duración del evento me ha de permitir poner una duración personalizada. El sistema actual no  es muy estético. 
+23. En el tipo de evento, necesito un evento que sea tipo acción o algo parecido. Ejemplo: embarcar en un crucero, recoger algo, etc...
+24. La zona horaria en la info del plan ha de aplicarse por defecto a todos los eventos del plan. 
+25. En tipo de alojamiento añadir "Crucero"
+26. En el evento, quiero poder añadir textos largos. Ejemplo: descripción que nos pasa una agencia.  Añadir un campo para poder hacerlo
+27. En el resumen del plan, vamos a poner una linea fina horizontal separando los días para ver claramentte el cambio de dia
+28. Resumnen del plan: si un evento está en borrador, marcar de alguna forma que el evento no está confirmado
+29. Web: En el calendario, añadir la opción demostrar en pantalla todos los días del plan. 
+30. Form evento: Añadir subtipo "Tour" dentro de actividad
+31. Las cards de los eventos ocupan exactamanete toda la columna del día. Quiero que sea un poco más estrecha. 
+32. En evento: añadir subtipo "shuttle" o "transfer" dentro de desplazamineto. Son los traslados que se hacen con el servicio del hotel. 
+33. Cuando podamos buscar una localización en eventos sería bueno poder seleccionar una nueva localizacion o una existente en el plan. Es decir, si tenemos la locaclizacion de un alojamiento y hacemos traslados de y hacia ese alojamineot, en la lista de localizaciones, ese alojamiento debería estar visible para poder seleccionarlo como origen o destino. Quizás hemos de añadir un icono diferente para mostrrar localizaciones del plan. 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/features/calendar/domain/models/participant_track.dart';
 import 'package:unp_calendario/features/calendar/domain/services/track_service.dart';
 
@@ -29,7 +30,7 @@ class CalendarTrackReorder {
           content: SizedBox(
             width: 500,
             height: 400,
-            child: _buildUnifiedView(allTracks, selectedTracks, currentUserId, setDialogState),
+            child: _buildUnifiedView(context, allTracks, selectedTracks, currentUserId, setDialogState),
           ),
           actions: [
             TextButton(
@@ -64,6 +65,7 @@ class CalendarTrackReorder {
 
   /// Vista unificada con drag & drop + checkboxes
   Widget _buildUnifiedView(
+    BuildContext context,
     List<ParticipantTrack> tracks, 
     Set<String> selectedTracks, 
     String currentUserId,
@@ -184,11 +186,11 @@ class CalendarTrackReorder {
         
         // Validación
         if (selectedTracks.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(16.0),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Text(
-              '⚠️ Debes seleccionar al menos un participante',
-              style: TextStyle(color: Colors.orange),
+              '⚠️ ${AppLocalizations.of(context)!.calendarSelectAtLeastOneParticipant}',
+              style: const TextStyle(color: Colors.orange),
             ),
           ),
       ],
@@ -196,10 +198,11 @@ class CalendarTrackReorder {
   }
 
   /// Construye el botón de gestión de participantes para el AppBar
-  Widget buildParticipantManagementButton(VoidCallback onPressed) {
+  Widget buildParticipantManagementButton(BuildContext context, VoidCallback onPressed) {
+    final loc = AppLocalizations.of(context)!;
     return IconButton(
       icon: const Icon(Icons.people, color: Colors.white),
-      tooltip: 'Gestionar Participantes',
+      tooltip: loc.tooltipManageParticipantsCalendar,
       onPressed: onPressed,
     );
   }

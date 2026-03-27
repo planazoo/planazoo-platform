@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
-/// Filtros y toggle de vista del dashboard (W26–W27): botones Todos/Estoy in/Pendientes/Cerrados
-/// y toggle Lista / Calendario.
+/// Filtros y vista del dashboard (W26–W27): un botón de filtros (menú) + toggle Lista / Calendario en la misma fila.
+/// Paridad con `PlansListPage` (iOS/móvil).
 class WdDashboardFilters extends StatelessWidget {
   final double columnWidth;
   final double rowHeight;
@@ -23,17 +23,22 @@ class WdDashboardFilters extends StatelessWidget {
     required this.onViewModeChanged,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        _buildW26(context, columnWidth, rowHeight),
-        _buildW27(context, columnWidth, rowHeight),
-      ],
-    );
+  String _filterLabel(AppLocalizations loc) {
+    switch (selectedFilter) {
+      case 'estoy_in':
+        return loc.dashboardFilterEstoyIn;
+      case 'pendientes':
+        return loc.dashboardFilterPending;
+      case 'cerrados':
+        return loc.dashboardFilterClosed;
+      case 'todos':
+      default:
+        return loc.dashboardFilterAll;
+    }
   }
 
-  Widget _buildW26(BuildContext context, double columnWidth, double rowHeight) {
+  @override
+  Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return Positioned(
       left: columnWidth,
@@ -46,16 +51,117 @@ class WdDashboardFilters extends StatelessWidget {
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildFilterButton('todos', loc.dashboardFilterAll, columnWidth, rowHeight),
-                    const SizedBox(width: 2),
-                    _buildFilterButton('estoy_in', loc.dashboardFilterEstoyIn, columnWidth, rowHeight),
-                    const SizedBox(width: 2),
-                    _buildFilterButton('pendientes', loc.dashboardFilterPending, columnWidth, rowHeight),
-                    const SizedBox(width: 2),
-                    _buildFilterButton('cerrados', loc.dashboardFilterClosed, columnWidth, rowHeight),
+                    Expanded(
+                      child: PopupMenuButton<String>(
+                        tooltip: loc.plansListFiltersButton,
+                        initialValue: selectedFilter,
+                        color: Colors.grey.shade900,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: AppColorScheme.color2.withValues(alpha: 0.7),
+                            width: 1.5,
+                          ),
+                        ),
+                        onSelected: onFilterChanged,
+                        itemBuilder: (context) => [
+                          PopupMenuItem<String>(
+                            value: 'todos',
+                            child: _filterMenuRow(loc, loc.dashboardFilterAll, 'todos'),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'estoy_in',
+                            child: _filterMenuRow(loc, loc.dashboardFilterEstoyIn, 'estoy_in'),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'pendientes',
+                            child: _filterMenuRow(loc, loc.dashboardFilterPending, 'pendientes'),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'cerrados',
+                            child: _filterMenuRow(loc, loc.dashboardFilterClosed, 'cerrados'),
+                          ),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade800,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColorScheme.color2.withValues(alpha: 0.7),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.filter_list, color: AppColorScheme.color2, size: 20),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      loc.plansListFiltersButton,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        color: Colors.grey.shade500,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      _filterLabel(loc),
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.arrow_drop_down, color: Colors.grey.shade400, size: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Tooltip(
+                      message: loc.plansListViewModeTooltip,
+                      child: ToggleButtons(
+                        isSelected: [!isCalendarView, isCalendarView],
+                        onPressed: (index) {
+                          onViewModeChanged(index == 1);
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        renderBorder: false,
+                        fillColor: AppColorScheme.color2,
+                        selectedColor: Colors.white,
+                        color: Colors.grey.shade400,
+                        constraints: BoxConstraints(
+                          minHeight: rowHeight * 0.72,
+                          minWidth: 44,
+                        ),
+                        children: const [
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            child: Icon(Icons.view_list, size: 20),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            child: Icon(Icons.calendar_month, size: 20),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -67,156 +173,27 @@ class WdDashboardFilters extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterButton(
-    String filterValue,
-    String label,
-    double columnWidth,
-    double rowHeight,
-  ) {
-    final isSelected = selectedFilter == filterValue;
-    return Expanded(
-      child: Container(
-        height: rowHeight * 0.6,
-        margin: EdgeInsets.symmetric(vertical: rowHeight * 0.2),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ],
-                )
-              : null,
-          color: isSelected ? null : Colors.grey.shade700,
-          border: isSelected
-              ? Border.all(color: AppColorScheme.color2, width: 2)
-              : null,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColorScheme.color2.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
+  Widget _filterMenuRow(AppLocalizations loc, String label, String filterValue) {
+    final selected = selectedFilter == filterValue;
+    return Row(
+      children: [
+        SizedBox(
+          width: 26,
+          child: selected
+              ? Icon(Icons.check, size: 18, color: AppColorScheme.color2)
+              : const SizedBox.shrink(),
         ),
-        child: InkWell(
-          onTap: () => onFilterChanged(filterValue),
-          borderRadius: BorderRadius.circular(12),
-          child: Center(
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(
-                color: isSelected ? Colors.white : Colors.grey.shade400,
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.white,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildW27(
-    BuildContext context,
-    double columnWidth,
-    double rowHeight,
-  ) {
-    final loc = AppLocalizations.of(context)!;
-
-    return Positioned(
-      left: columnWidth,
-      top: rowHeight * 3,
-      child: Container(
-        width: columnWidth * 4,
-        height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
-        child: Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.grey.shade900,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: ToggleButtons(
-            isSelected: [!isCalendarView, isCalendarView],
-            onPressed: (index) {
-              onViewModeChanged(index == 1);
-            },
-            borderRadius: BorderRadius.circular(24),
-            renderBorder: false,
-            fillColor: AppColorScheme.color2,
-            selectedColor: Colors.white,
-            color: Colors.grey.shade400,
-            constraints: const BoxConstraints(minHeight: 36, minWidth: 48),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.view_list_outlined,
-                      color:
-                          !isCalendarView ? Colors.white : Colors.grey.shade400,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      loc.planViewModeList,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color:
-                            !isCalendarView ? Colors.white : Colors.grey.shade400,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.calendar_month_outlined,
-                      color:
-                          isCalendarView ? Colors.white : Colors.grey.shade400,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      loc.planViewModeCalendar,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color:
-                            isCalendarView ? Colors.white : Colors.grey.shade400,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-            Container(width: 4, color: AppColorScheme.color2),
-        ],
-        ),
-      ),
+      ],
     );
   }
 }

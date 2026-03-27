@@ -12,6 +12,7 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// T252: Vista "Mi resumen" / "Mi itinerario" para participantes del plan.
@@ -24,6 +25,9 @@ class MyPlanSummaryScreen extends ConsumerStatefulWidget {
   final void Function(Accommodation accommodation)? onOpenAccommodation;
   /// Cuando el resumen está vacío, CTA "Ir al calendario" (p. ej. cambiar a pestaña Calendario).
   final VoidCallback? onGoToCalendar;
+  /// FAB "+": mismo flujo que calendario sin cambiar de pestaña (ID 44).
+  final VoidCallback? onRequestCreateEvent;
+  final VoidCallback? onRequestCreateAccommodation;
 
   const MyPlanSummaryScreen({
     super.key,
@@ -31,6 +35,8 @@ class MyPlanSummaryScreen extends ConsumerStatefulWidget {
     this.onOpenEvent,
     this.onOpenAccommodation,
     this.onGoToCalendar,
+    this.onRequestCreateEvent,
+    this.onRequestCreateAccommodation,
   });
 
   @override
@@ -40,11 +46,15 @@ class MyPlanSummaryScreen extends ConsumerStatefulWidget {
 class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
   static const int _chronoLimit = 15;
   bool _chronoExpanded = false;
-  bool _importantExpanded = true;
-  bool _todayExpanded = true;
-  bool _tomorrowExpanded = true;
+  bool _importantExpanded = false;
+  bool _todayExpanded = false;
+  bool _tomorrowExpanded = false;
   /// 'mine' = solo mis eventos; 'plan' = todos los participantes.
   String _viewMode = 'mine';
+  bool _participantsSectionExpanded = false;
+  bool _flightsQuickExpanded = true;
+  bool _accommodationQuickExpanded = true;
+  bool _itinerarySectionExpanded = true;
 
   @override
   Widget build(BuildContext context) {
@@ -123,10 +133,25 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               child: isEmpty
                   ? _buildEmptyState(loc)
                   : Stack(
+                      clipBehavior: Clip.none,
                       children: [
                         ListView(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                           children: [
+                            if (widget.plan.id != null) ...[
+                              _buildExpandableSection(
+                                title: loc.myPlanSummaryParticipantsSection,
+                                subtitle: null,
+                                expanded: _participantsSectionExpanded,
+                                onToggle: () => setState(() => _participantsSectionExpanded = !_participantsSectionExpanded),
+                                child: ParticipantsListWidget(
+                                  planId: widget.plan.id!,
+                                  showActions: false,
+                                  compact: true,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
                             _buildExpandableSection(
                               title: loc.myPlanSummaryImportant,
                               subtitle: null,
@@ -153,11 +178,55 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                               ),
                             ],
                             const SizedBox(height: 20),
-                            _buildQuickAccessSection(loc, flights, displayAccommodations, showParticipantLabels, participantNamesMap),
+                            _buildExpandableSection(
+                              title: loc.myPlanSummaryFlights,
+                              subtitle: null,
+                              expanded: _flightsQuickExpanded,
+                              framed: false,
+                              onToggle: () => setState(() => _flightsQuickExpanded = !_flightsQuickExpanded),
+                              child: _buildFlightsQuickContent(
+                                loc,
+                                flights,
+                                showParticipantLabels,
+                                participantNamesMap,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildExpandableSection(
+                              title: loc.myPlanSummaryAccommodation,
+                              subtitle: null,
+                              expanded: _accommodationQuickExpanded,
+                              framed: false,
+                              onToggle: () => setState(() => _accommodationQuickExpanded = !_accommodationQuickExpanded),
+                              child: _buildAccommodationQuickContent(
+                                loc,
+                                displayAccommodations,
+                                showParticipantLabels,
+                                participantNamesMap,
+                              ),
+                            ),
                             const SizedBox(height: 20),
-                            _buildChronologicalSection(loc, displayEvents, showParticipantLabels, participantNamesMap),
+                            _buildExpandableSection(
+                              title: loc.myPlanSummaryChronological,
+                              subtitle: null,
+                              expanded: _itinerarySectionExpanded,
+                              framed: false,
+                              onToggle: () => setState(() => _itinerarySectionExpanded = !_itinerarySectionExpanded),
+                              child: _buildChronologicalSectionBody(loc, displayEvents, showParticipantLabels, participantNamesMap),
+                            ),
                           ],
                         ),
+                        if (widget.onRequestCreateEvent != null && widget.onRequestCreateAccommodation != null)
+                          Positioned(
+                            right: 16,
+                            bottom: 16,
+                            child: FloatingActionButton(
+                              onPressed: () => _showCreateChooser(context, loc),
+                              backgroundColor: AppColorScheme.color3,
+                              foregroundColor: Colors.white,
+                              child: const Icon(Icons.add),
+                            ),
+                          ),
                       ],
                     ),
             ),
@@ -214,19 +283,41 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
       ),
       child: Row(
         children: [
-          Text(
-            loc.myPlanSummaryTab,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
+          Flexible(
+            child: Text(
+              loc.myPlanSummaryTab,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 17,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.1,
+              ),
             ),
           ),
-          const SizedBox(width: 16),
-          _buildViewModeChip(loc.myPlanSummaryViewMine, viewMode == 'mine', () => onViewModeChanged('mine')),
           const SizedBox(width: 8),
-          _buildViewModeChip(loc.myPlanSummaryViewPlan, viewMode == 'plan', () => onViewModeChanged('plan')),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              reverse: true,
+              child: Row(
+                children: [
+                  _buildViewModeChip(
+                    loc.myPlanSummaryViewMine,
+                    viewMode == 'mine',
+                    () => onViewModeChanged('mine'),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildViewModeChip(
+                    loc.myPlanSummaryViewPlan,
+                    viewMode == 'plan',
+                    () => onViewModeChanged('plan'),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -244,7 +335,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           child: Text(
             label,
             style: GoogleFonts.poppins(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
               color: selected ? AppColorScheme.color2 : Colors.white70,
             ),
@@ -283,7 +374,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             Text(
               loc.myPlanSummaryEmpty,
               style: GoogleFonts.poppins(
-                fontSize: 14,
+                fontSize: 15,
                 color: Colors.grey.shade400,
               ),
               textAlign: TextAlign.center,
@@ -307,14 +398,99 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     );
   }
 
-  /// Sección expandible individual: cabecera (título + subtítulo opcional + chevron) y contenido al expandir.
+  void _showCreateChooser(BuildContext context, AppLocalizations loc) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.grey.shade900,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.event, color: Colors.white),
+              title: Text(loc.createEvent, style: GoogleFonts.poppins(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                widget.onRequestCreateEvent?.call();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.hotel_outlined, color: Colors.white),
+              title: Text(loc.tooltipCreateAccommodation, style: GoogleFonts.poppins(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                widget.onRequestCreateAccommodation?.call();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Sección expandible: [framed] false = sin recuadro (ID 43).
   Widget _buildExpandableSection({
     required String title,
     String? subtitle,
     required bool expanded,
     required VoidCallback onToggle,
     required Widget child,
+    bool framed = true,
   }) {
+    final header = InkWell(
+      onTap: onToggle,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: framed ? 16 : 4, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: framed ? 15 : 16,
+                      fontWeight: FontWeight.w600,
+                      color: framed ? AppColorScheme.color2 : Colors.white,
+                    ),
+                  ),
+                  if (subtitle != null && subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(
+              expanded ? Icons.expand_less : Icons.expand_more,
+              size: 26,
+              color: Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (!framed) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          header,
+          if (expanded)
+            Padding(
+              padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
+              child: child,
+            ),
+        ],
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey.shade800,
@@ -326,44 +502,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          InkWell(
-            onTap: onToggle,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColorScheme.color2,
-                          ),
-                        ),
-                        if (subtitle != null && subtitle.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    expanded ? Icons.expand_less : Icons.expand_more,
-                    size: 24,
-                    color: Colors.grey.shade400,
-                  ),
-                ],
-              ),
-            ),
-          ),
+          header,
           if (expanded) ...[
             const Divider(height: 1),
             Padding(
@@ -405,7 +544,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           Text(
             plan.name,
             style: GoogleFonts.poppins(
-              fontSize: 15,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
               color: Colors.white,
             ),
@@ -414,20 +553,20 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         ],
         Text(
           '${DateFormatter.formatDate(plan.startDate)} – ${DateFormatter.formatDate(plan.endDate)}',
-          style: GoogleFonts.poppins(fontSize: 13, color: Colors.white70),
+          style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
         ),
         if (plan.timezone != null) ...[
           const SizedBox(height: 4),
           Text(
             plan.timezone!,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
+            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
           ),
         ],
         if (myInfoLines.isEmpty) ...[
           const SizedBox(height: 8),
           Text(
             loc.myPlanSummaryNoMyInfo,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
           ),
         ],
         if (myInfoLines.isNotEmpty) ...[
@@ -435,7 +574,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           Text(
             loc.myPlanSummaryMyInfo,
             style: GoogleFonts.poppins(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
               color: Colors.white,
             ),
@@ -462,7 +601,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     if (events.isEmpty) {
       return Text(
         '—',
-        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
       );
     }
     return Column(
@@ -470,10 +609,12 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
       children: events
           .map((e) {
             final subtitle = showParticipantLabels ? _participantLabelForEvent(e, participantNamesMap, loc) : null;
+            final code = _transportCodeLabel(e);
+            final head = code != null ? '${_formatEventTime(e)} $code · ${e.description}' : '${_formatEventTime(e)} ${e.description}';
             return Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: _buildSummaryLinkRow(
-                text: '${_formatEventTime(e)} ${e.description}',
+                text: head,
                 onOpenDetail: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
                 mapsQuery: e.commonPart?.location,
                 webUrl: e.commonPart?.url,
@@ -539,7 +680,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (leadingIcon != null) ...[
-                Icon(leadingIcon, size: 16, color: Colors.grey.shade500),
+                Icon(leadingIcon, size: 17, color: Colors.grey.shade500),
                 const SizedBox(width: 6),
               ],
               Expanded(
@@ -550,7 +691,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                     Text(
                       text,
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
+                        fontSize: 13,
                         color: onOpenDetail != null ? AppColorScheme.color2 : Colors.white70,
                       ),
                     ),
@@ -558,7 +699,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+                        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
                       ),
                     ],
                   ],
@@ -568,21 +709,8 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (onOpenDetail != null)
-                    _buildTinyActionIcon(
-                      icon: Icons.open_in_new,
-                      onTap: onOpenDetail,
-                    ),
-                  if (hasMaps)
-                    _buildTinyActionIcon(
-                      icon: Icons.map_outlined,
-                      onTap: () => _openMapsQuery(safeMapsQuery),
-                    ),
-                  if (hasWebUrl)
-                    _buildTinyActionIcon(
-                      icon: Icons.link,
-                      onTap: () => _openWebUrl(safeWebUrl),
-                    ),
+                  if (hasMaps) _buildMapLinkChip(onTap: () => _openMapsQuery(safeMapsQuery)),
+                  if (hasWebUrl) _buildWebWwwChip(onTap: () => _openWebUrl(safeWebUrl)),
                 ],
               ),
             ],
@@ -592,24 +720,44 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     );
   }
 
-  Widget _buildTinyActionIcon({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildMapLinkChip({required VoidCallback onTap}) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: InkWell(
-        onTap: onTap,
+      padding: const EdgeInsets.only(left: 6),
+      child: Material(
+        color: Colors.grey.shade800,
         borderRadius: BorderRadius.circular(10),
-        child: Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade900,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey.shade700, width: 1),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Icon(Icons.location_on, size: 22, color: AppColorScheme.color2),
           ),
-          child: Icon(icon, size: 14, color: AppColorScheme.color2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebWwwChip({required VoidCallback onTap}) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Material(
+        color: Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Text(
+              'www',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColorScheme.color2,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -640,88 +788,93 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     return 'https://$value';
   }
 
-  Widget _buildQuickAccessSection(
+  Widget _buildFlightsQuickContent(
     AppLocalizations loc,
     List<Event> flights,
+    bool showParticipantLabels,
+    Map<String, String> participantNamesMap,
+  ) {
+    if (flights.isEmpty) {
+      return Text(
+        '—',
+        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: flights.map((e) {
+        final subtitle = showParticipantLabels ? _participantLabelForEvent(e, participantNamesMap, loc) : null;
+        final code = _transportCodeLabel(e);
+        final line = code != null
+            ? '${DateFormatter.formatDate(e.date)} ${_formatEventTime(e)} $code · ${e.description}'
+            : '${DateFormatter.formatDate(e.date)} ${_formatEventTime(e)} ${e.description}';
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: _buildSummaryLinkRow(
+            text: line,
+            onOpenDetail: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
+            mapsQuery: e.commonPart?.location,
+            webUrl: e.commonPart?.url,
+            subtitle: subtitle,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildAccommodationQuickContent(
+    AppLocalizations loc,
     List<Accommodation> accommodations,
     bool showParticipantLabels,
     Map<String, String> participantNamesMap,
   ) {
+    if (accommodations.isEmpty) {
+      return Text(
+        '—',
+        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
+      );
+    }
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          loc.myPlanSummaryFlights,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: accommodations.map((a) {
+        final nights = a.duration;
+        final address = a.commonPart?.address?.trim();
+        final parts = <String>[];
+        if (showParticipantLabels) parts.add(_participantLabelForAccommodation(a, participantNamesMap, loc));
+        if (nights > 0) parts.add(loc.nights(nights));
+        if (address != null && address.isNotEmpty) parts.add(address);
+        final subtitle = parts.isEmpty ? null : parts.join(' · ');
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: _buildSummaryLinkRow(
+            text: '${a.hotelName} (${DateFormatter.formatDate(a.checkIn)} – ${DateFormatter.formatDate(a.checkOut)})',
+            onOpenDetail: widget.onOpenAccommodation != null ? () => widget.onOpenAccommodation!(a) : null,
+            mapsQuery: a.commonPart?.address,
+            webUrl: a.commonPart?.url,
+            subtitle: subtitle,
           ),
-        ),
-        Text(
-          loc.myPlanSummaryFlightsHint,
-          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
-        ),
-        const SizedBox(height: 6),
-        if (flights.isEmpty)
-          Text(
-            '—',
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
-          )
-        else
-          ...flights.map((e) {
-                final subtitle = showParticipantLabels ? _participantLabelForEvent(e, participantNamesMap, loc) : null;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: _buildSummaryLinkRow(
-                    text: '${DateFormatter.formatDate(e.date)} ${_formatEventTime(e)} ${e.description}',
-                    onOpenDetail: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
-                    mapsQuery: e.commonPart?.location,
-                    webUrl: e.commonPart?.url,
-                    subtitle: subtitle,
-                  ),
-                );
-              }),
-        const SizedBox(height: 16),
-        Text(
-          loc.myPlanSummaryAccommodation,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 6),
-        if (accommodations.isEmpty)
-          Text(
-            '—',
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
-          )
-        else
-          ...accommodations.map((a) {
-                final nights = a.checkOut.difference(a.checkIn).inDays;
-                final address = a.commonPart?.address?.trim();
-                final parts = <String>[];
-                if (showParticipantLabels) parts.add(_participantLabelForAccommodation(a, participantNamesMap, loc));
-                if (nights > 0) parts.add(loc.nights(nights));
-                if (address != null && address.isNotEmpty) parts.add(address);
-                final subtitle = parts.isEmpty ? null : parts.join(' · ');
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: _buildSummaryLinkRow(
-                    text: '${a.hotelName} (${DateFormatter.formatDate(a.checkIn)} – ${DateFormatter.formatDate(a.checkOut)})',
-                    onOpenDetail: widget.onOpenAccommodation != null ? () => widget.onOpenAccommodation!(a) : null,
-                    mapsQuery: a.commonPart?.address,
-                    webUrl: a.commonPart?.url,
-                    subtitle: subtitle,
-                  ),
-                );
-              }),
-      ],
+        );
+      }).toList(),
     );
   }
 
-  Widget _buildChronologicalSection(
+  /// Número vuelo/tren/etc. desde extraData (ID 50).
+  String? _transportCodeLabel(Event e) {
+    final ed = e.commonPart?.extraData;
+    if (ed == null) return null;
+    for (final key in ['flightNumber', 'trainNumber', 'transportNumber']) {
+      final v = ed[key]?.toString().trim();
+      if (v != null && v.isNotEmpty) return v;
+    }
+    return null;
+  }
+
+  String _chronologicalEventTitle(Event e) {
+    final c = _transportCodeLabel(e);
+    return c != null ? '$c · ${e.description}' : e.description;
+  }
+
+  Widget _buildChronologicalSectionBody(
     AppLocalizations loc,
     List<Event> events,
     bool showParticipantLabels,
@@ -733,19 +886,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          loc.myPlanSummaryChronological,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 8),
         if (events.isEmpty)
           Text(
             '—',
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
           )
         else ...[
           ..._buildChronologicalGroupedByDay(displayEvents, showParticipantLabels, participantNamesMap, loc),
@@ -756,7 +900,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                 onPressed: () => setState(() => _chronoExpanded = !_chronoExpanded),
                 child: Text(
                   _chronoExpanded ? loc.myPlanSummarySeeLess : loc.myPlanSummarySeeMore,
-                  style: GoogleFonts.poppins(fontSize: 12, color: AppColorScheme.color2),
+                  style: GoogleFonts.poppins(fontSize: 13, color: AppColorScheme.color2),
                 ),
               ),
             ),
@@ -778,6 +922,15 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     for (final e in events) {
       final day = DateTime(e.date.year, e.date.month, e.date.day);
       if (currentDay == null || day != currentDay) {
+        if (currentDay != null) {
+          list.add(
+            Divider(
+              height: 20,
+              thickness: 1,
+              color: Colors.grey.shade700.withValues(alpha: 0.6),
+            ),
+          );
+        }
         currentDay = day;
         final dayLabel = '${DateFormat.E().format(e.date)} ${DateFormatter.formatDateShort(e.date)}';
         list.add(
@@ -786,7 +939,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             child: Text(
               dayLabel,
               style: GoogleFonts.poppins(
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey.shade400,
               ),
@@ -806,13 +959,13 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(_eventTypeIcon(e), size: 16, color: Colors.grey.shade500),
+                  Icon(_eventTypeIcon(e), size: 18, color: Colors.grey.shade500),
                   const SizedBox(width: 6),
                   SizedBox(
-                    width: 72,
+                    width: 76,
                     child: Text(
                       _formatEventTime(e),
-                      style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade400),
+                      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
                     ),
                   ),
                   Expanded(
@@ -820,18 +973,44 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          e.description,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: widget.onOpenEvent != null ? AppColorScheme.color2 : Colors.white70,
-                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (e.isDraft || (e.commonPart?.isDraft == true)) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                margin: const EdgeInsets.only(right: 6, top: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade800.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.orange.shade300.withValues(alpha: 0.6)),
+                                ),
+                                child: Text(
+                                  'Borrador',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.orange.shade100,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            Expanded(
+                              child: Text(
+                                _chronologicalEventTitle(e),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: widget.onOpenEvent != null ? AppColorScheme.color2 : Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         if (participantLabel != null) ...[
                           const SizedBox(height: 2),
                           Text(
                             participantLabel,
-                            style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+                            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
                           ),
                         ],
                       ],
@@ -841,21 +1020,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (widget.onOpenEvent != null)
-                        _buildTinyActionIcon(
-                          icon: Icons.open_in_new,
-                          onTap: () => widget.onOpenEvent!(e),
-                        ),
                       if (e.commonPart?.location != null && e.commonPart!.location!.trim().isNotEmpty)
-                        _buildTinyActionIcon(
-                          icon: Icons.map_outlined,
-                          onTap: () => _openMapsQuery(e.commonPart!.location!),
-                        ),
+                        _buildMapLinkChip(onTap: () => _openMapsQuery(e.commonPart!.location!)),
                       if (e.commonPart?.url != null && e.commonPart!.url!.trim().isNotEmpty)
-                        _buildTinyActionIcon(
-                          icon: Icons.link,
-                          onTap: () => _openWebUrl(e.commonPart!.url!),
-                        ),
+                        _buildWebWwwChip(onTap: () => _openWebUrl(e.commonPart!.url!)),
                     ],
                   ),
                 ],

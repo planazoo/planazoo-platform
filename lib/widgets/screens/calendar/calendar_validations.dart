@@ -125,7 +125,7 @@ class CalendarValidations {
     }
 
     // Validaciones de duración
-    final duration = accommodation.checkOut.difference(accommodation.checkIn).inDays;
+    final duration = accommodation.duration;
     if (duration <= 0) {
       errors.add('La duración del alojamiento debe ser mayor a 0');
     }

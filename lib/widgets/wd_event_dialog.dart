@@ -25,6 +25,8 @@ import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
+import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
 import 'package:unp_calendario/features/places/data/places_api_service.dart';
 import 'package:unp_calendario/features/places/presentation/widgets/place_autocomplete_field.dart';
 import 'package:unp_calendario/features/flights/data/flight_status_service.dart';
@@ -59,6 +61,8 @@ class EventDialog extends ConsumerStatefulWidget {
 class _EventDialogState extends ConsumerState<EventDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _descriptionController;
+  /// Notas largas / texto de agencia (commonPart.notes).
+  late TextEditingController _longNotesController;
   late TextEditingController _locationController; // T225: lugar del evento (Places)
   late TextEditingController _urlController; // Enlace web del evento
   PlaceDetails? _lastPlaceDetails; // T225: último lugar seleccionado (para lat/lng en extraData)
@@ -105,6 +109,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late TextEditingController _numeroReservaController;
   late TextEditingController _gateController;
   late TextEditingController _notasPersonalesController;
+  // T49: "Mi información" para eventos de tipo Actividad (código o documento).
+  late TextEditingController _activityEntryCodeController;
+  late TextEditingController _activityEntryDocUrlController;
   late bool _tarjetaObtenida;
   // T246: número de vuelo (Desplazamiento / Avión)
   late TextEditingController _flightNumberController;
@@ -134,6 +141,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   String? _initialFlightNumber;
   bool _disconnectConnection = false;
 
+  /// Adjuntos (PDF/JPG/PNG) guardados en `Event.documents`.
+  List<EventDocument> _eventDocuments = [];
+  bool _uploadingEventAttachment = false;
+
   // Colores predefinidos para eventos
   final List<String> _eventColors = [
     'color2', // Color por defecto (mismo que W1)
@@ -152,14 +163,16 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     'Desplazamiento',
     'Restauración',
     'Actividad',
+    'Acción',
     'Otro',
   ];
 
   // Subtipos por familia
   final Map<String, List<String>> _typeSubtypes = {
-    'Desplazamiento': ['Taxi', 'Avión', 'Tren', 'Autobús', 'Coche', 'Caminar'],
+    'Desplazamiento': ['Taxi', 'Avión', 'Tren', 'Autobús', 'Coche', 'Caminar', 'Shuttle', 'Transfer'],
     'Restauración': ['Desayuno', 'Comida', 'Cena', 'Snack', 'Bebida'],
-    'Actividad': ['Museo', 'Monumento', 'Parque', 'Teatro', 'Concierto', 'Deporte'],
+    'Actividad': ['Museo', 'Monumento', 'Parque', 'Teatro', 'Concierto', 'Deporte', 'Tour'],
+    'Acción': ['Embarque', 'Recogida', 'Entrega', 'Otro'],
     'Otro': ['Compra', 'Reunión', 'Trabajo', 'Personal'],
   };
 
@@ -168,6 +181,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     'Desplazamiento': Icons.directions_car,
     'Restauración': Icons.restaurant,
     'Actividad': Icons.local_activity,
+    'Acción': Icons.touch_app,
     'Otro': Icons.more_horiz,
   };
 
@@ -190,6 +204,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     'Actividad|Teatro': Icons.theater_comedy,
     'Actividad|Concierto': Icons.music_note,
     'Actividad|Deporte': Icons.sports_soccer,
+    'Actividad|Tour': Icons.explore,
+    'Acción|Embarque': Icons.directions_boat,
+    'Acción|Recogida': Icons.shopping_bag,
+    'Acción|Entrega': Icons.inventory_2,
+    'Acción|Otro': Icons.more_horiz,
     'Otro|Compra': Icons.shopping_cart,
     'Otro|Reunión': Icons.groups,
     'Otro|Trabajo': Icons.work,
@@ -209,6 +228,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _descriptionController = TextEditingController(
       text: widget.event?.commonPart?.description ?? '',
     );
+    _longNotesController = TextEditingController(
+      text: widget.event?.commonPart?.notes ?? '',
+    );
+    _eventDocuments = List<EventDocument>.from(widget.event?.documents ?? const []);
     _locationController = TextEditingController(
       text: widget.event?.commonPart?.location ?? '',
     );
@@ -245,6 +268,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
     _notasPersonalesController = TextEditingController(
       text: personalFields['notasPersonales'] ?? '',
+    );
+    _activityEntryCodeController = TextEditingController(
+      text: personalFields['ticketCode'] ?? '',
+    );
+    _activityEntryDocUrlController = TextEditingController(
+      text: personalFields['ticketDocUrl'] ?? '',
     );
     _tarjetaObtenida = personalFields['tarjetaObtenida'] ?? false;
     _flightNumberController = TextEditingController(
@@ -492,6 +521,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       if (plan != null && mounted) {
         setState(() {
           _plan = plan;
+          // Zona horaria del plan por defecto en eventos nuevos (lista puntos P24).
+          if (widget.event == null && plan.timezone != null && plan.timezone!.trim().isNotEmpty) {
+            _selectedTimezone = plan.timezone!;
+            _selectedArrivalTimezone = plan.timezone!;
+          }
           // T252: Si es participante creando evento nuevo, solo puede ser borrador (propuesta)
           if (widget.event == null && currentUser != null && plan.userId != currentUser.id) {
             _isDraft = true;
@@ -564,6 +598,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   @override
   void dispose() {
     _descriptionController.dispose();
+    _longNotesController.dispose();
     _locationController.dispose();
     _urlController.dispose();
     _typeFamilyController.dispose();
@@ -574,6 +609,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _numeroReservaController.dispose();
     _gateController.dispose();
     _notasPersonalesController.dispose();
+    _activityEntryCodeController.dispose();
+    _activityEntryDocUrlController.dispose();
     _flightNumberController.dispose();
     _departureAirportController.dispose();
     _arrivalAirportController.dispose();
@@ -687,7 +724,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Un solo campo: dirección del evento (Places) + botón Abrir en Google Maps.
+  /// Un solo campo: dirección del evento (Places) + acceso a Maps con marcador.
   /// Se usa solo cuando el evento NO es Desplazamiento (para eventos localizados: 1 dirección).
   /// Dentro del campo se muestra "Localización".
   Widget _buildUnifiedLocationField() {
@@ -696,35 +733,101 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final hasAddress = _locationController.text.trim().isNotEmpty;
     final canOpenMaps = hasCoords || hasAddress;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: PlaceAutocompleteField(
-            controller: _locationController,
-            initialAddress: widget.event?.commonPart?.location,
-            lodgingOnly: false,
-            labelText: loc.eventAddressSingleLabel,
-            hintText: loc.eventAddressSingleHint,
-            fontSize: 12,
-            onPlaceSelected: (PlaceDetails details) {
-              setState(() {
-                _lastPlaceDetails = details;
-                final addr = details.formattedAddress;
-                _locationController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
-                    ? '${details.displayName}, $addr'
-                    : details.displayName;
-              });
-            },
+        PlaceAutocompleteField(
+          controller: _locationController,
+          initialAddress: widget.event?.commonPart?.location,
+          lodgingOnly: false,
+          labelText: loc.eventAddressSingleLabel,
+          hintText: loc.eventAddressSingleHint,
+          fontSize: 12,
+          onPlaceSelected: (PlaceDetails details) {
+            setState(() {
+              _lastPlaceDetails = details;
+              final addr = details.formattedAddress;
+              _locationController.text = (addr != null && addr.isNotEmpty && addr != details.displayName)
+                  ? '${details.displayName}, $addr'
+                  : details.displayName;
+            });
+          },
+        ),
+        const SizedBox(height: 6),
+        Align(
+          alignment: Alignment.centerRight,
+          child: IconButton(
+            icon: Icon(Icons.location_on, color: canOpenMaps ? AppColorScheme.color2 : Colors.grey.shade600),
+            tooltip: loc.openInGoogleMaps,
+            onPressed: canOpenMaps ? _openLocationInGoogleMaps : null,
           ),
         ),
-        const SizedBox(width: 8),
-        IconButton(
-          icon: Icon(Icons.map_outlined, color: canOpenMaps ? AppColorScheme.color2 : Colors.grey.shade600),
-          tooltip: loc.openInGoogleMaps,
-          onPressed: canOpenMaps ? _openLocationInGoogleMaps : null,
-        ),
       ],
+    );
+  }
+
+  Widget _buildNonTransportTimezoneSelector() {
+    final loc = AppLocalizations.of(context)!;
+    return _buildLabelOnBorderField(
+      label: loc.timezone,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${TimezoneService.getTimezoneCityName(_selectedTimezone)} (${TimezoneService.getUtcOffsetFormatted(_selectedTimezone)})',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          _buildFlightTimezoneCircle(
+            timezone: _selectedTimezone,
+            tooltip: '${loc.timezone}: ${TimezoneService.getTimezoneCityName(_selectedTimezone)} (${TimezoneService.getUtcOffsetFormatted(_selectedTimezone)})',
+            onTap: _canEditGeneral
+                ? () => _openFlightTimezonePicker(isArrival: false)
+                : _showReadOnlySnackBar,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIsForAllParticipantsSelector() {
+    return _wrapReadOnlyIfNeeded(
+      child: CheckboxListTile(
+        title: Text(
+          'Este evento es para todos los participantes del plan',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+            fontSize: 14,
+          ),
+        ),
+        subtitle: Text(
+          _isForAllParticipants
+              ? 'Todos los participantes estarán incluidos automáticamente'
+              : 'Selecciona participantes específicos abajo',
+          style: GoogleFonts.poppins(
+            color: Colors.grey.shade400,
+            fontSize: 12,
+          ),
+        ),
+        value: _isForAllParticipants,
+        activeColor: AppColorScheme.color2,
+        onChanged: _canEditGeneral
+            ? (value) {
+                setState(() {
+                  _isForAllParticipants = value ?? true;
+                  if (_isForAllParticipants) {
+                    _selectedParticipantIds.clear();
+                  }
+                });
+              }
+            : null,
+        contentPadding: EdgeInsets.zero,
+      ),
     );
   }
 
@@ -739,12 +842,159 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         decoration: InputDecoration(
           hintText: loc.eventUrlHint,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+          counterText: '',
         ),
         keyboardType: TextInputType.url,
         maxLength: 500,
+        maxLines: 1,
       ),
     );
+  }
+
+  Future<void> _openLongNotesEditor() async {
+    final loc = AppLocalizations.of(context)!;
+    final tempController = TextEditingController(text: _longNotesController.text);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => Theme(
+        data: AppTheme.darkTheme,
+        child: AlertDialog(
+          backgroundColor: Colors.grey.shade900,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            loc.eventLongNotesLabel,
+            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          content: SizedBox(
+            width: 680,
+            child: TextFormField(
+              controller: tempController,
+              minLines: 8,
+              maxLines: 16,
+              readOnly: !_canEditGeneral,
+              style: GoogleFonts.poppins(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: loc.eventLongNotesLabel,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(loc.cancel),
+            ),
+            TextButton(
+              onPressed: _canEditGeneral ? () => Navigator.of(context).pop(tempController.text) : null,
+              child: Text(loc.save),
+            ),
+          ],
+        ),
+      ),
+    );
+    tempController.dispose();
+    if (!mounted || result == null) return;
+    setState(() {
+      _longNotesController.text = result;
+    });
+  }
+
+  Future<void> _pickEventAttachment() async {
+    final planId = widget.planId;
+    if (planId == null) return;
+    final picked = await PlanFileService.pickAttachment();
+    if (picked == null) {
+      if (!mounted) return;
+      final loc = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.entityAttachmentsReadError, style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+      return;
+    }
+    final validationError = PlanFileService.validateAttachment(picked);
+    if (validationError != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(validationError, style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.orange.shade700,
+        ),
+      );
+      return;
+    }
+    setState(() => _uploadingEventAttachment = true);
+    try {
+      final uploaded = await PlanFileService.uploadAttachment(
+        planId: planId,
+        file: picked,
+        filenamePrefix: 'evt',
+      );
+      if (!mounted) return;
+      setState(() {
+        _eventDocuments = [..._eventDocuments, EventDocument.fromPlanAttachment(uploaded)];
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final loc = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.entityAttachmentsUploadError('$e'), style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingEventAttachment = false);
+    }
+  }
+
+  Future<void> _deleteEventAttachment(EventDocument doc) async {
+    final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) {
+            final loc = AppLocalizations.of(ctx)!;
+            return Theme(
+              data: AppTheme.darkTheme,
+              child: AlertDialog(
+                backgroundColor: Colors.grey.shade900,
+                title: Text(loc.entityAttachmentsDeleteTitle, style: GoogleFonts.poppins(color: Colors.white)),
+                content: Text(
+                  loc.entityAttachmentsDeleteConfirm(doc.name),
+                  style: GoogleFonts.poppins(color: Colors.grey.shade300),
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(loc.cancel)),
+                  TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(loc.delete)),
+                ],
+              ),
+            );
+          },
+        ) ??
+        false;
+    if (!confirm) return;
+    setState(() => _uploadingEventAttachment = true);
+    try {
+      await PlanFileService.deleteAttachment(doc.url);
+      if (!mounted) return;
+      setState(() {
+        _eventDocuments = _eventDocuments.where((d) => d.url != doc.url).toList();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      final loc = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.entityAttachmentsDeleteError, style: GoogleFonts.poppins(color: Colors.white)),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingEventAttachment = false);
+    }
   }
 
   /// Selector gráfico de tipo y subtipo de evento (iconos + chips con "+" para reabrir).
@@ -752,7 +1002,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final loc = AppLocalizations.of(context)!;
     final hasType = _typeFamilyController.text.isNotEmpty && _typeFamilies.contains(_typeFamilyController.text);
     final subtypes = hasType ? (_typeSubtypes[_typeFamilyController.text] ?? []) : <String>[];
-    final hasSubtype = _typeSubtypeController.text.isNotEmpty && subtypes.contains(_typeSubtypeController.text);
+    // Mostrar siempre tipo + subtipo cuando hay texto de subtipo (evita que solo quede visible el subtipo).
+    final hasSubtype = _typeSubtypeController.text.trim().isNotEmpty;
 
     if (!_canEditGeneral) {
       return _buildLabelOnBorderField(
@@ -1212,11 +1463,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     required void Function(String?)? onChanged,
     bool compact = false,
     IconData? leadingIcon,
+    bool showCityInMenuAndGmtSelected = false,
   }) {
     final fs = compact ? 11.0 : 13.0;
     final pad = compact
         ? const EdgeInsets.only(top: 8, left: 4, right: 4, bottom: 8)
         : const EdgeInsets.only(top: 10, left: 6, right: 8, bottom: 10);
+    final commonTimezones = TimezoneService.getCommonTimezones();
     final dropdown = DropdownButtonFormField<String>(
       value: value,
       isExpanded: true,
@@ -1229,14 +1482,51 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         filled: false,
       ),
       icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade400, size: compact ? 20 : 24),
-      items: TimezoneService.getCommonTimezones().map((tz) {
+      selectedItemBuilder: showCityInMenuAndGmtSelected
+          ? (context) => commonTimezones.map((tz) {
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    TimezoneService.getUtcOffsetFormatted(tz),
+                    style: GoogleFonts.poppins(fontSize: fs, color: Colors.white, fontWeight: FontWeight.w500),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList()
+          : null,
+      items: commonTimezones.map((tz) {
         return DropdownMenuItem<String>(
           value: tz,
-          child: Text(
-            TimezoneService.getUtcOffsetFormatted(tz),
-            style: GoogleFonts.poppins(fontSize: fs, color: Colors.white, fontWeight: FontWeight.w500),
-            overflow: TextOverflow.ellipsis,
-          ),
+          child: showCityInMenuAndGmtSelected
+              ? Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        TimezoneService.getTimezoneCityName(tz),
+                        style: GoogleFonts.poppins(
+                          fontSize: fs,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      TimezoneService.getUtcOffsetFormatted(tz),
+                      style: GoogleFonts.poppins(
+                        fontSize: fs - 1,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
+                  TimezoneService.getUtcOffsetFormatted(tz),
+                  style: GoogleFonts.poppins(fontSize: fs, color: Colors.white, fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
+                ),
         );
       }).toList(),
       onChanged: onChanged,
@@ -1258,17 +1548,91 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Dropdown de timezone para el bloque vuelo (columna estrecha junto al aeropuerto).
-  Widget _buildFlightTimezoneDropdown({
-    required String value,
-    required String label,
-    required void Function(String?)? onChanged,
+  String _timezoneOffsetBadge(String timezone) {
+    final gmt = TimezoneService.getUtcOffsetFormatted(timezone);
+    return gmt.startsWith('GMT') ? gmt.replaceFirst('GMT', '') : gmt;
+  }
+
+  Future<void> _openFlightTimezonePicker({required bool isArrival}) async {
+    if (!_canEditGeneral) return;
+    final selected = isArrival ? _selectedArrivalTimezone : _selectedTimezone;
+    final all = TimezoneService.getCommonTimezones();
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.grey.shade900,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: all.length,
+          itemBuilder: (context, index) {
+            final tz = all[index];
+            return ListTile(
+              dense: true,
+              selected: tz == selected,
+              leading: Icon(
+                Icons.public,
+                color: tz == selected ? AppColorScheme.color2 : Colors.grey.shade400,
+              ),
+              title: Text(
+                TimezoneService.getTimezoneCityName(tz),
+                style: GoogleFonts.poppins(color: Colors.white),
+              ),
+              trailing: Text(
+                TimezoneService.getUtcOffsetFormatted(tz),
+                style: GoogleFonts.poppins(
+                  color: tz == selected ? AppColorScheme.color2 : Colors.grey.shade400,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onTap: () => Navigator.of(context).pop(tz),
+            );
+          },
+        ),
+      ),
+    );
+    if (!mounted || picked == null) return;
+    setState(() {
+      if (isArrival) {
+        _selectedArrivalTimezone = picked;
+      } else {
+        _selectedTimezone = picked;
+      }
+    });
+  }
+
+  Widget _buildFlightTimezoneCircle({
+    required String timezone,
+    required String tooltip,
+    required VoidCallback onTap,
   }) {
-    return _buildTimezoneFieldOnBorder(
-      label: label,
-      value: value,
-      onChanged: onChanged,
-      compact: true,
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColorScheme.color2.withOpacity(0.18),
+              border: Border.all(color: AppColorScheme.color2.withOpacity(0.65)),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              _timezoneOffsetBadge(timezone),
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -1304,17 +1668,19 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                                 ? '${details.displayName}, $addr'
                                 : details.displayName;
                           });
+                          _autodetectFlightTimezoneFromPlace(
+                            details: details,
+                            isArrival: false,
+                          );
                         },
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      width: 165,
-                      child: _buildFlightTimezoneDropdown(
-                        value: _selectedTimezone,
-                        label: loc.timezone,
-                        onChanged: _canEditGeneral ? (value) => setState(() => _selectedTimezone = value ?? 'Europe/Madrid') : null,
-                      ),
+                    const SizedBox(width: 8),
+                    _buildFlightTimezoneCircle(
+                      timezone: _selectedTimezone,
+                      tooltip:
+                          '${loc.timezone}: ${TimezoneService.getTimezoneCityName(_selectedTimezone)} (${TimezoneService.getUtcOffsetFormatted(_selectedTimezone)})',
+                      onTap: () => _openFlightTimezonePicker(isArrival: false),
                     ),
                   ],
                 ),
@@ -1345,17 +1711,19 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                                 ? '${details.displayName}, $addr'
                                 : details.displayName;
                           });
+                          _autodetectFlightTimezoneFromPlace(
+                            details: details,
+                            isArrival: true,
+                          );
                         },
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      width: 165,
-                      child: _buildFlightTimezoneDropdown(
-                        value: _selectedArrivalTimezone,
-                        label: loc.arrivalTimezone,
-                        onChanged: _canEditGeneral ? (value) => setState(() => _selectedArrivalTimezone = value ?? 'Europe/Madrid') : null,
-                      ),
+                    const SizedBox(width: 8),
+                    _buildFlightTimezoneCircle(
+                      timezone: _selectedArrivalTimezone,
+                      tooltip:
+                          '${loc.arrivalTimezone}: ${TimezoneService.getTimezoneCityName(_selectedArrivalTimezone)} (${TimezoneService.getUtcOffsetFormatted(_selectedArrivalTimezone)})',
+                      onTap: () => _openFlightTimezonePicker(isArrival: true),
                     ),
                   ],
                 ),
@@ -1558,6 +1926,34 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ),
       );
     }
+  }
+
+  Future<void> _autodetectFlightTimezoneFromPlace({
+    required PlaceDetails details,
+    required bool isArrival,
+  }) async {
+    final lat = details.lat;
+    final lng = details.lng;
+    if (lat == null || lng == null) return;
+
+    final service = PlacesApiService(
+      apiKey: const String.fromEnvironment('PLACES_API_KEY', defaultValue: ''),
+    );
+    final detectedTimezone = await service.getTimezoneForCoordinates(
+      lat: lat,
+      lng: lng,
+      dateTime: _selectedDate,
+    );
+    if (!mounted || detectedTimezone == null || detectedTimezone.trim().isEmpty) return;
+
+    final normalizedTimezone = TimezoneService.normalizeToCommonTimezone(detectedTimezone);
+    setState(() {
+      if (isArrival) {
+        _selectedArrivalTimezone = normalizedTimezone;
+      } else {
+        _selectedTimezone = normalizedTimezone;
+      }
+    });
   }
 
   /// Abre la ubicación en Google Maps (por coordenadas o por búsqueda de dirección).
@@ -1825,12 +2221,20 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
     final dialogTitle = widget.event == null ? AppLocalizations.of(context)!.createEvent : AppLocalizations.of(context)!.editEvent;
     final screenSize = MediaQuery.sizeOf(context);
-    final contentHeight = isMobile ? screenSize.height - 64 : null;
+    final padding = MediaQuery.paddingOf(context);
+    // El AlertDialog coloca [content] y luego [actions] en columna. Si el content ocupa
+    // casi toda la pantalla, la fila Eliminar/Cancelar/Guardar queda fuera del viewport o
+    // bajo el área táctil (p. ej. Chrome estrecho / móvil). Reservar altura para acciones + safe area.
+    const actionsRowReserve = 112.0;
+    final contentHeight = isMobile
+        ? (screenSize.height - padding.vertical - 64 - actionsRowReserve).clamp(240.0, 9000.0)
+        : null;
     final contentWidth = isMobile ? screenSize.width : null;
 
     return Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
+        scrollable: true,
         backgroundColor: Colors.grey.shade800,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
@@ -2058,10 +2462,15 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     ].whereType<Widget>().toList();
   }
 
+  bool _hasGeneralEventTypeSelected() {
+    final f = _typeFamilyController.text.trim();
+    return f.isNotEmpty && _typeFamilies.contains(f);
+  }
+
   Widget _buildGeneralTabScroll(bool isMobile) {
     final pad = isMobile ? 6.0 : 8.0;
     final fsBody = isMobile ? 13.0 : 14.0;
-    final fsLabel = isMobile ? 12.0 : 13.0;
+    final fsLabel = isMobile ? 12.0 : 14.0;
     final fsHint = isMobile ? 12.0 : 14.0;
     final contentPad = isMobile ? 14.0 : 18.0;
     final spacing = isMobile ? 12.0 : 16.0;
@@ -2074,6 +2483,15 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             // 1. Identidad: Tipo y subtipo
             _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
             SizedBox(height: spacing),
+            if (widget.event == null && !_hasGeneralEventTypeSelected())
+              Padding(
+                padding: EdgeInsets.fromLTRB(contentPad, 0, contentPad, 12),
+                child: Text(
+                  AppLocalizations.of(context)!.eventSelectTypeFirstHint,
+                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+                ),
+              ),
+            if (widget.event != null || _hasGeneralEventTypeSelected()) ...[
             // Descripción del evento
             _wrapReadOnlyIfNeeded(
               child: _buildLabelOnBorderField(
@@ -2143,27 +2561,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
             SizedBox(height: spacing),
-            // Dirección: 1 campo (Dirección del evento) si NO es Desplazamiento; 2 campos (Origen, Destino) si es Desplazamiento
-            if (_typeFamilyController.text != 'Desplazamiento') ...[
-              _buildUnifiedLocationField(),
-              SizedBox(height: spacing),
-            ],
-            // Desplazamiento: siempre Origen + Destino (Avión = aeropuertos; resto = direcciones)
-            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
-              _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
-            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
-              SizedBox(height: spacing),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text.isNotEmpty &&
-                _typeSubtypeController.text != 'Avión')
-              _wrapReadOnlyIfNeeded(child: _buildTransportOriginDestinationBlock(showPlazas: _typeSubtypeController.text == 'Taxi')),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text.isNotEmpty &&
-                _typeSubtypeController.text != 'Avión')
-              SizedBox(height: spacing),
-            _wrapReadOnlyIfNeeded(child: _buildUrlField()),
-            SizedBox(height: spacing),
-            // 2. Cuándo: Fecha, Hora, Duración — cada campo con el mismo formato (título sobre el borde)
+            // Fecha / Hora / Duración justo debajo de Descripción.
             Row(
               children: [
                 Expanded(
@@ -2200,14 +2598,107 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ],
             ),
             SizedBox(height: spacing),
-            
-            // Timezone (oculto para Desplazamiento/Avión: se muestra en el bloque vuelo)
-            if (!(_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión'))
+            _wrapReadOnlyIfNeeded(
+              child: _buildLabelOnBorderField(
+                label: AppLocalizations.of(context)!.eventLongNotesLabel,
+                child: TextFormField(
+                  controller: _longNotesController,
+                  readOnly: !(_canEditGeneral || _canEditGeneralInitial),
+                  minLines: 1,
+                  maxLines: 3,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: AppLocalizations.of(context)!.eventLongNotesLabel,
+                    labelStyle: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.grey.shade400,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    hintStyle: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.grey.shade500,
+                    ),
+                    prefixIcon: Icon(Icons.article_outlined, color: Colors.grey.shade400),
+                    suffixIcon: IconButton(
+                      tooltip: 'Ampliar',
+                      onPressed: _openLongNotesEditor,
+                      icon: Icon(Icons.open_in_full, color: Colors.grey.shade400),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: AppColorScheme.color2,
+                        width: 2.5,
+                      ),
+                    ),
+                    fillColor: Colors.transparent,
+                    filled: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: spacing),
+            if (widget.planId != null)
+              EntityAttachmentsSection(
+                title: AppLocalizations.of(context)!.entityAttachmentsEventTitle,
+                files: _eventDocuments,
+                canManage: _canEditGeneral || _canEditGeneralInitial,
+                isUploading: _uploadingEventAttachment,
+                onUpload: (_canEditGeneral || _canEditGeneralInitial) ? _pickEventAttachment : null,
+                onDelete: _deleteEventAttachment,
+              ),
+            if (widget.planId != null) SizedBox(height: spacing),
+            _buildIsForAllParticipantsSelector(),
+            SizedBox(height: spacing),
+            if (_planCurrency != null) _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
+            if (_planCurrency != null) const SizedBox(height: 16),
+            // Dirección: 1 campo (Dirección del evento) si NO es Desplazamiento; 2 campos (Origen, Destino) si es Desplazamiento
+            if (_typeFamilyController.text != 'Desplazamiento') ...[
+              _buildUnifiedLocationField(),
+              SizedBox(height: spacing),
+            ],
+            // Desplazamiento: siempre Origen + Destino (Avión = aeropuertos; resto = direcciones)
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
+              _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión')
+              SizedBox(height: spacing),
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text.isNotEmpty &&
+                _typeSubtypeController.text != 'Avión')
+              _wrapReadOnlyIfNeeded(child: _buildTransportOriginDestinationBlock(showPlazas: _typeSubtypeController.text == 'Taxi')),
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text.isNotEmpty &&
+                _typeSubtypeController.text != 'Avión')
+              SizedBox(height: spacing),
+            _wrapReadOnlyIfNeeded(child: _buildUrlField()),
+            SizedBox(height: spacing),
+            // Timezone:
+            // - No desplazamiento: selector rápido estilo vuelo (ID 45).
+            // - Desplazamiento no avión: selector clásico ida/llegada.
+            if (_typeFamilyController.text != 'Desplazamiento')
+              _buildNonTransportTimezoneSelector(),
+            if (_typeFamilyController.text != 'Desplazamiento')
+              const SizedBox(height: 12),
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text != 'Avión')
               _wrapReadOnlyIfNeeded(
                 child: _buildTimezoneFieldOnBorder(
                   label: AppLocalizations.of(context)!.timezone,
                   value: _selectedTimezone,
                   leadingIcon: Icons.public,
+                  showCityInMenuAndGmtSelected: true,
                   onChanged: _canEditGeneral
                       ? (value) {
                           setState(() {
@@ -2217,7 +2708,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       : null,
                 ),
               ),
-            if (!(_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión'))
+            if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text != 'Avión')
               const SizedBox(height: 12),
             
             // Timezone de llegada (solo desplazamiento no avión)
@@ -2227,6 +2718,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   label: AppLocalizations.of(context)!.arrivalTimezone,
                   value: _selectedArrivalTimezone,
                   leadingIcon: Icons.flight_land,
+                  showCityInMenuAndGmtSelected: true,
                   onChanged: _canEditGeneral
                       ? (value) {
                           setState(() {
@@ -2237,8 +2729,54 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 ),
               ),
             const SizedBox(height: 16),
-            // 3. Opciones: Límite, Confirmación, Coste
-            // Límite de participantes (T117)
+            // 3. Participación: asignación y registro (ID 47/48)
+            // Participantes (tracks asignados)
+            _wrapReadOnlyIfNeeded(child: _buildParticipantsSection()),
+            const SizedBox(height: 16),
+            
+            // Registro de participantes (quién se ha apuntado)
+            if (widget.event != null && widget.planId != null)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade800, // Color sólido, sin gradiente
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: AppColorScheme.color2.withOpacity(0.5),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.people_outline, color: AppColorScheme.color2, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            AppLocalizations.of(context)!.participantsRegistered,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    EventParticipantRegistrationWidget(
+                      event: widget.event!,
+                      planId: widget.planId!,
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 16),
+            // 4. Opciones avanzadas al final (ID 47)
             _wrapReadOnlyIfNeeded(
               child: _buildLabelOnBorderField(
                 label: 'Límite de participantes (opcional)',
@@ -2294,7 +2832,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                         validator: (value) {
                           if (!_canEditGeneral) return null;
                           final v = value?.trim() ?? '';
-                          if (v.isEmpty) return null; // Opcional
+                          if (v.isEmpty) return null;
                           final intValue = int.tryParse(v);
                           if (intValue == null) return 'Debe ser un número válido';
                           if (intValue < 1) return 'Debe ser mayor que 0';
@@ -2305,7 +2843,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            // Requiere confirmación (T120 Fase 2)
             if (_canEditGeneral)
               CheckboxListTile(
                 title: Text(
@@ -2332,58 +2869,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 },
                 secondary: Icon(Icons.assignment_turned_in_outlined, color: AppColorScheme.color2),
                 contentPadding: EdgeInsets.zero,
-              ),
-            const SizedBox(height: 16),
-            
-            // Coste del evento (T101/T153)
-            if (_planCurrency != null) _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
-            const SizedBox(height: 16),
-            
-            // 4. Participación: asignación y registro
-            // Participantes (tracks asignados)
-            _wrapReadOnlyIfNeeded(child: _buildParticipantsSection()),
-            const SizedBox(height: 16),
-            
-            // Registro de participantes (quién se ha apuntado)
-            if (widget.event != null && widget.planId != null)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade800, // Color sólido, sin gradiente
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: AppColorScheme.color2.withOpacity(0.5),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.people_outline, color: AppColorScheme.color2, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            AppLocalizations.of(context)!.participantsRegistered,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    EventParticipantRegistrationWidget(
-                      event: widget.event!,
-                      planId: widget.planId!,
-                    ),
-                  ],
-                ),
               ),
             const SizedBox(height: 16),
             
@@ -2440,6 +2925,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
             ),
+            ],
                         ],
                       ),
                     );
@@ -2531,67 +3017,98 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          
-                          // Campo: Menú/Comida
-                          _buildPersonalTextField(
-                            controller: _menuController,
-                            labelText: AppLocalizations.of(context)!.menu,
-                            hintText: AppLocalizations.of(context)!.menuHint,
-                            icon: Icons.restaurant,
-                            validator: (value) {
-                              final v = value?.trim() ?? '';
-                              if (v.isEmpty) return null;
-                              if (v.length > 100) return 'Máximo 100 caracteres';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          // Campo: Preferencias
-                          _buildPersonalTextField(
-                            controller: _preferenciasController,
-                            labelText: AppLocalizations.of(context)!.preferences,
-                            hintText: AppLocalizations.of(context)!.preferencesHint,
-                            icon: Icons.favorite,
-                            maxLines: 2,
-                            validator: (value) {
-                              final v = value?.trim() ?? '';
-                              if (v.isEmpty) return null;
-                              if (v.length > 200) return 'Máximo 200 caracteres';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
 
-                          // Campo: Número de reserva
-                          _buildPersonalTextField(
-                            controller: _numeroReservaController,
-                            labelText: AppLocalizations.of(context)!.reservationNumber,
-                            hintText: AppLocalizations.of(context)!.reservationNumberHint,
-                            icon: Icons.confirmation_number,
-                            validator: (value) {
-                              final v = value?.trim() ?? '';
-                              if (v.isEmpty) return null;
-                              if (v.length > 50) return 'Máximo 50 caracteres';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          // Campo: Puerta/Gate
-                          _buildPersonalTextField(
-                            controller: _gateController,
-                            labelText: AppLocalizations.of(context)!.gate,
-                            hintText: AppLocalizations.of(context)!.gateHint,
-                            icon: Icons.door_front_door,
-                            validator: (value) {
-                              final v = value?.trim() ?? '';
-                              if (v.isEmpty) return null;
-                              if (v.length > 50) return 'Máximo 50 caracteres';
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
+                          // Campos personalizados según tipo de evento (ID 49).
+                          if (_typeFamilyController.text == 'Actividad') ...[
+                            _buildPersonalTextField(
+                              controller: _activityEntryCodeController,
+                              labelText: 'Código de entrada',
+                              hintText: 'Ej: ABC123 o el código del ticket',
+                              icon: Icons.confirmation_number,
+                              validator: (value) {
+                                final v = value?.trim() ?? '';
+                                if (v.isEmpty) return null;
+                                if (v.length > 50) return 'Máximo 50 caracteres';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildPersonalTextField(
+                              controller: _activityEntryDocUrlController,
+                              labelText: 'URL del ticket/archivo (opcional)',
+                              hintText: 'Ej: https://... (opcional)',
+                              icon: Icons.insert_drive_file,
+                              keyboardType: TextInputType.url,
+                              validator: (value) {
+                                final v = value?.trim() ?? '';
+                                if (v.isEmpty) return null;
+                                if (v.length > 500) return 'Máximo 500 caracteres';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                          ] else ...[
+                            // Campo: Menú/Comida
+                            _buildPersonalTextField(
+                              controller: _menuController,
+                              labelText: AppLocalizations.of(context)!.menu,
+                              hintText: AppLocalizations.of(context)!.menuHint,
+                              icon: Icons.restaurant,
+                              validator: (value) {
+                                final v = value?.trim() ?? '';
+                                if (v.isEmpty) return null;
+                                if (v.length > 100) return 'Máximo 100 caracteres';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Campo: Preferencias
+                            _buildPersonalTextField(
+                              controller: _preferenciasController,
+                              labelText: AppLocalizations.of(context)!.preferences,
+                              hintText: AppLocalizations.of(context)!.preferencesHint,
+                              icon: Icons.favorite,
+                              maxLines: 2,
+                              validator: (value) {
+                                final v = value?.trim() ?? '';
+                                if (v.isEmpty) return null;
+                                if (v.length > 200) return 'Máximo 200 caracteres';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Campo: Número de reserva
+                            _buildPersonalTextField(
+                              controller: _numeroReservaController,
+                              labelText: AppLocalizations.of(context)!.reservationNumber,
+                              hintText: AppLocalizations.of(context)!.reservationNumberHint,
+                              icon: Icons.confirmation_number,
+                              validator: (value) {
+                                final v = value?.trim() ?? '';
+                                if (v.isEmpty) return null;
+                                if (v.length > 50) return 'Máximo 50 caracteres';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Campo: Puerta/Gate
+                            _buildPersonalTextField(
+                              controller: _gateController,
+                              labelText: AppLocalizations.of(context)!.gate,
+                              hintText: AppLocalizations.of(context)!.gateHint,
+                              icon: Icons.door_front_door,
+                              validator: (value) {
+                                final v = value?.trim() ?? '';
+                                if (v.isEmpty) return null;
+                                if (v.length > 50) return 'Máximo 50 caracteres';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                          ],
                           
                           // Switch: Tarjeta obtenida
                           SwitchListTile.adaptive(
@@ -2790,10 +3307,15 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             
             // Campos de información personal del participante
             _buildReadOnlyField('Asiento', personalFields['asiento']),
-            _buildReadOnlyField('Menú', personalFields['menu']),
-            _buildReadOnlyField('Preferencias', personalFields['preferencias']),
-            _buildReadOnlyField('Número de reserva', personalFields['numeroReserva']),
-            _buildReadOnlyField('Gate', personalFields['gate']),
+            if (widget.event?.commonPart?.family == 'Actividad') ...[
+              _buildReadOnlyField('Código de entrada', personalFields['ticketCode']),
+              _buildReadOnlyField('URL del ticket/archivo', personalFields['ticketDocUrl']),
+            ] else ...[
+              _buildReadOnlyField('Menú', personalFields['menu']),
+              _buildReadOnlyField('Preferencias', personalFields['preferencias']),
+              _buildReadOnlyField('Número de reserva', personalFields['numeroReserva']),
+              _buildReadOnlyField('Gate', personalFields['gate']),
+            ],
             _buildReadOnlyField('Tarjeta obtenida', personalFields['tarjetaObtenida'] == true ? 'Sí' : 'No'),
             _buildReadOnlyField('Notas personales', personalFields['notasPersonales']),
             
@@ -2875,6 +3397,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     required String hintText,
     required IconData icon,
     int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
     return Container(
@@ -2882,6 +3405,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
+        keyboardType: keyboardType,
         style: GoogleFonts.poppins(
           fontSize: 14,
           color: Colors.white,
@@ -3323,42 +3847,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Checkbox principal "Este evento es para todos" (T47)
-            CheckboxListTile(
-              title: Text(
-                'Este evento es para todos los participantes del plan',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                  fontSize: 14,
-                ),
-              ),
-              subtitle: Text(
-                _isForAllParticipants 
-                    ? 'Todos los participantes estarán incluidos automáticamente'
-                    : 'Selecciona participantes específicos abajo',
-                style: GoogleFonts.poppins(
-                  color: Colors.grey.shade400,
-                  fontSize: 12,
-                ),
-              ),
-              value: _isForAllParticipants,
-              activeColor: AppColorScheme.color2,
-              onChanged: (value) {
-                setState(() {
-                  _isForAllParticipants = value ?? true;
-                  // Si se marca "para todos", limpiar selección individual
-                  if (_isForAllParticipants) {
-                    _selectedParticipantIds.clear();
-                  }
-                  // Si se desmarca "para todos", no forzar ninguna selección
-                  // El usuario puede seleccionar los participantes que desee
-                });
-              },
-              contentPadding: EdgeInsets.zero,
-            ),
-            const SizedBox(height: 8),
-            
             // Lista de participantes (solo visible si checkbox principal está desmarcado)
             if (!_isForAllParticipants) ...[
               Text(
@@ -3485,11 +3973,16 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Moneda del coste
-        _buildLabelOnBorderField(
-          label: 'Moneda del coste',
-          child: DropdownButtonFormField<String>(
+        // Moneda + coste en una sola línea (ID 48)
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _buildLabelOnBorderField(
+                label: 'Moneda del coste',
+                child: DropdownButtonFormField<String>(
                   value: _costCurrency ?? _planCurrency ?? 'EUR',
+                  isExpanded: true,
                   dropdownColor: Colors.grey.shade800,
                   style: GoogleFonts.poppins(
                     fontSize: 13,
@@ -3533,19 +4026,34 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       ),
                     );
                   }).toList(),
+                  selectedItemBuilder: (context) {
+                    return Currency.supportedCurrencies.map((currency) {
+                      return Text(
+                        '${currency.code} ${currency.symbol}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      );
+                    }).toList();
+                  },
                   onChanged: _canEditGeneral ? (value) async {
                     if (value == null) return;
                     setState(() => _costCurrency = value);
                     await _convertCostToPlanCurrency(exchangeRateService);
                   } : null,
                 ),
-        ),
-        const SizedBox(height: 12),
-        // Coste del evento
-        _buildLabelOnBorderField(
-          label: 'Coste del evento (opcional)',
-          child: TextFormField(
-            controller: _costController,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildLabelOnBorderField(
+                label: 'Coste del evento (opcional)',
+                child: TextFormField(
+                  controller: _costController,
                   enabled: _canEditGeneral,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   style: GoogleFonts.poppins(
@@ -3609,7 +4117,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     if (doubleValue > 1000000) return 'Máximo 1.000.000';
                     return null;
                   },
-          ),
+                ),
+              ),
+            ),
+          ],
         ),
         // Mostrar conversión si la moneda local es diferente a la del plan
         if (_costCurrency != null && 
@@ -3805,11 +4316,35 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   Future<void> _saveEvent() async {
     // Validación de formulario (campos con validator)
+    final loc = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              loc.eventDialogFixValidationErrors,
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+            ),
+            backgroundColor: Colors.orange.shade700,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    // Tipo de evento obligatorio (lista puntos P21).
+    if (_typeFamilyController.text.isEmpty || !_typeFamilies.contains(_typeFamilyController.text)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.selectValidTypeFirst, style: GoogleFonts.poppins(color: Colors.white)),
+            backgroundColor: Colors.orange.shade700,
+          ),
+        );
+      }
       return;
     }
     // Validación tipo/subtipo (selector gráfico sin FormField)
-    final loc = AppLocalizations.of(context)!;
     if (_typeSubtypeController.text.isNotEmpty &&
         (_typeFamilyController.text.isEmpty || !_typeFamilies.contains(_typeFamilyController.text))) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -3914,6 +4449,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       if (_lastFlightStatus!.durationMinutes != null) baseExtra['durationMinutes'] = _lastFlightStatus!.durationMinutes;
       if (_lastFlightStatus!.airlineName != null) baseExtra['airlineName'] = _lastFlightStatus!.airlineName;
     }
+    // Número de vuelo manual (persistir aunque no se use Amadeus)
+    final flightNoManual = _flightNumberController.text.trim();
+    if (flightNoManual.isNotEmpty) {
+      baseExtra['flightNumber'] = Sanitizer.sanitizePlainText(flightNoManual, maxLength: 32);
+    }
     // Aeropuerto salida/llegada (Desplazamiento / Avión) — texto y opcionalmente lat/lng desde Places
     if (_typeFamilyController.text == 'Desplazamiento' && _typeSubtypeController.text == 'Avión') {
       final dep = _departureAirportController.text.trim();
@@ -3996,6 +4536,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       subtype: _typeSubtypeController.text.isEmpty ? null : _typeSubtypeController.text,
       location: locationSanitized,
       url: _urlController.text.trim().isEmpty ? null : Sanitizer.sanitizePlainText(_urlController.text.trim(), maxLength: 500),
+      notes: _longNotesController.text.trim().isEmpty
+          ? null
+          : Sanitizer.sanitizePlainText(_longNotesController.text.trim(), maxLength: 8000),
       isDraft: effectiveIsDraft,
       extraData: baseExtra.isEmpty ? null : baseExtra,
       connection: connection,
@@ -4016,6 +4559,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         'gate': Sanitizer.sanitizePlainText(_gateController.text, maxLength: 50).isEmpty ? null : Sanitizer.sanitizePlainText(_gateController.text, maxLength: 50),
         'tarjetaObtenida': _tarjetaObtenida,
         'notasPersonales': Sanitizer.sanitizePlainText(_notasPersonalesController.text, maxLength: 1000).isEmpty ? null : Sanitizer.sanitizePlainText(_notasPersonalesController.text, maxLength: 1000),
+        // T49: Actividades (código / documento opcional).
+        'ticketCode': Sanitizer.sanitizePlainText(_activityEntryCodeController.text, maxLength: 50).isEmpty
+            ? null
+            : Sanitizer.sanitizePlainText(_activityEntryCodeController.text, maxLength: 50),
+        'ticketDocUrl': Sanitizer.sanitizePlainText(_activityEntryDocUrlController.text, maxLength: 500).isEmpty
+            ? null
+            : Sanitizer.sanitizePlainText(_activityEntryDocUrlController.text, maxLength: 500),
       },
     );
 
@@ -4049,6 +4599,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       updatedAt: DateTime.now(),
       commonPart: commonPart,
       personalParts: personalParts,
+      documents: _eventDocuments.isEmpty ? null : List<EventDocument>.from(_eventDocuments),
     );
 
     // T107: Detectar si el evento se extiende fuera del rango del plan
