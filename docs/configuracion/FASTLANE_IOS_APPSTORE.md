@@ -2,7 +2,28 @@
 
 Guía paso a paso para subir **unp_calendario** a TestFlight y a la App Store usando Fastlane.
 
-**Referencias:** T256 (`docs/tareas/T256_IMPLEMENTAR_FASTLANE.md`), evaluación T255 (`docs/tareas/archivo/T255_EVALUACION_FASTLANE.md`).
+**Referencias:** T256 (`docs/tareas/T256_IMPLEMENTAR_FASTLANE.md`), evaluación T255 (`docs/tareas/archivo/T255_EVALUACION_FASTLANE.md`).  
+**Checklist imprimible:** [FASTLANE_IOS_CHECKLIST.md](./FASTLANE_IOS_CHECKLIST.md).  
+**Índice de configuraciones:** [CONFIGURACIONES_PROYECTO.md](./CONFIGURACIONES_PROYECTO.md) (sección Apple / Fastlane).
+
+---
+
+## Importante: cuenta con doble factor (2FA)
+
+`upload_to_testflight` invoca **altool** / Content Delivery. Con Apple ID y **2FA activado**, la subida **falla** con error **-22938** (“Sign in with the app-specific password…”) si no usas una **contraseña específica de apps**.
+
+**Antes de `bundle exec fastlane beta` (o `release`), en la misma terminal:**
+
+```bash
+export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+```
+
+La contraseña se crea en [appleid.apple.com](https://appleid.apple.com) → **Inicio de sesión y seguridad** → **Contraseñas para apps**.  
+**No** uses la contraseña normal de iCloud; **no** commitees este valor (solo variable de entorno local o secreto de CI).
+
+**Recomendación a medio plazo:** [App Store Connect API Key](https://docs.fastlane.tools/app-store-connect-api/) en el `Fastfile` para CI sin contraseñas.
+
+**Alternativa sin fastlane:** arrastra el `.ipa` de `build/ios/ipa/` a la app **Transporter** (Mac App Store).
 
 ---
 
@@ -44,11 +65,7 @@ O bien define variables de entorno (útil para CI o para no dejar el email en el
 export FASTLANE_APPLE_ID="tu@email.com"
 export FASTLANE_TEAM_ID="XXXXXXXXXX"
 export FASTLANE_ITC_TEAM_ID="XXXXXXXXXX"
-```
-
-Para subir a TestFlight, Fastlane puede pedirte la **contraseña de Apple ID**. Mejor usar una **App-specific password** (appleid.apple.com → Sign-In and Security → App-Specific Passwords) y definir:
-
-```bash
+# Con 2FA, obligatoria para subir el IPA (ver sección "Importante" al inicio):
 export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 ```
 
@@ -92,20 +109,24 @@ Desde la **raíz del proyecto** (no desde `ios/`):
 flutter build ipa
 ```
 
-El IPA se generará en: `build/ios/ipa/unp_calendario.ipa`.
+El IPA queda en `build/ios/ipa/` (nombre habitual `unp_calendario.ipa`; si Flutter genera otro nombre, la lane toma el primer `.ipa` de esa carpeta, ver `ios/fastlane/Fastfile`).
+
+Si el export falla pero el **archive** existe, Xcode puede exportar manualmente: abre `build/ios/archive/Runner.xcarchive` con **Organizer** → **Distribute App**.
 
 ---
 
 ## Paso 6: Subir a TestFlight (beta)
 
-Desde la raíz:
+Desde la **raíz del repo**:
 
 ```bash
 cd ios
 bundle exec fastlane beta
 ```
 
-La lane **beta** usa el IPA ya generado en `build/ios/ipa/unp_calendario.ipa` y lo sube a TestFlight. La primera vez te pedirá Apple ID y contraseña (o usará las variables de entorno si las definiste).
+(O en una sola línea desde la raíz: `(cd ios && bundle exec fastlane beta)`.)
+
+La lane **beta** sube el IPA ya generado en `build/ios/ipa/`. Con 2FA, exporta siempre `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` antes de ejecutar (ver arriba).
 
 Opciones útiles en `ios/fastlane/Fastfile`:
 - `skip_waiting_for_build_processing: true`: no espera a que Apple procese el build (más rápido).
@@ -143,8 +164,9 @@ La lane **release** sube el IPA con `upload_to_app_store` (`submit_for_review: f
 ## Errores frecuentes
 
 - **"No se encontró el IPA"**: ejecuta `flutter build ipa` desde la raíz del proyecto antes de `fastlane beta` o `release`.
-- **Firma / provisioning**: revisa en Xcode que el target Runner tenga Signing correcto y un perfil de distribución.
-- **Bundle ID**: debe coincidir con el registrado en App Store Connect y en `Appfile` (`app_identifier`).
-- **Contraseña Apple**: usa App-specific password y `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` para evitar fallos con 2FA.
+- **`exportArchive No Accounts` / `No signing certificate "iOS Distribution"`**: en **Xcode → Settings → Accounts** debe haber al menos un Apple ID con el equipo del proyecto; hace falta certificado **Apple Distribution** y perfil **App Store** (o gestión automática de firma). Sin cuenta en Xcode, el export del IPA falla.
+- **`-22938` / “app-specific password”** al subir: exporta `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` (no la contraseña de iCloud). Ver sección “Importante: cuenta con doble factor” al inicio de este documento.
+- **Firma / provisioning**: **Runner** → **Signing & Capabilities** → team y perfil de distribución correctos para **Release**.
+- **Bundle ID**: debe coincidir con App Store Connect y `Appfile` (`app_identifier`).
 
 Para más opciones (API Key de App Store Connect, Match para certificados en equipo), ver [Fastlane iOS setup](https://docs.fastlane.tools/getting-started/ios/setup/) y [upload_to_testflight](https://docs.fastlane.tools/actions/upload_to_testflight/).

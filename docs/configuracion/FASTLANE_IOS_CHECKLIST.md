@@ -105,8 +105,9 @@ Si hasta ahora solo has trabajado en local, es posible que falte:
 ---
 
 ### Paso 6: Subir a TestFlight (beta)
-- [x] He creado una App-specific password en [appleid.apple.com](https://appleid.apple.com) (opcional pero recomendado)
-- [x] He ejecutado: `cd ios && bundle exec fastlane beta` (con FASTLANE_PASSWORD=app-specific-password)
+- [x] He creado una **contraseña específica de apps** en [appleid.apple.com](https://appleid.apple.com) (necesaria si la cuenta tiene 2FA)
+- [x] En la misma terminal, antes de fastlane: `export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"` (**no** usar `FASTLANE_PASSWORD` para esto; altool exige la variable oficial)
+- [x] He ejecutado desde la raíz del repo: `cd ios && bundle exec fastlane beta`
 - [x] Fastlane ha subido el IPA a TestFlight sin error
 - [x] Veo el build en App Store Connect → TestFlight
 
@@ -130,11 +131,13 @@ Si hasta ahora solo has trabajado en local, es posible que falte:
 # Instalar Fastlane (una vez)
 cd ios && bundle install
 
-# Build + subir a TestFlight
+# Build + subir a TestFlight (cuenta con 2FA: exportar contraseña específica antes)
 flutter build ipa
+export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 cd ios && bundle exec fastlane beta
 
 # Subir a App Store (release)
 flutter build ipa
+export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 cd ios && bundle exec fastlane release
 ```

@@ -73,7 +73,7 @@ Fastlane para Android (T256) está previsto; cuando se implemente, documentar en
 | Qué | Dónde | Notas |
 |-----|--------|--------|
 | .env | Raíz del proyecto | En `.gitignore`. No commitear `.env`, `.env.local`, `.env.production`. Usar para claves o URLs sensibles si la app las lee en runtime. |
-| Fastlane (Apple) | Opcional: variables de entorno | `FASTLANE_APPLE_ID`, `FASTLANE_TEAM_ID`, `FASTLANE_ITC_TEAM_ID`, `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` para no poner datos en `Appfile`. |
+| Fastlane (Apple) | Opcional: variables de entorno | `FASTLANE_APPLE_ID`, `FASTLANE_TEAM_ID`, `FASTLANE_ITC_TEAM_ID`. Con **2FA**, para subir el IPA hace falta **`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`** (contraseña específica de apps en appleid.apple.com); sin ella, error **-22938** en `upload_to_testflight`. No usar `FASTLANE_PASSWORD` como sustituto de la contraseña específica. Ver [FASTLANE_IOS_APPSTORE.md](./FASTLANE_IOS_APPSTORE.md). |
 
 **Seguridad:** Ver [GUIA_SEGURIDAD.md](../guias/GUIA_SEGURIDAD.md). No hardcodear API keys secretas ni contraseñas en código.
 

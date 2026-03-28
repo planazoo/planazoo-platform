@@ -97,6 +97,8 @@ Configuración y contexto del proyecto:
 - [Evaluación primeras pruebas con familia](./configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md) - Checklist y estado (listo para invitar a familia)
 - [Revisión iOS vs Web (TestFlight)](./configuracion/REVISION_IOS_VS_WEB.md) - Diferencias web/iOS, checklist pre-TestFlight
 - [Checklist push iOS + deep links](./configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md) - FCM/APNs (A1) y Universal Links / invitación (A2)
+- **[Publicar iOS (TestFlight / App Store) con Fastlane](./configuracion/FASTLANE_IOS_APPSTORE.md)** - `flutter build ipa`, `fastlane beta`, 2FA y errores habituales
+- [Checklist primera publicación iOS](./configuracion/FASTLANE_IOS_CHECKLIST.md) - Pasos marcables
 
 ---
 
