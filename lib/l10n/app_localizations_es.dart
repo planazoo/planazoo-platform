@@ -258,6 +258,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get paymentsBalancesSectionTitle => 'Balances por participante';
 
   @override
+  String get paymentsBalancesTricountHint =>
+      'Coste asignado = tu parte del gasto; total pagado = lo que salió de ti; saldo = diferencia (estilo Tricount).';
+
+  @override
   String get paymentsBalanceAssignedCost => 'Coste asignado';
 
   @override
@@ -271,20 +275,59 @@ class AppLocalizationsEs extends AppLocalizations {
       'Sugerencias de transferencias';
 
   @override
+  String get paymentsTransferSuggestionsSubtitle =>
+      'Propuesta mínima de pagos para cuadrar cuentas entre personas.';
+
+  @override
   String get paymentsBalanceChartTitle => 'Distribución de balances';
 
   @override
   String paymentsBalanceStatusCreditor(String amount) {
-    return 'Debe recibir $amount';
+    return 'Le deben $amount';
   }
 
   @override
   String paymentsBalanceStatusDebtor(String amount) {
-    return 'Debe pagar $amount';
+    return 'Debe $amount';
   }
 
   @override
   String get paymentsBalanceStatusSettled => 'Balance equilibrado';
+
+  @override
+  String get paymentsEditExpense => 'Editar gasto';
+
+  @override
+  String get paymentsExpenseUpdated => 'Gasto actualizado';
+
+  @override
+  String get paymentsExpenseDeleteConfirmTitle => '¿Eliminar este gasto?';
+
+  @override
+  String get paymentsExpenseDeleteConfirmBody =>
+      'Desaparecerá del plan y de los balances. No se puede deshacer.';
+
+  @override
+  String get paymentsExpenseDeleted => 'Gasto eliminado';
+
+  @override
+  String get paymentsExpenseDeleteError => 'No se pudo eliminar el gasto';
+
+  @override
+  String get paymentsExpenseFromEventPayerHint =>
+      'Indica quién pagó con su dinero; el reparto entre personas lo eliges más abajo.';
+
+  @override
+  String get paymentsActivityEmpty =>
+      'Sin gastos. Añade uno con el botón de arriba.';
+
+  @override
+  String paymentsExpenseRowMeta(String date, String payer) {
+    return '$date · $payer pagó';
+  }
+
+  @override
+  String get paymentsExpenseDefaultConcept => 'Gasto';
 
   @override
   String get paymentsAddExpense => 'Añadir gasto';
@@ -303,6 +346,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get paymentsExpenseDate => 'Fecha';
+
+  @override
+  String get paymentsExpenseLinkedEventLabel => 'Evento (opcional)';
+
+  @override
+  String get paymentsExpenseNoEventOption => 'Ninguno';
+
+  @override
+  String get paymentsExpenseEventFallbackTitle => 'Evento';
+
+  @override
+  String get paymentsExpenseUnknownLinkedEvent => 'Evento (referencia)';
 
   @override
   String get paymentsExpenseSplitBetween => 'Repartir entre';
@@ -1683,6 +1738,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get taxiSeatsHint => 'Número de plazas';
 
   @override
+  String get eventTransferTerminalLabel => 'Terminal / puerta';
+
+  @override
+  String get eventTransferTerminalHint => 'Ej: T2, puerta B12';
+
+  @override
+  String get eventTransferAirlineLabel => 'Aerolínea / vuelo';
+
+  @override
+  String get eventTransferAirlineHint => 'Ej: Iberia, IB1234';
+
+  @override
+  String get eventTransferAirportMeetLabel => 'Presentación en aeropuerto';
+
+  @override
+  String get eventTransferAirportMeetHint =>
+      'Ej: 2 h antes del vuelo, mostrador…';
+
+  @override
   String get flightNumberLabel => 'Número de vuelo';
 
   @override
@@ -1738,6 +1812,44 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get eventDialogFixValidationErrors =>
       'Revisa los campos marcados o incompletos antes de guardar.';
+
+  @override
+  String get eventDialogParticipantsScopeLabel => 'Participantes del evento';
+
+  @override
+  String get eventDialogForAllParticipantsTitle =>
+      'Este evento es para todos los participantes del plan';
+
+  @override
+  String get eventDialogForAllParticipantsSubtitleOn =>
+      'Todos los participantes estarán incluidos automáticamente';
+
+  @override
+  String get eventDialogForAllParticipantsSubtitleOff =>
+      'Selecciona participantes específicos abajo';
+
+  @override
+  String get eventDialogAddLinkedExpenseTooltip =>
+      'Añadir gasto ligado a este evento';
+
+  @override
+  String get eventSponsoredTag => 'Patrocinado';
+
+  @override
+  String eventSponsoredBy(String sponsor) {
+    return 'Patrocinado por $sponsor';
+  }
+
+  @override
+  String get eventSponsoredStaticHint =>
+      'Prueba estática de monetización contextual (sin anuncios activos).';
+
+  @override
+  String get eventSponsoredOpenOffer => 'Ver oferta';
+
+  @override
+  String get eventSponsoredOpenError =>
+      'No se pudo abrir el enlace del patrocinador';
 
   @override
   String get eventStatusDraft => 'Borrador';
@@ -2086,6 +2198,76 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPlanSummaryTab => 'Mi resumen';
 
   @override
+  String get planNotesTabTitle => 'Notas';
+
+  @override
+  String get planNotesTabCommon => 'Común';
+
+  @override
+  String get planNotesTabPersonal => 'Personal';
+
+  @override
+  String get planNotesPreparationTitle => 'Preparación';
+
+  @override
+  String get planNotesCommonIntro =>
+      'Notas y lista de preparación compartidas. Quién puede editar la lista lo define el organizador.';
+
+  @override
+  String get planNotesPersonalIntro =>
+      'Solo tú ves esta nota y tu lista de preparación personal.';
+
+  @override
+  String get planNotesCommonNoteLabel => 'Nota compartida';
+
+  @override
+  String get planNotesPersonalNoteLabel => 'Nota personal';
+
+  @override
+  String get planNotesAddPrepItem => 'Añadir ítem';
+
+  @override
+  String get planNotesSave => 'Guardar';
+
+  @override
+  String get planNotesSaved => 'Guardado';
+
+  @override
+  String get planNotesSaveError =>
+      'No se pudo guardar. Revisa conexión o permisos.';
+
+  @override
+  String get planNotesReadOnlyHint =>
+      'Puedes ver esta sección pero no editarla.';
+
+  @override
+  String get planNotesPolicyTitle =>
+      'Quién puede editar la lista de preparación común';
+
+  @override
+  String get planNotesPolicyOrganizerOnly => 'Solo el organizador';
+
+  @override
+  String get planNotesPolicySelected => 'Algunos participantes';
+
+  @override
+  String get planNotesPolicyAll => 'Todos los participantes';
+
+  @override
+  String get planNotesSelectParticipantsTitle =>
+      'Elige quién puede editar la lista';
+
+  @override
+  String get planNotesApplySelection => 'Aplicar';
+
+  @override
+  String get planNotesNoWorkspaceYet =>
+      'Las notas compartidas aún no están disponibles.';
+
+  @override
+  String get planNotesNewItemHint => 'Nuevo ítem';
+
+  @override
   String get calendarViewModeCalendar => 'Calendario';
 
   @override
@@ -2098,13 +2280,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPlanSummaryTomorrow => 'Mañana';
 
   @override
-  String get myPlanSummaryFlights => 'Mis vuelos';
+  String get myPlanSummaryFlights => 'Desplazamientos';
 
   @override
-  String get myPlanSummaryFlightsHint => 'Eventos de tipo Avión';
+  String get myPlanSummaryFlightsHint =>
+      'Tren, avión, coche y otros desplazamientos';
 
   @override
-  String get myPlanSummaryAccommodation => 'Mi alojamiento';
+  String get myPlanSummaryAccommodation => 'Alojamientos';
 
   @override
   String get myPlanSummaryImportant => 'Lo más importante';
@@ -2113,16 +2296,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPlanSummaryResumenSection => 'Resumen';
 
   @override
-  String get myPlanSummaryViewMine => 'Mi resumen';
+  String get myPlanSummaryViewMine => 'mío';
 
   @override
-  String get myPlanSummaryViewPlan => 'Resumen todos';
+  String get myPlanSummaryViewPlan => 'todos';
 
   @override
   String get myPlanSummaryLabelAll => 'Todos';
 
   @override
-  String get myPlanSummaryChronological => 'Itinerario completo';
+  String get myPlanSummaryChronological => 'Plan completo';
 
   @override
   String get myPlanSummaryMyInfo => 'Mi información';
@@ -2143,6 +2326,29 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPlanSummarySeeLess => 'Ver menos';
+
+  @override
+  String get myPlanSummaryDraftsOnlyTooltip => 'Solo borradores';
+
+  @override
+  String myPlanSummaryParticipantsCount(int count) {
+    return '$count participantes';
+  }
+
+  @override
+  String get myPlanSummaryQuickImportant => 'Importante';
+
+  @override
+  String get myPlanSummaryQuickParticipants => 'Participantes';
+
+  @override
+  String get myPlanSummaryQuickToday => 'hoy';
+
+  @override
+  String get myPlanSummaryQuickTomorrow => 'mañana';
+
+  @override
+  String get myPlanSummaryTimeNextDaySuffix => ' (+1)';
 
   @override
   String get proposalsTab => 'Propuestas';

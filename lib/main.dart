@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'firebase_options.dart';
 import 'app/app.dart';
 import 'features/calendar/domain/services/timezone_service.dart';
 import 'features/offline/domain/services/hive_service.dart';
+
+/// Handler de mensajes push en background (FCM).
+/// Debe ser top-level para que Flutter/Firebase lo pueda invocar.
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    await Firebase.initializeApp(options: firebaseOptions);
+  } catch (_) {
+    // Ignorar duplicate-app y otros casos donde ya está inicializado.
+  }
+  debugPrint(
+    'FCM background message: id=${message.messageId}, data=${message.data}',
+  );
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +51,11 @@ void main() async {
   
   // Inicializar Hive (solo para móviles)
   await HiveService.initialize();
+
+  // Registrar handler de notificaciones en background (A1 / ítem 109).
+  if (!kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
   
   runApp(
     const ProviderScope(

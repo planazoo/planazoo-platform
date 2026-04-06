@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Plan {
@@ -209,6 +211,28 @@ class Plan {
     final b = DateTime(date.year, date.month, date.day);
     return Plan.calendarDaysInclusive(a, b);
   }
+
+  /// Primer día del plan (índice 1-based) que debe mostrarse en la primera columna del calendario móvil
+  /// cuando se abre el plan: **hoy** si cae en el rango del plan; si el viaje es futuro, día 1; si ya pasó, última ventana posible (lista §3.2 ítem 99).
+  static int initialVisiblePlanDayIndex(Plan plan, int visibleDays) {
+    final total = plan.durationInDays;
+    if (total < 1) return 1;
+    final vis = math.max(1, visibleDays);
+    final start = DateTime(plan.startDate.year, plan.startDate.month, plan.startDate.day);
+    final end = DateTime(plan.endDate.year, plan.endDate.month, plan.endDate.day);
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    int first;
+    if (today.isBefore(start)) {
+      first = 1;
+    } else if (today.isAfter(end)) {
+      first = math.max(1, total - vis + 1);
+    } else {
+      first = plan.planDayIndexForDate(today);
+      if (first < 1) first = 1;
+      if (first > total) first = total;
+    }
+    return first;
+  }
   
   bool isDateInPlanRange(DateTime date) {
     return date.isAfter(startDate.subtract(const Duration(days: 1))) &&
@@ -266,6 +290,45 @@ class Plan {
         createdAt.hashCode ^
         updatedAt.hashCode ^
         savedAt.hashCode;
+  }
+}
+
+/// Fecha y hora iniciales al crear un evento desde FAB o botón rápido (no desde una celda del calendario).
+/// - Plan **en_curso**: momento actual (misma fecha y hora en iOS y web).
+/// - Cualquier otro estado: día civil actual acotado a [startDate, endDate]; hora **10:00**.
+class NewEventFromButtonDefaults {
+  final DateTime date;
+  final int hour;
+  final int startMinute;
+
+  const NewEventFromButtonDefaults({
+    required this.date,
+    required this.hour,
+    required this.startMinute,
+  });
+
+  factory NewEventFromButtonDefaults.forPlan(Plan plan) {
+    final now = DateTime.now();
+    final state = plan.state ?? 'planificando';
+    if (state == 'en_curso') {
+      return NewEventFromButtonDefaults(
+        date: DateTime(now.year, now.month, now.day),
+        hour: now.hour,
+        startMinute: now.minute,
+      );
+    }
+    final today = DateTime(now.year, now.month, now.day);
+    final start = DateTime(plan.startDate.year, plan.startDate.month, plan.startDate.day);
+    final end = DateTime(plan.endDate.year, plan.endDate.month, plan.endDate.day);
+    final DateTime d;
+    if (today.isBefore(start)) {
+      d = start;
+    } else if (today.isAfter(end)) {
+      d = end;
+    } else {
+      d = today;
+    }
+    return NewEventFromButtonDefaults(date: d, hour: 10, startMinute: 0);
   }
 }
 

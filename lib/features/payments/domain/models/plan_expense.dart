@@ -19,6 +19,8 @@ class PlanExpense {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? registeredBy;
+  /// Evento del plan al que se asocia el gasto (lista §3.2 ítem 102).
+  final String? eventId;
 
   const PlanExpense({
     this.id,
@@ -33,6 +35,7 @@ class PlanExpense {
     required this.createdAt,
     required this.updatedAt,
     this.registeredBy,
+    this.eventId,
   });
 
   /// Parte que corresponde a un participante (coste asignado).
@@ -66,6 +69,7 @@ class PlanExpense {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       registeredBy: data['registeredBy'],
+      eventId: data['eventId'] as String?,
     );
   }
 
@@ -83,6 +87,7 @@ class PlanExpense {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       if (registeredBy != null) 'registeredBy': registeredBy,
+      if (eventId != null && eventId!.isNotEmpty) 'eventId': eventId,
     };
   }
 
@@ -99,6 +104,7 @@ class PlanExpense {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? registeredBy,
+    String? eventId,
   }) {
     return PlanExpense(
       id: id ?? this.id,
@@ -113,6 +119,7 @@ class PlanExpense {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       registeredBy: registeredBy ?? this.registeredBy,
+      eventId: eventId ?? this.eventId,
     );
   }
 }

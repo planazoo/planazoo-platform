@@ -10,6 +10,7 @@ import 'package:unp_calendario/features/language/presentation/widgets/language_s
 import 'package:unp_calendario/features/security/utils/validator.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/register_page.dart';
+import 'package:unp_calendario/widgets/input/text_field_clear_suffix.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -322,6 +323,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ? AppColorScheme.color2
                 : Colors.grey.shade400,
           ),
+          suffixIcon: textFieldClearSuffix(
+            _emailController,
+            onCleared: () => setState(() {}),
+          ),
           filled: true,
           fillColor: Colors.transparent,
           border: OutlineInputBorder(
@@ -431,16 +436,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 ? AppColorScheme.color2
                 : Colors.grey.shade400,
           ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscurePassword ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey.shade400,
-            ),
-            onPressed: () {
-              setState(() {
-                _obscurePassword = !_obscurePassword;
-              });
-            },
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              textFieldClearSuffix(
+                _passwordController,
+                onCleared: () => setState(() {}),
+              ),
+              IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.grey.shade400,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              ),
+            ],
           ),
           filled: true,
           fillColor: Colors.transparent,

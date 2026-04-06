@@ -27,6 +27,11 @@ class PlanNavigationBar extends StatelessWidget {
         label: 'Info',
       ),
       NavigationOption(
+        id: 'planNotes',
+        icon: Icons.note_alt_outlined,
+        label: loc.planNotesTabTitle,
+      ),
+      NavigationOption(
         id: 'mySummary',
         icon: Icons.list_alt,
         label: loc.myPlanSummaryTab,

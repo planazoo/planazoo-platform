@@ -17,6 +17,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - `docs/guias/PROMPT_TRABAJO_AUTONOMO.md` - Prompt para sesiones autónomas (revisión doc/código, limpieza)
 - `docs/configuracion/FASTLANE_IOS_APPSTORE.md` - **Publicación iOS (TestFlight / App Store):** `flutter build ipa`, `fastlane beta`, contraseña específica de apps (`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`), errores típicos de firma y subida
 - `docs/configuracion/FASTLANE_IOS_CHECKLIST.md` - Checklist paso a paso para la primera publicación iOS
+- `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md` - **Notas del plan** (común/personal, preparación, plantillas); código en `lib/features/plan_notes/` (T262 en progreso, ver estado al inicio de ese .md)
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
 - `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice y visión general del sistema de planes
 - `docs/configuracion/TESTING_CHECKLIST.md` - Checklist exhaustivo de pruebas (actualizar tras cada tarea)
@@ -154,5 +155,5 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 Mantenemos este documento corto y de alto impacto. Cualquier nueva norma estable se añade aquí.
 
-*Última actualización: Marzo 2026 (normas: consistencia web e iOS; publicación iOS enlazada en §10.1 y FASTLANE_IOS_APPSTORE.md).*
+*Última actualización: Marzo 2026 (normas: consistencia web e iOS; publicación iOS §10.1; T262 notas del plan enlazado en documentos complementarios).*
 

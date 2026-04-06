@@ -332,6 +332,10 @@
   "@paymentsBalancesSectionTitle": {
     "description": "Title of the per-participant balances section"
   },
+  "paymentsBalancesTricountHint": "Assigned cost = your share of expenses; total paid = money that left your pocket; balance = the difference (split-app style).",
+  "@paymentsBalancesTricountHint": {
+    "description": "Subtitle explaining balances in split-expense app terms"
+  },
   "paymentsBalanceAssignedCost": "Assigned cost",
   "@paymentsBalanceAssignedCost": {
     "description": "Label for the assigned cost per participant"
@@ -348,11 +352,15 @@
   "@paymentsTransferSuggestionsTitle": {
     "description": "Title of the transfer suggestions section"
   },
+  "paymentsTransferSuggestionsSubtitle": "A minimal set of payments to settle up between people.",
+  "@paymentsTransferSuggestionsSubtitle": {
+    "description": "Explanatory text under transfer suggestions title"
+  },
   "paymentsBalanceChartTitle": "Balance distribution",
   "@paymentsBalanceChartTitle": {
     "description": "Title of the balance distribution chart"
   },
-  "paymentsBalanceStatusCreditor": "Should receive {amount}",
+  "paymentsBalanceStatusCreditor": "Is owed {amount}",
   "@paymentsBalanceStatusCreditor": {
     "description": "Status text when the participant is a creditor",
     "placeholders": {
@@ -361,7 +369,7 @@
       }
     }
   },
-  "paymentsBalanceStatusDebtor": "Should pay {amount}",
+  "paymentsBalanceStatusDebtor": "Owes {amount}",
   "@paymentsBalanceStatusDebtor": {
     "description": "Status text when the participant is a debtor",
     "placeholders": {
@@ -374,12 +382,35 @@
   "@paymentsBalanceStatusSettled": {
     "description": "Status text when the participant is settled"
   },
+  "paymentsEditExpense": "Edit expense",
+  "paymentsExpenseUpdated": "Expense updated",
+  "paymentsExpenseDeleteConfirmTitle": "Delete this expense?",
+  "paymentsExpenseDeleteConfirmBody": "It will be removed from the plan and balances. This cannot be undone.",
+  "paymentsExpenseDeleted": "Expense deleted",
+  "paymentsExpenseDeleteError": "Could not delete expense",
+  "paymentsExpenseFromEventPayerHint": "Say who actually paid; you choose how to split between people below.",
+  "@paymentsExpenseFromEventPayerHint": {
+    "description": "Hint when opening expense from an event (initialEventId)"
+  },
+  "paymentsActivityEmpty": "No expenses yet. Add one with the button above.",
+  "paymentsExpenseRowMeta": "{date} · paid by {payer}",
+  "@paymentsExpenseRowMeta": {
+    "placeholders": {
+      "date": {"type": "String"},
+      "payer": {"type": "String"}
+    }
+  },
+  "paymentsExpenseDefaultConcept": "Expense",
   "paymentsAddExpense": "Add expense",
   "paymentsAddExpenseTitle": "New expense (who paid, split)",
   "paymentsExpensePayer": "Who paid",
   "paymentsExpenseAmount": "Amount",
   "paymentsExpenseConcept": "Concept (optional)",
   "paymentsExpenseDate": "Date",
+  "paymentsExpenseLinkedEventLabel": "Event (optional)",
+  "paymentsExpenseNoEventOption": "None",
+  "paymentsExpenseEventFallbackTitle": "Event",
+  "paymentsExpenseUnknownLinkedEvent": "Event (reference)",
   "paymentsExpenseSplitBetween": "Split between",
   "paymentsActivityTitle": "Activity",
   "paymentsExpenseSaved": "Expense recorded",
@@ -1465,6 +1496,15 @@
   "taxiDestinationHint": "Drop-off address",
   "taxiSeatsLabel": "Taxi seats",
   "taxiSeatsHint": "Number of seats",
+  "eventTransferTerminalLabel": "Terminal / gate",
+  "@eventTransferTerminalLabel": {
+    "description": "Shuttle/Transfer: airport terminal (list item 90)"
+  },
+  "eventTransferTerminalHint": "E.g. T2, gate B12",
+  "eventTransferAirlineLabel": "Airline / flight",
+  "eventTransferAirlineHint": "E.g. Iberia, IB1234",
+  "eventTransferAirportMeetLabel": "Airport meet time",
+  "eventTransferAirportMeetHint": "E.g. 2h before flight, desk…",
   "flightNumberLabel": "Flight number",
   "flightNumberHint": "E.g. IB6842, AF1135",
   "flightDateLabel": "Flight date",
@@ -1498,6 +1538,21 @@
   "@eventDialogFixValidationErrors": {
     "description": "SnackBar when event form validate() fails"
   },
+  "eventDialogParticipantsScopeLabel": "Event participants",
+  "eventDialogForAllParticipantsTitle": "This event is for all participants in the plan",
+  "eventDialogForAllParticipantsSubtitleOn": "All participants will be included automatically",
+  "eventDialogForAllParticipantsSubtitleOff": "Pick specific participants below",
+  "eventDialogAddLinkedExpenseTooltip": "Add expense linked to this event",
+  "eventSponsoredTag": "Sponsored",
+  "eventSponsoredBy": "Sponsored by {sponsor}",
+  "@eventSponsoredBy": {
+    "placeholders": {
+      "sponsor": {"type": "String"}
+    }
+  },
+  "eventSponsoredStaticHint": "Static contextual monetization trial (no live ads yet).",
+  "eventSponsoredOpenOffer": "View offer",
+  "eventSponsoredOpenError": "Could not open sponsor link",
   "eventStatusDraft": "Draft",
   "eventStatusConfirmed": "Confirmed",
   "isDraft": "Is draft",
@@ -1840,6 +1895,48 @@
   "@planSummaryButtonLabel": { "description": "T193: Summary button label" },
   "myPlanSummaryTab": "My summary",
   "@myPlanSummaryTab": { "description": "T252: My summary / participant itinerary tab" },
+  "planNotesTabTitle": "Notes",
+  "@planNotesTabTitle": { "description": "T262: Plan detail tab for notes and preparation" },
+  "planNotesTabCommon": "Common",
+  "@planNotesTabCommon": { "description": "T262: Shared plan notes tab" },
+  "planNotesTabPersonal": "Personal",
+  "@planNotesTabPersonal": { "description": "T262: Personal plan notes tab" },
+  "planNotesPreparationTitle": "Preparation",
+  "@planNotesPreparationTitle": { "description": "T262: Checklist section title" },
+  "planNotesCommonIntro": "Shared notes and preparation list for this trip. Who can edit the list is set by the organizer.",
+  "@planNotesCommonIntro": { "description": "T262: Intro common section" },
+  "planNotesPersonalIntro": "Only you can see this note and your personal preparation list.",
+  "@planNotesPersonalIntro": { "description": "T262: Intro personal section" },
+  "planNotesCommonNoteLabel": "Shared note",
+  "@planNotesCommonNoteLabel": { "description": "T262: Label for common text field" },
+  "planNotesPersonalNoteLabel": "Personal note",
+  "@planNotesPersonalNoteLabel": { "description": "T262: Label for personal text field" },
+  "planNotesAddPrepItem": "Add item",
+  "@planNotesAddPrepItem": { "description": "T262: Add checklist item" },
+  "planNotesSave": "Save",
+  "@planNotesSave": { "description": "T262: Save notes button" },
+  "planNotesSaved": "Saved",
+  "@planNotesSaved": { "description": "T262: Snackbar after save" },
+  "planNotesSaveError": "Could not save. Check your connection or permissions.",
+  "@planNotesSaveError": { "description": "T262: Save failed" },
+  "planNotesReadOnlyHint": "You can view this section but not edit it.",
+  "@planNotesReadOnlyHint": { "description": "T262: Read-only common" },
+  "planNotesPolicyTitle": "Who can edit the shared preparation list",
+  "@planNotesPolicyTitle": { "description": "T262: Policy section title" },
+  "planNotesPolicyOrganizerOnly": "Organizer only",
+  "@planNotesPolicyOrganizerOnly": { "description": "T262: Policy option" },
+  "planNotesPolicySelected": "Selected participants",
+  "@planNotesPolicySelected": { "description": "T262: Policy option" },
+  "planNotesPolicyAll": "All participants",
+  "@planNotesPolicyAll": { "description": "T262: Policy option" },
+  "planNotesSelectParticipantsTitle": "Choose who can edit the list",
+  "@planNotesSelectParticipantsTitle": { "description": "T262: Dialog title" },
+  "planNotesApplySelection": "Apply",
+  "@planNotesApplySelection": { "description": "T262: Apply participant selection" },
+  "planNotesNoWorkspaceYet": "Shared notes are still loading or not available.",
+  "@planNotesNoWorkspaceYet": { "description": "T262: Missing workspace" },
+  "planNotesNewItemHint": "New item",
+  "@planNotesNewItemHint": { "description": "T262: Hint for new prep item" },
   "calendarViewModeCalendar": "Calendar",
   "@calendarViewModeCalendar": { "description": "T252: Calendar view mode in Calendar tab" },
   "myPlanSummaryHint": "This is your view as a participant",
@@ -1848,23 +1945,23 @@
   "@myPlanSummaryToday": { "description": "T252: Today section" },
   "myPlanSummaryTomorrow": "Tomorrow",
   "@myPlanSummaryTomorrow": { "description": "T252: Tomorrow section" },
-  "myPlanSummaryFlights": "My flights",
-  "@myPlanSummaryFlights": { "description": "T252: Quick access flights" },
-  "myPlanSummaryFlightsHint": "Flight-type events",
-  "@myPlanSummaryFlightsHint": { "description": "Flights section criterion in My summary" },
-  "myPlanSummaryAccommodation": "My accommodation",
+  "myPlanSummaryFlights": "Travel",
+  "@myPlanSummaryFlights": { "description": "T252: Quick access all transport (item 84)" },
+  "myPlanSummaryFlightsHint": "Train, flight, car and other travel",
+  "@myPlanSummaryFlightsHint": { "description": "Transport section criterion in My summary" },
+  "myPlanSummaryAccommodation": "Accommodations",
   "@myPlanSummaryAccommodation": { "description": "T252: Quick access accommodation" },
   "myPlanSummaryImportant": "Key information",
   "@myPlanSummaryImportant": { "description": "T252: Plan summary block" },
   "myPlanSummaryResumenSection": "Summary",
   "@myPlanSummaryResumenSection": { "description": "Expandible section title: Important + Today/Tomorrow" },
-  "myPlanSummaryViewMine": "My summary",
-  "@myPlanSummaryViewMine": { "description": "View selector: my events only" },
-  "myPlanSummaryViewPlan": "Summary all",
-  "@myPlanSummaryViewPlan": { "description": "View selector: all participants" },
+  "myPlanSummaryViewMine": "mine",
+  "@myPlanSummaryViewMine": { "description": "View selector: my events only (short, item 80)" },
+  "myPlanSummaryViewPlan": "all",
+  "@myPlanSummaryViewPlan": { "description": "View selector: all participants (short, item 80)" },
   "myPlanSummaryLabelAll": "All",
   "@myPlanSummaryLabelAll": { "description": "Label when event is for the whole plan" },
-  "myPlanSummaryChronological": "Full itinerary",
+  "myPlanSummaryChronological": "Full plan",
   "@myPlanSummaryChronological": { "description": "T252: Chronological list" },
   "myPlanSummaryMyInfo": "My information",
   "@myPlanSummaryMyInfo": { "description": "T252: Participant personal data block" },
@@ -1878,6 +1975,23 @@
   "@myPlanSummarySeeMore": { "description": "Expand chronological list" },
   "myPlanSummarySeeLess": "See less",
   "@myPlanSummarySeeLess": { "description": "Collapse chronological list" },
+  "myPlanSummaryDraftsOnlyTooltip": "Drafts only",
+  "@myPlanSummaryDraftsOnlyTooltip": { "description": "Item 81: filter unconfirmed events" },
+  "myPlanSummaryParticipantsCount": "{count} participants",
+  "@myPlanSummaryParticipantsCount": {
+    "description": "Item 74: participant count in important block",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "myPlanSummaryQuickImportant": "Highlights",
+  "@myPlanSummaryQuickImportant": { "description": "Item 75: quick access icon" },
+  "myPlanSummaryQuickParticipants": "Participants",
+  "@myPlanSummaryQuickParticipants": { "description": "Item 75: participants icon" },
+  "myPlanSummaryQuickToday": "today",
+  "@myPlanSummaryQuickToday": { "description": "Item 75: today icon label" },
+  "myPlanSummaryQuickTomorrow": "tomorrow",
+  "@myPlanSummaryQuickTomorrow": { "description": "Item 75: tomorrow icon label" },
+  "myPlanSummaryTimeNextDaySuffix": " (+1)",
+  "@myPlanSummaryTimeNextDaySuffix": { "description": "Item 72: event end next calendar day" },
   "proposalsTab": "Proposals",
   "@proposalsTab": { "description": "T252: Pending proposals tab" },
   "proposalsPendingTitle": "Pending proposals",

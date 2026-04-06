@@ -4,8 +4,8 @@
 
 **Relacionado con:** T51 - Validación de formularios (✅), T105 (✅ Base), T117 - Registro de participantes por evento (✅ Base), T120 - Confirmación de eventos (✅ Base Fases 1 y 2), T121, T110, T101 ✅, T102 ✅, T153 ✅, T100 ✅, T225 - Google Places (✅), T131 - Calendarios externos, T134 - Importación desde Email, T146 - Oráculo de Delfos, T147 - Valoraciones  
 **Nota:** Los eventos comparten estructura **Parte Común/Parte Personal** similar a los alojamientos (ver FLUJO_CRUD_ALOJAMIENTOS)  
-**Versión:** 1.5  
-**Fecha:** Febrero 2026 (T225 - lugar del evento con Google Places)
+**Versión:** 1.6  
+**Fecha:** Marzo 2026 (T225 Places; alta rápida FAB/resumen; anti-duplicado guardado; rejilla tipo/subtipo)
 
 ---
 
@@ -114,6 +114,7 @@ Completar campos:
 - Participantes asignados
 - Ubicación / Lugar (opcional, T225): búsqueda con Google Places; al elegir una sugerencia se rellena el campo Lugar; aparece tarjeta de ubicación con dirección y botón "Abrir en Google Maps". Se guarda en location y en extraData (placeLat, placeLng, placeAddress, placeName). Formulario con estética tipo login.
 - Número de vuelo (T246, solo Desplazamiento / Avión): campo opcional "Número de vuelo" (formato IATA, ej. IB6842); botón "Obtener datos del vuelo" llama a Amadeus On-Demand Flight Status vía Cloud Function; se rellenan descripción, fecha, hora de inicio y duración; se guarda en extraData (flightNumber, originIata, destinationIata, departureScheduled, arrivalScheduled, durationMinutes, airlineName). Configuración: docs/configuracion/CONFIGURAR_AMADEUS_FLIGHT_STATUS.md.
+- Desplazamiento / **Shuttle** o **Transfer** (lista §3.2 ítem 90): bloque opcional **terminal/puerta**, **aerolínea/vuelo** y **presentación en aeropuerto** (texto); se persiste en `extraData` (`transferTerminal`, `transferAirline`, `transferAirportMeet`). Comparte origen/destino con el resto de desplazamientos no avión.
 - Presupuesto si aplica (T101/T153):
   - Moneda local del coste (EUR/USD/GBP/JPY) (T153)
   - Coste por persona o total (T101)
@@ -159,6 +160,19 @@ Actualizar presupuesto del plan (T101):
   ↓
 Estado: "Pendiente" o "Confirmado" según configuración automática
 ```
+
+#### 1.1a - Alta rápida (FAB, celda vacía, Mi resumen) — Marzo 2026
+
+**Cuándo:** El usuario crea un evento desde el FAB "+" del calendario (web o móvil), desde el FAB "+" de la pestaña **Mi resumen** (mismo flujo modal que el calendario, sin cambiar de pestaña), o desde entradas equivalentes en detalle del plan.
+
+**Fecha y hora iniciales** (`NewEventFromButtonDefaults.forPlan` en código):  
+- Plan **en_curso:** día y hora = **ahora** (acotado al rango del plan si aplica).  
+- Cualquier otro estado del plan: día civil **dentro del rango** del plan (si "hoy" cae fuera, se usa inicio o fin del plan) y hora **10:00**.  
+- **Excepción:** creación desde **celda concreta** del calendario sigue usando el día y la franja horaria de esa celda.
+
+**Formulario al abrir:** selector de tipo/subtipo en **rejilla de tres columnas** con opciones en **orden alfabético**; bloque "Este evento es para todos los participantes" con el mismo patrón visual que el resto de campos (etiqueta en borde + checkbox).
+
+**Guardado:** mientras la petición de crear/actualizar está en curso, el botón **Crear/Guardar** permanece **deshabilitado** y se muestra indicador de carga, para evitar **eventos duplicados** si el usuario pulsa varias veces con red lenta.
 
 #### 1.2 - Creación desde Email de Confirmación (T134)
 

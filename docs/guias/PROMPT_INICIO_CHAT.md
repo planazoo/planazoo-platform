@@ -16,6 +16,7 @@ Antes de proponer o implementar nada:
 4. Para UI: Estilo Base oscuro, AppColorScheme, docs/ux/estilos/ESTILO_SOFISTICADO.md y docs/guias/GUIA_UI.md.
 5. Para flujos y decisiones: docs/flujos/, docs/especificaciones/, docs/arquitectura/ARCHITECTURE_DECISIONS.md según lo que vayamos a tocar.
 6. Para **publicar iOS / TestFlight / IPA**: docs/configuracion/FASTLANE_IOS_APPSTORE.md y CONTEXT.md §10.1 (contraseña específica de apps: FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD si hay 2FA).
+7. **Notas del plan (T262):** spec `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md`; implementación parcial en `lib/features/plan_notes/` (plantillas y cierre de tarea pendientes).
 
 Convenciones: páginas pg_*, widgets wd_*, comunicación en castellano. No hagas git push sin mi confirmación explícita.
 ```

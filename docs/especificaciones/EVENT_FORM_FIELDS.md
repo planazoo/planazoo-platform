@@ -70,6 +70,22 @@ Estos campos son aplicables a TODOS los eventos:
 - Duración: máximo 24h (para estancias usar Alojamiento)
 - Tipo/Subtipo: consistentes con listas por familia
 
+### Catálogo tipo/subtipo en app (`wd_event_dialog`, mar 2026)
+
+Los valores en **español** son los que se persisten en `typeFamily` / `subtype` (Firestore).
+
+| Familia | Subtipos |
+|--------|-----------|
+| Desplazamiento | Taxi, Avión, Tren, Autobús, Coche, Caminar, Shuttle, Transfer |
+| Restauración | Desayuno, Comida, Cena, Snack, Bebida |
+| Actividad | Concierto, Deporte, **Disfrutar hotel**, Monumento, Museo, Parque, Teatro, Tour |
+| Acción | Embarque, **Entrega vehículo alquiler**, **Fin viaje**, **Inicio viaje**, Otro, **Punto de encuentro**, **Recogida vehículo alquiler** |
+| Otro | Compra, Reunión, Trabajo, Personal |
+
+Al abrir un evento existente, **Recogida** → **Recogida vehículo alquiler** y **Entrega** → **Entrega vehículo alquiler** (migración de UI al guardar de nuevo).
+
+**Shuttle / Transfer (mar 2026, lista §3.2 ítem 90):** además de origen y destino (mismo bloque que taxi/tren), el formulario ofrece **Terminal / puerta**, **Aerolínea / vuelo** y **Presentación en aeropuerto** (texto libre: hora anticipación, mostrador, etc.). Se guardan en `commonPart.extraData`: `transferTerminal`, `transferAirline`, `transferAirportMeet`. Si el subtipo deja de ser Shuttle/Transfer, esas claves se eliminan al guardar.
+
 ### Personales (por participante)
 - Asiento: máx 50 caracteres
 - Menú/Comida: máx 100 caracteres
@@ -838,6 +854,10 @@ Map<String, List<EventFieldSpec>> eventFieldsByType = {
       EventFieldSpec('asiento', 'Asiento/Zona', 'Ej: Fila 8, Zona VIP', Icons.chair, FieldType.text, true),
       EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: CON123456', Icons.confirmation_number, FieldType.text, true),
       EventFieldSpec('preferencias', 'Preferencias', 'Cerca escenario, Zona de pie', Icons.tune, FieldType.text, false),
+    ],
+    'Disfrutar hotel': [
+      EventFieldSpec('preferencias', 'Preferencias', 'Spa, piscina, late checkout', Icons.hotel, FieldType.text, false),
+      EventFieldSpec('numeroReserva', 'Número de reserva', 'Ej: HOT123', Icons.confirmation_number, FieldType.text, false),
     ],
   },
   'Otro': {

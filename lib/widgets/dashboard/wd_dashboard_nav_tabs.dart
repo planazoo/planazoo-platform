@@ -58,6 +58,7 @@ class WdDashboardNavTabs extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
     return [
       DashboardNavTabItem(id: 'W14', icon: Icons.info, label: loc.dashboardTabPlanazoo, screen: 'planData'),
+      DashboardNavTabItem(id: 'W21_NOTES', icon: Icons.note_alt_outlined, label: loc.planNotesTabTitle, screen: 'planNotes'),
       DashboardNavTabItem(id: 'W15_MYSUMMARY', icon: Icons.list_alt, label: loc.myPlanSummaryTab, screen: 'mySummary'),
       DashboardNavTabItem(id: 'W15', icon: Icons.calendar_today, label: loc.dashboardTabCalendar, screen: 'calendar'),
       DashboardNavTabItem(id: 'W16', icon: Icons.group, label: loc.dashboardTabIn, screen: 'participants'),

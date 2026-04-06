@@ -1,7 +1,7 @@
 # 🔍 Auditoría de Colecciones de Firestore
 
 > Documento creado: Enero 2025  
-> Última actualización: Febrero 2026
+> Última actualización: Marzo 2026
 
 ---
 
@@ -35,6 +35,8 @@
 - `email`, `displayName`, `username`, `photoURL`
 - `createdAt`, `lastLoginAt`, `isActive`
 
+**Subcolecciones (reglas en `firestore.rules`):** entre otras, `fcmTokens`, `notifications`, `pending_email_events`, **`note_templates`** (T262 — plantillas de notas del usuario; UI pendiente).
+
 ---
 
 ### 2. `plans`
@@ -52,8 +54,10 @@
 **Subcolecciones (solo las que existen en código):**
 - `announcements` - Avisos del plan (`plans/{planId}/announcements`) — ver AnnouncementService
 - `messages` - Mensajes del chat del plan (`plans/{planId}/messages`) — ChatService
+- `plan_workspace` - Notas comunes + preparación compartida (T262): documento fijo `default` — `PlanNotesService` (`lib/features/plan_notes/domain/services/plan_notes_service.dart`)
+- `personal_plan_notes` - Notas y preparación personal por usuario (`plans/{planId}/personal_plan_notes/{userId}`) — mismo servicio T262
 
-**Nota:** Los eventos y alojamientos **no** son subcolecciones de `plans`. Están en la colección raíz `events` (eventos con `planId`; alojamientos con `typeFamily: 'alojamiento'`). Los pagos personales están en `personal_payments`; el bote común (T219) en `kitty_contributions` y `kitty_expenses`.
+**Nota:** Los eventos y alojamientos **no** son subcolecciones de `plans`. Están en la colección raíz `events` (eventos con `planId`; alojamientos con `typeFamily: 'alojamiento'`). Los pagos personales están en `personal_payments`; el bote común (T219) en `kitty_contributions` y `kitty_expenses` (colecciones existentes, aunque su UI principal en pagos se retiró en mar 2026).
 
 **Campos principales:**
 - `name`, `unpId`, `userId`, `baseDate`, `startDate`, `endDate`
@@ -203,8 +207,8 @@
 1. **`participant_groups`** - Grupos de participantes (T123) ✅
 2. **`plan_invitations`** - Invitaciones por email (T104) ✅
 3. **`personal_payments`** - Pagos personales (T102) ✅
-4. **`kitty_contributions`** - Aportaciones al bote común (T219, KittyService) ✅
-5. **`kitty_expenses`** - Gastos del bote común (T219, KittyService) ✅
+4. **`kitty_contributions`** - Aportaciones al bote común (T219, KittyService) ✅ *(no visibles en `PaymentSummaryPage` desde mar 2026)*
+5. **`kitty_expenses`** - Gastos del bote común (T219, KittyService) ✅ *(no visibles en `PaymentSummaryPage` desde mar 2026)*
 6. **`userPreferences`** - Preferencias de usuario ✅
 
 ---

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,12 +29,14 @@ import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_plans_list_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
-import 'package:unp_calendario/widgets/dialogs/payment_dialog.dart';
+import 'package:unp_calendario/features/payments/presentation/widgets/add_expense_dialog.dart';
+import 'package:unp_calendario/features/payments/presentation/providers/payment_providers.dart';
 import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
+import 'package:unp_calendario/features/plan_notes/presentation/pages/plan_notes_screen.dart';
 
 /// Página de detalle del plan para mobile
 /// Incluye barra de navegación horizontal y contenido según la opción seleccionada
@@ -58,7 +62,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   /// iOS: 3 días por defecto (lista §3.1 / ID 51).
   int _calendarVisibleDays =
       (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? 3 : 1;
-  int _calendarDayGroup = 0;
+  /// Índice 1-based: primera columna del calendario embebido (ítem 99: anclar a hoy al abrir).
+  late int _calendarFirstPlanDay;
 
   /// [widget.plan] solo refleja el plan al abrir la pantalla; al guardar fechas/duración en Info,
   /// el documento en Firestore cambia pero el constructor no. Usamos [plansStreamProvider] para
@@ -99,6 +104,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   void initState() {
     super.initState();
     _selectedOption = widget.initialTab ?? 'planData';
+    _calendarFirstPlanDay =
+        Plan.initialVisiblePlanDayIndex(widget.plan, _calendarVisibleDays);
   }
 
   @override
@@ -270,9 +277,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
               badgeCount: unreadChat,
             ),
             _buildQuickActionButton(
-              icon: Icons.payment_outlined,
+              icon: Icons.receipt_long_outlined,
               onTap: _quickCreatePayment,
-              tooltip: loc.paymentsRegisterPayment,
+              tooltip: loc.paymentsAddExpense,
               isActive: _selectedOption == 'payments',
             ),
             _buildQuickActionButton(
@@ -368,6 +375,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           onPlanDeleted: () {
             Navigator.of(context).pop();
           },
+        );
+
+      case 'planNotes':
+        return PlanNotesScreen(
+          plan: plan,
+          embedInPlanDetail: true,
         );
 
       case 'mySummary':
@@ -578,12 +591,15 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     if (switchToCalendar) {
       setState(() => _selectedOption = 'calendar');
     }
+    final defaults = NewEventFromButtonDefaults.forPlan(p);
     showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => EventDialog(
         planId: p.id!,
-        initialDate: p.startDate,
+        initialDate: defaults.date,
+        initialHour: defaults.hour,
+        initialStartMinute: defaults.startMinute,
         onSaved: (ev) async {
           await _persistEventFromDialog(ev);
           _invalidateEventProviders();
@@ -650,10 +666,10 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         fullscreenDialog: true,
-        builder: (ctx) => PaymentDialog(
-          planId: p.id!,
+        builder: (ctx) => AddExpenseDialog(
           plan: p,
           onSaved: () {
+            ref.invalidate(paymentSummaryProvider(p.id!));
             if (!mounted) return;
             setState(() => _selectedOption = 'payments');
           },
@@ -669,16 +685,18 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   /// Pestaña Calendario con barra unificada (rango días + 1/2/3).
   Widget _buildCalendarTabContent(Plan plan) {
     final totalDays = plan.durationInDays;
-    final currentStart = _calendarDayGroup * _calendarVisibleDays + 1;
-    if (totalDays > 0 && currentStart > totalDays) {
+    if (totalDays > 0 && _calendarFirstPlanDay > totalDays) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        if (_calendarDayGroup * _calendarVisibleDays + 1 > plan.durationInDays) {
-          setState(() => _calendarDayGroup = 0);
+        if (_calendarFirstPlanDay > plan.durationInDays) {
+          setState(() {
+            _calendarFirstPlanDay =
+                Plan.initialVisiblePlanDayIndex(plan, _calendarVisibleDays);
+          });
         }
       });
     }
-    final startDay = _calendarDayGroup * _calendarVisibleDays + 1;
+    final startDay = _calendarFirstPlanDay;
     final endDay = startDay + _calendarVisibleDays - 1;
 
     return Column(
@@ -693,25 +711,32 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             plan: plan,
             hideAppBar: true,
             visibleDays: _calendarVisibleDays,
-            currentDayGroup: _calendarDayGroup,
+            firstVisiblePlanDayIndex: _calendarFirstPlanDay,
             onVisibleDaysChanged: (days) {
               setState(() {
                 _calendarVisibleDays = days;
-                final currentStart =
-                    _calendarDayGroup * _calendarVisibleDays + 1;
-                if (currentStart > totalDays) {
-                  _calendarDayGroup = 0;
+                if (_calendarFirstPlanDay > totalDays) {
+                  _calendarFirstPlanDay =
+                      Plan.initialVisiblePlanDayIndex(plan, days);
                 }
               });
             },
             onPreviousDayGroup: () {
-              if (_calendarDayGroup > 0) {
-                setState(() => _calendarDayGroup--);
+              if (_calendarFirstPlanDay > 1) {
+                setState(() {
+                  _calendarFirstPlanDay = math.max(
+                    1,
+                    _calendarFirstPlanDay - _calendarVisibleDays,
+                  );
+                });
               }
             },
             onNextDayGroup: () {
               if (endDay < totalDays) {
-                setState(() => _calendarDayGroup++);
+                setState(() {
+                  final next = _calendarFirstPlanDay + _calendarVisibleDays;
+                  _calendarFirstPlanDay = next > totalDays ? totalDays : next;
+                });
               }
             },
           ),
@@ -744,8 +769,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.chevron_left, color: Colors.white),
-                  onPressed: _calendarDayGroup > 0
-                      ? () => setState(() => _calendarDayGroup--)
+                  onPressed: _calendarFirstPlanDay > 1
+                      ? () => setState(() {
+                            _calendarFirstPlanDay = math.max(
+                              1,
+                              _calendarFirstPlanDay - _calendarVisibleDays,
+                            );
+                          })
                       : null,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
@@ -767,7 +797,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                 IconButton(
                   icon: const Icon(Icons.chevron_right, color: Colors.white),
                   onPressed: endDay < totalDays
-                      ? () => setState(() => _calendarDayGroup++)
+                      ? () => setState(() {
+                            final next =
+                                _calendarFirstPlanDay + _calendarVisibleDays;
+                            _calendarFirstPlanDay =
+                                next > totalDays ? totalDays : next;
+                          })
                       : null,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
@@ -804,9 +839,10 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       onTap: () {
         setState(() {
           _calendarVisibleDays = days;
-          final currentStart = _calendarDayGroup * days + 1;
-          if (currentStart > plan.durationInDays) {
-            _calendarDayGroup = 0;
+          final t = plan.durationInDays;
+          if (_calendarFirstPlanDay > t) {
+            _calendarFirstPlanDay =
+                Plan.initialVisiblePlanDayIndex(plan, days);
           }
         });
       },

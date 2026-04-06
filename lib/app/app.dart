@@ -12,6 +12,9 @@ import 'package:unp_calendario/pages/pg_dashboard_page.dart';
 import 'package:unp_calendario/pages/pg_plans_list_page.dart';
 import 'package:unp_calendario/shared/utils/platform_utils.dart';
 import 'package:unp_calendario/features/help/presentation/pages/help_manual_page.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
+import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -21,6 +24,79 @@ class App extends ConsumerStatefulWidget {
 }
 
 class _AppState extends ConsumerState<App> {
+  final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+  final PlanService _planService = PlanService();
+  static const Set<String> _allowedPlanTabs = {
+    'planData',
+    'planNotes',
+    'mySummary',
+    'calendar',
+    'participants',
+    'chat',
+    'planNotifications',
+    'stats',
+    'payments',
+  };
+
+  String? _normalizeInitialTab(String? rawTab) {
+    if (rawTab == null) return null;
+    final tab = rawTab.trim();
+    if (tab.isEmpty) return null;
+    return _allowedPlanTabs.contains(tab) ? tab : null;
+  }
+
+  String? _inferInitialTabFromPayload(Map<String, dynamic> data) {
+    final rawType = (data['type'] ?? data['notificationType'] ?? data['category'])
+        ?.toString()
+        .trim()
+        .toLowerCase();
+    switch (rawType) {
+      case 'chat':
+      case 'message':
+      case 'new_message':
+        return 'chat';
+      case 'announcement':
+      case 'plan_notification':
+      case 'event_change':
+      case 'event_proposed':
+      case 'invitation':
+      case 'invitation_accepted':
+      case 'invitation_rejected':
+        return 'planNotifications';
+      case 'payment':
+      case 'expense':
+      case 'balance':
+        return 'payments';
+      default:
+        return null;
+    }
+  }
+
+  Future<void> _handlePushTap(RemoteMessage message) async {
+    final data = message.data;
+    final rawPlanId = data['planId'] ?? data['plan_id'];
+    if (rawPlanId == null || rawPlanId.toString().trim().isEmpty) {
+      return;
+    }
+    final planId = rawPlanId.toString();
+    final plan = await _planService.getPlanById(planId);
+    if (!mounted || plan == null) return;
+
+    final rawTab = data['tab'] ?? data['initialTab'];
+    final initialTab = _normalizeInitialTab(rawTab?.toString()) ??
+        _inferInitialTabFromPayload(data);
+    final nav = _rootNavigatorKey.currentState;
+    if (nav == null) return;
+
+    nav.push(
+      MaterialPageRoute<void>(
+        builder: (context) => PlanDetailPage(
+          plan: plan,
+          initialTab: initialTab,
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -29,6 +105,9 @@ class _AppState extends ConsumerState<App> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final languageNotifier = ref.read(languageNotifierProvider);
       languageNotifier.loadSavedLanguage();
+
+      // Registrar navegación desde push (A1 / ítem 109).
+      FCMService.setNotificationTapHandler(_handlePushTap);
       
       // Verificar si hay una notificación que abrió la app
       FCMService.getInitialMessage();
@@ -46,6 +125,7 @@ class _AppState extends ConsumerState<App> {
     ref.watch(fcmInitializerProvider);
     
     return MaterialApp(
+      navigatorKey: _rootNavigatorKey,
       title: 'UNP Calendario',
       theme: AppTheme.lightTheme,
       locale: currentLanguage,

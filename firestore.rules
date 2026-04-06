@@ -368,6 +368,53 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && 
                            (prefUserId == request.auth.uid || isPlanOwner(planId));
     }
+
+    // ============================================
+    // T262: Notas del plan (común) + preparación compartida — plan_workspace/default
+    // Participantes: solo mutan commonNoteText + preparationItems + updatedAt (misma regla que crear ítem).
+    // ============================================
+
+    match /plans/{planId}/plan_workspace/{docId} {
+      allow read: if isAuthenticated();
+
+      // Crear: organizador del plan o admin plataforma. (Si ves permission-denied aquí en local,
+      // despliega reglas: `firebase deploy --only firestore:rules` al proyecto que usa la app.)
+      allow create: if isAuthenticated() && docId == 'default' &&
+        request.resource.data.commonNoteText is string &&
+        request.resource.data.preparationItems is list &&
+        request.resource.data.preparationCommonEditPolicy in ['organizer_only', 'selected_participants', 'all_participants'] &&
+        request.resource.data.preparationCommonEditorUserIds is list &&
+        request.resource.data.planParticipantUserIds is list &&
+        (isPlanOwner(planId) || isAdmin(request.auth.uid));
+
+      allow update: if isAuthenticated() && docId == 'default' && (
+        isPlanOwner(planId) ||
+        (
+          (
+            (resource.data.preparationCommonEditPolicy == 'all_participants' &&
+             request.auth.uid in resource.data.planParticipantUserIds) ||
+            (resource.data.preparationCommonEditPolicy == 'selected_participants' &&
+             request.auth.uid in resource.data.preparationCommonEditorUserIds)
+          ) &&
+          request.resource.data.preparationCommonEditPolicy == resource.data.preparationCommonEditPolicy &&
+          request.resource.data.preparationCommonEditorUserIds == resource.data.preparationCommonEditorUserIds &&
+          request.resource.data.planParticipantUserIds == resource.data.planParticipantUserIds
+        )
+      ) || isAdmin(request.auth.uid);
+
+      allow delete: if isAuthenticated() && (isPlanOwner(planId) || isAdmin(request.auth.uid));
+    }
+
+    // T262: Notas personales por plan y usuario
+    match /plans/{planId}/personal_plan_notes/{noteUserId} {
+      allow read: if isAuthenticated() && request.auth.uid == noteUserId;
+
+      allow create: if isAuthenticated() && request.auth.uid == noteUserId &&
+        request.resource.data.personalNoteText is string &&
+        request.resource.data.preparationItems is list;
+
+      allow update, delete: if isAuthenticated() && request.auth.uid == noteUserId;
+    }
     
     // ============================================
     // REGLAS PARA AVISOS/NOTIFICACIONES (subcolección de planes) - T105
@@ -592,6 +639,11 @@ service cloud.firestore {
     // REGLAS PARA TOKENS FCM (Fase 1 - FCM Básico)
     // ============================================
     
+    // T262: Plantillas de notas del usuario (texto libre)
+    match /users/{userId}/note_templates/{templateId} {
+      allow read, create, update, delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
     match /users/{userId}/fcmTokens/{tokenId} {
       // Crear: Solo el propio usuario puede crear su token
       allow create: if isAuthenticated() && 

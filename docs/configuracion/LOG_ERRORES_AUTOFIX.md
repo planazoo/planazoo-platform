@@ -16,6 +16,44 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-04-06] `wd_event_dialog` — assertion en `DropdownButton` con timezone `UTC`
+
+- **Contexto:** Edición/creación de evento con selector de timezone en `wd_event_dialog`.
+- **Error:** `There should be exactly one item with [DropdownButton]'s value: UTC`.
+- **Causa raíz:** El `value` del dropdown podía ser `UTC` (u otra timezone válida) que no estaba en la lista de `items`, y además no se deduplicaban entradas antes de construir el selector.
+- **Solución aplicada:** En `_buildTimezoneFieldOnBorder` se deduplica la lista (`toSet().toList()`), se inserta el valor actual si es válido y falta en `items`, y se usa `safeValue` para garantizar coherencia `value/items`.
+- **Notas para el futuro:** En cualquier `DropdownButton(FormField)`, validar siempre que el `value` exista **exactamente una vez** en `items` antes de renderizar.
+
+### [2026-03-27] `payment_providers` — comparación nula innecesaria en `participantId`
+
+- **Contexto:** Tras quitar el fetch del bote en `paymentSummaryProvider`, `dart analyze` sobre providers.
+- **Error:** `The operand can't be 'null', so the condition is always 'true'` / `unnecessary_non_null_assertion` en `payment.participantId`.
+- **Causa raíz:** En `PersonalPayment`, `participantId` es `String` no nullable; el `if (payment.participantId != null)` era código heredado incorrecto.
+- **Solución aplicada:** `userIdsToResolve.add(payment.participantId);` directo. Eliminado import `firebase_auth` que ya no se usaba en ese archivo.
+
+### [2026-03-27] `wd_my_plan_summary_screen` — parámetro obligatorio sin argumento
+
+- **Contexto:** Añadir `dimPastInCourse` a `_buildFlightsQuickContent` y a la llamada del ListView.
+- **Error:** `The named parameter 'dimPastInCourse' is required, but there's no corresponding argument`.
+- **Causa raíz:** Había **dos** llamadas idénticas a `_buildFlightsQuickContent` en el archivo; solo se actualizó una.
+- **Solución aplicada:** Pasar `dimPastInCourse: dimPastInCourse` en la segunda llamada (o unificar en un solo bloque).
+- **Notas:** Tras renombrar/añadir parámetros requeridos, buscar **todas** las referencias al método (`rg`).
+
+### [2026-03-27] T262 `plan_workspace` — `permission-denied` al guardar (saveWorkspaceFull)
+
+- **Contexto:** Pestaña Notas del plan; guardar notas comunes / política como organizador (`PlanNotesService.saveWorkspaceFull`).
+- **Error:** `[cloud_firestore/permission-denied] Missing or insufficient permissions` con log `ERROR[PLAN_NOTES]: saveWorkspaceFull: <planId>`.
+- **Causa raíz habitual:** (1) Reglas de Firestore del **proyecto remoto** sin desplegar o desactualizadas respecto a `firestore.rules` (bloque `plans/{planId}/plan_workspace/{docId}`). (2) Menos frecuente: el usuario no es el `userId` dueño del documento `plans/{planId}` aunque la UI trate el caso como organizador.
+- **Solución aplicada:** Reglas: `allow create` de workspace también con `isAdmin(request.auth.uid)`; comentario en rules sobre `firebase deploy --only firestore:rules`. Código: log `debugPrint` orientativo si `FirebaseException.code == permission-denied`.
+- **Notas para el futuro:** Tras cambiar reglas en repo, desplegar siempre al proyecto que usa la app; `isPlanOwner` exige que exista `plans/{planId}` y `userId == request.auth.uid`.
+
+### [2026-03-27] T262 `PlanNotesService` — tipo `PlanPreparationItem` no resuelto
+
+- **Contexto:** Implementar T262 (`plan_notes_service.dart` con `saveWorkspaceParticipantContent`).
+- **Error:** `The name 'PlanPreparationItem' isn't a type` / `toMap` en receiver nullable.
+- **Causa raíz:** Faltaba `import` del modelo `plan_preparation_item.dart`.
+- **Solución aplicada:** Añadir el import explícito.
+
 ### [2026-03-27] `AppTheme` — `IconThemeData` sin parámetro `fontFamily` (Flutter 3.41+)
 
 - **Contexto:** Añadir `iconTheme: IconThemeData(fontFamily: 'MaterialIcons')` para iconos en web.

@@ -4,7 +4,7 @@
 
 **Fecha de creación:** Noviembre 2025  
 **Proyecto:** Planazoo (unp_calendario)  
-**Última actualización:** Febrero 2026
+**Última actualización:** Marzo 2026
 
 ---
 
@@ -89,6 +89,7 @@
 - ✅ Gestión de participantes con roles
 - ✅ Sistema de permisos granulares
 - ✅ Eliminación en cascada de datos relacionados
+- ⚠️ **Notas del plan (T262, fase 1):** pestaña Notas; notas comunes/personales y lista Preparación con permisos por organizador; código en `lib/features/plan_notes/`. Pendiente en producto: plantillas, checklist de pruebas, cierre formal de la tarea (ver `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md`).
 
 **Sistema de Eventos:**
 - ✅ CRUD completo de eventos
@@ -213,7 +214,7 @@ lib/
 | `lib/features/auth/` | [FLUJO_CRUD_USUARIOS](../flujos/FLUJO_CRUD_USUARIOS.md), [GUIA_SEGURIDAD](../guias/GUIA_SEGURIDAD.md) |
 | `lib/features/calendar/` | [FLUJO_CRUD_PLANES](../flujos/FLUJO_CRUD_PLANES.md), [FLUJO_CRUD_EVENTOS](../flujos/FLUJO_CRUD_EVENTOS.md), [FLUJO_CRUD_ALOJAMIENTOS](../flujos/FLUJO_CRUD_ALOJAMIENTOS.md), [FLUJO_GESTION_PARTICIPANTES](../flujos/FLUJO_GESTION_PARTICIPANTES.md), [IMAGENES_PLAN_FIREBASE.md](./IMAGENES_PLAN_FIREBASE.md) |
 | `lib/features/notifications/` | [NOTIFICACIONES_ESPECIFICACION](../producto/NOTIFICACIONES_ESPECIFICACION.md), [FLUJO_INVITACIONES_NOTIFICACIONES](../flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md) |
-| `lib/features/payments/` | [FLUJO_PRESUPUESTO_PAGOS](../flujos/FLUJO_PRESUPUESTO_PAGOS.md) — Presupuesto en W17 (Estadísticas), pagos en W18 (Pagos); bote común (T219), permisos (T218), aviso legal (T220) |
+| `lib/features/payments/` | [FLUJO_PRESUPUESTO_PAGOS](../flujos/FLUJO_PRESUPUESTO_PAGOS.md) — Presupuesto en W17 (Estadísticas), pagos en W18 (Pagos); gastos Tricount/balances/transferencias, permisos (T218), aviso legal (T220). Nota: el bote T219 se retiró de la UI principal en mar 2026. |
 | `lib/features/offline/` | [ARCHITECTURE_DECISIONS](../arquitectura/ARCHITECTURE_DECISIONS.md) (Offline First), [TESTING_OFFLINE_FIRST](../testing/TESTING_OFFLINE_FIRST.md) |
 | `lib/shared/` | Modelos y servicios compartidos; ver flujos según dominio (permisos, roles, etc.) |
 | `lib/app/` | [GUIA_UI](../guias/GUIA_UI.md) (tema, colores, tipografía) |

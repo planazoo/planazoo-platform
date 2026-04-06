@@ -32,6 +32,7 @@ import 'package:unp_calendario/widgets/screens/wd_admin_insights_screen.dart';
 import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page.dart';
 import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
 import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
+import 'package:unp_calendario/features/plan_notes/presentation/pages/plan_notes_screen.dart';
 import 'package:unp_calendario/widgets/plan/plan_list_widget.dart';
 import 'package:unp_calendario/widgets/plan/plan_calendar_view.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
@@ -1687,6 +1688,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     final screensRequiringPlan = <String>{
       'planData',
+      'planNotes',
       'mySummary',
       'stats',
       'payments',
@@ -1757,6 +1759,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     switch (currentScreen) {
       case 'planData':
         content = _buildPlanDataScreen();
+        break;
+      case 'planNotes':
+        content = selectedPlan != null
+            ? PlanNotesScreen(
+                plan: _selectedPlanResolvedFromStream() ?? selectedPlan!,
+                embedInPlanDetail: false,
+              )
+            : _buildNoPlanSelected();
         break;
       case 'mySummary':
         content = selectedPlan != null

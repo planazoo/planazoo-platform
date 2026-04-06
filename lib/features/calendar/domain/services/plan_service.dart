@@ -8,6 +8,7 @@ import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
 import 'invitation_service.dart';
 import 'event_participant_service.dart';
+import '../../../plan_notes/domain/services/plan_notes_service.dart';
 
 class PlanService {
   PlanService({InvitationService? invitationService})
@@ -219,6 +220,12 @@ class PlanService {
         role: 'organizer',
         autoAccept: true,
       );
+
+      // T262: documento workspace de notas comunes / preparación (subcolección).
+      await docRef
+          .collection(PlanNotesService.workspaceCollection)
+          .doc(PlanNotesService.workspaceDocId)
+          .set(PlanNotesService.initialWorkspacePayload(plan.userId));
       
       // Registrar creación exitosa de plan
       await rateLimiter.recordPlanCreation(plan.userId);
@@ -327,6 +334,11 @@ class PlanService {
       
       // 4. Eliminar físicamente todas las participaciones del plan
       await _participationService.deleteAllPlanParticipations(id);
+
+      // T262: notas del plan (workspace + personales por usuario)
+      final planNotes = PlanNotesService(firestore: _firestore);
+      await planNotes.deleteWorkspaceForPlan(id);
+      await planNotes.deleteAllPersonalNotesForPlan(id);
       
       // 5. Eliminar el plan
       await _firestore.collection(_collectionName).doc(id).delete();

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -95,8 +96,17 @@ class PlanCardWidget extends ConsumerWidget {
         : 0;
 
     // T213: card más compacta; mayor contraste cuando está seleccionada
-    final textSecondary = isSelected ? Colors.white.withOpacity(0.95) : Colors.grey.shade400;
-    final textTertiary = isSelected ? Colors.white.withOpacity(0.85) : Colors.grey.shade500;
+    final textSecondary = isSelected ? Colors.white.withValues(alpha: 0.95) : Colors.grey.shade400;
+    final textTertiary = isSelected ? Colors.white.withValues(alpha: 0.85) : Colors.grey.shade500;
+    // §3.2 ítem 62: lista planes en iOS un poco más grande (touch + legibilidad).
+    final isIos = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+    final cardPadH = isIos ? 20.0 : 16.0;
+    final cardPadV = isIos ? 16.0 : 12.0;
+    final titleFs = isIos ? 14.0 : 12.0;
+    final subtitleFs = isIos ? 11.0 : 10.0;
+    final metaFs = isIos ? 10.0 : 9.0;
+    final badgeFs = isIos ? 9.0 : 8.0;
+    final dividerH = isIos ? 80.0 : 72.0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 0),
@@ -112,13 +122,13 @@ class PlanCardWidget extends ConsumerWidget {
               )
             : Border(
                 bottom: BorderSide(
-                  color: isSelected ? Colors.white.withOpacity(0.25) : AppColorScheme.color2,
+                  color: isSelected ? Colors.white.withValues(alpha: 0.25) : AppColorScheme.color2,
                   width: 1,
                 ),
               ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: cardPadH, vertical: cardPadV),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -159,7 +169,7 @@ class PlanCardWidget extends ConsumerWidget {
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: titleFs,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -169,7 +179,7 @@ class PlanCardWidget extends ConsumerWidget {
                             _formatPlanDates(),
                             style: GoogleFonts.poppins(
                               color: textSecondary,
-                              fontSize: 10,
+                              fontSize: subtitleFs,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -177,7 +187,7 @@ class PlanCardWidget extends ConsumerWidget {
                             '${plan.columnCount} días',
                             style: GoogleFonts.poppins(
                               color: textTertiary,
-                              fontSize: 9,
+                              fontSize: metaFs,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -186,7 +196,7 @@ class PlanCardWidget extends ConsumerWidget {
                             children: [
                               PlanStateBadgeCompact(
                                 plan: plan,
-                                fontSize: 8,
+                                fontSize: badgeFs,
                                 onColoredBackground: isSelected,
                               ),
                               const SizedBox(width: 6),
@@ -202,7 +212,7 @@ class PlanCardWidget extends ConsumerWidget {
                                     '$participantsCount',
                                     style: GoogleFonts.poppins(
                                       color: textTertiary,
-                                      fontSize: 8,
+                                      fontSize: badgeFs,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -213,7 +223,7 @@ class PlanCardWidget extends ConsumerWidget {
                           const SizedBox(height: 2),
                           DaysRemainingIndicator(
                             plan: plan,
-                            fontSize: 8,
+                            fontSize: badgeFs,
                             compact: true,
                             showIcon: false,
                           ),
@@ -228,9 +238,9 @@ class PlanCardWidget extends ConsumerWidget {
             if (plan.id != null) ...[
                 Container(
                   width: 1,
-                  height: 72,
+                  height: dividerH,
                   margin: const EdgeInsets.only(left: 8, right: 8),
-                  color: (isSelected ? Colors.white : Colors.grey.shade600).withOpacity(0.3),
+                  color: (isSelected ? Colors.white : Colors.grey.shade600).withValues(alpha: 0.3),
                 ),
                 SizedBox(
                   width: 40,
@@ -290,7 +300,7 @@ class PlanCardWidget extends ConsumerWidget {
   }) {
     final color = hasUnread
         ? AppColorScheme.color3
-        : (isSelected ? Colors.white.withOpacity(0.9) : Colors.grey.shade400);
+        : (isSelected ? Colors.white.withValues(alpha: 0.9) : Colors.grey.shade400);
     return Icon(icon, size: _badgeIconSize, color: color);
   }
 
@@ -413,7 +423,7 @@ class PlanCardWidget extends ConsumerWidget {
         height: imageSize,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
+          border: Border.all(color: AppColorScheme.color2.withValues(alpha: 0.3)),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
@@ -421,7 +431,7 @@ class PlanCardWidget extends ConsumerWidget {
             imageUrl: plan.imageUrl!,
             fit: BoxFit.cover,
             placeholder: (context, url) => Container(
-              color: AppColorScheme.color2.withOpacity(0.1),
+              color: AppColorScheme.color2.withValues(alpha: 0.1),
               child: const Center(
                 child: SizedBox(
                   width: 16,
@@ -440,7 +450,7 @@ class PlanCardWidget extends ConsumerWidget {
         height: imageSize,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
+          border: Border.all(color: AppColorScheme.color2.withValues(alpha: 0.3)),
         ),
         child: _buildDefaultImage(),
       );
@@ -449,11 +459,11 @@ class PlanCardWidget extends ConsumerWidget {
 
   Widget _buildDefaultImage() {
     return Container(
-      color: AppColorScheme.color2.withOpacity(0.1),
+      color: AppColorScheme.color2.withValues(alpha: 0.1),
       child: Center(
         child: Icon(
           Icons.image,
-          color: AppColorScheme.color2.withOpacity(0.5),
+          color: AppColorScheme.color2.withValues(alpha: 0.5),
           size: 20,
         ),
       ),

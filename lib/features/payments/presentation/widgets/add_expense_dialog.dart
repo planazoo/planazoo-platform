@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import '../../domain/models/plan_expense.dart';
@@ -16,12 +17,18 @@ class AddExpenseDialog extends ConsumerStatefulWidget {
   /// Opcional: nombres por userId. Si no se pasa, el diálogo mostrará userId hasta que se resuelvan.
   final Map<String, String>? userIdToName;
   final VoidCallback? onSaved;
+  /// Preselecciona el evento del plan (p. ej. desde el diálogo de evento — ítem 102).
+  final String? initialEventId;
+  /// Modo edición: mismo formulario, guardado con `updateExpense`.
+  final PlanExpense? existingExpense;
 
   const AddExpenseDialog({
     super.key,
     required this.plan,
     this.userIdToName,
     this.onSaved,
+    this.initialEventId,
+    this.existingExpense,
   });
 
   @override
@@ -38,12 +45,36 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
   Map<String, String> _resolvedNames = {};
   bool _equalSplit = true;
   final Map<String, TextEditingController> _customAmountControllers = {};
+  String? _selectedEventId;
 
   @override
   void initState() {
     super.initState();
-    if (widget.userIdToName != null && widget.userIdToName!.isNotEmpty) {
-      _resolvedNames = Map.from(widget.userIdToName!);
+    final ed = widget.existingExpense;
+    if (ed != null) {
+      _amountController.text = ed.amount.toStringAsFixed(2);
+      _conceptController.text = ed.concept ?? '';
+      _selectedDate = ed.expenseDate;
+      _selectedPayerId = ed.payerId;
+      _selectedParticipantIds.clear();
+      _selectedParticipantIds.addAll(ed.participantIds);
+      _equalSplit = ed.equalSplit;
+      _selectedEventId = ed.eventId;
+      if (widget.userIdToName != null && widget.userIdToName!.isNotEmpty) {
+        _resolvedNames = Map.from(widget.userIdToName!);
+      }
+      if (!ed.equalSplit && ed.customShares != null) {
+        for (final uid in ed.participantIds) {
+          final v = ed.customShares![uid] ?? 0.0;
+          _customAmountControllers[uid] =
+              TextEditingController(text: v.toStringAsFixed(2));
+        }
+      }
+    } else {
+      _selectedEventId = widget.initialEventId;
+      if (widget.userIdToName != null && widget.userIdToName!.isNotEmpty) {
+        _resolvedNames = Map.from(widget.userIdToName!);
+      }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => _initParticipants());
   }
@@ -159,7 +190,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
           );
           return;
         }
-        customShares![uid] = v;
+        customShares[uid] = v;
         sum += v;
       }
       if ((sum - amount).abs() > 0.01) {
@@ -174,7 +205,12 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       }
     }
     final currentUser = ref.read(currentUserProvider);
+    final linkedEventId = _selectedEventId != null && _selectedEventId!.isNotEmpty
+        ? _selectedEventId
+        : null;
+    final existing = widget.existingExpense;
     final expense = PlanExpense(
+      id: existing?.id,
       planId: widget.plan.id!,
       payerId: _selectedPayerId!,
       amount: amount,
@@ -183,11 +219,33 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       participantIds: _selectedParticipantIds.toList(),
       equalSplit: _equalSplit,
       customShares: customShares,
-      createdAt: DateTime.now(),
+      createdAt: existing?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
-      registeredBy: currentUser?.id,
+      registeredBy: existing?.registeredBy ?? currentUser?.id,
+      eventId: linkedEventId,
     );
     final expenseService = ref.read(expenseServiceProvider);
+    if (existing?.id != null) {
+      final ok = await expenseService.updateExpense(expense);
+      if (!mounted) return;
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.paymentsExpenseUpdated),
+            backgroundColor: Colors.green,
+          ),
+        );
+        widget.onSaved?.call();
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.paymentsExpenseSaveError),
+          ),
+        );
+      }
+      return;
+    }
     final id = await expenseService.createExpense(expense);
     if (!mounted) return;
     if (id != null) {
@@ -213,9 +271,13 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
     final loc = AppLocalizations.of(context)!;
     final participationsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
 
+    final isEdit = widget.existingExpense != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.paymentsAddExpense, style: const TextStyle(fontSize: 18, color: Colors.white)),
+        title: Text(
+          isEdit ? loc.paymentsEditExpense : loc.paymentsAddExpense,
+          style: const TextStyle(fontSize: 18, color: Colors.white),
+        ),
         backgroundColor: AppColorScheme.color2,
         foregroundColor: Colors.white,
         leading: IconButton(
@@ -231,13 +293,40 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (widget.initialEventId != null &&
+                  widget.initialEventId!.isNotEmpty &&
+                  widget.existingExpense == null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColorScheme.color3.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColorScheme.color3.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info_outline, color: AppColorScheme.color3, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          loc.paymentsExpenseFromEventPayerHint,
+                          style: AppTypography.bodyStyle.copyWith(fontSize: 13, color: Colors.white.withValues(alpha: 0.9)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               Text(loc.paymentsExpensePayer, style: AppTypography.bodyStyle.copyWith(fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 participationsAsync.when(
                   data: (list) {
                     final real = list.where((p) => p.role != 'observer').toList();
                     return DropdownButtonFormField<String>(
-                      value: _selectedPayerId,
+                      initialValue: _selectedPayerId,
                       isExpanded: true,
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.person),
@@ -338,6 +427,75 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                ref.watch(planEventsStreamProvider(widget.plan.id!)).when(
+                      data: (eventList) {
+                        var withIds = eventList
+                            .where((e) => e.id != null && e.id!.isNotEmpty)
+                            .toList()
+                          ..sort((a, b) => a.date.compareTo(b.date));
+                        final seen = <String>{};
+                        final items = <DropdownMenuItem<String?>>[
+                          DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text(loc.paymentsExpenseNoEventOption),
+                          ),
+                        ];
+                        for (final e in withIds) {
+                          final id = e.id!;
+                          if (seen.contains(id)) continue;
+                          seen.add(id);
+                          final raw = e.description.trim();
+                          final label =
+                              raw.isEmpty ? loc.paymentsExpenseEventFallbackTitle : raw;
+                          final short = label.length > 48
+                              ? '${label.substring(0, 48)}…'
+                              : label;
+                          items.add(
+                            DropdownMenuItem<String?>(
+                              value: id,
+                              child:
+                                  Text(short, overflow: TextOverflow.ellipsis),
+                            ),
+                          );
+                        }
+                        final sel = _selectedEventId;
+                        if (sel != null &&
+                            sel.isNotEmpty &&
+                            !seen.contains(sel)) {
+                          items.add(
+                            DropdownMenuItem<String?>(
+                              value: sel,
+                              child: Text(
+                                loc.paymentsExpenseUnknownLinkedEvent,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          );
+                        }
+                        String? dropdownValue;
+                        if (sel != null &&
+                            sel.isNotEmpty &&
+                            items.any((i) => i.value == sel)) {
+                          dropdownValue = sel;
+                        }
+                        return DropdownButtonFormField<String?>(
+                          initialValue: dropdownValue,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: loc.paymentsExpenseLinkedEventLabel,
+                            prefixIcon: const Icon(Icons.event),
+                            border: const OutlineInputBorder(),
+                            filled: true,
+                          ),
+                          items: items,
+                          onChanged: (v) =>
+                              setState(() => _selectedEventId = v),
+                        );
+                      },
+                      loading: () => const LinearProgressIndicator(),
+                      error: (_, __) => const SizedBox.shrink(),
+                    ),
+                const SizedBox(height: 16),
                 Text(loc.paymentsExpenseSplitBetween, style: AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 participationsAsync.when(
@@ -363,8 +521,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                                   },
                                   controlAffinity: ListTileControlAffinity.leading,
                                   dense: true,
-                                ))
-                            .toList(),
+                                )),
                         const SizedBox(height: 12),
                         Row(
                           children: [
@@ -477,14 +634,14 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancelar'),
+                  child: Text(loc.cancel),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
                   onPressed: _save,
-                  child: const Text('Guardar'),
+                  child: Text(loc.save),
                 ),
               ),
             ],
@@ -524,8 +681,11 @@ class _CalculatorDialogState extends State<_CalculatorDialog> {
       }
       if (s == '.' && _display.contains('.')) return;
       if (s == '0' && _display == '0') return;
-      if (s != '.' && _display == '0') _display = s;
-      else _display += s;
+      if (s != '.' && _display == '0') {
+        _display = s;
+      } else {
+        _display += s;
+      }
     });
   }
 

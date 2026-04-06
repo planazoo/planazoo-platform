@@ -35,6 +35,7 @@ Algunas tareas tienen un `.md` propio con especificación, plan de fases o crite
 | T258 | `T258_ICONO_APP.md` | Detalle icono app iOS/Android. |
 | T259 | `T259_DEEP_LINK_INVITACION_IOS.md` | Deep link invitación iOS. |
 | T260 | `CURRENCY_SYSTEM_PROPOSAL.md` | Especificación sistema multi-moneda (T260). |
+| T262 | `T262_NOTAS_PLAN_COMUNES_PERSONALES.md` | Notas, plantillas, lista preparación (mini-tareas con checkbox). |
 
 En `TASKS.md`, las filas de estas tareas **deben** indicar que existe el documento (ej. «Especificación en `docs/tareas/Txxx_*.md`»).
 

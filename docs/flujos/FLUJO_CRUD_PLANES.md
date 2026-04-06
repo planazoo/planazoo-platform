@@ -3,8 +3,8 @@
 > Define todo el ciclo de vida de un plan: crear, leer, actualizar y eliminar
 
 **Relacionado con:** T109 ✅, T107 ✅, T118, T122, T131 - Calendarios externos, T133 - Exportación PDF, T144 - Gestión del ciclo de vida, T145 - Álbum digital, T147 - Valoraciones, T153 ✅, T101 ✅, T102 ✅  
-**Versión:** 1.6  
-**Fecha:** Enero 2025 (Actualizado - T101, T102, T107, T153, T109 bloqueos funcionales implementados)
+**Versión:** 1.7  
+**Fecha:** Marzo 2026 (info básica: nombre sobre foto; bloqueos T101/T102/T107/T153/T109)
 
 ---
 
@@ -270,6 +270,24 @@ Acciones disponibles dependen del rol (ver 2.2)
     - Tooltip al pasar el ratón por un día con planes muestra los nombres.
     - Clic en un día con múltiples planes abre modal para elegir cuál abrir.
 - Cambiar entre lista y calendario **no** pierde la selección del plan ni rompe la navegación hacia `PlanDataScreen` o `CalendarScreen`.
+- Calendario móvil embebido y calendario web: al abrir el plan, la ventana de días visible se **ancla** a **hoy** si hoy está en el rango del plan; si el viaje es futuro, desde el **día 1**; si ya terminó, la **última** ventana que cabe (`Plan.initialVisiblePlanDayIndex`).
+
+#### 2.4 - Pestaña "Mi resumen" / "Plan completo" (T252, Marzo 2026)
+
+Vista dentro del detalle del plan para el participante:
+
+- Conmutador de vista corto (**mío** / **todos** en ES; **mine** / **all** en EN) para la misma lista filtrada o completa.
+- Fila de **acceso rápido** (iconos Importante, Participantes, **hoy**, **mañana**): al pulsar se abre un **modal inferior** con el mismo contenido que antes en secciones expandibles (ítem 75); **hoy**/**mañana** solo si el día actual está dentro del rango del plan.
+- En el plan completo, hora de fin que pasa de medianoche se muestra como hora civil del día siguiente más sufijo **(+1)** (ítem 72).
+- Secciones expandibles (**Desplazamientos**, alojamientos, plan completo, etc.): **cerradas por defecto** al abrir (ítem 70); la sección de desplazamientos incluye **toda** la familia Desplazamiento, no solo avión (ítem 84).
+- En **Plan completo** los encabezados de día usan **locale del usuario**, **día de la semana completo** y **fecha con año** (`DateFormat.yMMMMEEEEd`).
+- Eventos ordenados por **fecha y hora de inicio** (desempate por `createdAt` e `id`).
+- Con plan en **en_curso**, los eventos **ya pasados** se muestran con tipografía más **atenuada** (ítem 69).
+- En estado **planificando**, si hay eventos **borrador**, un icono de **filtro** en la barra permite ver **solo borradores** (ítem 81).
+- **Lo más importante** resume: nombre, rango de fechas, **estado** del plan y **número de participantes** (ítem 74).
+- En **Resumen todos**, si el evento o alojamiento es para **todos** los participantes, la etiqueta correspondiente se muestra en **naranja**.
+- Fila de **alojamiento**: nombre del hotel en la primera línea; **fechas**, **noches** y participantes en la segunda (ítem 85).
+- En la lista rápida de **alojamientos** no se muestra la **dirección** en el subtítulo; el acceso a Maps sigue por el icono de **marcador** (misma huella que enlace **web**: icono `public` en chip, tamaño alineado al marcador).
 
 ---
 
@@ -285,7 +303,7 @@ Acciones disponibles dependen del rol (ver 2.2)
 Organizador → Plan → "Editar información"
   ↓
 Formulario editable:
-- Nombre del plan
+- Nombre del plan (en UI, el **nombre** aparece **encima** de la tarjeta de foto/estado del plan — paridad web/iOS)
 - Descripción
 - Imagen
 - Visibilidad (Público/Privado)

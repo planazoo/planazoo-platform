@@ -28,6 +28,19 @@ Documentar el sistema completo de gestión financiera del plan: presupuestos, co
 | **Deuda** | Lo que debe pagar un participante | Juan debe €25 |
 | **Crédito** | Lo que se debe a un participante | María debe cobrar €15 |
 
+### Enlace gastos Tricount ↔ eventos (lista §3.2 ítem 102, mar 2026)
+
+- Campo opcional **`eventId`** en documentos `plan_expenses` (modelo `PlanExpense`).
+- **Añadir gasto:** selector «Evento (opcional)» con los eventos del plan; valor **Ninguno** si no aplica.
+- **Desde el diálogo de evento** (evento ya guardado con id): icono recibo en la barra verde abre **Añadir gasto** con ese evento preseleccionado.
+- **Resumen → Actividad:** si hay `eventId`, se muestra el título del evento bajo la línea del pagador.
+- **Balances:** los ítems derivados de `PlanExpense` llevan `eventId` / descripción resuelta para coherencia con el desglose.
+
+### Bote común (kitty) — estado UI mar 2026 (lista §3.2 ítem 106)
+
+- La pestaña **Pagos** (`PaymentSummaryPage`) **ya no muestra** la sección de bote ni usa aportes/gastos kitty en el cálculo del resumen (`paymentSummaryProvider` pasa listas vacías a `BalanceService`).
+- Los servicios y colecciones **T219** (`kitty_contributions`, `kitty_expenses`) pueden seguir existiendo por compatibilidad; la decisión de producto sobre retirada total o mantenimiento solo backend queda documentada en `PAGOS_MVP.md` si se actualiza.
+
 ---
 
 ## 📌 DECISIONES MVP (PAGOS_MVP.md)
@@ -193,7 +206,9 @@ Distribución:
 
 #### 3.1 - Registro de Pagos Individuales
 
-**Flujo (T218: permisos por rol):**
+> **Mar 2026 (lista §3.2 ítem 101):** En la app, la entrada principal del resumen de pagos y el acceso rápido del plan móvil abren solo **«Añadir gasto»** (`AddExpenseDialog`, reparto tipo Tricount). El flujo **«Registrar pago»** (`PaymentDialog` → `PersonalPayment`) **ya no tiene botón en la UI**; el widget se mantiene en código por si hace falta contexto evento o edición futura (T102/T104).
+
+**Flujo (T218: permisos por rol) — referencia histórica / modelo `PersonalPayment`:**
 ```
 Participante paga algo
   ↓

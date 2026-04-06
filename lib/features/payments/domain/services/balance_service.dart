@@ -12,6 +12,18 @@ import '../../../../features/budget/domain/services/budget_service.dart';
 class BalanceService {
   final BudgetService _budgetService = BudgetService();
 
+  String? _planExpenseEventDescription(List<Event> events, PlanExpense e) {
+    final id = e.eventId;
+    if (id == null || id.isEmpty) return null;
+    for (final ev in events) {
+      if (ev.id == id) {
+        final d = ev.description.trim();
+        return d.isNotEmpty ? d : 'Evento';
+      }
+    }
+    return null;
+  }
+
   /// Calcular resumen completo de pagos y balances
   /// T219: [kittyContributions] y [kittyExpenses] integran el bote común en balances
   /// Gastos tipo Tricount: [planExpenses] añaden coste por participante (reparto) y lo pagado por el pagador
@@ -125,8 +137,9 @@ class BalanceService {
             .where((e) => e.payerId == userId)
             .map((e) => PaymentItem(
                   paymentId: 'expense_${e.id}',
-                  eventId: null,
-                  eventDescription: null,
+                  eventId: e.eventId,
+                  eventDescription:
+                      _planExpenseEventDescription(events, e),
                   amount: e.amount,
                   paymentDate: e.expenseDate,
                   paymentMethod: null,
@@ -200,8 +213,9 @@ class BalanceService {
               .where((e) => e.payerId == uid)
               .map((e) => PaymentItem(
                     paymentId: 'expense_${e.id}',
-                    eventId: null,
-                    eventDescription: null,
+                    eventId: e.eventId,
+                    eventDescription:
+                        _planExpenseEventDescription(events, e),
                     amount: e.amount,
                     paymentDate: e.expenseDate,
                     paymentMethod: null,
@@ -264,8 +278,9 @@ class BalanceService {
             .where((e) => e.payerId == uid)
             .map((e) => PaymentItem(
                   paymentId: 'expense_${e.id}',
-                  eventId: null,
-                  eventDescription: null,
+                  eventId: e.eventId,
+                  eventDescription:
+                      _planExpenseEventDescription(events, e),
                   amount: e.amount,
                   paymentDate: e.expenseDate,
                   paymentMethod: null,

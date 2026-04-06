@@ -18,6 +18,11 @@ class CalendarConstants {
   
   // Opacidades
   static const double gridLineOpacity = 0.3;
+
+  /// Línea vertical entre columnas (días / tracks): más visible (lista §3.2 ítem 100).
+  static const double calendarVerticalSeparatorWidth = 1.0;
+  static const double calendarSeparatorOpacityWeb = 0.55;
+  static const double calendarSeparatorOpacityMobile = 0.38;
   static const double accommodationBackgroundOpacity = 0.3;
   static const double accommodationBorderOpacity = 0.5;
   

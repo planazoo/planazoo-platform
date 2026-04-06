@@ -560,6 +560,12 @@ abstract class AppLocalizations {
   /// **'Balances por participante'**
   String get paymentsBalancesSectionTitle;
 
+  /// Subtítulo que explica balances al estilo apps de reparto de gastos
+  ///
+  /// In es, this message translates to:
+  /// **'Coste asignado = tu parte del gasto; total pagado = lo que salió de ti; saldo = diferencia (estilo Tricount).'**
+  String get paymentsBalancesTricountHint;
+
   /// Etiqueta del coste asignado a un participante
   ///
   /// In es, this message translates to:
@@ -584,6 +590,12 @@ abstract class AppLocalizations {
   /// **'Sugerencias de transferencias'**
   String get paymentsTransferSuggestionsTitle;
 
+  /// Texto aclaratorio bajo el título de sugerencias de transferencia
+  ///
+  /// In es, this message translates to:
+  /// **'Propuesta mínima de pagos para cuadrar cuentas entre personas.'**
+  String get paymentsTransferSuggestionsSubtitle;
+
   /// Título del gráfico de distribución de balances
   ///
   /// In es, this message translates to:
@@ -593,13 +605,13 @@ abstract class AppLocalizations {
   /// Texto de estado cuando el participante es acreedor
   ///
   /// In es, this message translates to:
-  /// **'Debe recibir {amount}'**
+  /// **'Le deben {amount}'**
   String paymentsBalanceStatusCreditor(String amount);
 
   /// Texto de estado cuando el participante es deudor
   ///
   /// In es, this message translates to:
-  /// **'Debe pagar {amount}'**
+  /// **'Debe {amount}'**
   String paymentsBalanceStatusDebtor(String amount);
 
   /// Texto de estado cuando el participante está equilibrado
@@ -607,6 +619,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Balance equilibrado'**
   String get paymentsBalanceStatusSettled;
+
+  /// No description provided for @paymentsEditExpense.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar gasto'**
+  String get paymentsEditExpense;
+
+  /// No description provided for @paymentsExpenseUpdated.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto actualizado'**
+  String get paymentsExpenseUpdated;
+
+  /// No description provided for @paymentsExpenseDeleteConfirmTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar este gasto?'**
+  String get paymentsExpenseDeleteConfirmTitle;
+
+  /// No description provided for @paymentsExpenseDeleteConfirmBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Desaparecerá del plan y de los balances. No se puede deshacer.'**
+  String get paymentsExpenseDeleteConfirmBody;
+
+  /// No description provided for @paymentsExpenseDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto eliminado'**
+  String get paymentsExpenseDeleted;
+
+  /// No description provided for @paymentsExpenseDeleteError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo eliminar el gasto'**
+  String get paymentsExpenseDeleteError;
+
+  /// Aviso al abrir gasto desde un evento (initialEventId)
+  ///
+  /// In es, this message translates to:
+  /// **'Indica quién pagó con su dinero; el reparto entre personas lo eliges más abajo.'**
+  String get paymentsExpenseFromEventPayerHint;
+
+  /// No description provided for @paymentsActivityEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin gastos. Añade uno con el botón de arriba.'**
+  String get paymentsActivityEmpty;
+
+  /// No description provided for @paymentsExpenseRowMeta.
+  ///
+  /// In es, this message translates to:
+  /// **'{date} · {payer} pagó'**
+  String paymentsExpenseRowMeta(String date, String payer);
+
+  /// No description provided for @paymentsExpenseDefaultConcept.
+  ///
+  /// In es, this message translates to:
+  /// **'Gasto'**
+  String get paymentsExpenseDefaultConcept;
 
   /// No description provided for @paymentsAddExpense.
   ///
@@ -643,6 +715,30 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Fecha'**
   String get paymentsExpenseDate;
+
+  /// No description provided for @paymentsExpenseLinkedEventLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Evento (opcional)'**
+  String get paymentsExpenseLinkedEventLabel;
+
+  /// No description provided for @paymentsExpenseNoEventOption.
+  ///
+  /// In es, this message translates to:
+  /// **'Ninguno'**
+  String get paymentsExpenseNoEventOption;
+
+  /// No description provided for @paymentsExpenseEventFallbackTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Evento'**
+  String get paymentsExpenseEventFallbackTitle;
+
+  /// No description provided for @paymentsExpenseUnknownLinkedEvent.
+  ///
+  /// In es, this message translates to:
+  /// **'Evento (referencia)'**
+  String get paymentsExpenseUnknownLinkedEvent;
 
   /// No description provided for @paymentsExpenseSplitBetween.
   ///
@@ -3092,6 +3188,42 @@ abstract class AppLocalizations {
   /// **'Número de plazas'**
   String get taxiSeatsHint;
 
+  /// Shuttle/Transfer: terminal aeropuerto (ítem 90 lista)
+  ///
+  /// In es, this message translates to:
+  /// **'Terminal / puerta'**
+  String get eventTransferTerminalLabel;
+
+  /// No description provided for @eventTransferTerminalHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: T2, puerta B12'**
+  String get eventTransferTerminalHint;
+
+  /// No description provided for @eventTransferAirlineLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Aerolínea / vuelo'**
+  String get eventTransferAirlineLabel;
+
+  /// No description provided for @eventTransferAirlineHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Iberia, IB1234'**
+  String get eventTransferAirlineHint;
+
+  /// No description provided for @eventTransferAirportMeetLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Presentación en aeropuerto'**
+  String get eventTransferAirportMeetLabel;
+
+  /// No description provided for @eventTransferAirportMeetHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 2 h antes del vuelo, mostrador…'**
+  String get eventTransferAirportMeetHint;
+
   /// No description provided for @flightNumberLabel.
   ///
   /// In es, this message translates to:
@@ -3199,6 +3331,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Revisa los campos marcados o incompletos antes de guardar.'**
   String get eventDialogFixValidationErrors;
+
+  /// Etiqueta del bloque «para todos» / selección (ítem 91 lista pruebas)
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes del evento'**
+  String get eventDialogParticipantsScopeLabel;
+
+  /// No description provided for @eventDialogForAllParticipantsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Este evento es para todos los participantes del plan'**
+  String get eventDialogForAllParticipantsTitle;
+
+  /// No description provided for @eventDialogForAllParticipantsSubtitleOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los participantes estarán incluidos automáticamente'**
+  String get eventDialogForAllParticipantsSubtitleOn;
+
+  /// No description provided for @eventDialogForAllParticipantsSubtitleOff.
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona participantes específicos abajo'**
+  String get eventDialogForAllParticipantsSubtitleOff;
+
+  /// No description provided for @eventDialogAddLinkedExpenseTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir gasto ligado a este evento'**
+  String get eventDialogAddLinkedExpenseTooltip;
+
+  /// No description provided for @eventSponsoredTag.
+  ///
+  /// In es, this message translates to:
+  /// **'Patrocinado'**
+  String get eventSponsoredTag;
+
+  /// No description provided for @eventSponsoredBy.
+  ///
+  /// In es, this message translates to:
+  /// **'Patrocinado por {sponsor}'**
+  String eventSponsoredBy(String sponsor);
+
+  /// No description provided for @eventSponsoredStaticHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Prueba estática de monetización contextual (sin anuncios activos).'**
+  String get eventSponsoredStaticHint;
+
+  /// No description provided for @eventSponsoredOpenOffer.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver oferta'**
+  String get eventSponsoredOpenOffer;
+
+  /// No description provided for @eventSponsoredOpenError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir el enlace del patrocinador'**
+  String get eventSponsoredOpenError;
 
   /// No description provided for @eventStatusDraft.
   ///
@@ -3848,6 +4040,132 @@ abstract class AppLocalizations {
   /// **'Mi resumen'**
   String get myPlanSummaryTab;
 
+  /// T262: Pestaña notas y preparación del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Notas'**
+  String get planNotesTabTitle;
+
+  /// T262: Pestaña notas compartidas
+  ///
+  /// In es, this message translates to:
+  /// **'Común'**
+  String get planNotesTabCommon;
+
+  /// T262: Pestaña notas personales
+  ///
+  /// In es, this message translates to:
+  /// **'Personal'**
+  String get planNotesTabPersonal;
+
+  /// T262: Título lista checklist
+  ///
+  /// In es, this message translates to:
+  /// **'Preparación'**
+  String get planNotesPreparationTitle;
+
+  /// T262: Intro sección común
+  ///
+  /// In es, this message translates to:
+  /// **'Notas y lista de preparación compartidas. Quién puede editar la lista lo define el organizador.'**
+  String get planNotesCommonIntro;
+
+  /// T262: Intro sección personal
+  ///
+  /// In es, this message translates to:
+  /// **'Solo tú ves esta nota y tu lista de preparación personal.'**
+  String get planNotesPersonalIntro;
+
+  /// T262: Etiqueta nota común
+  ///
+  /// In es, this message translates to:
+  /// **'Nota compartida'**
+  String get planNotesCommonNoteLabel;
+
+  /// T262: Etiqueta nota personal
+  ///
+  /// In es, this message translates to:
+  /// **'Nota personal'**
+  String get planNotesPersonalNoteLabel;
+
+  /// T262: Añadir ítem checklist
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir ítem'**
+  String get planNotesAddPrepItem;
+
+  /// T262: Botón guardar
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get planNotesSave;
+
+  /// T262: Snackbar tras guardar
+  ///
+  /// In es, this message translates to:
+  /// **'Guardado'**
+  String get planNotesSaved;
+
+  /// T262: Error al guardar
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar. Revisa conexión o permisos.'**
+  String get planNotesSaveError;
+
+  /// T262: Solo lectura común
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes ver esta sección pero no editarla.'**
+  String get planNotesReadOnlyHint;
+
+  /// T262: Título política edición
+  ///
+  /// In es, this message translates to:
+  /// **'Quién puede editar la lista de preparación común'**
+  String get planNotesPolicyTitle;
+
+  /// T262: Opción política
+  ///
+  /// In es, this message translates to:
+  /// **'Solo el organizador'**
+  String get planNotesPolicyOrganizerOnly;
+
+  /// T262: Opción política
+  ///
+  /// In es, this message translates to:
+  /// **'Algunos participantes'**
+  String get planNotesPolicySelected;
+
+  /// T262: Opción política
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los participantes'**
+  String get planNotesPolicyAll;
+
+  /// T262: Título diálogo
+  ///
+  /// In es, this message translates to:
+  /// **'Elige quién puede editar la lista'**
+  String get planNotesSelectParticipantsTitle;
+
+  /// T262: Aplicar selección
+  ///
+  /// In es, this message translates to:
+  /// **'Aplicar'**
+  String get planNotesApplySelection;
+
+  /// T262: Sin workspace
+  ///
+  /// In es, this message translates to:
+  /// **'Las notas compartidas aún no están disponibles.'**
+  String get planNotesNoWorkspaceYet;
+
+  /// T262: Hint nuevo ítem
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo ítem'**
+  String get planNotesNewItemHint;
+
   /// T252: Modo vista calendario en pestaña Calendario
   ///
   /// In es, this message translates to:
@@ -3872,22 +4190,22 @@ abstract class AppLocalizations {
   /// **'Mañana'**
   String get myPlanSummaryTomorrow;
 
-  /// T252: Acceso rápido vuelos
+  /// T252: Acceso rápido desplazamientos (ítem 84)
   ///
   /// In es, this message translates to:
-  /// **'Mis vuelos'**
+  /// **'Desplazamientos'**
   String get myPlanSummaryFlights;
 
-  /// Criterio sección vuelos en Mi resumen
+  /// Criterio sección desplazamientos en Mi resumen
   ///
   /// In es, this message translates to:
-  /// **'Eventos de tipo Avión'**
+  /// **'Tren, avión, coche y otros desplazamientos'**
   String get myPlanSummaryFlightsHint;
 
   /// T252: Acceso rápido alojamiento
   ///
   /// In es, this message translates to:
-  /// **'Mi alojamiento'**
+  /// **'Alojamientos'**
   String get myPlanSummaryAccommodation;
 
   /// T252: Bloque resumen plan
@@ -3902,16 +4220,16 @@ abstract class AppLocalizations {
   /// **'Resumen'**
   String get myPlanSummaryResumenSection;
 
-  /// Selector vista: solo mis eventos
+  /// Selector vista: solo mis eventos (corto, ítem 80)
   ///
   /// In es, this message translates to:
-  /// **'Mi resumen'**
+  /// **'mío'**
   String get myPlanSummaryViewMine;
 
-  /// Selector vista: todos los participantes
+  /// Selector vista: todos los participantes (corto, ítem 80)
   ///
   /// In es, this message translates to:
-  /// **'Resumen todos'**
+  /// **'todos'**
   String get myPlanSummaryViewPlan;
 
   /// Etiqueta cuando evento es para todo el plan
@@ -3923,7 +4241,7 @@ abstract class AppLocalizations {
   /// T252: Lista cronológica
   ///
   /// In es, this message translates to:
-  /// **'Itinerario completo'**
+  /// **'Plan completo'**
   String get myPlanSummaryChronological;
 
   /// T252: Bloque datos personales del participante
@@ -3961,6 +4279,48 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Ver menos'**
   String get myPlanSummarySeeLess;
+
+  /// Ítem 81: filtrar eventos no confirmados
+  ///
+  /// In es, this message translates to:
+  /// **'Solo borradores'**
+  String get myPlanSummaryDraftsOnlyTooltip;
+
+  /// Ítem 74: recuento en Lo más importante
+  ///
+  /// In es, this message translates to:
+  /// **'{count} participantes'**
+  String myPlanSummaryParticipantsCount(int count);
+
+  /// Ítem 75: icono acceso rápido
+  ///
+  /// In es, this message translates to:
+  /// **'Importante'**
+  String get myPlanSummaryQuickImportant;
+
+  /// Ítem 75: icono participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Participantes'**
+  String get myPlanSummaryQuickParticipants;
+
+  /// Ítem 75: icono hoy (minúsculas)
+  ///
+  /// In es, this message translates to:
+  /// **'hoy'**
+  String get myPlanSummaryQuickToday;
+
+  /// Ítem 75: icono mañana (minúsculas)
+  ///
+  /// In es, this message translates to:
+  /// **'mañana'**
+  String get myPlanSummaryQuickTomorrow;
+
+  /// Ítem 72: fin de evento al día siguiente
+  ///
+  /// In es, this message translates to:
+  /// **' (+1)'**
+  String get myPlanSummaryTimeNextDaySuffix;
 
   /// T252: Pestaña propuestas pendientes
   ///

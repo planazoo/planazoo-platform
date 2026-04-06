@@ -12,6 +12,7 @@ class ParticipantGroupsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
     
     if (currentUser == null) {

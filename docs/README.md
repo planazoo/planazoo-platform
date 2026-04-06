@@ -57,6 +57,7 @@ Documentación detallada de experiencia de usuario:
 Gestión de tareas del proyecto:
 - [Tareas Activas](./tareas/TASKS.md)
 - [Tareas Completadas](./tareas/COMPLETED_TASKS.md)
+- [T262 — Notas del plan](./tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md) (spec; implementación parcial en `lib/features/plan_notes/`)
 
 ### 🔧 [Admin](./admin/)
 - [Lista blanca de administradores](./admin/ADMINS_WHITELIST.md)
@@ -163,7 +164,8 @@ Configuración y contexto del proyecto:
 **Sistema Financiero:**
 - ✅ Sistema de presupuesto (T101) — costes por evento/alojamiento, total, desglose; se ve en **Estadísticas (W17)** → `PlanStatsPage`
 - ✅ Sistema de pagos personales (T102) — balances, quién debe a quién, sugerencias de transferencias; se ve en **Pagos (W18)** → `PaymentSummaryPage`
-- ✅ Pagos MVP (T217–T221): permisos por rol (organizador/participante), bote común (aportaciones y gastos), aviso legal "no procesamos cobros", misma experiencia web y móvil
+- ✅ Pagos MVP (T217–T221): permisos por rol (organizador/participante), gastos tipo Tricount + balances + sugerencias de transferencias, aviso legal "no procesamos cobros", misma experiencia web y móvil
+- ℹ️ Bote común (T219): implementado históricamente; retirado de la UI de `PaymentSummaryPage` en mar 2026 (lista §3.2 ítem 106)
 - ✅ Sistema multi-moneda (EUR, USD, GBP, JPY) (T153)
 
 **Sistema de Análisis:**

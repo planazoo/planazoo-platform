@@ -191,7 +191,7 @@ Ninguna decisión está cerrada hasta que la revises y la confirmes. Para cada p
 |------|----------|
 | **5.1 Alcance** | **A** — Solo cuadre interno; la app no procesa cobros. |
 | **5.2 Quién registra pagos** | **B** — Organizador registra cualquier pago; participante solo "yo pagué X". |
-| **5.3 Bote común** | **B** — Sí en el MVP; definir flujo (quién pone, quién gasta, reflejo en balances). |
+| **5.3 Bote común** | **B** — Se implementó en T219, pero en mar 2026 se retiró de la UI de pagos (lista §3.2 ítem 106). Mantener como capability opcional/backlog hasta nueva decisión de producto. |
 | **5.4 Mobile** | **A** — Sí; misma experiencia que en web; sustituir "Próximamente". |
 | **5.5 Pruebas** | **A** — Sí; casos PAY-* + fase de pagos en plan E2E (integrado en docs/testing y TESTING_CHECKLIST). |
 | **5.6 Legal y aviso en UI** | **A** — Términos/FAQ + aviso breve en la pantalla de pagos. |
@@ -203,11 +203,17 @@ Ninguna decisión está cerrada hasta que la revises y la confirmes. Para cada p
 Los siguientes pasos se concretan en función de lo que decidas en la sección 5.
 
 1. **Tareas:** Ya documentadas en `docs/tareas/TASKS.md` § 12: **T217** (unificar web/mobile), **T218** (permisos por rol), **T219** (bote común), **T220** (aviso UI + legal), **T221** (actualizar FLUJO_PRESUPUESTO_PAGOS.md), **T222** (ejecutar fase E2E y PAY-*). Vincular a T150 (MVP).
-2. **Flujo y permisos:** Actualizar `FLUJO_PRESUPUESTO_PAGOS.md` con las decisiones (quién registra qué, sin bote común en MVP) y la matriz de permisos por rol/estado del plan.
+2. **Flujo y permisos:** Actualizar `FLUJO_PRESUPUESTO_PAGOS.md` con las decisiones (quién registra qué) y reflejar explícitamente que la sección de bote no está en `PaymentSummaryPage` desde mar 2026.
 3. **Testing:** Añadir al plan E2E (tres usuarios) la fase de pagos; ejecutar casos PAY-* de `TESTING_CHECKLIST.md` cuando se implemente.
 4. **Legal:** Incluir en términos/FAQ que la app no procesa cobros; añadir el aviso breve en la pantalla de pagos.
 
 Cuando estén hechas las tareas anteriores, el bloque pagos MVP queda cerrado para lanzamiento.
+
+### Estado actual (mar 2026) para evitar confusión documental
+
+- `PaymentSummaryPage` mantiene: gastos tipo Tricount, balances y sugerencias de transferencias.
+- La sección de bote común (`kitty_contributions` / `kitty_expenses`) se retiró de la UI y del cálculo del resumen en esa pantalla.
+- Si se decide reintroducir el bote en producto, debe quedar trazado como nueva decisión (y con checklist PAY específico).
 
 ---
 

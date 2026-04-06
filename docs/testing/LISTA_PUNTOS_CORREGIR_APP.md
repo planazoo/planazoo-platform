@@ -2,7 +2,7 @@
 
 **Objetivo:** un único sitio para **nuevos** hallazgos en pruebas (bugs, UX, copy, iOS/web).
 
-**Última limpieza:** 2026-03-12 — ítems cerrados **P3–P20** archivados; acciones abiertas **P1/P2 (infra)** en [`ACCIONES_PENDIENTES_APP.md`](./ACCIONES_PENDIENTES_APP.md). Histórico: [`ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md`](./ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md) *(borrable cuando no haga falta).* **Backlog nuevo:** §3.1 **2026-03-24** (IDs **34–61**).
+**Última limpieza:** 2026-03-12 — ítems cerrados **P3–P20** archivados; acciones abiertas **P1/P2 (infra)** en [`ACCIONES_PENDIENTES_APP.md`](./ACCIONES_PENDIENTES_APP.md). Histórico: [`ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md`](./ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md) *(borrable cuando no haga falta).* **Backlog:** §3.1 **2026-03-24** (IDs **34–61**); §3.2 **2026-03-27** pruebas **iOS** (IDs **62–109**).
 
 ---
 
@@ -19,7 +19,7 @@
 
 Para cada tema nuevo:
 
-- **ID**: número secuencial (siguiente libre **62** tras §3.1; el histórico en archivo llegó hasta **20**, lista larga en este doc hasta **33**).
+- **ID**: número secuencial (siguiente libre **110** tras §3.2; el histórico en archivo llegó hasta **20**, §3.1 usa **34–61**). **No confundir** con códigos **Txxx** de `docs/tareas/TASKS.md` (p. ej. ítem **94** aquí ≠ **T94** allí).
 - **Plataforma**: iOS / Web / Ambas / …
 - **Pantalla / flujo**: (ej. Lista de planes, Detalle → Calendario, …)
 - **Tipo**: bug / mejora / copy
@@ -35,7 +35,7 @@ Para cada tema nuevo:
 
 | ID | Plataforma | Pantalla / flujo | Tipo | Gravedad | Descripción breve | Estado |
 |----|------------|------------------|------|----------|---------------------|--------|
-| — | | | | | *Filas detalladas en §3.1 (34–61) y histórico/archivo.* | |
+| — | | | | | *Filas detalladas en §3.1 (34–61), §3.2 (62–109) y histórico/archivo.* | |
 
 **Resumen:** *actualizar a mano:* pendiente **·** en curso **·** hecho **.**
 
@@ -90,10 +90,114 @@ Para cada tema nuevo:
 
 ---
 
+### 3.2 Ronda 2026-03-27 — pruebas en **iOS** (IDs 62–109)
+
+**Origen:** feedback tras uso en dispositivo. **Prioridad de implementación:** iOS; en la columna *Web / notas* se indica si conviene **paridad web** (misma UX), **adaptar** (densidad/desktop) o **solo iOS**.
+
+**Cómo leer duplicados / conflictos con §3.1**
+
+| Relación | Detalle |
+|----------|---------|
+| **58** (offline) | El feedback **65** refuerza la necesidad de **offline first real**; mantener **58** como verificación hasta tener plan técnico (T56–T62, `CONTEXT.md`). |
+| **44** (FAB resumen) | **79** proponía quitar el FAB; **decisión 2026-03-27:** **mantener** el FAB de momento (coherente con **44** hecho). Revisar de nuevo solo si se adopta el rediseño de barras (**64**). |
+| **48** (selector participantes) | **91** indica **regresión o desalineación** visual tras cambios; revisar de nuevo el bloque del selector. |
+| **39–43** (resumen hecho) | Varios ítems **69–88** **refinan de nuevo** Mi resumen (layout, copy, modales). No borran el histórico; son iteración UI. |
+| **Vuelos vs desplazamientos** | **84** alinea con idea ya en **41** (quitar jerga “tipo avión”); aquí se pide **ampliar sección** a todos los desplazamientos. |
+
+**Documentación ya existente (solo referencia, sin implementar aquí)**
+
+- Publicidad / monetización: [`docs/especificaciones/PATROCINIOS_Y_MONETIZACION.md`](../especificaciones/PATROCINIOS_Y_MONETIZACION.md) (T143; patrocinio contextual, afiliados).
+- Notificaciones push móvil: [`docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md`](../configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md), [`docs/testing/ACCIONES_PENDIENTES_APP.md`](./ACCIONES_PENDIENTES_APP.md), tareas/notificaciones en `TASKS.md`.
+- Tipos/subtipos evento: [`docs/especificaciones/EVENT_FORM_FIELDS.md`](../especificaciones/EVENT_FORM_FIELDS.md), [`docs/tareas/T250`](../tareas/TASKS.md) (matriz tipo/subtipo).
+- Icono app: [`docs/tareas/T258_ICONO_APP.md`](../tareas/T258_ICONO_APP.md) — **63** encaja como brief creativo adicional.
+
+**Ítems solo para hablar (no codificar aún)**
+
+- **64** — Rediseño barras inferiores + FAB (unificar, FAB rojo `+` central, menú por contexto + “Otros…”).
+- **66** — Recogida/entrega **vehículo alquiler** (coche/moto/bici): modelo de datos, documentación del contrato, ¿evento tipo Acción/Desplazamiento? — enlazar con **95** y EVENT_FORM_FIELDS.
+- **98** — **Asistente “inteligente”** (reglas: vuelo→¿taxi?, estado plan vs fechas, etc.): producto/epic; posible base transversal, no paralelo; IA futura opcional.
+
+**Orden sugerido de trabajo** (ajustar según dependencias)
+
+| Paso | IDs | Bloque |
+|------|-----|--------|
+| A | **89**, **91** | Bugs/regresión evento (doble guardado, layout selector). |
+| B | **99**, **100** | Calendario iOS (hoy primero, separador columnas). |
+| C | **67** | Transversal campos con clear “×” (widget reutilizable → web + iOS). |
+| D | **68** | Info plan (orden nombre/foto). |
+| E | **69–88** | Mi resumen / plan completo (gran bloque; subir **74–75** si condiciona el resto). |
+| F | **92–97**, **90**, **94–95** | Catálogo eventos / copy subtipos / campos traslado. |
+| G | **64** | Rediseño barras/FAB (el **79** quedó **sin aplicar**: se mantiene FAB). |
+| H | **101–107**, **106** | Pagos (eliminar bote, Tricount, eventos). |
+| I | **62**, **80**, **81**, **82–83** | iOS pulido lista planes + resumen + alojamientos. |
+| J | **63**, **108** | Icono app + prueba publicidad estática. |
+| K | **65**, **58** | Offline first (especificación + tareas; no código hasta acuerdo). |
+| L | **109** | Push notificaciones (infra). |
+| — | **64**, **66**, **98** | Reuniones de producto sin código. |
+
+| ID | Plataforma | Pantalla / flujo | Tipo | Gravedad | Descripción breve | Web / notas | Estado |
+|----|------------|------------------|------|----------|---------------------|-------------|--------|
+| 62 | iOS (→Ambas) | Lista planes W28 / cards | mejora | media | Aumentar tamaño global de la **card** en iOS (referencia visual: **WhatsApp**); iconos derecha actuales OK. | **Web:** revisar densidad y `min` touch en cards compartidas; no tiene que ser idéntico al móvil. | hecho (2026-03-27: `PlanCardWidget` padding y tipografía mayores solo en iOS) |
+| 63 | Ambas | Icono app / marca | diseño | baja | Icono que juegue con las **dos “oo”** de Planazoo (conexión): ideas — brújula + meeting point; dos ojos uno guiñando. | Mismo asset todas las plataformas. Ver **T258**. | pendiente |
+| 64 | iOS (producto) | Navegación inferior + FAB | discusión | — | **No implementar aún.** Demasiadas barras + FABs crear. Opción a valorar: **unificar** accesos a pantallas + crear; **FAB rojo** con **+** blanco **centrado**; al pulsar menú según pantalla (calendario: evento/alojamiento; pagos: gasto…); entrada **“Otros…”** despliega el resto como hoy. | Si se adopta, **replicar patrón** en web (dock/barra) coherente con `GUIA_UI`. | pendiente (diseño) |
+| 65 | Ambas | App / datos | producto | alta | Tras viaje real: **offline first** se percibe **imprescindible**; toda la información debería poder consultarse offline. Opinión técnica antes de codificar: viable con caché local + cola de sync; coste T56–T62. | **Misma necesidad** en web (PWA/caché) con matices; alinear con roadmap Offline. | pendiente |
+| 66 | Ambas | Eventos / documentación | discusión | — | **No implementar.** Recogida/entrega **vehículo alquiler** (coche/moto/bici): documentación específica. ¿Qué hay en docs? Propuesta: eventos **Acción** o **Desplazamiento** + subtipos **95** + campos adjuntos/notas; enlazar contrato en Info plan T262/notas. | Igual criterio web/iOS. | pendiente (diseño) |
+| 67 | Ambas | Formularios (transversal) | mejora | media | En campos de texto, mostrar **“×”** para **borrar todo** el contenido (patrón estándar). | **Paridad** en web (mismo componente o `suffixIcon`). | hecho (2026-03-27: `text_field_clear_suffix.dart` + login email/contraseña + descripción en `wd_event_dialog`) |
+| 68 | Ambas | Info del plan | mejora | baja | Mover campo **Nombre del plan** **encima** del campo/imagen de **foto**. | Paridad. | hecho (2026-03-27: nombre encima de la card foto/estado en `wd_plan_data_screen`) |
+| 69 | Ambas | Mi resumen | mejora | media | Plan **en marcha**: eventos **pasados** con **otro color** (distinción temporal clara). | Paridad. | hecho (2026-03-27: plan `en_curso` + `_isEventPast` + estilo atenuado en hoy/mañana, desplazamientos y plan completo) |
+| 70 | Ambas | Mi resumen | mejora | media | **Todas las secciones cerradas** por defecto al abrir. *(Si ya aplicado en histórico §4, **verificar** tras rediseños recientes.)* | Paridad. | hecho (2026-03-27: vuelos, alojamientos y plan completo `expanded: false` por defecto en `wd_my_plan_summary_screen`) |
+| 71 | Ambas | Mi resumen | copy | baja | Cambiar **“Mi alojamiento”** → **“Mis alojamientos”**. | Paridad; alineado con **77**: título **Alojamientos** en l10n. | hecho (2026-03-27: `myPlanSummaryAccommodation`) |
+| 72 | Ambas | Mi resumen / horarios | mejora | media | Eventos que **cruzan medianoche**: revisar cómo se muestran horas; valorar **+1** o etiqueta “día siguiente”. | Paridad; cuidado con timezones. | hecho (2026-03-27: `_formatEventTime` + `myPlanSummaryTimeNextDaySuffix` cuando `totalEndMinutes` ≥ 24h) |
+| 73 | iOS | Mi resumen / itinerario | mejora | media | **Alinear** hora con texto e **iconos** en bloque **itinerario completo**. | Web: comprobar si ya alineado; unificar estilo si no. | hecho (2026-03-27: fila cronológica `CrossAxisAlignment.center` + `height` en texto hora) |
+| 74 | Ambas | Mi resumen | mejora | media | Reducir bloque **“Lo más importante”** a: **nombre del plan**, **fechas**, **estado**, **n.º participantes**. | Paridad. | hecho (2026-03-27: `_buildImportantBlockContent` + `PlanStateService` + `planRealParticipantsProvider` + l10n `myPlanSummaryParticipantsCount`) |
+| 75 | Ambas | Mi resumen | mejora | alta | **Lo más importante**, **Participantes**, **Hoy**, **Mañana** → **cuatro iconos** en **una fila**; tap abre **modal** con el contenido actual. Iconos **Hoy**/**Mañana** = textos “hoy” / “mañana”. | Paridad; accesibilidad y tamaño táctil. | hecho (2026-03-27: `_buildSummaryQuickAccessRow` + `showModalBottomSheet`; hoy/mañana solo si plan en fechas en curso; l10n `myPlanSummaryQuick*`) |
+| 76 | Ambas | Mi resumen | copy | baja | **“Mis vuelos”** → **“Vuelos”**. | Paridad. | hecho (2026-03-27: `myPlanSummaryFlights` ES/EN) |
+| 77 | Ambas | Mi resumen | copy | baja | **“Mis alojamientos”** → **“Alojamientos”**. | Paridad. | hecho (2026-03-27: `myPlanSummaryAccommodation` ES/EN) |
+| 78 | Ambas | Mi resumen / evento | mejora | baja | Si en evento aparece **“Todos”**, mostrarlo en **naranja** (énfasis). | Paridad. | hecho (2026-03-27: subtítulo y plan completo con `subtitleEmphasizeAll` / estilo naranja en `wd_my_plan_summary_screen`) |
+| 79 | iOS (→Ambas) | Mi resumen | mejora | media | ~~Eliminar FAB~~ **Decisión 2026-03-27:** **mantener** el FAB de crear en resumen (alineado con **44**). Reabrir solo si **64** unifica creación en otro control. | — | cerrado (decisión producto) |
+| 80 | iOS | Mi resumen / barra vista | bug | media | Botones **“Mi resumen”** / **“Resumen todos”** quedan **medio tapados**. Acortar textos a **“mío”** / **“todos”** (mismo criterio visual que chip borrador/confirmado). | Web: revisar si existe solape similar en toolbar. | hecho (2026-03-27: l10n `myPlanSummaryViewMine` / `myPlanSummaryViewPlan` ES/EN cortos) |
+| 81 | Ambas | Mi resumen / barra superior | feature | media | Si plan en **planificando** y hay **borradores**, botón en **barra superior** para **filtrar solo borradores**. | Paridad. | hecho (2026-03-27: icono filtro en `_buildSummaryBar` + `_draftOnlyFilter` sobre lista de eventos) |
+| 82 | Ambas | Mi resumen / alojamientos | mejora | baja | No mostrar **dirección** en lista; bastante **icono marcador**. | Paridad. | hecho (2026-03-27: dirección quitada del subtítulo en `_buildAccommodationQuickContent`; Maps sigue con `mapsQuery` desde dirección) |
+| 83 | Ambas | Mi resumen | mejora | baja | **Igualar tamaño** icono **marcador** y **web**; cambiar **“www”** → **“web”**. | Coherente con **42** (ya tocó iconos); revisar consistencia. | hecho (2026-03-27: chip web = `Icons.public` 22px como marcador; sin texto “www”) |
+| 84 | Ambas | Mi resumen | mejora | media | Ampliar **“Mis vuelos”** a **todos los desplazamientos** del plan (no solo avión). | Paridad; renombrar sección coherente con **76**. | hecho (2026-03-27: filtro `typeFamily` desplazamiento + títulos l10n Desplazamientos/Travel) |
+| 85 | Ambas | Mi resumen / alojamientos | mejora | baja | En alojamientos: **fechas** y **noches** en **segunda línea**. | Paridad. | hecho (2026-03-27: título = nombre hotel; subtítulo fechas + noches + participantes en `_buildAccommodationQuickContent`) |
+| 86 | Ambas | Mi resumen / plan completo | bug | media | Días del itinerario en **inglés** → **idioma usuario** + **nombre día completo** + **año** en fecha. | Paridad (`intl` / locale). | hecho (2026-03-27: `DateFormat.yMMMMEEEEd(Localizations.localeOf(context))` en encabezados de día) |
+| 87 | Ambas | Mi resumen | copy | baja | Renombrar **“Itinerario completo”** → **“Plan completo”**. | Paridad l10n. | hecho (2026-03-27: `myPlanSummaryChronological` ES/EN) |
+| 88 | Ambas | Mi resumen / plan completo | bug | media | Eventos ordenados por **hora**, no por **orden de creación**. | Paridad. | hecho (2026-03-27: `_compareEventsBySchedule` fecha+hora+`createdAt`+id; lista vuelos ordenada igual) |
+| 89 | Ambas | Evento / guardar | bug | alta | Conexión **lenta**: varios taps en **Crear** generan **eventos duplicados**. **Debounce** / deshabilitar botón / idempotencia. | Paridad crítica. | hecho (2026-03-27: `_isSavingEvent` + botón deshabilitado e indicador en `wd_event_dialog`) |
+| 90 | Ambas | Evento / traslados | feature | media | Traslados: campos **terminal**, **línea aérea**, **presentación en aeropuerto** (o textos equivalentes). | Paridad; ver T246/T250. | hecho (2026-03-27: Shuttle/Transfer en `wd_event_dialog` + `extraData`; l10n ES/EN) |
+| 91 | Ambas | Evento / formulario | bug | media | Selector **“Este evento es para todos los…”** **desfasado** respecto al bloque del selector (regresión tras último cambio). Relacionado con **48**. | Paridad. | hecho (2026-03-27: mismo marco `label on border` + `CheckboxTheme` + l10n `eventDialog*`) |
+| 92 | Ambas | Evento / tipo Acción | feature | baja | Nuevo subtipo **“punto de encuentro”**. | Paridad; actualizar EVENT_FORM_FIELDS / catálogo. | hecho (2026-03-27: catálogo + icono en `wd_event_dialog`) |
+| 93 | Ambas | Evento / Actividad | feature | baja | Subtipo **“disfrutar hotel”** (o similar) dentro de Actividad. | Paridad. | hecho (2026-03-27: subtipo + icono + `EVENT_FORM_FIELDS`) |
+| 94 | Ambas | Evento / crear | mejora | media | **Decisión:** plan **en_curso** → fecha y hora = **ahora** (iOS y web). Otro estado → día civil **dentro del rango del plan** (hoy acotado a inicio/fin) y hora **10:00**. Implementado vía `NewEventFromButtonDefaults.forPlan` (FAB web, FAB móvil, crear desde resumen/detalle). | Celdas del calendario siguen usando el día/hora de la celda. | hecho (2026-03-27) |
+| 95 | Ambas | Evento / subtipos | copy | baja | Renombrar subtipo **recogida** → **recogida vehículo alquiler** (o equivalente); **entrega** → **entrega vehículo alquiler**. Alinea con **66**. | Paridad l10n. | hecho (2026-03-27: textos ES en catálogo + normalización al abrir en `wd_event_dialog`) |
+| 96 | Ambas | Evento / tipo y subtipo | mejora | media | Mostrar **3 opciones por fila**, orden **alfabético**. | Web: grid responsive; iOS: mismo criterio. | hecho (2026-03-27: `GridView` 3 cols + orden A–Z en `wd_event_dialog`) |
+| 97 | Ambas | Evento / Acción | feature | baja | Dos subtipos nuevos: **inicio viaje**, **fin viaje**. | Paridad. | hecho (2026-03-27: catálogo + iconos en `wd_event_dialog`) |
+| 98 | Ambas | Producto / asistente | epic | — | **No implementar aún.** Sistema de **sugerencias** (vuelo→taxi, estado plan vs fechas reales, etc.) por **reglas**; IA opcional futuro. Integrar como **principio** de producto, no módulo aislado. | Misma visión todas las plataformas. | pendiente (diseño) |
+| 99 | iOS (→Ambas) | Calendario | mejora | media | Al abrir, **primer día visible = hoy** (no solo default 3 días sin anclar a hoy). | Web: mismo criterio de viewport inicial. | hecho (2026-03-27: `Plan.initialVisiblePlanDayIndex` + ventana por índice 1-based en móvil embebido; web `_currentDayGroup` inicial desde mismo helper) |
+| 100 | Ambas | Calendario | mejora | baja | **Línea separación** entre columnas de días **más visible** (más gruesa/contraste). | Paridad. | hecho (2026-03-27: `CalendarConstants.calendarVerticalSeparator*` + web/móvil `_createGridBorder`) |
+| 101 | Ambas | Resumen pagos | mejora | media | Dejar solo **“Añadir gasto”**; **eliminar** flujo/botón **“Registrar pago”** (o unificar en uno). | Paridad. | hecho (2026-03-27: AppBar resumen = `IconButton` → `AddExpenseDialog`; FAB plan móvil = mismo; `PaymentDialog` sin entrada UI) |
+| 102 | Ambas | Pagos ↔ eventos | feature | alta | **Ligar gasto con evento** y viceversa: gasto desde evento suma al plan; desde pagos elegir evento si existe. | Paridad; modelo datos + UI. | hecho (2026-03-27: `PlanExpense.eventId` + selector en `AddExpenseDialog`; icono recibo en barra `EventDialog`; resumen actividad muestra evento; `BalanceService` en ítems de gasto) |
+| 103 | Ambas | Resumen pagos | feature | media | **“Te deben”** (y balances) alineados concepto **Tricount** / splits claros. | Paridad; ver `producto/PAGOS_PARIDAD_TRICOUNT.md` si aplica. | hecho (2026-03-27: copy estado “Le deben/Debe”, hint bajo Balances y subtítulo transferencias) |
+| 104 | Ambas | Resumen pagos | feature | media | **Editar** y **eliminar** pagos/gastos ya registrados. | Paridad + reglas Firestore. | hecho (2026-03-27: menú en fila de gasto Tricount + `AddExpenseDialog` edición; org/pagador/registrador) |
+| 105 | Ambas | Resumen pagos | feature | baja | **Sugerencias de transferencia** entre participantes. | Paridad. | hecho (ya en app; 2026-03-27: subtítulo aclaratorio l10n) |
+| 106 | Ambas | Resumen pagos / bote | producto | alta | **Eliminar todo lo del bote** (kitty): ya no necesario. *(**60** fue corrección UI del bote; **106** es retirada funcional.)* | Paridad; limpiar reglas/colecciones según decisión. | hecho en UI y resumen (2026-03-27: sin sección bote; `paymentSummaryProvider` sin aportes/gastos kitty; `BalanceService` sigue aceptando listas vacías) |
+| 107 | Ambas | Pagos / evento | feature | media | Al registrar gasto en **contexto evento**, preguntar **quién ha pagado** (split Tricount). | Paridad. | hecho (2026-03-27: aviso l10n en `AddExpenseDialog` con `initialEventId`) |
+| 108 | Ambas | Publicidad / monetización | spike | baja | **Prueba estática** poco invasiva: dónde encaja banner/zona o **botón contextual** en formularios (ej. desplazamiento → oferta relacionada). Ver **PATROCINIOS_Y_MONETIZACION**. | Web igual; medir UX antes de red. | hecho (2026-04-06: `wd_event_dialog` muestra bloque patrocinado estático contextual para Desplazamiento con CTA externo, sin red/ads) |
+| 109 | iOS (+Ambas) | Notificaciones push | infra | alta | Push **clave** para éxito. Revisar **tareas** y docs (**CHECKLIST_IOS_PUSH**, **ACCIONES_PENDIENTES**, FCM). Poner en marcha según prioridad. | Web: push/PWA según roadmap; móvil prioritario. | en progreso (2026-04-06: código listo — FCM robustecido, tap push + contrato payload + background handler; pendiente validación en iPhone físico con checklist A1) |
+
+**Agrupación §3.2:** Lista planes **62** · Marca **63** · Navegación discusión **64** · Offline **65** · Vehículo alquiler discusión **66** · Transversal **67** · Info **68** · Resumen/layout **69–88** · Eventos **89–97** · Epic asistente **98** · Calendario **99–100** · Pagos **101–107** · Publicidad **108** · Push **109**.
+
+**Semántica §5 vs §3.2:** el plan ya no usa estado “borrador” como tal; el ítem **81** (“filtrar borradores”) se entiende como **eventos no confirmados** (`isDraft` / mismo criterio que chip histórico **28**). Unificar copy al implementar.
+
+---
+
 ### Referencias
 
+- Tareas roadmap y colisión ID vs **Txxx:** [`docs/tareas/TASKS.md`](../tareas/TASKS.md) (fin del archivo: *Relación con LISTA_PUNTOS…*).
 - Infra iOS (push / deep links): [`docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md`](../configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md) y [`ACCIONES_PENDIENTES_APP.md`](./ACCIONES_PENDIENTES_APP.md).
 - Normas generales: [`docs/configuracion/CONTEXT.md`](../configuracion/CONTEXT.md).
+- §3.2 (62–109): monetización [`PATROCINIOS_Y_MONETIZACION.md`](../especificaciones/PATROCINIOS_Y_MONETIZACION.md); pagos tipo Tricount [`PAGOS_PARIDAD_TRICOUNT.md`](../producto/PAGOS_PARIDAD_TRICOUNT.md); icono app [`T258_ICONO_APP.md`](../tareas/T258_ICONO_APP.md).
 
 
 ### Puntos 22-3-2026 — agrupación por zona (prioridad iOS)
@@ -124,7 +228,7 @@ Para cada tema nuevo:
 | **8** | Lista de planes (móvil): **toggle lista / calendario** con `PlanCalendarView` y apertura de `PlanDetailPage`. |
 | **10** | Info plan: botones Guardar/Cancelar más visibles (`color3`, padding); **PopScope** + diálogo al salir con cambios; back llama a confirmación. |
 | **11** | Descripción: botón **ampliar** (`Icons.open_in_full`) abre modal de edición larga. |
-| **13** | Web calendario: **FAB** `+` (solo `kIsWeb` y si el plan permite crear eventos) → nuevo evento inicio plan 10:00. |
+| **13** | Web calendario: **FAB** `+` (solo `kIsWeb` y si el plan permite crear eventos). *Defaults al pulsar FAB:* ver **ítem 94** §3.2 (`NewEventFromButtonDefaults`: **en_curso** = ahora; otro estado = día en rango + 10:00). |
 | **16** | `EventDialog`: `barrierDismissible: false` en `showDialog` (plan detalle, calendario web/móvil, dashboard). |
 | **20** | Campo Firestore `referenceNotes` en `Plan` + formulario “Notas y referencias del plan” en Info. |
 | **21** | Nuevo evento: hasta elegir tipo válido solo selector + hint; pestaña General oculta el resto; validación al guardar sin tipo. |
@@ -144,7 +248,7 @@ Para cada tema nuevo:
 
 ### 4. Pendientes activos (prioridad iOS)
 
-Nuevo backlog detallado y orden de trabajo: **§3.1 (IDs 34–61)**.
+Backlog detallado: **§3.1 (IDs 34–61)** y **§3.2 (IDs 62–109)** — esta última es la **ronda iOS 2026-03-27** (Mi resumen, calendario, pagos, eventos, offline, push, etc.).
 
 | ID | Estado | Próximo paso sugerido |
 |----|--------|------------------------|
@@ -173,7 +277,7 @@ Recuerda que le damos prioridad a la app iOS
 
 
 
-1. en la pagoina info, las secciones Participantes, Avisos, y zona de peligro han nde estar cerradas por defecto. añadir un icono a la de Avisos y la de de Zona de peligro. Cambiar el nombre Zona de peligro por "Eliminar plan". Hacer la zona
+1. en la pagoina info, las secciones Participantes, Avisos, y zona de peligro han nde estar cerradas por defecto. añadir un icono a la de Avisos y la de de Zona de peligro. Cambiar el nombre Zona de peligro por "Eliminar plan". Hacer la sección coherente con la UI estándar.
 2. En Mi Resumen, añadir la lista de participantes.
 3. En el form de evento, revisar esto porque ya funcionaba: al seleccionar un tipo de evento, aparecen los subtipos. Al seleccionar un subtipo solo se que queda visible el subtipo 
 4. El modal "Eliminar plan": los textos no se ven bien. Ajustar a la UI standard. 

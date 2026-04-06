@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -18,6 +19,11 @@ class FCMService {
   
   static String? _currentToken;
   static String? _currentUserId;
+  static bool _isInitialized = false;
+  static StreamSubscription<String>? _tokenRefreshSubscription;
+  static StreamSubscription<RemoteMessage>? _onMessageSubscription;
+  static StreamSubscription<RemoteMessage>? _onMessageOpenedSubscription;
+  static Future<void> Function(RemoteMessage message)? _notificationTapHandler;
   
   /// Inicializa FCM y solicita permisos
   /// 
@@ -25,6 +31,9 @@ class FCMService {
   /// Retorna true si la inicialización fue exitosa
   static Future<bool> initialize(String userId) async {
     try {
+      if (_isInitialized && _currentUserId == userId) {
+        return true;
+      }
       _currentUserId = userId;
       
       // FCM no está disponible en web
@@ -53,19 +62,28 @@ class FCMService {
           );
           return false;
         }
+
+        await _messaging.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
       }
       
       // Obtener token inicial
       await _getAndSaveToken();
       
       // Escuchar cambios en el token
-      _messaging.onTokenRefresh.listen((newToken) {
+      await _tokenRefreshSubscription?.cancel();
+      _tokenRefreshSubscription = _messaging.onTokenRefresh.listen((newToken) {
         LoggerService.info('Token FCM actualizado', context: 'FCM_SERVICE');
+        _currentToken = newToken;
         _saveTokenToFirestore(newToken);
       });
       
       // Configurar handlers de notificaciones
       _setupNotificationHandlers();
+      _isInitialized = true;
       
       LoggerService.info('FCM inicializado correctamente', context: 'FCM_SERVICE');
       return true;
@@ -151,8 +169,9 @@ class FCMService {
   
   /// Configura los handlers para notificaciones
   static void _setupNotificationHandlers() {
+    _onMessageSubscription?.cancel();
     // Notificación recibida cuando la app está en primer plano
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    _onMessageSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       LoggerService.info(
         'Notificación recibida en primer plano: ${message.notification?.title}',
         context: 'FCM_SERVICE',
@@ -160,13 +179,18 @@ class FCMService {
       // TODO: Mostrar notificación local o actualizar UI
     });
     
+    _onMessageOpenedSubscription?.cancel();
     // Notificación recibida cuando la app está en segundo plano y el usuario la toca
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    _onMessageOpenedSubscription =
+        FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       LoggerService.info(
         'Notificación abierta desde segundo plano: ${message.notification?.title}',
         context: 'FCM_SERVICE',
       );
-      // TODO: Navegar a la pantalla correspondiente
+      final handler = _notificationTapHandler;
+      if (handler != null) {
+        handler(message);
+      }
     });
   }
   
@@ -175,6 +199,13 @@ class FCMService {
   
   /// Limpia el token cuando el usuario cierra sesión
   static Future<void> cleanup() async {
+    await _tokenRefreshSubscription?.cancel();
+    await _onMessageSubscription?.cancel();
+    await _onMessageOpenedSubscription?.cancel();
+    _tokenRefreshSubscription = null;
+    _onMessageSubscription = null;
+    _onMessageOpenedSubscription = null;
+
     if (_currentToken != null && _currentUserId != null) {
       try {
         await _firestore
@@ -199,6 +230,7 @@ class FCMService {
     
     _currentToken = null;
     _currentUserId = null;
+    _isInitialized = false;
   }
   
   /// Obtiene el handler para notificaciones cuando la app se abre desde terminada
@@ -212,7 +244,17 @@ class FCMService {
         'Notificación abierta desde estado terminado: ${message.notification?.title}',
         context: 'FCM_SERVICE',
       );
-      // TODO: Navegar a la pantalla correspondiente
+      final handler = _notificationTapHandler;
+      if (handler != null) {
+        await handler(message);
+      }
     }
+  }
+
+  /// Registra un callback para manejar taps en notificaciones push.
+  static void setNotificationTapHandler(
+    Future<void> Function(RemoteMessage message)? handler,
+  ) {
+    _notificationTapHandler = handler;
   }
 }

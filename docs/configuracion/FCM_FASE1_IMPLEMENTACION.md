@@ -56,6 +56,13 @@ fcmInitializerProvider: Observa el estado de autenticación y:
 
 - Se inicializa FCM automáticamente cuando el usuario se autentica
 - Se verifica si hay notificaciones que abrieron la app al iniciar
+- Se registra callback central para tap en push (`setNotificationTapHandler`) y navegación por `planId`.
+
+### 3.1 **Bootstrap en main (`lib/main.dart`)**
+
+- Registro de handler top-level de mensajes en background:
+  - `FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler)`
+- Este handler inicializa Firebase en isolate de background y deja log básico del payload.
 
 ### 4. **Cloud Function (`functions/index.js`)**
 

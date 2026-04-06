@@ -2,8 +2,8 @@
 
 > Documento vivo que debe actualizarse cada vez que se completa una tarea o se añade nueva funcionalidad.
 
-**Versión:** 1.4  
-**Última actualización:** Febrero 2026  
+**Versión:** 1.5  
+**Última actualización:** Marzo 2026  
 **Mantenedor:** Equipo de desarrollo
 
 ---
@@ -921,6 +921,11 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 - [ ] **EVENT-C-021:** Editar evento de vuelo y volver a obtener datos (T246)
   - Pasos: Editar un evento que ya tiene datos de vuelo; cambiar número de vuelo o fecha del evento y pulsar de nuevo "Obtener datos del vuelo".
   - Esperado: Se actualizan descripción, hora y duración; al guardar, extraData refleja el nuevo vuelo.
+  - Estado: 🔄
+
+- [ ] **EVENT-C-022:** Shuttle/Transfer: terminal, aerolínea y presentación (lista §3.2 ítem 90)
+  - Pasos: Crear o editar evento → Desplazamiento → subtipo Shuttle o Transfer. Rellenar origen/destino si aplica; rellenar terminal, aerolínea y presentación en aeropuerto; guardar y reabrir.
+  - Esperado: `extraData` contiene `transferTerminal`, `transferAirline`, `transferAirportMeet` cuando hay texto; al cambiar subtipo a otro desplazamiento y guardar, esas claves desaparecen.
   - Estado: 🔄
 
 ### 4.2 Leer/Ver Eventos
@@ -1921,7 +1926,7 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 **Distinción en la UI (ver `docs/producto/PAGOS_MVP.md`, `docs/flujos/FLUJO_PRESUPUESTO_PAGOS.md`):**
 - **Presupuesto (T101):** costes del plan, total, desglose. Se ve en la pestaña **Estadísticas (W17)** → `PlanStatsPage`.
-- **Pagos (T102):** quién ha pagado qué, balances, bote común, sugerencias de transferencias. Se ve en la pestaña **Pagos (W18)** → `PaymentSummaryPage`.
+- **Pagos (T102):** quién ha pagado qué, balances, sugerencias de transferencias. Se ve en la pestaña **Pagos (W18)** → `PaymentSummaryPage`. *(Bote común retirado de esta pantalla y del cálculo de resumen en mar 2026 — ítem lista 106.)*
 
 ### 9.1 Gestión de Presupuesto (T101)
 
@@ -1969,14 +1974,20 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 **Alcance MVP:** Ver [docs/producto/PAGOS_MVP.md](../producto/PAGOS_MVP.md). Permisos: organizador registra cualquier pago; participante solo "yo pagué X". Bote común: aportaciones y gastos (reparto en balances). Aviso en UI: "La app no procesa cobros…". Flujo E2E: [docs/testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) — Fase 11.5 Pagos.
 
-- [ ] **PAY-001:** Registrar pago individual
-  - Pasos: Abrir plan → pestaña Pagos (W18) → "Registrar pago"; rellenar participante (organizador puede elegir cualquiera), monto, concepto, fecha
-  - Esperado: Pago guardado; aparece en resumen y en el balance del participante
-  - Estado: ✅
+**Ítem lista §3.2 — 101 (mar 2026):** La entrada principal de pagos es **solo «Añadir gasto»** (`AddExpenseDialog`). No hay menú «Registrar pago» en el AppBar del resumen ni acceso equivalente en el FAB del plan móvil.
+
+**Ítem 102 (mar 2026):** `PlanExpense.eventId` opcional; selector en `AddExpenseDialog`; icono en barra del `EventDialog`; línea de evento en actividad del resumen.
+
+**Ítems 104–107 (mar 2026):** Editar/eliminar gastos Tricount desde el menú de cada fila en Actividad (organizador, pagador o quien registró); aviso «quién pagó» al abrir gasto con evento preseleccionado; copy balances estilo Tricount + textos aclaratorios; sin sección bote en resumen.
+
+- [ ] **PAY-001:** Añadir gasto individual (flujo principal)
+  - Pasos: Abrir plan → pestaña Pagos → botón **+** en la barra (o «Añadir gasto» en actividad, o icono recibo en la barra rápida del plan móvil). Rellenar pagador, importe, concepto, reparto y fecha en `AddExpenseDialog`; guardar.
+  - Esperado: Gasto guardado como `PlanExpense`; resumen y balances actualizados.
+  - Estado: 🔄
 
 - [ ] **PAY-002:** Ver balance de participante
   - Pasos: En PaymentSummaryPage ver tarjetas por participante (coste asignado, total pagado, balance)
-  - Esperado: Balances coherentes (total pagado − coste; incluye coste repartido del bote si hay gastos)
+  - Esperado: Balances coherentes (total pagado − coste; gastos Tricount y pagos del plan; sin bote en resumen desde mar 2026)
   - Estado: ✅
 
 - [ ] **PAY-003:** Cálculo de deudas (sugerencias de transferencias)
@@ -1984,20 +1995,18 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Texto tipo "X debe Y € a Z"; coherente con balances
   - Estado: ✅
 
-- [ ] **PAY-004:** Permisos: participante solo "yo pagué"
-  - Pasos: Entrar como participante (no organizador) → Pagos → Registrar pago
-  - Esperado: No hay selector de participante; se muestra "Tú (yo pagué)" fijo; solo puede registrar su propio pago
+- [ ] **PAY-004:** Permisos en «Añadir gasto» (participante vs organizador)
+  - Pasos: Entrar como participante (no organizador) → Pagos → **Añadir gasto**. Comprobar si el selector de pagador permite solo a sí mismo o a cualquiera según reglas actuales del diálogo.
+  - Esperado: Coherente con política implementada en `AddExpenseDialog` (revisar tras cambios de permisos).
   - Estado: 🔄
 
-- [ ] **PAY-005:** Bote común — aportación
-  - Pasos: En PaymentSummaryPage, sección "Bote común" → "Aportación"; organizador elige participante (o participante solo "mi aportación"), monto, concepto
-  - Esperado: Aportación guardada; saldo del bote y balances actualizados (aporte cuenta como pagado del participante)
-  - Estado: 🔄
+- [ ] **PAY-005:** ~~Bote común — aportación~~ (obsoleto en UI mar 2026)
+  - La sección bote **no** está en `PaymentSummaryPage`. Si se mantiene backend T219, probar solo vía datos/Firestore o pantalla alternativa si se reintroduce.
+  - Estado: ⏸️ (retirado UI — lista §3.2 ítem 106)
 
-- [ ] **PAY-006:** Bote común — gasto (solo organizador)
-  - Pasos: Como organizador → "Gasto del bote"; concepto y monto. Como participante: botón "Gasto del bote" no visible o no permitido
-  - Esperado: Gasto guardado; saldo del bote baja; coste repartido entre todos los participantes (balance actualizado)
-  - Estado: 🔄
+- [ ] **PAY-006:** ~~Bote común — gasto~~ (obsoleto en UI mar 2026)
+  - Mismo criterio que PAY-005.
+  - Estado: ⏸️
 
 - [ ] **PAY-007:** Aviso legal en pantalla de pagos
   - Pasos: Abrir plan → Pagos (W18)
@@ -2026,9 +2035,9 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Conversión automática, coste guardado en moneda del plan
   - Estado: 🔄
 
-- [ ] **CURR-005:** Registrar pago con moneda local diferente
-  - Pasos: Registrar pago seleccionando moneda diferente a la del plan
-  - Esperado: Conversión automática mostrada, pago guardado en moneda del plan
+- [ ] **CURR-005:** Pago/gasto con moneda local diferente (si aplica en UI)
+  - Pasos: Tras ítem 101, el flujo «Registrar pago» multi-moneda no está en la UI principal. Probar conversión en el flujo que exista (p. ej. coste en evento T153) o reabrir cuando `AddExpenseDialog` soporte moneda local.
+  - Esperado: Conversión automática cuando el formulario lo permita; guardado en moneda del plan.
   - Estado: 🔄
 
 - [ ] **CURR-006:** Ver formateo de moneda en estadísticas
@@ -2250,7 +2259,7 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ### 12.3 Regresión funcional (puntos cerrados 2026-03)
 
-> Cobertura de regresión para ítems marcados como hechos en `LISTA_PUNTOS_CORREGIR_APP.md` y `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md`.
+> Cobertura de regresión para ítems marcados como hechos en `LISTA_PUNTOS_CORREGIR_APP.md` y `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md`. Comportamiento de alta rápida y formulario de evento: ver también `docs/flujos/FLUJO_CRUD_EVENTOS.md` § 1.1a; Mi resumen: `docs/flujos/FLUJO_CRUD_PLANES.md` § 2.4.
 
 - [ ] **REG-2026-001:** Info del plan — secciones plegadas y bloque eliminar
   - Pasos: Abrir Info del plan en iOS/web; verificar estado inicial de secciones Participantes/Avisos/Eliminar plan; abrir/cerrar cada una.
@@ -2287,9 +2296,9 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Cambio de vista estable; navegación a detalle correcta.
   - Estado: 🔄
 
-- [ ] **REG-2026-008:** Calendario web — FAB de alta rápida de evento
-  - Pasos: En calendario web, pulsar FAB "+".
-  - Esperado: Se crea/abre alta de evento con fecha/hora inicial válidas sin errores.
+- [ ] **REG-2026-008:** Calendario web/móvil y resumen — FAB de alta rápida de evento
+  - Pasos: Con plan **no** en_curso, pulsar FAB "+" en calendario web, en calendario móvil y en pestaña **Mi resumen**. Repetir con plan **en_curso**.
+  - Esperado: Se abre el formulario con fecha/hora coherentes con `NewEventFromButtonDefaults.forPlan` (en_curso ≈ ahora acotado al plan; resto ≈ día en rango + 10:00). Sin errores de validación al abrir.
   - Estado: 🔄
 
 - [ ] **REG-2026-009:** Modal de evento web — no cerrar al clic fuera
@@ -2325,6 +2334,36 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 - [ ] **REG-2026-015:** Calendario/resumen refrescan tras CRUD de evento
   - Pasos: Crear, editar y eliminar evento; volver a calendario y resumen.
   - Esperado: Los cambios se reflejan de inmediato sin recargar manualmente.
+  - Estado: 🔄
+
+- [ ] **REG-2026-016:** Evento — un solo guardado con red lenta (ítem 89)
+  - Pasos: Simular red lenta o repetir tap rápido sobre **Crear/Guardar** en el diálogo de evento.
+  - Esperado: El botón queda deshabilitado y no se crean eventos duplicados.
+  - Estado: 🔄
+
+- [ ] **REG-2026-017:** Evento — tipo/subtipo en rejilla 3 columnas A–Z (ítem 96)
+  - Pasos: Abrir alta de evento y revisar selectores de tipo y subtipo.
+  - Esperado: Tres opciones por fila (donde aplique el layout) y orden alfabético estable.
+  - Estado: 🔄
+
+- [ ] **REG-2026-018:** Calendario — separadores verticales entre días (ítem 100)
+  - Pasos: Vista multi-día web y móvil con varias columnas.
+  - Esperado: Línea entre columnas claramente visible (constantes `calendarVerticalSeparator*`).
+  - Estado: 🔄
+
+- [ ] **REG-2026-019:** Info del plan — nombre encima de foto (ítem 68)
+  - Pasos: Abrir edición de información del plan.
+  - Esperado: El campo nombre aparece por encima de la tarjeta de imagen/estado.
+  - Estado: 🔄
+
+- [ ] **REG-2026-020:** Mi resumen — locale en plan completo, web/mapa, "Todos", alojamientos (ítems 78, 82, 83, 86, 88)
+  - Pasos: En **Resumen todos**, abrir **Plan completo** con el dispositivo en ES y en EN; revisar filas con evento "para todos", fila con URL web, fila de alojamiento con dirección; comprobar orden de dos eventos el mismo día a distinta hora.
+  - Esperado: Encabezados de día en idioma del usuario con día completo y año; chip web con icono (no texto "www"), tamaño similar al marcador; sin dirección en subtítulo de alojamiento (Maps sigue funcionando); etiqueta de todos los participantes en naranja; orden por hora (no por orden de creación arbitrario).
+  - Estado: 🔄
+
+- [ ] **REG-2026-021:** Notas del plan / workspace — permisos Firestore
+  - Pasos: Guardar notas de referencia como organizador/admin tras `firebase deploy --only firestore:rules` si hubo cambios recientes.
+  - Esperado: Sin `permission-denied`; si falla, verificar despliegue de reglas y mensaje de ayuda en cliente.
   - Estado: 🔄
 
 ---

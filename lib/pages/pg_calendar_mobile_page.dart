@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,18 +41,18 @@ import 'package:unp_calendario/features/notifications/domain/services/notificati
 ///
 /// En modo embebido ([hideAppBar] true) la barra superior se dibuja en el padre
 /// (barra unificada Calendario|Mi resumen + rango de días + 1/2/3) y se pasan
-/// [visibleDays], [currentDayGroup] y los callbacks.
+  /// [visibleDays], [firstVisiblePlanDayIndex] y los callbacks.
 class CalendarMobilePage extends ConsumerStatefulWidget {
   final Plan plan;
 
-  /// Si true, no se muestra AppBar (la barra va en el padre). Requiere pasar [visibleDays], [currentDayGroup] y callbacks.
+  /// Si true, no se muestra AppBar (la barra va en el padre). Requiere pasar [visibleDays], [firstVisiblePlanDayIndex] y callbacks.
   final bool hideAppBar;
 
   /// Días visibles (1, 2 o 3) cuando [hideAppBar] es true.
   final int? visibleDays;
 
-  /// Grupo de días actual cuando [hideAppBar] es true.
-  final int? currentDayGroup;
+  /// Índice 1-based del primer día del plan mostrado en la columna izquierda (lista §3.2 ítem 99).
+  final int? firstVisiblePlanDayIndex;
 
   final ValueChanged<int>? onVisibleDaysChanged;
   final VoidCallback? onPreviousDayGroup;
@@ -61,7 +63,7 @@ class CalendarMobilePage extends ConsumerStatefulWidget {
     required this.plan,
     this.hideAppBar = false,
     this.visibleDays,
-    this.currentDayGroup,
+    this.firstVisiblePlanDayIndex,
     this.onVisibleDaysChanged,
     this.onPreviousDayGroup,
     this.onNextDayGroup,
@@ -76,17 +78,17 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   int _visibleDays =
       (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? 3 : 1;
 
-  // Estado para la navegación de días
-  int _currentDayGroup = 0;
+  /// Índice 1-based: primer día del plan en la columna izquierda.
+  int _firstVisiblePlanDay = 1;
 
   int get _effectiveVisibleDays =>
       widget.hideAppBar && widget.visibleDays != null
           ? widget.visibleDays!
           : _visibleDays;
-  int get _effectiveCurrentDayGroup =>
-      widget.hideAppBar && widget.currentDayGroup != null
-          ? widget.currentDayGroup!
-          : _currentDayGroup;
+  int get _effectiveFirstVisiblePlanDay =>
+      widget.hideAppBar && widget.firstVisiblePlanDayIndex != null
+          ? widget.firstVisiblePlanDayIndex!
+          : _firstVisiblePlanDay;
 
   // Controladores para scroll vertical sincronizado
   final ScrollController _hoursScrollController = ScrollController();
@@ -110,7 +112,9 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     super.initState();
     _trackService = TrackService();
     _initializeTracks();
-    
+    _firstVisiblePlanDay =
+        Plan.initialVisiblePlanDayIndex(widget.plan, _visibleDays);
+
     // Sincronizar controladores de scroll
     _hoursScrollController.addListener(_syncScrollFromHours);
     _dataScrollController.addListener(_syncScrollFromData);
@@ -214,8 +218,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
 
   List<dynamic> _getColumnsToShow() {
     return List.generate(_effectiveVisibleDays, (dayIndex) {
-      final actualDayIndex =
-          _effectiveCurrentDayGroup * _effectiveVisibleDays + dayIndex + 1;
+      final actualDayIndex = _effectiveFirstVisiblePlanDay + dayIndex;
       final totalDays = widget.plan.durationInDays;
       final isEmpty = actualDayIndex > totalDays;
       return {
@@ -246,8 +249,11 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
 
   Border _createGridBorder({bool includeRight = true}) {
     return Border(
-      right: includeRight 
-          ? BorderSide(color: AppColorScheme.gridLineColor.withOpacity(CalendarConstants.gridLineOpacity), width: 0.5)
+      right: includeRight
+          ? BorderSide(
+              color: Colors.white.withOpacity(CalendarConstants.calendarSeparatorOpacityMobile),
+              width: CalendarConstants.calendarVerticalSeparatorWidth,
+            )
           : BorderSide.none,
     );
   }
@@ -405,8 +411,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   }
 
   List<Widget> _buildDaysEventsLayerWithSubColumns(double availableWidth) {
-    final startDayIndex =
-        _effectiveCurrentDayGroup * _effectiveVisibleDays + 1;
+    final startDayIndex = _effectiveFirstVisiblePlanDay;
     final endDayIndex = startDayIndex + _effectiveVisibleDays - 1;
     final totalDays = widget.plan.durationInDays;
     final actualEndDayIndex = endDayIndex > totalDays ? totalDays : endDayIndex;
@@ -698,7 +703,12 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     return code != null ? '$code · ${event.description}' : event.description;
   }
 
-  void _showNewEventDialogForParticipant(DateTime date, int hour, ParticipantTrack track) {
+  void _showNewEventDialogForParticipant(
+    DateTime date,
+    int hour,
+    ParticipantTrack track, {
+    int? initialStartMinute,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -706,6 +716,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         planId: widget.plan.id ?? '',
         initialDate: date,
         initialHour: hour,
+        initialStartMinute: initialStartMinute,
         onSaved: (newEvent) async {
           final eventService = ref.read(eventServiceProvider);
           final eventId = await eventService.createEvent(newEvent);
@@ -868,7 +879,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   }
 
   void _previousDayGroup() {
-    if (_effectiveCurrentDayGroup <= 0) return;
+    if (_effectiveFirstVisiblePlanDay <= 1) return;
     if (widget.onPreviousDayGroup != null) {
       widget.onPreviousDayGroup!();
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -877,7 +888,10 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
       return;
     }
     setState(() {
-      _currentDayGroup--;
+      _firstVisiblePlanDay = math.max(
+        1,
+        _firstVisiblePlanDay - _effectiveVisibleDays,
+      );
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToFirstEvent();
@@ -886,8 +900,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
 
   void _nextDayGroup() {
     final totalDays = widget.plan.durationInDays;
-    final startDay =
-        _effectiveCurrentDayGroup * _effectiveVisibleDays + 1;
+    final startDay = _effectiveFirstVisiblePlanDay;
     final endDay = startDay + _effectiveVisibleDays - 1;
     if (endDay >= totalDays) return;
     if (widget.onNextDayGroup != null) {
@@ -898,7 +911,8 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
       return;
     }
     setState(() {
-      _currentDayGroup++;
+      final next = _firstVisiblePlanDay + _effectiveVisibleDays;
+      _firstVisiblePlanDay = next > totalDays ? totalDays : next;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToFirstEvent();
@@ -913,9 +927,9 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     setState(() {
       _visibleDays = days;
       final totalDays = widget.plan.durationInDays;
-      final currentStartDay = _currentDayGroup * _visibleDays + 1;
-      if (currentStartDay > totalDays) {
-        _currentDayGroup = 0;
+      if (_firstVisiblePlanDay > totalDays) {
+        _firstVisiblePlanDay =
+            Plan.initialVisiblePlanDayIndex(widget.plan, _visibleDays);
       }
     });
   }
@@ -941,8 +955,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
 
     ref.watch(calendarNotifierProvider(calendarParams));
     
-    final startDay =
-        _effectiveCurrentDayGroup * _effectiveVisibleDays + 1;
+    final startDay = _effectiveFirstVisiblePlanDay;
     final endDay = startDay + _effectiveVisibleDays - 1;
     final totalDays = widget.plan.durationInDays;
 
@@ -974,13 +987,15 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            final visibleDays = _getColumnsToShow();
-            if (visibleDays.isNotEmpty) {
-              final firstDay = visibleDays.first as Map<String, dynamic>;
-              final dayIndex = firstDay['index'] as int;
-              final date = widget.plan.dateForPlanDayIndex(dayIndex);
-              _showNewEventDialogForParticipant(date, 12, _getFilteredTracks().first);
-            }
+            final tracks = _getFilteredTracks();
+            if (tracks.isEmpty) return;
+            final d = NewEventFromButtonDefaults.forPlan(widget.plan);
+            _showNewEventDialogForParticipant(
+              d.date,
+              d.hour,
+              tracks.first,
+              initialStartMinute: d.startMinute,
+            );
           },
           backgroundColor: AppColorScheme.color2,
           child: const Icon(Icons.add, color: Colors.white),
@@ -1002,7 +1017,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         children: [
           IconButton(
             onPressed:
-                _effectiveCurrentDayGroup > 0 ? _previousDayGroup : null,
+                _effectiveFirstVisiblePlanDay > 1 ? _previousDayGroup : null,
             icon: const Icon(Icons.chevron_left, color: Colors.white),
           ),
           Expanded(

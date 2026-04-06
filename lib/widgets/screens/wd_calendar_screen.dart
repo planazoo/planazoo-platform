@@ -122,7 +122,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (widget.initialVisibleDays != null) {
       _visibleDays = widget.initialVisibleDays!;
     }
-    
+    _currentDayGroup = (Plan.initialVisiblePlanDayIndex(widget.plan, _visibleDays) - 1) ~/ _visibleDays;
+
     // Inicializar el servicio de tracks
     _trackService = TrackService();
     _initializeTracks();
@@ -338,7 +339,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         appBar: _buildAppBar(),
         floatingActionButton: kIsWeb && PlanStatePermissions.canAddEvents(widget.plan)
             ? FloatingActionButton(
-                onPressed: () => _showNewEventDialog(widget.plan.startDate, 10),
+                onPressed: () {
+                  final d = NewEventFromButtonDefaults.forPlan(widget.plan);
+                  _showNewEventDialog(
+                    d.date,
+                    d.hour,
+                    initialStartMinute: d.startMinute,
+                  );
+                },
                 backgroundColor: AppColorScheme.color3,
                 foregroundColor: Colors.white,
                 tooltip: AppLocalizations.of(context)!.createEvent,
@@ -457,8 +465,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Crea un borde común para elementos de la grilla
   Border _createGridBorder({bool includeRight = true}) {
     return Border(
-      right: includeRight 
-          ? BorderSide(color: Colors.grey.shade700.withOpacity(_gridLineOpacity), width: 0.5)
+      right: includeRight
+          ? BorderSide(
+              color: Colors.grey.shade500.withOpacity(CalendarConstants.calendarSeparatorOpacityWeb),
+              width: CalendarConstants.calendarVerticalSeparatorWidth,
+            )
           : BorderSide.none,
     );
   }
@@ -3204,7 +3215,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   /// Muestra el diálogo para crear un nuevo evento
-  void _showNewEventDialog(DateTime date, int hour, {String? participantId}) {
+  void _showNewEventDialog(
+    DateTime date,
+    int hour, {
+    String? participantId,
+    int? initialStartMinute,
+  }) {
     // T109: Verificar si se puede crear eventos según el estado del plan
     if (!PlanStatePermissions.canAddEvents(widget.plan)) {
       final blockedReason = PlanStatePermissions.getBlockedReason('create_event', widget.plan);
@@ -3229,6 +3245,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         planId: widget.plan.id ?? '',
         initialDate: date,
         initialHour: hour,
+        initialStartMinute: initialStartMinute,
         onSaved: (newEvent) async {
           // VALIDAR: ¿Crearía conflicto de participante?
           if (_wouldCreateParticipantConflict(

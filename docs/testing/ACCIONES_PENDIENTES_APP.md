@@ -16,6 +16,13 @@ Referencias cruzadas: `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md`, `doc
 - **Flujo:** notificaciones push (primer plano / segundo plano / al abrir desde notificación).  
 - **Objetivo:** APNs + FCM correctos; notificaciones fiables y navegación al sitio adecuado al tocar.  
 - **Estado:** parcial — checklist en `CHECKLIST_IOS_PUSH_DEEPLINKS.md` (A1); falta validación completa en dispositivo y proyecto Firebase/APNs.
+- **Avance 2026-04-06 (código):** `FCMService` reforzado con inicialización idempotente por usuario, cancelación de listeners para evitar duplicados (`onTokenRefresh`, `onMessage`, `onMessageOpenedApp`) y `setForegroundNotificationPresentationOptions` en iOS.
+- **Avance 2026-04-06 (navegación tap push):** handler central en `App` (`navigatorKey`) + `FCMService.setNotificationTapHandler`; si el payload trae `planId`/`plan_id`, abre `PlanDetailPage` (opcional `tab`/`initialTab`).
+- **Avance 2026-04-06 (contrato payload):** normalización/validación de pestaña destino (`tab`/`initialTab`) + fallback por `type` (`chat`, `planNotifications`, `payments`) documentado en `CHECKLIST_IOS_PUSH_DEEPLINKS.md`.
+- **Avance 2026-04-06 (background):** `main.dart` registra `FirebaseMessaging.onBackgroundMessage(...)` con handler top-level para recepción en segundo plano.
+- **Checklist operativa:** ejecutar `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` sección **“Ejecución guiada A1 (iOS push)”** y registrar evidencia (foreground/background/terminada).
+- **Estado de ejecución (2026-04-06):** implementación de código preparada; **pruebas en dispositivo físico pendientes** por no disponer de iPhone en este momento.
+- **Próximo paso al retomar:** iniciar por “Paso 1 — Verificar token FCM en Firestore” y continuar secuencia 2→7 de la checklist operativa.
 
 ### A2 — Deep link de invitación en iOS
 

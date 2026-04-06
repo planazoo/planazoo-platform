@@ -1,0 +1,11 @@
+---
+description: Flujo de trabajo del agente (comandos y explicaciones)
+alwaysApply: true
+---
+
+# Flujo de trabajo preferido
+
+- **Comandos:** Ejecutar terminal, análisis y herramientas **sin pedir confirmación** al usuario cuando el entorno lo permita.
+- **Localización:** Tras cambiar `app_*.arb`, ejecutar **`flutter gen-l10n`** (o el equivalente del proyecto) y comprobar que no queden getters rotos.
+- **Análisis:** Tras cambios sustantivos en Dart, ejecutar **`dart analyze`** (o `flutter analyze`) y corregir hasta que pase.
+- **Mientras trabajas:** **No** mostrar parches ni listados largos de código intermedio; aplicar cambios con herramientas y al cerrar la tarea dar un **resumen breve** (qué archivos / qué comportamiento), sin repetir diffs completos salvo que pida detalle puntual.

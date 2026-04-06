@@ -12,7 +12,6 @@ import '../../../../features/calendar/presentation/providers/calendar_providers.
 import '../../../../features/calendar/presentation/providers/accommodation_providers.dart';
 import '../../../../features/calendar/presentation/providers/plan_participation_providers.dart';
 import '../../../../features/auth/presentation/providers/auth_providers.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 /// T102: Provider del servicio de pagos
 final paymentServiceProvider = Provider<PaymentService>((ref) {
@@ -109,10 +108,7 @@ final paymentSummaryProvider = FutureProvider.family<PaymentSummary, String>((re
     const Duration(seconds: 10),
   );
 
-  // T219: Obtener bote común (aportes y gastos)
-  final kittyService = ref.watch(kittyServiceProvider);
-  final kittyContributions = await kittyService.getContributionsByPlanIdFirst(planId);
-  final kittyExpenses = await kittyService.getExpensesByPlanIdFirst(planId);
+  // Lista §3.2 ítem 106: bote común retirado del cálculo y de la UI de resumen.
 
   // Gastos tipo Tricount
   final expenseService = ref.watch(expenseServiceProvider);
@@ -125,10 +121,7 @@ final paymentSummaryProvider = FutureProvider.family<PaymentSummary, String>((re
     userIdsToResolve.add(p.userId);
   }
   for (final payment in payments) {
-    if (payment.participantId != null) userIdsToResolve.add(payment.participantId!);
-  }
-  for (final c in kittyContributions) {
-    userIdsToResolve.add(c.participantId);
+    userIdsToResolve.add(payment.participantId);
   }
   for (final event in events) {
     userIdsToResolve.add(event.userId);
@@ -154,15 +147,15 @@ final paymentSummaryProvider = FutureProvider.family<PaymentSummary, String>((re
     }
   }
 
-  // Calcular resumen (T219: incluye bote común; gastos tipo Tricount)
+  // Resumen: sin bote (106); gastos Tricount en planExpenses.
   return balanceService.calculatePaymentSummary(
     events: events,
     accommodations: accommodations,
     participations: participations,
     payments: payments,
     userIdToName: userIdToName,
-    kittyContributions: kittyContributions,
-    kittyExpenses: kittyExpenses,
+    kittyContributions: const [],
+    kittyExpenses: const [],
     planExpenses: planExpenses,
     // De momento, el coste base de los eventos no se incluye automáticamente en el cálculo de pagos.
     // Si en el futuro se quiere hacer configurable desde la UI, este flag se puede vincular a una preferencia.

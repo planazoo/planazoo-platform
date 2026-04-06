@@ -4,7 +4,7 @@
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
 > **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T262**
+**Siguiente código de tarea: T263**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
@@ -15,10 +15,10 @@
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), T260 (sistema multi-moneda), etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña)**, etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
-**Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
+**Total aproximado: ~96 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
 
 **Preparación pruebas con familia:** Ver `docs/configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md`. Ítems de prioridad alta (l10n lista planes/invitación, navegación al plan en móvil, Safe area, timezones Egipto+Londres) implementados; checklist §4 pendiente de ejecutar antes de invitar.
 
@@ -45,13 +45,21 @@
 
 - **Grupos 1-3:** Tracks, filtros, parte común/personal (mayoría completados).
 - **Grupo 4:** Offline (T56-T62, T63-T64).
-- **Grupo 5:** Timezones (T40-T45) — completados.
+- **Grupo 5:** Timezones (T40-T45) — **núcleo ya en la app**; las filas **T40–T45 en §8** siguen listadas hasta **cierre formal** (QA / migración / docs). Evitar duplicar el mensaje «completadas» aquí y en §8 sin alinear.
 - **Grupo 6:** Funcionalidades avanzadas (T77-T90; varias completadas).
 - **Otros:** Admin, seguridad, UI/UX, producto.
 
 ---
 
 ## 🗂️ Tareas pendientes (ordenadas por área)
+
+### 0. Plan — notas (nueva pestaña, alta prioridad)
+
+| Código | Descripción | Prioridad |
+|--------|-------------|-----------|
+| **T262** | **Notas del plan (comunes y personales) + plantillas + lista de preparación:** Apartado al mismo nivel que Info, Resumen, etc. Bloque **Preparación** (título l10n); lista común con permisos configurables por **organizador** (solo él / participantes elegidos / todos). Plantillas; Firestore + reglas, web+iOS. Especificación en `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md`. **Estado real:** fase 1 implementada (`lib/features/plan_notes/`); pendiente plantillas UI, checklist pruebas y cierre con aprobación (detalle en ese .md). | **Alta** |
+
+---
 
 ### 1. Mejoras UI/UX – Widgets, Info plan, Calendario, Cards
 
@@ -167,6 +175,8 @@
 
 ### 8. Timezones (T40-T45)
 
+> **Nota:** No contradecir el resumen de grupos: el comportamiento principal de timezones ya está en producción; estas filas son **seguimiento / cierre administrativo** (tests T44–T45, migración T43, etc.) hasta moverlas a `COMPLETED_TASKS.md`.
+
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
 | **T40** | Fundamentos timezone: campo timezone en Event, guardar/mostrar hora local del evento. | Alta |
@@ -263,3 +273,9 @@
 - **T214** — Fusionada en T213 (cards: tamaño + contraste).
 
 Las tareas **completadas** que estaban en este archivo han pasado a `COMPLETED_TASKS.md` (incluida T164 Login con Google). Para detalle histórico de cualquier tarea, consultar ese archivo o el historial de git.
+
+### Relación con `docs/testing/LISTA_PUNTOS_CORREGIR_APP.md`
+
+- **Propósito distinto:** `TASKS.md` = códigos **Txxx** (especificaciones y roadmap). La lista de puntos = IDs numéricos (**34–61**, **62–109**, …) de **pruebas / bugs / UX** por ronda.
+- **Colisión de números:** un ID como **94** en la lista (*defaults al crear evento desde FAB*) **no** es la **T94** de `COMPLETED_TASKS.md` (refactor CalendarScreen). En referencias cruzadas usar siempre **«ítem 94»** vs **«T94»**.
+- **Complementarios (ejemplos):** **T257** (revisión iOS vs web) ↔ muchos ítems §3.2; **T250** / `EVENT_FORM_FIELDS.md` ↔ **90**, **92–97**; **T246** ↔ **90**, **50** (histórico); **T262** ↔ **66** (contrato en notas); **T56–T62** ↔ **58**, **65**; pagos **T102** / **T222** ↔ **101–107**; **T259** ↔ **109** (push + deep links en otros docs).

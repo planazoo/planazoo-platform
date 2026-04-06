@@ -332,6 +332,10 @@
   "@paymentsBalancesSectionTitle": {
     "description": "Título de la sección de balances por participante"
   },
+  "paymentsBalancesTricountHint": "Coste asignado = tu parte del gasto; total pagado = lo que salió de ti; saldo = diferencia (estilo Tricount).",
+  "@paymentsBalancesTricountHint": {
+    "description": "Subtítulo que explica balances al estilo apps de reparto de gastos"
+  },
   "paymentsBalanceAssignedCost": "Coste asignado",
   "@paymentsBalanceAssignedCost": {
     "description": "Etiqueta del coste asignado a un participante"
@@ -348,11 +352,15 @@
   "@paymentsTransferSuggestionsTitle": {
     "description": "Título de la sección de sugerencias de transferencias"
   },
+  "paymentsTransferSuggestionsSubtitle": "Propuesta mínima de pagos para cuadrar cuentas entre personas.",
+  "@paymentsTransferSuggestionsSubtitle": {
+    "description": "Texto aclaratorio bajo el título de sugerencias de transferencia"
+  },
   "paymentsBalanceChartTitle": "Distribución de balances",
   "@paymentsBalanceChartTitle": {
     "description": "Título del gráfico de distribución de balances"
   },
-  "paymentsBalanceStatusCreditor": "Debe recibir {amount}",
+  "paymentsBalanceStatusCreditor": "Le deben {amount}",
   "@paymentsBalanceStatusCreditor": {
     "description": "Texto de estado cuando el participante es acreedor",
     "placeholders": {
@@ -361,7 +369,7 @@
       }
     }
   },
-  "paymentsBalanceStatusDebtor": "Debe pagar {amount}",
+  "paymentsBalanceStatusDebtor": "Debe {amount}",
   "@paymentsBalanceStatusDebtor": {
     "description": "Texto de estado cuando el participante es deudor",
     "placeholders": {
@@ -374,12 +382,35 @@
   "@paymentsBalanceStatusSettled": {
     "description": "Texto de estado cuando el participante está equilibrado"
   },
+  "paymentsEditExpense": "Editar gasto",
+  "paymentsExpenseUpdated": "Gasto actualizado",
+  "paymentsExpenseDeleteConfirmTitle": "¿Eliminar este gasto?",
+  "paymentsExpenseDeleteConfirmBody": "Desaparecerá del plan y de los balances. No se puede deshacer.",
+  "paymentsExpenseDeleted": "Gasto eliminado",
+  "paymentsExpenseDeleteError": "No se pudo eliminar el gasto",
+  "paymentsExpenseFromEventPayerHint": "Indica quién pagó con su dinero; el reparto entre personas lo eliges más abajo.",
+  "@paymentsExpenseFromEventPayerHint": {
+    "description": "Aviso al abrir gasto desde un evento (initialEventId)"
+  },
+  "paymentsActivityEmpty": "Sin gastos. Añade uno con el botón de arriba.",
+  "paymentsExpenseRowMeta": "{date} · {payer} pagó",
+  "@paymentsExpenseRowMeta": {
+    "placeholders": {
+      "date": {"type": "String"},
+      "payer": {"type": "String"}
+    }
+  },
+  "paymentsExpenseDefaultConcept": "Gasto",
   "paymentsAddExpense": "Añadir gasto",
   "paymentsAddExpenseTitle": "Nuevo gasto (quién pagó, reparto)",
   "paymentsExpensePayer": "Quién pagó",
   "paymentsExpenseAmount": "Importe",
   "paymentsExpenseConcept": "Concepto (opcional)",
   "paymentsExpenseDate": "Fecha",
+  "paymentsExpenseLinkedEventLabel": "Evento (opcional)",
+  "paymentsExpenseNoEventOption": "Ninguno",
+  "paymentsExpenseEventFallbackTitle": "Evento",
+  "paymentsExpenseUnknownLinkedEvent": "Evento (referencia)",
   "paymentsExpenseSplitBetween": "Repartir entre",
   "paymentsActivityTitle": "Actividad",
   "paymentsExpenseSaved": "Gasto registrado",
@@ -1465,6 +1496,15 @@
   "taxiDestinationHint": "Dirección de llegada",
   "taxiSeatsLabel": "Plazas del taxi",
   "taxiSeatsHint": "Número de plazas",
+  "eventTransferTerminalLabel": "Terminal / puerta",
+  "@eventTransferTerminalLabel": {
+    "description": "Shuttle/Transfer: terminal aeropuerto (ítem 90 lista)"
+  },
+  "eventTransferTerminalHint": "Ej: T2, puerta B12",
+  "eventTransferAirlineLabel": "Aerolínea / vuelo",
+  "eventTransferAirlineHint": "Ej: Iberia, IB1234",
+  "eventTransferAirportMeetLabel": "Presentación en aeropuerto",
+  "eventTransferAirportMeetHint": "Ej: 2 h antes del vuelo, mostrador…",
   "flightNumberLabel": "Número de vuelo",
   "flightNumberHint": "Ej: IB6842, AF1135",
   "flightDateLabel": "Fecha del vuelo",
@@ -1498,6 +1538,24 @@
   "@eventDialogFixValidationErrors": {
     "description": "SnackBar cuando el formulario del evento no pasa validate()"
   },
+  "eventDialogParticipantsScopeLabel": "Participantes del evento",
+  "@eventDialogParticipantsScopeLabel": {
+    "description": "Etiqueta del bloque «para todos» / selección (ítem 91 lista pruebas)"
+  },
+  "eventDialogForAllParticipantsTitle": "Este evento es para todos los participantes del plan",
+  "eventDialogForAllParticipantsSubtitleOn": "Todos los participantes estarán incluidos automáticamente",
+  "eventDialogForAllParticipantsSubtitleOff": "Selecciona participantes específicos abajo",
+  "eventDialogAddLinkedExpenseTooltip": "Añadir gasto ligado a este evento",
+  "eventSponsoredTag": "Patrocinado",
+  "eventSponsoredBy": "Patrocinado por {sponsor}",
+  "@eventSponsoredBy": {
+    "placeholders": {
+      "sponsor": {"type": "String"}
+    }
+  },
+  "eventSponsoredStaticHint": "Prueba estática de monetización contextual (sin anuncios activos).",
+  "eventSponsoredOpenOffer": "Ver oferta",
+  "eventSponsoredOpenError": "No se pudo abrir el enlace del patrocinador",
   "eventStatusDraft": "Borrador",
   "eventStatusConfirmed": "Confirmado",
   "isDraft": "Es borrador",
@@ -1840,6 +1898,48 @@
   "@planSummaryButtonLabel": { "description": "T193: Etiqueta del botón resumen" },
   "myPlanSummaryTab": "Mi resumen",
   "@myPlanSummaryTab": { "description": "T252: Pestaña Mi resumen / itinerario participante" },
+  "planNotesTabTitle": "Notas",
+  "@planNotesTabTitle": { "description": "T262: Pestaña notas y preparación del plan" },
+  "planNotesTabCommon": "Común",
+  "@planNotesTabCommon": { "description": "T262: Pestaña notas compartidas" },
+  "planNotesTabPersonal": "Personal",
+  "@planNotesTabPersonal": { "description": "T262: Pestaña notas personales" },
+  "planNotesPreparationTitle": "Preparación",
+  "@planNotesPreparationTitle": { "description": "T262: Título lista checklist" },
+  "planNotesCommonIntro": "Notas y lista de preparación compartidas. Quién puede editar la lista lo define el organizador.",
+  "@planNotesCommonIntro": { "description": "T262: Intro sección común" },
+  "planNotesPersonalIntro": "Solo tú ves esta nota y tu lista de preparación personal.",
+  "@planNotesPersonalIntro": { "description": "T262: Intro sección personal" },
+  "planNotesCommonNoteLabel": "Nota compartida",
+  "@planNotesCommonNoteLabel": { "description": "T262: Etiqueta nota común" },
+  "planNotesPersonalNoteLabel": "Nota personal",
+  "@planNotesPersonalNoteLabel": { "description": "T262: Etiqueta nota personal" },
+  "planNotesAddPrepItem": "Añadir ítem",
+  "@planNotesAddPrepItem": { "description": "T262: Añadir ítem checklist" },
+  "planNotesSave": "Guardar",
+  "@planNotesSave": { "description": "T262: Botón guardar" },
+  "planNotesSaved": "Guardado",
+  "@planNotesSaved": { "description": "T262: Snackbar tras guardar" },
+  "planNotesSaveError": "No se pudo guardar. Revisa conexión o permisos.",
+  "@planNotesSaveError": { "description": "T262: Error al guardar" },
+  "planNotesReadOnlyHint": "Puedes ver esta sección pero no editarla.",
+  "@planNotesReadOnlyHint": { "description": "T262: Solo lectura común" },
+  "planNotesPolicyTitle": "Quién puede editar la lista de preparación común",
+  "@planNotesPolicyTitle": { "description": "T262: Título política edición" },
+  "planNotesPolicyOrganizerOnly": "Solo el organizador",
+  "@planNotesPolicyOrganizerOnly": { "description": "T262: Opción política" },
+  "planNotesPolicySelected": "Algunos participantes",
+  "@planNotesPolicySelected": { "description": "T262: Opción política" },
+  "planNotesPolicyAll": "Todos los participantes",
+  "@planNotesPolicyAll": { "description": "T262: Opción política" },
+  "planNotesSelectParticipantsTitle": "Elige quién puede editar la lista",
+  "@planNotesSelectParticipantsTitle": { "description": "T262: Título diálogo" },
+  "planNotesApplySelection": "Aplicar",
+  "@planNotesApplySelection": { "description": "T262: Aplicar selección" },
+  "planNotesNoWorkspaceYet": "Las notas compartidas aún no están disponibles.",
+  "@planNotesNoWorkspaceYet": { "description": "T262: Sin workspace" },
+  "planNotesNewItemHint": "Nuevo ítem",
+  "@planNotesNewItemHint": { "description": "T262: Hint nuevo ítem" },
   "calendarViewModeCalendar": "Calendario",
   "@calendarViewModeCalendar": { "description": "T252: Modo vista calendario en pestaña Calendario" },
   "myPlanSummaryHint": "Esta es tu vista como participante",
@@ -1848,23 +1948,23 @@
   "@myPlanSummaryToday": { "description": "T252: Sección hoy" },
   "myPlanSummaryTomorrow": "Mañana",
   "@myPlanSummaryTomorrow": { "description": "T252: Sección mañana" },
-  "myPlanSummaryFlights": "Mis vuelos",
-  "@myPlanSummaryFlights": { "description": "T252: Acceso rápido vuelos" },
-  "myPlanSummaryFlightsHint": "Eventos de tipo Avión",
-  "@myPlanSummaryFlightsHint": { "description": "Criterio sección vuelos en Mi resumen" },
-  "myPlanSummaryAccommodation": "Mi alojamiento",
+  "myPlanSummaryFlights": "Desplazamientos",
+  "@myPlanSummaryFlights": { "description": "T252: Acceso rápido desplazamientos (ítem 84)" },
+  "myPlanSummaryFlightsHint": "Tren, avión, coche y otros desplazamientos",
+  "@myPlanSummaryFlightsHint": { "description": "Criterio sección desplazamientos en Mi resumen" },
+  "myPlanSummaryAccommodation": "Alojamientos",
   "@myPlanSummaryAccommodation": { "description": "T252: Acceso rápido alojamiento" },
   "myPlanSummaryImportant": "Lo más importante",
   "@myPlanSummaryImportant": { "description": "T252: Bloque resumen plan" },
   "myPlanSummaryResumenSection": "Resumen",
   "@myPlanSummaryResumenSection": { "description": "Título sección expandible Lo más importante + Hoy/Mañana" },
-  "myPlanSummaryViewMine": "Mi resumen",
-  "@myPlanSummaryViewMine": { "description": "Selector vista: solo mis eventos" },
-  "myPlanSummaryViewPlan": "Resumen todos",
-  "@myPlanSummaryViewPlan": { "description": "Selector vista: todos los participantes" },
+  "myPlanSummaryViewMine": "mío",
+  "@myPlanSummaryViewMine": { "description": "Selector vista: solo mis eventos (corto, ítem 80)" },
+  "myPlanSummaryViewPlan": "todos",
+  "@myPlanSummaryViewPlan": { "description": "Selector vista: todos los participantes (corto, ítem 80)" },
   "myPlanSummaryLabelAll": "Todos",
   "@myPlanSummaryLabelAll": { "description": "Etiqueta cuando evento es para todo el plan" },
-  "myPlanSummaryChronological": "Itinerario completo",
+  "myPlanSummaryChronological": "Plan completo",
   "@myPlanSummaryChronological": { "description": "T252: Lista cronológica" },
   "myPlanSummaryMyInfo": "Mi información",
   "@myPlanSummaryMyInfo": { "description": "T252: Bloque datos personales del participante" },
@@ -1878,6 +1978,23 @@
   "@myPlanSummarySeeMore": { "description": "Expandir lista cronológica" },
   "myPlanSummarySeeLess": "Ver menos",
   "@myPlanSummarySeeLess": { "description": "Colapsar lista cronológica" },
+  "myPlanSummaryDraftsOnlyTooltip": "Solo borradores",
+  "@myPlanSummaryDraftsOnlyTooltip": { "description": "Ítem 81: filtrar eventos no confirmados" },
+  "myPlanSummaryParticipantsCount": "{count} participantes",
+  "@myPlanSummaryParticipantsCount": {
+    "description": "Ítem 74: recuento en Lo más importante",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "myPlanSummaryQuickImportant": "Importante",
+  "@myPlanSummaryQuickImportant": { "description": "Ítem 75: icono acceso rápido" },
+  "myPlanSummaryQuickParticipants": "Participantes",
+  "@myPlanSummaryQuickParticipants": { "description": "Ítem 75: icono participantes" },
+  "myPlanSummaryQuickToday": "hoy",
+  "@myPlanSummaryQuickToday": { "description": "Ítem 75: icono hoy (minúsculas)" },
+  "myPlanSummaryQuickTomorrow": "mañana",
+  "@myPlanSummaryQuickTomorrow": { "description": "Ítem 75: icono mañana (minúsculas)" },
+  "myPlanSummaryTimeNextDaySuffix": " (+1)",
+  "@myPlanSummaryTimeNextDaySuffix": { "description": "Ítem 72: fin de evento al día siguiente" },
   "proposalsTab": "Propuestas",
   "@proposalsTab": { "description": "T252: Pestaña propuestas pendientes" },
   "proposalsPendingTitle": "Propuestas pendientes",
