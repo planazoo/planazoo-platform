@@ -2,8 +2,8 @@
 
 > Documento vivo que debe actualizarse cada vez que se completa una tarea o se añade nueva funcionalidad.
 
-**Versión:** 1.5  
-**Última actualización:** Marzo 2026  
+**Versión:** 1.6  
+**Última actualización:** Abril 2026  
 **Mantenedor:** Equipo de desarrollo
 
 ---
@@ -17,6 +17,7 @@
 5. **Pruebas lógicas (JSON):** Para casos automatizados por datos (login, contraseñas, eventos, etc.) y reportes para IA, ver [docs/testing/SISTEMA_PRUEBAS_LOGICAS.md](../testing/SISTEMA_PRUEBAS_LOGICAS.md).
 6. **Pruebas E2E tres usuarios (flujo completo):** Para simular un ciclo real con UA/UB/UC (crear plan → invitaciones → eventos → chat → aprobar → durante plan → cerrar), ver [docs/testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md). Incluye tabla de huecos/situaciones no contempladas para derivar tareas.
 7. **QA nocturno (futuro):** Para el diseño del sistema de E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac, alertas), ver [docs/testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md](../testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md).
+8. **Offline-first (solo iOS/Android):** Inventario de boxes Hive, cold start sin red y perfil `current_user` en [docs/testing/TESTING_OFFLINE_FIRST.md](../testing/TESTING_OFFLINE_FIRST.md); flujo de usuario en [docs/flujos/FLUJO_CRUD_USUARIOS.md](../flujos/FLUJO_CRUD_USUARIOS.md) (sección *Snapshot de perfil en Hive*).
 
 ---
 
@@ -108,6 +109,7 @@ Cada caso de prueba debe incluir:
 13. [Timezones](#13-timezones)
 14. [Seguridad y Permisos](#14-seguridad-y-permisos)
 15. [Sincronización y Offline](#15-sincronización-y-offline)
+   - 15.2 [Perfil local Hive (current_user)](#152-perfil-local-hive-current_user-solo-móvil)
 16. [Casos Edge y Errores](#16-casos-edge-y-errores)
 17. [Rendimiento](#17-rendimiento)
 18. [UX y Accesibilidad](#18-ux-y-accesibilidad)
@@ -752,6 +754,7 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
     2. En la app: Perfil → Acciones avanzadas → "Eliminar cuenta" → reautenticar con contraseña.
     3. Comprobar que el flujo termina sin error (no `permission-denied`) y que se cierra sesión.
     4. En Firestore (y Auth), comprobar que **no queda** ningún dato del usuario: `users/{uid}` eliminado, participaciones, permisos, invitaciones (recibidas y enviadas), eventos creados por él, pagos personales, grupos, preferencias, etc. Ver lista en `UserService.deleteAllUserData()` y en `FLUJO_CRUD_USUARIOS.md` § Eliminación de cuenta.
+    5. **Solo iOS/Android:** Tras el cierre de sesión por eliminación de cuenta, el snapshot local del perfil debe quedar limpio: al reiniciar la app en frío no debe mostrarse el usuario eliminado ni datos de su `UserModel` desde cache (Hive box `current_user`, clave `current`; se llama `clearCurrentUser` cuando `firebaseUser == null`). Referencia: [TESTING_OFFLINE_FIRST.md](../testing/TESTING_OFFLINE_FIRST.md), checklist **OFF-PROF-002** (misma limpieza en logout manual).
   - Esperado: Cuenta y todos los datos asociados eliminados; no es posible volver a iniciar sesión con ese email sin registrarse de nuevo.
   - Estado: 🔄
 
@@ -2563,6 +2566,26 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 - [ ] **OFF-004:** Resolución de conflictos
   - Pasos: Cambios offline que entran en conflicto
   - Esperado: Resolución o notificación de conflicto
+  - Estado: 🔄
+
+### 15.2 Perfil local Hive (current_user, solo móvil)
+
+**Contexto:** En iOS/Android el perfil autenticado tiene copia en Hive para arranque cuando Firestore no responde. No aplica a web. Detalle: [TESTING_OFFLINE_FIRST.md](../testing/TESTING_OFFLINE_FIRST.md), [FLUJO_CRUD_USUARIOS.md](../flujos/FLUJO_CRUD_USUARIOS.md).
+
+- [ ] **OFF-PROF-001:** Reinicio en frío con sesión y sin red — perfil coherente
+  - Pasos:
+    1. Iniciar sesión online y esperar carga normal del perfil desde Firestore.
+    2. Forzar cierre de la app (no solo background).
+    3. Activar modo avión o desactivar datos/Wi‑Fi.
+    4. Abrir la app de nuevo.
+  - Esperado: No bloqueo indefinido en carga de auth; se muestra usuario coherente con el último snapshot (displayName, etc.) o fallback mínimo desde Auth según implementación. Log opcional: `Item guardado localmente: current [current_user]` tras sesión online previa.
+  - Estado: 🔄
+
+- [ ] **OFF-PROF-002:** Cerrar sesión borra snapshot local del perfil
+  - Pasos:
+    1. Con sesión iniciada (tras haber cargado perfil al menos una vez en online), usar **Cerrar sesión**.
+    2. Cerrar app por completo y volver a abrir (opcional: sin red).
+  - Esperado: Pantalla de login; no se reutiliza el `UserModel` de la cuenta cerrada desde Hive. Implementación: `AuthNotifier` → `clearCurrentUser()` cuando no hay `firebaseUser`.
   - Estado: 🔄
 
 ---

@@ -4,8 +4,8 @@
 
 **Relacionado con:** T51 - Validación de formularios (✅), T104, T117, T120, T123, T126 - Rate limiting (✅)  
 **Ver CRUD completo:** `FLUJO_CRUD_PLANES.md`  
-**Versión:** 1.2  
-**Fecha:** Enero 2025 (Actualizado: Febrero 2026)
+**Versión:** 1.3  
+**Fecha:** Abril 2026 (revisión de coherencia documental con estado actual de invitaciones/notificaciones)
 
 ---
 
@@ -640,5 +640,5 @@ graph TD
 ---
 
 *Documento de flujo de gestión de participantes*  
-*Última actualización: Febrero 2026 (revisión sincronizada con código: participant_groups, Gmail SMTP, links por token)*
+*Última actualización: Abril 2026 (revisión sincronizada con código y documentación operativa vigente)*
 

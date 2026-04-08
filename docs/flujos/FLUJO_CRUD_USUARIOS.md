@@ -1,15 +1,32 @@
 # 👤 FLUJO_CRUD_USUARIOS
 
 Estado: ✅ Alineado  
-Versión: 1.4  
-Fecha: Noviembre 2025 (Actualizado - Validaciones reforzadas, flujo completo). Revisión Febrero 2026: UserModel.isAdmin (T188), AccountSettingsPage eliminado.
+Versión: 1.5  
+Fecha: Abril 2026 (snapshot de perfil en Hive `current_user` para arranque offline). Base original Noviembre 2025; v1.4: coherencia documental; Febrero 2026: UserModel.isAdmin (T188), AccountSettingsPage eliminado.
 
 ---
 
 ## 🎯 Objetivo
 Definir y alinear el flujo completo de gestión de usuarios (registro, login, lectura, actualización, eliminación, recuperación) con la implementación actual del código y las reglas de seguridad. El documento se actualiza dinámicamente conforme implementamos mejoras.
 
-Relacionado con: `lib/features/auth/presentation/notifiers/auth_notifier.dart`, `lib/features/auth/domain/services/user_service.dart`, `lib/features/auth/domain/models/user_model.dart`, `firestore.rules`, `GUIA_SEGURIDAD.md`.
+Relacionado con: `lib/features/auth/presentation/notifiers/auth_notifier.dart`, `lib/features/auth/domain/services/user_service.dart`, `lib/features/auth/domain/models/user_model.dart`, `lib/features/offline/domain/services/user_local_service.dart`, `firestore.rules`, `GUIA_SEGURIDAD.md`, `docs/testing/TESTING_OFFLINE_FIRST.md`.
+
+---
+
+## 📱 Snapshot de perfil en Hive (móvil, offline-first)
+
+Solo **iOS/Android** (no web). Complementa Firestore para que el arranque con sesión Firebase Auth no dependa de red.
+
+| Aspecto | Comportamiento |
+|---------|----------------|
+| **Almacén** | Hive box `current_user`, documento único con clave `current` |
+| **Servicio** | `UserLocalService` (`toMap` / `fromMap` a partir de `UserModel`) |
+| **Escritura** | Tras obtener el usuario desde Firestore en el listener de `AuthNotifier` y establecer `AuthStatus.authenticated` |
+| **Lectura** | Si `getUser` hace timeout, falla o devuelve `null` pero Auth sigue activo, se usa el snapshot **solo si** `cached.id == firebaseUser.uid` |
+| **Borrado** | Al cerrar sesión (`firebaseUser == null`): `clearCurrentUser()` |
+| **Fallback** | Si no hay snapshot válido, `UserModel.fromFirebaseAuth()` (datos mínimos) |
+
+Inventario completo de boxes offline: `docs/testing/TESTING_OFFLINE_FIRST.md`.
 
 ---
 
@@ -28,6 +45,7 @@ Estado actual:
 - ✅ **T163:** Login acepta email o username (con o sin @)
 - ✅ **T163:** Usuarios existentes sin username reciben uno automático en el login
 - ⚠️ Pendiente de pruebas completas antes de cerrar T137 y T163
+- ✅ **Abr 2026:** Perfil cacheado en Hive (`current_user`) para arranque offline coherente con `UserModel`
 
 ---
 
@@ -282,6 +300,6 @@ Ref: ver `firestore.rules` sección `REGLAS PARA USUARIOS`.
 - ✅ UI actualizada para usar `displayIdentifier` en W6 (no mostrar email directamente)
 - ✅ Eliminado `account_settings_page.dart`; `deleteAccount` y `changePassword` se invocan desde `ProfilePage` vía `AuthNotifier` (modales dedicados)
 
-*Última actualización: Febrero 2026*
+*Última actualización: Abril 2026*
 
 

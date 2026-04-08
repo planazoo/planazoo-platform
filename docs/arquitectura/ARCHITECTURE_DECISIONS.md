@@ -655,7 +655,7 @@ Usuario en avión sin conexión a internet
 ### Decisiones Técnicas
 - **Riverpod:** State management elegido para la aplicación
 - **Firestore:** Base de datos en la nube para sincronización
-- **SQLite/Hive:** Base de datos local para funcionamiento offline
+- **Hive (móvil):** persistencia local offline-first (`plans`, `events`, `participations`, `sync_queue`, `current_user` para perfil); inventario y QA en `docs/testing/TESTING_OFFLINE_FIRST.md`, perfil de usuario en `docs/flujos/FLUJO_CRUD_USUARIOS.md`
 - **Flutter:** Framework de desarrollo principal
 
 ### Patrones de Diseño

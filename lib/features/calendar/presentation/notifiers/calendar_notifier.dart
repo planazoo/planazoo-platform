@@ -53,8 +53,9 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
       // Crear nueva suscripción
       _eventsSubscription = _eventService.getEventsByPlanId(planId, userId).listen(
         (events) {
-          if (state.loadingState != LoadingState.loading) return;
-          
+          // Aceptar todas las emisiones del stream, no solo la primera carga.
+          // Si filtramos por loading==true, los cambios posteriores (p. ej. crear evento offline)
+          // nunca llegan al estado y la vista no se refresca.
           state = state.copyWith(
             events: events,
             loadingState: LoadingState.success,
@@ -486,7 +487,9 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
   /// Usa Source.server para que iOS y web muestren datos actualizados tras guardar (evita caché local).
   Future<void> refreshEvents() async {
     try {
-      final events = await _eventService.getEventsByPlanIdFromServer(planId, userId);
+      final events = await _eventService
+          .getEventsByPlanIdFromServer(planId, userId)
+          .timeout(const Duration(seconds: 2));
       state = state.copyWith(
         events: events,
         loadingState: LoadingState.success,
@@ -494,7 +497,21 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
         clearError: true,
       );
     } catch (_) {
-      // Si falla (ej. sin red), mantener estado actual; el stream seguirá emitiendo cuando haya conexión
+      // Offline: fallback a fuente local/cache para refrescar vista sin red.
+      try {
+        final localEvents = await _eventService
+            .getEventsByPlanId(planId, userId)
+            .first
+            .timeout(const Duration(seconds: 2));
+        state = state.copyWith(
+          events: localEvents,
+          loadingState: LoadingState.success,
+          lastSyncTime: DateTime.now(),
+          clearError: true,
+        );
+      } catch (_) {
+        // Si también falla, mantener estado actual; el stream seguirá emitiendo.
+      }
     }
   }
 

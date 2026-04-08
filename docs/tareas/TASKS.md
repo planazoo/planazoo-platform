@@ -15,10 +15,10 @@
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T228, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña)**, etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña)**, etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
-**Total aproximado: ~96 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
+**Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
 
 **Preparación pruebas con familia:** Ver `docs/configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md`. Ítems de prioridad alta (l10n lista planes/invitación, navegación al plan en móvil, Safe area, timezones Egipto+Londres) implementados; checklist §4 pendiente de ejecutar antes de invitar.
 
@@ -73,7 +73,6 @@
 | **T212** | Calendario en pantalla completa por defecto. | Media |
 | **T226** | **UI estándar modales:** Definir y aplicar que los modales tengan barra superior en color verde con el título del modal y, si aplica, botones o textos. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T231** | Info plan: Revisar el apartado «Avisos»: comentar, evaluar si tiene sentido mantenerlo y tomar una decisión en ese momento (mantener / simplificar / quitar). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Baja |
-| **T236** | Notificaciones: (1) En el icono de notificaciones en W1, el círculo con el número no debe tapar el icono; recolocarlo. (2) Estética de los botones Aceptar y Rechazar según estilo principal de la app. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T237** | Página Info del plan: (1) Optimizar para ver más datos; estructura pensada sobre todo para móvil. (2) Sobre la zona de Avisos: comentar y tomar decisión en ese momento (ver T231). (3) El estado del plan debería verse en la barra superior verde. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T244** | **Mejorar visualización de los avisos en la Info del plan:** Revisar y mejorar la presentación del timeline de avisos (tipografía, espaciado, diferenciación por tipo urgente/importante/info, legibilidad en móvil, orden y agrupación). Mantener funcionalidad actual (publicar, ver, eliminar). Origen: decisión de mantener avisos (T231); notificaciones ya funcionando vía Cloud Function. | Media |
 | **T251** | **Estética estándar en formularios de eventos y alojamientos:** Adecuar el modal de eventos (`wd_event_dialog.dart`) y el modal de alojamientos (`wd_accommodation_dialog.dart`) a la estética estándar de la app (barra verde, espaciado, tipografía, campos con formato "título sobre el borde", botones y estados coherentes con GUIA_UI y con el resto de modales). Complementa T226 (UI estándar modales). | Media |
@@ -99,8 +98,8 @@
 | **T225** | **Búsqueda de lugar con Google Places API:** Integrar autocompletado y Place Details para **alojamientos** y **eventos**. Plan de fases en `docs/tareas/T225_GOOGLE_PLACES_PLAN.md`. Requiere: API key (Places API), paquete Flutter, variable de entorno, UI de búsqueda + mapeo a modelo. Coste: ~10k Place Details/mes gratis. **En progreso** (Fase 1: dependencia y API key). | Media |
 | **T246** | **Rellenar evento desplazamiento por número de vuelo o tren:** En evento tipo Desplazamiento, campo opcional "Número de vuelo" (ej. IB6842) o "Número de tren"; API devuelve origen, destino, horarios; rellenar descripción y fecha/hora del evento. Plan y APIs en `docs/tareas/T246_DESPLAZAMIENTO_POR_NUMERO_VUELO_TREN.md`. Fase 1: vuelos (ej. AviationStack); Fase 2 opcional: trenes (Renfe, etc.). | Media |
 | **T247** | **Eventos conectados a proveedores:** Marcar eventos que se rellenan desde APIs externas (Amadeus, email, etc.) con metadatos de conexión, mostrar un badge/indicador en calendario y modal, y al cambiar campos sincronizados (fecha/hora, duración, número de vuelo, etc.), avisar al usuario de que se perderá la conexión, permitiendo elegir entre desconectar y mantener el cambio o deshacer el cambio y mantener la conexión. Testing y docs: ver `docs/tareas/T247_EVENTOS_CONECTADOS.md`. | Media |
-| **T238** | Modal crear evento: (1) ~~Barra verde superior con título.~~ ✅ Hecho. (2) Mejorar visualización de las opciones «General» y «Mi información». (3) Evaluar si el texto «Puedes editar esta información» es necesario. (4) Hacer muy rápido y fácil definir el evento — *decidir al abordar la tarea*: flujo corto con «Más opciones» vs todos los campos visibles reordenados, etc. (5) Orden de aparición de los campos mejorado. Relacionado con T208 (duración/hora concreta). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
-| **T242** | Página Calendario: (1) ~~Eliminar la opción «perspectiva de usuario».~~ ✅ Hecho. (2) Agrupar las opciones de la barra en un menú categorizado; revisar cuáles son necesarias. (3) Añadir menú de filtros de eventos: todos, borrador. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T238** | **(parcial)** Modal crear evento: (1) ~~Barra verde superior con título.~~ ✅ Hecho. (2) Mejorar visualización de las opciones «General» y «Mi información». (3) Evaluar si el texto «Puedes editar esta información» es necesario. (4) Hacer muy rápido y fácil definir el evento — *decidir al abordar la tarea*: flujo corto con «Más opciones» vs todos los campos visibles reordenados, etc. (5) Orden de aparición de los campos mejorado. Relacionado con T208 (duración/hora concreta). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T242** | **(parcial)** Página Calendario: (1) ~~Eliminar la opción «perspectiva de usuario».~~ ✅ Hecho. (2) Agrupar las opciones de la barra en un menú categorizado; revisar cuáles son necesarias. (3) Añadir menú de filtros de eventos: todos, borrador. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T243** | Copiar planes, eventos y alojamientos: (1) Revisar si ya existe tarea (T35, T211 para eventos). (2) Crear ambas opciones: (a) copiar eventos y alojamientos dentro del mismo plan (pegar en el plan actual); (b) duplicar plan entero (plan nuevo con eventos y alojamientos copiados). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T250** | **Definir campos por combinación tipo-subtipo de evento:** Para cada par tipo/subtipo (Desplazamiento/Avión, Desplazamiento/Taxi, Restauración/Comida, etc.), especificar qué campos son visibles, editables, obligatorios u opcionales, y en qué contexto (crear vs editar, rol del usuario). Documentar en `docs/especificaciones/EVENT_FORM_FIELDS.md` o anexo; alinear después el formulario `wd_event_dialog.dart` con esa definición. | Media |
 ---
@@ -208,7 +207,7 @@
 |--------|-------------|-----------|
 | **T131** | Sincronización con calendarios externos (.ics, etc.). | Media |
 | **T133** | Exportación profesional de planes (PDF/Email). | Media |
-| **T134** | Eventos desde correo reenviado a dirección plataforma: usuario reenvía confirmación a una dirección nuestra; parseo y creación de evento (buzón + asignación a plan). **Solo From = usuario registrado.** Anti-spam: rate limiting por usuario, lista blanca opcional (beta). Decisiones a cerrar en `docs/producto/CORREO_EVENTOS_SPAM.md`. | Alta |
+| **T134** | Eventos desde correo reenviado a dirección plataforma: usuario reenvía confirmación a una dirección nuestra; parseo y creación de evento (buzón + asignación a plan). **Solo From = usuario registrado.** Anti-spam: rate limiting por usuario, lista blanca opcional (beta). Decisiones y esquema en `docs/producto/CORREO_EVENTOS_SISTEMA_PARSEO.md`. | Alta |
 | **T181** | Definir guía de layout modular para pantallas (grid, secciones, espaciados). | Media |
 
 ---
@@ -263,6 +262,7 @@
 
 ## ✅ Tareas eliminadas o fusionadas en esta limpieza
 
+- **T236** — Movida a `COMPLETED_TASKS.md` (implementada en Feb 2026 junto con T230 y T239).
 - **T49** — Obsoleta (reemplazada por sistema de tracks T71, T78-T80).
 - **T178** — Duplicada de T177 (aviso timezone dispositivo); ya completada en COMPLETED_TASKS.
 - **T18** — Página administración Firebase; sustituida por vista administrativa T183-T188.

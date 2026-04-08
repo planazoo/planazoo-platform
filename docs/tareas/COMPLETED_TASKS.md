@@ -4,6 +4,17 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 ---
 
+## Índice rápido
+
+Para navegar más rápido en este archivo (Ctrl+F):
+
+- **Recientes (2026):** `T255`, `T238`, `T242`, `T229`, `T235`, `T240`, `T241`, `T230`, `T236`, `T239`, `T217–T221`.
+- **Bloque 2026 (UI/flujos):** `T203`, `T198`, `T161`, `T207`, `T206`, `T216`, `T189`, `T200`, `T201`, `T209`, `T213`, `T202`, `T194–T197`, `T199`, `T193`.
+- **Bloque funcional 2025 (sistemas core):** `T101`, `T113`, `T107`, `T123`, `T112`, `T100`, `T105`, `T109`, `T120`, `T117`, `T153`, `T152`, `T164`, `T177`, `T178`.
+- **Bloque histórico inicial (fundaciones UI/calendario):** `T1–T99` (widgets base, calendario, tracks, validaciones, reglas y seguridad).
+
+---
+
 ## T255 - Evaluar Fastlane para publicar apps iOS y Android (Marzo 2026)
 
 **Estado:** ✅ Completada  
@@ -153,11 +164,11 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 **Estado:** ✅ Completada  
 **Fecha de finalización:** Febrero 2026  
 
-**Descripción:** Eliminar la opción de aceptar alias como From en eventos por correo; solo aceptar el email principal del usuario registrado (ver `docs/producto/CORREO_EVENTOS_SPAM.md`).
+**Descripción:** Eliminar la opción de aceptar alias como From en eventos por correo; solo aceptar el email principal del usuario registrado (ver `docs/producto/CORREO_EVENTOS_SISTEMA_PARSEO.md`).
 
-**Implementación:** En `functions/index.js`, `findUserIdByEmail` ahora solo busca por coincidencia exacta del email (normalizado a minúsculas). Se eliminó el fallback que buscaba por "base" Gmail (user@gmail.com cuando From era user+alias@gmail.com). Documento CORREO_EVENTOS_SPAM.md actualizado.
+**Implementación:** En `functions/index.js`, `findUserIdByEmail` ahora solo busca por coincidencia exacta del email (normalizado a minúsculas). Se eliminó el fallback que buscaba por "base" Gmail (user@gmail.com cuando From era user+alias@gmail.com). Documento de referencia actualizado en `CORREO_EVENTOS_SISTEMA_PARSEO.md`.
 
-**Archivos:** `functions/index.js`, `docs/producto/CORREO_EVENTOS_SPAM.md`.
+**Archivos:** `functions/index.js`, `docs/producto/CORREO_EVENTOS_SISTEMA_PARSEO.md`.
 
 ---
 
@@ -2474,7 +2485,7 @@ Sistema completo de avisos unidireccionales funcional. Los participantes pueden 
 
 ---
 
-### T120 (Base) - Sistema de Invitaciones y Confirmación - Base Funcional
+## T120 (Base) - Sistema de Invitaciones y Confirmación - Base Funcional
 **Fecha de implementación:** Enero 2025  
 **Complejidad:** 🔴 Alta  
 **Prioridad:** 🔴 Alta
@@ -2549,7 +2560,7 @@ Sistema base de confirmación de invitaciones funcional. Los usuarios invitados 
 
 ---
 
-### T117 - Sistema de Registro de Participantes por Evento (Base)
+## T117 - Sistema de Registro de Participantes por Evento (Base)
 **Fecha de implementación:** Enero 2025  
 **Complejidad:** ⚠️ Media  
 **Prioridad:** 🟡 Media
@@ -2630,7 +2641,7 @@ Sistema base funcional de registro de participantes por evento. Los usuarios pue
 
 ---
 
-### T120 Fase 2 - Sistema de Confirmación de Eventos (Base)
+## T120 Fase 2 - Sistema de Confirmación de Eventos (Base)
 **Fecha de implementación:** Enero 2025  
 **Complejidad:** 🔴 Alta  
 **Prioridad:** 🔴 Alta

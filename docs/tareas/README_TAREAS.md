@@ -39,6 +39,8 @@ Algunas tareas tienen un `.md` propio con especificación, plan de fases o crite
 
 En `TASKS.md`, las filas de estas tareas **deben** indicar que existe el documento (ej. «Especificación en `docs/tareas/Txxx_*.md`»).
 
+**Auditoría (Abr 2026):** los `T*.md` presentes en `docs/tareas/` están en uso (pendientes/en curso y referenciados en `TASKS.md` o en documentación activa), por lo que **no se eliminan ni se archivan** en esta revisión.
+
 ---
 
 ## 3. Archivo (especificaciones de tareas completadas)

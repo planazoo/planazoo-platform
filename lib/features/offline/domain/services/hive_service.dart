@@ -12,6 +12,8 @@ class HiveService {
   static const String _boxNameEvents = 'events';
   static const String _boxNameParticipations = 'participations';
   static const String _boxNameSyncQueue = 'sync_queue';
+  /// Snapshot del usuario autenticado (offline-first).
+  static const String _boxNameCurrentUser = 'current_user';
   
   static bool _isInitialized = false;
   static bool _isMobile = false;
@@ -82,5 +84,6 @@ class HiveService {
   static String get boxNameEvents => _boxNameEvents;
   static String get boxNameParticipations => _boxNameParticipations;
   static String get boxNameSyncQueue => _boxNameSyncQueue;
+  static String get boxNameCurrentUser => _boxNameCurrentUser;
 }
 

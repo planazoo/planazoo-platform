@@ -1,16 +1,16 @@
 # 💰 Flujo de Presupuesto y Pagos
 
-> Define cómo gestionar presupuestos, costes, pagos y bote común en un plan
+> Define cómo gestionar presupuestos, costes y pagos del plan (incluyendo contexto histórico del bote común)
 
 **Relacionado con:** T101 ✅, T102 ✅, T153 ✅, T217–T222 (Pagos MVP)  
-**Versión:** 1.2  
-**Fecha:** Febrero 2026 (Decisiones MVP, bote común T219, permisos T218)
+**Versión:** 1.3  
+**Fecha:** Abril 2026 (alineado con retiro UI del bote en mar 2026 y flujo Tricount vigente)
 
 ---
 
 ## 🎯 Objetivo
 
-Documentar el sistema completo de gestión financiera del plan: presupuestos, costes por evento, pagos individuales, bote común, y cálculo de deudas/reembolsos.
+Documentar el sistema completo de gestión financiera del plan: presupuestos, costes por evento, pagos individuales y cálculo de deudas/reembolsos (con nota histórica del bote común T219).
 
 ---
 
@@ -23,7 +23,7 @@ Documentar el sistema completo de gestión financiera del plan: presupuestos, co
 | **Coste estimado** | Coste previsto antes del evento | "En torno a €50" |
 | **Coste real** | Coste final después del evento | "Fueron €47.50" |
 | **Pago individual** | Lo que pagó un participante específico | Juan pagó €120 |
-| **Bote común** | Fondo compartido del grupo | "Bote: €500" |
+| **Bote común (histórico)** | Fondo compartido del grupo (legacy T219; fuera de la UI principal actual) | "Bote: €500" |
 | **Distribución equitativa** | Coste dividido entre participantes | €300 ÷ 4 = €75 c/u |
 | **Deuda** | Lo que debe pagar un participante | Juan debe €25 |
 | **Crédito** | Lo que se debe a un participante | María debe cobrar €15 |
@@ -51,7 +51,7 @@ Resumen de decisiones para el primer MVP (T217–T222):
 |------|----------|
 | **Alcance** | Solo cuadre interno; la app **no procesa cobros** (solo anotación y sugerencias de transferencias). |
 | **Quién registra pagos** | **Organizador:** puede registrar cualquier pago (de cualquier participante). **Participante:** solo puede registrar "yo pagué X" (su propio pago). |
-| **Bote común** | **Sí en MVP.** Flujo: quién aporta al bote, quién gasta del bote, reflejo en balances (coste repartido entre participantes). |
+| **Bote común** | **Histórico (T219).** Desde mar 2026 no se muestra en `PaymentSummaryPage` ni entra en el resumen principal; queda como capability legacy/documental hasta nueva decisión de producto. |
 | **Mobile** | Misma experiencia que en web; pestaña Pagos con resumen y registro según permisos. |
 | **Legal** | Aviso breve en pantalla de pagos + referencia en términos/FAQ: la app no procesa cobros. |
 
@@ -62,11 +62,9 @@ Resumen de decisiones para el primer MVP (T217–T222):
 | Ver resumen de pagos y balances | ✅ | ✅ |
 | Registrar pago de **cualquier** participante | ✅ | ❌ |
 | Registrar pago **"yo pagué X"** (propio) | ✅ | ✅ |
-| Ver / añadir **aportación al bote** | ✅ (cualquier participante) | ✅ (solo "mi aportación") |
-| Registrar **gasto del bote** | ✅ | ❌ |
 | Ver sugerencias de transferencias | ✅ | ✅ |
 
-**Dónde se ve en la app:** El **presupuesto** del plan (coste total, desglose) se ve en la pestaña **Estadísticas (W17)** → `PlanStatsPage`. El **sistema de pagos** (balances, bote común, transferencias) en la pestaña **Pagos (W18)** → `PaymentSummaryPage`. Ver `docs/guias/GUIA_UI.md` y `docs/producto/PAGOS_MVP.md`.
+**Dónde se ve en la app:** El **presupuesto** del plan (coste total, desglose) se ve en la pestaña **Estadísticas (W17)** → `PlanStatsPage`. El **sistema de pagos** (gastos, balances y transferencias) en la pestaña **Pagos (W18)** → `PaymentSummaryPage`. Ver `docs/guias/GUIA_UI.md` y `docs/producto/PAGOS_MVP.md`.
 
 ---
 
@@ -244,9 +242,10 @@ Actualizar:
 - **Pagado:** Pago confirmado
 - **Reembolsado:** Pago devuelto
 
-#### 3.2 - Sistema de Bote Común
+#### 3.2 - Sistema de Bote Común (histórico / legacy)
 
-**Concepto:** Fondo compartido del grupo para gastos colectivos
+**Concepto:** Fondo compartido del grupo para gastos colectivos.  
+**Estado actual:** retirado de la UI principal de pagos (mar 2026), mantenido aquí como referencia histórica de T219.
 
 **Flujo:**
 ```
@@ -269,11 +268,11 @@ Opciones:
 - Ver historial
 ```
 
-**Funcionalidad (T219 ✅):**
+**Funcionalidad histórica (T219 ✅):**
 - Tracking de aportaciones por persona (`kitty_contributions`)
 - Tracking de gastos del bote (`kitty_expenses`), reparto equitativo entre participantes
 - Cálculo de saldo del bote y reflejo en balances: aportación cuenta como "pagado" del participante; gasto suma al coste de cada participante (gasto ÷ n)
-- Historial en UI (PaymentSummaryPage, sección "Bote común")
+- Historial en UI (sección "Bote común" en `PaymentSummaryPage`) **[histórico; retirado de UI actual]**
 - Permisos: organizador puede registrar cualquier aportación y los gastos; participante solo "mi aportación"
 
 #### 3.3 - Cálculo de "Quién Debe Pagar / Cobrar"
@@ -594,15 +593,15 @@ graph TD
 - ✅ Desglose eventos vs alojamientos
 - ✅ Visualización en dashboard de estadísticas
 
-**Implementado (T102 + T218 + T219 + T220):**
+**Implementado (T102 + T218 + T220):**
 - ✅ Sistema de registro de pagos individuales (`PersonalPayment`)
 - ✅ Servicio `PaymentService` para CRUD de pagos
-- ✅ Servicio `BalanceService` para cálculo de balances (incl. bote común)
+- ✅ Servicio `BalanceService` para cálculo de balances del flujo principal (gastos/pagos/transferencias)
 - ✅ Permisos por rol (T218): organizador registra cualquier pago; participante solo "yo pagué"
-- ✅ Bote común (T219): `KittyContribution`, `KittyExpense`, `KittyService`; aportaciones suman al "pagado", gastos repartidos al "coste"; UI en PaymentSummaryPage
+- ℹ️ Bote común (T219, legado): `KittyContribution`, `KittyExpense`, `KittyService`; actualmente fuera de la UI principal de `PaymentSummaryPage` (listas vacías en resumen)
 - ✅ Cálculo automático de deudas/créditos por participante
 - ✅ Sugerencias de transferencias para equilibrar deudas
-- ✅ UI en `PaymentSummaryPage` (resumen, bote, balances, transferencias)
+- ✅ UI en `PaymentSummaryPage` (resumen de gastos, balances y transferencias)
 - ✅ Aviso legal en pantalla de pagos (T220): "La app no procesa cobros..."
 - ✅ Integración en dashboard y móvil (T217)
 - ✅ Formateo de montos según moneda del plan
@@ -626,5 +625,5 @@ graph TD
 ---
 
 *Documento de flujo de presupuesto y pagos*  
-*Última actualización: Febrero 2026*
+*Última actualización: Abril 2026*
 

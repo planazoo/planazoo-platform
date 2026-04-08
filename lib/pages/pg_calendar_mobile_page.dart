@@ -74,6 +74,8 @@ class CalendarMobilePage extends ConsumerStatefulWidget {
 }
 
 class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
+  static const double _horizontalSwipeVelocityThreshold = 220.0;
+
   // Número de días visibles (1, 2 o 3); iOS por defecto 3 (ID 51).
   int _visibleDays =
       (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? 3 : 1;
@@ -719,24 +721,38 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         initialStartMinute: initialStartMinute,
         onSaved: (newEvent) async {
           final eventService = ref.read(eventServiceProvider);
-          final eventId = await eventService.createEvent(newEvent);
-          
-          // T252: Si es propuesta (borrador de un participante), notificar al organizador
-          if (newEvent.isDraft && widget.plan.userId != null && newEvent.userId != widget.plan.userId) {
-            await NotificationHelper().notifyEventProposed(
-              organizerUserId: widget.plan.userId!,
-              planId: widget.plan.id ?? '',
-              planName: widget.plan.name,
-              eventId: eventId,
-              eventDescription: newEvent.description,
-            );
-          }
-          
-          // Cerrar el diálogo
+          final createEventFuture = eventService.createEvent(newEvent);
+
+          // Cerrar el diálogo inmediatamente para no bloquear UX si Firestore tarda en offline.
           if (context.mounted) {
             Navigator.of(context).pop();
           }
-          _invalidateEventProviders();
+          if (mounted) {
+            _invalidateEventProviders();
+          }
+
+          final eventId = await createEventFuture.timeout(
+            const Duration(seconds: 4),
+            onTimeout: () => null,
+          );
+
+          // T252: notificación best-effort (no bloquear UX en offline).
+          if (newEvent.isDraft &&
+              newEvent.userId != widget.plan.userId) {
+            Future<void>(() async {
+              try {
+                await NotificationHelper()
+                    .notifyEventProposed(
+                      organizerUserId: widget.plan.userId,
+                      planId: widget.plan.id ?? '',
+                      planName: widget.plan.name,
+                      eventId: eventId,
+                      eventDescription: newEvent.description,
+                    )
+                    .timeout(const Duration(seconds: 2));
+              } catch (_) {}
+            });
+          }
         },
       ),
     );
@@ -744,6 +760,9 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
 
   /// Invalida los providers de eventos/estadísticas para refrescar calendario, resumen, etc. en mobile.
   void _invalidateEventProviders() {
+    if (!mounted) {
+      return;
+    }
     if (widget.plan.id == null) {
       if (mounted) setState(() {});
       return;
@@ -934,6 +953,20 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     });
   }
 
+  void _handleHorizontalSwipe(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0.0;
+    if (velocity.abs() < _horizontalSwipeVelocityThreshold) {
+      return;
+    }
+
+    // Swipe izquierda: avanzar días. Swipe derecha: retroceder días.
+    if (velocity < 0) {
+      _nextDayGroup();
+    } else {
+      _previousDayGroup();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     _syncTracksWithParticipants();
@@ -972,6 +1005,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
           buildFixedRows: _buildFixedRows,
           buildDataRows: _buildDataRows,
           buildEventsLayer: _buildEventsLayer,
+          onHorizontalSwipeEnd: _handleHorizontalSwipe,
           onAccommodationHeaderTap: () {
             // Usar el mismo flujo móvil de creación de alojamientos.
             final visibleDays = _getColumnsToShow();

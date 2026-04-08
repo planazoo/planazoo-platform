@@ -15,6 +15,7 @@ import 'package:unp_calendario/features/help/presentation/pages/help_manual_page
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:unp_calendario/shared/services/logger_service.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -101,8 +102,10 @@ class _AppState extends ConsumerState<App> {
   @override
   void initState() {
     super.initState();
+    LoggerService.info('App.initState()', context: 'APP_BOOT');
     // Cargar idioma guardado al iniciar
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      LoggerService.info('App.postFrame(start)', context: 'APP_BOOT');
       final languageNotifier = ref.read(languageNotifierProvider);
       languageNotifier.loadSavedLanguage();
 
@@ -111,11 +114,13 @@ class _AppState extends ConsumerState<App> {
       
       // Verificar si hay una notificación que abrió la app
       FCMService.getInitialMessage();
+      LoggerService.info('App.postFrame(done)', context: 'APP_BOOT');
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    LoggerService.debug('App.build()', context: 'APP_BOOT');
     final currentLanguage = ref.watch(currentLanguageSyncProvider);
     
     // Inicializar servicios de sincronización en tiempo real (solo observa, no usa el valor)

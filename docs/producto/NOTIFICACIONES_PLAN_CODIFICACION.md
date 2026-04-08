@@ -88,7 +88,7 @@
 
 3. **Documentación**  
    - Actualizar "Implementación actual" en `FLUJO_INVITACIONES_NOTIFICACIONES.md` cuando cada fase esté hecha.  
-   - Mantener `NOTIFICACIONES_ESPECIFICACION.md` y `BUZON_UNIFICADO_NOTIFICACIONES.md` como referencia.
+   - Mantener `NOTIFICACIONES_ESPECIFICACION.md` como referencia de decisiones de producto.
 
 **Entregables:** Reglas e índices revisados; checklist 7.4 ejecutable; doc actualizada.
 

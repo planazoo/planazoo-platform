@@ -1,13 +1,24 @@
 # 🔔 FCM Fase 1: Implementación Básica
 
 > **Fecha:** Enero 2025  
-> **Última actualización:** Febrero 2026  
-> **Estado:** ✅ Completado  
-> **Objetivo:** Configurar infraestructura base de Firebase Cloud Messaging (FCM) para recibir notificaciones push
+> **Última actualización:** Abril 2026  
+> **Estado:** ✅ Infra base completada (operación en validación iOS real)  
+> **Objetivo:** Documentar la base técnica FCM (arquitectura y piezas).  
+> **Checklist operativa A1/A2:** `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` (fuente de verdad para pruebas).
 
 ---
 
-## 📋 Resumen
+## 📋 Alcance de este documento
+
+Este documento describe la **arquitectura técnica** de FCM (servicio, provider, bootstrap, Cloud Function, reglas).
+
+Para ejecutar pruebas manuales y cerrar el punto 109:
+- usar `CHECKLIST_IOS_PUSH_DEEPLINKS.md` (sección A1 y ejecución guiada),
+- registrar estado en `docs/testing/ACCIONES_PENDIENTES_APP.md`.
+
+---
+
+## 📋 Resumen técnico
 
 Se ha implementado la infraestructura básica de FCM que permite:
 - ✅ Obtener y registrar tokens FCM de dispositivos
@@ -146,19 +157,6 @@ Reglas de seguridad para `users/{userId}/fcmTokens/{tokenId}`:
 ### Limpieza de Tokens
 - Los tokens se eliminan cuando el usuario cierra sesión
 - Los tokens inválidos se eliminan automáticamente por la Cloud Function
-
----
-
-## ✅ Checklist de Implementación
-
-- [x] Agregar dependencia `firebase_messaging` al `pubspec.yaml`
-- [x] Crear servicio `FCMService`
-- [x] Configurar permisos iOS (`Info.plist`)
-- [x] Crear provider para inicialización automática
-- [x] Integrar en `App` widget
-- [x] Crear Cloud Function `sendPushNotification`
-- [x] Actualizar Firestore rules para `fcmTokens`
-- [x] Documentar implementación
 
 ---
 

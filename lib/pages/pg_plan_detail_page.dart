@@ -471,14 +471,21 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     final p = _planFromStreamRead();
     if (event.id == null) {
       final eventId = await eventService.createEvent(event);
-      if (event.isDraft && p.userId != null && event.userId != p.userId && p.id != null) {
-        await NotificationHelper().notifyEventProposed(
-          organizerUserId: p.userId!,
-          planId: p.id!,
-          planName: p.name,
-          eventId: eventId,
-          eventDescription: event.description,
-        );
+      if (event.isDraft && event.userId != p.userId && p.id != null) {
+        // Best-effort: no bloquear cierre de diálogo ni UX en offline.
+        Future<void>(() async {
+          try {
+            await NotificationHelper()
+                .notifyEventProposed(
+                  organizerUserId: p.userId,
+                  planId: p.id!,
+                  planName: p.name,
+                  eventId: eventId,
+                  eventDescription: event.description,
+                )
+                .timeout(const Duration(seconds: 2));
+          } catch (_) {}
+        });
       }
     } else {
       await eventService.updateEvent(event);

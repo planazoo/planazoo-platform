@@ -81,10 +81,15 @@ La lista global **agrega** todas estas fuentes en una sola vista (cronológica y
 
 - **Plan de codificación:** `docs/producto/NOTIFICACIONES_PLAN_CODIFICACION.md`
 - **Flujo detallado invitaciones y notificaciones:** `docs/flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md`
-- **Buzón unificado (estado anterior / evolución):** `docs/producto/BUZON_UNIFICADO_NOTIFICACIONES.md`
 - **UI y widgets W14–W25:** `docs/guias/GUIA_UI.md`, `docs/ux/pages/w14_plan_info_access.md`, etc.
 - **FCM (push):** `docs/configuracion/FCM_FASE1_IMPLEMENTACION.md`
 - **Testing:** `docs/configuracion/TESTING_CHECKLIST.md` (sección 7.4 Sistema de notificaciones) y `docs/testing/SISTEMA_PRUEBAS_LOGICAS.md`
+
+## 4.1 Nota historica
+
+La propuesta original de "buzon unificado" ya esta consolidada en esta especificacion:
+- campana = lista global,
+- W20 = notificaciones del plan seleccionado.
 
 ---
 

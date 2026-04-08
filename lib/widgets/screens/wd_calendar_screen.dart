@@ -3294,21 +3294,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // Si pasa validación, crear evento
           final eventService = ref.read(eventServiceProvider);
           final eventId = await eventService.createEvent(newEvent);
-          
-          // T252: Si es propuesta (borrador de un participante), notificar al organizador
-          if (newEvent.isDraft && widget.plan.userId != null && newEvent.userId != widget.plan.userId) {
-            await NotificationHelper().notifyEventProposed(
-              organizerUserId: widget.plan.userId!,
-              planId: widget.plan.id ?? '',
-              planName: widget.plan.name,
-              eventId: eventId,
-              eventDescription: newEvent.description,
-            );
-          }
-          
-          // Cerrar el diálogo primero
+
+          // Cerrar el diálogo antes de side-effects de red (offline-safe).
           if (context.mounted) {
             Navigator.of(context).pop();
+          }
+
+          // T252: notificación best-effort (no bloquear tras guardar en offline).
+          if (newEvent.isDraft && newEvent.userId != widget.plan.userId) {
+            Future<void>(() async {
+              try {
+                await NotificationHelper()
+                    .notifyEventProposed(
+                      organizerUserId: widget.plan.userId,
+                      planId: widget.plan.id ?? '',
+                      planName: widget.plan.name,
+                      eventId: eventId,
+                      eventDescription: newEvent.description,
+                    )
+                    .timeout(const Duration(seconds: 2));
+              } catch (_) {}
+            });
           }
           
           // Esperar un poco y luego invalidar providers

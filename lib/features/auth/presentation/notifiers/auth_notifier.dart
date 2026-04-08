@@ -7,6 +7,7 @@ import 'package:unp_calendario/features/auth/domain/services/auth_service.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
+import 'package:unp_calendario/features/offline/domain/services/user_local_service.dart';
 import 'package:unp_calendario/features/security/services/rate_limiter_service.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/features/security/utils/validator.dart';
@@ -15,6 +16,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
   final UserService _userService;
   final PlanParticipationService _planParticipationService;
+  final UserLocalService _userLocalService = UserLocalService();
   final RateLimiterService _rateLimiter = RateLimiterService();
   bool _isRegistering = false; // Flag para evitar conflictos durante registro
   String? _pendingErrorMessage; // Error pendiente de consumir por la UI
@@ -55,7 +57,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         
         // Usuario autenticado y verificado - obtener datos existentes
         try {
-          final userModel = await _userService.getUser(firebaseUser.uid);
+          final userModel = await _userService
+              .getUser(firebaseUser.uid)
+              .timeout(const Duration(seconds: 3), onTimeout: () => null);
           
           if (userModel != null) {
             UserModel updatedUser = userModel.copyWith(lastLoginAt: DateTime.now());
@@ -70,11 +74,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
               final generatedUsername = await _generateAutomaticUsername(updatedUser);
               if (generatedUsername != null) {
                 updatedUser = updatedUser.copyWith(username: generatedUsername);
-                await _userService.updateUsername(updatedUser.id, generatedUsername);
+                await _userService
+                    .updateUsername(updatedUser.id, generatedUsername)
+                    .timeout(const Duration(seconds: 2), onTimeout: () => false);
               }
             }
             
-            await _userService.updateUser(updatedUser);
+            await _userService
+                .updateUser(updatedUser)
+                .timeout(const Duration(seconds: 2), onTimeout: () {});
 
             final deviceTimezone = TimezoneService.getSystemTimezone();
             final shouldSuggestTimezone = updatedUser.defaultTimezone != null &&
@@ -86,40 +94,109 @@ class AuthNotifier extends StateNotifier<AuthState> {
               timezoneSuggestion: shouldSuggestTimezone ? deviceTimezone : null,
               deviceTimezone: shouldSuggestTimezone ? deviceTimezone : null,
             );
+            Future<void>(() async {
+              try {
+                await _userLocalService.saveCurrentUser(updatedUser);
+              } catch (_) {}
+            });
           } else {
-            // Usuario no existe en Firestore - crear uno nuevo (puede ser de Google)
-            final newUserModel = UserModel.fromFirebaseAuth(firebaseUser)
-                .copyWith(defaultTimezone: TimezoneService.getSystemTimezone());
-            
-            // Generar username automático
-            final generatedUsername = await _generateAutomaticUsername(newUserModel);
-            final userModelWithUsername = generatedUsername != null
-                ? newUserModel.copyWith(username: generatedUsername)
-                : newUserModel;
-            
-            // Crear usuario en Firestore
-            await _userService.createUser(userModelWithUsername);
-            
-            // Actualizar último login
-            final updatedUser = userModelWithUsername.copyWith(lastLoginAt: DateTime.now());
-            await _userService.updateUser(updatedUser);
+            final cached =
+                await _userLocalService.getCurrentUserIfMatches(firebaseUser.uid);
+            if (cached != null) {
+              final deviceTimezone = TimezoneService.getSystemTimezone();
+              final merged = cached.copyWith(lastLoginAt: DateTime.now());
+              final shouldSuggest = merged.defaultTimezone != null &&
+                  merged.defaultTimezone != deviceTimezone;
+              state = AuthState(
+                status: AuthStatus.authenticated,
+                user: merged,
+                timezoneSuggestion: shouldSuggest ? deviceTimezone : null,
+                deviceTimezone: shouldSuggest ? deviceTimezone : null,
+              );
+              Future<void>(() async {
+                try {
+                  await _userLocalService.saveCurrentUser(merged);
+                } catch (_) {}
+                try {
+                  await _userService
+                      .updateUser(merged)
+                      .timeout(const Duration(seconds: 2), onTimeout: () {});
+                } catch (_) {}
+              });
+            } else {
+              // Fallback offline-first: entrar con datos locales de FirebaseAuth
+              // y crear/sincronizar documento en Firestore en segundo plano.
+              final deviceTimezone = TimezoneService.getSystemTimezone();
+              final fallbackUser = UserModel.fromFirebaseAuth(firebaseUser)
+                  .copyWith(
+                    defaultTimezone: deviceTimezone,
+                    lastLoginAt: DateTime.now(),
+                  );
 
-            final deviceTimezone = TimezoneService.getSystemTimezone();
-            
-            state = AuthState(
-              status: AuthStatus.authenticated,
-              user: updatedUser,
-              timezoneSuggestion: updatedUser.defaultTimezone != deviceTimezone ? deviceTimezone : null,
-              deviceTimezone: updatedUser.defaultTimezone != deviceTimezone ? deviceTimezone : null,
-            );
+              state = AuthState(
+                status: AuthStatus.authenticated,
+                user: fallbackUser,
+                timezoneSuggestion: null,
+                deviceTimezone: null,
+              );
+
+              Future<void>(() async {
+                try {
+                  final generatedUsername =
+                      await _generateAutomaticUsername(fallbackUser);
+                  final userModelWithUsername = generatedUsername != null
+                      ? fallbackUser.copyWith(username: generatedUsername)
+                      : fallbackUser;
+                  await _userService
+                      .createUser(userModelWithUsername)
+                      .timeout(const Duration(seconds: 4), onTimeout: () => null);
+                  await _userService
+                      .updateUser(
+                          userModelWithUsername.copyWith(lastLoginAt: DateTime.now()))
+                      .timeout(const Duration(seconds: 2), onTimeout: () {});
+                } catch (_) {}
+              });
+            }
           }
         } catch (e) {
-          state = AuthState(
-            status: AuthStatus.error,
-            errorMessage: 'Error al obtener datos del usuario: $e',
-          );
+          final cached =
+              await _userLocalService.getCurrentUserIfMatches(firebaseUser.uid);
+          if (cached != null) {
+            final deviceTimezone = TimezoneService.getSystemTimezone();
+            final merged = cached.copyWith(lastLoginAt: DateTime.now());
+            final shouldSuggest = merged.defaultTimezone != null &&
+                merged.defaultTimezone != deviceTimezone;
+            state = AuthState(
+              status: AuthStatus.authenticated,
+              user: merged,
+              timezoneSuggestion: shouldSuggest ? deviceTimezone : null,
+              deviceTimezone: shouldSuggest ? deviceTimezone : null,
+            );
+            Future<void>(() async {
+              try {
+                await _userLocalService.saveCurrentUser(merged);
+              } catch (_) {}
+            });
+          } else {
+            // Fallback offline-first: no bloquear arranque si Firestore no responde.
+            final deviceTimezone = TimezoneService.getSystemTimezone();
+            final fallbackUser = UserModel.fromFirebaseAuth(firebaseUser)
+                .copyWith(
+                  defaultTimezone: deviceTimezone,
+                  lastLoginAt: DateTime.now(),
+                );
+            state = AuthState(
+              status: AuthStatus.authenticated,
+              user: fallbackUser,
+              timezoneSuggestion: null,
+              deviceTimezone: null,
+            );
+          }
         }
       } else {
+        try {
+          await _userLocalService.clearCurrentUser();
+        } catch (_) {}
         // Usuario no autenticado
         if (_pendingErrorMessage != null) {
           state = AuthState(

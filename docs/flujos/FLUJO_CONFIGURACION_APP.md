@@ -3,8 +3,8 @@
 > Define qué elementos son configurables por el usuario y por plan
 
 **Relacionado con:** T50, T105, T124  
-**Versión:** 1.1  
-**Fecha:** Enero 2025. Revisión Febrero 2026: alineado con implementación actual (idioma, timezone, perfil).
+**Versión:** 1.2  
+**Fecha:** Abril 2026 (revisión de coherencia documental con implementación actual de configuración)
 
 ---
 
@@ -318,5 +318,5 @@ graph TD
 ---
 
 *Documento de flujo de configuración de la app*  
-*Última actualización: Febrero 2026 (revisión sincronizada con código: idioma SharedPreferences, defaultTimezone, perfil, sin preferences feature)*
+*Última actualización: Abril 2026 (revisión sincronizada con código y alcance vigente)*
 

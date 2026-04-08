@@ -16,6 +16,57 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-04-08] `auth_notifier` — `onTimeout` con tipo incorrecto en `Future<bool>`
+
+- **Contexto:** Ajuste offline-first del arranque de sesión para evitar bloqueo sin red.
+- **Error:** `body_might_complete_normally` en `.timeout(... onTimeout: () {})` sobre `updateUsername(...)`.
+- **Causa raíz:** `updateUsername` devuelve `Future<bool>` y el callback `onTimeout` no retornaba ningún `bool`.
+- **Solución aplicada:** Cambiar a `onTimeout: () => false` para cumplir tipo y mantener fallback no bloqueante.
+
+### [2026-04-08] `wd_event_dialog` — `undefined_identifier` tras añadir trazas de guardado
+
+- **Contexto:** Instrumentación de debug para diagnosticar por qué el modal no se cerraba al guardar un evento en offline.
+- **Error:** `Undefined name 'LoggerService'` en varias líneas de `wd_event_dialog.dart`.
+- **Causa raíz:** Se añadieron llamadas a `LoggerService` sin importar `shared/services/logger_service.dart`.
+- **Solución aplicada:** Añadido import explícito `package:unp_calendario/shared/services/logger_service.dart`.
+
+### [2026-04-08] `calendar_notifier` — stream de eventos no refrescaba tras la carga inicial
+
+- **Contexto:** Ítem 58 offline: el modal de crear evento cerraba, pero la vista calendario no mostraba nuevos eventos.
+- **Error observado:** la UI no reflejaba emisiones nuevas pese a logs de guardado local/realtime.
+- **Causa raíz:** En `_loadEvents()`, el listener de `getEventsByPlanId(...).listen(...)` tenía `if (state.loadingState != LoadingState.loading) return;`, bloqueando todas las emisiones posteriores a la primera.
+- **Solución aplicada:** eliminar ese guard y aceptar todas las emisiones del stream para mantener el estado sincronizado en tiempo real (online/offline).
+
+### [2026-04-08] Calendario offline — formulario de evento no se cierra tras guardar
+
+- **Contexto:** Ítem 58 / guardado de evento con red desactivada (iPhone o pantallas que usan `EventDialog`).
+- **Síntoma:** Tras pulsar guardar, el evento llega a persistirse (o encolarse) pero el diálogo no hace `pop` y el calendario no refresca hasta volver online.
+- **Causa raíz:** (1) En `wd_calendar_screen` y `pg_plan_detail_page` el flujo hacía **`await NotificationHelper().notifyEventProposed(...)`** antes de cerrar el diálogo; esa llamada escribe en Firestore y puede quedar colgada sin red. (2) En `wd_event_dialog`, **`_getConvertedCost()`** podía esperar indefinidamente al documento `exchange_rates/current` si no había caché en memoria y el cliente no resolvía el `get()` en offline.
+- **Solución aplicada:** Cerrar el diálogo justo después de `createEvent` donde aplicaba; pasar `notifyEventProposed` a **best-effort** (`Future` + `timeout` 2s) en plan detalle y calendario web; en `_getConvertedCost` aplicar **`timeout` 2s** sobre `convertAmount` y usar el importe local como respaldo.
+
+### [2026-04-06] `wd_event_dialog` (offline) — `Plan?` no asignable en expansión de rango
+
+- **Contexto:** Ajuste para no bloquear guardado de evento en offline (timeout en `planService.getPlanById`).
+- **Error:** `The argument type 'Plan?' can't be assigned to the parameter type 'Plan'` en `ExpandPlanDialog` / `PlanRangeUtils.calculateExpandedPlanValues`.
+- **Causa raíz:** Tras envolver el fetch en `try/catch`, el `plan` quedó nullable y se usó en closures async sin promoción estable de null-safety.
+- **Solución aplicada:** Crear variable local no nula `planForRange` dentro del bloque `if (plan != null)` y usarla en todo el flujo de expansión.
+
+### [2026-04-06] `pg_calendar_mobile_page` — `Cannot use "ref" after the widget was disposed`
+
+- **Contexto:** Guardado de evento en modo offline; el evento se persistía pero el callback post-guardado lanzaba excepción.
+- **Error:** `Bad state: Cannot use "ref" after the widget was disposed` en `_invalidateEventProviders`.
+- **Causa raíz:** El callback `onSaved` del diálogo seguía ejecutando invalidaciones con `ref.read(...)` cuando la pantalla del calendario ya no estaba montada.
+- **Solución aplicada:** Guardas `mounted` antes de invalidar (`if (mounted) _invalidateEventProviders();`) y salida temprana en `_invalidateEventProviders` si `!mounted`.
+
+### [2026-04-06] iOS FCM/APNs — `apns-token-not-set` al iniciar push (ítem 109)
+
+- **Contexto:** Pruebas de push iOS en dispositivo físico para cerrar el ítem 109; `FCMService.initialize(...)` ejecutado tras login.
+- **Error:** `[firebase_messaging/apns-token-not-set] APNS token has not been set yet` y ausencia de subcolección `users/{userId}/fcmTokens`.
+- **Causa raíz:** Configuración iOS incompleta para mensajería: `FirebaseAppDelegateProxyEnabled` estaba en `false` (sin registro manual de APNs), y el target no tenía `Runner.entitlements` con `aps-environment`.
+- **Solución aplicada:** `Info.plist` con `FirebaseAppDelegateProxyEnabled = true`; creación de `ios/Runner/Runner.entitlements` con `aps-environment=development`; `CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements` en Debug/Release/Profile del target Runner; además, en `FCMService`, espera/reintento APNs antes de pedir token FCM.
+- **Solución aplicada:** `Info.plist` con `FirebaseAppDelegateProxyEnabled = true`; creación de `ios/Runner/Runner.entitlements` con `aps-environment=development`; `CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements` en Debug/Release/Profile del target Runner; además, en `FCMService`, espera/reintento APNs antes de pedir token FCM. Se añadió registro nativo explícito en `AppDelegate` (`registerForRemoteNotifications`) y logs `APNS_NATIVE` para ver si iOS entrega token o falla el registro.
+- **Notas para el futuro:** Si aparece `apns-token-not-set`, revisar primero swizzling/APNs entitlements antes de depurar Firestore o payloads.
+
 ### [2026-04-06] `wd_event_dialog` — assertion en `DropdownButton` con timezone `UTC`
 
 - **Contexto:** Edición/creación de evento con selector de timezone en `wd_event_dialog`.

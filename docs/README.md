@@ -18,22 +18,23 @@ Guías transversales que aplican a todo el proyecto:
 ### 🔄 [Flujos de Proceso](./flujos/)
 Flujos específicos del ciclo de vida de la aplicación:
 - [CRUD Planes](./flujos/FLUJO_CRUD_PLANES.md) - Crear, leer, actualizar y eliminar planes
-- [CRUD Usuarios](./flujos/FLUJO_CRUD_USUARIOS.md) - Registro, login y gestión de usuarios
+- [CRUD Usuarios](./flujos/FLUJO_CRUD_USUARIOS.md) - Registro, login y gestión de usuarios (móvil: snapshot Hive `current_user`; detalle en el flujo y en [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md))
 - [CRUD Eventos](./flujos/FLUJO_CRUD_EVENTOS.md) - Gestión completa de eventos
 - [CRUD Alojamientos](./flujos/FLUJO_CRUD_ALOJAMIENTOS.md) - Gestión completa de alojamientos
 - [Estados del Plan](./flujos/FLUJO_ESTADOS_PLAN.md) - Transiciones entre estados
 - [Gestión de Participantes](./flujos/FLUJO_GESTION_PARTICIPANTES.md) - Invitaciones y gestión
 - [Presupuesto y Pagos](./flujos/FLUJO_PRESUPUESTO_PAGOS.md) - Sistema financiero
 - [Invitaciones y Notificaciones](./flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md) - Comunicación
+- [Notas del Plan](./flujos/FLUJO_NOTAS_PLAN.md) - Notas comunes/personales y preparación
 - [Validación](./flujos/FLUJO_VALIDACION.md) - Verificación y validación
 - [Configuración App](./flujos/FLUJO_CONFIGURACION_APP.md) - Configuración de usuario y app
 
 ### 📦 [Producto](./producto/)
 Decisiones de producto y especificaciones funcionales:
-- [Posición del producto frente a la IA](./producto/POSICION_PRODUCTO_FRENTE_A_IA.md) – Por qué la app no es fácilmente sustituible; IA como aliado, no sustituto
 - [Sistema de notificaciones – Especificación](./producto/NOTIFICACIONES_ESPECIFICACION.md) – Lista global (campana), W20 por plan, filtros, badge
 - [Plan de codificación – Notificaciones](./producto/NOTIFICACIONES_PLAN_CODIFICACION.md) – Fases e implementación
-- [Buzón unificado (evolución)](./producto/BUZON_UNIFICADO_NOTIFICACIONES.md) – Contexto histórico y enlace a la especificación
+- [Paridad pagos con Tricount](./producto/PAGOS_PARIDAD_TRICOUNT.md) – Objetivo funcional y fases de implementación de gastos
+- [Pagos en el MVP](./producto/PAGOS_MVP.md) – Alcance y decisiones funcionales de pagos
 
 ### 📐 [Especificaciones](./especificaciones/)
 Especificaciones técnicas detalladas:
@@ -74,7 +75,7 @@ Gestión de tareas del proyecto:
 - [Sistema Nocturno de QA Distribuido](./testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md) - E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac), capas A/B/C, alertas y fases de implementación
 - [Plan E2E tres usuarios (manual)](./testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) - Flujo completo UA/UB/UC para pruebas manuales
 - [Registro de observaciones de pruebas](./testing/REGISTRO_OBSERVACIONES_PRUEBAS.md) - Notas y observaciones durante pruebas manuales
-- [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md)
+- [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md) — Hive móvil (`plans`, `events`, `participations`, `sync_queue`, `current_user`) y arranque offline
 
 ### ⚙️ [Configuración](./configuracion/)
 Configuración y contexto del proyecto:
@@ -86,7 +87,8 @@ Configuración y contexto del proyecto:
 - [Imágenes de plan (Firebase Storage)](./configuracion/IMAGENES_PLAN_FIREBASE.md) - Bucket, reglas, CORS, código y troubleshooting
 - [CORS Storage (subida web)](./configuracion/STORAGE_CORS.md) - Configurar CORS para subir imágenes desde la web
 - [Testing Checklist](./configuracion/TESTING_CHECKLIST.md) - Checklist de pruebas (actualizar tras cada tarea)
-- [FCM Fase 1](./configuracion/FCM_FASE1_IMPLEMENTACION.md) - Notificaciones push
+- [Checklist push iOS + deep links](./configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md) - Fuente operativa A1/A2 (pruebas y cierre)
+- [FCM Fase 1](./configuracion/FCM_FASE1_IMPLEMENTACION.md) - Arquitectura técnica FCM (referencia)
 - [Onboarding IA](./configuracion/ONBOARDING_IA.md) - Contexto para asistentes IA
 - [Usuarios de prueba](./configuracion/USUARIOS_PRUEBA.md) - Datos semilla y pruebas
 - [Nomenclatura UI](./configuracion/NOMENCLATURA_UI.md) - Páginas, menús y modales
@@ -97,7 +99,6 @@ Configuración y contexto del proyecto:
 - [Migración Mac / iOS](./configuracion/MIGRACION_MAC_PLAYBOOK.md) - Playbook para desarrollo en Mac
 - [Evaluación primeras pruebas con familia](./configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md) - Checklist y estado (listo para invitar a familia)
 - [Revisión iOS vs Web (TestFlight)](./configuracion/REVISION_IOS_VS_WEB.md) - Diferencias web/iOS, checklist pre-TestFlight
-- [Checklist push iOS + deep links](./configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md) - FCM/APNs (A1) y Universal Links / invitación (A2)
 - **[Publicar iOS (TestFlight / App Store) con Fastlane](./configuracion/FASTLANE_IOS_APPSTORE.md)** - `flutter build ipa`, `fastlane beta`, 2FA y errores habituales
 - [Checklist primera publicación iOS](./configuracion/FASTLANE_IOS_CHECKLIST.md) - Pasos marcables
 

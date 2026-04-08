@@ -1,7 +1,7 @@
 # Eventos desde correo: sistema de recepción y parseo
 
-> Cómo recibe la plataforma el correo reenviado y cómo extrae de él los datos del evento.  
-> **Relacionado:** T134, `docs/producto/CORREO_EVENTOS_SPAM.md`.
+> Cómo recibe la plataforma el correo reenviado, cómo lo valida y cómo extrae datos del evento.
+> **Documento canónico T134:** recepción, anti-spam, parseo y esquema Firestore.
 
 **Alcance para usuarios vs administración:** Lo que ve el **usuario** en la app es solo: reenviar correos a la dirección de la plataforma, ver su buzón de eventos pendientes y asignarlos a un plan. El **catálogo de plantillas** (crear, actualizar, categorizar, generar con LLM a partir de un correo de ejemplo) es un **proceso interno de administración de la plataforma**: no está disponible en la app para usuarios finales. Solo los admins de la plataforma gestionan las plantillas.
 
@@ -33,12 +33,10 @@ El usuario **reenvía** un correo de confirmación (vuelo, hotel, alquiler, etc.
 
 ### 2. Validación anti-spam (antes de parsear)
 
-- **From = usuario registrado:** Solo se procesan correos cuyo **remitente (From)** coincida con un email de un usuario registrado en la plataforma. De momento se acepta **también alias** (ej. Gmail `+`); en el futuro solo email principal (tarea T216). Si el From no está registrado: no procesar, **no responder** al remitente, y **registrar** el intento para depuración.
+- **From = usuario registrado (email principal):** Solo se procesan correos cuyo **remitente (From)** coincida exactamente con el email principal del usuario registrado. **No se aceptan alias** (T216 cerrada). Si el From no está registrado: no procesar, **no responder** al remitente, y **registrar** el intento para depuración.
 - **Rate limit:** **50 correos por día** por usuario. Al superar el límite: no procesar ese correo y **avisar al usuario** (por app o email). También se registra para depuración.
 - **Lista blanca:** No se usa; cualquier usuario registrado puede usar la dirección de reenvío (sujeto a rate limit).
 - **Registro:** Se guardan datos de intentos rechazados (From no registrado, rate limit superado) **para depuración**.
-
-Detalle completo en `docs/producto/CORREO_EVENTOS_SPAM.md`.
 
 ---
 
@@ -57,6 +55,20 @@ Detalle completo en `docs/producto/CORREO_EVENTOS_SPAM.md`.
 
 - **Evento pendiente:** Se crea un documento en Firestore (colección tipo `pending_email_events` o integrada en el usuario) con: `userId`, datos extraídos (título, fecha, ubicación, código, tipo), `templateId` usado (si aplica), `raw` opcional (para depuración), `timestamp`.
 - **App (usuario):** Notificación “tienes N eventos pendientes de asignar”. El usuario abre el **buzón**, ve la lista de pendientes (parseados y sin parsear), puede **editar** los datos antes de confirmar, **asigna a un plan** y confirma → se crea el **evento real** en ese plan. Los pendientes se marcan como procesados o se eliminan.
+
+### 4.1 Esquema Firestore (resumen operativo)
+
+**Colección `email_templates`** (plantillas de parseo):
+- Campos base: `name`, `locale`, `event_type`, `active`, `priority`, `triggers`, `fields`, `field_order`, `createdAt`, `updatedAt`.
+- Escritura restringida a admins de plataforma; lectura para procesos autenticados que lo necesiten.
+
+**Subcolección `users/{userId}/pending_email_events`** (buzón del usuario):
+- Campos base: `subject`, `bodyPlain`, `fromEmail`, `parsed`, `templateId`, `status`, `createdAt`, `updatedAt`.
+- Acceso de cliente solo al usuario propietario; Cloud Functions por Admin SDK.
+
+**Registro de rechazos anti-spam**:
+- Estado actual: registro en logs de Cloud Functions.
+- Evolución opcional: colección `email_rejection_logs` para analítica/depuración persistente.
 
 ---
 
@@ -102,7 +114,7 @@ El JSON completo está en el doc (sección 2.1). El **prompt** para que la LLM g
 |------|----------|
 | Recepción | **100% Google:** Buzón Gmail/Workspace + Gmail API (polling con Cloud Scheduler). Sin proveedores externos de inbound. |
 | Dirección | Global (`eventos@...`); usuario identificado por From. |
-| Anti-spam | From = usuario registrado (de momento + alias); 50 correos/día; no responder a no registrado; registrar rechazos para depuración. |
+| Anti-spam | From = usuario registrado (**email principal**, sin alias); 50 correos/día; no responder a no registrado; registrar rechazos para depuración. |
 | Parseo | Solo plantillas; sin LLM por correo. LLM solo para crear/actualizar/categorizar plantillas (admin). |
 | Catálogo | Firestore, colección `email_templates`; solo admins escriben. |
 | Idiomas | Una plantilla por idioma; campo `locale`. |

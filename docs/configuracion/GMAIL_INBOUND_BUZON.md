@@ -1,7 +1,7 @@
 # Recepción de correos (buzón) con Gmail API
 
 > Configuración para que la plataforma lea el buzón con Gmail API (recepción 100% Google).  
-> Relacionado: `docs/producto/CORREO_EVENTOS_SISTEMA_PARSEO.md`, Cloud Function `processInboundGmail`.
+> Relacionado: `docs/producto/CORREO_EVENTOS_SISTEMA_PARSEO.md` (documento canónico T134), Cloud Function `processInboundGmail`.
 
 **Buzón actual:** `unplanzoo+eventos@gmail.com` (los usuarios reenvían sus confirmaciones a esta dirección).
 

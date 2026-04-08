@@ -43,6 +43,12 @@
 - 🔔 Sistema de invitaciones y notificaciones
 - 📊 Estadísticas y análisis
 
+### Posicion de producto frente a IA (guia breve)
+
+1. La app es donde lo acordado queda confirmado y compartido para el grupo.
+2. La coordinacion multiusuario y la identidad son el nucleo del valor.
+3. La IA es apoyo (sugerencias, redaccion, resumen), no fuente de verdad.
+
 ---
 
 ## 📚 DOCUMENTOS ESENCIALES (LEER EN ESTE ORDEN)
@@ -65,7 +71,7 @@
 - **`docs/flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md`** - Sistema de invitaciones
 - **`docs/flujos/FLUJO_GESTION_PARTICIPANTES.md`** - Gestión de participantes
 - **`docs/flujos/FLUJO_PRESUPUESTO_PAGOS.md`** - Sistema financiero
-- **`docs/flujos/FLUJO_CRUD_USUARIOS.md`** - Registro y gestión de usuarios
+- **`docs/flujos/FLUJO_CRUD_USUARIOS.md`** - Registro y gestión de usuarios; perfil cacheado en Hive (`current_user`) solo móvil
 
 ### 4. Documentos de Tareas
 - **`docs/tareas/TASKS.md`** ⭐ **OBLIGATORIO** - Lista de tareas pendientes y completadas
@@ -211,11 +217,11 @@ lib/
 
 | Carpeta / módulo | Documentación principal |
 |------------------|-------------------------|
-| `lib/features/auth/` | [FLUJO_CRUD_USUARIOS](../flujos/FLUJO_CRUD_USUARIOS.md), [GUIA_SEGURIDAD](../guias/GUIA_SEGURIDAD.md) |
+| `lib/features/auth/` | [FLUJO_CRUD_USUARIOS](../flujos/FLUJO_CRUD_USUARIOS.md) (incl. Hive `current_user`), [GUIA_SEGURIDAD](../guias/GUIA_SEGURIDAD.md) |
 | `lib/features/calendar/` | [FLUJO_CRUD_PLANES](../flujos/FLUJO_CRUD_PLANES.md), [FLUJO_CRUD_EVENTOS](../flujos/FLUJO_CRUD_EVENTOS.md), [FLUJO_CRUD_ALOJAMIENTOS](../flujos/FLUJO_CRUD_ALOJAMIENTOS.md), [FLUJO_GESTION_PARTICIPANTES](../flujos/FLUJO_GESTION_PARTICIPANTES.md), [IMAGENES_PLAN_FIREBASE.md](./IMAGENES_PLAN_FIREBASE.md) |
 | `lib/features/notifications/` | [NOTIFICACIONES_ESPECIFICACION](../producto/NOTIFICACIONES_ESPECIFICACION.md), [FLUJO_INVITACIONES_NOTIFICACIONES](../flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md) |
 | `lib/features/payments/` | [FLUJO_PRESUPUESTO_PAGOS](../flujos/FLUJO_PRESUPUESTO_PAGOS.md) — Presupuesto en W17 (Estadísticas), pagos en W18 (Pagos); gastos Tricount/balances/transferencias, permisos (T218), aviso legal (T220). Nota: el bote T219 se retiró de la UI principal en mar 2026. |
-| `lib/features/offline/` | [ARCHITECTURE_DECISIONS](../arquitectura/ARCHITECTURE_DECISIONS.md) (Offline First), [TESTING_OFFLINE_FIRST](../testing/TESTING_OFFLINE_FIRST.md) |
+| `lib/features/offline/` | [ARCHITECTURE_DECISIONS](../arquitectura/ARCHITECTURE_DECISIONS.md) (Offline First), [TESTING_OFFLINE_FIRST](../testing/TESTING_OFFLINE_FIRST.md); perfil `current_user` también en [FLUJO_CRUD_USUARIOS](../flujos/FLUJO_CRUD_USUARIOS.md) |
 | `lib/shared/` | Modelos y servicios compartidos; ver flujos según dominio (permisos, roles, etc.) |
 | `lib/app/` | [GUIA_UI](../guias/GUIA_UI.md) (tema, colores, tipografía) |
 | `lib/pages/` | [NOMENCLATURA_UI](./NOMENCLATURA_UI.md), [Documentación de Widgets](../ux/pages/) (W1–W30) |

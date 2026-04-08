@@ -942,5 +942,5 @@ Timeline:
 ---
 
 *Documento de flujo CRUD completo de eventos*  
-*Última actualización: Febrero 2026*
+*Última actualización: Abril 2026 (revisión de coherencia documental y estado de implementación)*
 

@@ -157,15 +157,28 @@ class EventService {
     try {
       // Verificar rate limiting para creación de eventos
       final rateLimiter = RateLimiterService();
-      final eventLimitCheck = await rateLimiter.checkEventCreation(event.planId);
-      
+      final eventLimitCheck = await rateLimiter
+          .checkEventCreation(event.planId)
+          .timeout(const Duration(seconds: 2), onTimeout: () {
+        // En offline no bloqueamos creación por rate-limit remoto.
+        return RateLimitResult(
+          allowed: true,
+          remainingAttempts: 1,
+          requiresCaptcha: false,
+        );
+      });
+
       if (!eventLimitCheck.allowed) {
         throw Exception(eventLimitCheck.getErrorMessage());
       }
       
       // Verificar que el usuario participa en el plan
-      final isParticipant = await _participationService.isUserParticipant(event.planId, event.userId);
-
+      final isParticipant = await _participationService
+          .isUserParticipant(event.planId, event.userId)
+          .timeout(const Duration(seconds: 2), onTimeout: () {
+        // En offline permitimos continuar; Firestore/rules validará al sincronizar.
+        return true;
+      });
       if (!isParticipant) {
         return null;
       }
@@ -191,7 +204,9 @@ class EventService {
       
       // Verificar que el usuario participa en el plan (solo si no es actualización de sincronización)
       if (!skipSync) {
-        final isParticipant = await _participationService.isUserParticipant(event.planId, event.userId);
+        final isParticipant = await _participationService
+            .isUserParticipant(event.planId, event.userId)
+            .timeout(const Duration(seconds: 2), onTimeout: () => true);
         if (!isParticipant) {
           return false;
         }

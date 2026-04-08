@@ -17,7 +17,8 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - `docs/guias/PROMPT_TRABAJO_AUTONOMO.md` - Prompt para sesiones autónomas (revisión doc/código, limpieza)
 - `docs/configuracion/FASTLANE_IOS_APPSTORE.md` - **Publicación iOS (TestFlight / App Store):** `flutter build ipa`, `fastlane beta`, contraseña específica de apps (`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`), errores típicos de firma y subida
 - `docs/configuracion/FASTLANE_IOS_CHECKLIST.md` - Checklist paso a paso para la primera publicación iOS
-- `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md` - **Notas del plan** (común/personal, preparación, plantillas); código en `lib/features/plan_notes/` (T262 en progreso, ver estado al inicio de ese .md)
+- `docs/flujos/FLUJO_NOTAS_PLAN.md` - **Flujo implementado** de Notas del plan (común/personal, preparación, permisos)
+- `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md` - **Especificación de producto** de Notas del plan (T262 en progreso; roadmap de plantillas y cierre)
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
 - `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice y visión general del sistema de planes
 - `docs/configuracion/TESTING_CHECKLIST.md` - Checklist exhaustivo de pruebas (actualizar tras cada tarea)
@@ -55,6 +56,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 ### 4) Persistencia y Decisiones de Datos
 - Persistencia local solo para prototipos rápidos; versión final debe ser global (Firestore) salvo indicación contraria.
+- **Excepción explícita (móvil offline):** caché Hive + cola de sync documentada en `docs/testing/TESTING_OFFLINE_FIRST.md` (boxes `plans`, `events`, `participations`, `sync_queue`, **`current_user`** para snapshot del perfil tras login). Comportamiento de usuario y perfil: `docs/flujos/FLUJO_CRUD_USUARIOS.md` (sección *Snapshot de perfil en Hive*).
 - Identificadores estables (p. ej., `participantId`) para persistir orden/configuración; evitar IDs efímeros.
 
 ### 5) UI/UX y Calidad
@@ -81,7 +83,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
   - **Ver T158:** Sistema multi-idioma en progreso (~65% completado). Consultar `docs/tareas/TASKS.md` para estado actual
 - **Multi-plataforma:** App soporta Web + iOS + Android. Verificar compatibilidad de plugins/APIs en las 3 plataformas antes de usar. Priorizar soluciones cross-platform. Consultar `docs/arquitectura/PLATFORM_STRATEGY.md` para estrategia de desarrollo multi-plataforma.
 - **⚠️ Consistencia Web e iOS (obligatorio):** A partir de ahora, **todos los cambios** (UI, flujos, funcionalidad, iconos, navegación) han de ser **consistentes en web y en iOS** (y en Android cuando aplique). No introducir comportamiento, diseño o elementos que solo existan o se vean en una plataforma sin replicarlos en las demás. Al implementar una funcionalidad nueva o modificar una existente, verificar y ajustar tanto la experiencia web como la móvil (p. ej. lista de planes, barra inferior, cards, modales).
-- **Offline-First:** Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
+- **Offline-First (móvil):** Criterios y datos locales en Hive: `docs/testing/TESTING_OFFLINE_FIRST.md`. En web la prioridad es distinta (sin las mismas boxes).
 - **UI/UX:** Consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar siempre `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons` para mantener consistencia. Documentar componentes nuevos en la guía.
 - **Seguridad:** Consultar `docs/guias/GUIA_SEGURIDAD.md` antes de implementar funcionalidades y verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
 - **Patrón Común/Personal:** Consultar `docs/guias/GUIA_PATRON_COMUN_PERSONAL.md` para implementar eventos y alojamientos con información compartida e individual por participante. Usar EventCommonPart/EventPersonalPart y AccommodationCommonPart/AccommodationPersonalPart.
@@ -94,7 +96,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
   - `FLUJO_PRESUPUESTO_PAGOS.md` - Sistema financiero
   - `FLUJO_INVITACIONES_NOTIFICACIONES.md` - Comunicación
   - `FLUJO_VALIDACION.md` - Validación y verificación
-  - `FLUJO_CRUD_USUARIOS.md` - Registro, login y gestión de usuarios
+  - `FLUJO_CRUD_USUARIOS.md` - Registro, login y gestión de usuarios (incluye Hive `current_user` en móvil)
   - `FLUJO_CONFIGURACION_APP.md` - Configuración de usuario, app y planes
 - **Guías de Referencia:**
   - `GUIA_SEGURIDAD.md` - Seguridad, autenticación y protección de datos

@@ -35,6 +35,9 @@ class CalendarGrid extends StatelessWidget {
   /// Cuando es true, bloquea el scroll vertical para priorizar gestos de drag en eventos.
   final bool lockVerticalScroll;
 
+  /// Callback opcional para capturar swipe horizontal sobre el área de datos.
+  final ValueChanged<DragEndDetails>? onHorizontalSwipeEnd;
+
   const CalendarGrid({
     super.key,
     required this.hoursScrollController,
@@ -44,6 +47,7 @@ class CalendarGrid extends StatelessWidget {
     required this.buildEventsLayer,
     required this.onAccommodationHeaderTap,
     this.lockVerticalScroll = false,
+    this.onHorizontalSwipeEnd,
   });
 
   @override
@@ -191,27 +195,31 @@ class CalendarGrid extends StatelessWidget {
               return Stack(
                 children: [
                   // Capa 1: Datos de la tabla
-                  ScrollConfiguration(
-                    behavior: ScrollConfiguration.of(context).copyWith(
-                      dragDevices: {
-                        PointerDeviceKind.touch,
-                        PointerDeviceKind.mouse,
-                        PointerDeviceKind.trackpad,
-                      },
-                    ),
-                    child: SingleChildScrollView(
-                      controller: dataScrollController,
-                      physics: lockVerticalScroll
-                          ? const NeverScrollableScrollPhysics()
-                          : const AlwaysScrollableScrollPhysics(),
-                      child: Stack(
-                        children: [
-                          buildDataRows(),
-                          // Capa 2: Eventos (Positioned) - Ahora dentro del SingleChildScrollView
-                          ...buildEventsLayer(constraints.maxWidth),
-                          // Capa 3: Detector invisible para doble clicks en celdas vacías (deshabilitado temporalmente)
-                          // _buildDoubleClickDetector(constraints.maxWidth),
-                        ],
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onHorizontalDragEnd: onHorizontalSwipeEnd,
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                          PointerDeviceKind.trackpad,
+                        },
+                      ),
+                      child: SingleChildScrollView(
+                        controller: dataScrollController,
+                        physics: lockVerticalScroll
+                            ? const NeverScrollableScrollPhysics()
+                            : const AlwaysScrollableScrollPhysics(),
+                        child: Stack(
+                          children: [
+                            buildDataRows(),
+                            // Capa 2: Eventos (Positioned) - Ahora dentro del SingleChildScrollView
+                            ...buildEventsLayer(constraints.maxWidth),
+                            // Capa 3: Detector invisible para doble clicks en celdas vacías (deshabilitado temporalmente)
+                            // _buildDoubleClickDetector(constraints.maxWidth),
+                          ],
+                        ),
                       ),
                     ),
                   ),

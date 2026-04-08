@@ -85,7 +85,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late String _selectedColor;
   late bool _isDraft;
   late List<String> _selectedParticipantIds;
+  late List<String> _initialSelectedParticipantIds;
   late bool _isForAllParticipants; // Checkbox principal "Para todos"
+  late bool _initialIsForAllParticipants;
   late String _selectedTimezone;
   late String _selectedArrivalTimezone;
   late TextEditingController _maxParticipantsController;
@@ -445,6 +447,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _isForAllParticipants = existingCommonPart?.isForAllParticipants ?? true;
     _selectedParticipantIds =
         List.from(existingCommonPart?.participantIds ?? []);
+    _initialIsForAllParticipants = _isForAllParticipants;
+    _initialSelectedParticipantIds = List.from(_selectedParticipantIds);
 
     // Si es un evento existente y no está marcado "para todos" pero no hay participantes,
     // no forzar ninguna selección. El usuario puede crear eventos sin incluirse a sí mismo.
@@ -3803,6 +3807,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return PlanStatePermissions.canDeleteEvents(_plan!);
   }
 
+  bool get _isLegacyEventWithoutParticipants {
+    return widget.event != null &&
+        !_initialIsForAllParticipants &&
+        _initialSelectedParticipantIds.isEmpty;
+  }
+
   /// Construye el tab de información de otros participantes (solo para admins)
   Widget _buildOthersInfoTab() {
     final currentUser = ref.read(currentUserProvider);
@@ -4552,7 +4562,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               }),
 
               // Mensaje de validación
-              if (_selectedParticipantIds.isEmpty)
+              if (_selectedParticipantIds.isEmpty &&
+                  !_isLegacyEventWithoutParticipants)
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
@@ -4894,15 +4905,20 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return localAmount;
     }
 
-    // Convertir a moneda del plan
+    // Convertir a moneda del plan (timeout: en offline la lectura Firestore de tipos puede colgar).
     final exchangeRateService = ExchangeRateService();
     try {
-      final convertedAmount = await exchangeRateService.convertAmount(
-        localAmount,
-        _costCurrency!,
-        _planCurrency!,
-      );
-      return convertedAmount;
+      final convertedAmount = await exchangeRateService
+          .convertAmount(
+            localAmount,
+            _costCurrency!,
+            _planCurrency!,
+          )
+          .timeout(
+            const Duration(seconds: 2),
+            onTimeout: () => null,
+          );
+      return convertedAmount ?? localAmount;
     } catch (e) {
       // Si falla la conversión, retornar el monto original
       return localAmount;
@@ -5022,7 +5038,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
     // Validación de participantes (T47)
     // Si no está marcado "para todos", debe haber al menos un participante seleccionado
-    if (!_isForAllParticipants && _selectedParticipantIds.isEmpty) {
+    if (!_isForAllParticipants &&
+        _selectedParticipantIds.isEmpty &&
+        !_isLegacyEventWithoutParticipants) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -5398,19 +5416,28 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       // T107: Detectar si el evento se extiende fuera del rango del plan
       if (widget.planId != null && !effectiveIsDraft) {
         final planService = ref.read(planServiceProvider);
-        final plan = await planService.getPlanById(widget.planId!);
+        Plan? plan;
+        try {
+          // En offline este fetch remoto puede tardar o fallar; no debe bloquear el guardado.
+          plan = await planService
+              .getPlanById(widget.planId!)
+              .timeout(const Duration(seconds: 3));
+        } catch (_) {
+          plan = null;
+        }
         if (!mounted) return;
 
         if (plan != null) {
+          final planForRange = plan;
           final expansionInfo =
-              PlanRangeUtils.detectEventOutsideRange(event, plan);
+              PlanRangeUtils.detectEventOutsideRange(event, planForRange);
 
           if (expansionInfo != null) {
             // Mostrar diálogo de confirmación
             final shouldExpand = await showDialog<bool>(
               context: context,
               builder: (context) => ExpandPlanDialog(
-                plan: plan,
+                plan: planForRange,
                 expansionInfo: expansionInfo,
               ),
             );
@@ -5418,9 +5445,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             if (shouldExpand == true) {
               // Expandir el plan
               final newPlanValues = PlanRangeUtils.calculateExpandedPlanValues(
-                  plan, expansionInfo);
+                  planForRange, expansionInfo);
               final success = await planService.expandPlan(
-                plan,
+                planForRange,
                 newStartDate: newPlanValues['startDate'] as DateTime,
                 newEndDate: newPlanValues['endDate'] as DateTime,
                 newColumnCount: newPlanValues['columnCount'] as int,

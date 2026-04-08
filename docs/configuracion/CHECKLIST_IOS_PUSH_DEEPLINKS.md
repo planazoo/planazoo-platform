@@ -1,5 +1,8 @@
 # Checklist iOS: push (FCM/APNs) y deep links de invitación
 
+> Fuente operativa de referencia para A1/A2.  
+> `FCM_FASE1_IMPLEMENTACION.md` mantiene solo el contexto técnico de arquitectura.
+
 Referencia para **A1** (notificaciones) y **A2** (links de invitación) de `docs/testing/ACCIONES_PENDIENTES_APP.md` (antes P1/P2 de la lista histórica).
 
 ## A1 — Notificaciones push (FCM + APNs)

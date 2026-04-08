@@ -11,6 +11,8 @@ class ConnectivityService {
   final Connectivity _connectivity = Connectivity();
   StreamController<bool>? _connectivityController;
   StreamSubscription<List<ConnectivityResult>>? _subscription;
+  Timer? _statusDebounce;
+  bool? _pendingStatus;
   bool _isOnline = true; // Por defecto asumimos online
 
   /// Stream del estado de conectividad (true = online, false = offline)
@@ -42,16 +44,7 @@ class ConnectivityService {
 
       // Escuchar cambios
       _subscription = _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
-        final wasOnline = _isOnline;
-        _isOnline = _hasInternetConnection(results);
-        
-        if (wasOnline != _isOnline) {
-          LoggerService.info(
-            'Estado de conectividad cambió: ${_isOnline ? "ONLINE" : "OFFLINE"}',
-            context: 'CONNECTIVITY_SERVICE',
-          );
-          _connectivityController?.add(_isOnline);
-        }
+        _scheduleStatusUpdate(_hasInternetConnection(results));
       });
 
       LoggerService.database(
@@ -91,10 +84,29 @@ class ConnectivityService {
     }
   }
 
+  void _scheduleStatusUpdate(bool nextStatus) {
+    _pendingStatus = nextStatus;
+    _statusDebounce?.cancel();
+    _statusDebounce = Timer(const Duration(milliseconds: 700), () {
+      final pending = _pendingStatus;
+      if (pending == null) return;
+      if (pending == _isOnline) return;
+      _isOnline = pending;
+      LoggerService.info(
+        'Estado de conectividad cambió: ${_isOnline ? "ONLINE" : "OFFLINE"}',
+        context: 'CONNECTIVITY_SERVICE',
+      );
+      _connectivityController?.add(_isOnline);
+    });
+  }
+
   /// Detiene el monitoreo de conectividad
   void dispose() {
     _subscription?.cancel();
     _subscription = null;
+    _statusDebounce?.cancel();
+    _statusDebounce = null;
+    _pendingStatus = null;
     _connectivityController?.close();
     _connectivityController = null;
   }

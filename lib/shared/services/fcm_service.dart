@@ -24,6 +24,12 @@ class FCMService {
   static StreamSubscription<RemoteMessage>? _onMessageSubscription;
   static StreamSubscription<RemoteMessage>? _onMessageOpenedSubscription;
   static Future<void> Function(RemoteMessage message)? _notificationTapHandler;
+
+  static String _shortToken(String? token) {
+    if (token == null || token.isEmpty) return 'null';
+    if (token.length <= 12) return token;
+    return '${token.substring(0, 8)}...${token.substring(token.length - 4)}';
+  }
   
   /// Inicializa FCM y solicita permisos
   /// 
@@ -31,7 +37,15 @@ class FCMService {
   /// Retorna true si la inicialización fue exitosa
   static Future<bool> initialize(String userId) async {
     try {
+      LoggerService.info(
+        'initialize(start) userId=$userId initialized=$_isInitialized currentUser=$_currentUserId',
+        context: 'FCM_SERVICE',
+      );
       if (_isInitialized && _currentUserId == userId) {
+        LoggerService.info(
+          'initialize(skip) ya inicializado para este usuario',
+          context: 'FCM_SERVICE',
+        );
         return true;
       }
       _currentUserId = userId;
@@ -44,6 +58,7 @@ class FCMService {
       
       // Solicitar permisos (iOS)
       if (Platform.isIOS) {
+        LoggerService.info('iOS requestPermission(start)', context: 'FCM_SERVICE');
         final settings = await _messaging.requestPermission(
           alert: true,
           announcement: false,
@@ -62,15 +77,24 @@ class FCMService {
           );
           return false;
         }
+        LoggerService.info(
+          'iOS requestPermission(done) status=${settings.authorizationStatus.name}',
+          context: 'FCM_SERVICE',
+        );
 
         await _messaging.setForegroundNotificationPresentationOptions(
           alert: true,
           badge: true,
           sound: true,
         );
+
+        // iOS: APNs puede tardar unos segundos tras conceder permisos.
+        // Esperamos un poco para evitar errores "apns-token-not-set" al pedir el token FCM.
+        await _waitForApnsToken();
       }
       
       // Obtener token inicial
+      LoggerService.info('getToken(initial) start', context: 'FCM_SERVICE');
       await _getAndSaveToken();
       
       // Escuchar cambios en el token
@@ -102,17 +126,78 @@ class FCMService {
     try {
       final token = await _messaging.getToken();
       if (token != null) {
+        LoggerService.info(
+          'getToken(success) token=${_shortToken(token)}',
+          context: 'FCM_SERVICE',
+        );
         _currentToken = token;
         await _saveTokenToFirestore(token);
         LoggerService.info('Token FCM obtenido y guardado', context: 'FCM_SERVICE');
+      } else {
+        LoggerService.warning('getToken(null)', context: 'FCM_SERVICE');
       }
     } catch (e) {
+      // iOS: si APNs aún no está listo, reintentar durante una ventana corta.
+      if (Platform.isIOS && e.toString().contains('apns-token-not-set')) {
+        LoggerService.warning(
+          'getToken(apns-token-not-set) reintentos iniciados',
+          context: 'FCM_SERVICE',
+        );
+        for (int i = 0; i < 10; i++) {
+          await Future<void>.delayed(const Duration(seconds: 2));
+          try {
+            final retryToken = await _messaging.getToken();
+            if (retryToken != null) {
+              LoggerService.info(
+                'getToken(retry#$i success) token=${_shortToken(retryToken)}',
+                context: 'FCM_SERVICE',
+              );
+              _currentToken = retryToken;
+              await _saveTokenToFirestore(retryToken);
+              LoggerService.info(
+                'Token FCM obtenido y guardado tras espera APNs',
+                context: 'FCM_SERVICE',
+              );
+              return;
+            }
+            LoggerService.warning(
+              'getToken(retry#$i null)',
+              context: 'FCM_SERVICE',
+            );
+          } catch (retryError) {
+            LoggerService.warning(
+              'getToken(retry#$i error): $retryError',
+              context: 'FCM_SERVICE',
+            );
+          }
+        }
+      }
       LoggerService.error(
         'Error obteniendo token FCM',
         context: 'FCM_SERVICE',
         error: e,
       );
     }
+  }
+
+  /// iOS: espera breve a que el token APNs esté disponible.
+  static Future<void> _waitForApnsToken() async {
+    for (int i = 0; i < 5; i++) {
+      final apnsToken = await _messaging.getAPNSToken();
+      if (apnsToken != null && apnsToken.isNotEmpty) {
+        LoggerService.info(
+          'getAPNSToken(success retry#$i) token=${_shortToken(apnsToken)}',
+          context: 'FCM_SERVICE',
+        );
+        return;
+      }
+      LoggerService.warning('getAPNSToken(empty retry#$i)', context: 'FCM_SERVICE');
+      await Future<void>.delayed(const Duration(seconds: 1));
+    }
+    LoggerService.warning(
+      'getAPNSToken(timeout) tras 5 intentos',
+      context: 'FCM_SERVICE',
+    );
   }
   
   /// Guarda el token FCM en Firestore
@@ -147,7 +232,7 @@ class FCMService {
       }, SetOptions(merge: true));
       
       LoggerService.database(
-        'Token FCM guardado en Firestore: users/$_currentUserId/fcmTokens',
+        'Token FCM guardado en Firestore: users/$_currentUserId/fcmTokens/${_shortToken(token)}',
         operation: 'SAVE',
       );
     } catch (e) {
@@ -169,6 +254,7 @@ class FCMService {
   
   /// Configura los handlers para notificaciones
   static void _setupNotificationHandlers() {
+    LoggerService.info('setupNotificationHandlers()', context: 'FCM_SERVICE');
     _onMessageSubscription?.cancel();
     // Notificación recibida cuando la app está en primer plano
     _onMessageSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -199,6 +285,10 @@ class FCMService {
   
   /// Limpia el token cuando el usuario cierra sesión
   static Future<void> cleanup() async {
+    LoggerService.info(
+      'cleanup() user=$_currentUserId token=${_shortToken(_currentToken)}',
+      context: 'FCM_SERVICE',
+    );
     await _tokenRefreshSubscription?.cancel();
     await _onMessageSubscription?.cancel();
     await _onMessageOpenedSubscription?.cancel();
@@ -238,6 +328,7 @@ class FCMService {
   static Future<void> getInitialMessage() async {
     if (kIsWeb) return;
     
+    LoggerService.info('getInitialMessage(check)', context: 'FCM_SERVICE');
     final message = await _messaging.getInitialMessage();
     if (message != null) {
       LoggerService.info(
@@ -256,5 +347,9 @@ class FCMService {
     Future<void> Function(RemoteMessage message)? handler,
   ) {
     _notificationTapHandler = handler;
+    LoggerService.info(
+      'setNotificationTapHandler(registered=${handler != null})',
+      context: 'FCM_SERVICE',
+    );
   }
 }
