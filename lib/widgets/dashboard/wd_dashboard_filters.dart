@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
@@ -39,6 +40,13 @@ class WdDashboardFilters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const double controlHeight = 36;
+    final panelBg = kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
+    final controlBg = kIsWeb ? const Color(0xFFF8FAFC) : Colors.grey.shade800;
+    final textColor = kIsWeb ? const Color(0xFF0F172A) : Colors.white;
+    final controlBorderColor =
+        kIsWeb ? const Color(0xFFE2E8F0) : AppColorScheme.color2.withValues(alpha: 0.7);
+    final controlBorderWidth = kIsWeb ? 1.0 : 1.5;
     final loc = AppLocalizations.of(context)!;
     return Positioned(
       left: columnWidth,
@@ -46,89 +54,77 @@ class WdDashboardFilters extends StatelessWidget {
       child: Container(
         width: columnWidth * 4,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
+        decoration: BoxDecoration(color: panelBg),
         child: Row(
           children: [
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+                padding: const EdgeInsets.all(8),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
-                      child: PopupMenuButton<String>(
-                        tooltip: loc.plansListFiltersButton,
-                        initialValue: selectedFilter,
-                        color: Colors.grey.shade900,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: AppColorScheme.color2.withValues(alpha: 0.7),
-                            width: 1.5,
-                          ),
-                        ),
-                        onSelected: onFilterChanged,
-                        itemBuilder: (context) => [
-                          PopupMenuItem<String>(
-                            value: 'todos',
-                            child: _filterMenuRow(loc, loc.dashboardFilterAll, 'todos'),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'estoy_in',
-                            child: _filterMenuRow(loc, loc.dashboardFilterEstoyIn, 'estoy_in'),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'pendientes',
-                            child: _filterMenuRow(loc, loc.dashboardFilterPending, 'pendientes'),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'cerrados',
-                            child: _filterMenuRow(loc, loc.dashboardFilterClosed, 'cerrados'),
-                          ),
-                        ],
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade800,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColorScheme.color2.withValues(alpha: 0.7),
-                              width: 1.5,
+                      child: SizedBox(
+                        height: controlHeight,
+                        child: PopupMenuButton<String>(
+                          tooltip: loc.plansListFiltersButton,
+                          initialValue: selectedFilter,
+                          color: panelBg,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: BorderSide(
+                              color: controlBorderColor,
+                              width: controlBorderWidth,
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.filter_list, color: AppColorScheme.color2, size: 20),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      loc.plansListFiltersButton,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 10,
-                                        color: Colors.grey.shade500,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      _filterLabel(loc),
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
+                          onSelected: onFilterChanged,
+                          itemBuilder: (context) => [
+                            PopupMenuItem<String>(
+                              value: 'todos',
+                              child: _filterMenuRow(loc, loc.dashboardFilterAll, 'todos'),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'estoy_in',
+                              child: _filterMenuRow(loc, loc.dashboardFilterEstoyIn, 'estoy_in'),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'pendientes',
+                              child: _filterMenuRow(loc, loc.dashboardFilterPending, 'pendientes'),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'cerrados',
+                              child: _filterMenuRow(loc, loc.dashboardFilterClosed, 'cerrados'),
+                            ),
+                          ],
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: controlBg,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: controlBorderColor,
+                                width: controlBorderWidth,
                               ),
-                              Icon(Icons.arrow_drop_down, color: Colors.grey.shade400, size: 20),
-                            ],
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.filter_list, color: AppColorScheme.color2, size: 20),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    _filterLabel(loc),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: textColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Icon(Icons.arrow_drop_down, color: kIsWeb ? const Color(0xFF64748B) : Colors.grey.shade400, size: 20),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -147,16 +143,16 @@ class WdDashboardFilters extends StatelessWidget {
                         selectedColor: Colors.white,
                         color: Colors.grey.shade400,
                         constraints: BoxConstraints(
-                          minHeight: rowHeight * 0.72,
+                          minHeight: controlHeight,
                           minWidth: 44,
                         ),
                         children: const [
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             child: Icon(Icons.view_list, size: 20),
                           ),
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             child: Icon(Icons.calendar_month, size: 20),
                           ),
                         ],
@@ -188,7 +184,7 @@ class WdDashboardFilters extends StatelessWidget {
             label,
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.white,
+              color: kIsWeb ? const Color(0xFF0F172A) : Colors.white,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),

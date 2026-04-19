@@ -2,8 +2,8 @@
 
 > Documento vivo que debe actualizarse cada vez que se completa una tarea o se añade nueva funcionalidad.
 
-**Versión:** 1.6  
-**Última actualización:** Abril 2026  
+**Versión:** 1.7  
+**Última actualización:** Abril 2026 (REG-2026-022, enlaces ítem 58 / offline Firestore-first)  
 **Mantenedor:** Equipo de desarrollo
 
 ---
@@ -17,7 +17,7 @@
 5. **Pruebas lógicas (JSON):** Para casos automatizados por datos (login, contraseñas, eventos, etc.) y reportes para IA, ver [docs/testing/SISTEMA_PRUEBAS_LOGICAS.md](../testing/SISTEMA_PRUEBAS_LOGICAS.md).
 6. **Pruebas E2E tres usuarios (flujo completo):** Para simular un ciclo real con UA/UB/UC (crear plan → invitaciones → eventos → chat → aprobar → durante plan → cerrar), ver [docs/testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md). Incluye tabla de huecos/situaciones no contempladas para derivar tareas.
 7. **QA nocturno (futuro):** Para el diseño del sistema de E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac, alertas), ver [docs/testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md](../testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md).
-8. **Offline-first (solo iOS/Android):** Inventario de boxes Hive, cold start sin red y perfil `current_user` en [docs/testing/TESTING_OFFLINE_FIRST.md](../testing/TESTING_OFFLINE_FIRST.md); flujo de usuario en [docs/flujos/FLUJO_CRUD_USUARIOS.md](../flujos/FLUJO_CRUD_USUARIOS.md) (sección *Snapshot de perfil en Hive*).
+8. **Offline-first (solo iOS/Android):** Arquitectura **Firestore-first** (cola del SDK) + réplica Hive y perfil `current_user` — [docs/testing/TESTING_OFFLINE_FIRST.md](../testing/TESTING_OFFLINE_FIRST.md); flujo de usuario en [docs/flujos/FLUJO_CRUD_USUARIOS.md](../flujos/FLUJO_CRUD_USUARIOS.md) (sección *Snapshot de perfil en Hive*). **Ítem 58** de [LISTA_PUNTOS_CORREGIR_APP.md](../testing/LISTA_PUNTOS_CORREGIR_APP.md) cerrado con esa guía y `CONTEXT.md` (2026-04-08). Regresión sugerida: **REG-2026-022** (§12.3) y §15.
 
 ---
 
@@ -2262,7 +2262,7 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 
 ### 12.3 Regresión funcional (puntos cerrados 2026-03)
 
-> Cobertura de regresión para ítems marcados como hechos en `LISTA_PUNTOS_CORREGIR_APP.md` y `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md`. Comportamiento de alta rápida y formulario de evento: ver también `docs/flujos/FLUJO_CRUD_EVENTOS.md` § 1.1a; Mi resumen: `docs/flujos/FLUJO_CRUD_PLANES.md` § 2.4.
+> Cobertura de regresión para ítems marcados como hechos en `LISTA_PUNTOS_CORREGIR_APP.md` y `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md`. Comportamiento de alta rápida y formulario de evento: ver también `docs/flujos/FLUJO_CRUD_EVENTOS.md` § 1.1a; Mi resumen: `docs/flujos/FLUJO_CRUD_PLANES.md` § 2.4. **Offline — ítem 58:** checklist rápido en `TESTING_OFFLINE_FIRST.md` §0; caso formal **REG-2026-022** abajo.
 
 - [ ] **REG-2026-001:** Info del plan — secciones plegadas y bloque eliminar
   - Pasos: Abrir Info del plan en iOS/web; verificar estado inicial de secciones Participantes/Avisos/Eliminar plan; abrir/cerrar cada una.
@@ -2369,41 +2369,46 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Sin `permission-denied`; si falla, verificar despliegue de reglas y mensaje de ayuda en cliente.
   - Estado: 🔄
 
+- [ ] **REG-2026-022:** Offline móvil — verificación ítem **58** (Firestore + Hive + perfil)
+  - Pasos: Ejecutar en iOS o Android el checklist **§0** de [TESTING_OFFLINE_FIRST.md](../testing/TESTING_OFFLINE_FIRST.md) (baseline online, corte de red + banner, crear/editar visible, reconexión, conflicto simple). Opcional: cold start offline tras login previo (perfil / **OFF-PROF-001**).
+  - Esperado: Coherente con la guía: persistencia vía **cliente Firestore**; réplica Hive con red; sin exigir logs de `sync_queue` en CRUD normal. Cierre documental del 58: [LISTA_PUNTOS_CORREGIR_APP.md](../testing/LISTA_PUNTOS_CORREGIR_APP.md).
+  - Estado: 🔄
+
 ---
 
 ## 13. TIMEZONES
 - [ ] **⚠️ IMPORTANTE:** Esta sección es crítica para la funcionalidad de la app.
 
-+### 13.0 Pruebas genéricas de timezones
-+- [x] **TZ-GEN-001:** Verificar preferencia personal
-+  - Pasos:
-+    1. Abrir perfil → Seguridad y acceso → Configurar zona horaria.
-+    2. Seleccionar timezone distinta a la del dispositivo y guardar.
-+    3. Reabrir perfil y comprobar que la preferencia se mantiene.
-+  - Esperado: `users.defaultTimezone` actualizado y visible en cabecera del perfil.
-+- [ ] **TZ-GEN-002:** Comprobar propagación a participaciones
-+  - Pasos:
-+    1. Tras cambiar la preferencia, abrir un plan donde el usuario participe.
-+    2. Inspeccionar Firestore (`plan_participations.personalTimezone`) o revisar eventos en calendario.
-+  - Esperado: Todas las participaciones activas usan la nueva zona; eventos muestran horarios convertidos.
-+  - Nota: Se completará en conjunto con las pruebas de planes y eventos (sección 3 y 4).
-+- [x] **TZ-GEN-003:** Banner de detección automática (si aplica)
-+  - Pasos:
-+    1. Cambiar `users.defaultTimezone` manualmente en Firestore a un valor diferente al timezone del dispositivo.
-+    2. Volver a iniciar sesión.
-+  - Esperado: Banner con copy de soporte, opciones "Actualizar zona" y "Mantener". Al elegir cada opción se muestra snackbar correspondiente.
-+- [ ] **TZ-GEN-004:** Consistencia tras recargar sesión
-+  - Pasos:
-+    1. Cambiar preferencia de timezone.
-+    2. Hacer logout/login y abrir el mismo plan.
-+  - Esperado: La preferencia persiste y el calendario respeta la zona configurada.
-+  - Nota: Persistencia confirmada. Verificación visual del calendario se realizará junto con eventos multi-timezone.
-+- [ ] **TZ-GEN-005:** Fallback sin preferencia
-+  - Pasos:
-+    1. Crear usuario nuevo (sin `defaultTimezone`).
-+    2. Abrir plan existente con timezone definida.
-+  - Esperado: El usuario ve los horarios en la zona del plan hasta que configure su preferencia.
-+
+### 13.0 Pruebas genéricas de timezones
+- [x] **TZ-GEN-001:** Verificar preferencia personal
+  - Pasos:
+    1. Abrir perfil → Seguridad y acceso → Configurar zona horaria.
+    2. Seleccionar timezone distinta a la del dispositivo y guardar.
+    3. Reabrir perfil y comprobar que la preferencia se mantiene.
+  - Esperado: `users.defaultTimezone` actualizado y visible en cabecera del perfil.
+- [ ] **TZ-GEN-002:** Comprobar propagación a participaciones
+  - Pasos:
+    1. Tras cambiar la preferencia, abrir un plan donde el usuario participe.
+    2. Inspeccionar Firestore (`plan_participations.personalTimezone`) o revisar eventos en calendario.
+  - Esperado: Todas las participaciones activas usan la nueva zona; eventos muestran horarios convertidos.
+  - Nota: Se completará en conjunto con las pruebas de planes y eventos (sección 3 y 4).
+- [x] **TZ-GEN-003:** Banner de detección automática (si aplica)
+  - Pasos:
+    1. Cambiar `users.defaultTimezone` manualmente en Firestore a un valor diferente al timezone del dispositivo.
+    2. Volver a iniciar sesión.
+  - Esperado: Banner con copy de soporte, opciones "Actualizar zona" y "Mantener". Al elegir cada opción se muestra snackbar correspondiente.
+- [ ] **TZ-GEN-004:** Consistencia tras recargar sesión
+  - Pasos:
+    1. Cambiar preferencia de timezone.
+    2. Hacer logout/login y abrir el mismo plan.
+  - Esperado: La preferencia persiste y el calendario respeta la zona configurada.
+  - Nota: Persistencia confirmada. Verificación visual del calendario se realizará junto con eventos multi-timezone.
+- [ ] **TZ-GEN-005:** Fallback sin preferencia
+  - Pasos:
+    1. Crear usuario nuevo (sin `defaultTimezone`).
+    2. Abrir plan existente con timezone definida.
+  - Esperado: El usuario ve los horarios en la zona del plan hasta que configure su preferencia.
+
 ### 13.1 Timezones en Planes (T40)
 
 #### TZ-001 — Creación de plan
@@ -2545,6 +2550,8 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
 ---
 
 ## 15. SINCRONIZACIÓN Y OFFLINE
+
+**Referencia cruzada:** Arquitectura y criterios actualizados en [TESTING_OFFLINE_FIRST.md](../testing/TESTING_OFFLINE_FIRST.md). **Ítem 58** ([LISTA_PUNTOS_CORREGIR_APP.md](../testing/LISTA_PUNTOS_CORREGIR_APP.md)): verificación de producto cerrada con modelo Firestore-first; caso de regresión **REG-2026-022** (§12.3). El **ítem 65** de la lista sigue siendo roadmap de consulta offline amplia / web.
 
 ### 15.1 Modo Offline
 

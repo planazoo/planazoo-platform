@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -45,6 +46,12 @@ class MyPlanSummaryScreen extends ConsumerStatefulWidget {
 }
 
 class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
+  static const Color _webPageBg = Color(0xFFF1F5F9);
+  static const Color _webOnSurface = Color(0xFF0F172A);
+  static const Color _webMuted = Color(0xFF64748B);
+  static const Color _webBorder = Color(0xFFE2E8F0);
+  static const Color _webAppBarTitle = Color(0xFF1F2937);
+
   static const int _chronoLimit = 15;
   bool _chronoExpanded = false;
   /// 'mine' = solo mis eventos; 'plan' = todos los participantes.
@@ -90,7 +97,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
       return Center(
         child: Text(
           loc.loginTitle,
-          style: GoogleFonts.poppins(color: Colors.grey.shade400),
+          style: GoogleFonts.poppins(
+            color: kIsWeb ? _webMuted : Colors.grey.shade400,
+          ),
         ),
       );
     }
@@ -178,9 +187,11 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           children: [
             bar,
             Expanded(
-              child: isEmpty
-                  ? _buildEmptyState(loc)
-                  : Stack(
+              child: ColoredBox(
+                color: kIsWeb ? _webPageBg : Colors.transparent,
+                child: isEmpty
+                    ? _buildEmptyState(loc)
+                    : Stack(
                       clipBehavior: Clip.none,
                       children: [
                         ListView(
@@ -259,6 +270,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                           ),
                       ],
                     ),
+              ),
             ),
           ],
         );
@@ -274,9 +286,12 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             draftsOnlyActive: false,
             onDraftOnlyToggle: () {},
           ),
-          const Expanded(
-            child: Center(
-              child: CircularProgressIndicator(color: AppColorScheme.color2),
+          Expanded(
+            child: ColoredBox(
+              color: kIsWeb ? _webPageBg : Colors.transparent,
+              child: const Center(
+                child: CircularProgressIndicator(color: AppColorScheme.color2),
+              ),
             ),
           ),
         ],
@@ -293,10 +308,13 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             onDraftOnlyToggle: () {},
           ),
           Expanded(
-            child: Center(
-              child: Text(
-                err.toString(),
-                style: GoogleFonts.poppins(color: Colors.red.shade300, fontSize: 12),
+            child: ColoredBox(
+              color: kIsWeb ? _webPageBg : Colors.transparent,
+              child: Center(
+                child: Text(
+                  err.toString(),
+                  style: GoogleFonts.poppins(color: Colors.red.shade300, fontSize: 12),
+                ),
               ),
             ),
           ),
@@ -319,14 +337,25 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColorScheme.color2,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: kIsWeb ? _webPageBg : AppColorScheme.color2,
+        border: kIsWeb
+            ? const Border(bottom: BorderSide(color: _webBorder))
+            : null,
+        boxShadow: kIsWeb
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
       ),
       child: Row(
         children: [
@@ -337,7 +366,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
                 fontSize: 17,
-                color: Colors.white,
+                color: kIsWeb ? _webAppBarTitle : Colors.white,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.1,
               ),
@@ -351,7 +380,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               onPressed: onDraftOnlyToggle,
               icon: Icon(
                 draftsOnlyActive ? Icons.filter_alt : Icons.filter_alt_outlined,
-                color: draftsOnlyActive ? Colors.orange.shade200 : Colors.white70,
+                color: draftsOnlyActive
+                    ? (kIsWeb ? Colors.orange.shade800 : Colors.orange.shade200)
+                    : (kIsWeb ? _webMuted : Colors.white70),
                 size: 22,
               ),
             ),
@@ -384,6 +415,27 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
   }
 
   Widget _buildViewModeChip(String label, bool selected, VoidCallback onTap) {
+    if (kIsWeb) {
+      return Material(
+        color: selected ? AppColorScheme.color2 : const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: selected ? Colors.white : _webMuted,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return Material(
       color: selected ? Colors.white : Colors.white24,
       borderRadius: BorderRadius.circular(20),
@@ -408,7 +460,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
   void _showSummaryDetailSheet(BuildContext context, String title, Widget body) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.grey.shade900,
+      backgroundColor: kIsWeb ? Colors.white : Colors.grey.shade900,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -432,18 +484,24 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 17,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: kIsWeb ? _webAppBarTitle : Colors.white,
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white70),
+                          icon: Icon(
+                            Icons.close,
+                            color: kIsWeb ? _webMuted : Colors.white70,
+                          ),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
                     ),
                   ),
-                  Divider(height: 1, color: Colors.grey.shade700),
+                  Divider(
+                    height: 1,
+                    color: kIsWeb ? _webBorder : Colors.grey.shade700,
+                  ),
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: body,
@@ -527,7 +585,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             width: 1,
             height: 52,
             margin: const EdgeInsets.symmetric(horizontal: 2),
-            color: Colors.grey.shade700,
+            color: kIsWeb ? _webBorder : Colors.grey.shade700,
           ),
         );
       }
@@ -553,7 +611,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: Colors.white70,
+                        color: kIsWeb ? _webMuted : Colors.white70,
                         fontWeight: FontWeight.w500,
                         height: 1.15,
                       ),
@@ -570,9 +628,20 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: kIsWeb ? Colors.white : Colors.grey.shade800,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700),
+        border: Border.all(
+          color: kIsWeb ? _webBorder : Colors.grey.shade700,
+        ),
+        boxShadow: kIsWeb
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : null,
       ),
       child: Row(children: rowChildren),
     );
@@ -601,14 +670,14 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             Icon(
               Icons.event_note_outlined,
               size: 56,
-              color: Colors.grey.shade500,
+              color: kIsWeb ? _webMuted : Colors.grey.shade500,
             ),
             const SizedBox(height: 16),
             Text(
               loc.myPlanSummaryEmpty,
               style: GoogleFonts.poppins(
                 fontSize: 15,
-                color: Colors.grey.shade400,
+                color: kIsWeb ? _webMuted : Colors.grey.shade400,
               ),
               textAlign: TextAlign.center,
             ),
@@ -634,22 +703,38 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
   void _showCreateChooser(BuildContext context, AppLocalizations loc) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.grey.shade900,
+      backgroundColor: kIsWeb ? Colors.white : Colors.grey.shade900,
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.event, color: Colors.white),
-              title: Text(loc.createEvent, style: GoogleFonts.poppins(color: Colors.white)),
+              leading: Icon(
+                Icons.event,
+                color: kIsWeb ? AppColorScheme.color2 : Colors.white,
+              ),
+              title: Text(
+                loc.createEvent,
+                style: GoogleFonts.poppins(
+                  color: kIsWeb ? _webOnSurface : Colors.white,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 widget.onRequestCreateEvent?.call();
               },
             ),
             ListTile(
-              leading: const Icon(Icons.hotel_outlined, color: Colors.white),
-              title: Text(loc.tooltipCreateAccommodation, style: GoogleFonts.poppins(color: Colors.white)),
+              leading: Icon(
+                Icons.hotel_outlined,
+                color: kIsWeb ? AppColorScheme.color2 : Colors.white,
+              ),
+              title: Text(
+                loc.tooltipCreateAccommodation,
+                style: GoogleFonts.poppins(
+                  color: kIsWeb ? _webOnSurface : Colors.white,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 widget.onRequestCreateAccommodation?.call();
@@ -686,14 +771,19 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: framed ? 15 : 16,
                       fontWeight: FontWeight.w600,
-                      color: framed ? AppColorScheme.color2 : Colors.white,
+                      color: framed
+                          ? AppColorScheme.color2
+                          : (kIsWeb ? _webOnSurface : Colors.white),
                     ),
                   ),
                   if (subtitle != null && subtitle.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: kIsWeb ? _webMuted : Colors.grey.shade400,
+                      ),
                     ),
                   ],
                 ],
@@ -702,7 +792,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             Icon(
               expanded ? Icons.expand_less : Icons.expand_more,
               size: 26,
-              color: Colors.grey.shade400,
+              color: kIsWeb ? _webMuted : Colors.grey.shade400,
             ),
           ],
         ),
@@ -726,9 +816,20 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: kIsWeb ? Colors.white : Colors.grey.shade800,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700),
+        border: Border.all(
+          color: kIsWeb ? _webBorder : Colors.grey.shade700,
+        ),
+        boxShadow: kIsWeb
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : null,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -737,7 +838,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         children: [
           header,
           if (expanded) ...[
-            const Divider(height: 1),
+            Divider(
+              height: 1,
+              color: kIsWeb ? _webBorder : Colors.grey.shade700,
+            ),
             Padding(
               padding: const EdgeInsets.all(16),
               child: child,
@@ -762,14 +866,17 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             style: GoogleFonts.poppins(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: Colors.white,
+              color: kIsWeb ? _webOnSurface : Colors.white,
             ),
           ),
           const SizedBox(height: 8),
         ],
         Text(
           '${DateFormatter.formatDate(plan.startDate)} – ${DateFormatter.formatDate(plan.endDate)}',
-          style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: kIsWeb ? _webMuted : Colors.white70,
+          ),
         ),
         const SizedBox(height: 6),
         Text(
@@ -777,13 +884,16 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           style: GoogleFonts.poppins(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade300,
+            color: kIsWeb ? const Color(0xFF475569) : Colors.grey.shade300,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           loc.myPlanSummaryParticipantsCount(participantCount),
-          style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: kIsWeb ? _webMuted : Colors.grey.shade400,
+          ),
         ),
       ],
     );
@@ -800,7 +910,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     if (events.isEmpty) {
       return Text(
         '—',
-        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          color: kIsWeb ? _webMuted : Colors.grey.shade500,
+        ),
       );
     }
     final now = DateTime.now();
@@ -886,13 +999,19 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     final safeWebUrl = webUrl ?? '';
     final titleColor = mutedPast
         ? Colors.grey.shade600
-        : (onOpenDetail != null ? AppColorScheme.color2 : Colors.white70);
+        : (onOpenDetail != null
+            ? AppColorScheme.color2
+            : (kIsWeb ? _webMuted : Colors.white70));
     final subColor = mutedPast
         ? Colors.grey.shade700
-        : (subtitleEmphasizeAll ? Colors.orange.shade200 : Colors.grey.shade500);
+        : (subtitleEmphasizeAll
+            ? (kIsWeb ? Colors.orange.shade800 : Colors.orange.shade200)
+            : Colors.grey.shade500);
     final subWeight =
         mutedPast ? FontWeight.w400 : (subtitleEmphasizeAll ? FontWeight.w600 : FontWeight.w400);
-    final iconColor = mutedPast ? Colors.grey.shade700 : Colors.grey.shade500;
+    final iconColor = mutedPast
+        ? Colors.grey.shade700
+        : (kIsWeb ? _webMuted : Colors.grey.shade500);
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
       child: InkWell(
@@ -948,18 +1067,25 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     );
   }
 
+  /// En web, el teal interactivo sobre fondo slate casi no se distingue; usamos título/teal más oscuro y borde.
+  Color get _linkChipIconColor =>
+      kIsWeb ? AppColorScheme.titleColor : AppColorScheme.color2;
+
   Widget _buildMapLinkChip({required VoidCallback onTap}) {
     return Padding(
       padding: const EdgeInsets.only(left: 6),
       child: Material(
-        color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(10),
+        color: kIsWeb ? Colors.white : Colors.grey.shade800,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: kIsWeb ? const BorderSide(color: _webBorder) : BorderSide.none,
+        ),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Icon(Icons.location_on, size: 22, color: AppColorScheme.color2),
+            child: Icon(Icons.location_on, size: 22, color: _linkChipIconColor),
           ),
         ),
       ),
@@ -971,14 +1097,17 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     return Padding(
       padding: const EdgeInsets.only(left: 6),
       child: Material(
-        color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(10),
+        color: kIsWeb ? Colors.white : Colors.grey.shade800,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: kIsWeb ? const BorderSide(color: _webBorder) : BorderSide.none,
+        ),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Icon(Icons.public, size: 22, color: AppColorScheme.color2),
+            child: Icon(Icons.public, size: 22, color: _linkChipIconColor),
           ),
         ),
       ),
@@ -1020,7 +1149,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     if (flights.isEmpty) {
       return Text(
         '—',
-        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          color: kIsWeb ? _webMuted : Colors.grey.shade500,
+        ),
       );
     }
     final now = DateTime.now();
@@ -1058,7 +1190,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     if (accommodations.isEmpty) {
       return Text(
         '—',
-        style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          color: kIsWeb ? _webMuted : Colors.grey.shade500,
+        ),
       );
     }
     return Column(
@@ -1121,7 +1256,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         if (events.isEmpty)
           Text(
             '—',
-            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: kIsWeb ? _webMuted : Colors.grey.shade500,
+            ),
           )
         else ...[
           ..._buildChronologicalGroupedByDay(
@@ -1170,7 +1308,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             Divider(
               height: 20,
               thickness: 1,
-              color: Colors.grey.shade700.withValues(alpha: 0.6),
+              color: kIsWeb
+                  ? _webBorder
+                  : Colors.grey.shade700.withValues(alpha: 0.6),
             ),
           );
         }
@@ -1184,7 +1324,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade400,
+                color: kIsWeb ? _webMuted : Colors.grey.shade400,
               ),
             ),
           ),
@@ -1192,11 +1332,16 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
       }
       final participantLabel = showParticipantLabels ? _participantLabelForEvent(e, participantNamesMap, loc) : null;
       final past = dimPastInCourse && _isEventPast(e, now);
-      final timeColor = past ? Colors.grey.shade700 : Colors.grey.shade400;
+      final timeColor = past
+          ? Colors.grey.shade700
+          : (kIsWeb ? _webMuted : Colors.grey.shade400);
       final titleColor = past
           ? Colors.grey.shade600
-          : (widget.onOpenEvent != null ? AppColorScheme.color2 : Colors.white70);
-      final iconColor = past ? Colors.grey.shade700 : Colors.grey.shade500;
+          : (widget.onOpenEvent != null
+              ? AppColorScheme.color2
+              : (kIsWeb ? _webMuted : Colors.white70));
+      final iconColor =
+          past ? Colors.grey.shade700 : (kIsWeb ? _webMuted : Colors.grey.shade500);
       final allLabelOrange =
           showParticipantLabels && e.participantTrackIds.isEmpty && !past;
       list.add(
@@ -1266,7 +1411,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                               color: past
                                   ? Colors.grey.shade700
                                   : (allLabelOrange
-                                      ? Colors.orange.shade200
+                                      ? (kIsWeb
+                                          ? Colors.orange.shade800
+                                          : Colors.orange.shade200)
                                       : Colors.grey.shade500),
                               fontWeight:
                                   !past && allLabelOrange ? FontWeight.w600 : FontWeight.w400,

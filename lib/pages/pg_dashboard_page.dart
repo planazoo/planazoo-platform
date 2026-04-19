@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
@@ -75,6 +76,12 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
+  bool get _isWeb => kIsWeb;
+  ThemeData get _dashboardTheme => _isWeb ? AppTheme.lightTheme : AppTheme.darkTheme;
+  Color get _surfacePrimary => _isWeb ? const Color(0xFFF5F7FA) : Colors.grey.shade800;
+  Color get _surfaceSecondary => _isWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
+  Color get _onSurfacePrimary => _isWeb ? const Color(0xFF1F2937) : Colors.white;
+  Color get _onSurfaceMuted => _isWeb ? const Color(0xFF6B7280) : Colors.grey.shade400;
   // Estado para el planazoo seleccionado
   String? selectedPlanId;
   Plan? selectedPlan;
@@ -633,11 +640,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
     
     return Theme(
-      data: AppTheme.darkTheme,
+      data: _dashboardTheme,
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade800, // Color sólido, sin gradiente
+            color: _surfacePrimary, // Color sólido, sin gradiente
           ),
           child: Stack(
             children: [
@@ -1443,7 +1450,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           width: double.infinity,
           height: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.grey.shade800, // Color sólido, sin gradiente
+            color: _surfacePrimary, // Color sólido, sin gradiente
           ),
           child: Stack(
             children: [
@@ -1547,7 +1554,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         width: w13Width,
         height: w13Height,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
+        decoration: BoxDecoration(color: _surfaceSecondary),
         child: Row(
           children: [
             Expanded(
@@ -1577,7 +1584,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         width: w28Width,
         height: w28Height,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
+        decoration: BoxDecoration(color: _surfaceSecondary),
         child: Row(
           children: [
             Expanded(
@@ -1601,9 +1608,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   plans: displayedPlans,
                   selectedPlanId: selectedPlanId,
                   isLoading: isLoading,
-                  onPlanSelected: _selectPlanazoo,
+                  onPlanSelected: (planId) {
+                    Plan? targetPlan;
+                    for (final plan in displayedPlans) {
+                      if (plan.id == planId) {
+                        targetPlan = plan;
+                        break;
+                      }
+                    }
+                    if (targetPlan != null) {
+                      _openPlanTab(targetPlan, 'mySummary', 'W15_MYSUMMARY');
+                    } else {
+                      _selectPlanazoo(planId);
+                    }
+                  },
                   onPlanDeleted: _deletePlanazoo,
-                  onSummaryInPanel: (plan) => _openPlanTab(plan, 'mySummary', 'W15_MYSUMMARY'),
                   onNotificationsTap: (plan) => _openPlanTab(plan, 'unifiedNotifications', 'W20'),
                   onChatTap: (plan) => _openPlanTab(plan, 'chat', 'W19'),
                 ),
@@ -1630,7 +1649,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         width: w30Width,
         height: w30Height,
         decoration: BoxDecoration(
-          color: Colors.grey.shade800, // Color sólido, sin gradiente
+          color: _surfacePrimary, // Color sólido, sin gradiente
           // Sin borderRadius (esquinas en ángulo recto)
           // Sin borde
           // Sin sombras
@@ -1734,7 +1753,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             style: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: _onSurfacePrimary,
               letterSpacing: 0.1,
             ),
           ),
@@ -1743,7 +1762,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             AppLocalizations.of(context)!.dashboardCreateFirstPlanHint,
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.grey.shade400,
+              color: _onSurfaceMuted,
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
@@ -2135,7 +2154,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       child: Container(
         width: w29Width,
         height: w29Height,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
+        decoration: BoxDecoration(color: _surfaceSecondary),
         child: Row(
           children: [
             Expanded(
@@ -2153,7 +2172,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       loc.dashboardInvitationsPendingCount(invitations.length),
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: Colors.grey.shade300,
+                        color: _isWeb ? const Color(0xFF475569) : Colors.grey.shade300,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -2220,7 +2239,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         child: Text(
           AppLocalizations.of(context)!.dashboardSelectPlanToSeeChat,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, color: Colors.white),
+          style: TextStyle(fontSize: 18, color: _onSurfacePrimary),
         ),
       );
     }

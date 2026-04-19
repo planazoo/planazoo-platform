@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 /// Servicio de logging profesional para reemplazar print statements
 class LoggerService {
   // Tag eliminado para mantener logs más limpios
+  static const bool _showDatabaseLogs = false;
   
   /// Log de debug (solo en modo debug)
   static void debug(String message, {String? context}) {
@@ -58,6 +59,7 @@ class LoggerService {
   
   /// Log de operación de base de datos
   static void database(String message, {String? operation}) {
+    if (!_showDatabaseLogs) return;
     final operationStr = operation != null ? '[$operation]' : '';
       print('DATABASE$operationStr: $message');
   }

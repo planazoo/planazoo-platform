@@ -8,8 +8,6 @@ class PlanListWidget extends StatelessWidget {
   final bool isLoading;
   final Function(String) onPlanSelected;
   final Function(String) onPlanDeleted;
-  /// Si se proporciona, el icono de resumen abre la página de resumen (p. ej. pestaña Mi resumen).
-  final void Function(Plan plan)? onSummaryInPanel;
   /// Al clic en icono notificaciones: abrir notificaciones del plan.
   final void Function(Plan plan)? onNotificationsTap;
   /// Al clic en icono chat: abrir chat del plan.
@@ -22,7 +20,6 @@ class PlanListWidget extends StatelessWidget {
     required this.isLoading,
     required this.onPlanSelected,
     required this.onPlanDeleted,
-    this.onSummaryInPanel,
     this.onNotificationsTap,
     this.onChatTap,
   });
@@ -40,7 +37,8 @@ class PlanListWidget extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      // Alineado con W13 (Buscar planes): mismo inset horizontal.
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       itemCount: plans.length,
       itemBuilder: (context, index) {
         final plan = plans[index];
@@ -51,7 +49,6 @@ class PlanListWidget extends StatelessWidget {
           isSelected: isSelected,
           onTap: () => onPlanSelected(plan.id!),
           onDelete: () => onPlanDeleted(plan.id!),
-          onSummaryInPanel: onSummaryInPanel,
           onNotificationsTap: onNotificationsTap,
           onChatTap: onChatTap,
         );

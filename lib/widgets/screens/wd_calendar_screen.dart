@@ -114,6 +114,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   String? _selectedPerspectiveUserId;
   String? _currentPerspectiveTimezone;
 
+  static const String _ctxActionEdit = 'edit';
+  static const String _ctxActionCopy = 'copy';
+  static const String _ctxActionDelete = 'delete';
+
   @override
   void initState() {
     super.initState();
@@ -310,12 +314,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     if (currentUser == null) {
       return Theme(
-        data: AppTheme.darkTheme,
+        data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
         child: Scaffold(
-          backgroundColor: Colors.grey.shade900,
+          backgroundColor: kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900,
           body: Container(
             decoration: BoxDecoration(
-              color: Colors.grey.shade800, // Color sólido, sin gradiente
+              color: kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade800, // Color sólido, sin gradiente
             ),
             child: const Center(child: CircularProgressIndicator(color: AppColorScheme.color2)),
           ),
@@ -333,9 +337,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     ref.watch(calendarNotifierProvider(calendarParams));
     
     return Theme(
-      data: AppTheme.darkTheme,
+      data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade900,
+        backgroundColor: kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900,
         appBar: _buildAppBar(),
         floatingActionButton: kIsWeb && PlanStatePermissions.canAddEvents(widget.plan)
             ? FloatingActionButton(
@@ -355,7 +359,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             : null,
         body: Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade800, // Color sólido, sin gradiente
+            color: kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade800, // Color sólido, sin gradiente
           ),
           child: _buildCalendarBody(),
         ),
@@ -467,7 +471,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Border(
       right: includeRight
           ? BorderSide(
-              color: Colors.grey.shade500.withOpacity(CalendarConstants.calendarSeparatorOpacityWeb),
+              color: (kIsWeb ? const Color(0xFFCBD5E1) : Colors.grey.shade500)
+                  .withOpacity(CalendarConstants.calendarSeparatorOpacityWeb),
               width: CalendarConstants.calendarVerticalSeparatorWidth,
             )
           : BorderSide.none,
@@ -477,7 +482,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Crea un BoxDecoration común para contenedores con borde
   BoxDecoration _createBorderedDecoration({Color? color}) {
     return BoxDecoration(
-      border: Border.all(color: Colors.grey.shade700.withOpacity(0.3)),
+      border: Border.all(
+        color: (kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade700).withOpacity(0.3),
+      ),
       color: color,
     );
   }
@@ -585,10 +592,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final columns = _getColumnsToShow();
     
     return Row(
-      children: columns.map((column) {
+      children: columns.asMap().entries.map((entry) {
+        final visibleDayIndex = entry.key;
+        final column = entry.value;
         final dayData = column as Map<String, dynamic>;
         final participants = dayData['participants'] as List<ParticipantTrack>;
-        
+
         return Expanded(
           child: Column(
             children: List.generate(AppConstants.defaultRowCount, (hourIndex) {
@@ -596,10 +605,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 height: AppConstants.cellHeight,
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Colors.grey.shade700.withOpacity(0.3),
+                    color: kIsWeb
+                        ? const Color(0xFFE2E8F0).withValues(alpha: 0.9)
+                        : Colors.grey.shade700.withOpacity(0.3),
                     width: 0.5,
                   ),
-                  color: _getDataCellColor(column),
+                  color: _getDataCellColor(column, visibleDayIndex),
                 ),
                 child: _buildEventCellWithSubColumns(hourIndex, column, participants),
               );
@@ -612,14 +623,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Obtiene el color de la celda de datos según el tipo de columna
   /// T90: Aplica fondo diferenciado para tracks activos
-  Color _getDataCellColor(dynamic column) {
+  /// Web: franjas claras alineadas con [CalendarTracks] / W13.
+  Color _getDataCellColor(dynamic column, int visibleDayIndex) {
     final dayData = column as Map<String, dynamic>;
     final isEmpty = dayData['isEmpty'] as bool;
+
+    if (kIsWeb) {
+      if (isEmpty) {
+        return const Color(0xFFE2E8F0).withValues(alpha: 0.35);
+      }
+      return visibleDayIndex % 2 == 0
+          ? const Color(0xFFFFFFFF)
+          : const Color(0xFFFAFCFF);
+    }
+
     if (isEmpty) return Colors.grey.shade800.withOpacity(0.3);
-    
-    // Nota: El resaltado de track activo se aplica en las subcolumnas individuales
-    // Este método solo afecta el fondo general de la celda del día
-    // Estilo base: fondo oscuro
     return Colors.grey.shade800;
   }
   
@@ -1191,7 +1209,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         _showEventDialog(continuationEvent);
       },
       // Drag deshabilitado para continuaciones - solo desde evento original
-      child: Container(
+      child: Stack(
+        children: [
+          Container(
           decoration: BoxDecoration(
             color: ColorUtils.getEventColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
             borderRadius: BorderRadius.circular(4),
@@ -1235,6 +1255,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ),
             ),
           ),
+          ),
+          _buildEventActionsMenuButton(continuationEvent, height),
+        ],
       ),
     );
   }
@@ -1510,15 +1533,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       onPanStart: (details) => _startDrag(event, details),
       onPanUpdate: (details) => _updateDrag(details),
       onPanEnd: (details) => _endDrag(details),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 50),
-        curve: Curves.easeOut,
-        transform: Matrix4.translationValues(
-          displayOffset.dx,
-          displayOffset.dy,
-          0,
-        ),
-        child: Container(
+      child: Stack(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 50),
+            curve: Curves.easeOut,
+            transform: Matrix4.translationValues(
+              displayOffset.dx,
+              displayOffset.dy,
+              0,
+            ),
+            child: Container(
           decoration: BoxDecoration(
             // T89: Gradiente para eventos multi-participante cuando abarcan múltiples tracks
             gradient: isMultiParticipant && isMultiTrack
@@ -1617,7 +1642,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ),
             ),
           ),
-        ),
+            ),
+          ),
+          _buildEventActionsMenuButton(event, height),
+        ],
       ),
     );
   }
@@ -2470,6 +2498,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         ),
       ),
+      _buildEventActionsMenuButton(
+        segment.originalEvent,
+        height,
+        right: showLimitIndicator ? 20 : 2,
+      ),
       // Indicador visual de límite alcanzado
       if (showLimitIndicator)
         Positioned(
@@ -2658,7 +2691,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           duration: const Duration(milliseconds: 50),
           curve: Curves.easeOut,
           transform: isThisEventDragging ? Matrix4.translationValues(displayOffset.dx, displayOffset.dy, 0) : null,
-          child: Container(
+          child: Stack(
+            children: [
+              Container(
             decoration: BoxDecoration(
               // T89: Gradiente para eventos multi-participante cuando abarcan múltiples tracks
               gradient: isMultiParticipant && isMultiTrack
@@ -2763,6 +2798,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
               ),
             ),
+              ),
+              _buildEventActionsMenuButton(event, eventHeight),
+            ],
           ),
         ),
       );
@@ -3214,6 +3252,222 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
+  Widget _buildEventActionsMenuButton(
+    Event event,
+    double eventHeight, {
+    double right = 0,
+  }) {
+    if (!kIsWeb || eventHeight < 22) return const SizedBox.shrink();
+    final canCopy = PlanStatePermissions.canAddEvents(widget.plan);
+    final canDelete = PlanStatePermissions.canDeleteEvents(widget.plan);
+    if (!canCopy && !canDelete) return const SizedBox.shrink();
+    final itemSize = eventHeight < 34 ? 12.0 : 13.0;
+
+    return Positioned(
+      top: 1,
+      right: right,
+      child: PopupMenuButton<String>(
+        tooltip: '',
+        padding: EdgeInsets.zero,
+        iconSize: itemSize,
+        splashRadius: itemSize,
+        icon: Icon(
+          Icons.more_vert,
+          color: Colors.white,
+          shadows: const [
+            Shadow(
+              offset: Offset(0, 0.5),
+              blurRadius: 2,
+              color: Color(0x66000000),
+            ),
+          ],
+        ),
+        onSelected: (value) => _handleEventContextAction(event, value),
+        itemBuilder: (context) => [
+          PopupMenuItem<String>(
+            value: _ctxActionEdit,
+            child: Text(AppLocalizations.of(context)!.calendarContextEditEvent),
+          ),
+          if (canCopy)
+            PopupMenuItem<String>(
+              value: _ctxActionCopy,
+              child: Text(AppLocalizations.of(context)!.calendarContextCopyEvent),
+            ),
+          if (canDelete)
+            PopupMenuItem<String>(
+              value: _ctxActionDelete,
+              child: Text(AppLocalizations.of(context)!.calendarContextDeleteEvent),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleEventContextAction(Event event, String value) async {
+    switch (value) {
+      case _ctxActionEdit:
+        _showEventDialog(event);
+        break;
+      case _ctxActionCopy:
+        await _copyEventWithinPlan(event);
+        break;
+      case _ctxActionDelete:
+        await _deleteEventFromContextMenu(event);
+        break;
+    }
+  }
+
+  String _copyColorFor(String? sourceColor) {
+    const primary = 'purple';
+    const secondary = 'teal';
+    if (sourceColor == null || sourceColor.isEmpty) return primary;
+    return sourceColor == primary ? secondary : primary;
+  }
+
+  String _prefixCopyTitle(String text) {
+    final trimmed = text.trim();
+    if (trimmed.toUpperCase().startsWith('COPIA')) return trimmed;
+    return trimmed.isEmpty ? 'COPIA' : 'COPIA $trimmed';
+  }
+
+  Event _buildCopiedEvent(Event source) {
+    final now = DateTime.now();
+    final shiftedStart = DateTime(
+      source.date.year,
+      source.date.month,
+      source.date.day,
+      source.hour,
+      source.startMinute,
+    ).add(const Duration(minutes: 30));
+    final copyColor = _copyColorFor(source.color);
+    final copyTitle = _prefixCopyTitle(source.description);
+    final srcCommon = source.commonPart;
+    final copiedCommon = srcCommon == null
+        ? null
+        : EventCommonPart(
+            description: _prefixCopyTitle(srcCommon.description),
+            date: DateTime(
+              shiftedStart.year,
+              shiftedStart.month,
+              shiftedStart.day,
+            ),
+            startHour: shiftedStart.hour,
+            startMinute: shiftedStart.minute,
+            durationMinutes: srcCommon.durationMinutes,
+            location: srcCommon.location,
+            notes: srcCommon.notes,
+            url: srcCommon.url,
+            family: srcCommon.family,
+            subtype: srcCommon.subtype,
+            customColor: copyColor,
+            participantIds: List<String>.from(srcCommon.participantIds),
+            isForAllParticipants: srcCommon.isForAllParticipants,
+            isDraft: srcCommon.isDraft,
+            extraData: srcCommon.extraData == null
+                ? null
+                : Map<String, dynamic>.from(srcCommon.extraData!),
+            connection: srcCommon.connection == null
+                ? null
+                : Map<String, dynamic>.from(srcCommon.connection!),
+          );
+
+    return source.copyWith(
+      id: null,
+      userId: _currentUserId ?? source.userId,
+      description: copyTitle,
+      date: DateTime(
+        shiftedStart.year,
+        shiftedStart.month,
+        shiftedStart.day,
+      ),
+      hour: shiftedStart.hour,
+      startMinute: shiftedStart.minute,
+      color: copyColor,
+      createdAt: now,
+      updatedAt: now,
+      commonPart: copiedCommon,
+      personalParts: source.personalParts?.map(
+        (k, v) => MapEntry(k, EventPersonalPart.fromMap(v.toMap())),
+      ),
+      documents: source.documents
+          ?.map((d) => EventDocument.fromMap(d.toMap()))
+          .toList(),
+    );
+  }
+
+  Future<void> _copyEventWithinPlan(Event event) async {
+    if (!PlanStatePermissions.canAddEvents(widget.plan)) return;
+    final copied = _buildCopiedEvent(event);
+    final id = await ref.read(eventServiceProvider).createEvent(copied);
+    if (!mounted) return;
+    if (id != null) {
+      _invalidateEventProviders();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!
+              .calendarContextCopiedOkWithOffset),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(AppLocalizations.of(context)!.calendarContextCopiedError),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteEventFromContextMenu(Event event) async {
+    final eventId = event.id;
+    if (eventId == null || !PlanStatePermissions.canDeleteEvents(widget.plan)) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(AppLocalizations.of(context)!.calendarContextDeleteTitle),
+            content:
+                Text(AppLocalizations.of(context)!.calendarContextDeleteMessage),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(AppLocalizations.of(context)!.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(AppLocalizations.of(context)!.delete),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) return;
+    final ok = await ref.read(eventServiceProvider).deleteEvent(eventId);
+    if (!mounted) return;
+    if (ok) {
+      _invalidateEventProviders();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.calendarContextDeletedOk),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(AppLocalizations.of(context)!.calendarContextDeletedError),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   /// Muestra el diálogo para crear un nuevo evento
   void _showNewEventDialog(
     DateTime date,
@@ -3582,7 +3836,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     'Tap para crear',
                     style: TextStyle(
                       fontSize: 6,
-                      color: Colors.grey.shade600,
+                      color: kIsWeb
+                          ? const Color(0xFF64748B)
+                          : Colors.grey.shade600,
                     ),
                   ),
                 ),

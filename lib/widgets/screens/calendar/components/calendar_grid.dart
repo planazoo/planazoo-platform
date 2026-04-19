@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
@@ -82,8 +83,14 @@ class CalendarGrid extends StatelessWidget {
             height: CalendarConstants.headerHeight,
             decoration: CalendarStyles.getFixedHoursColumnDecoration().copyWith(
               border: Border(
-                top: BorderSide(color: Colors.grey.shade600, width: 1),
-                bottom: BorderSide(color: Colors.grey.shade600, width: 1),
+                top: BorderSide(
+                  color: kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade600,
+                  width: 1,
+                ),
+                bottom: BorderSide(
+                  color: kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade600,
+                  width: 1,
+                ),
               ),
             ),
             child: const Center(
@@ -109,7 +116,9 @@ class CalendarGrid extends StatelessWidget {
                         child: Icon(
                           Icons.home_rounded,
                           size: 20,
-                          color: Colors.white.withOpacity(0.9),
+                          color: kIsWeb
+                              ? AppColorScheme.color2
+                              : Colors.white.withOpacity(0.9),
                         ),
                       ),
                       Positioned(

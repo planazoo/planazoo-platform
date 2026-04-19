@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import '../../../../features/calendar/domain/models/plan.dart';
 import '../../../../features/calendar/domain/models/event.dart';
 import '../../../../features/calendar/domain/models/plan_participation.dart';
@@ -9,17 +7,16 @@ import '../../../../shared/services/logger_service.dart';
 import 'plan_local_service.dart';
 import 'event_local_service.dart';
 import 'participation_local_service.dart';
-import 'sync_service.dart';
 import 'hive_service.dart';
 
-/// Servicio para sincronización en tiempo real con Firestore listeners (solo móviles)
-/// 
-/// Escucha cambios en Firestore y sincroniza automáticamente con la base de datos local.
+/// Servicio para sincronización en tiempo real con Firestore listeners (solo móviles).
+///
+/// Con red, refleja Firestore en Hive (`plans`, `events`, `participations`). Las escrituras
+/// offline siguen la cola del SDK de Firestore; `SyncService` / `sync_queue` no intervienen en rutas actuales.
 class RealtimeSyncService {
   final PlanLocalService _planLocalService = PlanLocalService();
   final EventLocalService _eventLocalService = EventLocalService();
   final ParticipationLocalService _participationLocalService = ParticipationLocalService();
-  final SyncService _syncService = SyncService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final Map<String, StreamSubscription> _subscriptions = {};

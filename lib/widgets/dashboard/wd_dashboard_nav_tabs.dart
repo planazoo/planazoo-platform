@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
-import 'package:unp_calendario/l10n/app_localizations.dart';
 
 /// Definición de una pestaña de navegación del dashboard (W14–W20).
 class DashboardNavTabItem {
@@ -11,8 +11,6 @@ class DashboardNavTabItem {
   final String screen;
   /// Badge de no leídas (p. ej. en W20).
   final int? badgeCount;
-  /// Si true, el label usa fuente más pequeña (p. ej. "notificaciones").
-  final bool smallLabel;
 
   const DashboardNavTabItem({
     required this.id,
@@ -20,7 +18,6 @@ class DashboardNavTabItem {
     required this.label,
     required this.screen,
     this.badgeCount,
-    this.smallLabel = false,
   });
 
   DashboardNavTabItem copyWith({int? badgeCount}) {
@@ -30,7 +27,6 @@ class DashboardNavTabItem {
       label: label,
       screen: screen,
       badgeCount: badgeCount ?? this.badgeCount,
-      smallLabel: smallLabel,
     );
   }
 }
@@ -55,17 +51,16 @@ class WdDashboardNavTabs extends StatelessWidget {
 
   /// Lista de pestañas (W14–W20) con etiquetas localizadas. T252: añadida "Mi resumen".
   static List<DashboardNavTabItem> tabItems(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
     return [
-      DashboardNavTabItem(id: 'W14', icon: Icons.info, label: loc.dashboardTabPlanazoo, screen: 'planData'),
-      DashboardNavTabItem(id: 'W21_NOTES', icon: Icons.note_alt_outlined, label: loc.planNotesTabTitle, screen: 'planNotes'),
-      DashboardNavTabItem(id: 'W15_MYSUMMARY', icon: Icons.list_alt, label: loc.myPlanSummaryTab, screen: 'mySummary'),
-      DashboardNavTabItem(id: 'W15', icon: Icons.calendar_today, label: loc.dashboardTabCalendar, screen: 'calendar'),
-      DashboardNavTabItem(id: 'W16', icon: Icons.group, label: loc.dashboardTabIn, screen: 'participants'),
-      DashboardNavTabItem(id: 'W18', icon: Icons.payment, label: loc.dashboardTabPayments, screen: 'payments'),
-      DashboardNavTabItem(id: 'W19', icon: Icons.chat_bubble_outline, label: loc.dashboardTabChat, screen: 'chat'),
-      DashboardNavTabItem(id: 'W20', icon: Icons.notifications_outlined, label: loc.dashboardTabNotifications, screen: 'unifiedNotifications', smallLabel: true),
-      DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: loc.dashboardTabStats, screen: 'stats'),
+      DashboardNavTabItem(id: 'W14', icon: Icons.info, label: 'info', screen: 'planData'),
+      DashboardNavTabItem(id: 'W15_MYSUMMARY', icon: Icons.list_alt, label: 'resumen', screen: 'mySummary'),
+      DashboardNavTabItem(id: 'W15', icon: Icons.calendar_today, label: 'calendario', screen: 'calendar'),
+      DashboardNavTabItem(id: 'W16', icon: Icons.group, label: 'in', screen: 'participants'),
+      DashboardNavTabItem(id: 'W18', icon: Icons.payment, label: 'pagos', screen: 'payments'),
+      DashboardNavTabItem(id: 'W19', icon: Icons.chat_bubble_outline, label: 'chat', screen: 'chat'),
+      DashboardNavTabItem(id: 'W20', icon: Icons.notifications_outlined, label: 'avisos', screen: 'unifiedNotifications'),
+      DashboardNavTabItem(id: 'W21_NOTES', icon: Icons.note_alt_outlined, label: 'notas', screen: 'planNotes'),
+      DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: 'stats', screen: 'stats'),
     ];
   }
 
@@ -125,71 +120,48 @@ class _NavTabCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final badgeCount = item.badgeCount ?? 0;
     final hasUnread = badgeCount > 0;
+    final cellBg = kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
     final textColor = isSelected
         ? Colors.white
-        : (hasUnread ? AppColorScheme.color3 : Colors.grey.shade400);
-    final fontSize = item.smallLabel ? 10.0 : 12.0;
+        : (hasUnread
+            ? AppColorScheme.color3
+            : (kIsWeb ? const Color(0xFF475569) : Colors.grey.shade400));
+    const fontSize = 11.0;
+    final pillWidth = width - 12;
 
     return SizedBox(
       width: width,
       height: height,
       child: Container(
         decoration: BoxDecoration(
-          color: isSelected ? AppColorScheme.color2 : Colors.grey.shade900,
-          borderRadius: isSelected
-              ? const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                )
-              : null,
-          border: isSelected
-              ? Border.all(color: AppColorScheme.color2, width: 2)
-              : null,
+          color: cellBg,
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
+        child: InkWell(
           onTap: onTap,
-          borderRadius: isSelected
-              ? const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
-                )
-              : null,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      (item.id == 'W19' && hasUnread) ? Icons.chat_bubble : item.icon,
-                      color: textColor,
-                      size: 20,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.label,
-                      style: GoogleFonts.poppins(
-                        color: textColor,
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+          child: Center(
+            child: Container(
+              width: pillWidth,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: isSelected
+                  ? BoxDecoration(
+                      color: AppColorScheme.color2,
+                      borderRadius: BorderRadius.circular(10),
+                    )
+                  : null,
+              child: Text(
+                item.label,
+                style: GoogleFonts.poppins(
+                  color: textColor,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w600,
                 ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                textAlign: TextAlign.center,
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-          ],
         ),
       ),
     );
@@ -214,7 +186,7 @@ class _EmptyNavCell extends StatelessWidget {
       height: height,
       child: Container(
         decoration: BoxDecoration(
-          color: isSelected ? AppColorScheme.color2 : Colors.grey.shade900,
+          color: kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900,
           border: isSelected
               ? Border.all(color: AppColorScheme.color2, width: 2)
               : null,

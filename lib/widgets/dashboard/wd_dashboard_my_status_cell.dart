@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
@@ -24,6 +25,7 @@ class WdDashboardMyStatusCell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final headerBg = kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
     final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
 
@@ -31,7 +33,7 @@ class WdDashboardMyStatusCell extends ConsumerWidget {
       return Positioned(
         left: columnWidth * _w10Column - 1,
         top: 0,
-        child: _buildEmptyCell(context, loc),
+        child: _buildEmptyCell(context, loc, headerBg),
       );
     }
 
@@ -41,7 +43,7 @@ class WdDashboardMyStatusCell extends ConsumerWidget {
       left: columnWidth * _w10Column - 1,
       top: 0,
       child: Material(
-        color: Colors.grey.shade900,
+        color: headerBg,
         child: SizedBox(
           width: columnWidth + 1,
           height: rowHeight,
@@ -57,12 +59,12 @@ class WdDashboardMyStatusCell extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyCell(BuildContext context, AppLocalizations loc) {
+  Widget _buildEmptyCell(BuildContext context, AppLocalizations loc, Color headerBg) {
     return Container(
       width: columnWidth + 1,
       height: rowHeight,
       decoration: BoxDecoration(
-        color: Colors.grey.shade900,
+        color: headerBg,
       ),
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 6),

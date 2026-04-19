@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme/color_scheme.dart';
 
@@ -60,7 +61,7 @@ class _PlanSearchWidgetState extends State<PlanSearchWidget> {
         child: Center(
           child: Icon(
             Icons.close,
-            color: Colors.grey.shade400,
+            color: kIsWeb ? const Color(0xFF94A3B8) : Colors.grey.shade400,
             size: 20,
           ),
         ),
@@ -78,53 +79,55 @@ class _PlanSearchWidgetState extends State<PlanSearchWidget> {
   @override
   Widget build(BuildContext context) {
     const double fieldHeight = 36;
+    final isWebLight = kIsWeb;
+    final bgColor = isWebLight ? const Color(0xFFF8FAFC) : Colors.grey.shade800;
+    final borderColor = isWebLight ? const Color(0xFFE2E8F0) : Colors.grey.shade700.withOpacity(0.5);
+    final textColor = isWebLight ? const Color(0xFF0F172A) : Colors.white;
+    final hintColor = isWebLight ? const Color(0xFF94A3B8) : Colors.grey.shade500;
+    final iconColor = isWebLight ? const Color(0xFF94A3B8) : Colors.grey.shade400;
+
     return Container(
       height: fieldHeight,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
+        color: bgColor,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: borderColor,
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-            spreadRadius: -2,
-          ),
-        ],
+        boxShadow: isWebLight
+            ? const []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 1),
+                  spreadRadius: -2,
+                ),
+              ],
       ),
       child: TextField(
         controller: _controller,
         style: GoogleFonts.poppins(
           fontSize: 14,
-          color: Colors.white,
+          color: textColor,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           hintText: 'Buscar planes...',
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade500,
+            color: hintColor,
           ),
           prefixIcon: Icon(
             Icons.search,
-            color: Colors.grey.shade400,
+            color: iconColor,
             size: 22,
           ),
           suffixIcon: _controller.text.isEmpty

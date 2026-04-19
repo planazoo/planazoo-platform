@@ -1,15 +1,19 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../features/chat/domain/models/plan_message.dart';
-import '../../features/chat/domain/services/chat_service.dart';
 import '../../features/chat/presentation/providers/chat_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
-import '../../shared/utils/date_formatter.dart';
 import '../../app/theme/color_scheme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Emojis disponibles para reacciones (clic derecho o pulsación larga en el mensaje)
 const List<String> _reactionEmojis = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+
+const Color _kWebBorder = Color(0xFFE2E8F0);
+const Color _kWebMuted = Color(0xFF64748B);
+const Color _kWebOnSurface = Color(0xFF0F172A);
+const Color _kWebReactionBg = Color(0xFFF1F5F9);
 
 /// Widget que muestra una burbuja de mensaje tipo WhatsApp
 class ChatMessageBubble extends ConsumerWidget {
@@ -34,6 +38,15 @@ class ChatMessageBubble extends ConsumerWidget {
     // Defensivo: mensajes antiguos/hot reload pueden hacer que .reactions falle al leer
     final reactions = PlanMessage.safeReactions(message);
 
+    final bodyTextColor =
+        isOwnMessage ? Colors.white : (kIsWeb ? _kWebOnSurface : Colors.white);
+    final metaColor = isOwnMessage
+        ? Colors.white.withValues(alpha: 0.7)
+        : (kIsWeb ? _kWebMuted : Colors.white.withValues(alpha: 0.7));
+    final editedColor = isOwnMessage
+        ? Colors.white.withValues(alpha: 0.6)
+        : (kIsWeb ? _kWebMuted : Colors.white.withValues(alpha: 0.6));
+
     return Align(
       alignment: isOwnMessage ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -51,7 +64,7 @@ class ChatMessageBubble extends ConsumerWidget {
                   senderDisplayName ?? senderUsername ?? 'Usuario',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: Colors.grey.shade400,
+                    color: kIsWeb ? _kWebMuted : Colors.grey.shade400,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -70,7 +83,19 @@ class ChatMessageBubble extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: isOwnMessage
                       ? AppColorScheme.color2
-                      : Colors.grey.shade800,
+                      : (kIsWeb ? Colors.white : Colors.grey.shade800),
+                  border: !isOwnMessage && kIsWeb
+                      ? Border.all(color: _kWebBorder)
+                      : null,
+                  boxShadow: !isOwnMessage && kIsWeb
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 1),
+                          ),
+                        ]
+                      : null,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(18),
                     topRight: const Radius.circular(18),
@@ -85,7 +110,7 @@ class ChatMessageBubble extends ConsumerWidget {
                       message.message,
                       style: GoogleFonts.poppins(
                         fontSize: 15,
-                        color: Colors.white,
+                        color: bodyTextColor,
                         height: 1.4,
                       ),
                     ),
@@ -97,7 +122,7 @@ class ChatMessageBubble extends ConsumerWidget {
                           _formatTime(message.createdAt),
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: Colors.white.withOpacity(0.7),
+                            color: metaColor,
                           ),
                         ),
                         if (isOwnMessage) ...[
@@ -107,7 +132,7 @@ class ChatMessageBubble extends ConsumerWidget {
                             size: 14,
                             color: isRead
                                 ? Colors.blue.shade300
-                                : Colors.white.withOpacity(0.7),
+                                : Colors.white.withValues(alpha: 0.7),
                           ),
                         ],
                         if (message.isEdited) ...[
@@ -116,7 +141,7 @@ class ChatMessageBubble extends ConsumerWidget {
                             'editado',
                             style: GoogleFonts.poppins(
                               fontSize: 10,
-                              color: Colors.white.withOpacity(0.6),
+                              color: editedColor,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -139,9 +164,14 @@ class ChatMessageBubble extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: isMe
-                                    ? AppColorScheme.color2.withOpacity(0.6)
-                                    : Colors.white.withOpacity(0.1),
+                                    ? AppColorScheme.color2.withValues(alpha: 0.6)
+                                    : (kIsWeb
+                                        ? _kWebReactionBg
+                                        : Colors.white.withValues(alpha: 0.1)),
                                 borderRadius: BorderRadius.circular(12),
+                                border: !isMe && kIsWeb
+                                    ? Border.all(color: _kWebBorder.withValues(alpha: 0.6))
+                                    : null,
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -153,7 +183,9 @@ class ChatMessageBubble extends ConsumerWidget {
                                       '$count',
                                       style: GoogleFonts.poppins(
                                         fontSize: 11,
-                                        color: Colors.white70,
+                                        color: (isOwnMessage || !kIsWeb)
+                                            ? Colors.white70
+                                            : _kWebMuted,
                                       ),
                                     ),
                                   ],
@@ -185,7 +217,8 @@ class ChatMessageBubble extends ConsumerWidget {
       context: context,
       position: position,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.grey.shade800,
+      color: kIsWeb ? Colors.white : Colors.grey.shade800,
+      elevation: 8,
       items: [
         PopupMenuItem<String>(
           enabled: false,

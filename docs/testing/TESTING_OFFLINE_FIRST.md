@@ -14,8 +14,18 @@ Solo **móvil** (`HiveService.isMobile`). En web estas operaciones se ignoran.
 | `plans` | Snapshots de planes del usuario | `RealtimeSyncService` + `PlanLocalService` |
 | `events` | Eventos (no alojamientos en esta caja) | `RealtimeSyncService` + `EventLocalService` |
 | `participations` | `plan_participations` activas | `RealtimeSyncService` + `ParticipationLocalService` |
-| `sync_queue` | Operaciones pendientes (`create` / `update` / `delete` + payload) | `SyncQueueService` |
+| `sync_queue` | Operaciones pendientes (`create` / `update` / `delete` + payload) | `SyncQueueService` + `SyncService` *(infra preparada; ver arquitectura abajo)* |
 | **`current_user`** | **Un único documento** (`key: current`): perfil del usuario autenticado alineado con `UserModel` | **`UserLocalService` + `AuthNotifier`** |
+
+### Arquitectura offline en móvil (fuente de verdad operativa)
+
+Para **planes, eventos y participaciones**, el comportamiento offline que usa la app hoy se apoya en:
+
+1. **Persistencia offline de Firestore** (activada por defecto en iOS/Android): las lecturas con `.snapshots()` / `.get()` pueden servirse desde caché local; las **escrituras** sin red quedan en la **cola del SDK** y se envían al volver la conectividad.
+2. **Hive (`plans`, `events`, `participations`)** como **réplica** cuando hay red: `RealtimeSyncService` escucha Firestore y actualiza cajas vía `*LocalService`.
+3. **`current_user` en Hive** para **perfil**: arranque y sesión coherentes si Firestore no responde pero Auth sigue válido (no lo sustituye el SDK de la misma forma).
+
+La **`sync_queue` propia** y **`SyncService.syncAll`** (`lib/features/offline/domain/services/sync_service.dart`) implementan cola explícita + resolución “último `updatedAt` gana” para alinear Hive ↔ remoto, pero **no están cableadas** al reconectar como segundo motor de sync sobre las mismas escrituras (no conviene duplicar la cola del SDK sin diseño explícito). Evolución posible: tareas **T56–T62** / roadmap offline. Hasta entonces, las pruebas de “reconexión y conflictos” deben interpretarse en términos de **Firestore + reglas de negocio en servidor**, no de logs `Item añadido a cola de sincronización` en rutas normales de creación de eventos.
 
 ### Perfil en `current_user` (offline-first)
 
@@ -61,11 +71,11 @@ Objetivo: decidir **funciona / no funciona / parcial** con evidencia mínima rep
 4. **Chequeo de conflicto simple (5-8 min)**
    - Modificar el mismo dato en dos clientes (uno offline y otro online).
    - Reconectar cliente offline.
-   - Verificar regla vigente: "último cambio gana" (según `updatedAt`).
+   - Verificar coherencia con **Firestore** (convención típica: última escritura al documento prevalece al sincronizar; no exigir log `Conflicto resuelto` del `SyncService` en rutas actuales).
 
 **Criterio de cierre del 58**
-- Si pasan 1-4: marcar `hecho`.
-- Si falla algún bloque: mantener `en curso` y anotar bloqueo específico (cola, reconexión, conflictos, UX).
+- Si pasan 1-4: marcar `hecho` en la lista de puntos (ver `LISTA_PUNTOS_CORREGIR_APP.md`).
+- Si falla algún bloque: mantener `en curso` y anotar bloqueo específico (reconexión Firestore, UX, perfil Hive, etc.).
 
 ### 1. Verificación Inicial
 
@@ -103,9 +113,9 @@ adb shell svc wifi disable && adb shell svc data disable
 - [ ] El indicador muestra "Sin conexión - Modo offline activo" (banner naranja)
 - [ ] Tras un login online previo, **reinicio en frío offline**: la app arranca y muestra usuario coherente (Hive `current_user` + Auth)
 - [ ] La app sigue funcionando (puedes navegar, ver datos)
-- [ ] Puedes crear nuevos planes/eventos (se guardan localmente)
-- [ ] Puedes editar planes/eventos existentes (se guardan localmente)
-- [ ] Los cambios se añaden a la cola de sincronización
+- [ ] Puedes crear nuevos planes/eventos (persistencia local vía **caché/ cola de Firestore**)
+- [ ] Puedes editar planes/eventos existentes (igual)
+- [ ] Tras reconectar, los cambios pendientes del SDK llegan a Firestore (la **`sync_queue` Hive** no es el camino activo para este CRUD)
 
 ### 4. Sincronización (Volver a Online)
 
@@ -127,7 +137,7 @@ adb shell svc wifi enable && adb shell svc data enable
 - [ ] Los cambios pendientes se sincronizan automáticamente
 - [ ] Los datos locales se actualizan con cambios remotos
 - [ ] No hay pérdida de datos
-- [ ] Los conflictos se resuelven (último cambio gana)
+- [ ] Tras ediciones concurrentes, los datos convergen con lo que refleje Firestore (sin depender de `SyncService.syncAll` en la build actual)
 
 ### 5. Resolución de Conflictos
 
@@ -139,16 +149,15 @@ Para probar conflictos:
    - Volver a conectar la app offline
    - Verificar que el último cambio gana
 
-2. **Verificar logs:**
-   - Buscar mensajes "Conflicto resuelto (último cambio gana)" en la consola
+2. **Verificar comportamiento:**
+   - Coherencia de datos tras reconectar; el mensaje de log `Conflicto resuelto (último cambio gana)` en `SyncService` solo aplica si en el futuro se invoca `syncAll` / cola explícita.
 
-### 6. Cola de Sincronización
+### 6. Cola de escrituras pendientes (Firestore)
 
-- [ ] Crear varios cambios offline
-- [ ] Verificar que todos se añaden a la cola
+- [ ] Crear varios cambios offline (p. ej. varios eventos)
 - [ ] Volver a conectar
-- [ ] Verificar que todos se sincronizan
-- [ ] Verificar retry automático si hay errores
+- [ ] Verificar que los documentos aparecen en Firestore / en otros clientes (el SDK reintenta envíos)
+- [ ] *(Opcional avanzado)* Inspección local: caché de Firestore; no confundir con la caja Hive `sync_queue` reservada para futuro `SyncService`
 
 ### 7. Sincronización en Tiempo Real
 
@@ -162,10 +171,10 @@ Buscar en la consola:
 
 - `Hive inicializado correctamente` - Hive funcionando
 - `ConnectivityService inicializado` - Conectividad funcionando
-- `RealtimeSyncService inicializado` - Sincronización en tiempo real activa
-- `Item añadido a cola de sincronización` - Cola funcionando
+- `RealtimeSyncService inicializado` - Listeners activos (réplica Hive cuando hay red)
+- `Item añadido a cola de sincronización` - Solo si se usa la cola Hive explícita (hoy **no** en flujo normal CRUD planes/eventos)
 - `Item guardado localmente: current [current_user]` - Snapshot de perfil en Hive (tras guardado exitoso desde `AuthNotifier`)
-- `Conflicto resuelto` - Resolución de conflictos funcionando
+- `Conflicto resuelto` - Solo si se ejecuta la ruta de `SyncService` con cola/remoto (hoy no cableada al reconectar)
 - `Evento sincronizado en tiempo real` - Sincronización automática funcionando
 
 ## ⚠️ Problemas Comunes
@@ -184,18 +193,18 @@ Buscar en la consola:
 - Verificar conexión a Firestore
 
 ### Datos no se guardan offline
-- Verificar que Hive está inicializado
-- Verificar logs de `LocalStorageService`
-- Verificar que los servicios usan los servicios locales cuando están offline
+- Verificar persistencia de Firestore (SDK) y que la app no fuerza solo `Source.server` en rutas críticas
+- Verificar que Hive está inicializado (perfil + réplica cuando vuelve la red)
+- Verificar logs de `LocalStorageService` / `RealtimeSyncService`
 
 ## 📝 Notas
 
 - El sistema offline solo funciona en móviles (iOS/Android)
 - En web, la app funcionará normalmente pero sin capacidades offline
-- Los cambios offline se guardan en Hive y se sincronizan cuando hay conexión
-- La resolución de conflictos usa "último cambio gana" basado en `updatedAt`
+- Los cambios offline de planes/eventos pasan por la **caché y cola del cliente Firestore**; Hive refleja el remoto al estar online
+- Conflictos multi-dispositivo: reglas efectivas de **Firestore / última escritura**; `SyncService` documenta una estrategia `updatedAt` para cuando se active la cola Hive explícita
 - El perfil del usuario autenticado tiene copia en Hive (`current_user`) para arranque y sesión sin Firestore
-- Casos de prueba formales (checklist): [TESTING_CHECKLIST.md](../configuracion/TESTING_CHECKLIST.md) — sección 15.2 (**OFF-PROF-001**, **OFF-PROF-002**); borrado de cuenta **USER-D-007** (paso 5, móvil)
+- Casos de prueba formales (checklist): [TESTING_CHECKLIST.md](../configuracion/TESTING_CHECKLIST.md) — **REG-2026-022** (§12.3, regresión ítem **58** / §0 de esta guía); sección 15 (**OFF-001–004**, **OFF-PROF-001**, **OFF-PROF-002**); borrado de cuenta **USER-D-007** (paso 5, móvil)
 
-**Última actualización:** Abril 2026 (box `current_user` + flujo Auth documentados)
+**Última actualización:** Abril 2026 — `current_user`; arquitectura Firestore-first vs `sync_queue` Hive aclarada
 

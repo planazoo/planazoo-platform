@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
@@ -36,6 +37,9 @@ class WdDashboardSidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isWebLight = kIsWeb;
+    final sidebarBg = isWebLight ? const Color(0xFFE8EEF5) : AppColorScheme.color2;
+    final iconColor = isWebLight ? const Color(0xFF475569) : Colors.white;
     final loc = AppLocalizations.of(context)!;
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.isAdmin ?? false;
@@ -53,8 +57,8 @@ class WdDashboardSidebar extends ConsumerWidget {
       child: Container(
         width: columnWidth,
         height: gridHeight,
-        decoration: const BoxDecoration(
-          color: AppColorScheme.color2,
+        decoration: BoxDecoration(
+          color: sidebarBg,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -64,7 +68,9 @@ class WdDashboardSidebar extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  NotificationBadge(),
+                  NotificationBadge(
+                    iconColor: iconColor,
+                  ),
                   if (onOpenChatForPlan != null) ...[
                     const SizedBox(height: 8),
                     Tooltip(
@@ -72,7 +78,7 @@ class WdDashboardSidebar extends ConsumerWidget {
                       child: IconButton(
                         icon: Icon(
                           showChatBadge ? Icons.chat_bubble : Icons.chat_bubble_outline,
-                          color: showChatBadge ? AppColorScheme.color3 : Colors.white,
+                          color: showChatBadge ? AppColorScheme.color3 : iconColor,
                           size: 24,
                         ),
                         onPressed: () {
@@ -90,7 +96,7 @@ class WdDashboardSidebar extends ConsumerWidget {
                     Tooltip(
                       message: 'Administración',
                       child: IconButton(
-                        icon: const Icon(Icons.admin_panel_settings, color: Colors.white, size: 24),
+                        icon: Icon(Icons.admin_panel_settings, color: iconColor, size: 24),
                         onPressed: onAdminTap,
                       ),
                     ),
@@ -100,7 +106,7 @@ class WdDashboardSidebar extends ConsumerWidget {
                     Tooltip(
                       message: loc.helpManualOpenFromLogin,
                       child: IconButton(
-                        icon: const Icon(Icons.help_outline, color: Colors.white, size: 24),
+                        icon: Icon(Icons.help_outline, color: iconColor, size: 24),
                         onPressed: onHelpTap,
                       ),
                     ),
@@ -118,17 +124,17 @@ class WdDashboardSidebar extends ConsumerWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: isWebLight ? const Color(0xFFFDFEFF) : Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: isWebLight ? const Color(0xFFE2E8F0) : Colors.white.withValues(alpha: 0.3),
                         width: 2,
                       ),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       Icons.person,
-                      color: Colors.white,
+                      color: iconColor,
                       size: 24,
                     ),
                   ),

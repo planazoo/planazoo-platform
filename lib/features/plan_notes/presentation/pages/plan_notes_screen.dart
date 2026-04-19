@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,6 +31,10 @@ class PlanNotesScreen extends ConsumerStatefulWidget {
 
 class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
     with SingleTickerProviderStateMixin {
+  static const double _notesTextScale = 0.92;
+  static const double _fsXs = 12;
+  static const double _fsSm = 13;
+  static const double _fsTitle = 15;
   late TabController _tabController;
   final _commonNoteCtrl = TextEditingController();
   final _personalNoteCtrl = TextEditingController();
@@ -47,6 +52,33 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
   bool _didEnsureWorkspace = false;
   String? _lastAppliedCommonFp;
   String? _lastAppliedPersonalFp;
+
+  static const Color _webPageBg = Color(0xFFF1F5F9);
+  static const Color _webOnSurface = Color(0xFF1F2937);
+  static const Color _webBodyText = Color(0xFF0F172A);
+  static const Color _webMuted = Color(0xFF64748B);
+  static const Color _webInputFill = Color(0xFFF8FAFC);
+  static const Color _webBorder = Color(0xFFE2E8F0);
+
+  bool get _webLight => kIsWeb;
+
+  Color get _pageBg => _webLight ? _webPageBg : Colors.grey.shade900;
+
+  Color get _textPrimary => _webLight ? _webBodyText : Colors.white;
+
+  Color get _textSecondary => _webLight ? _webMuted : Colors.grey.shade400;
+
+  Color get _labelMuted => _webLight ? _webMuted : Colors.white70;
+
+  Color get _inputFill => _webLight ? _webInputFill : Colors.grey.shade800;
+
+  Color get _cardSurface => _webLight ? Colors.white : Colors.grey.shade800;
+
+  Color get _borderSubtle =>
+      _webLight ? _webBorder : Colors.grey.shade700;
+
+  Color get _readOnlyHintColor =>
+      _webLight ? Colors.amber.shade900 : Colors.amber.shade200;
 
   @override
   void initState() {
@@ -178,45 +210,51 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
         var local = Set<String>.from(initial);
         return StatefulBuilder(
           builder: (context, setLocal) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF2C2C2C),
-              title: Text(
-                loc.planNotesSelectParticipantsTitle,
-                style: const TextStyle(color: Colors.white),
-              ),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final p in participants)
-                      if (p.isActive && p.isAccepted && !p.isObserver)
-                        CheckboxListTile(
-                          value: local.contains(p.userId),
-                          onChanged: (v) {
-                            setLocal(() {
-                              if (v == true) {
-                                local.add(p.userId);
-                              } else {
-                                local.remove(p.userId);
-                              }
-                            });
-                          },
-                          title: Text(
-                            names[p.userId] ?? p.userId,
-                            style: const TextStyle(color: Colors.white70),
+            return Theme(
+              data: _webLight ? AppTheme.lightTheme : AppTheme.darkTheme,
+              child: AlertDialog(
+                backgroundColor:
+                    _webLight ? Colors.white : const Color(0xFF2C2C2C),
+                title: Text(
+                  loc.planNotesSelectParticipantsTitle,
+                  style: TextStyle(
+                      color: _webLight ? _webOnSurface : Colors.white),
+                ),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      for (final p in participants)
+                        if (p.isActive && p.isAccepted && !p.isObserver)
+                          CheckboxListTile(
+                            value: local.contains(p.userId),
+                            onChanged: (v) {
+                              setLocal(() {
+                                if (v == true) {
+                                  local.add(p.userId);
+                                } else {
+                                  local.remove(p.userId);
+                                }
+                              });
+                            },
+                            title: Text(
+                              names[p.userId] ?? p.userId,
+                              style: TextStyle(
+                                  color: _webLight ? _webBodyText : Colors.white70),
+                            ),
+                            activeColor: AppColorScheme.color2,
                           ),
-                          activeColor: AppColorScheme.color2,
-                        ),
-                  ],
+                    ],
+                  ),
                 ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, local),
+                    child: Text(loc.planNotesApplySelection),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, local),
-                  child: Text(loc.planNotesApplySelection),
-                ),
-              ],
             );
           },
         );
@@ -301,54 +339,64 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
 
     final participantsAsync = ref.watch(planRealParticipantsProvider(planId));
     final nameMapAsync = ref.watch(planParticipantDisplayNamesProvider(planId));
+    final notesTabBar = TabBar(
+      controller: _tabController,
+      indicatorColor: kIsWeb ? AppColorScheme.color2 : Colors.white,
+      labelColor: kIsWeb ? _webBodyText : Colors.white,
+      unselectedLabelColor: kIsWeb ? _webMuted : Colors.white70,
+      labelStyle: GoogleFonts.poppins(
+        fontWeight: FontWeight.w600,
+        fontSize: _fsSm,
+      ),
+      tabs: [
+        Tab(text: loc.planNotesTabCommon),
+        Tab(text: loc.planNotesTabPersonal),
+      ],
+    );
 
     return Theme(
-      data: AppTheme.darkTheme,
-      child: Scaffold(
-        backgroundColor: Colors.grey.shade900,
-        appBar: AppBar(
-          automaticallyImplyLeading: !widget.embedInPlanDetail,
-          backgroundColor: AppColorScheme.color2,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          title: Text(
-            loc.planNotesTabTitle,
-            style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          bottom: TabBar(
-            controller: _tabController,
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            tabs: [
-              Tab(text: loc.planNotesTabCommon),
-              Tab(text: loc.planNotesTabPersonal),
+      data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
+      child: MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: const TextScaler.linear(_notesTextScale),
+        ),
+        child: Scaffold(
+          backgroundColor: _pageBg,
+          appBar: null,
+          body: Column(
+            children: [
+              Material(
+                color: kIsWeb ? _webPageBg : AppColorScheme.color2,
+                child: notesTabBar,
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildCommonTab(
+                      context,
+                      loc: loc,
+                      planId: planId,
+                      userId: userId,
+                      isOrganizer: isOrganizer,
+                      workspaceLoading: wsAsync.isLoading,
+                      workspace: workspace,
+                      readOnlyCommon: readOnlyCommon,
+                      canEditCommon: canEditCommon,
+                      participantsAsync: participantsAsync,
+                      nameMapAsync: nameMapAsync,
+                    ),
+                    _buildPersonalTab(
+                      context,
+                      loc: loc,
+                      planId: planId,
+                      userId: userId,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-        ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildCommonTab(
-              context,
-              loc: loc,
-              planId: planId,
-              userId: userId,
-              isOrganizer: isOrganizer,
-              workspaceLoading: wsAsync.isLoading,
-              workspace: workspace,
-              readOnlyCommon: readOnlyCommon,
-              canEditCommon: canEditCommon,
-              participantsAsync: participantsAsync,
-              nameMapAsync: nameMapAsync,
-            ),
-            _buildPersonalTab(
-              context,
-              loc: loc,
-              planId: planId,
-              userId: userId,
-            ),
-          ],
         ),
       ),
     );
@@ -377,7 +425,7 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
           child: Text(
             loc.planNotesNoWorkspaceYet,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade400),
+            style: TextStyle(color: _textSecondary),
           ),
         ),
       );
@@ -390,13 +438,13 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
         children: [
           Text(
             loc.planNotesCommonIntro,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+            style: TextStyle(color: _textSecondary, fontSize: _fsXs),
           ),
           if (readOnlyCommon) ...[
             const SizedBox(height: 8),
             Text(
               loc.planNotesReadOnlyHint,
-              style: TextStyle(color: Colors.amber.shade200, fontSize: 12),
+              style: TextStyle(color: _readOnlyHintColor, fontSize: _fsXs),
             ),
           ],
           const SizedBox(height: 16),
@@ -404,9 +452,9 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
             Text(
               loc.planNotesPolicyTitle,
               style: GoogleFonts.poppins(
-                color: Colors.white,
+                color: _textPrimary,
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
+                fontSize: _fsSm,
               ),
             ),
             const SizedBox(height: 8),
@@ -470,7 +518,7 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
             style: GoogleFonts.poppins(
               color: AppColorScheme.color2,
               fontWeight: FontWeight.w600,
-              fontSize: 16,
+              fontSize: _fsTitle,
             ),
           ),
           const SizedBox(height: 8),
@@ -501,12 +549,13 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
                 Expanded(
                   child: TextField(
                     controller: _commonNewItemCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: _textPrimary, fontSize: _fsSm),
                     decoration: InputDecoration(
                       hintText: loc.planNotesNewItemHint,
-                      hintStyle: TextStyle(color: Colors.grey.shade600),
+                      hintStyle: TextStyle(color: _textSecondary, fontSize: _fsSm),
+                      isDense: true,
                       enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey.shade700),
+                        borderSide: BorderSide(color: _borderSubtle),
                       ),
                     ),
                   ),
@@ -532,7 +581,7 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
           const SizedBox(height: 24),
           Text(
             loc.planNotesCommonNoteLabel,
-            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+            style: GoogleFonts.poppins(color: _labelMuted, fontSize: _fsSm),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -541,11 +590,23 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
             minLines: 4,
             maxLines: 12,
             onChanged: (_) => setState(() => _dirtyCommon = true),
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: _textPrimary, fontSize: _fsSm),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.grey.shade800,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              fillColor: _inputFill,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _borderSubtle),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _borderSubtle),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    const BorderSide(color: AppColorScheme.color2, width: 2),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -576,7 +637,7 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
         children: [
           Text(
             loc.planNotesPersonalIntro,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+            style: TextStyle(color: _textSecondary, fontSize: _fsXs),
           ),
           const SizedBox(height: 16),
           Text(
@@ -584,7 +645,7 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
             style: GoogleFonts.poppins(
               color: AppColorScheme.color2,
               fontWeight: FontWeight.w600,
-              fontSize: 16,
+              fontSize: _fsTitle,
             ),
           ),
           const SizedBox(height: 8),
@@ -612,12 +673,13 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
               Expanded(
                 child: TextField(
                   controller: _personalNewItemCtrl,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: _textPrimary, fontSize: _fsSm),
                   decoration: InputDecoration(
                     hintText: loc.planNotesNewItemHint,
-                    hintStyle: TextStyle(color: Colors.grey.shade600),
+                    hintStyle: TextStyle(color: _textSecondary, fontSize: _fsSm),
+                    isDense: true,
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.grey.shade700),
+                      borderSide: BorderSide(color: _borderSubtle),
                     ),
                   ),
                 ),
@@ -642,7 +704,7 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
           const SizedBox(height: 24),
           Text(
             loc.planNotesPersonalNoteLabel,
-            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+            style: GoogleFonts.poppins(color: _labelMuted, fontSize: _fsSm),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -650,11 +712,23 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
             minLines: 4,
             maxLines: 12,
             onChanged: (_) => setState(() => _dirtyPersonal = true),
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: _textPrimary, fontSize: _fsSm),
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.grey.shade800,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              fillColor: _inputFill,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _borderSubtle),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: _borderSubtle),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                    const BorderSide(color: AppColorScheme.color2, width: 2),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -674,8 +748,15 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
     required ValueChanged<bool> onToggle,
     required VoidCallback? onDelete,
   }) {
+    final strikeColor =
+        _webLight ? _webMuted : Colors.white54;
     return Card(
-      color: Colors.grey.shade800,
+      color: _cardSurface,
+      elevation: _webLight ? 0 : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: _borderSubtle.withValues(alpha: 0.9)),
+      ),
       margin: const EdgeInsets.only(bottom: 6),
       child: ListTile(
         leading: Checkbox(
@@ -686,15 +767,16 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
         title: Text(
           item.text,
           style: TextStyle(
-            color: Colors.white,
+            color: _textPrimary,
+            fontSize: _fsSm,
             decoration: item.done ? TextDecoration.lineThrough : null,
-            decorationColor: Colors.white54,
+            decorationColor: strikeColor,
           ),
         ),
         trailing: onDelete == null
             ? null
             : IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.white54),
+                icon: Icon(Icons.delete_outline, color: strikeColor),
                 onPressed: onDelete,
               ),
       ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -37,6 +38,94 @@ class ParticipantsScreen extends ConsumerStatefulWidget {
 }
 
 class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
+  static const Color _webPageBg = Color(0xFFF1F5F9);
+  static const Color _webBorder = Color(0xFFE2E8F0);
+  static const Color _webOnSurface = Color(0xFF0F172A);
+  static const Color _webMuted = Color(0xFF64748B);
+
+  /// Tarjeta lista participantes: oscura en móvil, clara en web (W13).
+  BoxDecoration _participantCardDecoration({double radius = 12}) {
+    if (kIsWeb) {
+      return BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: _webBorder),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
+    }
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.grey.shade800,
+          const Color(0xFF2C2C2C),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: Colors.grey.shade700.withOpacity(0.5),
+        width: 1,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.3),
+          blurRadius: 12,
+          offset: const Offset(0, 2),
+          spreadRadius: 0,
+        ),
+      ],
+    );
+  }
+
+  /// Bloque superior “Invitar usuarios” (borde inferior en web).
+  BoxDecoration _inviteSectionDecoration() {
+    if (kIsWeb) {
+      return BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: _webBorder),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
+    }
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.grey.shade800,
+          const Color(0xFF2C2C2C),
+        ],
+      ),
+      border: Border(
+        bottom: BorderSide(
+          color: Colors.grey.shade700.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.3),
+          blurRadius: 12,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    );
+  }
+
   List<UserModel> _allUsers = [];
   List<UserModel> _filteredUsers = [];
   bool _isLoadingUsers = true;
@@ -255,15 +344,15 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => Theme(
-          data: AppTheme.darkTheme,
+          data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
           child: AlertDialog(
-            backgroundColor: Colors.grey.shade800,
+            backgroundColor: kIsWeb ? Colors.white : Colors.grey.shade800,
             title: Text(
               loc.invitationCreatedTitle,
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: kIsWeb ? _webOnSurface : Colors.white,
               ),
             ),
             content: Column(
@@ -274,17 +363,17 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                   loc.invitationShareLinkHint,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
-                    color: Colors.grey.shade400,
+                    color: kIsWeb ? _webMuted : Colors.grey.shade400,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade900,
+                    color: kIsWeb ? const Color(0xFFF8FAFC) : Colors.grey.shade900,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.grey.shade700.withOpacity(0.5),
+                      color: kIsWeb ? _webBorder : Colors.grey.shade700.withOpacity(0.5),
                       width: 1,
                     ),
                   ),
@@ -292,7 +381,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     link,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: Colors.white,
+                      color: kIsWeb ? _webOnSurface : Colors.white,
                     ),
                   ),
                 ),
@@ -304,7 +393,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 child: Text(
                   loc.close,
                   style: GoogleFonts.poppins(
-                    color: Colors.grey.shade400,
+                    color: kIsWeb ? _webMuted : Colors.grey.shade400,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -379,17 +468,17 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       builder: (dialogContext) {
         final loc = AppLocalizations.of(dialogContext)!;
         return Theme(
-          data: AppTheme.darkTheme,
+          data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
           child: StatefulBuilder(
             builder: (context, setInnerState) {
               return AlertDialog(
-                backgroundColor: Colors.grey.shade800,
+                backgroundColor: kIsWeb ? Colors.white : Colors.grey.shade800,
                 title: Text(
                   loc.inviteByEmailTitle,
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: kIsWeb ? _webOnSurface : Colors.white,
                   ),
                 ),
                 content: SingleChildScrollView(
@@ -402,7 +491,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                           loc.invitePendingExistsForEmail(emailController.text.trim()),
                           style: GoogleFonts.poppins(
                             fontSize: 14,
-                            color: Colors.white,
+                            color: kIsWeb ? _webOnSurface : Colors.white,
                           ),
                         ),
                       ] else ...[
@@ -438,10 +527,10 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                         ],
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade800,
+                            color: kIsWeb ? const Color(0xFFF8FAFC) : Colors.grey.shade800,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.grey.shade700.withOpacity(0.5),
+                              color: kIsWeb ? _webBorder : Colors.grey.shade700.withOpacity(0.5),
                               width: 1,
                             ),
                           ),
@@ -451,20 +540,20 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             enabled: !isLoading,
                             style: GoogleFonts.poppins(
                               fontSize: 15,
-                              color: Colors.white,
+                              color: kIsWeb ? _webOnSurface : Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
                             decoration: InputDecoration(
                               labelText: loc.emailLabel,
                               labelStyle: GoogleFonts.poppins(
                                 fontSize: 13,
-                                color: Colors.grey.shade400,
+                                color: kIsWeb ? _webMuted : Colors.grey.shade400,
                                 fontWeight: FontWeight.w500,
                               ),
                               hintText: loc.emailHint,
                               hintStyle: GoogleFonts.poppins(
                                 fontSize: 14,
-                                color: Colors.grey.shade500,
+                                color: kIsWeb ? _webMuted : Colors.grey.shade500,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
@@ -490,19 +579,19 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                         const SizedBox(height: 12),
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade800,
+                            color: kIsWeb ? const Color(0xFFF8FAFC) : Colors.grey.shade800,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.grey.shade700.withOpacity(0.5),
+                              color: kIsWeb ? _webBorder : Colors.grey.shade700.withOpacity(0.5),
                               width: 1,
                             ),
                           ),
                           child: DropdownButtonFormField<String>(
                             value: role,
-                            dropdownColor: Colors.grey.shade800,
+                            dropdownColor: kIsWeb ? Colors.white : Colors.grey.shade800,
                             style: GoogleFonts.poppins(
                               fontSize: 15,
-                              color: Colors.white,
+                              color: kIsWeb ? _webOnSurface : Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
                             items: [
@@ -512,7 +601,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                   loc.participantRoleLabel,
                                   style: GoogleFonts.poppins(
                                     fontSize: 15,
-                                    color: Colors.white,
+                                    color: kIsWeb ? _webOnSurface : Colors.white,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -523,7 +612,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                   loc.observerRoleLabel,
                                   style: GoogleFonts.poppins(
                                     fontSize: 15,
-                                    color: Colors.white,
+                                    color: kIsWeb ? _webOnSurface : Colors.white,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -534,7 +623,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                               labelText: loc.roleFieldLabel,
                               labelStyle: GoogleFonts.poppins(
                                 fontSize: 13,
-                                color: Colors.grey.shade400,
+                                color: kIsWeb ? _webMuted : Colors.grey.shade400,
                                 fontWeight: FontWeight.w500,
                               ),
                               border: OutlineInputBorder(
@@ -561,10 +650,10 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                         const SizedBox(height: 12),
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade800,
+                            color: kIsWeb ? const Color(0xFFF8FAFC) : Colors.grey.shade800,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.grey.shade700.withOpacity(0.5),
+                              color: kIsWeb ? _webBorder : Colors.grey.shade700.withOpacity(0.5),
                               width: 1,
                             ),
                           ),
@@ -574,14 +663,14 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                             enabled: !isLoading,
                             style: GoogleFonts.poppins(
                               fontSize: 15,
-                              color: Colors.white,
+                              color: kIsWeb ? _webOnSurface : Colors.white,
                               fontWeight: FontWeight.w500,
                             ),
                             decoration: InputDecoration(
                               labelText: loc.inviteOptionalMessageLabel,
                               labelStyle: GoogleFonts.poppins(
                                 fontSize: 13,
-                                color: Colors.grey.shade400,
+                                color: kIsWeb ? _webMuted : Colors.grey.shade400,
                                 fontWeight: FontWeight.w500,
                               ),
                               border: OutlineInputBorder(
@@ -827,22 +916,22 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         builder: (dialogContext) {
           final loc = AppLocalizations.of(dialogContext)!;
           return Theme(
-            data: AppTheme.darkTheme,
+            data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
             child: AlertDialog(
-              backgroundColor: Colors.grey.shade800,
+              backgroundColor: kIsWeb ? Colors.white : Colors.grey.shade800,
               title: Text(
                 loc.confirmDeleteTitle,
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: kIsWeb ? _webOnSurface : Colors.white,
                 ),
               ),
               content: Text(
                 loc.participantRemoveConfirmMessage,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: Colors.grey.shade400,
+                  color: kIsWeb ? _webMuted : Colors.grey.shade400,
                 ),
               ),
               actions: [
@@ -851,7 +940,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                   child: Text(
                     loc.cancel,
                     style: GoogleFonts.poppins(
-                      color: Colors.grey.shade400,
+                      color: kIsWeb ? _webMuted : Colors.grey.shade400,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -973,7 +1062,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 Text(
                   'Cargando participantes...',
                   style: GoogleFonts.poppins(
-                    color: Colors.grey.shade400,
+                    color: kIsWeb ? _webMuted : Colors.grey.shade400,
                     fontSize: 14,
                   ),
                 ),
@@ -989,7 +1078,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 Text(
                   'Error al cargar participantes: $error',
                   style: GoogleFonts.poppins(
-                    color: Colors.grey.shade400,
+                    color: kIsWeb ? _webMuted : Colors.grey.shade400,
                     fontSize: 14,
                   ),
                   textAlign: TextAlign.center,
@@ -1100,29 +1189,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     final statusText = PlanUserStatusColors.pendingText;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
+      decoration: _participantCardDecoration(),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
@@ -1150,14 +1217,14 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white,
+                      color: kIsWeb ? _webOnSurface : Colors.white,
                     ),
                   ),
                   Text(
                     loc.invitationPendingEmailLabel,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: Colors.grey.shade400,
+                      color: kIsWeb ? _webMuted : Colors.grey.shade400,
                     ),
                   ),
                 ],
@@ -1307,29 +1374,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade800,
-            const Color(0xFF2C2C2C),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
+      decoration: _participantCardDecoration(),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
@@ -1359,7 +1404,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
-                      color: Colors.white,
+                      color: kIsWeb ? _webOnSurface : Colors.white,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1369,7 +1414,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     Text(
                       usernameLabel,
                       style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400,
+                        color: kIsWeb ? _webMuted : Colors.grey.shade400,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1455,15 +1500,15 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     showDialog(
       context: context,
       builder: (context) => Theme(
-        data: AppTheme.darkTheme,
+        data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
         child: AlertDialog(
-          backgroundColor: Colors.grey.shade800,
+          backgroundColor: kIsWeb ? Colors.white : Colors.grey.shade800,
           title: Text(
             'Cambiar rol',
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: kIsWeb ? _webOnSurface : Colors.white,
             ),
           ),
           content: Column(
@@ -1473,7 +1518,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 'Selecciona un nuevo rol para ${participation.userId}:',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: Colors.grey.shade400,
+                  color: kIsWeb ? _webMuted : Colors.grey.shade400,
                 ),
               ),
               const SizedBox(height: 16),
@@ -1501,7 +1546,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       title: Text(
         label,
         style: GoogleFonts.poppins(
-          color: Colors.white,
+          color: kIsWeb ? _webOnSurface : Colors.white,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -1509,7 +1554,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       subtitle: Text(
         _getRoleDescription(role),
         style: GoogleFonts.poppins(
-          color: Colors.grey.shade400,
+          color: kIsWeb ? _webMuted : Colors.grey.shade400,
           fontSize: 12,
         ),
       ),
@@ -1534,9 +1579,20 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey.shade800,
+          color: kIsWeb ? Colors.white : Colors.grey.shade800,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade700.withOpacity(0.5)),
+          border: Border.all(
+            color: kIsWeb ? _webBorder : Colors.grey.shade700.withOpacity(0.5),
+          ),
+          boxShadow: kIsWeb
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           children: [
@@ -1552,7 +1608,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: kIsWeb ? _webOnSurface : Colors.white,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1560,7 +1616,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     'Dejarás de ser participante de este plan.',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: Colors.grey.shade400,
+                      color: kIsWeb ? _webMuted : Colors.grey.shade400,
                     ),
                   ),
                 ],
@@ -1591,25 +1647,41 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       builder: (dialogContext) {
         final loc = AppLocalizations.of(dialogContext)!;
         return Theme(
-          data: AppTheme.darkTheme,
+          data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
           child: AlertDialog(
-            backgroundColor: Colors.grey.shade800,
+            backgroundColor: kIsWeb ? Colors.white : Colors.grey.shade800,
             title: Text(
               loc.planCardLeavePlanTitle,
-              style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+              style: GoogleFonts.poppins(
+                color: kIsWeb ? _webOnSurface : Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             content: Text(
               loc.planCardLeavePlanConfirmBody(widget.plan.name),
-              style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
+              style: GoogleFonts.poppins(
+                color: kIsWeb ? _webMuted : Colors.grey.shade300,
+                fontSize: 14,
+              ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: Text(loc.cancel, style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+                child: Text(
+                  loc.cancel,
+                  style: GoogleFonts.poppins(
+                    color: kIsWeb ? _webMuted : Colors.grey.shade400,
+                  ),
+                ),
               ),
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: Text(loc.planCardLeavePlanButton, style: GoogleFonts.poppins(color: Colors.orange.shade300)),
+                child: Text(
+                  loc.planCardLeavePlanButton,
+                  style: GoogleFonts.poppins(
+                    color: kIsWeb ? Colors.orange.shade800 : Colors.orange.shade300,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1649,29 +1721,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
 
         return Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.grey.shade800,
-                const Color(0xFF2C2C2C),
-              ],
-            ),
-            border: Border(
-              bottom: BorderSide(
-                color: Colors.grey.shade700.withOpacity(0.5),
-                width: 1,
-              ),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
+          decoration: _inviteSectionDecoration(),
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
@@ -1688,7 +1738,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: kIsWeb ? _webOnSurface : Colors.white,
                         letterSpacing: 0.1,
                       ),
                     ),
@@ -1813,28 +1863,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                   return ConstrainedBox(
                     constraints: const BoxConstraints(maxHeight: 240),
                     child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.grey.shade800,
-                            const Color(0xFF2C2C2C),
-                          ],
-                        ),
-                        border: Border.all(
-                          color: Colors.grey.shade700.withOpacity(0.5),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
+                      decoration: _participantCardDecoration(radius: 14),
                       child: availableUsers.isEmpty
                           ? Center(
                               child: Padding(
@@ -1844,7 +1873,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                       ? 'No hay usuarios disponibles'
                                       : 'No se encontraron usuarios',
                                   style: GoogleFonts.poppins(
-                                    color: Colors.grey.shade400,
+                                    color: kIsWeb ? _webMuted : Colors.grey.shade400,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -1857,21 +1886,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                 final user = availableUsers[index];
                                 return Container(
                                   margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Colors.grey.shade800,
-                                        const Color(0xFF2C2C2C),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.grey.shade700.withOpacity(0.3),
-                                      width: 1,
-                                    ),
-                                  ),
+                                  decoration: _participantCardDecoration(),
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                     leading: CircleAvatar(
@@ -1889,7 +1904,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                     title: Text(
                                       _formatUserDisplay(user, user.id),
                                       style: GoogleFonts.poppins(
-                                        color: Colors.white,
+                                        color: kIsWeb ? _webOnSurface : Colors.white,
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -1900,7 +1915,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                         ? Text(
                                             '@${user.username!.trim()}',
                                             style: GoogleFonts.poppins(
-                                              color: Colors.grey.shade400,
+                                              color: kIsWeb ? _webMuted : Colors.grey.shade400,
                                               fontSize: 12,
                                             ),
                                             maxLines: 1,
@@ -2052,7 +2067,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: kIsWeb ? _webOnSurface : Colors.white,
                   letterSpacing: 0.1,
                 ),
               ),
@@ -2064,40 +2079,12 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 final isPending = inv.status == 'pending';
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.grey.shade800,
-                        const Color(0xFF2C2C2C),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: Colors.grey.shade700.withOpacity(0.5),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 24,
-                        offset: const Offset(0, 6),
-                        spreadRadius: 0,
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 12,
-                        offset: const Offset(0, 2),
-                        spreadRadius: -4,
-                      ),
-                    ],
-                  ),
+                  decoration: _participantCardDecoration(radius: 18),
                   child: ListTile(
                     title: Text(
                       inv.email ?? '',
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
+                        color: kIsWeb ? _webOnSurface : Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -2105,7 +2092,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                     subtitle: Text(
                       'Estado: $statusLabel • Rol: ${inv.role ?? 'participant'} • Creada: $created${isPending ? ' • Expira: $expires' : ''}',
                       style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400,
+                        color: kIsWeb ? _webMuted : Colors.grey.shade400,
                         fontSize: 12,
                       ),
                     ),
@@ -2169,37 +2156,55 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
         return Container(
           margin: const EdgeInsets.all(12.0),
           padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.grey.shade800,
-                const Color(0xFF2C2C2C),
-              ],
-            ),
-            border: Border.all(
-              color: hasPendingInvitations
-                  ? Colors.orange.shade400.withOpacity(0.5)
-                  : AppColorScheme.color2.withOpacity(0.5),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.4),
-                blurRadius: 24,
-                offset: const Offset(0, 6),
-                spreadRadius: 0,
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-                spreadRadius: -4,
-              ),
-            ],
-          ),
+          decoration: kIsWeb
+              ? BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(
+                    color: hasPendingInvitations
+                        ? Colors.orange.shade300
+                        : _webBorder,
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                )
+              : BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.grey.shade800,
+                      const Color(0xFF2C2C2C),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: hasPendingInvitations
+                        ? Colors.orange.shade400.withOpacity(0.5)
+                        : AppColorScheme.color2.withOpacity(0.5),
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.4),
+                      blurRadius: 24,
+                      offset: const Offset(0, 6),
+                      spreadRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 12,
+                      offset: const Offset(0, 2),
+                      spreadRadius: -4,
+                    ),
+                  ],
+                ),
           child: Row(
             children: [
               Icon(
@@ -2219,7 +2224,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: Colors.white,
+                        color: kIsWeb ? _webOnSurface : Colors.white,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -2229,7 +2234,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                           : 'Si recibiste una invitación, acepta desde el enlace en tu correo.',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: Colors.grey.shade400,
+                        color: kIsWeb ? _webMuted : Colors.grey.shade400,
                       ),
                     ),
                   ],
@@ -2249,14 +2254,25 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: AppColorScheme.color2,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: kIsWeb ? _webPageBg : AppColorScheme.color2,
+        border: kIsWeb
+            ? const Border(bottom: BorderSide(color: _webBorder))
+            : null,
+        boxShadow: kIsWeb
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
       ),
       child: Row(
         children: [
@@ -2265,7 +2281,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
             style: GoogleFonts.poppins(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
               letterSpacing: 0.1,
             ),
           ),
@@ -2299,16 +2315,18 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       );
 
       final gradientBox = Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade800,
-              const Color(0xFF2C2C2C),
-            ],
-          ),
-        ),
+        decoration: kIsWeb
+            ? const BoxDecoration(color: _webPageBg)
+            : BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.grey.shade800,
+                    const Color(0xFF2C2C2C),
+                  ],
+                ),
+              ),
         child: isCompact
             ? scrollContent
             : Column(
@@ -2339,20 +2357,27 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     if (isCompact && widget.embedInScaffold) {
       final canPop = Navigator.of(context).canPop();
       return Theme(
-        data: AppTheme.darkTheme,
+        data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
         child: Scaffold(
-          backgroundColor: Colors.grey.shade900,
+          backgroundColor: kIsWeb ? _webPageBg : Colors.grey.shade900,
           appBar: AppBar(
             toolbarHeight: 48,
-            backgroundColor: AppColorScheme.color2,
-            foregroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: kIsWeb ? _webPageBg : AppColorScheme.color2,
+            foregroundColor: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
             elevation: 0,
+            shape: kIsWeb
+                ? const Border(bottom: BorderSide(color: _webBorder))
+                : null,
+            iconTheme: IconThemeData(
+              color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+            ),
             title: Text(
               AppLocalizations.of(context)!.participants,
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
                 letterSpacing: 0.1,
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -97,8 +98,14 @@ class CalendarTracks extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: _getHeaderColor(column, visibleDayIndex),
                         border: Border(
-                          top: BorderSide(color: Colors.grey.shade600, width: 1),
-                          bottom: BorderSide(color: Colors.grey.shade600, width: 1),
+                          top: BorderSide(
+                            color: kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade600,
+                            width: 1,
+                          ),
+                          bottom: BorderSide(
+                            color: kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade600,
+                            width: 1,
+                          ),
                         ),
                       ),
                       child: Center(
@@ -133,10 +140,14 @@ class CalendarTracks extends ConsumerWidget {
   }
 
   Color _stripeBase(int visibleDayIndex) =>
-      visibleDayIndex % 2 == 0 ? const Color(0xFF2E2E2E) : const Color(0xFF242424);
+      kIsWeb
+          ? (visibleDayIndex % 2 == 0 ? const Color(0xFFFFFFFF) : const Color(0xFFFAFCFF))
+          : (visibleDayIndex % 2 == 0 ? const Color(0xFF2E2E2E) : const Color(0xFF242424));
 
   Color _accommodationStripColor(int visibleDayIndex) =>
-      visibleDayIndex % 2 == 0 ? const Color(0xFF333333) : const Color(0xFF282828);
+      kIsWeb
+          ? (visibleDayIndex % 2 == 0 ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9))
+          : (visibleDayIndex % 2 == 0 ? const Color(0xFF333333) : const Color(0xFF282828));
 
   /// Obtiene el color del header según columna visible, vacío y “hoy”.
   Color _getHeaderColor(dynamic column, int visibleDayIndex) {
@@ -148,7 +159,9 @@ class CalendarTracks extends ConsumerWidget {
     final isToday = dayDate.year == now.year &&
         dayDate.month == now.month &&
         dayDate.day == now.day;
-    if (isEmpty) return Colors.grey.shade800.withOpacity(0.3);
+    if (isEmpty) {
+      return (kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade800).withOpacity(0.3);
+    }
     Color base = _stripeBase(visibleDayIndex);
     if (isToday) {
       base = Color.lerp(base, Colors.grey.shade600, 0.22) ?? base;
@@ -169,7 +182,7 @@ class CalendarTracks extends ConsumerWidget {
         style: GoogleFonts.poppins(
           fontSize: CalendarConstants.headerFontSize,
           fontWeight: FontWeight.w500,
-          color: Colors.grey.shade400,
+          color: kIsWeb ? const Color(0xFF94A3B8) : Colors.grey.shade400,
         ),
       );
     }
@@ -282,7 +295,7 @@ class CalendarTracks extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: initialsFontSize,
                               fontWeight: isActiveTrack ? FontWeight.w900 : FontWeight.bold,
-                              color: Colors.white,
+                              color: kIsWeb ? const Color(0xFF1E293B) : Colors.white,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -379,9 +392,12 @@ class CalendarTracks extends ConsumerWidget {
     final isEmpty = dayData['isEmpty'] as bool;
     
     if (isEmpty) {
-      return const Text(
+      return Text(
         'Sin alojamiento',
-        style: TextStyle(fontSize: 8, color: Colors.grey),
+        style: TextStyle(
+          fontSize: 8,
+          color: kIsWeb ? const Color(0xFF64748B) : Colors.grey,
+        ),
       );
     }
     

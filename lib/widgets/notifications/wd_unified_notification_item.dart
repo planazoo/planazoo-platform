@@ -202,16 +202,20 @@ class InformativeNotificationTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(10),
-            border: Border(
-              left: BorderSide(color: borderColor, width: isUnread ? 3 : 1),
-              bottom: BorderSide(color: Colors.grey.shade700, width: 0.5),
-              top: BorderSide(color: Colors.grey.shade900.withOpacity(0.2), width: 0.5),
-              right: BorderSide(color: Colors.grey.shade900.withOpacity(0.2), width: 0.5),
-            ),
+            border: Border.all(color: borderColor, width: 0.8),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                width: isUnread ? 3 : 1,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isUnread ? AppColorScheme.color2 : Colors.grey.shade600,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              const SizedBox(width: 8),
               Icon(
                 isUnread ? Icons.notifications_active_outlined : Icons.notifications_none,
                 color: iconColor,

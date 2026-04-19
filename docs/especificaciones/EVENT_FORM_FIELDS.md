@@ -86,6 +86,8 @@ Al abrir un evento existente, **Recogida** → **Recogida vehículo alquiler** y
 
 **Shuttle / Transfer (mar 2026, lista §3.2 ítem 90):** además de origen y destino (mismo bloque que taxi/tren), el formulario ofrece **Terminal / puerta**, **Aerolínea / vuelo** y **Presentación en aeropuerto** (texto libre: hora anticipación, mostrador, etc.). Se guardan en `commonPart.extraData`: `transferTerminal`, `transferAirline`, `transferAirportMeet`. Si el subtipo deja de ser Shuttle/Transfer, esas claves se eliminan al guardar.
 
+**Acción / Recogida vehículo alquiler + Entrega vehículo alquiler (abr 2026, ítem 66):** el formulario añade bloque específico de alquiler con **Compañía**, **Oficina de recogida/entrega**, **Contrato o reserva**, **Matrícula (opcional)** y **Checklist recogida/entrega** (combustible, daños, km, política). Se guardan en `commonPart.extraData`: `rentalCompany`, `rentalOffice`, `rentalContractCode`, `rentalVehiclePlate`, `rentalPickupReturnNotes`. Si el subtipo deja de ser estos dos, las claves se limpian al guardar.
+
 ### Personales (por participante)
 - Asiento: máx 50 caracteres
 - Menú/Comida: máx 100 caracteres

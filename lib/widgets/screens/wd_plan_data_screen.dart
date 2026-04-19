@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -90,19 +91,81 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   /// Descripción del plan: bloque expandible (cerrado por defecto).
   bool _planDescriptionExpanded = false;
 
-  // Helper para detectar modo oscuro
-  bool get _isDarkMode {
-    return Theme.of(context).brightness == Brightness.dark;
-  }
+  /// Web: panel claro alineado con W13 / cabecera dashboard (#F1F5F9). Móvil: tema oscuro existente.
+  bool get _webLight => kIsWeb;
 
-  // Colores del estilo Sofisticado (siempre modo oscuro)
-  Color get _cardBackgroundStart => Colors.grey.shade800;
-  Color get _cardBackgroundEnd => const Color(0xFF2C2C2C);
-  Color get _cardBorder => Colors.grey.shade700.withOpacity(0.5);
-  Color get _textPrimary => Colors.white;
-  Color get _textSecondary => Colors.grey.shade400;
-  Color get _inputBackground => Colors.grey.shade800;
-  Color get _inputText => Colors.white;
+  static const Color _webHeaderBg = Color(0xFFF1F5F9);
+  static const Color _webHeaderTitle = Color(0xFF1F2937);
+
+  Color get _pageBackground =>
+      _webLight ? _webHeaderBg : Colors.grey.shade900;
+
+  Color get _cardBackgroundStart =>
+      _webLight ? Colors.white : Colors.grey.shade800;
+
+  Color get _cardBackgroundEnd =>
+      _webLight ? const Color(0xFFF8FAFC) : const Color(0xFF2C2C2C);
+
+  Color get _cardBorder => _webLight
+      ? const Color(0xFFE2E8F0)
+      : Colors.grey.shade700.withOpacity(0.5);
+
+  Color get _textPrimary =>
+      _webLight ? const Color(0xFF0F172A) : Colors.white;
+
+  Color get _textSecondary =>
+      _webLight ? const Color(0xFF64748B) : Colors.grey.shade400;
+
+  Color get _inputBackground =>
+      _webLight ? const Color(0xFFF8FAFC) : Colors.grey.shade800;
+
+  Color get _labelMuted => _textSecondary;
+
+  List<BoxShadow> get _gradientCardShadows => _webLight
+      ? [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ]
+      : [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+            spreadRadius: -4,
+          ),
+        ];
+
+  List<BoxShadow> get _fieldCardShadows => _webLight
+      ? [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ]
+      : [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+            spreadRadius: -2,
+          ),
+        ];
 
   /// Estilo del contenido de los campos (igual que nombre del plan)
   TextStyle get _infoContentStyle => GoogleFonts.poppins(
@@ -208,36 +271,46 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     }
     final choice = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.grey.shade900,
-        title: Text(
-          'Cambios sin guardar',
-          style: GoogleFonts.poppins(
-              color: Colors.white, fontWeight: FontWeight.w600),
+      builder: (ctx) => Theme(
+        data: _webLight ? AppTheme.lightTheme : AppTheme.darkTheme,
+        child: AlertDialog(
+          backgroundColor: _webLight ? Colors.white : Colors.grey.shade900,
+          title: Text(
+            'Cambios sin guardar',
+            style: GoogleFonts.poppins(
+                color: _webLight ? _webHeaderTitle : Colors.white,
+                fontWeight: FontWeight.w600),
+          ),
+          content: Text(
+            '¿Quieres guardar los cambios en la información del plan?',
+            style: GoogleFonts.poppins(
+                color: _webLight ? _textSecondary : Colors.grey.shade300,
+                fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'cancel'),
+              child: Text('Seguir editando',
+                  style: GoogleFonts.poppins(
+                      color: _webLight ? _textSecondary : Colors.grey.shade400)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'discard'),
+              child: Text('Descartar',
+                  style: GoogleFonts.poppins(
+                      color: _webLight
+                          ? Colors.orange.shade800
+                          : Colors.orange.shade200)),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, 'save'),
+              style: FilledButton.styleFrom(
+                  backgroundColor: AppColorScheme.color3),
+              child: Text('Guardar',
+                  style: GoogleFonts.poppins(color: Colors.white)),
+            ),
+          ],
         ),
-        content: Text(
-          '¿Quieres guardar los cambios en la información del plan?',
-          style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, 'cancel'),
-            child: Text('Seguir editando',
-                style: GoogleFonts.poppins(color: Colors.grey.shade400)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, 'discard'),
-            child: Text('Descartar',
-                style: GoogleFonts.poppins(color: Colors.orange.shade200)),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, 'save'),
-            style:
-                FilledButton.styleFrom(backgroundColor: AppColorScheme.color3),
-            child: Text('Guardar',
-                style: GoogleFonts.poppins(color: Colors.white)),
-          ),
-        ],
       ),
     );
     if (!mounted) return;
@@ -286,17 +359,18 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       context: context,
       builder: (context) {
         return Theme(
-          data: AppTheme.darkTheme,
+          data: _webLight ? AppTheme.lightTheme : AppTheme.darkTheme,
           child: StatefulBuilder(
             builder: (context, setInnerState) {
               return AlertDialog(
-                backgroundColor: Colors.grey.shade800,
+                backgroundColor:
+                    _webLight ? Colors.white : Colors.grey.shade800,
                 title: Text(
                   'Fechas del plan',
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: _textPrimary,
                   ),
                 ),
                 content: Column(
@@ -350,7 +424,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     onPressed: () => Navigator.of(context).pop(false),
                     child: Text(
                       'Cancelar',
-                      style: GoogleFonts.poppins(color: Colors.grey.shade400),
+                      style: GoogleFonts.poppins(color: _textSecondary),
                     ),
                   ),
                   ElevatedButton(
@@ -482,20 +556,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               color: _cardBorder,
               width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.4),
-                blurRadius: 24,
-                offset: const Offset(0, 6),
-                spreadRadius: 0,
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-                spreadRadius: -4,
-              ),
-            ],
+            boxShadow: _gradientCardShadows,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -511,14 +572,17 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                       20, 18, 12, _infoSectionParticipantsExpanded ? 10 : 18),
                   child: Row(
                     children: [
-                      Icon(Icons.group_outlined, color: Colors.white),
+                      Icon(
+                        Icons.group_outlined,
+                        color: kIsWeb ? AppColorScheme.color2 : Colors.white,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           loc.planDetailsParticipantsTitle,
                           style: GoogleFonts.poppins(
                             fontSize: 16,
-                            color: Colors.white,
+                            color: _textPrimary,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.1,
                           ),
@@ -534,7 +598,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         _infoSectionParticipantsExpanded
                             ? Icons.expand_less
                             : Icons.expand_more,
-                        color: Colors.grey.shade400,
+                        color: _textSecondary,
                       ),
                     ],
                   ),
@@ -544,7 +608,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                 Divider(
                     height: 1,
                     thickness: 1,
-                    color: Colors.grey.shade700.withOpacity(0.5)),
+                    color: _cardBorder.withValues(alpha: 0.85)),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                   child: Column(
@@ -608,20 +672,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             color: _cardBorder,
             width: 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              blurRadius: 24,
-              offset: const Offset(0, 6),
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-              spreadRadius: -4,
-            ),
-          ],
+          boxShadow: _gradientCardShadows,
         ),
         child: const Center(child: CircularProgressIndicator()),
       ),
@@ -681,20 +732,34 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     /// Barra superior W31: título "Info del plan", iconos resumen + in/out (salir plan), y Cancelar/Guardar si hay cambios.
     final isOrganizer = currentUser?.id == currentPlan.userId;
+    final headerBg = kIsWeb ? _webHeaderBg : AppColorScheme.color2;
+    final headerTitleColor = kIsWeb ? _webHeaderTitle : Colors.white;
+    final headerShadow = kIsWeb
+        ? [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ]
+        : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ];
+    final cancelFg =
+        kIsWeb ? const Color(0xFFC2410C) : Colors.orange.shade200;
+
     Widget buildHeader() {
       return Container(
         width: double.infinity,
         height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: AppColorScheme.color2,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          color: headerBg,
+          boxShadow: headerShadow,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -704,7 +769,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               'Info del plan',
               style: GoogleFonts.poppins(
                 fontSize: 16,
-                color: Colors.white,
+                color: headerTitleColor,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.1,
               ),
@@ -744,11 +809,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 6),
-                          foregroundColor: Colors.orange.shade200,
+                          foregroundColor: cancelFg,
                         ),
                         child: Text(loc.planDetailsBarCancelShort,
                             style: GoogleFonts.poppins(
-                                fontSize: 12, color: Colors.orange.shade200)),
+                                fontSize: 12, color: cancelFg)),
                       ),
                       const SizedBox(width: 6),
                       FilledButton(
@@ -791,10 +856,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       final verticalPadding = isCompact ? 16.0 : 20.0;
 
       return Container(
-        color: Colors.grey.shade900,
+        color: _pageBackground,
         child: Column(
           children: [
-            buildHeader(),
+            if (widget.showAppBar) buildHeader(),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
@@ -868,7 +933,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           await _handleExitRequest();
         },
         child: Theme(
-          data: AppTheme.darkTheme,
+          data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
           child: Scaffold(
             appBar: AppBar(
               title: Text(currentPlan.name),
@@ -887,7 +952,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                   ),
               ],
             ),
-            backgroundColor: Colors.grey.shade900,
+            backgroundColor: _pageBackground,
             body: body,
           ),
         ),
@@ -895,7 +960,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     }
 
     return Theme(
-      data: AppTheme.darkTheme,
+      data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
       child: body,
     );
   }
@@ -950,7 +1015,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: Colors.white,
+                                    color: _textPrimary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -1004,7 +1069,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                                   loc.createPlanVisibilityPrivateShort,
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: Colors.white,
+                                    color: _textPrimary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1013,7 +1078,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                                   loc.createPlanVisibilityPrivate,
                                   style: GoogleFonts.poppins(
                                     fontSize: 12,
-                                    color: Colors.grey.shade400,
+                                    color: _textSecondary,
                                   ),
                                 ),
                               ],
@@ -1028,7 +1093,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                                   loc.createPlanVisibilityPublicShort,
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: Colors.white,
+                                    color: _textPrimary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -1037,7 +1102,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                                   loc.createPlanVisibilityPublic,
                                   style: GoogleFonts.poppins(
                                     fontSize: 12,
-                                    color: Colors.grey.shade400,
+                                    color: _textSecondary,
                                   ),
                                 ),
                               ],
@@ -1109,7 +1174,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             loc.planDetailsMetaTitle,
             style: GoogleFonts.poppins(
               fontSize: 16,
-              color: Colors.white,
+              color: _textPrimary,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.1,
             ),
@@ -1177,7 +1242,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   Widget _buildTimezoneTile(AppLocalizations loc) {
-    final textTheme = Theme.of(context).textTheme;
     final commonTimezones = TimezoneService.getCommonTimezones().toList();
     final fallbackTimezone = TimezoneService.getSystemTimezone();
     final availableTimezones =
@@ -1190,26 +1254,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: _cardBackgroundStart, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: _cardBorder,
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-            spreadRadius: -2,
-          ),
-        ],
+        boxShadow: _fieldCardShadows,
       ),
       child: DropdownButtonFormField<String>(
         value: safeSelectedTimezone,
@@ -1219,7 +1270,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           labelText: loc.planTimezoneLabel,
           labelStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade400,
+            color: _labelMuted,
             fontWeight: FontWeight.w500,
           ),
           contentPadding:
@@ -1242,7 +1293,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           filled: true,
           fillColor: Colors.transparent,
         ),
-        dropdownColor: Colors.grey.shade800,
+        dropdownColor: _cardBackgroundStart,
         items: availableTimezones
             .map(
               (tz) => DropdownMenuItem<String>(
@@ -1255,7 +1306,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
                           fontSize: 15,
-                          color: Colors.white,
+                          color: _textPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1265,7 +1316,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                       TimezoneService.getUtcOffsetFormatted(tz),
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: Colors.grey.shade400,
+                        color: _textSecondary,
                       ),
                     ),
                   ],
@@ -1305,26 +1356,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: _cardBackgroundStart, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: _cardBorder,
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-            spreadRadius: -2,
-          ),
-        ],
+        boxShadow: _fieldCardShadows,
       ),
       child: DropdownButtonFormField<String>(
         value: value,
@@ -1334,7 +1372,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           labelText: label,
           labelStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade400,
+            color: _labelMuted,
             fontWeight: FontWeight.w500,
           ),
           contentPadding:
@@ -1357,7 +1395,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           filled: true,
           fillColor: Colors.transparent,
         ),
-        dropdownColor: Colors.grey.shade800,
+        dropdownColor: _cardBackgroundStart,
         items: items,
         selectedItemBuilder: selectedItemBuilder,
         onChanged: (selected) {
@@ -1372,26 +1410,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   Widget _buildBudgetField(AppLocalizations loc) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: _cardBackgroundStart, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: _cardBorder,
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-            spreadRadius: -2,
-          ),
-        ],
+        boxShadow: _fieldCardShadows,
       ),
       child: TextFormField(
         controller: _budgetController,
@@ -1403,7 +1428,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               : loc.planDetailsBudgetLabel,
           labelStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade400,
+            color: _labelMuted,
             fontWeight: FontWeight.w500,
           ),
           contentPadding:
@@ -1456,26 +1481,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: _cardBackgroundStart, // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: _cardBorder,
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 1),
-            spreadRadius: -2,
-          ),
-        ],
+        boxShadow: _fieldCardShadows,
       ),
       child: InkWell(
         onTap: onTap,
@@ -1485,7 +1497,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             labelText: label,
             labelStyle: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.grey.shade400,
+              color: _labelMuted,
               fontWeight: FontWeight.w500,
             ),
             border: OutlineInputBorder(
@@ -1507,7 +1519,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             fillColor: Colors.transparent,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            suffixIcon: Icon(Icons.edit_calendar, color: Colors.grey.shade400),
+            suffixIcon: Icon(Icons.edit_calendar, color: _labelMuted),
           ),
           child: Text(
             _formatDate(value),
@@ -1518,21 +1530,25 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     );
   }
 
-  /// Aviso solo lectura: estándar UIShowcase — fondo oscuro, borde y texto naranja (contraste en tema oscuro).
+  /// Aviso solo lectura: fondo y texto adaptados a web claro / tema oscuro.
   Widget _buildReadOnlyWarning() {
+    final borderColor = Colors.orange.shade700;
+    final bg = kIsWeb ? Colors.amber.shade50 : Colors.grey.shade800;
+    final iconColor = kIsWeb ? Colors.amber.shade900 : Colors.orange.shade300;
+    final textColor = kIsWeb ? Colors.amber.shade900 : Colors.orange.shade200;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade700),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
           Icon(
             Icons.info_outline,
-            color: Colors.orange.shade300,
+            color: iconColor,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -1542,7 +1558,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                   'Este plan tiene restricciones de edición según su estado.',
               style: GoogleFonts.poppins(
                 fontSize: 13,
-                color: Colors.orange.shade200,
+                color: textColor,
               ),
             ),
           ),
@@ -1761,30 +1777,36 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => Theme(
-        data: AppTheme.darkTheme,
+        data: _webLight ? AppTheme.lightTheme : AppTheme.darkTheme,
         child: AlertDialog(
-          backgroundColor: Colors.grey.shade800,
+          backgroundColor: _webLight ? Colors.white : Colors.grey.shade800,
           title: Text(
             'Salir del plan',
             style: GoogleFonts.poppins(
-                color: Colors.white, fontWeight: FontWeight.w600),
+                color: _webLight ? _webHeaderTitle : Colors.white,
+                fontWeight: FontWeight.w600),
           ),
           content: Text(
             'Si sales de "${currentPlan.name}", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\n'
             'Para volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.',
-            style:
-                GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
+            style: GoogleFonts.poppins(
+                color: _webLight ? _textSecondary : Colors.grey.shade300,
+                fontSize: 14),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: Text('Cancelar',
-                  style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+                  style: GoogleFonts.poppins(
+                      color: _webLight ? _textSecondary : Colors.grey.shade400)),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
               child: Text('Salir',
-                  style: GoogleFonts.poppins(color: Colors.orange.shade300)),
+                  style: GoogleFonts.poppins(
+                      color: _webLight
+                          ? Colors.orange.shade800
+                          : Colors.orange.shade300)),
             ),
           ],
         ),
@@ -1822,10 +1844,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       return const SizedBox.shrink();
     }
 
+    final dangerFg = kIsWeb ? Colors.red.shade900 : Colors.red.shade200;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: kIsWeb ? Colors.red.shade50 : Colors.grey.shade800,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.red.shade700, width: 1),
       ),
@@ -1842,15 +1865,14 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                   16, 14, 12, _infoSectionDangerExpanded ? 10 : 14),
               child: Row(
                 children: [
-                  Icon(Icons.delete_outline,
-                      color: Colors.red.shade200, size: 22),
+                  Icon(Icons.delete_outline, color: dangerFg, size: 22),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       loc.planInfoDangerZoneTitle,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
-                        color: Colors.red.shade200,
+                        color: dangerFg,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1859,7 +1881,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     _infoSectionDangerExpanded
                         ? Icons.expand_less
                         : Icons.expand_more,
-                    color: Colors.red.shade200,
+                    color: dangerFg,
                   ),
                 ],
               ),
@@ -1879,7 +1901,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     loc.planInfoDangerZoneSubtitle,
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: Colors.red.shade200,
+                      color: dangerFg,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1944,9 +1966,12 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _DeletePlanDialog(
-        loc: loc,
-        onDelete: _deletePlan,
+      builder: (context) => Theme(
+        data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
+        child: _DeletePlanDialog(
+          loc: loc,
+          onDelete: _deletePlan,
+        ),
       ),
     );
 
@@ -2216,7 +2241,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     final selected = await showMenu<String>(
       context: anchorContext,
       position: position,
-      color: Colors.grey.shade800,
+      color: _cardBackgroundStart,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       items: stateTransitions
           .map(
@@ -2233,7 +2258,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                       t['label'] as String,
                       style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.white,
+                          color: _textPrimary,
                           fontWeight: FontWeight.w500),
                     ),
                   ),
@@ -2264,7 +2289,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
         children: [
           Builder(
             builder: (badgeContext) {
-              return Material(
+              final badge = Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: showStateMenu
@@ -2275,74 +2300,22 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                   child: Padding(
                     padding: const EdgeInsets.all(4),
                     child: PlanStateBadge(
-                        plan: currentPlan, onColoredBackground: true),
+                      plan: currentPlan,
+                      // En web la card es clara: el modo "colored" usa texto blanco (T235) y aquí desaparece.
+                      onColoredBackground: !kIsWeb,
+                    ),
                   ),
                 ),
               );
+              if (showStateMenu) {
+                return Tooltip(
+                  message: loc.tooltipChangePlanState,
+                  child: badge,
+                );
+              }
+              return badge;
             },
           ),
-          if (showStateMenu) ...[
-            const SizedBox(height: 10),
-            PopupMenuButton<String>(
-              tooltip: loc.tooltipChangePlanState,
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              color: Colors.grey.shade800,
-              onSelected: (newState) => _changePlanState(newState),
-              itemBuilder: (context) => stateTransitions
-                  .map(
-                    (t) => PopupMenuItem<String>(
-                      value: t['state'] as String,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(t['icon'] as IconData,
-                              size: 20, color: AppColorScheme.color2),
-                          const SizedBox(width: 12),
-                          Text(
-                            t['label'] as String,
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                  .toList(),
-              child: isCompact
-                  ? Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Icon(Icons.sync_alt,
-                          color: AppColorScheme.color2, size: 28),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.sync_alt,
-                              size: 18, color: AppColorScheme.color2),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Cambiar estado',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColorScheme.color2,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.arrow_drop_down,
-                              color: AppColorScheme.color2, size: 22),
-                        ],
-                      ),
-                    ),
-            ),
-          ],
           if (showLeaveButton) ...[
             const SizedBox(height: 12),
             TextButton.icon(
@@ -2393,18 +2366,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
             ),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: _cardBorder, width: 1),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 24,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0),
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
-                  spreadRadius: -4),
-            ],
+            boxShadow: _gradientCardShadows,
           ),
           child: Row(
             children: [
@@ -2429,17 +2391,17 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       labelText: showLabel ? label : null,
       labelStyle: GoogleFonts.poppins(
           fontSize: 14,
-          color: Colors.grey.shade400,
+          color: _labelMuted,
           fontWeight: FontWeight.w500),
       contentPadding: EdgeInsets.symmetric(
           horizontal: isCompact ? 12 : 18, vertical: isCompact ? 12 : 18),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade700),
+        borderSide: BorderSide(color: _cardBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade700.withOpacity(0.5)),
+        borderSide: BorderSide(color: _cardBorder.withValues(alpha: 0.9)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -2473,7 +2435,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       decoration: BoxDecoration(
         color: _inputBackground,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700.withOpacity(0.5)),
+        border: Border.all(color: _cardBorder.withValues(alpha: 0.9)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -2494,7 +2456,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                         loc.createPlanDescriptionLabel,
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.grey.shade400,
+                          color: _labelMuted,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -2591,16 +2553,16 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       padding: EdgeInsets.symmetric(
           horizontal: isCompact ? 10 : 12, vertical: isCompact ? 10 : 12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade900,
+        color: _inputBackground,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700.withOpacity(0.55)),
+        border: Border.all(color: _cardBorder.withValues(alpha: 0.9)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.attach_file, size: 16, color: Colors.grey.shade300),
+              Icon(Icons.attach_file, size: 16, color: _textSecondary),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -2608,7 +2570,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                   style: GoogleFonts.poppins(
                     fontSize: isCompact ? 12 : 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade200,
+                    color: _textPrimary,
                   ),
                 ),
               ),
@@ -2638,7 +2600,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
             Text(
               loc.entityAttachmentsEmpty,
               style: GoogleFonts.poppins(
-                  fontSize: 12, color: Colors.grey.shade400),
+                  fontSize: 12, color: _textSecondary),
             )
           else
             Column(
@@ -2667,7 +2629,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                       Text(
                         _formatFileSize(file.size),
                         style: GoogleFonts.poppins(
-                            fontSize: 11, color: Colors.grey.shade400),
+                            fontSize: 11, color: _textSecondary),
                       ),
                       if (canManage) ...[
                         const SizedBox(width: 4),
@@ -2744,22 +2706,29 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
           context: context,
           builder: (ctx) {
             final loc = AppLocalizations.of(ctx)!;
-            return AlertDialog(
-              backgroundColor: Colors.grey.shade900,
-              title: Text(loc.entityAttachmentsDeleteTitle,
-                  style: GoogleFonts.poppins(color: Colors.white)),
-              content: Text(
-                loc.entityAttachmentsDeleteConfirm(attachment.name),
-                style: GoogleFonts.poppins(color: Colors.grey.shade300),
+            return Theme(
+              data: _webLight ? AppTheme.lightTheme : AppTheme.darkTheme,
+              child: AlertDialog(
+                backgroundColor: _webLight ? Colors.white : Colors.grey.shade900,
+                title: Text(loc.entityAttachmentsDeleteTitle,
+                    style: GoogleFonts.poppins(
+                        color: _webLight
+                            ? _PlanDataScreenState._webHeaderTitle
+                            : Colors.white)),
+                content: Text(
+                  loc.entityAttachmentsDeleteConfirm(attachment.name),
+                  style: GoogleFonts.poppins(
+                      color: _webLight ? _textSecondary : Colors.grey.shade300),
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: Text(loc.cancel)),
+                  TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: Text(loc.delete)),
+                ],
               ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(false),
-                    child: Text(loc.cancel)),
-                TextButton(
-                    onPressed: () => Navigator.of(ctx).pop(true),
-                    child: Text(loc.delete)),
-              ],
             );
           },
         ) ??
@@ -3033,20 +3002,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
           color: _cardBorder,
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-            spreadRadius: -4,
-          ),
-        ],
+        boxShadow: _gradientCardShadows,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3060,14 +3016,17 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
               padding: const EdgeInsets.fromLTRB(20, 18, 12, 16),
               child: Row(
                 children: [
-                  Icon(Icons.campaign_outlined, color: Colors.white),
+                  Icon(
+                    Icons.campaign_outlined,
+                    color: kIsWeb ? AppColorScheme.color2 : Colors.white,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       loc.planDetailsAnnouncementsTitle,
                       style: GoogleFonts.poppins(
                         fontSize: 16,
-                        color: Colors.white,
+                        color: _textPrimary,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.1,
                       ),
@@ -3082,7 +3041,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
                     _infoSectionAnnouncementsExpanded
                         ? Icons.expand_less
                         : Icons.expand_more,
-                    color: Colors.grey.shade400,
+                    color: _textSecondary,
                   ),
                 ],
               ),
@@ -3092,7 +3051,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
             Divider(
                 height: 1,
                 thickness: 1,
-                color: Colors.grey.shade700.withOpacity(0.5)),
+                color: _cardBorder.withValues(alpha: 0.85)),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
               child: Align(

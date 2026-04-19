@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mode.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.dart';
-import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
-import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
-import 'package:unp_calendario/shared/services/permission_service.dart';
-import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
-import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
 
 /// Clase que maneja la construcción del AppBar del calendario
 class CalendarAppBar {
@@ -59,8 +55,21 @@ class CalendarAppBar {
     final endDay = startDay + visibleDays - 1;
     final totalDays = plan.durationInDays;
 
+    final webBar = kIsWeb;
+    final onBar = webBar ? const Color(0xFF1F2937) : Colors.white;
+
     return AppBar(
       toolbarHeight: 48.0,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      iconTheme: IconThemeData(color: onBar, size: 22),
+      actionsIconTheme: IconThemeData(color: onBar, size: 22),
+      shape: webBar
+          ? const Border(
+              bottom: BorderSide(color: Color(0xFFE2E8F0)),
+            )
+          : null,
       title: _buildTitle(context, startDay, endDay, totalDays, onPreviousDayGroup, onNextDayGroup),
       actions: _buildActions(
         context,
@@ -78,8 +87,8 @@ class CalendarAppBar {
         eventDraftFilter: eventDraftFilter,
         onEventDraftFilterChanged: onEventDraftFilterChanged,
       ),
-      backgroundColor: AppColorScheme.color2,
-      foregroundColor: Colors.white,
+      backgroundColor: kIsWeb ? const Color(0xFFF1F5F9) : AppColorScheme.color2,
+      foregroundColor: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
     );
   }
 
@@ -96,8 +105,8 @@ class CalendarAppBar {
         ),
         Text(
           loc.calendarTitleDaysRange(startDay, endDay, totalDays, visibleDays),
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
             fontWeight: FontWeight.w500,
             fontSize: 13,
           ),
@@ -135,10 +144,18 @@ class CalendarAppBar {
           padding: const EdgeInsets.only(left: 8, top: 4, bottom: 4),
           child: TextButton.icon(
             onPressed: onShowSummary,
-            icon: const Icon(Icons.summarize, size: 18, color: Colors.white),
+            icon: Icon(
+              Icons.summarize,
+              size: 18,
+              color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+            ),
             label: Text(
               summaryButtonLabel,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -179,7 +196,11 @@ class CalendarAppBar {
   }) {
     final loc = AppLocalizations.of(context)!;
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: Colors.white),
+      color: kIsWeb ? Colors.white : null,
+      icon: Icon(
+        Icons.more_vert,
+        color: kIsWeb ? const Color(0xFF334155) : Colors.white,
+      ),
       tooltip: loc.calendarOptionsTooltip,
       onSelected: (String value) {
         if (value.startsWith('_')) return;

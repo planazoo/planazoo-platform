@@ -2,8 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'logger_service.dart' show LoggerService;
 
 /// Servicio para gestionar Firebase Cloud Messaging (FCM)
@@ -24,11 +23,70 @@ class FCMService {
   static StreamSubscription<RemoteMessage>? _onMessageSubscription;
   static StreamSubscription<RemoteMessage>? _onMessageOpenedSubscription;
   static Future<void> Function(RemoteMessage message)? _notificationTapHandler;
+  static String? _lastForegroundDedupKey;
+  static DateTime? _lastForegroundDedupAt;
+  /// UI opcional cuando llega un push en primer plano (SnackBar, etc.).
+  static void Function(RemoteMessage message)? onForegroundMessage;
 
   static String _shortToken(String? token) {
     if (token == null || token.isEmpty) return 'null';
     if (token.length <= 12) return token;
     return '${token.substring(0, 8)}...${token.substring(token.length - 4)}';
+  }
+
+  /// Una sola suscripción a [FirebaseMessaging.onMessage] durante toda la vida del proceso.
+  /// En iOS conviene registrarla pronto (desde [main]); no cancelarla en [cleanup].
+  static void attachForegroundMessageListener() {
+    if (kIsWeb) return;
+    if (_onMessageSubscription != null) {
+      LoggerService.info(
+        'attachForegroundMessageListener(skip) onMessage ya activo',
+        context: 'FCM_SERVICE',
+      );
+      return;
+    }
+    _onMessageSubscription = FirebaseMessaging.onMessage.listen(_emitForegroundFromPlugin);
+    LoggerService.info('attachForegroundMessageListener()', context: 'FCM_SERVICE');
+  }
+
+  static void _emitForegroundFromPlugin(RemoteMessage message) {
+    _emitForegroundUi(message, source: 'plugin');
+  }
+
+  static void _emitForegroundUi(RemoteMessage message, {required String source}) {
+    final dedupKey =
+        '${message.messageId ?? ""}|${message.notification?.title}|${message.notification?.body}';
+    final now = DateTime.now();
+    if (_lastForegroundDedupKey == dedupKey &&
+        _lastForegroundDedupAt != null &&
+        now.difference(_lastForegroundDedupAt!) < const Duration(seconds: 2)) {
+      debugPrint('FCM foreground ui dedup skip source=$source key=$dedupKey');
+      return;
+    }
+    _lastForegroundDedupKey = dedupKey;
+    _lastForegroundDedupAt = now;
+
+    debugPrint(
+      'FCM foreground ui source=$source messageId=${message.messageId} '
+      'notification=${message.notification?.title} data=${message.data}',
+    );
+    LoggerService.info(
+      'Notificación recibida en primer plano: ${message.notification?.title}',
+      context: 'FCM_SERVICE',
+    );
+    final ui = onForegroundMessage;
+    if (ui != null) {
+      try {
+        ui(message);
+      } catch (e, st) {
+        LoggerService.error(
+          'Error en onForegroundMessage',
+          context: 'FCM_SERVICE',
+          error: e,
+          stackTrace: st,
+        );
+      }
+    }
   }
   
   /// Inicializa FCM y solicita permisos
@@ -222,14 +280,22 @@ class FCMService {
           .doc(token);
       
       final now = Timestamp.now();
-      final deviceInfo = _getDeviceInfo();
-      
-      await tokenRef.set({
-        'token': token,
-        'deviceInfo': deviceInfo,
-        'createdAt': now,
-        'updatedAt': now,
-      }, SetOptions(merge: true));
+      final snapshot = await tokenRef.get();
+
+      if (!snapshot.exists) {
+        final deviceInfo = _getDeviceInfo();
+        await tokenRef.set({
+          'token': token,
+          'deviceInfo': deviceInfo,
+          'createdAt': now,
+          'updatedAt': now,
+        });
+      } else {
+        // Mantener token/deviceInfo/createdAt intactos para cumplir reglas.
+        await tokenRef.set({
+          'updatedAt': now,
+        }, SetOptions(merge: true));
+      }
       
       LoggerService.database(
         'Token FCM guardado en Firestore: users/$_currentUserId/fcmTokens/${_shortToken(token)}',
@@ -255,16 +321,7 @@ class FCMService {
   /// Configura los handlers para notificaciones
   static void _setupNotificationHandlers() {
     LoggerService.info('setupNotificationHandlers()', context: 'FCM_SERVICE');
-    _onMessageSubscription?.cancel();
-    // Notificación recibida cuando la app está en primer plano
-    _onMessageSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      LoggerService.info(
-        'Notificación recibida en primer plano: ${message.notification?.title}',
-        context: 'FCM_SERVICE',
-      );
-      // TODO: Mostrar notificación local o actualizar UI
-    });
-    
+    // Foreground: [attachForegroundMessageListener] se llama desde main (una vez).
     _onMessageOpenedSubscription?.cancel();
     // Notificación recibida cuando la app está en segundo plano y el usuario la toca
     _onMessageOpenedSubscription =
@@ -290,11 +347,10 @@ class FCMService {
       context: 'FCM_SERVICE',
     );
     await _tokenRefreshSubscription?.cancel();
-    await _onMessageSubscription?.cancel();
     await _onMessageOpenedSubscription?.cancel();
     _tokenRefreshSubscription = null;
-    _onMessageSubscription = null;
     _onMessageOpenedSubscription = null;
+    onForegroundMessage = null;
 
     if (_currentToken != null && _currentUserId != null) {
       try {
@@ -349,6 +405,15 @@ class FCMService {
     _notificationTapHandler = handler;
     LoggerService.info(
       'setNotificationTapHandler(registered=${handler != null})',
+      context: 'FCM_SERVICE',
+    );
+  }
+
+  /// Registra feedback en UI cuando la app está en primer plano (p. ej. SnackBar).
+  static void setForegroundMessageHandler(void Function(RemoteMessage message)? handler) {
+    onForegroundMessage = handler;
+    LoggerService.info(
+      'setForegroundMessageHandler(registered=${handler != null})',
       context: 'FCM_SERVICE',
     );
   }

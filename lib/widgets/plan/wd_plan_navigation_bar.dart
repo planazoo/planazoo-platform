@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
@@ -27,11 +28,6 @@ class PlanNavigationBar extends StatelessWidget {
         label: 'Info',
       ),
       NavigationOption(
-        id: 'planNotes',
-        icon: Icons.note_alt_outlined,
-        label: loc.planNotesTabTitle,
-      ),
-      NavigationOption(
         id: 'mySummary',
         icon: Icons.list_alt,
         label: loc.myPlanSummaryTab,
@@ -58,20 +54,26 @@ class PlanNavigationBar extends StatelessWidget {
         label: 'Pagos',
       ),
       NavigationOption(
-        id: 'stats',
-        icon: Icons.bar_chart,
-        label: 'Stats',
-      ),
-      NavigationOption(
         id: 'planNotifications',
         icon: Icons.notifications_outlined,
         label: loc.notificationsTitle,
+      ),
+      NavigationOption(
+        id: 'planNotes',
+        icon: Icons.note_alt_outlined,
+        label: loc.planNotesTabTitle,
+      ),
+      NavigationOption(
+        id: 'stats',
+        icon: Icons.bar_chart,
+        label: 'Stats',
       ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
+    const webBorder = Color(0xFFE2E8F0);
     final options = _allOptions(context)
         .where((o) => o.id != 'stats' || showStatsTab)
         .toList();
@@ -85,27 +87,41 @@ class PlanNavigationBar extends StatelessWidget {
     return Container(
       height: barHeight,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.grey.shade900,
-            Colors.grey.shade800,
-          ],
-        ),
+        gradient: kIsWeb
+            ? const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFF1F5F9), Color(0xFFF8FAFC)],
+              )
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.grey.shade900,
+                  Colors.grey.shade800,
+                ],
+              ),
         border: Border(
           bottom: BorderSide(
-            color: Colors.grey.shade700.withOpacity(0.3),
+            color: kIsWeb ? webBorder : Colors.grey.shade700.withOpacity(0.3),
             width: 1,
           ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: kIsWeb
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -158,6 +174,8 @@ class _NavigationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const webBorder = Color(0xFFE2E8F0);
+    const webMuted = Color(0xFF64748B);
     final side = compact ? 42.0 : 48.0;
     final iconSize = compact ? 20.0 : 24.0;
     return GestureDetector(
@@ -177,18 +195,24 @@ class _NavigationButton extends StatelessWidget {
                     AppColorScheme.color2.withOpacity(0.85),
                   ],
                 )
-              : LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-                ),
+              : (kIsWeb
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.white, Color(0xFFF8FAFC)],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.grey.shade800,
+                        const Color(0xFF2C2C2C),
+                      ],
+                    )),
           border: Border.all(
             color: isSelected
                 ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
+                : (kIsWeb ? webBorder : Colors.grey.shade700.withOpacity(0.5)),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -205,13 +229,21 @@ class _NavigationButton extends StatelessWidget {
                     offset: const Offset(0, 1),
                   ),
                 ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
+              : (kIsWeb
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ]),
         ),
         child: Center(
           child: Semantics(
@@ -220,7 +252,9 @@ class _NavigationButton extends StatelessWidget {
             selected: isSelected,
             child: Icon(
               option.icon,
-              color: isSelected ? Colors.white : AppColorScheme.color2,
+              color: isSelected
+                  ? Colors.white
+                  : (kIsWeb ? webMuted : AppColorScheme.color2),
               size: iconSize,
             ),
           ),

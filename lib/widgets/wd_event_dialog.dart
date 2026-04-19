@@ -149,6 +149,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late TextEditingController _transferTerminalController;
   late TextEditingController _transferAirlineController;
   late TextEditingController _transferAirportMeetController;
+  // Ítem 66: documentación específica para recogida/entrega de vehículo alquiler.
+  late TextEditingController _rentalCompanyController;
+  late TextEditingController _rentalOfficeController;
+  late TextEditingController _rentalContractCodeController;
+  late TextEditingController _rentalVehiclePlateController;
+  late TextEditingController _rentalPickupReturnNotesController;
   FlightStatusResult? _lastFlightStatus;
   bool _flightStatusLoading = false;
 
@@ -385,6 +391,21 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
     _transferAirportMeetController = TextEditingController(
       text: ed?['transferAirportMeet'] as String? ?? '',
+    );
+    _rentalCompanyController = TextEditingController(
+      text: ed?['rentalCompany'] as String? ?? '',
+    );
+    _rentalOfficeController = TextEditingController(
+      text: ed?['rentalOffice'] as String? ?? '',
+    );
+    _rentalContractCodeController = TextEditingController(
+      text: ed?['rentalContractCode'] as String? ?? '',
+    );
+    _rentalVehiclePlateController = TextEditingController(
+      text: ed?['rentalVehiclePlate'] as String? ?? '',
+    );
+    _rentalPickupReturnNotesController = TextEditingController(
+      text: ed?['rentalPickupReturnNotes'] as String? ?? '',
     );
     if (ed != null && ed['flightNumber'] != null) {
       _lastFlightStatus = FlightStatusResult(
@@ -712,6 +733,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _transferTerminalController.dispose();
     _transferAirlineController.dispose();
     _transferAirportMeetController.dispose();
+    _rentalCompanyController.dispose();
+    _rentalOfficeController.dispose();
+    _rentalContractCodeController.dispose();
+    _rentalVehiclePlateController.dispose();
+    _rentalPickupReturnNotesController.dispose();
     _maxParticipantsController.dispose();
     _costController.dispose(); // T101
     super.dispose();
@@ -1463,6 +1489,19 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return subtype;
     }
 
+    // Acción vinculada a vehículo de alquiler: sugerir texto útil con compañía/oficina.
+    if (family == 'Acción' &&
+        (subtype == 'Recogida vehículo alquiler' ||
+            subtype == 'Entrega vehículo alquiler')) {
+      final company = _rentalCompanyController.text.trim();
+      final office = _rentalOfficeController.text.trim();
+      if (company.isNotEmpty && office.isNotEmpty) {
+        return '$subtype · ${short(company)} (${short(office)})';
+      }
+      if (company.isNotEmpty) return '$subtype · ${short(company)}';
+      return subtype;
+    }
+
     // Evento con localización única
     final location = _locationController.text.trim();
     if (location.isNotEmpty) {
@@ -1704,6 +1743,148 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               fontWeight: FontWeight.w500,
             ),
             decoration: deco(loc.eventTransferAirportMeetHint),
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool get _isRentalVehicleActionSubtype {
+    if (_typeFamilyController.text != 'Acción') return false;
+    final s = _typeSubtypeController.text;
+    return s == 'Recogida vehículo alquiler' ||
+        s == 'Entrega vehículo alquiler';
+  }
+
+  Widget _buildRentalVehicleActionFields() {
+    final loc = AppLocalizations.of(context)!;
+    final ro = !(_canEditGeneral || _canEditGeneralInitial);
+
+    InputDecoration deco(String hint) => InputDecoration(
+          hintText: hint,
+          hintStyle: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey.shade500,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: AppColorScheme.color2,
+              width: 2.5,
+            ),
+          ),
+          fillColor: Colors.transparent,
+          filled: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        );
+
+    TextStyle style() => GoogleFonts.poppins(
+          fontSize: 13,
+          color: Colors.white,
+          fontWeight: FontWeight.w500,
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildLabelOnBorderField(
+          label: loc.eventRentalCompanyLabel,
+          contentPadding:
+              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
+          child: TextFormField(
+            controller: _rentalCompanyController,
+            readOnly: ro,
+            style: style(),
+            decoration: deco(loc.eventRentalCompanyHint),
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return null;
+              if (v.length > 120) return 'Máximo 120 caracteres';
+              return null;
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildLabelOnBorderField(
+          label: loc.eventRentalOfficeLabel,
+          contentPadding:
+              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
+          child: TextFormField(
+            controller: _rentalOfficeController,
+            readOnly: ro,
+            style: style(),
+            decoration: deco(loc.eventRentalOfficeHint),
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return null;
+              if (v.length > 180) return 'Máximo 180 caracteres';
+              return null;
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildLabelOnBorderField(
+          label: loc.eventRentalContractCodeLabel,
+          contentPadding:
+              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
+          child: TextFormField(
+            controller: _rentalContractCodeController,
+            readOnly: ro,
+            style: style(),
+            decoration: deco(loc.eventRentalContractCodeHint),
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return null;
+              if (v.length > 60) return 'Máximo 60 caracteres';
+              return null;
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildLabelOnBorderField(
+          label: loc.eventRentalVehiclePlateLabel,
+          contentPadding:
+              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
+          child: TextFormField(
+            controller: _rentalVehiclePlateController,
+            readOnly: ro,
+            style: style(),
+            decoration: deco(loc.eventRentalVehiclePlateHint),
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return null;
+              if (v.length > 20) return 'Máximo 20 caracteres';
+              return null;
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildLabelOnBorderField(
+          label: loc.eventRentalPickupReturnNotesLabel,
+          contentPadding:
+              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
+          child: TextFormField(
+            controller: _rentalPickupReturnNotesController,
+            readOnly: ro,
+            minLines: 1,
+            maxLines: 3,
+            style: style(),
+            decoration: deco(loc.eventRentalPickupReturnNotesHint),
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return null;
+              if (v.length > 600) return 'Máximo 600 caracteres';
+              return null;
+            },
           ),
         ),
       ],
@@ -3270,6 +3451,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text.isNotEmpty) ...[
               _buildStaticSponsorCard(),
+              SizedBox(height: spacing),
+            ],
+            if (_isRentalVehicleActionSubtype) ...[
+              _wrapReadOnlyIfNeeded(child: _buildRentalVehicleActionFields()),
               SizedBox(height: spacing),
             ],
             _wrapReadOnlyIfNeeded(child: _buildUrlField()),
@@ -5238,6 +5423,50 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         baseExtra.remove('transferTerminal');
         baseExtra.remove('transferAirline');
         baseExtra.remove('transferAirportMeet');
+      }
+      if (_isRentalVehicleActionSubtype) {
+        final company = _rentalCompanyController.text.trim();
+        final office = _rentalOfficeController.text.trim();
+        final contract = _rentalContractCodeController.text.trim();
+        final plate = _rentalVehiclePlateController.text.trim();
+        final notes = _rentalPickupReturnNotesController.text.trim();
+
+        if (company.isNotEmpty) {
+          baseExtra['rentalCompany'] =
+              Sanitizer.sanitizePlainText(company, maxLength: 120);
+        } else {
+          baseExtra.remove('rentalCompany');
+        }
+        if (office.isNotEmpty) {
+          baseExtra['rentalOffice'] =
+              Sanitizer.sanitizePlainText(office, maxLength: 180);
+        } else {
+          baseExtra.remove('rentalOffice');
+        }
+        if (contract.isNotEmpty) {
+          baseExtra['rentalContractCode'] =
+              Sanitizer.sanitizePlainText(contract, maxLength: 60);
+        } else {
+          baseExtra.remove('rentalContractCode');
+        }
+        if (plate.isNotEmpty) {
+          baseExtra['rentalVehiclePlate'] =
+              Sanitizer.sanitizePlainText(plate, maxLength: 20);
+        } else {
+          baseExtra.remove('rentalVehiclePlate');
+        }
+        if (notes.isNotEmpty) {
+          baseExtra['rentalPickupReturnNotes'] =
+              Sanitizer.sanitizePlainText(notes, maxLength: 600);
+        } else {
+          baseExtra.remove('rentalPickupReturnNotes');
+        }
+      } else {
+        baseExtra.remove('rentalCompany');
+        baseExtra.remove('rentalOffice');
+        baseExtra.remove('rentalContractCode');
+        baseExtra.remove('rentalVehiclePlate');
+        baseExtra.remove('rentalPickupReturnNotes');
       }
 
       // Descripción: si el usuario dejó el campo vacío, generar una a partir de tipo, subtipo y ubicación

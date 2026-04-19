@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -36,30 +37,38 @@ class WdDashboardHeaderBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final headerBg = kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
     return Stack(
       children: [
-        _buildW2(context, ref, columnWidth, rowHeight),
-        _buildW3(columnWidth, rowHeight),
-        _buildW4(context, columnWidth, rowHeight),
-        _buildW5(columnWidth, rowHeight),
-        _buildW6(context, ref, columnWidth, rowHeight),
+        _buildW2(context, ref, columnWidth, rowHeight, headerBg),
+        _buildW3(columnWidth, rowHeight, headerBg),
+        _buildW4(context, columnWidth, rowHeight, headerBg),
+        _buildW5(columnWidth, rowHeight, headerBg),
+        _buildW6(context, ref, columnWidth, rowHeight, headerBg),
       ],
     );
   }
 
-  Widget _buildW2(BuildContext context, WidgetRef ref, double columnWidth, double rowHeight) {
+  Widget _buildW2(
+    BuildContext context,
+    WidgetRef ref,
+    double columnWidth,
+    double rowHeight,
+    Color bg,
+  ) {
+    final text = kIsWeb ? const Color(0xFF1F2937) : Colors.white;
     return Positioned(
       left: columnWidth,
       top: 0,
       child: Container(
         width: columnWidth * 2,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
+        decoration: BoxDecoration(color: bg),
         child: Center(
           child: Text(
             AppLocalizations.of(context)!.dashboardLogo,
             style: GoogleFonts.poppins(
-              color: Colors.white,
+              color: text,
               fontSize: 18,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.1,
@@ -70,14 +79,14 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildW3(double columnWidth, double rowHeight) {
+  Widget _buildW3(double columnWidth, double rowHeight, Color bg) {
     return Positioned(
       left: columnWidth * 3,
       top: 0,
       child: Container(
         width: columnWidth,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
+        decoration: BoxDecoration(color: bg),
         child: Center(
           child: GestureDetector(
             onTap: onCreatePlan,
@@ -117,7 +126,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildW4(BuildContext context, double columnWidth, double rowHeight) {
+  Widget _buildW4(BuildContext context, double columnWidth, double rowHeight, Color bg) {
     // UI Showcase movido a página Admin (solo accesible para admin desde W1).
     return Positioned(
       left: columnWidth * 4,
@@ -125,7 +134,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
       child: Container(
         width: columnWidth,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
+        decoration: BoxDecoration(color: bg),
         child: Row(
           children: [
             const Expanded(child: SizedBox.shrink()),
@@ -136,7 +145,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildW5(double columnWidth, double rowHeight) {
+  Widget _buildW5(double columnWidth, double rowHeight, Color bg) {
     final w5Width = columnWidth + 1;
     final w5Height = rowHeight;
     final circleSize = (w5Width < w5Height ? w5Width : w5Height) * 0.8;
@@ -147,7 +156,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
       child: Container(
         width: w5Width,
         height: w5Height,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
+        decoration: BoxDecoration(color: bg),
         child: Center(
           child: Container(
             width: circleSize,
@@ -205,6 +214,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     WidgetRef ref,
     double columnWidth,
     double rowHeight,
+    Color bg,
   ) {
     return Positioned(
       left: columnWidth * 6 - 1,
@@ -212,7 +222,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
       child: Container(
         width: columnWidth * 5 + 1,
         height: rowHeight,
-        decoration: BoxDecoration(color: Colors.grey.shade900),
+        decoration: BoxDecoration(color: bg),
         child: selectedPlan != null
             ? _buildPlanInfoContent(context, ref)
             : _buildNoPlanSelectedInfo(context),
@@ -281,7 +291,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
                   letterSpacing: 0.1,
                 ),
                 maxLines: 1,
@@ -294,7 +304,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
                     '${_formatDateDDMMAA(plan.startDate)} - ${_formatDateDDMMAA(plan.endDate)}',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(0.9),
+                      color: kIsWeb ? const Color(0xFF334155) : Colors.white.withOpacity(0.9),
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -308,8 +318,8 @@ class WdDashboardHeaderBar extends ConsumerWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: (hasPendingInvitation || hasPendingParticipation)
-                              ? Colors.orange.shade200
-                              : Colors.white.withOpacity(0.75),
+                              ? (kIsWeb ? Colors.orange.shade700 : Colors.orange.shade200)
+                              : (kIsWeb ? const Color(0xFF64748B) : Colors.white.withOpacity(0.75)),
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,

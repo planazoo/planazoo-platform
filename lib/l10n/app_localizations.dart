@@ -3224,6 +3224,66 @@ abstract class AppLocalizations {
   /// **'Ej: 2 h antes del vuelo, mostrador…'**
   String get eventTransferAirportMeetHint;
 
+  /// No description provided for @eventRentalCompanyLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Compañía de alquiler'**
+  String get eventRentalCompanyLabel;
+
+  /// No description provided for @eventRentalCompanyHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Hertz, Europcar, Sixt'**
+  String get eventRentalCompanyHint;
+
+  /// No description provided for @eventRentalOfficeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Oficina de recogida/entrega'**
+  String get eventRentalOfficeLabel;
+
+  /// No description provided for @eventRentalOfficeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Aeropuerto T4, centro ciudad'**
+  String get eventRentalOfficeHint;
+
+  /// No description provided for @eventRentalContractCodeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Contrato o reserva'**
+  String get eventRentalContractCodeLabel;
+
+  /// No description provided for @eventRentalContractCodeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: RC-123456'**
+  String get eventRentalContractCodeHint;
+
+  /// No description provided for @eventRentalVehiclePlateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Matrícula (opcional)'**
+  String get eventRentalVehiclePlateLabel;
+
+  /// No description provided for @eventRentalVehiclePlateHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 1234ABC'**
+  String get eventRentalVehiclePlateHint;
+
+  /// No description provided for @eventRentalPickupReturnNotesLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Checklist recogida/entrega'**
+  String get eventRentalPickupReturnNotesLabel;
+
+  /// No description provided for @eventRentalPickupReturnNotesHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: combustible, daños visibles, km, política de devolución'**
+  String get eventRentalPickupReturnNotesHint;
+
   /// No description provided for @flightNumberLabel.
   ///
   /// In es, this message translates to:
@@ -3361,6 +3421,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Añadir gasto ligado a este evento'**
   String get eventDialogAddLinkedExpenseTooltip;
+
+  /// No description provided for @calendarContextEditEvent.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar evento'**
+  String get calendarContextEditEvent;
+
+  /// No description provided for @calendarContextCopyEvent.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar evento'**
+  String get calendarContextCopyEvent;
+
+  /// No description provided for @calendarContextDeleteEvent.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar evento'**
+  String get calendarContextDeleteEvent;
+
+  /// No description provided for @calendarContextCopiedOk.
+  ///
+  /// In es, this message translates to:
+  /// **'Evento copiado correctamente'**
+  String get calendarContextCopiedOk;
+
+  /// No description provided for @calendarContextCopiedOkWithOffset.
+  ///
+  /// In es, this message translates to:
+  /// **'Copia creada (+30 min), color distinto y prefijo COPIA'**
+  String get calendarContextCopiedOkWithOffset;
+
+  /// No description provided for @calendarContextCopiedError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo copiar el evento'**
+  String get calendarContextCopiedError;
+
+  /// No description provided for @calendarContextDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar evento'**
+  String get calendarContextDeleteTitle;
+
+  /// No description provided for @calendarContextDeleteMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Seguro que quieres eliminar este evento?'**
+  String get calendarContextDeleteMessage;
+
+  /// No description provided for @calendarContextDeletedOk.
+  ///
+  /// In es, this message translates to:
+  /// **'Evento eliminado correctamente'**
+  String get calendarContextDeletedOk;
+
+  /// No description provided for @calendarContextDeletedError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo eliminar el evento'**
+  String get calendarContextDeletedError;
 
   /// No description provided for @eventSponsoredTag.
   ///

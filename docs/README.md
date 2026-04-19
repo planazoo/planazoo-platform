@@ -75,7 +75,7 @@ Gestión de tareas del proyecto:
 - [Sistema Nocturno de QA Distribuido](./testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md) - E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac), capas A/B/C, alertas y fases de implementación
 - [Plan E2E tres usuarios (manual)](./testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) - Flujo completo UA/UB/UC para pruebas manuales
 - [Registro de observaciones de pruebas](./testing/REGISTRO_OBSERVACIONES_PRUEBAS.md) - Notas y observaciones durante pruebas manuales
-- [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md) — Hive móvil (`plans`, `events`, `participations`, `sync_queue`, `current_user`) y arranque offline
+- [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md) — Móvil: Firestore offline (SDK) + réplica Hive + `current_user`; guía alineada con **ítem 58** cerrado; regresión **REG-2026-022** en [Testing Checklist](./configuracion/TESTING_CHECKLIST.md)
 
 ### ⚙️ [Configuración](./configuracion/)
 Configuración y contexto del proyecto:

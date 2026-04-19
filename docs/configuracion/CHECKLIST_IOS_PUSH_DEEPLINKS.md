@@ -114,7 +114,7 @@ Usa esta secuencia para cerrar el punto **109** con evidencia real.
 
 ### 2) Prueba foreground (app abierta)
 
-- Payload recomendado:
+- Payload recomendado (custom data; mismo contrato que en background):
   ```json
   {
     "planId": "PLAN_ID_REAL",
@@ -125,8 +125,17 @@ Usa esta secuencia para cerrar el punto **109** con evidencia real.
   - App en primer plano.
   - Enviar push desde Firebase Console o Cloud Function.
 - Esperado:
-  - Llega push al dispositivo (banner/lista según ajustes iOS).
+  - En consola Flutter: línea `FCM onMessage ...` y log `Notificación recibida en primer plano`.
+  - En la app: **SnackBar** con título/cuerpo del push (feedback in-app).
   - No crash ni navegación inesperada automática.
+
+**Nota iOS (HTTP v1 / curl):**
+
+- Para **ver banner / Centro de notificaciones** (sobre todo en **background**), hace falta un mensaje **visible**: bloque `notification` (y/o `aps.alert` vía FCM). Un mensaje **solo `data`** con `aps` = `content-available` es un **push silencioso**: en background **no** verás aviso en la bandeja (comportamiento esperado de iOS).
+- Todos los valores del mapa `data` en FCM v1 deben ser **strings**.
+- Push silencioso en iOS: suele requerir cabeceras APNs coherentes (`apns-push-type`, `apns-priority`). Si el `curl` devuelve error JSON de FCM/APNs, revisar mensaje y payload.
+
+**Ejemplo HTTP v1 “visible” (background + datos para la app):** usar de nuevo el `curl` con `notification` + `data` que ya te funcionaba para background.
 
 ### 3) Prueba background (app en segundo plano)
 

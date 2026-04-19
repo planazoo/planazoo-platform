@@ -1740,6 +1740,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventTransferAirportMeetHint => 'E.g. 2h before flight, desk…';
 
   @override
+  String get eventRentalCompanyLabel => 'Rental company';
+
+  @override
+  String get eventRentalCompanyHint => 'E.g. Hertz, Europcar, Sixt';
+
+  @override
+  String get eventRentalOfficeLabel => 'Pick-up/drop-off office';
+
+  @override
+  String get eventRentalOfficeHint => 'E.g. Airport T4, city center';
+
+  @override
+  String get eventRentalContractCodeLabel => 'Contract or booking code';
+
+  @override
+  String get eventRentalContractCodeHint => 'E.g. RC-123456';
+
+  @override
+  String get eventRentalVehiclePlateLabel => 'Vehicle plate (optional)';
+
+  @override
+  String get eventRentalVehiclePlateHint => 'E.g. 1234ABC';
+
+  @override
+  String get eventRentalPickupReturnNotesLabel => 'Pick-up/drop-off checklist';
+
+  @override
+  String get eventRentalPickupReturnNotesHint =>
+      'E.g. fuel, visible damage, mileage, return policy';
+
+  @override
   String get flightNumberLabel => 'Flight number';
 
   @override
@@ -1813,6 +1844,38 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get eventDialogAddLinkedExpenseTooltip =>
       'Add expense linked to this event';
+
+  @override
+  String get calendarContextEditEvent => 'Edit event';
+
+  @override
+  String get calendarContextCopyEvent => 'Copy event';
+
+  @override
+  String get calendarContextDeleteEvent => 'Delete event';
+
+  @override
+  String get calendarContextCopiedOk => 'Event copied successfully';
+
+  @override
+  String get calendarContextCopiedOkWithOffset =>
+      'Copy created (+30 min), different color and COPIA prefix';
+
+  @override
+  String get calendarContextCopiedError => 'Could not copy event';
+
+  @override
+  String get calendarContextDeleteTitle => 'Delete event';
+
+  @override
+  String get calendarContextDeleteMessage =>
+      'Are you sure you want to delete this event?';
+
+  @override
+  String get calendarContextDeletedOk => 'Event deleted successfully';
+
+  @override
+  String get calendarContextDeletedError => 'Could not delete event';
 
   @override
   String get eventSponsoredTag => 'Sponsored';

@@ -133,10 +133,11 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         }
       });
     }
+    final isWebChat = kIsWeb && _selectedOption == 'chat';
     return Theme(
-      data: AppTheme.darkTheme,
+      data: isWebChat ? AppTheme.lightTheme : AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade900,
+        backgroundColor: isWebChat ? const Color(0xFFF1F5F9) : Colors.grey.shade900,
         appBar: _buildAppBar(plan),
         bottomNavigationBar: _buildQuickActionsBar(plan),
         body: SafeArea(
@@ -166,11 +167,15 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   /// Barra superior: nombre del plan, chip mi estado (dentro/fuera/pend.) y ayuda P18.
   PreferredSizeWidget _buildAppBar(Plan plan) {
     final loc = AppLocalizations.of(context)!;
+    final isWebChat = kIsWeb && _selectedOption == 'chat';
     return AppBar(
-      backgroundColor: AppColorScheme.color2,
+      backgroundColor: isWebChat ? const Color(0xFFF1F5F9) : AppColorScheme.color2,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        icon: Icon(
+          Icons.arrow_back,
+          color: isWebChat ? const Color(0xFF1F2937) : Colors.white,
+        ),
         onPressed: () {
           // Si al hacer pop no queda nada debajo (pantalla negra), aseguramos volver a la lista de planes.
           if (Navigator.of(context).canPop()) {
@@ -185,7 +190,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       title: Text(
         plan.name,
         style: GoogleFonts.poppins(
-          color: Colors.white,
+          color: isWebChat ? const Color(0xFF1F2937) : Colors.white,
           fontSize: 16,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
@@ -211,7 +216,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                 contextLabel: loc.planMyStatusHelpTitle,
                 defaultBody: loc.planMyStatusHelpDefault,
                 iconSize: 18,
-                iconColor: Colors.white.withValues(alpha: 0.9),
+                iconColor: isWebChat
+                    ? const Color(0xFF64748B)
+                    : Colors.white.withValues(alpha: 0.9),
               ),
             ],
           ),
@@ -222,6 +229,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
 
   Widget _buildQuickActionsBar(Plan plan) {
     final loc = AppLocalizations.of(context)!;
+    final isWebChat = kIsWeb && _selectedOption == 'chat';
     final planId = plan.id;
     final unreadChat = planId != null
         ? (ref.watch(unreadMessagesCountProvider(planId)).valueOrNull ?? 0)
@@ -235,24 +243,43 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       child: Container(
         height: 72,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.grey.shade900,
-              const Color(0xFF171717),
-            ],
-          ),
+          gradient: isWebChat
+              ? const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
+                )
+              : LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.grey.shade900,
+                    const Color(0xFF171717),
+                  ],
+                ),
           border: Border(
-            top: BorderSide(color: Colors.grey.shade700.withOpacity(0.4), width: 1),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.35),
-              blurRadius: 16,
-              offset: const Offset(0, -3),
+            top: BorderSide(
+              color: isWebChat
+                  ? const Color(0xFFE2E8F0)
+                  : Colors.grey.shade700.withOpacity(0.4),
+              width: 1,
             ),
-          ],
+          ),
+          boxShadow: isWebChat
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, -3),
+                  ),
+                ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -302,9 +329,18 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     required bool isActive,
     int badgeCount = 0,
   }) {
-    final iconColor = isActive ? Colors.white : AppColorScheme.color2;
-    final bg = isActive ? AppColorScheme.color2 : Colors.transparent;
-    final borderColor = isActive ? AppColorScheme.color2 : Colors.grey.shade700.withOpacity(0.7);
+    final isWebChat = kIsWeb && _selectedOption == 'chat';
+    final iconColor = isActive
+        ? Colors.white
+        : (isWebChat ? const Color(0xFF64748B) : AppColorScheme.color2);
+    final bg = isActive
+        ? AppColorScheme.color2
+        : (isWebChat ? Colors.white : Colors.transparent);
+    final borderColor = isActive
+        ? AppColorScheme.color2
+        : (isWebChat
+            ? const Color(0xFFE2E8F0)
+            : Colors.grey.shade700.withOpacity(0.7));
 
     return Tooltip(
       message: tooltip,
@@ -326,7 +362,15 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                       offset: const Offset(0, 3),
                     ),
                   ]
-                : null,
+                : (isWebChat
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                          blurRadius: 6,
+                          offset: const Offset(0, 1),
+                        ),
+                      ]
+                    : null),
           ),
           child: Stack(
             clipBehavior: Clip.none,

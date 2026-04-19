@@ -4,7 +4,7 @@
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
 > **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T263**
+**Siguiente código de tarea: T267**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
@@ -15,10 +15,10 @@
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña)**, etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña), T263-T266 (items 63/64/65/98 de lista QA)**, etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
-**Total aproximado: ~95 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
+**Total aproximado: ~99 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
 
 **Preparación pruebas con familia:** Ver `docs/configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md`. Ítems de prioridad alta (l10n lista planes/invitación, navegación al plan en móvil, Safe area, timezones Egipto+Londres) implementados; checklist §4 pendiente de ejecutar antes de invitar.
 
@@ -160,6 +160,8 @@
 | **T61** | Notificaciones push offline. | Media |
 | **T62** | Testing exhaustivo Offline First. | Media |
 
+> **Nota (2026-04-08):** La verificación de lista **ítem 58** («offline first» móvil) quedó **cerrada** documentalmente con arquitectura **Firestore-first** + réplica Hive + `current_user` — ver [TESTING_OFFLINE_FIRST.md](../testing/TESTING_OFFLINE_FIRST.md), [LISTA_PUNTOS_CORREGIR_APP.md](../testing/LISTA_PUNTOS_CORREGIR_APP.md) y regresión **REG-2026-022** en [TESTING_CHECKLIST.md](../configuracion/TESTING_CHECKLIST.md) §12.3. Las tareas **T56–T62** siguen siendo roadmap (cola Hive explícita, pruebas amplias, etc.); el **ítem 65** de la lista es necesidad de producto más amplia (consulta offline total / web).
+
 ---
 
 ### 7. Permisos (T64, T66, T67)
@@ -230,6 +232,10 @@
 | **T258** | **Icono de la app Planazoo:** Configuración y mantenimiento del icono propio en iOS y Android (sin borde blanco, full bleed si aplica). Detalle en `docs/tareas/T258_ICONO_APP.md`. | Baja |
 | **T259** | **Deep link invitación en iOS:** Implementar Universal Links o custom URL scheme para que el link de invitación (p. ej. desde email) abra la app iOS directamente en la pantalla de invitación, en paridad con la experiencia web. Incluye: configuración Associated Domains (Universal Links) o URL scheme en Xcode, archivo apple-app-site-association en el servidor si aplica, y manejo de la URL en la app (WidgetsBinding / getInitialUri). Referencia: `docs/configuracion/REVISION_IOS_VS_WEB.md` §2.3 y §3 ítem 7. Detalle en `docs/tareas/T259_DEEP_LINK_INVITACION_IOS.md`. | Media |
 | **T260** | **Sistema multi-moneda:** Soporte de múltiples monedas por plan (EUR, USD, GBP, etc.), formateo automático en UI según moneda del plan y, opcionalmente, conversión de tipos de cambio al visualizar o registrar. Relacionado con T101 (presupuesto) y T102 (pagos). Especificación en `docs/tareas/CURRENCY_SYSTEM_PROPOSAL.md`. | Media |
+| **T263** | **Brief y decisión de icono app (traslado de ítem 63):** Definir brief final de marca para icono Planazoo (concepto visual de las dos “oo”, variantes, criterios de legibilidad en tamaños pequeños, versión iOS/Android, exportables necesarios) y dejar decisión cerrada para implementación en T258. | Baja |
+| **T264** | **Navegación inferior + patrón de creación (traslado de ítem 64):** Decidir diseño de producto para barras inferiores/FAB y menú de creación contextual (“Otros…” incluido), con criterio de paridad web/iOS y plan de implementación por fases (sin codificar hasta cierre de diseño). | Media |
+| **T265** | **Offline first amplio (traslado de ítem 65):** Definir roadmap funcional y técnico para consulta offline total (móvil y enfoque web/PWA), priorizar MVP y fases sobre T56-T62, con criterios de éxito y checklist de validación. | Alta |
+| **T266** | **Asistente por reglas (traslado de ítem 98):** Definir alcance de producto para sugerencias inteligentes basadas en reglas (ej. vuelo→taxi, estado plan vs fechas), catálogo inicial de reglas, UX de presentación y métricas de valor antes de implementación. | Media |
 
 ---
 
@@ -278,4 +284,4 @@ Las tareas **completadas** que estaban en este archivo han pasado a `COMPLETED_T
 
 - **Propósito distinto:** `TASKS.md` = códigos **Txxx** (especificaciones y roadmap). La lista de puntos = IDs numéricos (**34–61**, **62–109**, …) de **pruebas / bugs / UX** por ronda.
 - **Colisión de números:** un ID como **94** en la lista (*defaults al crear evento desde FAB*) **no** es la **T94** de `COMPLETED_TASKS.md` (refactor CalendarScreen). En referencias cruzadas usar siempre **«ítem 94»** vs **«T94»**.
-- **Complementarios (ejemplos):** **T257** (revisión iOS vs web) ↔ muchos ítems §3.2; **T250** / `EVENT_FORM_FIELDS.md` ↔ **90**, **92–97**; **T246** ↔ **90**, **50** (histórico); **T262** ↔ **66** (contrato en notas); **T56–T62** ↔ **58**, **65**; pagos **T102** / **T222** ↔ **101–107**; **T259** ↔ **109** (push + deep links en otros docs).
+- **Complementarios (ejemplos):** **T257** (revisión iOS vs web) ↔ muchos ítems §3.2; **T250** / `EVENT_FORM_FIELDS.md` ↔ **90**, **92–97**; **T246** ↔ **90**, **50** (histórico); **T262** ↔ **66** (contrato en notas); **T263** ↔ **63** (icono), **T264** ↔ **64** (barras/FAB), **T265** ↔ **65** (offline amplio), **T266** ↔ **98** (asistente); **T56–T62** ↔ roadmap offline técnico; **ítem 58** ↔ verificación cerrada 2026-04-08 — `TESTING_OFFLINE_FIRST.md`, **REG-2026-022** en `TESTING_CHECKLIST.md`; pagos **T102** / **T222** ↔ **101–107**; **T259** ↔ **109** (push + deep links en otros docs).

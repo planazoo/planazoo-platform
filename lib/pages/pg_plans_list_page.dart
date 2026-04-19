@@ -611,13 +611,6 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
           ),
         );
       },
-      onSummaryInPanel: (_) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => PlanDetailPage(plan: plan, initialTab: 'mySummary'),
-          ),
-        );
-      },
       onNotificationsTap: (_) {
         Navigator.of(context).push(
           MaterialPageRoute(

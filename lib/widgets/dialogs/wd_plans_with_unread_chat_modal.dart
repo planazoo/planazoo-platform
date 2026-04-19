@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,7 +15,7 @@ void showPlansWithUnreadChatModal({
 }) {
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: Colors.grey.shade900,
+    backgroundColor: kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -65,18 +66,25 @@ class _PlansWithUnreadChatModal extends ConsumerWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
                 ),
               ),
             ),
-            const Divider(height: 1),
+            Divider(
+              height: 1,
+              color: kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade700,
+            ),
             Flexible(
               child: withUnread.isEmpty
                   ? Padding(
                       padding: const EdgeInsets.all(24),
                       child: Text(
                         loc.notificationsEmpty,
-                        style: GoogleFonts.poppins(color: Colors.grey.shade400),
+                        style: GoogleFonts.poppins(
+                          color: kIsWeb
+                              ? const Color(0xFF64748B)
+                              : Colors.grey.shade400,
+                        ),
                       ),
                     )
                   : ListView.builder(
@@ -120,11 +128,14 @@ class _PlanUnreadTile extends ConsumerWidget {
       title: Text(
         plan.name,
         style: GoogleFonts.poppins(
-          color: Colors.white,
+          color: kIsWeb ? const Color(0xFF0F172A) : Colors.white,
           fontWeight: FontWeight.w500,
         ),
       ),
-      trailing: Icon(Icons.chevron_right, color: Colors.grey.shade400),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: kIsWeb ? const Color(0xFF64748B) : Colors.grey.shade400,
+      ),
       onTap: onTap,
     );
   }

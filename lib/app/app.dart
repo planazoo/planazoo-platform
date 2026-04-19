@@ -111,6 +111,29 @@ class _AppState extends ConsumerState<App> {
 
       // Registrar navegación desde push (A1 / ítem 109).
       FCMService.setNotificationTapHandler(_handlePushTap);
+
+      // Segundo frame: el [navigatorKey] ya tiene contexto (SnackBar en foreground).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        FCMService.setForegroundMessageHandler((message) {
+          final ctx = _rootNavigatorKey.currentContext;
+          if (ctx == null || !ctx.mounted) return;
+          final title = message.notification?.title ??
+              message.data['title']?.toString() ??
+              'Planazoo';
+          final body = message.notification?.body ??
+              message.data['body']?.toString() ??
+              '';
+          final text = body.isEmpty
+              ? title
+              : (title.isEmpty ? body : '$title\n$body');
+          ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(
+            SnackBar(
+              content: Text(text),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        });
+      });
       
       // Verificar si hay una notificación que abrió la app
       FCMService.getInitialMessage();

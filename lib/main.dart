@@ -8,6 +8,7 @@ import 'firebase_options.dart';
 import 'app/app.dart';
 import 'features/calendar/domain/services/timezone_service.dart';
 import 'features/offline/domain/services/hive_service.dart';
+import 'shared/services/fcm_service.dart';
 
 /// Handler de mensajes push en background (FCM).
 /// Debe ser top-level para que Flutter/Firebase lo pueda invocar.
@@ -55,6 +56,8 @@ void main() async {
   // Registrar handler de notificaciones en background (A1 / ítem 109).
   if (!kIsWeb) {
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    // iOS: registrar foreground lo antes posible (antes de runApp) para no perder el stream.
+    FCMService.attachForegroundMessageListener();
   }
   
   runApp(

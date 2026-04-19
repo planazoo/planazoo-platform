@@ -56,7 +56,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 ### 4) Persistencia y Decisiones de Datos
 - Persistencia local solo para prototipos rápidos; versión final debe ser global (Firestore) salvo indicación contraria.
-- **Excepción explícita (móvil offline):** caché Hive + cola de sync documentada en `docs/testing/TESTING_OFFLINE_FIRST.md` (boxes `plans`, `events`, `participations`, `sync_queue`, **`current_user`** para snapshot del perfil tras login). Comportamiento de usuario y perfil: `docs/flujos/FLUJO_CRUD_USUARIOS.md` (sección *Snapshot de perfil en Hive*).
+- **Excepción explícita (móvil offline):** persistencia offline de **Firestore** (cola del SDK) para planes/eventos + **réplica Hive** vía listeners (`plans`, `events`, `participations`); perfil en **`current_user`**. El box `sync_queue` y `SyncService` están preparados pero **no** son el camino principal de sync (ver `docs/testing/TESTING_OFFLINE_FIRST.md`). Comportamiento de usuario y perfil: `docs/flujos/FLUJO_CRUD_USUARIOS.md` (sección *Snapshot de perfil en Hive*).
 - Identificadores estables (p. ej., `participantId`) para persistir orden/configuración; evitar IDs efímeros.
 
 ### 5) UI/UX y Calidad

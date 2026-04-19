@@ -16,7 +16,6 @@ import 'package:unp_calendario/features/notifications/presentation/providers/not
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
-import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
 import 'package:unp_calendario/widgets/plan/plan_status_chip_actions.dart';
 
 class PlanCardWidget extends ConsumerWidget {
@@ -24,8 +23,6 @@ class PlanCardWidget extends ConsumerWidget {
   final VoidCallback? onTap;
   final bool isSelected;
   final VoidCallback? onDelete;
-  /// Si se proporciona, el icono de resumen abre la página de resumen (no el diálogo generador).
-  final void Function(Plan plan)? onSummaryInPanel;
   /// Al clic en icono notificaciones: abrir página de notificaciones del plan.
   final void Function(Plan plan)? onNotificationsTap;
   /// Al clic en icono chat: abrir página de chat del plan.
@@ -37,7 +34,6 @@ class PlanCardWidget extends ConsumerWidget {
     this.onTap,
     this.isSelected = false,
     this.onDelete,
-    this.onSummaryInPanel,
     this.onNotificationsTap,
     this.onChatTap,
   });
@@ -86,6 +82,7 @@ class PlanCardWidget extends ConsumerWidget {
                 ));
 
     final hasAnyPending = isPending;
+    final webLight = kIsWeb;
 
     // W28: iconos de notificaciones y mensajes no leídos por plan
     final notifUnread = plan.id != null
@@ -94,10 +91,17 @@ class PlanCardWidget extends ConsumerWidget {
     final chatUnread = plan.id != null
         ? ref.watch(unreadMessagesCountProvider(plan.id!)).valueOrNull ?? 0
         : 0;
+    final showNotifIcon = notifUnread > 0 && onNotificationsTap != null;
+    final showChatIcon = chatUnread > 0 && onChatTap != null;
+    final showActionColumn = plan.id != null && (showNotifIcon || showChatIcon);
 
     // T213: card más compacta; mayor contraste cuando está seleccionada
-    final textSecondary = isSelected ? Colors.white.withValues(alpha: 0.95) : Colors.grey.shade400;
-    final textTertiary = isSelected ? Colors.white.withValues(alpha: 0.85) : Colors.grey.shade500;
+    final textSecondary = isSelected
+        ? Colors.white.withValues(alpha: 0.95)
+        : (webLight ? const Color(0xFF475569) : Colors.grey.shade400);
+    final textTertiary = isSelected
+        ? Colors.white.withValues(alpha: 0.85)
+        : (webLight ? const Color(0xFF64748B) : Colors.grey.shade500);
     // §3.2 ítem 62: lista planes en iOS un poco más grande (touch + legibilidad).
     final isIos = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
     final cardPadH = isIos ? 20.0 : 16.0;
@@ -109,20 +113,31 @@ class PlanCardWidget extends ConsumerWidget {
     final dividerH = isIos ? 80.0 : 72.0;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 0),
+      margin: EdgeInsets.only(bottom: webLight ? 8 : 0),
       decoration: BoxDecoration(
         color: isSelected
             ? AppColorScheme.color2
-            : Colors.grey.shade900,
-        borderRadius: BorderRadius.zero,
+            : (webLight ? Colors.white : Colors.grey.shade900),
+        borderRadius: BorderRadius.circular(webLight ? 12 : 0),
+        boxShadow: webLight
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
         border: hasAnyPending
             ? Border(
-                top: BorderSide(color: Colors.orange.shade400, width: 2),
-                bottom: BorderSide(color: AppColorScheme.color2, width: 1),
+                top: BorderSide(color: webLight ? const Color(0xFFF59E0B) : Colors.orange.shade400, width: 2),
+                bottom: BorderSide(color: webLight ? const Color(0xFFE2E8F0) : AppColorScheme.color2, width: 1),
               )
             : Border(
                 bottom: BorderSide(
-                  color: isSelected ? Colors.white.withValues(alpha: 0.25) : AppColorScheme.color2,
+                  color: isSelected
+                      ? (webLight ? const Color(0xFFD5E2EE) : Colors.white.withValues(alpha: 0.25))
+                      : (webLight ? const Color(0xFFE2E8F0) : AppColorScheme.color2),
                   width: 1,
                 ),
               ),
@@ -135,7 +150,7 @@ class PlanCardWidget extends ConsumerWidget {
             Expanded(
               child: InkWell(
                 onTap: onTap,
-                borderRadius: BorderRadius.zero,
+                borderRadius: BorderRadius.circular(webLight ? 12 : 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -168,7 +183,7 @@ class PlanCardWidget extends ConsumerWidget {
                             plan.name,
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: webLight ? const Color(0xFF0F172A) : Colors.white,
                               fontSize: titleFs,
                             ),
                             maxLines: 2,
@@ -205,7 +220,7 @@ class PlanCardWidget extends ConsumerWidget {
                                   Icon(
                                     Icons.groups_2_outlined,
                                     size: 13,
-                                    color: Colors.grey.shade400,
+                                    color: webLight ? const Color(0xFF94A3B8) : Colors.grey.shade400,
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
@@ -235,12 +250,15 @@ class PlanCardWidget extends ConsumerWidget {
               ),
             ),
             // Columna vertical estrecha: iconos resumen, notificaciones, chat
-            if (plan.id != null) ...[
+            if (showActionColumn) ...[
                 Container(
                   width: 1,
                   height: dividerH,
                   margin: const EdgeInsets.only(left: 8, right: 8),
-                  color: (isSelected ? Colors.white : Colors.grey.shade600).withValues(alpha: 0.3),
+                  color: (isSelected
+                          ? (webLight ? const Color(0xFFB6C7DA) : Colors.white)
+                          : (webLight ? const Color(0xFFCBD5E1) : Colors.grey.shade600))
+                      .withValues(alpha: 0.35),
                 ),
                 SizedBox(
                   width: 40,
@@ -249,30 +267,25 @@ class PlanCardWidget extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      PlanSummaryButton(
-                      plan: plan,
-                      iconOnly: true,
-                      foregroundColor: isSelected ? Colors.white : Colors.white70,
-                      onShowInPanel: onSummaryInPanel,
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: onNotificationsTap != null ? () => onNotificationsTap!(plan) : null,
-                      child: _buildBadgeIcon(
-                        icon: notifUnread > 0 ? Icons.notifications : Icons.notifications_outlined,
-                        hasUnread: notifUnread > 0,
-                        isSelected: isSelected,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: onChatTap != null ? () => onChatTap!(plan) : null,
-                      child: _buildBadgeIcon(
-                        icon: chatUnread > 0 ? Icons.chat_bubble : Icons.chat_bubble_outline,
-                        hasUnread: chatUnread > 0,
-                        isSelected: isSelected,
-                      ),
-                    ),
+                      if (showNotifIcon)
+                        GestureDetector(
+                          onTap: () => onNotificationsTap!(plan),
+                          child: Icon(
+                            Icons.notifications,
+                            size: _badgeIconSize,
+                            color: AppColorScheme.color3,
+                          ),
+                        ),
+                      if (showNotifIcon && showChatIcon) const SizedBox(height: 8),
+                      if (showChatIcon)
+                        GestureDetector(
+                          onTap: () => onChatTap!(plan),
+                          child: Icon(
+                            Icons.chat_bubble,
+                            size: _badgeIconSize,
+                            color: AppColorScheme.color3,
+                          ),
+                        ),
                   ],
                 ),
                 ),
@@ -292,17 +305,6 @@ class PlanCardWidget extends ConsumerWidget {
   String _formatDate(DateTime date) => DateFormatter.formatDate(date);
 
   static const double _badgeIconSize = 20.0;
-
-  Widget _buildBadgeIcon({
-    required IconData icon,
-    required bool hasUnread,
-    required bool isSelected,
-  }) {
-    final color = hasUnread
-        ? AppColorScheme.color3
-        : (isSelected ? Colors.white.withValues(alpha: 0.9) : Colors.grey.shade400);
-    return Icon(icon, size: _badgeIconSize, color: color);
-  }
 
   Widget _buildStatusChipVisual(
     BuildContext context, {

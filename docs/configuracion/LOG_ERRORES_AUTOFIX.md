@@ -16,6 +16,74 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-04-18] iOS — foreground sin `onMessage` con `FlutterImplicitEngineDelegate` + escena (FCM devuelve `name` OK)
+
+- **Contexto:** Push en primer plano: segundo plano OK; `curl` FCM HTTP v1 devuelve `name` (envío aceptado); no hay `FCM onMessage` / SnackBar en Dart.
+- **Causa raíz:** Con `UIApplicationSceneManifest` + `FlutterSceneDelegate` y plugins registrados solo en `didInitializeImplicitFlutterEngine`, el plugin `firebase_messaging` puede no reenviar `Messaging#onMessage` a Dart (véase [flutter#185048](https://github.com/flutter/flutter/issues/185048)); el sistema sí entrega la notificación vía APNs (`willPresent` nativo).
+- **Solución aplicada:** Rollback de la migración UIScene para iOS: quitar `UIApplicationSceneManifest` de `Info.plist`, volver `AppDelegate` al ciclo clásico (`GeneratedPluginRegistrant.register(with: self)` en `didFinishLaunchingWithOptions`) y eliminar el puente temporal por `MethodChannel`.
+- **Notas:** Mantener este rollback hasta que haya fix estable upstream para `FlutterImplicitEngineDelegate` + `firebase_messaging`.
+
+### [2026-04-18] FCM HTTP v1 — “solo data” + `content-available` parece romper fore/back
+
+- **Contexto:** Prueba de foreground con `curl` sin bloque `notification`, solo `data` + `aps.content-available`.
+- **Causa raíz:** Ese patrón es un **push silencioso** en iOS: no muestra banner en background (no es fallo de la app). Además, sin cabeceras APNs correctas o con payload mal formado, FCM/APNs puede rechazar el envío o no entregar UI.
+- **Solución aplicada:** Para validar **banner en background**, volver al mensaje con bloque `notification` + `data`. Documentación en `CHECKLIST_IOS_PUSH_DEEPLINKS.md` § paso 2 ajustada para no recomendar solo `data` como sustituto universal.
+- **Notas:** Diferenciar “no hay banner” (silent) vs “el `curl` devuelve error JSON” (revisar respuesta del API).
+
+### [2026-04-18] `FCMService` — iOS foreground: sin `onMessage` / sin SnackBar con payload `notification`
+
+- **Contexto:** Push en primer plano: background OK; no aparecía log `Notificación recibida en primer plano` ni SnackBar.
+- **Causa raíz:** En iOS, mensajes con bloque `notification` + `aps.alert` pueden no entrar por la misma ruta que los “data-only”; además conviene registrar `FirebaseMessaging.onMessage` muy pronto (tras `Firebase.initializeApp`).
+- **Solución aplicada:** `FCMService.attachForegroundMessageListener()` desde `main.dart` antes de `runApp` (una suscripción, no cancelar en `cleanup`); `cleanup` solo pone `onForegroundMessage = null`; `debugPrint` para ver `FCM onMessage` en consola; checklist: prueba alternativa HTTP v1 solo `data` + `aps` sin `alert`.
+- **Notas para el futuro:** Si foreground sigue vacío con curl “notification”, probar payload solo `data` (ver `CHECKLIST_IOS_PUSH_DEEPLINKS.md` § paso 2).
+
+### [2026-04-18] `FCMService` — foreground sin banner tras `flutter_local_notifications`
+
+- **Contexto:** Push iOS en primer plano: background OK, foreground sin feedback visible.
+- **Causa raíz:** `flutter_local_notifications` se registró como `UIApplicationDelegate` y su `willPresentNotification` ignora notificaciones que no son “locales” (FCM remoto), lo que puede interferir con la cadena de delegados y con `FirebaseMessaging.onMessage` en iOS.
+- **Solución aplicada:** Quitar dependencia `flutter_local_notifications`; en `onMessage` invocar un callback `setForegroundMessageHandler` registrado desde `App` que muestra un `SnackBar` con `navigatorKey` (feedback claro en foreground sin banner del sistema).
+- **Notas para el futuro:** Evitar inicializar plugins que tomen `UNUserNotificationCenter` sin reenviar notificaciones remotas; para foreground, SnackBar/overlay in-app es más predecible que duplicar capa nativa.
+
+### [2026-04-18] `wd_unified_notification_item` — excepción `borderRadius` con bordes no uniformes
+
+- **Contexto:** Pruebas de push iOS (foreground/background) con lista de notificaciones abierta.
+- **Error:** `A borderRadius can only be given on borders with uniform colors` en `lib/widgets/notifications/wd_unified_notification_item.dart`.
+- **Causa raíz:** `BoxDecoration` combinaba `borderRadius` con un `Border` de lados con colores distintos.
+- **Solución aplicada:** Cambiar a `Border.all(...)` uniforme y mover el acento de no leído a un indicador lateral interno (`Container`) dentro de la fila.
+- **Notas para el futuro:** Si un contenedor tiene `borderRadius`, usar borde uniforme o pintar acentos laterales como widgets hijos.
+
+### [2026-04-18] `FCMService` — `permission-denied` al guardar `fcmTokens` en iOS
+
+- **Contexto:** Validación de push iOS (A1), tras obtener token FCM en arranque (`lib/shared/services/fcm_service.dart`).
+- **Error:** `[cloud_firestore/permission-denied] The caller does not have permission to execute the specified operation.` al guardar en `users/{userId}/fcmTokens/{token}`.
+- **Causa raíz:** En cada refresco se hacía `set(..., merge: true)` enviando también `createdAt` y `deviceInfo`; las reglas de `update` para `fcmTokens` solo permiten cambiar `updatedAt` y exigen que `token`, `deviceInfo` y `createdAt` permanezcan iguales.
+- **Solución aplicada:** En `_saveTokenToFirestore`, crear documento completo solo si no existe; si existe, actualizar únicamente `updatedAt` con `merge: true`.
+- **Notas para el futuro:** Cuando haya reglas con campos inmutables, separar explícitamente flujo de `create` vs `update` para no reescribir campos bloqueados.
+
+### [2026-04-09] `wd_dashboard_my_status_cell` — variable fuera de scope en helper privado
+
+- **Contexto:** Unificación de fondos del header (W2–W12) con el color de W13 en web.
+- **Error:** `The getter 'headerBg' isn't defined for the type 'WdDashboardMyStatusCell'`.
+- **Causa raíz:** `headerBg` se declaró dentro de `build()` y se usó en `_buildEmptyCell()` sin pasarlo por parámetro.
+- **Solución aplicada:** Añadir `headerBg` como parámetro explícito de `_buildEmptyCell(...)` y pasarlo desde `build()`.
+- **Notas para el futuro:** Si un helper de clase usa valores calculados en `build`, pasarlos por argumento en vez de depender de scope local.
+
+### [2026-04-09] `PlanCardWidget` refactor W28 — parámetro eliminado rompía `pg_plans_list_page`
+
+- **Contexto:** Ajuste de W28 para quitar icono de resumen y cambiar comportamiento de clic en card.
+- **Error:** `The named parameter 'onSummaryInPanel' isn't defined` en `pg_plans_list_page.dart`.
+- **Causa raíz:** Se eliminó `onSummaryInPanel` de `PlanCardWidget` pero quedó una llamada antigua en otra pantalla.
+- **Solución aplicada:** Quitar el named parameter obsoleto en `pg_plans_list_page` y mantener navegación por `onTap`.
+- **Notas para el futuro:** Al eliminar parámetros públicos de widgets compartidos, buscar todas las invocaciones antes de cerrar.
+
+### [2026-04-09] `wd_dashboard_sidebar` — `invalid_constant` en icono perfil (tema web claro)
+
+- **Contexto:** Ajuste visual de tema claro en web para dashboard/calendario.
+- **Error:** `Invalid constant value` en `wd_dashboard_sidebar.dart` al ejecutar `dart analyze`.
+- **Causa raíz:** Se dejó `const Icon(...)` usando un color dinámico (`iconColor`) que depende de `kIsWeb`.
+- **Solución aplicada:** Quitar `const` del `Icon` de perfil para permitir valor en runtime.
+- **Notas para el futuro:** Evitar `const` en widgets cuando cualquier propiedad dependa de variables calculadas.
+
 ### [2026-04-08] `auth_notifier` — `onTimeout` con tipo incorrecto en `Future<bool>`
 
 - **Contexto:** Ajuste offline-first del arranque de sesión para evitar bloqueo sin red.
@@ -367,4 +435,12 @@ Cada entrada nueva debe seguir esta estructura:
 - **Causa raíz**: el operador ternario depende de estado; no puede formar parte de una expresión `const`.
 - **Solución aplicada**: quitar `const` del `EdgeInsets.fromLTRB(...)`.
 - **Notas para el futuro**: si un padding depende de `setState`/campos, no usar `const` delante del `EdgeInsets`/`BoxDecoration` que lo incluya.
+
+### [2026-04-12] `wd_plan_data_screen` — extensión y miembros estáticos del `State`
+
+- **Contexto**: diálogo de borrar adjunto en extensión `extension _PlanDataScreenStateExtension on _PlanDataScreenState`.
+- **Error**: `unqualified_reference_to_static_member_of_extended_type` al usar `_webHeaderTitle` sin calificar.
+- **Causa raíz**: `_webHeaderTitle` es `static const` en `_PlanDataScreenState`; desde una extensión hay que referenciarlo con el nombre del tipo (`_PlanDataScreenState._webHeaderTitle`).
+- **Solución aplicada**: calificar el color estático en ese `AlertDialog`.
+- **Notas para el futuro**: en extensiones sobre `State`, los getters de instancia se usan con `this` implícito; constantes estáticas privadas del `State` requieren el prefijo del tipo.
 
