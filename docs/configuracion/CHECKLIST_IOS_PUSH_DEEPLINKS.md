@@ -5,6 +5,12 @@
 
 Referencia para **A1** (notificaciones) y **A2** (links de invitación) de `docs/testing/ACCIONES_PENDIENTES_APP.md` (antes P1/P2 de la lista histórica).
 
+### Estado push iOS (2026-04 — cerrado en app)
+
+- **Validado en iPhone físico:** foreground (`FirebaseMessaging.onMessage` + feedback in-app), background con banner/tap.
+- **Embedding obligatorio para FCM en foreground:** no usar `UIApplicationSceneManifest` + `FlutterImplicitEngineDelegate` solo con registro en `didInitializeImplicitFlutterEngine` (puede romper `onMessage` en Dart; ver [flutter#185048](https://github.com/flutter/flutter/issues/185048)). Mantener **`AppDelegate` clásico** con `GeneratedPluginRegistrant.register(with: self)` en `application:didFinishLaunchingWithOptions:`.
+- **Seguimiento:** paridad **Android** → `docs/tareas/TASKS.md` **T267**.
+
 ## A1 — Notificaciones push (FCM + APNs)
 
 1. **Firebase / Apple**

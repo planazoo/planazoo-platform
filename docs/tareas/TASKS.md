@@ -4,7 +4,7 @@
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
 > **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T267**
+**Siguiente código de tarea: T268**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
@@ -15,10 +15,10 @@
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña), T263-T266 (items 63/64/65/98 de lista QA)**, etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), **T267 (app Android + push FCM)**, T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña), T263-T266 (items 63/64/65/98 de lista QA)**, etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
-**Total aproximado: ~99 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
+**Total aproximado: ~100 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
 
 **Preparación pruebas con familia:** Ver `docs/configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md`. Ítems de prioridad alta (l10n lista planes/invitación, navegación al plan en móvil, Safe area, timezones Egipto+Londres) implementados; checklist §4 pendiente de ejecutar antes de invitar.
 
@@ -231,6 +231,7 @@
 | **T257** | **Revisión web vs iOS (prioridad iOS):** Identificar y cerrar diferencias entre versión web (más desarrollada) e iOS. La plataforma prioritaria es iOS. Checklist y hallazgos en `docs/configuracion/REVISION_IOS_VS_WEB.md`; tarea en `docs/tareas/T257_REVISION_WEB_VS_IOS.md`. | Alta |
 | **T258** | **Icono de la app Planazoo:** Configuración y mantenimiento del icono propio en iOS y Android (sin borde blanco, full bleed si aplica). Detalle en `docs/tareas/T258_ICONO_APP.md`. | Baja |
 | **T259** | **Deep link invitación en iOS:** Implementar Universal Links o custom URL scheme para que el link de invitación (p. ej. desde email) abra la app iOS directamente en la pantalla de invitación, en paridad con la experiencia web. Incluye: configuración Associated Domains (Universal Links) o URL scheme en Xcode, archivo apple-app-site-association en el servidor si aplica, y manejo de la URL en la app (WidgetsBinding / getInitialUri). Referencia: `docs/configuracion/REVISION_IOS_VS_WEB.md` §2.3 y §3 ítem 7. Detalle en `docs/tareas/T259_DEEP_LINK_INVITACION_IOS.md`. | Media |
+| **T267** | **App Android y push FCM (paridad con iOS):** Tener la app compilable y usable en Android y validar el flujo de notificaciones push con la misma lógica que en iOS (`FCMService`, tokens en Firestore, foreground/background, tap). Incluye: proyecto `android/` (Firebase `google-services.json`, manifest, canales de notificación si aplica), pruebas en dispositivo/emulador, y documentar checklist Android equivalente a `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` cuando se cierre. **Contexto:** push iOS cerrado en 2026-04 (AppDelegate clásico, sin UIScene). | Alta |
 | **T260** | **Sistema multi-moneda:** Soporte de múltiples monedas por plan (EUR, USD, GBP, etc.), formateo automático en UI según moneda del plan y, opcionalmente, conversión de tipos de cambio al visualizar o registrar. Relacionado con T101 (presupuesto) y T102 (pagos). Especificación en `docs/tareas/CURRENCY_SYSTEM_PROPOSAL.md`. | Media |
 | **T263** | **Brief y decisión de icono app (traslado de ítem 63):** Definir brief final de marca para icono Planazoo (concepto visual de las dos “oo”, variantes, criterios de legibilidad en tamaños pequeños, versión iOS/Android, exportables necesarios) y dejar decisión cerrada para implementación en T258. | Baja |
 | **T264** | **Navegación inferior + patrón de creación (traslado de ítem 64):** Decidir diseño de producto para barras inferiores/FAB y menú de creación contextual (“Otros…” incluido), con criterio de paridad web/iOS y plan de implementación por fases (sin codificar hasta cierre de diseño). | Media |

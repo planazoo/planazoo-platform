@@ -16,6 +16,11 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-04-19] Push iOS — cierre QA (ítem 109)
+
+- **Contexto:** Cierre formal del tema push en iPhone tras validar foreground/background.
+- **Estado:** Checklist y lista QA actualizadas; **109** archivado; **A1** en `ACCIONES_PENDIENTES_APP.md` marcado cerrado. Seguimiento Android: **T267** (`TASKS.md`).
+
 ### [2026-04-18] iOS — foreground sin `onMessage` con `FlutterImplicitEngineDelegate` + escena (FCM devuelve `name` OK)
 
 - **Contexto:** Push en primer plano: segundo plano OK; `curl` FCM HTTP v1 devuelve `name` (envío aceptado); no hay `FCM onMessage` / SnackBar en Dart.

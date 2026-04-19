@@ -4,7 +4,7 @@
 
 **Histórico de cerrados:**
 - `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md` (bloque histórico 1-33 y P3-P20).
-- `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_04.md` (cierres de 34-109, excepto abiertos actuales).
+- `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_04.md` (cierres de 34-109; **109** push iOS cerrado 2026-04-19).
 
 ---
 
@@ -34,17 +34,15 @@
 ### 3. Resumen actual
 
 - **Pendientes:** 0
-- **En progreso:** 1 (`109`)
-- **Movidos a TASKS.md como tareas nuevas:** `63`→`T263`, `64`→`T264`, `65`→`T265`, `98`→`T266`
-- **Hechos/cerrados en histórico:** 71 (movidos fuera de este documento; `66` cerrado en 2026-04-09)
+- **En progreso:** 0
+- **Movidos a TASKS.md como tareas nuevas:** `63`→`T263`, `64`→`T264`, `65`→`T265`, `98`→`T266`; **Android push/app:** `T267`
+- **Hechos/cerrados en histórico:** 72 (incluye cierre **109** push iOS, 2026-04-19 — ver `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_04.md`)
 
 ---
 
 ### 4. Puntos abiertos
 
-| ID | Plataforma | Pantalla / flujo | Tipo | Gravedad | Descripción breve | Estado |
-|----|------------|------------------|------|----------|-------------------|--------|
-| 109 | iOS (+Ambas) | Notificaciones push | infra | alta | Completar pruebas reales de push en iOS (foreground/background/terminada). Referencias: `ACCIONES_PENDIENTES_APP.md` y `CHECKLIST_IOS_PUSH_DEEPLINKS.md`. | en progreso |
+*Ninguno.* El siguiente ID libre para nuevos hallazgos es **110**.
 
 ---
 
