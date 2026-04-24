@@ -61,7 +61,7 @@ class WdPendingEventCard extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8, vertical: compact ? 2 : 4),
                     decoration: BoxDecoration(
-                      color: AppColorScheme.color4.withOpacity(0.3),
+                      color: AppColorScheme.color4.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(compact ? 4 : 8),
                     ),
                     child: Text(

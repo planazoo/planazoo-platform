@@ -178,7 +178,7 @@ class _KittyContributionDialogState extends ConsumerState<KittyContributionDialo
                     data: (list) {
                       final real = list.where((p) => p.role != 'observer').toList();
                       return DropdownButtonFormField<String>(
-                        value: _selectedParticipantId,
+                        initialValue: _selectedParticipantId,
                         isExpanded: true,
                         decoration: const InputDecoration(
                           prefixIcon: Icon(Icons.person),

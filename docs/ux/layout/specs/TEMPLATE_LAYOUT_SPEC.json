@@ -3,6 +3,11 @@
   "platform": "web|mobile|both",
   "version": "1.0",
   "lastUpdated": "2024-12-XX",
+  "uiGovernance": {
+    "normative": false,
+    "canonicalUiDoc": "docs/guias/GUIA_UI.md",
+    "note": "Plantilla de layout historica; no define reglas visuales globales."
+  },
   "description": "Descripción breve de la pantalla",
   
   "layout": {

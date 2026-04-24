@@ -130,6 +130,11 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
     }
 
     return AlertDialog(
+      backgroundColor: const Color(0xFF1F2937),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: Row(
         children: [
           const Icon(Icons.edit, color: Colors.blue),
@@ -153,9 +158,9 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: Colors.blue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,9 +186,9 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
+                    color: Colors.orange.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.shade200),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     children: [
@@ -200,8 +205,8 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
                         icon: const Icon(Icons.admin_panel_settings),
                         label: const Text('Hacer Administrador'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade100,
-                          foregroundColor: Colors.red.shade800,
+                          backgroundColor: Colors.red.withValues(alpha: 0.2),
+                          foregroundColor: Colors.white,
                         ),
                       ),
                     ],
@@ -261,7 +266,7 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
           prefixIcon: Icon(icon),
           border: const OutlineInputBorder(),
           filled: true,
-          fillColor: Colors.grey.shade50,
+          fillColor: Colors.white10,
         ),
         maxLines: label == 'Notas personales' ? 3 : 1,
       ),

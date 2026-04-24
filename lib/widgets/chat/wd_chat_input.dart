@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,11 +18,8 @@ class ChatInput extends ConsumerStatefulWidget {
 }
 
 class _ChatInputState extends ConsumerState<ChatInput> {
-  static const Color _webPageBg = Color(0xFFF1F5F9);
-  static const Color _webBorder = Color(0xFFE2E8F0);
-  static const Color _webMuted = Color(0xFF64748B);
-  static const Color _webOnSurface = Color(0xFF0F172A);
-
+  static const Color _pageBg = Color(0xFF111827);
+  static const Color _surface = Color(0xFF1F2937);
   final TextEditingController _controller = TextEditingController();
   bool _isComposing = false;
 
@@ -49,22 +45,13 @@ class _ChatInputState extends ConsumerState<ChatInput> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: kIsWeb ? Colors.white : Colors.grey.shade900,
+        color: _pageBg,
         border: Border(
           top: BorderSide(
-            color: kIsWeb ? _webBorder : Colors.grey.shade700,
+            color: Colors.white12,
             width: 0.5,
           ),
         ),
-        boxShadow: kIsWeb
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ]
-            : null,
       ),
       child: SafeArea(
         child: Row(
@@ -73,11 +60,9 @@ class _ChatInputState extends ConsumerState<ChatInput> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: kIsWeb ? _webPageBg : Colors.grey.shade800,
+                  color: _surface,
                   borderRadius: BorderRadius.circular(24),
-                  border: kIsWeb
-                      ? Border.all(color: _webBorder)
-                      : null,
+                  border: Border.all(color: Colors.white12),
                 ),
                 child: Focus(
                   onKeyEvent: (node, event) {
@@ -102,14 +87,14 @@ class _ChatInputState extends ConsumerState<ChatInput> {
                     onSubmitted: (_) => _handleSend(),
                     style: GoogleFonts.poppins(
                     fontSize: 15,
-                    color: kIsWeb ? _webOnSurface : Colors.white,
+                    color: Colors.white,
                     fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Escribe un mensaje...',
                     hintStyle: GoogleFonts.poppins(
                       fontSize: 15,
-                      color: kIsWeb ? _webMuted : Colors.grey.shade500,
+                      color: Colors.white60,
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -129,7 +114,7 @@ class _ChatInputState extends ConsumerState<ChatInput> {
               decoration: BoxDecoration(
                 color: _isComposing
                     ? AppColorScheme.color2
-                    : (kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade700),
+                    : Colors.white24,
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -137,7 +122,7 @@ class _ChatInputState extends ConsumerState<ChatInput> {
                   Icons.send,
                   color: _isComposing
                       ? Colors.white
-                      : (kIsWeb ? _webMuted : Colors.white),
+                      : Colors.white,
                 ),
                 onPressed: _isComposing ? _handleSend : null,
                 padding: const EdgeInsets.all(12),

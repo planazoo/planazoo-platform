@@ -3,6 +3,11 @@
   "platform": "web",
   "version": "1.0",
   "lastUpdated": "2024-12-XX",
+  "uiGovernance": {
+    "normative": false,
+    "canonicalUiDoc": "docs/guias/GUIA_UI.md",
+    "note": "Spec historico de layout; no define reglas visuales globales."
+  },
   "description": "Dashboard principal para web con grid 17x13",
   
   "layout": {

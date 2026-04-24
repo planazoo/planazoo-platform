@@ -21,12 +21,12 @@ class PasswordRulesChecklist extends StatelessWidget {
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: status.isValid
               ? Colors.green.shade200
-              : Colors.grey.shade300,
+              : Colors.white70,
         ),
       ),
       child: Column(
@@ -77,7 +77,7 @@ class _RuleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = fulfilled ? Colors.green.shade600 : Colors.grey.shade500;
+    final color = fulfilled ? Colors.green.shade600 : Colors.white60;
     final icon = fulfilled ? Icons.check_circle : Icons.radio_button_unchecked;
 
     return Padding(

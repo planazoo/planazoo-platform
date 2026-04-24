@@ -536,7 +536,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey.shade900,
+        backgroundColor: const Color(0xFF111827),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Evento conectado',
@@ -552,7 +552,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           '¿Quieres continuar y desconectar, o cancelar para mantener la conexión?',
           style: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade200,
+            color: Colors.white70,
           ),
         ),
         actions: [
@@ -563,7 +563,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade300,
+                color: Colors.white70,
               ),
             ),
           ),
@@ -746,24 +746,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   /// Decoración tipo login: fondo sólido, borde y sombra (estética unificada).
   BoxDecoration _buildLoginStyleDecoration() {
     return BoxDecoration(
-      color: Colors.grey.shade800,
-      borderRadius: BorderRadius.circular(14),
+      color: const Color(0xFF1F2937),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(
-        color: Colors.grey.shade700.withValues(alpha: 0.5),
+        color: Colors.white.withValues(alpha: 0.12),
         width: 1,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.4),
-          blurRadius: 12,
-          offset: const Offset(0, 3),
-          spreadRadius: 0,
-        ),
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.2),
-          blurRadius: 6,
+          color: Colors.black.withValues(alpha: 0.18),
+          blurRadius: 10,
           offset: const Offset(0, 1),
-          spreadRadius: -2,
         ),
       ],
     );
@@ -771,18 +764,18 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   /// Decoración para campos con título sobre el borde (sin sombra).
   BoxDecoration get _borderedFieldDecoration => BoxDecoration(
-        color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(14),
+        color: const Color(0xFF1F2937),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.grey.shade700.withValues(alpha: 0.5),
+          color: Colors.white.withValues(alpha: 0.12),
           width: 1,
         ),
       );
 
   /// Estilo del título que va sobre el borde del campo.
   TextStyle get _labelOnBorderStyle => GoogleFonts.poppins(
-        fontSize: 13,
-        color: Colors.grey.shade400,
+        fontSize: 11,
+        color: Colors.white70,
         fontWeight: FontWeight.w500,
       );
 
@@ -804,7 +797,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             left: 14,
             top: -7,
             child: Container(
-              color: Colors.grey.shade800,
+              color: const Color(0xFF1F2937),
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(label, style: _labelOnBorderStyle),
             ),
@@ -885,7 +878,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           child: IconButton(
             icon: Icon(Icons.location_on,
                 color:
-                    canOpenMaps ? AppColorScheme.color2 : Colors.grey.shade600),
+                    canOpenMaps ? AppColorScheme.color2 : Colors.white60),
             tooltip: loc.openInGoogleMaps,
             onPressed: canOpenMaps ? _openLocationInGoogleMaps : null,
           ),
@@ -935,9 +928,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               if (states.contains(WidgetState.selected)) {
                 return AppColorScheme.color2;
               }
-              return Colors.grey.shade700;
+              return Colors.white.withValues(alpha: 0.12);
             }),
-            side: BorderSide(color: Colors.grey.shade500, width: 1.5),
+            side: BorderSide(color: Colors.white60, width: 1.5),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           ),
@@ -957,7 +950,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     ? loc.eventDialogForAllParticipantsSubtitleOn
                     : loc.eventDialogForAllParticipantsSubtitleOff,
                 style: GoogleFonts.poppins(
-                  color: Colors.grey.shade400,
+                  color: Colors.white70,
                   fontSize: 12,
                 ),
               ),
@@ -1015,7 +1008,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       builder: (context) => Theme(
         data: AppTheme.darkTheme,
         child: AlertDialog(
-          backgroundColor: Colors.grey.shade900,
+          backgroundColor: const Color(0xFF111827),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
@@ -1125,12 +1118,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             return Theme(
               data: AppTheme.darkTheme,
               child: AlertDialog(
-                backgroundColor: Colors.grey.shade900,
+                backgroundColor: const Color(0xFF111827),
                 title: Text(loc.entityAttachmentsDeleteTitle,
                     style: GoogleFonts.poppins(color: Colors.white)),
                 content: Text(
                   loc.entityAttachmentsDeleteConfirm(doc.name),
-                  style: GoogleFonts.poppins(color: Colors.grey.shade300),
+                  style: GoogleFonts.poppins(color: Colors.white70),
                 ),
                 actions: [
                   TextButton(
@@ -1216,7 +1209,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 '—',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: Colors.grey.shade500,
+                  color: Colors.white60,
                 ),
               ),
           ],
@@ -1286,7 +1279,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 loc.eventSubtype,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.grey.shade400,
+                  color: Colors.white70,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1384,8 +1377,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     bool showPlus = false,
     VoidCallback? onTap,
   }) {
-    final color = selected ? AppColorScheme.color2 : Colors.grey.shade700;
-    final borderColor = selected ? AppColorScheme.color2 : Colors.grey.shade600;
+    final color = selected
+        ? AppColorScheme.color2.withValues(alpha: 0.28)
+        : Colors.white.withValues(alpha: 0.06);
+    final borderColor = selected
+        ? AppColorScheme.color2
+        : Colors.white.withValues(alpha: 0.12);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -1394,9 +1391,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.2),
+            color: color,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: selected ? 2 : 1),
+            border: Border.all(color: borderColor, width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1404,7 +1401,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               Icon(icon,
                   size: 20,
                   color:
-                      selected ? AppColorScheme.color2 : Colors.grey.shade400),
+                      selected ? Colors.white : Colors.white70),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
@@ -1414,7 +1411,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: selected ? Colors.white : Colors.grey.shade300,
+                    color: selected ? Colors.white : Colors.white70,
                   ),
                 ),
               ),
@@ -1423,7 +1420,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 Icon(
                   Icons.add_circle_outline,
                   size: 16,
-                  color: selected ? Colors.white : Colors.grey.shade500,
+                  color: selected ? Colors.white : Colors.white54,
                 ),
               ],
             ],
@@ -1559,7 +1556,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   color: (_taxiOriginDetails != null ||
                           _taxiOriginController.text.trim().isNotEmpty)
                       ? AppColorScheme.color2
-                      : Colors.grey.shade600,
+                      : Colors.white60,
                 ),
                 tooltip: loc.openInGoogleMaps,
                 onPressed: () => _openTaxiAddressInMaps(
@@ -1609,7 +1606,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   color: (_taxiDestinationDetails != null ||
                           _taxiDestinationController.text.trim().isNotEmpty)
                       ? AppColorScheme.color2
-                      : Colors.grey.shade600,
+                      : Colors.white60,
                 ),
                 tooltip: loc.openInGoogleMaps,
                 onPressed: () => _openTaxiAddressInMaps(
@@ -1630,11 +1627,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               hintText: loc.taxiSeatsHint,
               labelStyle: GoogleFonts.poppins(
                 fontSize: 13,
-                color: Colors.grey.shade400,
+                color: Colors.white70,
                 fontWeight: FontWeight.w500,
               ),
               prefixIcon: Icon(Icons.airline_seat_recline_normal,
-                  color: Colors.grey.shade400),
+                  color: Colors.white70),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
@@ -1642,7 +1639,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               filled: true,
               fillColor: Colors.transparent,
             ),
-            dropdownColor: Colors.grey.shade800,
+            dropdownColor: const Color(0xFF1F2937),
             style: GoogleFonts.poppins(
               fontSize: 14,
               color: Colors.white,
@@ -1670,7 +1667,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           hintText: hint,
           hintStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade500,
+            color: Colors.white60,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -1764,7 +1761,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           hintText: hint,
           hintStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade500,
+            color: Colors.white60,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -1939,7 +1936,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             loc.eventSponsoredStaticHint,
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.grey.shade300,
+              color: Colors.white70,
             ),
           ),
           const SizedBox(height: 8),
@@ -2063,7 +2060,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final dropdown = DropdownButtonFormField<String>(
       initialValue: safeValue,
       isExpanded: true,
-      dropdownColor: Colors.grey.shade800,
+      dropdownColor: const Color(0xFF1F2937),
       style: GoogleFonts.poppins(
           fontSize: fs, color: Colors.white, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
@@ -2073,7 +2070,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         filled: false,
       ),
       icon: Icon(Icons.arrow_drop_down,
-          color: Colors.grey.shade400, size: compact ? 20 : 24),
+          color: Colors.white70, size: compact ? 20 : 24),
       selectedItemBuilder: showCityInMenuAndGmtSelected
           ? (context) => commonTimezones.map((tz) {
                 return Align(
@@ -2111,7 +2108,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       TimezoneService.getUtcOffsetFormatted(tz),
                       style: GoogleFonts.poppins(
                         fontSize: fs - 1,
-                        color: Colors.grey.shade400,
+                        color: Colors.white70,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -2138,7 +2135,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(leadingIcon,
-                    size: compact ? 18 : 20, color: Colors.grey.shade400),
+                    size: compact ? 18 : 20, color: Colors.white70),
                 const SizedBox(width: 8),
                 Expanded(child: dropdown),
               ],
@@ -2158,7 +2155,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final all = TimezoneService.getCommonTimezones();
     final picked = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.grey.shade900,
+      backgroundColor: const Color(0xFF111827),
       isScrollControlled: true,
       builder: (context) => SafeArea(
         child: ListView.builder(
@@ -2173,7 +2170,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 Icons.public,
                 color: tz == selected
                     ? AppColorScheme.color2
-                    : Colors.grey.shade400,
+                    : Colors.white70,
               ),
               title: Text(
                 TimezoneService.getTimezoneCityName(tz),
@@ -2184,7 +2181,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 style: GoogleFonts.poppins(
                   color: tz == selected
                       ? AppColorScheme.color2
-                      : Colors.grey.shade400,
+                      : Colors.white70,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -2357,14 +2354,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   hintText: loc.flightNumberHint,
                   labelStyle: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: Colors.grey.shade400,
+                    color: Colors.white70,
                     fontWeight: FontWeight.w500,
                   ),
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: Colors.grey.shade500,
+                    color: Colors.white60,
                   ),
-                  prefixIcon: Icon(Icons.flight, color: Colors.grey.shade400),
+                  prefixIcon: Icon(Icons.flight, color: Colors.white70),
                   suffixIcon: _canEditGeneral
                       ? IconButton(
                           onPressed:
@@ -2378,7 +2375,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                                     color: AppColorScheme.color2,
                                   ),
                                 )
-                              : Icon(Icons.search, color: Colors.grey.shade400),
+                              : Icon(Icons.search, color: Colors.white70),
                           tooltip: loc.getFlightDataButton,
                         )
                       : null,
@@ -2415,7 +2412,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           _lastFlightStatus!.shortDescription,
                           style: GoogleFonts.poppins(
                             fontSize: 13,
-                            color: Colors.grey.shade300,
+                            color: Colors.white70,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -2429,7 +2426,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             ),
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: Colors.grey.shade400,
+                              color: Colors.white70,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
@@ -2699,7 +2696,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         vertical: isMobile ? 10 : 14,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF79A2A8),
+        color: const Color(0xFF111827),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(isMobile ? 0 : 18),
         ),
@@ -2722,7 +2722,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             child: Text(
               title,
               style: GoogleFonts.poppins(
-                fontSize: isMobile ? 14 : 18,
+                fontSize: isMobile ? 14 : 17,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
@@ -2868,7 +2868,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return Theme(
         data: AppTheme.darkTheme,
         child: AlertDialog(
-          backgroundColor: Colors.grey.shade800,
+          backgroundColor: const Color(0xFF111827),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
           ),
@@ -2897,7 +2897,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       Text(
                         AppLocalizations.of(context)!.initializingPermissions,
                         style: GoogleFonts.poppins(
-                          color: Colors.grey.shade400,
+                          color: Colors.white70,
                           fontSize: isMobile ? 13 : 14,
                         ),
                       ),
@@ -2930,7 +2930,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       data: AppTheme.darkTheme,
       child: AlertDialog(
         scrollable: true,
-        backgroundColor: Colors.grey.shade800,
+        backgroundColor: const Color(0xFF111827),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
         ),
@@ -3129,7 +3129,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             child: Text(
               AppLocalizations.of(context)!.cancel,
               style: GoogleFonts.poppins(
-                color: Colors.grey.shade400,
+                color: Colors.white70,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -3139,13 +3139,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           // Botón guardar / aceptar en verde (T209)
           Container(
             decoration: BoxDecoration(
-              color: Colors.green.shade600,
-              borderRadius: BorderRadius.circular(14),
+              color: AppColorScheme.color2,
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.green.shade600.withValues(alpha: 0.4),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
+                  color: AppColorScheme.color2.withValues(alpha: 0.35),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
                   spreadRadius: 0,
                 ),
               ],
@@ -3159,7 +3159,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 shadowColor: Colors.transparent,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: _isSavingEvent
@@ -3201,19 +3201,74 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return f.isNotEmpty && _typeFamilies.contains(f);
   }
 
+  Widget _buildGeneralSectionHeader(String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: Colors.white60,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDemoSectionCard({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1F2937),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildSectionTitleInCard({
+    required String title,
+    required String subtitle,
+  }) {
+    return _buildDemoSectionCard(
+      child: _buildGeneralSectionHeader(title, subtitle),
+    );
+  }
+
   Widget _buildGeneralTabScroll(bool isMobile) {
-    final pad = isMobile ? 6.0 : 8.0;
+    final pad = isMobile ? 8.0 : 10.0;
     final fsBody = isMobile ? 13.0 : 14.0;
     final contentPad = isMobile ? 14.0 : 18.0;
-    final spacing = isMobile ? 12.0 : 16.0;
+    final spacing = isMobile ? 10.0 : 12.0;
     return SingleChildScrollView(
       padding: EdgeInsets.all(pad),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Identidad: Tipo y subtipo
-          _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
+          // 1. Identidad: Tipo y subtipo (referencia visual demo)
+          _buildSectionTitleInCard(
+            title: 'Identidad del evento',
+            subtitle: 'Tipo, subtipo y color para reconocimiento rapido',
+          ),
+          const SizedBox(height: 8),
+          _buildDemoSectionCard(
+            child: _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
+          ),
           SizedBox(height: spacing),
           if (widget.event == null && !_hasGeneralEventTypeSelected())
             Padding(
@@ -3221,130 +3276,160 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               child: Text(
                 AppLocalizations.of(context)!.eventSelectTypeFirstHint,
                 style: GoogleFonts.poppins(
-                    fontSize: 13, color: Colors.grey.shade400),
+                    fontSize: 13, color: Colors.white70),
               ),
             ),
           if (widget.event != null || _hasGeneralEventTypeSelected()) ...[
+            _buildSectionTitleInCard(
+              title: 'Informacion general',
+              subtitle: 'Lo minimo para crear un evento claro',
+            ),
+            const SizedBox(height: 8),
             // Descripción del evento
-            _wrapReadOnlyIfNeeded(
-              child: _buildLabelOnBorderField(
-                label: AppLocalizations.of(context)!.eventDescription,
-                child: TextFormField(
-                  controller: _descriptionController,
-                  readOnly: !(_canEditGeneral || _canEditGeneralInitial),
-                  maxLines: 1,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
+            _buildDemoSectionCard(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _wrapReadOnlyIfNeeded(
+                    child: _buildLabelOnBorderField(
+                      label: AppLocalizations.of(context)!.eventDescription,
+                      child: TextFormField(
+                        controller: _descriptionController,
+                        readOnly: !(_canEditGeneral || _canEditGeneralInitial),
+                        maxLines: 1,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          hintText:
+                              AppLocalizations.of(context)!.eventDescriptionHint,
+                          labelStyle: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          hintStyle: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.white60,
+                          ),
+                          prefixIcon:
+                              Icon(Icons.subject, color: Colors.white70),
+                          suffixIcon: textFieldClearSuffix(
+                            _descriptionController,
+                            onCleared: () => setState(() {}),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: AppColorScheme.color2,
+                              width: 2.5,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: Colors.red.shade400,
+                              width: 1,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(
+                              color: Colors.red.shade400,
+                              width: 2.5,
+                            ),
+                          ),
+                          fillColor: Colors.transparent,
+                          filled: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 0, vertical: 12),
+                        ),
+                        validator: (value) {
+                          if (!_canEditGeneral) return null;
+                          final v = value?.trim() ?? '';
+                          if (v.isNotEmpty && v.length < 3) {
+                            return 'Mínimo 3 caracteres';
+                          }
+                          if (v.length > 1000) return 'Máximo 1000 caracteres';
+                          return null;
+                        },
+                      ),
+                    ),
                   ),
-                  decoration: InputDecoration(
-                    hintText:
-                        AppLocalizations.of(context)!.eventDescriptionHint,
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.grey.shade400,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    hintStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.grey.shade500,
-                    ),
-                    prefixIcon:
-                        Icon(Icons.subject, color: Colors.grey.shade400),
-                    suffixIcon: textFieldClearSuffix(
-                      _descriptionController,
-                      onCleared: () => setState(() {}),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: AppColorScheme.color2,
-                        width: 2.5,
+                  SizedBox(height: spacing),
+                  // Fecha / Hora / Duración justo debajo de Descripción.
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildWhenField(
+                          label: AppLocalizations.of(context)!.date,
+                          value: DateFormatter.formatDate(_selectedDate),
+                          onTap: _canEditGeneral
+                              ? _selectDate
+                              : _showReadOnlySnackBar,
+                          isMobile: isMobile,
+                          fsBody: fsBody,
+                        ),
                       ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 1,
+                      SizedBox(width: isMobile ? 6 : 8),
+                      Expanded(
+                        child: _buildWhenField(
+                          label: AppLocalizations.of(context)!.time,
+                          value: DateFormatter.formatTimeOnly(
+                            DateTime(
+                                2000, 1, 1, _selectedHour, _selectedStartMinute),
+                          ),
+                          onTap: _canEditGeneral
+                              ? _selectStartTime
+                              : _showReadOnlySnackBar,
+                          isMobile: isMobile,
+                          fsBody: fsBody,
+                        ),
                       ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 2.5,
+                      SizedBox(width: isMobile ? 6 : 8),
+                      Expanded(
+                        child: _buildWhenField(
+                          label: AppLocalizations.of(context)!.duration,
+                          value: _formatDuration(_selectedDurationMinutes),
+                          onTap: _canEditGeneral
+                              ? _selectDuration
+                              : _showReadOnlySnackBar,
+                          isMobile: isMobile,
+                          fsBody: fsBody,
+                        ),
                       ),
-                    ),
-                    fillColor: Colors.transparent,
-                    filled: true,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+                    ],
                   ),
-                  validator: (value) {
-                    if (!_canEditGeneral) return null;
-                    final v = value?.trim() ?? '';
-                    if (v.isNotEmpty && v.length < 3) {
-                      return 'Mínimo 3 caracteres';
-                    }
-                    if (v.length > 1000) return 'Máximo 1000 caracteres';
-                    return null;
-                  },
-                ),
+                ],
               ),
             ),
             SizedBox(height: spacing),
-            // Fecha / Hora / Duración justo debajo de Descripción.
-            Row(
-              children: [
-                Expanded(
-                  child: _buildWhenField(
-                    label: AppLocalizations.of(context)!.date,
-                    value: DateFormatter.formatDate(_selectedDate),
-                    onTap:
-                        _canEditGeneral ? _selectDate : _showReadOnlySnackBar,
-                    isMobile: isMobile,
-                    fsBody: fsBody,
-                  ),
+            // Desplazamiento/Avión: priorizar campos críticos del vuelo justo tras fecha/hora/duración.
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text == 'Avión')
+              _buildDemoSectionCard(
+                child: _buildGeneralSectionHeader(
+                  'Vuelo',
+                  'Numero de vuelo, aeropuertos y zona horaria',
                 ),
-                SizedBox(width: isMobile ? 6 : 8),
-                Expanded(
-                  child: _buildWhenField(
-                    label: AppLocalizations.of(context)!.time,
-                    value: DateFormatter.formatTimeOnly(
-                      DateTime(2000, 1, 1, _selectedHour, _selectedStartMinute),
-                    ),
-                    onTap: _canEditGeneral
-                        ? _selectStartTime
-                        : _showReadOnlySnackBar,
-                    isMobile: isMobile,
-                    fsBody: fsBody,
-                  ),
-                ),
-                SizedBox(width: isMobile ? 6 : 8),
-                Expanded(
-                  child: _buildWhenField(
-                    label: AppLocalizations.of(context)!.duration,
-                    value: _formatDuration(_selectedDurationMinutes),
-                    onTap: _canEditGeneral
-                        ? _selectDuration
-                        : _showReadOnlySnackBar,
-                    isMobile: isMobile,
-                    fsBody: fsBody,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: spacing),
+              ),
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text == 'Avión')
+              _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text == 'Avión')
+              SizedBox(height: spacing),
             _wrapReadOnlyIfNeeded(
               child: _buildLabelOnBorderField(
                 label: AppLocalizations.of(context)!.eventLongNotesLabel,
@@ -3362,20 +3447,20 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     hintText: AppLocalizations.of(context)!.eventLongNotesLabel,
                     labelStyle: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: Colors.grey.shade400,
+                      color: Colors.white70,
                       fontWeight: FontWeight.w500,
                     ),
                     hintStyle: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: Colors.grey.shade500,
+                      color: Colors.white60,
                     ),
                     prefixIcon: Icon(Icons.article_outlined,
-                        color: Colors.grey.shade400),
+                        color: Colors.white70),
                     suffixIcon: IconButton(
                       tooltip: 'Ampliar',
                       onPressed: _openLongNotesEditor,
                       icon:
-                          Icon(Icons.open_in_full, color: Colors.grey.shade400),
+                          Icon(Icons.open_in_full, color: Colors.white70),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -3414,23 +3499,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 onDelete: _deleteEventAttachment,
               ),
             if (widget.planId != null) SizedBox(height: spacing),
-            _buildIsForAllParticipantsSelector(),
-            SizedBox(height: spacing),
-            if (_planCurrency != null)
-              _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
-            if (_planCurrency != null) const SizedBox(height: 16),
             // Dirección: 1 campo (Dirección del evento) si NO es Desplazamiento; 2 campos (Origen, Destino) si es Desplazamiento
             if (_typeFamilyController.text != 'Desplazamiento') ...[
               _buildUnifiedLocationField(),
               SizedBox(height: spacing),
             ],
-            // Desplazamiento: siempre Origen + Destino (Avión = aeropuertos; resto = direcciones)
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text == 'Avión')
-              _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text == 'Avión')
-              SizedBox(height: spacing),
+            // Desplazamiento: Origen + Destino para subtipos no avión.
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text.isNotEmpty &&
                 _typeSubtypeController.text != 'Avión')
@@ -3506,7 +3580,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 ),
               ),
             const SizedBox(height: 16),
-            // 3. Participación: asignación y registro (ID 47/48)
+            _buildSectionTitleInCard(
+              title: 'Participacion y limites',
+              subtitle: 'Alcance del evento, asistentes y restricciones',
+            ),
+            const SizedBox(height: 8),
+            _buildIsForAllParticipantsSelector(),
+            SizedBox(height: spacing),
+            // 4. Participación: asignación y registro (ID 47/48)
             // Participantes (tracks asignados)
             _wrapReadOnlyIfNeeded(child: _buildParticipantsSection()),
             const SizedBox(height: 16),
@@ -3516,10 +3597,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade800, // Color sólido, sin gradiente
-                  borderRadius: BorderRadius.circular(18),
+                  color: const Color(0xFF1F2937),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColorScheme.color2.withValues(alpha: 0.5),
+                    color: Colors.white.withValues(alpha: 0.12),
                     width: 1,
                   ),
                 ),
@@ -3555,7 +3636,28 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 ),
               ),
             const SizedBox(height: 16),
-            // 4. Opciones avanzadas al final (ID 47)
+            if (_planCurrency != null)
+              _buildSectionTitleInCard(
+                title: 'Coste',
+                subtitle: 'Importe y moneda del evento',
+              ),
+            if (_planCurrency != null) const SizedBox(height: 8),
+            if (_planCurrency != null)
+              _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
+            if (_planCurrency != null) const SizedBox(height: 16),
+            _buildSectionTitleInCard(
+              title: 'Opciones avanzadas',
+              subtitle: 'Configuraciones adicionales del evento',
+            ),
+            const SizedBox(height: 8),
+            _buildDemoSectionCard(
+              child: _buildGeneralSectionHeader(
+                'Limites y confirmacion',
+                'Control del aforo y aprobacion de asistencia',
+              ),
+            ),
+            const SizedBox(height: 8),
+            // 5. Opciones avanzadas al final (ID 47)
             _wrapReadOnlyIfNeeded(
               child: _buildLabelOnBorderField(
                 label: 'Límite de participantes (opcional)',
@@ -3572,10 +3674,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     hintText: 'Ej: 10 (dejar vacío para sin límite)',
                     hintStyle: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: Colors.grey.shade500,
+                      color: Colors.white60,
                     ),
                     prefixIcon:
-                        Icon(Icons.people_outline, color: Colors.grey.shade400),
+                        Icon(Icons.people_outline, color: Colors.white70),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide.none,
@@ -3637,7 +3739,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 subtitle: Text(
                   AppLocalizations.of(context)!.requiresConfirmationSubtitle,
                   style: GoogleFonts.poppins(
-                    color: Colors.grey.shade400,
+                    color: Colors.white70,
                     fontSize: 12,
                   ),
                 ),
@@ -3655,6 +3757,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             const SizedBox(height: 16),
 
             // 5. Apariencia: Color
+            _buildDemoSectionCard(
+              child: _buildGeneralSectionHeader(
+                'Apariencia',
+                'Color del evento en el calendario',
+              ),
+            ),
+            const SizedBox(height: 8),
             _wrapReadOnlyIfNeeded(
               child: ListTile(
                 leading: Icon(Icons.palette, color: AppColorScheme.color2),
@@ -3689,7 +3798,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             border: _selectedColor == colorName
                                 ? Border.all(color: Colors.white, width: 2.5)
                                 : Border.all(
-                                    color: Colors.grey.shade600,
+                                    color: Colors.white60,
                                     width: 1,
                                   ),
                             boxShadow: _selectedColor == colorName
@@ -3749,14 +3858,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 hintText: AppLocalizations.of(context)!.seatHint,
                 labelStyle: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: Colors.grey.shade400,
+                  color: Colors.white70,
                   fontWeight: FontWeight.w500,
                 ),
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: Colors.grey.shade500,
+                  color: Colors.white60,
                 ),
-                prefixIcon: Icon(Icons.chair, color: Colors.grey.shade400),
+                prefixIcon: Icon(Icons.chair, color: Colors.white70),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
@@ -3906,7 +4015,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             subtitle: Text(
               AppLocalizations.of(context)!.cardObtainedSubtitle,
               style: GoogleFonts.poppins(
-                color: Colors.grey.shade400,
+                color: Colors.white70,
                 fontSize: 12,
               ),
             ),
@@ -4014,7 +4123,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           child: Text(
             'No hay otros participantes en este evento',
             style: GoogleFonts.poppins(
-              color: Colors.grey.shade400,
+              color: Colors.white70,
               fontSize: 14,
             ),
           ),
@@ -4166,21 +4275,21 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade800, // Color sólido, sin gradiente
+                  color: const Color(0xFF1F2937), // Color sólido, sin gradiente
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.grey.shade700.withValues(alpha: 0.5),
+                    color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
                     width: 1,
                   ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.lock, color: Colors.grey.shade400, size: 16),
+                    Icon(Icons.lock, color: Colors.white70, size: 16),
                     const SizedBox(width: 8),
                     Text(
                       'Sin permisos para editar',
                       style: GoogleFonts.poppins(
-                        color: Colors.grey.shade400,
+                        color: Colors.white70,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -4220,14 +4329,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           hintText: hintText,
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade400,
+            color: Colors.white70,
             fontWeight: FontWeight.w500,
           ),
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade500,
+            color: Colors.white60,
           ),
-          prefixIcon: Icon(icon, color: Colors.grey.shade400),
+          prefixIcon: Icon(icon, color: Colors.white70),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
@@ -4280,7 +4389,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               '$label:',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade400,
+                color: Colors.white70,
                 fontSize: 13,
               ),
             ),
@@ -4289,7 +4398,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             child: Text(
               value ?? 'No especificado',
               style: GoogleFonts.poppins(
-                color: value != null ? Colors.white : Colors.grey.shade500,
+                color: value != null ? Colors.white : Colors.white60,
                 fontStyle: value == null ? FontStyle.italic : FontStyle.normal,
                 fontSize: 13,
               ),
@@ -4369,7 +4478,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       builder: (context) => Theme(
         data: AppTheme.darkTheme,
         child: AlertDialog(
-          backgroundColor: Colors.grey.shade800,
+          backgroundColor: const Color(0xFF1F2937),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
@@ -4437,7 +4546,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             '(máximo)',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: Colors.grey.shade400,
+                              color: Colors.white70,
                             ),
                           )
                         : null,
@@ -4450,7 +4559,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     '💡 Eventos máximo 24h.\nSi necesitas más → usa Alojamientos',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: Colors.grey.shade400,
+                      color: Colors.white70,
                       fontStyle: FontStyle.italic,
                     ),
                     textAlign: TextAlign.center,
@@ -4546,7 +4655,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       builder: (context) => Theme(
         data: AppTheme.darkTheme,
         child: AlertDialog(
-          backgroundColor: Colors.grey.shade800,
+          backgroundColor: const Color(0xFF1F2937),
           title: Text(
             AppLocalizations.of(context)!.confirmDeleteTitle,
             style: GoogleFonts.poppins(
@@ -4558,7 +4667,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           content: Text(
             '¿Estás seguro de que quieres eliminar el evento "${widget.event?.description}"?',
             style: GoogleFonts.poppins(
-              color: Colors.grey.shade400,
+              color: Colors.white70,
               fontSize: 14,
             ),
           ),
@@ -4568,7 +4677,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               child: Text(
                 AppLocalizations.of(context)!.cancel,
                 style: GoogleFonts.poppins(
-                  color: Colors.grey.shade400,
+                  color: Colors.white70,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -4649,7 +4758,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           return Text(
             'No hay participantes en este plan',
             style: GoogleFonts.poppins(
-              color: Colors.grey.shade400,
+              color: Colors.white70,
               fontSize: 14,
             ),
           );
@@ -4736,7 +4845,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontStyle: FontStyle.italic,
-                                color: Colors.grey.shade400,
+                                color: Colors.white70,
                               ),
                             )
                           : null,
@@ -4798,7 +4907,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 child: DropdownButtonFormField<String>(
                   initialValue: _costCurrency ?? _planCurrency ?? 'EUR',
                   isExpanded: true,
-                  dropdownColor: Colors.grey.shade800,
+                  dropdownColor: const Color(0xFF1F2937),
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     color: Colors.white,
@@ -4807,7 +4916,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   decoration: InputDecoration(
                     prefixIcon: Icon(
                       _getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'),
-                      color: Colors.grey.shade400,
+                      color: Colors.white70,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -4884,11 +4993,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     hintText: 'Ej: 150.50',
                     hintStyle: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: Colors.grey.shade500,
+                      color: Colors.white60,
                     ),
                     prefixIcon: Icon(
                       _getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'),
-                      color: Colors.grey.shade400,
+                      color: Colors.white70,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -4975,7 +5084,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                         'Calculando...',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: Colors.grey.shade400,
+                          color: Colors.white70,
                         ),
                       ),
                     ],
@@ -5027,7 +5136,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                         '⚠️ Los tipos de cambio son orientativos. El valor real será el aplicado por tu banco o tarjeta de crédito al momento del pago.',
                         style: GoogleFonts.poppins(
                           fontSize: 10,
-                          color: Colors.grey.shade400,
+                          color: Colors.white70,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -5714,7 +5823,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       AppLocalizations.of(context)!.eventNotSaved,
                       style: GoogleFonts.poppins(color: Colors.white),
                     ),
-                    backgroundColor: Colors.grey.shade800,
+                    backgroundColor: const Color(0xFF1F2937),
                     duration: const Duration(seconds: 2),
                   ),
                 );
@@ -5759,7 +5868,7 @@ class _EventTabChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isSelected ? Colors.white : Colors.grey.shade400;
+    final textColor = isSelected ? Colors.white : Colors.white70;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -5770,50 +5879,23 @@ class _EventTabChip extends StatelessWidget {
           horizontal: isMobile ? 8 : 12,
         ),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withValues(alpha: 0.85),
-                  ],
-                )
-              : LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.grey.shade800,
-                    const Color(0xFF2C2C2C),
-                  ],
-                ),
+          color: isSelected
+              ? AppColorScheme.color2.withValues(alpha: 0.28)
+              : const Color(0xFF1F2937),
           border: Border.all(
             color: isSelected
                 ? AppColorScheme.color2
-                : Colors.grey.shade700.withValues(alpha: 0.5),
-            width: isSelected ? 2 : 1,
+                : Colors.white.withValues(alpha: 0.12),
+            width: 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColorScheme.color2.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 2),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 6,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isSelected ? 0.18 : 0.10),
+              blurRadius: isSelected ? 8 : 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
         child: Center(
           child: Text(

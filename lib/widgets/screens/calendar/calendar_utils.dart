@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/participant_track.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';

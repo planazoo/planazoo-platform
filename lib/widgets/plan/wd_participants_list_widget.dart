@@ -61,12 +61,11 @@ class ParticipantsListWidget extends ConsumerWidget {
                 final username = user?.username != null ? '@${user!.username}' : participation.userId;
 
                 final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-                final textColor = isDarkMode ? Colors.white : Colors.grey.shade900;
-                final secondaryTextColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600;
+                final textColor = isDarkMode ? Colors.white : const Color(0xFF111827);
                 // Estándar UIShowcase: organizador con color2 (no azul).
                 final organizerBg = isDarkMode
-                    ? AppColorScheme.color2.withOpacity(0.3)
-                    : AppColorScheme.color2.withOpacity(0.2);
+                    ? AppColorScheme.color2.withValues(alpha: 0.3)
+                    : AppColorScheme.color2.withValues(alpha: 0.2);
                 final organizerFg = isDarkMode ? Colors.white : AppColorScheme.color2;
 
                 final padding = compact ? const EdgeInsets.symmetric(horizontal: 12, vertical: 4) : const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
@@ -77,17 +76,16 @@ class ParticipantsListWidget extends ConsumerWidget {
                   child: ListTile(
                     contentPadding: padding,
                     leading: CircleAvatar(
+                      radius: radius,
                       backgroundColor: isOrganizer
                           ? organizerBg
-                          : (isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200),
+                          : (isDarkMode ? Colors.white.withValues(alpha: 0.12) : Colors.white70),
                       child: Icon(
-                        isOrganizer ? Icons.admin_panel_settings : Icons.person,
-                        color: isOrganizer
-                            ? organizerFg
-                            : (isDarkMode ? Colors.grey.shade300 : Colors.grey.shade700),
-                        size: iconSize,
-                      ),
-                      radius: radius,
+                          isOrganizer ? Icons.admin_panel_settings : Icons.person,
+                          color: isOrganizer
+                              ? organizerFg
+                              : (isDarkMode ? Colors.white70 : Colors.white.withValues(alpha: 0.12)),
+                          size: iconSize),
                     ),
                     title: Text(
                       '$displayName $username',
@@ -236,9 +234,5 @@ class ParticipantsListWidget extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 }

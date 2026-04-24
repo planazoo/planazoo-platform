@@ -26,11 +26,11 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
     return Theme(
       data: isDark
           ? ThemeData.dark().copyWith(
-              scaffoldBackgroundColor: Colors.grey.shade900,
+              scaffoldBackgroundColor: const Color(0xFF111827),
               colorScheme: ColorScheme.fromSeed(
                 seedColor: AppColorScheme.color2,
                 brightness: Brightness.dark,
-                background: Colors.grey.shade900,
+                surface: const Color(0xFF111827),
               ),
             )
           : ThemeData(
@@ -39,13 +39,13 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
               colorScheme: ColorScheme.fromSeed(
                 seedColor: AppColorScheme.color2,
                 brightness: Brightness.light,
-                background: AppColorScheme.color0,
+                surface: AppColorScheme.color0,
               ),
             ),
       child: Scaffold(
-        backgroundColor: isDark ? Colors.grey.shade900 : AppColorScheme.color0,
+        backgroundColor: isDark ? const Color(0xFF111827) : AppColorScheme.color0,
         appBar: AppBar(
-          backgroundColor: isDark ? Colors.grey.shade800 : AppColorScheme.color1,
+          backgroundColor: isDark ? const Color(0xFF1F2937) : AppColorScheme.color1,
           title: const Text('UI Showcase – Estilo principal y claro'),
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(60),
@@ -151,8 +151,8 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: isSelected
               ? AppColorScheme.color2
-              : (isDark ? Colors.grey.shade800 : AppColorScheme.color1),
-          foregroundColor: isSelected ? Colors.white : (isDark ? Colors.grey.shade300 : AppColorScheme.bodyColor),
+              : (isDark ? const Color(0xFF1F2937) : AppColorScheme.color1),
+          foregroundColor: isSelected ? Colors.white : (isDark ? Colors.white70 : AppColorScheme.bodyColor),
           padding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
@@ -240,10 +240,10 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
 
   /// Cards de plan: estilo PlanCardWidget (seleccionada = color2, no seleccionada = grey800).
   Widget _buildPlanCardsSection() {
-    final unselectedBg = _isDark ? Colors.grey.shade800 : Colors.grey.shade300;
+    final unselectedBg = _isDark ? const Color(0xFF1F2937) : Colors.white70;
     final selectedBg = AppColorScheme.color2;
     final textPrimary = _isDark ? Colors.white : AppColorScheme.bodyColor;
-    final textSecondary = _isDark ? Colors.white.withOpacity(0.95) : AppColorScheme.bodyColor.withOpacity(0.8);
+    final textSecondary = _isDark ? Colors.white.withValues(alpha: 0.95) : AppColorScheme.bodyColor.withValues(alpha: 0.8);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -274,7 +274,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
           isSelected: true,
           bgColor: selectedBg,
           textPrimary: Colors.white,
-          textSecondary: Colors.white.withOpacity(0.9),
+          textSecondary: Colors.white.withValues(alpha: 0.9),
         ),
       ],
     );
@@ -290,11 +290,11 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
     required Color textSecondary,
   }) {
     // En elementos seleccionados (fondo color2): iconos y textos como estado han de ser visibles (contraste claro).
-    final iconColor = isSelected ? Colors.white : AppColorScheme.color2.withOpacity(0.6);
-    final iconBgColor = isSelected ? Colors.white.withOpacity(0.2) : AppColorScheme.color2.withOpacity(0.2);
+    final iconColor = isSelected ? Colors.white : AppColorScheme.color2.withValues(alpha: 0.6);
+    final iconBgColor = isSelected ? Colors.white.withValues(alpha: 0.2) : AppColorScheme.color2.withValues(alpha: 0.2);
     final stateTextColor = isSelected ? Colors.white : AppColorScheme.color2;
-    final stateBgColor = isSelected ? Colors.white.withOpacity(0.25) : AppColorScheme.color2.withOpacity(0.2);
-    final stateBorderColor = isSelected ? Colors.white.withOpacity(0.4) : AppColorScheme.color2.withOpacity(0.4);
+    final stateBgColor = isSelected ? Colors.white.withValues(alpha: 0.25) : AppColorScheme.color2.withValues(alpha: 0.2);
+    final stateBorderColor = isSelected ? Colors.white.withValues(alpha: 0.4) : AppColorScheme.color2.withValues(alpha: 0.4);
 
     return Container(
       margin: const EdgeInsets.only(right: 16),
@@ -303,11 +303,11 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
         border: isSelected
-            ? Border.all(color: Colors.white.withOpacity(0.25), width: 1)
+            ? Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1)
             : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isSelected ? 0.35 : 0.2),
+            color: Colors.black.withValues(alpha: isSelected ? 0.35 : 0.2),
             blurRadius: isSelected ? 10 : 6,
             offset: const Offset(0, 2),
           ),
@@ -387,12 +387,12 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppColorScheme.color3.withOpacity(0.4),
+                  color: AppColorScheme.color3.withValues(alpha: 0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -441,16 +441,16 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
                     end: Alignment.bottomRight,
                     colors: [
                       AppColorScheme.color2,
-                      AppColorScheme.color2.withOpacity(0.85),
+                      AppColorScheme.color2.withValues(alpha: 0.85),
                     ],
                   )
                 : null,
-            color: isSelected ? null : (_isDark ? Colors.grey.shade700 : Colors.grey.shade400),
+            color: isSelected ? null : (_isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white70),
             borderRadius: BorderRadius.circular(12),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColorScheme.color2.withOpacity(0.3),
+                      color: AppColorScheme.color2.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -460,7 +460,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
           child: Text(
             filters[i],
             style: GoogleFonts.poppins(
-              color: isSelected ? Colors.white : (_isDark ? Colors.grey.shade400 : Colors.grey.shade800),
+              color: isSelected ? Colors.white : (_isDark ? Colors.white70 : const Color(0xFF1F2937)),
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
@@ -474,7 +474,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
   Widget _buildViewModeToggleSection() {
     return Container(
       decoration: BoxDecoration(
-        color: _isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+        color: _isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white70,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -517,7 +517,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
               Icon(
                 icon,
                 size: 20,
-                color: selected ? Colors.white : (_isDark ? Colors.grey.shade400 : Colors.grey.shade700),
+                color: selected ? Colors.white : (_isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.12)),
               ),
               const SizedBox(width: 8),
               Text(
@@ -525,7 +525,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : (_isDark ? Colors.grey.shade400 : Colors.grey.shade700),
+                  color: selected ? Colors.white : (_isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.12)),
                 ),
               ),
             ],
@@ -549,7 +549,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             elevation: 2,
-            shadowColor: AppColorScheme.color3.withOpacity(0.4),
+            shadowColor: AppColorScheme.color3.withValues(alpha: 0.4),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -604,7 +604,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
             color: AppColorScheme.color2,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 blurRadius: 12,
                 offset: const Offset(0, 3),
               ),
@@ -641,7 +641,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _isDark ? Colors.grey.shade800 : Colors.orange.shade50,
+            color: _isDark ? const Color(0xFF1F2937) : Colors.orange.shade50,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _isDark ? Colors.orange.shade700 : Colors.orange.shade200,
@@ -683,23 +683,23 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _isDark ? Colors.grey.shade800 : Colors.grey.shade300,
-            _isDark ? cardEnd : Colors.grey.shade400,
+            _isDark ? const Color(0xFF1F2937) : Colors.white70,
+            _isDark ? cardEnd : Colors.white70,
           ],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: _isDark ? Colors.grey.shade700.withOpacity(0.5) : Colors.grey.shade500,
+          color: _isDark ? Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5) : Colors.white60,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(_isDark ? 0.4 : 0.15),
+            color: Colors.black.withValues(alpha: _isDark ? 0.4 : 0.15),
             blurRadius: 24,
             offset: const Offset(0, 6),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(_isDark ? 0.2 : 0.08),
+            color: Colors.black.withValues(alpha: _isDark ? 0.2 : 0.08),
             blurRadius: 12,
             offset: const Offset(0, 2),
             spreadRadius: -4,
@@ -722,7 +722,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
             'Contenido de la sección. Estilo estándar para bloques tipo Info del plan.',
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: _isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+              color: _isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.12),
             ),
           ),
         ],
@@ -732,7 +732,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
 
   /// TextButton, botón peligro (Salir/Eliminar), badge Invitación, iconos solos (estilo app).
   Widget _buildExtraControlsSection() {
-    final fgMuted = _isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final fgMuted = _isDark ? Colors.white70 : Colors.white60;
     return Wrap(
       spacing: 12,
       runSpacing: 16,
@@ -783,7 +783,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
           onPressed: () {},
           icon: Icon(Icons.palette, color: AppColorScheme.color2),
           style: IconButton.styleFrom(
-            backgroundColor: _isDark ? Colors.grey.shade800 : AppColorScheme.color1.withOpacity(0.5),
+            backgroundColor: _isDark ? const Color(0xFF1F2937) : AppColorScheme.color1.withValues(alpha: 0.5),
           ),
           tooltip: 'UI Showcase',
         ),
@@ -803,7 +803,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
       children: [
         Text(
           'Al completar una acción o mostrar un mensaje de error, usar SnackBar con el estilo siguiente.',
-          style: GoogleFonts.poppins(fontSize: 14, color: _isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+          style: GoogleFonts.poppins(fontSize: 14, color: _isDark ? Colors.white70 : Colors.white60),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -863,9 +863,9 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
   Widget _buildW31PanelStandard() {
     return Container(
       decoration: BoxDecoration(
-        color: _isDark ? Colors.grey.shade900 : AppColorScheme.color0,
+        color: _isDark ? const Color(0xFF111827) : AppColorScheme.color0,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _isDark ? Colors.grey.shade700 : Colors.grey.shade300, width: 1),
+        border: Border.all(color: _isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white70, width: 1),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -909,7 +909,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
               'Contenido del panel. Aquí va la vista específica (Stats, Calendario, Resumen, etc.). La barra superior es común: color2, título centrado o a la izquierda, iconos de acción a la derecha.',
               style: GoogleFonts.poppins(
                 fontSize: 14,
-                color: _isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                color: _isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.12),
                 height: 1.4,
               ),
             ),
@@ -924,9 +924,9 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
   Widget _buildChatSection() {
     return Container(
       decoration: BoxDecoration(
-        color: _isDark ? Colors.grey.shade900 : AppColorScheme.color0,
+        color: _isDark ? const Color(0xFF111827) : AppColorScheme.color0,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _isDark ? Colors.grey.shade700 : Colors.grey.shade300, width: 1),
+        border: Border.all(color: _isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white70, width: 1),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -943,7 +943,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: _isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+                      color: _isDark ? const Color(0xFF1F2937) : Colors.white70,
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(18),
                         topRight: Radius.circular(18),
@@ -956,12 +956,12 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
                       children: [
                         Text(
                           'Mensaje recibido de otro participante.',
-                          style: GoogleFonts.poppins(fontSize: 15, color: _isDark ? Colors.white : Colors.grey.shade900, height: 1.4),
+                          style: GoogleFonts.poppins(fontSize: 15, color: _isDark ? Colors.white : const Color(0xFF111827), height: 1.4),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '10:30',
-                          style: GoogleFonts.poppins(fontSize: 11, color: (_isDark ? Colors.white : Colors.grey.shade700).withOpacity(0.7)),
+                          style: GoogleFonts.poppins(fontSize: 11, color: (_isDark ? Colors.white : Colors.white.withValues(alpha: 0.12)).withValues(alpha: 0.7)),
                         ),
                       ],
                     ),
@@ -1004,26 +1004,26 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: _isDark ? Colors.grey.shade900 : AppColorScheme.color0,
-              border: Border(top: BorderSide(color: _isDark ? Colors.grey.shade700 : Colors.grey.shade400, width: 0.5)),
+              color: _isDark ? const Color(0xFF111827) : AppColorScheme.color0,
+              border: Border(top: BorderSide(color: _isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white70, width: 0.5)),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: _isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                      color: _isDark ? const Color(0xFF1F2937) : Colors.white70,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: TextField(
                       readOnly: true,
                       decoration: InputDecoration(
                         hintText: 'Escribe un mensaje...',
-                        hintStyle: GoogleFonts.poppins(fontSize: 15, color: Colors.grey.shade500),
+                        hintStyle: GoogleFonts.poppins(fontSize: 15, color: Colors.white60),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
-                      style: GoogleFonts.poppins(fontSize: 15, color: _isDark ? Colors.white : Colors.grey.shade900, fontWeight: FontWeight.w500),
+                      style: GoogleFonts.poppins(fontSize: 15, color: _isDark ? Colors.white : const Color(0xFF111827), fontWeight: FontWeight.w500),
                     ),
                   ),
                 ),
@@ -1075,17 +1075,17 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
     if (_isDark) {
       return Container(
         decoration: BoxDecoration(
-          color: Colors.grey.shade800,
+          color: const Color(0xFF1F2937),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade700.withOpacity(0.5), width: 1),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5), width: 1),
         ),
         child: TextField(
           style: GoogleFonts.poppins(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             labelText: label,
             hintText: hint,
-            labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
-            hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
+            labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
+            hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.white60),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
             focusedBorder: OutlineInputBorder(
@@ -1104,17 +1104,17 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade600),
-        hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
+        labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.white60),
+        hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.white60),
         filled: true,
         fillColor: AppColorScheme.color0,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade400),
+          borderSide: BorderSide(color: Colors.white70),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade400),
+          borderSide: BorderSide(color: Colors.white70),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -1128,7 +1128,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
   Widget _buildDropdownField(String label, List<String> options) {
     String? selectedValue = options.first;
     return DropdownButtonFormField<String>(
-      value: selectedValue,
+      initialValue: selectedValue,
       decoration: _getInputDecoration(label),
       items: options.map((option) => DropdownMenuItem(value: option, child: Text(option))).toList(),
       onChanged: (value) {},
@@ -1139,7 +1139,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
     if (_isDark) {
       return InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
+        labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(
@@ -1147,22 +1147,22 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
           borderSide: BorderSide(color: AppColorScheme.color2, width: 2.5),
         ),
         filled: true,
-        fillColor: Colors.grey.shade800,
+        fillColor: const Color(0xFF1F2937),
         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       );
     }
     return InputDecoration(
       labelText: label,
-      labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade600),
+      labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.white60),
       filled: true,
       fillColor: AppColorScheme.color0,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade400),
+        borderSide: BorderSide(color: Colors.white70),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade400),
+        borderSide: BorderSide(color: Colors.white70),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -1209,7 +1209,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: _isDark ? 0 : 2,
-        shadowColor: AppColorScheme.color2.withOpacity(0.3),
+        shadowColor: AppColorScheme.color2.withValues(alpha: 0.3),
       ),
       child: Text('Guardar', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600)),
     );
@@ -1223,7 +1223,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         side: BorderSide(
-          color: AppColorScheme.color2.withOpacity(_isDark ? 0.7 : 1),
+          color: AppColorScheme.color2.withValues(alpha: _isDark ? 0.7 : 1),
           width: 2,
         ),
       ),
@@ -1236,7 +1236,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
       onPressed: () {},
       icon: const Icon(Icons.favorite),
       style: IconButton.styleFrom(
-        backgroundColor: _isDark ? Colors.grey.shade800 : AppColorScheme.color2.withOpacity(0.15),
+        backgroundColor: _isDark ? const Color(0xFF1F2937) : AppColorScheme.color2.withValues(alpha: 0.15),
         foregroundColor: AppColorScheme.color2,
         padding: const EdgeInsets.all(12),
       ),
@@ -1254,22 +1254,22 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
   }
 
   Widget _buildCard(String title, String subtitle, IconData icon) {
-    final bg = _isDark ? Colors.grey.shade800 : AppColorScheme.color1.withOpacity(0.4);
+    final bg = _isDark ? const Color(0xFF1F2937) : AppColorScheme.color1.withValues(alpha: 0.4);
     final titleColor = _isDark ? Colors.white : AppColorScheme.bodyColor;
-    final subColor = _isDark ? Colors.grey.shade400 : Colors.grey.shade700;
+    final subColor = _isDark ? Colors.white70 : Colors.white.withValues(alpha: 0.12);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: bg,
         border: Border.all(
-          color: _isDark ? Colors.grey.shade700 : Colors.grey.shade400,
+          color: _isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white70,
           width: 1,
         ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: _isDark
             ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
+                  color: Colors.black.withValues(alpha: 0.25),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1281,7 +1281,7 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColorScheme.color2.withOpacity(0.2),
+              color: AppColorScheme.color2.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: AppColorScheme.color2, size: 24),
@@ -1325,16 +1325,16 @@ class _UIShowcasePageState extends State<UIShowcasePage> {
 
   Widget _buildListItem(String title, {bool isOrganizer = false}) {
     final textColor = _isDark ? Colors.white : AppColorScheme.bodyColor;
-    final borderColor = _isDark ? Colors.grey.shade700 : Colors.grey.shade400;
+    final borderColor = _isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white70;
     final avatarBg = isOrganizer
-        ? AppColorScheme.color2.withOpacity(0.3)
-        : (_isDark ? Colors.grey.shade700 : AppColorScheme.color2.withOpacity(0.2));
+        ? AppColorScheme.color2.withValues(alpha: 0.3)
+        : (_isDark ? Colors.white.withValues(alpha: 0.12) : AppColorScheme.color2.withValues(alpha: 0.2));
     final avatarFg = isOrganizer ? Colors.white : (_isDark ? Colors.white : AppColorScheme.color2);
     return Container(
       margin: const EdgeInsets.only(bottom: 0),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: _isDark ? Colors.grey.shade800 : AppColorScheme.color0,
+        color: _isDark ? const Color(0xFF1F2937) : AppColorScheme.color0,
         border: Border(bottom: BorderSide(color: borderColor, width: 1)),
         borderRadius: BorderRadius.circular(12),
       ),

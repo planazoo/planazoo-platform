@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 
@@ -120,12 +119,12 @@ class _NavTabCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final badgeCount = item.badgeCount ?? 0;
     final hasUnread = badgeCount > 0;
-    final cellBg = kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
+    final cellBg = const Color(0xFF111827);
     final textColor = isSelected
         ? Colors.white
         : (hasUnread
             ? AppColorScheme.color3
-            : (kIsWeb ? const Color(0xFF475569) : Colors.grey.shade400));
+            : Colors.white70);
     const fontSize = 11.0;
     final pillWidth = width - 12;
 
@@ -186,7 +185,7 @@ class _EmptyNavCell extends StatelessWidget {
       height: height,
       child: Container(
         decoration: BoxDecoration(
-          color: kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900,
+          color: const Color(0xFF111827),
           border: isSelected
               ? Border.all(color: AppColorScheme.color2, width: 2)
               : null,

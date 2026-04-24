@@ -169,8 +169,6 @@ class GlobalNotificationsService {
         return UnifiedNotificationType.participantRemoved;
       case NotificationType.alarm:
         return UnifiedNotificationType.alarm;
-      default:
-        return UnifiedNotificationType.other;
     }
   }
 }

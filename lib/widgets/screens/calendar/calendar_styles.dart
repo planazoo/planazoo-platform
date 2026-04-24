@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
@@ -12,7 +11,7 @@ class CalendarStyles {
       fontWeight: isToday ? FontWeight.w600 : FontWeight.w500,
       color: isToday
           ? AppColorScheme.color2
-          : (kIsWeb ? const Color(0xFF1E293B) : Colors.white),
+          : Colors.white,
       fontSize: CalendarConstants.headerFontSize,
     );
   }
@@ -22,7 +21,7 @@ class CalendarStyles {
     return GoogleFonts.poppins(
       fontSize: CalendarConstants.participantFontSize,
       fontWeight: FontWeight.w500,
-      color: kIsWeb ? const Color(0xFF334155) : Colors.white,
+      color: Colors.white,
     );
   }
 
@@ -31,7 +30,7 @@ class CalendarStyles {
     return GoogleFonts.poppins(
       fontSize: CalendarConstants.miniParticipantFontSize,
       fontWeight: FontWeight.w600,
-      color: kIsWeb ? const Color(0xFF64748B) : Colors.grey.shade400,
+      color: Colors.white70,
     );
   }
 
@@ -57,7 +56,7 @@ class CalendarStyles {
   static TextStyle getHourTextStyle() {
     return GoogleFonts.poppins(
       fontSize: 12,
-      color: kIsWeb ? const Color(0xFF64748B) : Colors.grey.shade400,
+      color: Colors.white70,
       fontWeight: FontWeight.w500,
     );
   }
@@ -73,22 +72,21 @@ class CalendarStyles {
   /// Obtiene la decoración del header de días (sin bordes, estilo limpio)
   static BoxDecoration getDayHeaderDecoration() {
     return BoxDecoration(
-      color: kIsWeb ? const Color(0xFFF8FAFC) : Colors.grey.shade800,
+      color: const Color(0xFF1F2937),
     );
   }
 
   /// Obtiene la decoración del header de participantes (sin bordes)
   static BoxDecoration getParticipantHeaderDecoration() {
     return BoxDecoration(
-      color: kIsWeb ? const Color(0xFFF8FAFC) : Colors.grey.shade800,
+      color: const Color(0xFF1F2937),
     );
   }
 
   /// Obtiene la decoración del header mini de participantes (sin bordes)
   static BoxDecoration getMiniParticipantHeaderDecoration() {
     return BoxDecoration(
-      color: (kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade800)
-          .withOpacity(0.6),
+      color: const Color(0xFF1F2937).withValues(alpha: 0.6),
     );
   }
 
@@ -104,10 +102,10 @@ class CalendarStyles {
   /// Obtiene la decoración de un alojamiento
   static BoxDecoration getAccommodationDecoration() {
     return BoxDecoration(
-      color: Colors.green.withOpacity(CalendarConstants.accommodationBackgroundOpacity),
+      color: Colors.green.withValues(alpha: CalendarConstants.accommodationBackgroundOpacity),
       borderRadius: BorderRadius.circular(3),
       border: Border.all(
-        color: Colors.green.withOpacity(CalendarConstants.accommodationBorderOpacity),
+        color: Colors.green.withValues(alpha: CalendarConstants.accommodationBorderOpacity),
         width: 1,
       ),
     );
@@ -116,7 +114,7 @@ class CalendarStyles {
   /// Obtiene la decoración de la columna fija de horas (sin bordes)
   static BoxDecoration getFixedHoursColumnDecoration() {
     return BoxDecoration(
-      color: kIsWeb ? const Color(0xFFFFFFFF) : Colors.grey.shade800,
+      color: const Color(0xFF1F2937),
     );
   }
 
@@ -124,17 +122,17 @@ class CalendarStyles {
   static BoxDecoration getHourCellDecoration() {
     return BoxDecoration(
       border: Border.all(
-        color: (kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade700).withOpacity(0.7),
+        color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.7),
         width: 0.5,
       ),
-      color: (kIsWeb ? const Color(0xFFFFFFFF) : Colors.grey.shade800).withOpacity(0.3),
+      color: const Color(0xFF1F2937).withValues(alpha: 0.3),
     );
   }
 
   /// Obtiene la decoración de la fila fija de alojamientos (sin bordes)
   static BoxDecoration getFixedAccommodationRowDecoration() {
     return BoxDecoration(
-      color: kIsWeb ? const Color(0xFFF8FAFC) : Colors.grey.shade800,
+      color: const Color(0xFF1F2937),
     );
   }
 
@@ -155,7 +153,7 @@ class CalendarStyles {
 
   /// Obtiene el color de fondo del AppBar
   static Color getAppBarBackgroundColor() {
-    return Colors.grey.shade800;
+    return const Color(0xFF1F2937);
   }
 
   /// Obtiene el color de texto del AppBar

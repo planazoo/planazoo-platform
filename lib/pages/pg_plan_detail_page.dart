@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -56,12 +56,17 @@ class PlanDetailPage extends ConsumerStatefulWidget {
 }
 
 class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
+  static const Color _cPageBg = Color(0xFF111827);
+  static const Color _cTextPrimary = Colors.white;
+  static const Color _cTextSecondary = Colors.white70;
+  static const double _aBorderStrong = 0.12;
+
   late String _selectedOption;
   bool _hasSetInitialTabForParticipant = false;
   /// Estado del calendario embebido: días visibles (1/2/3) y grupo actual (barra unificada).
   /// iOS: 3 días por defecto (lista §3.1 / ID 51).
   int _calendarVisibleDays =
-      (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? 3 : 1;
+      (defaultTargetPlatform == TargetPlatform.iOS) ? 3 : 1;
   /// Índice 1-based: primera columna del calendario embebido (ítem 99: anclar a hoy al abrir).
   late int _calendarFirstPlanDay;
 
@@ -133,11 +138,10 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         }
       });
     }
-    final isWebChat = kIsWeb && _selectedOption == 'chat';
     return Theme(
-      data: isWebChat ? AppTheme.lightTheme : AppTheme.darkTheme,
+      data: AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: isWebChat ? const Color(0xFFF1F5F9) : Colors.grey.shade900,
+        backgroundColor: _cPageBg,
         appBar: _buildAppBar(plan),
         bottomNavigationBar: _buildQuickActionsBar(plan),
         body: SafeArea(
@@ -167,14 +171,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   /// Barra superior: nombre del plan, chip mi estado (dentro/fuera/pend.) y ayuda P18.
   PreferredSizeWidget _buildAppBar(Plan plan) {
     final loc = AppLocalizations.of(context)!;
-    final isWebChat = kIsWeb && _selectedOption == 'chat';
     return AppBar(
-      backgroundColor: isWebChat ? const Color(0xFFF1F5F9) : AppColorScheme.color2,
+      backgroundColor: _cPageBg,
       elevation: 0,
       leading: IconButton(
         icon: Icon(
           Icons.arrow_back,
-          color: isWebChat ? const Color(0xFF1F2937) : Colors.white,
+          color: _cTextPrimary,
         ),
         onPressed: () {
           // Si al hacer pop no queda nada debajo (pantalla negra), aseguramos volver a la lista de planes.
@@ -190,7 +193,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       title: Text(
         plan.name,
         style: GoogleFonts.poppins(
-          color: isWebChat ? const Color(0xFF1F2937) : Colors.white,
+          color: _cTextPrimary,
           fontSize: 16,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
@@ -216,9 +219,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                 contextLabel: loc.planMyStatusHelpTitle,
                 defaultBody: loc.planMyStatusHelpDefault,
                 iconSize: 18,
-                iconColor: isWebChat
-                    ? const Color(0xFF64748B)
-                    : Colors.white.withValues(alpha: 0.9),
+                iconColor: _cTextSecondary,
               ),
             ],
           ),
@@ -229,7 +230,6 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
 
   Widget _buildQuickActionsBar(Plan plan) {
     final loc = AppLocalizations.of(context)!;
-    final isWebChat = kIsWeb && _selectedOption == 'chat';
     final planId = plan.id;
     final unreadChat = planId != null
         ? (ref.watch(unreadMessagesCountProvider(planId)).valueOrNull ?? 0)
@@ -243,43 +243,14 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       child: Container(
         height: 72,
         decoration: BoxDecoration(
-          gradient: isWebChat
-              ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
-                )
-              : LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.grey.shade900,
-                    const Color(0xFF171717),
-                  ],
-                ),
+          color: _cPageBg,
           border: Border(
             top: BorderSide(
-              color: isWebChat
-                  ? const Color(0xFFE2E8F0)
-                  : Colors.grey.shade700.withOpacity(0.4),
+              color: _cTextPrimary.withValues(alpha: _aBorderStrong),
               width: 1,
             ),
           ),
-          boxShadow: isWebChat
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.35),
-                    blurRadius: 16,
-                    offset: const Offset(0, -3),
-                  ),
-                ],
+          boxShadow: null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -329,18 +300,15 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     required bool isActive,
     int badgeCount = 0,
   }) {
-    final isWebChat = kIsWeb && _selectedOption == 'chat';
     final iconColor = isActive
-        ? Colors.white
-        : (isWebChat ? const Color(0xFF64748B) : AppColorScheme.color2);
+        ? _cTextPrimary
+        : _cTextSecondary;
     final bg = isActive
         ? AppColorScheme.color2
-        : (isWebChat ? Colors.white : Colors.transparent);
+        : Colors.transparent;
     final borderColor = isActive
         ? AppColorScheme.color2
-        : (isWebChat
-            ? const Color(0xFFE2E8F0)
-            : Colors.grey.shade700.withOpacity(0.7));
+        : _cTextPrimary.withValues(alpha: _aBorderStrong);
 
     return Tooltip(
       message: tooltip,
@@ -357,20 +325,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             boxShadow: isActive
                 ? [
                     BoxShadow(
-                      color: AppColorScheme.color2.withOpacity(0.35),
+                      color: AppColorScheme.color2.withValues(alpha: 0.35),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
                   ]
-                : (isWebChat
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                          blurRadius: 6,
-                          offset: const Offset(0, 1),
-                        ),
-                      ]
-                    : null),
+                : null,
           ),
           child: Stack(
             clipBehavior: Clip.none,
@@ -388,7 +348,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                     decoration: BoxDecoration(
                       color: AppColorScheme.color3,
                       borderRadius: BorderRadius.circular(99),
-                      border: Border.all(color: Colors.black.withOpacity(0.2), width: 0.5),
+                      border: Border.all(color: Colors.black.withValues(alpha: 0.2), width: 0.5),
                     ),
                     child: Text(
                       badgeCount > 99 ? '99+' : '$badgeCount',
@@ -598,7 +558,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           if (context.mounted) {
             Navigator.of(context).pop();
           }
-          if (!success && mounted) {
+          if (!success && context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
@@ -617,7 +577,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           if (context.mounted) {
             Navigator.of(context).pop();
           }
-          if (!success && mounted) {
+          if (!success && context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Error al eliminar el alojamiento. Por favor, inténtalo de nuevo.'),
@@ -733,7 +693,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     setState(() => _selectedOption = 'planNotifications');
   }
 
-  /// Pestaña Calendario con barra unificada (rango días + 1/2/3).
+  /// Pestaña Calendario: mismo marco visual que [CalendarDemoV1Page] (demo/calendar-v1).
   Widget _buildCalendarTabContent(Plan plan) {
     final totalDays = plan.durationInDays;
     if (totalDays > 0 && _calendarFirstPlanDay > totalDays) {
@@ -753,129 +713,167 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildUnifiedCalendarBar(plan, totalDays, startDay, endDay),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+          child: _buildUnifiedCalendarBar(plan, totalDays, startDay, endDay),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              Icon(
+                Icons.schedule,
+                size: 14,
+                color: Colors.white.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  plan.timezone != null && plan.timezone!.trim().isNotEmpty
+                      ? 'Zona horaria del plan: ${plan.timezone}'
+                      : 'Zona horaria del plan: no configurada',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: Colors.white54,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
         Expanded(
-          child: CalendarMobilePage(
-            key: ValueKey(
-              'cal-${plan.id}-${plan.startDate.toIso8601String()}-${plan.endDate.toIso8601String()}',
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1F2937),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: CalendarMobilePage(
+                key: ValueKey(
+                  'cal-${plan.id}-${plan.startDate.toIso8601String()}-${plan.endDate.toIso8601String()}',
+                ),
+                plan: plan,
+                hideAppBar: true,
+                visibleDays: _calendarVisibleDays,
+                firstVisiblePlanDayIndex: _calendarFirstPlanDay,
+                onVisibleDaysChanged: (days) {
+                  setState(() {
+                    _calendarVisibleDays = days;
+                    if (_calendarFirstPlanDay > totalDays && totalDays > 0) {
+                      _calendarFirstPlanDay =
+                          Plan.initialVisiblePlanDayIndex(plan, days);
+                    }
+                  });
+                },
+                onPreviousDayGroup: () {
+                  if (_calendarFirstPlanDay > 1) {
+                    setState(() {
+                      _calendarFirstPlanDay = math.max(
+                        1,
+                        _calendarFirstPlanDay - _calendarVisibleDays,
+                      );
+                    });
+                  }
+                },
+                onNextDayGroup: () {
+                  if (totalDays > 0 && endDay < totalDays) {
+                    setState(() {
+                      final next = _calendarFirstPlanDay + _calendarVisibleDays;
+                      _calendarFirstPlanDay = next > totalDays
+                          ? math.max(1, totalDays - _calendarVisibleDays + 1)
+                          : next;
+                    });
+                  }
+                },
+              ),
             ),
-            plan: plan,
-            hideAppBar: true,
-            visibleDays: _calendarVisibleDays,
-            firstVisiblePlanDayIndex: _calendarFirstPlanDay,
-            onVisibleDaysChanged: (days) {
-              setState(() {
-                _calendarVisibleDays = days;
-                if (_calendarFirstPlanDay > totalDays) {
-                  _calendarFirstPlanDay =
-                      Plan.initialVisiblePlanDayIndex(plan, days);
-                }
-              });
-            },
-            onPreviousDayGroup: () {
-              if (_calendarFirstPlanDay > 1) {
-                setState(() {
-                  _calendarFirstPlanDay = math.max(
-                    1,
-                    _calendarFirstPlanDay - _calendarVisibleDays,
-                  );
-                });
-              }
-            },
-            onNextDayGroup: () {
-              if (endDay < totalDays) {
-                setState(() {
-                  final next = _calendarFirstPlanDay + _calendarVisibleDays;
-                  _calendarFirstPlanDay = next > totalDays ? totalDays : next;
-                });
-              }
-            },
           ),
         ),
       ],
     );
   }
 
-  /// Barra única: rango D1-3/7 + botones 1/2/3 días.
+  /// Barra unificada alineada con la demo V1: tarjeta redondeada + chips 1|2|3.
   Widget _buildUnifiedCalendarBar(Plan plan, int totalDays, int startDay, int endDay) {
+    final canPrev = startDay > 1;
+    final canNext = totalDays > 0 && endDay < totalDays;
+    final displayTotal = math.max(1, totalDays);
+
+    void goNext() {
+      if (!canNext) return;
+      setState(() {
+        final next = _calendarFirstPlanDay + _calendarVisibleDays;
+        _calendarFirstPlanDay = next > totalDays
+            ? math.max(1, totalDays - _calendarVisibleDays + 1)
+            : next;
+      });
+    }
+
     return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey.shade900,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade700.withOpacity(0.5),
-            width: 1,
-          ),
-        ),
+        color: const Color(0xFF1F2937),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
-          // Centro: < D1-3/7 >
           Expanded(
             flex: 3,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left, color: Colors.white),
-                  onPressed: _calendarFirstPlanDay > 1
-                      ? () => setState(() {
-                            _calendarFirstPlanDay = math.max(
-                              1,
-                              _calendarFirstPlanDay - _calendarVisibleDays,
-                            );
-                          })
-                      : null,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
+                _calendarNavCircle(
+                  icon: Icons.chevron_left_rounded,
+                  enabled: canPrev,
+                  onTap: () {
+                    if (!canPrev) return;
+                    setState(() {
+                      _calendarFirstPlanDay = math.max(
+                        1,
+                        _calendarFirstPlanDay - _calendarVisibleDays,
+                      );
+                    });
+                  },
                 ),
                 Expanded(
                   child: Text(
-                    'D$startDay-$endDay/$totalDays',
+                    'D$startDay–$endDay/$displayTotal',
+                    textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       color: Colors.white,
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
+                      letterSpacing: 0.2,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right, color: Colors.white),
-                  onPressed: endDay < totalDays
-                      ? () => setState(() {
-                            final next =
-                                _calendarFirstPlanDay + _calendarVisibleDays;
-                            _calendarFirstPlanDay =
-                                next > totalDays ? totalDays : next;
-                          })
-                      : null,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
+                _calendarNavCircle(
+                  icon: Icons.chevron_right_rounded,
+                  enabled: canNext,
+                  onTap: goNext,
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          // Derecha: 1 | 2 | 3 días
           Expanded(
             flex: 2,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _buildUnifiedDayChip(plan, 1),
-                const SizedBox(width: 4),
-                _buildUnifiedDayChip(plan, 2),
-                const SizedBox(width: 4),
-                _buildUnifiedDayChip(plan, 3),
+                for (final d in [1, 2, 3]) ...[
+                  if (d > 1) const SizedBox(width: 6),
+                  _buildUnifiedDayChip(plan, d),
+                ],
               ],
             ),
           ),
@@ -884,36 +882,62 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
+  Widget _calendarNavCircle({
+    required IconData icon,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(
+            icon,
+            size: 22,
+            color: enabled ? Colors.white : Colors.white24,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildUnifiedDayChip(Plan plan, int days) {
-    final isSelected = _calendarVisibleDays == days;
-    return GestureDetector(
+    final selected = _calendarVisibleDays == days;
+    return InkWell(
       onTap: () {
         setState(() {
           _calendarVisibleDays = days;
           final t = plan.durationInDays;
-          if (_calendarFirstPlanDay > t) {
+          if (t > 0 && _calendarFirstPlanDay > t) {
             _calendarFirstPlanDay =
                 Plan.initialVisiblePlanDayIndex(plan, days);
           }
         });
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColorScheme.color2 : Colors.grey.shade800,
-          borderRadius: BorderRadius.circular(8),
+          color: selected
+              ? AppColorScheme.color2
+              : Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected
+            color: selected
                 ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
+                : Colors.white.withValues(alpha: 0.12),
+            width: selected ? 1.5 : 1,
           ),
         ),
         child: Text(
           '$days',
           style: GoogleFonts.poppins(
-            color: isSelected ? Colors.white : Colors.grey.shade400,
-            fontSize: 12,
+            color: selected ? Colors.white : Colors.white70,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
         ),

@@ -10,6 +10,7 @@ Referencia para **A1** (notificaciones) y **A2** (links de invitación) de `docs
 - **Validado en iPhone físico:** foreground (`FirebaseMessaging.onMessage` + feedback in-app), background con banner/tap.
 - **Embedding obligatorio para FCM en foreground:** no usar `UIApplicationSceneManifest` + `FlutterImplicitEngineDelegate` solo con registro en `didInitializeImplicitFlutterEngine` (puede romper `onMessage` en Dart; ver [flutter#185048](https://github.com/flutter/flutter/issues/185048)). Mantener **`AppDelegate` clásico** con `GeneratedPluginRegistrant.register(with: self)` en `application:didFinishLaunchingWithOptions:`.
 - **Seguimiento:** paridad **Android** → `docs/tareas/TASKS.md` **T267**.
+- **Invitación a plan (usuario registrado):** Tras crear la notificación in-app, la app llama a la Cloud Function **`sendInvitationPush`** (valida en servidor que el llamador es el `invitedBy` de la participación `pending`). El payload incluye `type=invitation` y `tab=participants` para abrir **Participantes** y aceptar/rechazar. Requiere **`firebase deploy --only functions:sendInvitationPush`** (o deploy completo de `functions/`) tras actualizar el código.
 
 ## A1 — Notificaciones push (FCM + APNs)
 

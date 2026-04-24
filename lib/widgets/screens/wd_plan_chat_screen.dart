@@ -1,8 +1,6 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../app/theme/app_theme.dart';
 import '../../features/chat/domain/models/plan_message.dart';
 import '../../features/chat/presentation/providers/chat_providers.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
@@ -33,11 +31,7 @@ class PlanChatScreen extends ConsumerStatefulWidget {
 }
 
 class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
-  static const Color _webPageBg = Color(0xFFF1F5F9);
-  static const Color _webBorder = Color(0xFFE2E8F0);
-  static const Color _webMuted = Color(0xFF64748B);
-  static const Color _webAppBarTitle = Color(0xFF1F2937);
-
+  static const Color _pageBg = Color(0xFF111827);
   final ScrollController _scrollController = ScrollController();
   final Map<String, UserModel> _userCache = {};
   bool _hasMarkedAsRead = false;
@@ -139,29 +133,26 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
         : AppBar(
             toolbarHeight: 48,
             surfaceTintColor: Colors.transparent,
-            backgroundColor: kIsWeb ? _webPageBg : AppColorScheme.color2,
-            foregroundColor: kIsWeb ? _webAppBarTitle : Colors.white,
+            backgroundColor: AppColorScheme.color2,
+            foregroundColor: Colors.white,
             elevation: 0,
-            shape: kIsWeb
-                ? const Border(bottom: BorderSide(color: _webBorder))
-                : null,
             centerTitle: false,
             title: Text(
               'Chat del plan',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: kIsWeb ? _webAppBarTitle : Colors.white,
+                color: Colors.white,
                 letterSpacing: 0.1,
               ),
             ),
             iconTheme: IconThemeData(
-              color: kIsWeb ? _webAppBarTitle : Colors.white,
+              color: Colors.white,
             ),
           );
 
     final scaffold = Scaffold(
-      backgroundColor: kIsWeb ? _webPageBg : Colors.grey.shade900,
+      backgroundColor: _pageBg,
       appBar: appBar,
       body: Column(
         children: [
@@ -184,14 +175,14 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
                         Icon(
                           Icons.chat_bubble_outline,
                           size: 64,
-                          color: kIsWeb ? _webMuted : Colors.grey.shade600,
+                          color: Colors.white60,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No hay mensajes aún',
                           style: GoogleFonts.poppins(
                             fontSize: 16,
-                            color: kIsWeb ? _webMuted : Colors.grey.shade400,
+                            color: Colors.white70,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -199,7 +190,7 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
                           'Sé el primero en escribir',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
-                            color: kIsWeb ? _webMuted : Colors.grey.shade500,
+                            color: Colors.white60,
                           ),
                         ),
                       ],
@@ -248,14 +239,14 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
                       Icon(
                         Icons.error_outline,
                         size: 64,
-                        color: Colors.red.shade400,
+                        color: Colors.redAccent,
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'Error al cargar mensajes',
                         style: GoogleFonts.poppins(
                           fontSize: 16,
-                          color: kIsWeb ? _webMuted : Colors.grey.shade400,
+                          color: Colors.white70,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -263,7 +254,7 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
                         error.toString(),
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: kIsWeb ? _webMuted : Colors.grey.shade500,
+                          color: Colors.white60,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -300,12 +291,6 @@ class _PlanChatScreenState extends ConsumerState<PlanChatScreen> {
       ),
     );
 
-    if (kIsWeb) {
-      return Theme(
-        data: AppTheme.lightTheme,
-        child: scaffold,
-      );
-    }
     return scaffold;
   }
 }

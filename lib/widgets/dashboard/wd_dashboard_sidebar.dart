@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
@@ -37,9 +36,8 @@ class WdDashboardSidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isWebLight = kIsWeb;
-    final sidebarBg = isWebLight ? const Color(0xFFE8EEF5) : AppColorScheme.color2;
-    final iconColor = isWebLight ? const Color(0xFF475569) : Colors.white;
+    final sidebarBg = AppColorScheme.color2;
+    const iconColor = Colors.white;
     final loc = AppLocalizations.of(context)!;
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.isAdmin ?? false;
@@ -124,10 +122,10 @@ class WdDashboardSidebar extends ConsumerWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: isWebLight ? const Color(0xFFFDFEFF) : Colors.white.withValues(alpha: 0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: isWebLight ? const Color(0xFFE2E8F0) : Colors.white.withValues(alpha: 0.3),
+                        color: Colors.white.withValues(alpha: 0.3),
                         width: 2,
                       ),
                     ),

@@ -28,29 +28,21 @@ class UserService {
   Future<String?> createUser(UserModel user) async {
     try {
       // Verificar si el usuario ya existe
-      if (user.id != null) {
-        final doc = await _firestore
-            .collection(_collection)
-            .doc(user.id!)
-            .get();
-        
-        if (doc.exists) {
-          return user.id; // Usuario ya existe
-        }
-        
-        // Crear usuario con su ID específico
-        await _firestore
-            .collection(_collection)
-            .doc(user.id!)
-            .set(user.toFirestore());
-        return user.id;
-      }
-      
-      // Si no tiene ID, crear con ID aleatorio
-      final docRef = await _firestore
+      final doc = await _firestore
           .collection(_collection)
-          .add(user.toFirestore());
-      return docRef.id;
+          .doc(user.id)
+          .get();
+
+      if (doc.exists) {
+        return user.id; // Usuario ya existe
+      }
+
+      // Crear usuario con su ID específico
+      await _firestore
+          .collection(_collection)
+          .doc(user.id)
+          .set(user.toFirestore());
+      return user.id;
     } catch (e) {
       throw 'Error al crear usuario: $e';
     }
@@ -501,7 +493,7 @@ class UserService {
       final querySnapshot = await _firestore
           .collection(_collection)
           .where('displayName', isGreaterThanOrEqualTo: query)
-          .where('displayName', isLessThan: query + 'z')
+          .where('displayName', isLessThan: '${query}z')
           .where('isActive', isEqualTo: true)
           .limit(10)
           .get();

@@ -64,8 +64,8 @@ final planParticipantDisplayNamesProvider = FutureProvider.family<Map<String, St
           map[p.userId] = user.displayName!.trim();
         } else if (user.username != null && user.username!.trim().isNotEmpty) {
           map[p.userId] = '@${user.username!.trim()}';
-        } else if (user.email != null && user.email!.trim().isNotEmpty) {
-          map[p.userId] = user.email!.trim();
+        } else if (user.email.trim().isNotEmpty) {
+          map[p.userId] = user.email.trim();
         } else {
           map[p.userId] = p.userId;
         }

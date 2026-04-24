@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import '../../../../features/calendar/domain/models/plan.dart';
 import '../../../../features/calendar/domain/models/event.dart';
 import '../../../../features/calendar/domain/models/plan_participation.dart';
@@ -315,7 +313,7 @@ class SyncService {
 
       for (var doc in remoteSnapshot.docs) {
         final data = doc.data();
-        if (data != null && data['typeFamily'] == 'alojamiento') {
+        if (data['typeFamily'] == 'alojamiento') {
           continue; // No sincronizar alojamientos a la caja local de eventos
         }
         final remoteEvent = Event.fromFirestore(doc);
@@ -475,7 +473,7 @@ class SyncService {
   /// Crea un Event directamente desde datos de Firestore
   Event _createEventFromData(String? id, Map<String, dynamic> data) {
     // Helper para parsear fechas
-    DateTime _parseDate(dynamic value) {
+    DateTime parseDate(dynamic value) {
       if (value is Timestamp) return value.toDate();
       if (value is String) return DateTime.parse(value);
       throw ArgumentError('Invalid date: $value');
@@ -524,7 +522,7 @@ class SyncService {
       id: id,
       planId: data['planId'] ?? '',
       userId: data['userId'] ?? '',
-      date: _parseDate(data['date']),
+      date: parseDate(data['date']),
       hour: data['hour'] ?? (commonPart?.startHour ?? 0),
       duration: duration,
       startMinute: startMinute,
@@ -537,8 +535,8 @@ class SyncService {
       documents: documents,
       participantTrackIds: participantTrackIds,
       isDraft: data['isDraft'] ?? false,
-      createdAt: _parseDate(data['createdAt']),
-      updatedAt: _parseDate(data['updatedAt']),
+      createdAt: parseDate(data['createdAt']),
+      updatedAt: parseDate(data['updatedAt']),
       commonPart: commonPart,
       personalParts: personalParts,
       baseEventId: data['baseEventId'],

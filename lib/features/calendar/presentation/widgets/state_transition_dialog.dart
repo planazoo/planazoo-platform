@@ -20,6 +20,7 @@ class StateTransitionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const surface = Color(0xFF1F2937);
     final currentState = plan.state ?? 'planificando';
     final currentInfo = PlanStateService.getStateDisplayInfo(currentState);
     final newInfo = PlanStateService.getStateDisplayInfo(newState);
@@ -90,6 +91,11 @@ class StateTransitionDialog extends StatelessWidget {
     const String? implicationText = null;
 
     return AlertDialog(
+      backgroundColor: surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: null,
       contentPadding: EdgeInsets.zero,
       content: Column(
@@ -100,8 +106,8 @@ class StateTransitionDialog extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: const BoxDecoration(
-              color: Color(0xFF79A2A8),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              color: AppColorScheme.color2,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
               children: [
@@ -132,22 +138,24 @@ class StateTransitionDialog extends StatelessWidget {
                         Color(currentInfo['color'] as int)),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(Icons.arrow_forward, size: 20),
+                      child: Icon(Icons.arrow_forward, size: 20, color: Colors.white70),
                     ),
                     _buildStateChip(
                         newInfo['label'] as String, Color(newInfo['color'] as int)),
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(message),
+                Text(message, style: const TextStyle(color: Colors.white70)),
                 if (implicationText != null) ...[
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColorScheme.color2.withOpacity(0.1),
+                      color: AppColorScheme.color2.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
+                      border: Border.all(
+                        color: AppColorScheme.color2.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,12 +165,7 @@ class StateTransitionDialog extends StatelessWidget {
                         Expanded(
                           child: Text(
                             implicationText,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.grey.shade200
-                                  : Colors.grey.shade800,
-                            ),
+                            style: const TextStyle(fontSize: 13, color: Colors.white70),
                           ),
                         ),
                       ],
@@ -177,7 +180,7 @@ class StateTransitionDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancelar'),
+          child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
         ),
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(true),
@@ -195,8 +198,8 @@ class StateTransitionDialog extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(

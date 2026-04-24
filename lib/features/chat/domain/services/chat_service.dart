@@ -126,11 +126,20 @@ class ChatService {
           error: error,
           stackTrace: stackTrace,
         );
-        throw error;
+        // Evitar elevar errores de permisos al root isolate (ruido/noise en emulador
+        // o usuario sin acceso a ese plan). Se registra y se deja que la UI siga viva.
       })) {
         yield _snapshotToMessages(snapshot);
       }
     } catch (e) {
+      if (e.toString().contains('permission-denied')) {
+        LoggerService.warning(
+          'Sin permisos para mensajes de plan $planId; stream vacío',
+          context: 'CHAT_SERVICE',
+        );
+        yield const <PlanMessage>[];
+        return;
+      }
       LoggerService.error(
         'Error in messages stream for plan: $planId',
         context: 'CHAT_SERVICE',

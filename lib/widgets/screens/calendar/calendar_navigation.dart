@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
-import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
 
 /// Clase que maneja la navegación del calendario
 class CalendarNavigation {

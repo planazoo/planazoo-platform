@@ -13,13 +13,13 @@ class EventLocalService extends LocalStorageService<Event> {
     final firestoreMap = event.toFirestore();
     
     // Función recursiva para convertir Timestamps a strings ISO
-    dynamic _convertTimestamp(dynamic value) {
+    dynamic convertTimestamp(dynamic value) {
       if (value is Timestamp) {
         return value.toDate().toIso8601String();
       } else if (value is Map) {
-        return value.map((key, val) => MapEntry(key, _convertTimestamp(val)));
+        return value.map((key, val) => MapEntry(key, convertTimestamp(val)));
       } else if (value is List) {
-        return value.map((item) => _convertTimestamp(item)).toList();
+        return value.map((item) => convertTimestamp(item)).toList();
       } else {
         return value;
       }
@@ -27,7 +27,7 @@ class EventLocalService extends LocalStorageService<Event> {
     
     final hiveMap = <String, dynamic>{};
     for (var entry in firestoreMap.entries) {
-      hiveMap[entry.key] = _convertTimestamp(entry.value);
+      hiveMap[entry.key] = convertTimestamp(entry.value);
     }
     
     // Añadimos el ID si existe
@@ -41,7 +41,7 @@ class EventLocalService extends LocalStorageService<Event> {
   @override
   Event fromMap(Map<String, dynamic> map) {
     // Helper para convertir fechas
-    DateTime _parseDate(dynamic value) {
+    DateTime parseDate(dynamic value) {
       if (value is String) {
         return DateTime.parse(value);
       } else if (value is Timestamp) {
@@ -109,7 +109,7 @@ class EventLocalService extends LocalStorageService<Event> {
       id: map['_id'] as String?,
       planId: data['planId'] ?? '',
       userId: data['userId'] ?? '',
-      date: _parseDate(data['date']),
+      date: parseDate(data['date']),
       hour: data['hour'] ?? (commonPart?.startHour ?? 0),
       duration: duration,
       startMinute: startMinute,
@@ -122,8 +122,8 @@ class EventLocalService extends LocalStorageService<Event> {
       documents: documents,
       participantTrackIds: participantTrackIds,
       isDraft: data['isDraft'] ?? false,
-      createdAt: _parseDate(data['createdAt']),
-      updatedAt: _parseDate(data['updatedAt']),
+      createdAt: parseDate(data['createdAt']),
+      updatedAt: parseDate(data['updatedAt']),
       commonPart: commonPart,
       personalParts: personalParts,
       baseEventId: data['baseEventId'],

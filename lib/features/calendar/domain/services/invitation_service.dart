@@ -1,3 +1,5 @@
+// ignore_for_file: unnecessary_non_null_assertion, unnecessary_null_comparison, dead_null_aware_expression
+
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';

@@ -4,7 +4,6 @@ import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/pending_email_event.dart';
 import 'package:unp_calendario/features/calendar/domain/services/pending_email_event_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
-import 'package:unp_calendario/features/notifications/domain/models/unified_notification.dart';
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -62,7 +61,7 @@ class WdPlanNotificationsScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.notifications_none, size: 64, color: AppColorScheme.color4.withOpacity(0.5)),
+                      Icon(Icons.notifications_none, size: 64, color: AppColorScheme.color4.withValues(alpha: 0.5)),
                       const SizedBox(height: 16),
                       Text(
                         loc.notificationsEmpty,

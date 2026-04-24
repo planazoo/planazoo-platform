@@ -386,6 +386,6 @@ class TimezoneService {
   static Color getTimezoneBarColor(String timezone) {
     final baseColor = getTimezoneColor(timezone);
     // Retornar versión más clara con opacidad
-    return baseColor.withOpacity(0.6);
+    return baseColor.withValues(alpha: 0.6);
   }
 }

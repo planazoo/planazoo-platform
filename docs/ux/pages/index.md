@@ -1,5 +1,8 @@
 # ÍNDICE DE PÁGINAS - UNP CALENDARIO
 
+> ⚠️ Nota de gobernanza UI: los documentos de este directorio (`docs/ux/pages/`) son descriptivos e históricos de pantallas concretas.  
+> No son fuente normativa de reglas visuales. La única fuente canónica de UI es `docs/guias/GUIA_UI.md`.
+
 ## 📋 Descripción General
 Este directorio contiene la documentación técnica y funcional de todas las páginas de la aplicación UNP Calendario. Cada documento incluye especificaciones detalladas de diseño, funcionalidad, validaciones y aspectos técnicos de implementación.
 

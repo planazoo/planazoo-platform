@@ -43,16 +43,16 @@ class EntityAttachmentsSection extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade900,
+        color: const Color(0xFF111827),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade700.withOpacity(0.55)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.55)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.attach_file, size: 16, color: Colors.grey.shade300),
+              Icon(Icons.attach_file, size: 16, color: Colors.white70),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -60,7 +60,7 @@ class EntityAttachmentsSection extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade200,
+                    color: Colors.white70,
                   ),
                 ),
               ),
@@ -85,7 +85,7 @@ class EntityAttachmentsSection extends StatelessWidget {
           if (files.isEmpty)
             Text(
               'Sin archivos adjuntos',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
             )
           else
             Column(
@@ -113,7 +113,7 @@ class EntityAttachmentsSection extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         formatFileSize(file.size),
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade400),
+                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.white70),
                       ),
                       if (canManage) ...[
                         const SizedBox(width: 4),

@@ -3,6 +3,11 @@
   "platform": "mobile",
   "version": "1.0",
   "lastUpdated": "2024-12-31",
+  "uiGovernance": {
+    "normative": false,
+    "canonicalUiDoc": "docs/guias/GUIA_UI.md",
+    "note": "Spec historico de layout; no define reglas visuales globales."
+  },
   "description": "Página de detalle del plan para móvil con barra de navegación horizontal y contenido dinámico",
   
   "layout": {

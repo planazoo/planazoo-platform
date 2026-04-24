@@ -14,7 +14,7 @@ Widget textFieldClearSuffix(
         return const SizedBox.shrink();
       }
       return IconButton(
-        icon: Icon(Icons.clear, size: iconSize, color: iconColor ?? Colors.grey.shade400),
+        icon: Icon(Icons.clear, size: iconSize, color: iconColor ?? Colors.white70),
         onPressed: () {
           controller.clear();
           onCleared?.call();

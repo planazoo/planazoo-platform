@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../features/chat/domain/models/plan_message.dart';
@@ -10,13 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Emojis disponibles para reacciones (clic derecho o pulsación larga en el mensaje)
 const List<String> _reactionEmojis = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
-const Color _kWebBorder = Color(0xFFE2E8F0);
-const Color _kWebMuted = Color(0xFF64748B);
-const Color _kWebOnSurface = Color(0xFF0F172A);
-const Color _kWebReactionBg = Color(0xFFF1F5F9);
-
 /// Widget que muestra una burbuja de mensaje tipo WhatsApp
 class ChatMessageBubble extends ConsumerWidget {
+  static const Color _surface = Color(0xFF1F2937);
   final String planId;
   final PlanMessage message;
   final String? senderDisplayName;
@@ -39,13 +34,13 @@ class ChatMessageBubble extends ConsumerWidget {
     final reactions = PlanMessage.safeReactions(message);
 
     final bodyTextColor =
-        isOwnMessage ? Colors.white : (kIsWeb ? _kWebOnSurface : Colors.white);
+        Colors.white;
     final metaColor = isOwnMessage
         ? Colors.white.withValues(alpha: 0.7)
-        : (kIsWeb ? _kWebMuted : Colors.white.withValues(alpha: 0.7));
+        : Colors.white.withValues(alpha: 0.7);
     final editedColor = isOwnMessage
         ? Colors.white.withValues(alpha: 0.6)
-        : (kIsWeb ? _kWebMuted : Colors.white.withValues(alpha: 0.6));
+        : Colors.white.withValues(alpha: 0.6);
 
     return Align(
       alignment: isOwnMessage ? Alignment.centerRight : Alignment.centerLeft,
@@ -64,7 +59,7 @@ class ChatMessageBubble extends ConsumerWidget {
                   senderDisplayName ?? senderUsername ?? 'Usuario',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: kIsWeb ? _kWebMuted : Colors.grey.shade400,
+                    color: Colors.white60,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -83,19 +78,10 @@ class ChatMessageBubble extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: isOwnMessage
                       ? AppColorScheme.color2
-                      : (kIsWeb ? Colors.white : Colors.grey.shade800),
-                  border: !isOwnMessage && kIsWeb
-                      ? Border.all(color: _kWebBorder)
-                      : null,
-                  boxShadow: !isOwnMessage && kIsWeb
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                            blurRadius: 6,
-                            offset: const Offset(0, 1),
-                          ),
-                        ]
-                      : null,
+                      : _surface,
+                  border: isOwnMessage
+                      ? null
+                      : Border.all(color: Colors.white12),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(18),
                     topRight: const Radius.circular(18),
@@ -131,7 +117,7 @@ class ChatMessageBubble extends ConsumerWidget {
                             isRead ? Icons.done_all : Icons.done,
                             size: 14,
                             color: isRead
-                                ? Colors.blue.shade300
+                                ? Colors.white
                                 : Colors.white.withValues(alpha: 0.7),
                           ),
                         ],
@@ -159,19 +145,15 @@ class ChatMessageBubble extends ConsumerWidget {
                           final count = userIds.length;
                           final isMe = currentUser != null && userIds.contains(currentUser.id);
                           return GestureDetector(
-                            onTap: () => _toggleReaction(context, ref, emoji),
+                            onTap: () => _toggleReaction(ref, emoji),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: isMe
                                     ? AppColorScheme.color2.withValues(alpha: 0.6)
-                                    : (kIsWeb
-                                        ? _kWebReactionBg
-                                        : Colors.white.withValues(alpha: 0.1)),
+                                    : Colors.white.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
-                                border: !isMe && kIsWeb
-                                    ? Border.all(color: _kWebBorder.withValues(alpha: 0.6))
-                                    : null,
+                                border: Border.all(color: Colors.white12),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -183,9 +165,9 @@ class ChatMessageBubble extends ConsumerWidget {
                                       '$count',
                                       style: GoogleFonts.poppins(
                                         fontSize: 11,
-                                        color: (isOwnMessage || !kIsWeb)
+                                        color: isOwnMessage
                                             ? Colors.white70
-                                            : _kWebMuted,
+                                            : Colors.white70,
                                       ),
                                     ),
                                   ],
@@ -217,7 +199,7 @@ class ChatMessageBubble extends ConsumerWidget {
       context: context,
       position: position,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: kIsWeb ? Colors.white : Colors.grey.shade800,
+      color: _surface,
       elevation: 8,
       items: [
         PopupMenuItem<String>(
@@ -244,16 +226,16 @@ class ChatMessageBubble extends ConsumerWidget {
         ),
       ],
     ).then((emoji) {
-      if (emoji != null) _toggleReaction(context, ref, emoji);
+      if (emoji != null) _toggleReaction(ref, emoji);
     });
   }
 
-  Future<void> _toggleReaction(BuildContext context, WidgetRef ref, String emoji) async {
+  Future<void> _toggleReaction(WidgetRef ref, String emoji) async {
     final currentUser = ref.read(currentUserProvider);
     if (currentUser == null || message.id == null) return;
     final chatService = ref.read(chatServiceProvider);
     final ok = await chatService.toggleReaction(planId, message.id!, currentUser.id, emoji);
-    if (ok && context.mounted) {
+    if (ok) {
       ref.invalidate(planMessagesProvider(planId));
     }
   }

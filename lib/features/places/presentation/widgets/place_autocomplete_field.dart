@@ -200,10 +200,6 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
       ),
     );
     final overlay = Overlay.of(context, rootOverlay: true);
-    if (overlay == null) {
-      debugPrint('PLACES[overlay]: No Overlay disponible para mostrar sugerencias');
-      return;
-    }
     overlay.insert(_overlayEntry!);
   }
 

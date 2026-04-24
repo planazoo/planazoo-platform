@@ -64,6 +64,11 @@ class _ManageRolesDialogState extends ConsumerState<ManageRolesDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: const Color(0xFF1F2937),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: Row(
         children: [
           const Icon(Icons.admin_panel_settings, color: Colors.red),
@@ -140,10 +145,10 @@ class _ManageRolesDialogState extends ConsumerState<ManageRolesDialog> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _getRoleColor(_currentUserPermissions?.role ?? UserRole.observer).withOpacity(0.1),
+        color: _getRoleColor(_currentUserPermissions?.role ?? UserRole.observer).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: _getRoleColor(_currentUserPermissions?.role ?? UserRole.observer).withOpacity(0.3),
+          color: _getRoleColor(_currentUserPermissions?.role ?? UserRole.observer).withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -202,7 +207,7 @@ class _ManageRolesDialogState extends ConsumerState<ManageRolesDialog> {
                 final displayName = snapshot.data ?? user.userId;
                 final initials = _getInitials(displayName);
                 return CircleAvatar(
-                  backgroundColor: _getRoleColor(user.role).withOpacity(0.2),
+                  backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.2),
                   child: Text(
                     initials,
                     style: TextStyle(
@@ -232,7 +237,7 @@ class _ManageRolesDialogState extends ConsumerState<ManageRolesDialog> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
+                          color: Colors.blue.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
@@ -315,8 +320,9 @@ class _ManageRolesDialogState extends ConsumerState<ManageRolesDialog> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Colors.white10,
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -369,6 +375,7 @@ class _ManageRolesDialogState extends ConsumerState<ManageRolesDialog> {
       if (success) {
         // Recargar la lista
         await _loadUsersAndPermissions();
+        if (!mounted) return;
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -630,7 +630,7 @@ class EventCommonPart {
     final dateParsed = dateValue == null
         ? DateTime.now()
         : (dateValue is Timestamp)
-            ? (dateValue as Timestamp).toDate()
+            ? dateValue.toDate()
             : DateTime.parse(dateValue.toString());
     return EventCommonPart(
       description: map['description'] ?? '',

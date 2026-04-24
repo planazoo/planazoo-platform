@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Celdas vacías de la barra superior del dashboard (W7–W12: C12–C17, R1).
 /// Mantienen el mismo fondo que el header para alinear visualmente la rejilla.
@@ -18,7 +17,7 @@ class WdDashboardHeaderPlaceholders extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final headerBg = kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
+    final headerBg = const Color(0xFF111827);
     return Stack(
       children: [
         for (int i = 0; i < _cellCount; i++)

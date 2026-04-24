@@ -272,11 +272,11 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             return Theme(
               data: AppTheme.darkTheme,
               child: AlertDialog(
-                backgroundColor: Colors.grey.shade900,
+                backgroundColor: const Color(0xFF111827),
                 title: Text(loc.entityAttachmentsDeleteTitle, style: GoogleFonts.poppins(color: Colors.white)),
                 content: Text(
                   loc.entityAttachmentsDeleteConfirm(doc.name),
-                  style: GoogleFonts.poppins(color: Colors.grey.shade300),
+                  style: GoogleFonts.poppins(color: Colors.white70),
                 ),
                 actions: [
                   TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(loc.cancel)),
@@ -312,26 +312,60 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   /// Decoración tipo login (estética unificada con evento y login).
   BoxDecoration _buildLoginStyleDecoration() {
     return BoxDecoration(
-      color: Colors.grey.shade800,
-      borderRadius: BorderRadius.circular(14),
+      color: const Color(0xFF1F2937),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(
-        color: Colors.grey.shade700.withOpacity(0.5),
+        color: Colors.white.withValues(alpha: 0.12),
         width: 1,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.4),
-          blurRadius: 12,
-          offset: const Offset(0, 3),
-          spreadRadius: 0,
-        ),
-        BoxShadow(
-          color: Colors.black.withOpacity(0.2),
-          blurRadius: 6,
+          color: Colors.black.withValues(alpha: 0.18),
+          blurRadius: 10,
           offset: const Offset(0, 1),
-          spreadRadius: -2,
         ),
       ],
+    );
+  }
+
+  Widget _buildSectionCard({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1F2937),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required String subtitle,
+  }) {
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: Colors.white60,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -341,9 +375,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     final address = _lastPlaceDetails?.formattedAddress
         ?? widget.accommodation?.commonPart?.extraData?['placeAddress'] as String?
         ?? _addressController.text.trim();
-    final hasAddress = address != null && address.isNotEmpty;
+    final hasAddress = address.isNotEmpty;
     if (!hasAddress && !hasCoords) return const SizedBox.shrink();
-    final displayAddress = address ?? '';
+    final displayAddress = address;
     return Padding(
       padding: const EdgeInsets.only(top: 12),
       child: Container(
@@ -358,14 +392,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.location_on_outlined, size: 18, color: Colors.grey.shade400),
+                  Icon(Icons.location_on_outlined, size: 18, color: Colors.white70),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       displayAddress,
                       style: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: Colors.grey.shade300,
+                        color: Colors.white70,
                         fontWeight: FontWeight.w500,
                       ),
                       maxLines: 3,
@@ -390,7 +424,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppColorScheme.color2.withOpacity(0.8)),
+                  side: BorderSide(color: AppColorScheme.color2.withValues(alpha: 0.8)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -436,7 +470,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     return Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
-        backgroundColor: Colors.grey.shade800,
+        backgroundColor: const Color(0xFF111827),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
         ),
@@ -457,7 +491,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF79A2A8),
+                  color: const Color(0xFF111827),
+                  border: Border(
+                    bottom: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+                  ),
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(isMobile ? 0 : 18),
                   ),
@@ -466,7 +503,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 title,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 17,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -480,6 +517,11 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _buildSectionHeader(
+                        title: '1. Datos generales',
+                        subtitle: 'Nombre, dirección y tipo de alojamiento',
+                      ),
+                      const SizedBox(height: 10),
                       // T225: Búsqueda de lugar (Places API) – rellena nombre y dirección
                       PlaceAutocompleteField(
                         initialAddress: widget.accommodation?.commonPart?.address,
@@ -509,14 +551,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                             hintText: AppLocalizations.of(context)!.accommodationNameHint,
                             labelStyle: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: Colors.grey.shade400,
+                              color: Colors.white70,
                               fontWeight: FontWeight.w500,
                             ),
                             hintStyle: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: Colors.grey.shade500,
+                              color: Colors.white60,
                             ),
-                            prefixIcon: Icon(Icons.hotel, color: Colors.grey.shade400),
+                            prefixIcon: Icon(Icons.hotel, color: Colors.white70),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide.none,
@@ -566,14 +608,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                             hintText: AppLocalizations.of(context)!.placeSearchHint,
                             labelStyle: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: Colors.grey.shade400,
+                              color: Colors.white70,
                               fontWeight: FontWeight.w500,
                             ),
                             hintStyle: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: Colors.grey.shade500,
+                              color: Colors.white60,
                             ),
-                            prefixIcon: Icon(Icons.place, color: Colors.grey.shade400),
+                            prefixIcon: Icon(Icons.place, color: Colors.white70),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide.none,
@@ -597,6 +639,11 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                       ),
                       _buildLocationDetailsCard(),
                       const SizedBox(height: 16),
+                      _buildSectionHeader(
+                        title: '2. Información adicional',
+                        subtitle: 'Enlace, descripción y archivos',
+                      ),
+                      const SizedBox(height: 10),
                       // Enlace web
                       Container(
                         decoration: _buildLoginStyleDecoration(),
@@ -614,14 +661,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                             hintText: AppLocalizations.of(context)!.eventUrlHint,
                             labelStyle: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: Colors.grey.shade400,
+                              color: Colors.white70,
                               fontWeight: FontWeight.w500,
                             ),
                             hintStyle: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: Colors.grey.shade500,
+                              color: Colors.white60,
                             ),
-                            prefixIcon: Icon(Icons.link, color: Colors.grey.shade400),
+                            prefixIcon: Icon(Icons.link, color: Colors.white70),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide.none,
@@ -648,21 +695,21 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                       Container(
                         decoration: _buildLoginStyleDecoration(),
                         child: DropdownButtonFormField<String>(
-                          value: _selectedType,
+                          initialValue: _selectedType,
                           decoration: InputDecoration(
                             labelText: AppLocalizations.of(context)!.accommodationType,
                             labelStyle: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: Colors.grey.shade400,
+                              color: Colors.white70,
                               fontWeight: FontWeight.w500,
                             ),
                             border: InputBorder.none,
-                            prefixIcon: Icon(Icons.category, color: Colors.grey.shade400),
+                            prefixIcon: Icon(Icons.category, color: Colors.white70),
                             filled: true,
                             fillColor: Colors.transparent,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
                           ),
-                          dropdownColor: Colors.grey.shade800,
+                          dropdownColor: const Color(0xFF1F2937),
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             color: Colors.white,
@@ -707,14 +754,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                             hintText: AppLocalizations.of(context)!.additionalNotes,
                             labelStyle: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: Colors.grey.shade400,
+                              color: Colors.white70,
                               fontWeight: FontWeight.w500,
                             ),
                             hintStyle: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: Colors.grey.shade500,
+                              color: Colors.white60,
                             ),
-                            prefixIcon: Icon(Icons.notes, color: Colors.grey.shade400),
+                            prefixIcon: Icon(Icons.notes, color: Colors.white70),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide.none,
@@ -752,42 +799,49 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                         onDelete: _deleteAccommodationAttachment,
                       ),
                       const SizedBox(height: 16),
-            
-            // Coste del alojamiento (T101/T153)
-            if (_planCurrency != null) _buildCostFieldWithCurrency(),
+                      _buildSectionHeader(
+                        title: '3. Coste y estancia',
+                        subtitle: 'Importe, fechas y duración',
+                      ),
+                      const SizedBox(height: 10),
+                      // Coste del alojamiento (T101/T153)
+                      if (_planCurrency != null) _buildCostFieldWithCurrency(),
               const SizedBox(height: 16),
               
-            // Check-in (estética oscura)
-              ListTile(
+                      _buildSectionCard(
+                        child: Column(
+                          children: [
+                            // Check-in (estética oscura)
+                            ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.login, color: Colors.grey.shade400),
+              leading: Icon(Icons.login, color: Colors.white70),
               title: Text(
                 AppLocalizations.of(context)!.checkIn,
                 style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
               ),
               subtitle: Text(
                 '${_selectedCheckIn.day}/${_selectedCheckIn.month}/${_selectedCheckIn.year}',
-                style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13),
+                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
               ),
               onTap: _selectCheckInDate,
             ),
             // Check-out (estética oscura)
-              ListTile(
+            ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.logout, color: Colors.grey.shade400),
+              leading: Icon(Icons.logout, color: Colors.white70),
               title: Text(
                 AppLocalizations.of(context)!.checkOut,
                 style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
               ),
               subtitle: Text(
                 '${_selectedCheckOut.day}/${_selectedCheckOut.month}/${_selectedCheckOut.year}',
-                style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13),
+                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
               ),
               onTap: _selectCheckOutDate,
             ),
             const SizedBox(height: 8),
             // Duración (estética tipo login)
-              Container(
+            Container(
               padding: const EdgeInsets.all(12),
               decoration: _buildLoginStyleDecoration(),
               child: Row(
@@ -807,50 +861,64 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 ],
               ),
             ),
+                          ],
+                        ),
+                      ),
             const SizedBox(height: 16),
-            // Color
-            Text(
-              AppLocalizations.of(context)!.color,
-              style: GoogleFonts.poppins(
-                color: Colors.grey.shade300,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+            _buildSectionHeader(
+              title: '4. Apariencia y participación',
+              subtitle: 'Color y personas asignadas al alojamiento',
+            ),
+            const SizedBox(height: 10),
+            _buildSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.color,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: _accommodationColors.map((colorName) {
+                      final color = _getColorFromName(colorName);
+                      final isSelected = _selectedColor == colorName;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedColor = colorName;
+                          });
+                        },
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: isSelected
+                                ? Border.all(color: AppColorScheme.color2, width: 2.5)
+                                : Border.all(
+                                    color: Colors.white.withValues(alpha: 0.35),
+                                    width: 1,
+                                  ),
+                          ),
+                          child: isSelected
+                              ? const Icon(Icons.check, color: Colors.white, size: 18)
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 14),
+                  _buildParticipantSelection(),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: _accommodationColors.map((colorName) {
-                final color = _getColorFromName(colorName);
-                final isSelected = _selectedColor == colorName;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedColor = colorName;
-                    });
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: isSelected 
-                          ? Border.all(color: AppColorScheme.color2, width: 3)
-                          : Border.all(color: Colors.grey.shade600, width: 1),
-                    ),
-                    child: isSelected 
-                        ? const Icon(Icons.check, color: Colors.white)
-                        : null,
-                  ),
-                );
-              }).toList(),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Selección de participantes
-            _buildParticipantSelection(),
                   ],
                 ),
               ),
@@ -872,7 +940,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             AppLocalizations.of(context)!.cancel,
-            style: GoogleFonts.poppins(color: Colors.grey.shade400),
+            style: GoogleFonts.poppins(color: Colors.white70),
           ),
         ),
         ElevatedButton(
@@ -880,6 +948,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColorScheme.color2,
             foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           ),
           child: Text(
             widget.accommodation == null ? AppLocalizations.of(context)!.create : AppLocalizations.of(context)!.save,
@@ -961,11 +1033,11 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                   subtitle: _isForAllParticipants
                       ? Text(
                           'Todos los participantes estarán incluidos automáticamente',
-                          style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
                         )
                       : Text(
                           'Selecciona participantes específicos abajo',
-                          style: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
                         ),
                   value: _isForAllParticipants,
                   onChanged: (value) {
@@ -1030,8 +1102,20 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                                 }
                               });
                             },
-                            selectedColor: Colors.blue.shade100,
-                            checkmarkColor: Colors.blue.shade800,
+                            selectedColor:
+                                AppColorScheme.color2.withValues(alpha: 0.35),
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.06),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? AppColorScheme.color2
+                                  : Colors.white.withValues(alpha: 0.12),
+                            ),
+                            checkmarkColor: Colors.white,
+                            labelStyle: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
                           );
                         },
                       );
@@ -1081,17 +1165,17 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           DropdownButtonFormField<String>(
-            value: _costCurrency ?? _planCurrency ?? 'EUR',
+            initialValue: _costCurrency ?? _planCurrency ?? 'EUR',
             decoration: InputDecoration(
               labelText: AppLocalizations.of(context)!.costCurrency,
-              labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
-              prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'), color: Colors.grey.shade400),
+              labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
+              prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'), color: Colors.white70),
               border: InputBorder.none,
               filled: true,
               fillColor: Colors.transparent,
               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             ),
-            dropdownColor: Colors.grey.shade800,
+            dropdownColor: const Color(0xFF1F2937),
             style: GoogleFonts.poppins(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
             items: Currency.supportedCurrencies.map((currency) {
               return DropdownMenuItem<String>(
@@ -1112,9 +1196,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             decoration: InputDecoration(
               labelText: AppLocalizations.of(context)!.costOptional,
               hintText: AppLocalizations.of(context)!.costHint,
-              labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400, fontWeight: FontWeight.w500),
-              hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
-              prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'), color: Colors.grey.shade400),
+              labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
+              hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.white60),
+              prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'), color: Colors.white70),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
               focusedBorder: OutlineInputBorder(
@@ -1159,7 +1243,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                     children: [
                       const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                       const SizedBox(width: 8),
-                      Text(AppLocalizations.of(context)!.calculating, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400)),
+                      Text(AppLocalizations.of(context)!.calculating, style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
                     ],
                   ),
                 );
@@ -1170,9 +1254,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 return Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColorScheme.color2.withOpacity(0.15),
+                    color: AppColorScheme.color2.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColorScheme.color2.withOpacity(0.5)),
+                    border:
+                        Border.all(color: AppColorScheme.color2.withValues(alpha: 0.5)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1205,7 +1290,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                         '⚠️ Los tipos de cambio son orientativos. El valor real será el aplicado por tu banco o tarjeta de crédito al momento del pago.',
                         style: GoogleFonts.poppins(
                           fontSize: 10,
-                          color: Colors.grey.shade400,
+                          color: Colors.white70,
                           fontStyle: FontStyle.italic,
                         ),
                       ),

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
-import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -51,7 +50,7 @@ class ProposalsPendingScreen extends ConsumerWidget {
                   loc.proposalsOnlyOrganizer,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
-                    color: Colors.grey.shade400,
+                    color: Colors.white70,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -76,7 +75,7 @@ class ProposalsPendingScreen extends ConsumerWidget {
                     loc.proposalsEmpty,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: Colors.grey.shade400,
+                      color: Colors.white70,
                     ),
                   ),
                 );
@@ -119,7 +118,7 @@ class ProposalsPendingScreen extends ConsumerWidget {
         color: AppColorScheme.color2,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -178,7 +177,7 @@ class _ProposalCard extends StatelessWidget {
     final timeStr = '${event.hour.toString().padLeft(2, '0')}:${event.startMinute.toString().padLeft(2, '0')}';
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.grey.shade800,
+      color: const Color(0xFF1F2937),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -196,7 +195,7 @@ class _ProposalCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               '${DateFormatter.formatDate(event.date)} · $timeStr',
-              style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+              style: GoogleFonts.poppins(fontSize: 13, color: Colors.white70),
             ),
             const SizedBox(height: 12),
             Row(

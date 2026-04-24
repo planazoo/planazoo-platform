@@ -91,20 +91,20 @@ class AnnouncementTimeline extends ConsumerWidget {
                 Icon(
                   Icons.message_outlined,
                   size: 48,
-                  color: Colors.grey.shade400,
+                  color: Colors.white70,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No hay avisos aún',
                   style: AppTypography.bodyStyle.copyWith(
-                    color: Colors.grey.shade600,
+                    color: Colors.white60,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Sé el primero en publicar un aviso',
                   style: AppTypography.bodyStyle.copyWith(
-                    color: Colors.grey.shade500,
+                    color: Colors.white60,
                     fontSize: 14,
                   ),
                 ),
@@ -128,9 +128,9 @@ class AnnouncementTimeline extends ConsumerWidget {
               builder: (context, userSnapshot) {
                 final authorName = userSnapshot.data?.displayIdentifier ?? announcement.userId.substring(0, 8);
 
-            final bgColor = compact ? Colors.grey.shade800 : Colors.white;
+            final bgColor = compact ? const Color(0xFF1F2937) : Colors.white;
             final textColor = compact ? Colors.white : AppColorScheme.color4;
-            final secondaryColor = compact ? Colors.grey.shade400 : Colors.grey.shade600;
+            final secondaryColor = compact ? Colors.white70 : Colors.white60;
             final padding = compact ? 10.0 : 16.0;
             final spacing = compact ? 6.0 : 12.0;
             final marginBottom = compact ? 8.0 : 16.0;
@@ -142,14 +142,14 @@ class AnnouncementTimeline extends ConsumerWidget {
                 color: bgColor,
                 borderRadius: BorderRadius.circular(compact ? 10 : 12),
                 border: Border.all(
-                  color: typeColor.withOpacity(compact ? 0.5 : 0.3),
+                  color: typeColor.withValues(alpha: compact ? 0.5 : 0.3),
                   width: compact ? 1 : 1.5,
                 ),
                 boxShadow: compact
                     ? null
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -166,7 +166,7 @@ class AnnouncementTimeline extends ConsumerWidget {
                         Container(
                           padding: EdgeInsets.all(compact ? 4 : 6),
                           decoration: BoxDecoration(
-                            color: typeColor.withOpacity(0.2),
+                            color: typeColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(compact ? 4 : 6),
                           ),
                           child: Icon(

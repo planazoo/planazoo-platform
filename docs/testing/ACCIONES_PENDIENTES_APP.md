@@ -39,6 +39,22 @@ Referencias cruzadas: `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md`, `doc
 - **Estado:** parcial — checklist (A2); tarea relacionada **T259**.  
 - **Alineación de flujo:** ver `docs/flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md` (invitaciones/notificaciones) y `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` (A2 operativo).
 
+## Infra Android (nuevo seguimiento)
+
+### A3 — App Android local + push invitación (paridad)
+
+- **Plataforma:** Android  
+- **Flujo:** ejecución app en Android + invitación entre usuarios con push y apertura al plan/pestaña de participantes.
+- **Objetivo:** paridad operativa con iOS en el caso de invitación (T267).
+- **Estado:** pendiente de arranque local (en este entorno falta SDK Android en `flutter doctor`).
+- **Guía operativa:** `docs/configuracion/SETUP_ANDROID_LOCAL.md`.
+- **Checklist mínimo al retomar:**
+  - Android toolchain OK (`flutter doctor -v`).
+  - App corre en dispositivo/emulador Android.
+  - Token FCM Android guardado en `users/{uid}/fcmTokens`.
+  - Caso invitación: push llega y al tap abre `PlanDetailPage` en `participants`.
+  - Registrar evidencia y actualizar `TESTING_CHECKLIST.md`.
+
 ---
 
-*A1 cerrado (2026-04-19). Cuando A2 quede cerrado en la práctica, actualizar este archivo o mover la nota a `TASKS.md` / release notes.*
+*A1 cerrado (2026-04-19). Pendientes activos de esta hoja: A2 (deep link iOS) y A3 (Android + push).*

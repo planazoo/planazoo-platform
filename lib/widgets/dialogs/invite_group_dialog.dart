@@ -21,6 +21,11 @@ class InviteGroupDialog extends ConsumerWidget {
     final groupsAsync = ref.watch(userGroupsStreamProvider(userId));
 
     return AlertDialog(
+      backgroundColor: const Color(0xFF1F2937),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: const Text('Invitar Grupo'),
       content: SizedBox(
         width: 400,
@@ -95,7 +100,7 @@ class InviteGroupDialog extends ConsumerWidget {
                             '${group.totalMembers} miembro${group.totalMembers != 1 ? 's' : ''}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade600,
+                              color: Colors.white70,
                             ),
                           ),
                           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -119,7 +124,7 @@ class InviteGroupDialog extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade700,
+                  color: Colors.white70,
                 ),
               ),
               const SizedBox(height: 8),
@@ -127,7 +132,7 @@ class InviteGroupDialog extends ConsumerWidget {
                 error.toString(),
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: Colors.white60,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -187,7 +192,7 @@ class InviteGroupDialog extends ConsumerWidget {
               'Se enviarán invitaciones a:',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade700,
+                color: Colors.white70,
               ),
             ),
             const SizedBox(height: 8),
@@ -196,13 +201,13 @@ class InviteGroupDialog extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   '• ${group.memberUserIds.length} usuario${group.memberUserIds.length != 1 ? 's' : ''} registrado${group.memberUserIds.length != 1 ? 's' : ''}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: const TextStyle(fontSize: 12, color: Colors.white60),
                 ),
               ),
             if (group.memberEmails.isNotEmpty)
               Text(
                 '• ${group.memberEmails.length} email${group.memberEmails.length != 1 ? 's' : ''}',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: const TextStyle(fontSize: 12, color: Colors.white60),
               ),
           ],
         ),
@@ -242,7 +247,7 @@ class InviteGroupDialog extends ConsumerWidget {
                 'Enviando invitaciones...',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade700,
+                  color: Colors.white70,
                 ),
               ),
             ],

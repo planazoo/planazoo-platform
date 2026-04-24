@@ -104,7 +104,7 @@ class PersonalPayment {
       registeredBy: registeredBy ?? this.registeredBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      adminCreatedBy: adminCreatedBy ?? this._adminCreatedBy,
+      adminCreatedBy: adminCreatedBy ?? _adminCreatedBy,
     );
   }
 

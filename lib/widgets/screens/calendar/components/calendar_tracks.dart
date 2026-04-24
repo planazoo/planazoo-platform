@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -99,11 +98,11 @@ class CalendarTracks extends ConsumerWidget {
                         color: _getHeaderColor(column, visibleDayIndex),
                         border: Border(
                           top: BorderSide(
-                            color: kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade600,
+                            color: Colors.white60,
                             width: 1,
                           ),
                           bottom: BorderSide(
-                            color: kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade600,
+                            color: Colors.white60,
                             width: 1,
                           ),
                         ),
@@ -140,14 +139,10 @@ class CalendarTracks extends ConsumerWidget {
   }
 
   Color _stripeBase(int visibleDayIndex) =>
-      kIsWeb
-          ? (visibleDayIndex % 2 == 0 ? const Color(0xFFFFFFFF) : const Color(0xFFFAFCFF))
-          : (visibleDayIndex % 2 == 0 ? const Color(0xFF2E2E2E) : const Color(0xFF242424));
+      (visibleDayIndex % 2 == 0 ? const Color(0xFF2E2E2E) : const Color(0xFF242424));
 
   Color _accommodationStripColor(int visibleDayIndex) =>
-      kIsWeb
-          ? (visibleDayIndex % 2 == 0 ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9))
-          : (visibleDayIndex % 2 == 0 ? const Color(0xFF333333) : const Color(0xFF282828));
+      (visibleDayIndex % 2 == 0 ? const Color(0xFF333333) : const Color(0xFF282828));
 
   /// Obtiene el color del header según columna visible, vacío y “hoy”.
   Color _getHeaderColor(dynamic column, int visibleDayIndex) {
@@ -160,11 +155,11 @@ class CalendarTracks extends ConsumerWidget {
         dayDate.month == now.month &&
         dayDate.day == now.day;
     if (isEmpty) {
-      return (kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade800).withOpacity(0.3);
+      return const Color(0xFF1F2937).withValues(alpha: 0.3);
     }
     Color base = _stripeBase(visibleDayIndex);
     if (isToday) {
-      base = Color.lerp(base, Colors.grey.shade600, 0.22) ?? base;
+      base = Color.lerp(base, Colors.white60, 0.22) ?? base;
     }
     return base;
   }
@@ -182,7 +177,7 @@ class CalendarTracks extends ConsumerWidget {
         style: GoogleFonts.poppins(
           fontSize: CalendarConstants.headerFontSize,
           fontWeight: FontWeight.w500,
-          color: kIsWeb ? const Color(0xFF94A3B8) : Colors.grey.shade400,
+          color: Colors.white70,
         ),
       );
     }
@@ -275,7 +270,7 @@ class CalendarTracks extends ConsumerWidget {
                         decoration: BoxDecoration(
                           // Fondo diferenciado para track activo
                           color: isActiveTrack 
-                              ? AppColorScheme.color1.withOpacity(0.2)
+                              ? AppColorScheme.color1.withValues(alpha: 0.2)
                               : Colors.transparent,
                           // Borde más grueso para track activo, normal para otros (excepto último)
                           border: isLastTrack 
@@ -283,7 +278,7 @@ class CalendarTracks extends ConsumerWidget {
                               : (isActiveTrack
                                   ? Border(
                                       right: BorderSide(
-                                        color: AppColorScheme.gridLineColor.withOpacity(gridLineOpacity),
+                                        color: AppColorScheme.gridLineColor.withValues(alpha: gridLineOpacity),
                                         width: 1.5, // Borde más grueso para track activo
                                       ),
                                     )
@@ -295,7 +290,7 @@ class CalendarTracks extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: initialsFontSize,
                               fontWeight: isActiveTrack ? FontWeight.w900 : FontWeight.bold,
-                              color: kIsWeb ? const Color(0xFF1E293B) : Colors.white,
+                              color: Colors.white,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -396,7 +391,7 @@ class CalendarTracks extends ConsumerWidget {
         'Sin alojamiento',
         style: TextStyle(
           fontSize: 8,
-          color: kIsWeb ? const Color(0xFF64748B) : Colors.grey,
+          color: Colors.grey,
         ),
       );
     }
@@ -454,7 +449,7 @@ class CalendarTracks extends ConsumerWidget {
                       decoration: BoxDecoration(
                         // Fondo diferenciado para track activo
                         color: isActiveTrack 
-                            ? AppColorScheme.color1.withOpacity(0.05)
+                            ? AppColorScheme.color1.withValues(alpha: 0.05)
                             : Colors.transparent,
                         // Borde más grueso para track activo
                         border: isLastTrack
@@ -462,7 +457,7 @@ class CalendarTracks extends ConsumerWidget {
                             : (isActiveTrack
                                 ? Border(
                                     right: BorderSide(
-                                      color: AppColorScheme.gridLineColor.withOpacity(gridLineOpacity),
+                                      color: AppColorScheme.gridLineColor.withValues(alpha: gridLineOpacity),
                                       width: 1.5, // Borde más grueso para track activo
                                     ),
                                   )
@@ -484,7 +479,7 @@ class CalendarTracks extends ConsumerWidget {
                         onDoubleTap: () {
                           onShowNewAccommodationDialog(dayDate);
                         },
-                        child: Container(
+                        child: const SizedBox(
                           width: double.infinity,
                           height: double.infinity,
                         ),
@@ -577,10 +572,10 @@ class CalendarTracks extends ConsumerWidget {
               margin: EdgeInsets.symmetric(horizontal: width * 0.04, vertical: 0),
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               decoration: BoxDecoration(
-                color: accommodation.displayColor.withOpacity(0.3),
+                color: accommodation.displayColor.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                  color: accommodation.displayColor.withOpacity(0.5),
+                  color: accommodation.displayColor.withValues(alpha: 0.5),
                   width: 1,
                 ),
               ),

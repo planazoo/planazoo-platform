@@ -18,6 +18,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   final _emailController = TextEditingController();
   String? _selectedPhotoURL;
   bool _isLoading = false;
+  static const Color _surface = Color(0xFF1F2937);
 
   @override
   void initState() {
@@ -48,12 +49,16 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
+      backgroundColor: _surface,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: Material(
-          borderRadius: BorderRadius.circular(20),
-          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          color: _surface,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: currentUser == null
@@ -75,7 +80,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                 style: AppTypography.titleStyle.copyWith(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColorScheme.color4,
+                                  color: Colors.white,
                                 ),
                               ),
                               const Spacer(),
@@ -96,7 +101,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                   height: 120,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: Colors.grey.shade200,
+                                    color: Colors.white12,
                                     border: Border.all(
                                       color: AppColorScheme.color2,
                                       width: 3,
@@ -121,7 +126,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                       : const Icon(
                                           Icons.person,
                                           size: 60,
-                                          color: Colors.grey,
+                                          color: Colors.white70,
                                         ),
                                 ),
                                 Positioned(
@@ -131,7 +136,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                     decoration: BoxDecoration(
                                       color: AppColorScheme.color2,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
+                                      border: Border.all(color: Colors.white12, width: 2),
                                     ),
                                     child: IconButton(
                                       icon: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
@@ -154,13 +159,16 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide: const BorderSide(color: Colors.white12),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(color: AppColorScheme.color2, width: 2),
                               ),
+                              labelStyle: const TextStyle(color: Colors.white70),
+                              hintStyle: const TextStyle(color: Colors.white60),
                             ),
+                            style: const TextStyle(color: Colors.white),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'El nombre es obligatorio';
@@ -184,17 +192,20 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                               ),
                               disabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey.shade300),
+                                borderSide: const BorderSide(color: Colors.white12),
                               ),
                               filled: true,
-                              fillColor: Colors.grey.shade100,
+                              fillColor: Colors.white10,
+                              labelStyle: const TextStyle(color: Colors.white70),
+                              hintStyle: const TextStyle(color: Colors.white60),
                             ),
+                            style: const TextStyle(color: Colors.white70),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'El email no se puede cambiar. Contacta con soporte si necesitas cambiarlo.',
                             style: AppTypography.bodyStyle.copyWith(
-                              color: Colors.grey.shade600,
+                              color: Colors.white60,
                               fontSize: 12,
                             ),
                           ),
@@ -243,7 +254,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                 'Cancelar',
                                 style: AppTypography.interactiveStyle.copyWith(
                                   fontSize: 16,
-                                  color: Colors.grey.shade600,
+                                  color: Colors.white70,
                                 ),
                               ),
                             ),
@@ -314,7 +325,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         content: Text(
           'La captura desde cámara estará disponible próximamente. Usa la opción "Usar URL" por ahora.',
         ),
-        backgroundColor: Colors.orange.shade600,
+        backgroundColor: AppColorScheme.color2,
       ),
     );
   }
@@ -326,7 +337,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         content: Text(
           'La selección desde galería estará disponible próximamente. Usa la opción "Usar URL" por ahora.',
         ),
-        backgroundColor: Colors.orange.shade600,
+        backgroundColor: AppColorScheme.color2,
       ),
     );
   }

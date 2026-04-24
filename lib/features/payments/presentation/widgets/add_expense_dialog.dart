@@ -36,6 +36,16 @@ class AddExpenseDialog extends ConsumerStatefulWidget {
 }
 
 class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
+  static const Color _cPageBg = Color(0xFF111827);
+  static const Color _cTextPrimary = Colors.white;
+  static const Color _cTextSecondary = Colors.white70;
+  static const double _aBorderStrong = 0.12;
+  static const double _aSurfaceMuted = 0.04;
+  static const double _sp8 = 8;
+  static const double _sp12 = 12;
+  static const double _sp16 = 16;
+  static const double _fsSectionTitle = 12;
+
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _conceptController = TextEditingController();
@@ -273,13 +283,18 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
 
     final isEdit = widget.existingExpense != null;
     return Scaffold(
+      backgroundColor: _cPageBg,
       appBar: AppBar(
         title: Text(
           isEdit ? loc.paymentsEditExpense : loc.paymentsAddExpense,
-          style: const TextStyle(fontSize: 18, color: Colors.white),
+          style: AppTypography.bodyStyle.copyWith(
+            fontSize: 16,
+            color: _cTextPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        backgroundColor: AppColorScheme.color2,
-        foregroundColor: Colors.white,
+        backgroundColor: _cPageBg,
+        foregroundColor: _cTextPrimary,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
@@ -288,7 +303,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(_sp12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,20 +333,25 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: _sp16),
               ],
-              Text(loc.paymentsExpensePayer, style: AppTypography.bodyStyle.copyWith(fontSize: 13, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+              Text(
+                loc.paymentsExpensePayer,
+                style: AppTypography.bodyStyle.copyWith(
+                  fontSize: _fsSectionTitle,
+                  fontWeight: FontWeight.w600,
+                  color: _cTextPrimary,
+                ),
+              ),
+                const SizedBox(height: _sp8),
                 participationsAsync.when(
                   data: (list) {
                     final real = list.where((p) => p.role != 'observer').toList();
                     return DropdownButtonFormField<String>(
                       initialValue: _selectedPayerId,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.person),
-                        border: OutlineInputBorder(),
-                        filled: true,
+                      decoration: _inputDecoration(
+                        prefixIcon: const Icon(Icons.person, color: _cTextSecondary),
                       ),
                       hint: const Text('Selecciona'),
                       items: real
@@ -350,7 +370,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                   loading: () => const CircularProgressIndicator(),
                   error: (e, _) => Text('Error: $e'),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: _sp16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -359,9 +379,10 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                         controller: _amountController,
                         decoration: InputDecoration(
                           labelText: '${loc.paymentsExpenseAmount} *',
-                          prefixIcon: const Icon(Icons.euro),
+                          prefixIcon: const Icon(Icons.euro, color: _cTextSecondary),
                           border: const OutlineInputBorder(),
                           filled: true,
+                          fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (_) {
@@ -403,30 +424,32 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: _sp16),
                 TextFormField(
                   controller: _conceptController,
                   decoration: InputDecoration(
                     labelText: loc.paymentsExpenseConcept,
-                    prefixIcon: const Icon(Icons.description),
+                    prefixIcon: const Icon(Icons.description, color: _cTextSecondary),
                     border: const OutlineInputBorder(),
                     filled: true,
+                    fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: _sp16),
                 InkWell(
                   onTap: _selectDate,
                   child: InputDecorator(
                     decoration: InputDecoration(
                       labelText: loc.paymentsExpenseDate,
-                      prefixIcon: const Icon(Icons.calendar_today),
+                      prefixIcon: const Icon(Icons.calendar_today, color: _cTextSecondary),
                       border: const OutlineInputBorder(),
                       filled: true,
+                      fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
                     ),
                     child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate), style: AppTypography.bodyStyle),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: _sp16),
                 ref.watch(planEventsStreamProvider(widget.plan.id!)).when(
                       data: (eventList) {
                         var withIds = eventList
@@ -483,9 +506,10 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                           isExpanded: true,
                           decoration: InputDecoration(
                             labelText: loc.paymentsExpenseLinkedEventLabel,
-                            prefixIcon: const Icon(Icons.event),
+                            prefixIcon: const Icon(Icons.event, color: _cTextSecondary),
                             border: const OutlineInputBorder(),
                             filled: true,
+                            fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
                           ),
                           items: items,
                           onChanged: (v) =>
@@ -495,9 +519,16 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                       loading: () => const LinearProgressIndicator(),
                       error: (_, __) => const SizedBox.shrink(),
                     ),
-                const SizedBox(height: 16),
-                Text(loc.paymentsExpenseSplitBetween, style: AppTypography.bodyStyle.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                const SizedBox(height: _sp16),
+                Text(
+                  loc.paymentsExpenseSplitBetween,
+                  style: AppTypography.bodyStyle.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: _fsSectionTitle,
+                    color: _cTextPrimary,
+                  ),
+                ),
+                const SizedBox(height: _sp8),
                 participationsAsync.when(
                   data: (list) {
                     final real = list.where((p) => p.role != 'observer').toList();
@@ -584,9 +615,8 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                                     Expanded(
                                       child: TextFormField(
                                         controller: controller,
-                                        decoration: const InputDecoration(
+                                        decoration: _inputDecoration(
                                           prefixText: '€ ',
-                                          border: OutlineInputBorder(),
                                           isDense: true,
                                         ),
                                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -628,7 +658,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
         ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(_sp12),
           child: Row(
             children: [
               Expanded(
@@ -637,7 +667,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                   child: Text(loc.cancel),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: _sp12),
               Expanded(
                 child: FilledButton(
                   onPressed: _save,
@@ -648,6 +678,32 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
           ),
         ),
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    Widget? prefixIcon,
+    String? prefixText,
+    bool isDense = false,
+  }) {
+    return InputDecoration(
+      prefixIcon: prefixIcon,
+      prefixText: prefixText,
+      isDense: isDense,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColorScheme.color2, width: 1.5),
+      ),
+      filled: true,
+      fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
     );
   }
 }
@@ -663,6 +719,12 @@ class _CalculatorDialog extends StatefulWidget {
 }
 
 class _CalculatorDialogState extends State<_CalculatorDialog> {
+  static const Color _cPageBg = Color(0xFF111827);
+  static const Color _cSurfaceBg = Color(0xFF1F2937);
+  static const Color _cTextPrimary = Colors.white;
+  static const Color _cTextSecondary = Colors.white70;
+  static const double _aBorderStrong = 0.12;
+
   late String _display;
   double? _result;
 
@@ -717,6 +779,11 @@ class _CalculatorDialogState extends State<_CalculatorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: _cPageBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
+      ),
       title: Text(AppLocalizations.of(context)!.paymentsCalculator),
       content: SizedBox(
         width: 260,
@@ -726,13 +793,17 @@ class _CalculatorDialogState extends State<_CalculatorDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade800,
-                borderRadius: BorderRadius.circular(8),
+                color: _cSurfaceBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
               ),
               alignment: Alignment.centerRight,
               child: Text(
                 _display,
-                style: AppTypography.titleStyle.copyWith(fontSize: 24),
+                style: AppTypography.titleStyle.copyWith(
+                  fontSize: 24,
+                  color: _cTextPrimary,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -762,8 +833,21 @@ class _CalculatorDialogState extends State<_CalculatorDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-        FilledButton(onPressed: _apply, child: const Text('Aplicar')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            'Cancelar',
+            style: AppTypography.bodyStyle.copyWith(color: _cTextSecondary),
+          ),
+        ),
+        FilledButton(
+          onPressed: _apply,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColorScheme.color2,
+            foregroundColor: _cTextPrimary,
+          ),
+          child: const Text('Aplicar'),
+        ),
       ],
     );
   }
@@ -774,7 +858,19 @@ class _CalculatorDialogState extends State<_CalculatorDialog> {
       height: 48,
       child: ElevatedButton(
         onPressed: onPressed,
-        child: Text(label),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _cSurfaceBg,
+          foregroundColor: _cTextPrimary,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.bodyStyle.copyWith(fontSize: 13, color: _cTextPrimary),
+        ),
       ),
     );
   }

@@ -55,7 +55,7 @@ class WdUnifiedNotificationsScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.notifications_none, size: 64, color: AppColorScheme.color4.withOpacity(0.5)),
+                      Icon(Icons.notifications_none, size: 64, color: AppColorScheme.color4.withValues(alpha: 0.5)),
                       const SizedBox(height: 16),
                       Text(
                         loc.pendingEventsEmpty,
@@ -203,7 +203,7 @@ class _InvitationCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   loc.invitationRoleLabel(invitation.role!),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.12)),
                 ),
               ),
             const SizedBox(height: 12),

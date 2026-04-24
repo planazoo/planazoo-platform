@@ -35,7 +35,7 @@ class HelpIconButton extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
     final service = ref.read(helpTextServiceProvider);
-    final color = iconColor ?? Colors.grey.shade400;
+    final color = iconColor ?? Colors.white70;
 
     return Semantics(
       label: 'Ayuda sobre $contextLabel',

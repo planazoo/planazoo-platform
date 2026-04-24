@@ -71,7 +71,7 @@ class PermissionField extends StatelessWidget {
             Icon(
               canEdit ? Icons.lock_open : Icons.lock,
               size: 16,
-              color: canEdit ? Colors.green.shade600 : Colors.grey.shade500,
+              color: canEdit ? Colors.green.shade600 : Colors.white60,
             ),
             const SizedBox(width: 4),
             // Texto de estado
@@ -80,7 +80,7 @@ class PermissionField extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: canEdit ? Colors.green.shade700 : Colors.grey.shade600,
+                color: canEdit ? Colors.green.shade700 : Colors.white60,
               ),
             ),
             const Spacer(),
@@ -91,7 +91,7 @@ class PermissionField extends StatelessWidget {
                 child: Icon(
                   Icons.help_outline,
                   size: 16,
-                  color: Colors.grey.shade500,
+                  color: Colors.white60,
                 ),
               ),
           ],
@@ -152,29 +152,29 @@ class PermissionTextField extends StatelessWidget {
                 prefixIcon: prefixIcon != null 
                     ? Icon(
                         prefixIcon,
-                        color: canEdit ? Colors.green.shade600 : Colors.grey.shade500,
+                        color: canEdit ? Colors.green.shade600 : Colors.white60,
                       )
                     : null,
                 border: OutlineInputBorder(
                   borderSide: BorderSide(
-                    color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+                    color: canEdit ? Colors.green.shade300 : Colors.white70,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
-                    color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+                    color: canEdit ? Colors.green.shade300 : Colors.white70,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(
-                    color: canEdit ? Colors.green.shade500 : Colors.grey.shade400,
+                    color: canEdit ? Colors.green.shade500 : Colors.white70,
                   ),
                 ),
                 filled: true,
-                fillColor: canEdit ? Colors.green.shade50 : Colors.grey.shade50,
+                fillColor: canEdit ? Colors.green.shade50 : Colors.white.withValues(alpha: 0.06),
                 suffixIcon: canEdit 
                     ? Icon(Icons.edit, size: 16, color: Colors.green.shade600)
-                    : Icon(Icons.lock, size: 16, color: Colors.grey.shade500),
+                    : Icon(Icons.lock, size: 16, color: Colors.white60),
               ),
             )
           : TextField(
@@ -188,29 +188,29 @@ class PermissionTextField extends StatelessWidget {
           prefixIcon: prefixIcon != null 
               ? Icon(
                   prefixIcon,
-                  color: canEdit ? Colors.green.shade600 : Colors.grey.shade500,
+                  color: canEdit ? Colors.green.shade600 : Colors.white60,
                 )
               : null,
           border: OutlineInputBorder(
             borderSide: BorderSide(
-              color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+              color: canEdit ? Colors.green.shade300 : Colors.white70,
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+              color: canEdit ? Colors.green.shade300 : Colors.white70,
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: canEdit ? Colors.green.shade500 : Colors.grey.shade400,
+              color: canEdit ? Colors.green.shade500 : Colors.white70,
             ),
           ),
           filled: true,
-          fillColor: canEdit ? Colors.green.shade50 : Colors.grey.shade50,
+          fillColor: canEdit ? Colors.green.shade50 : Colors.white.withValues(alpha: 0.06),
           suffixIcon: canEdit 
               ? Icon(Icons.edit, size: 16, color: Colors.green.shade600)
-              : Icon(Icons.lock, size: 16, color: Colors.grey.shade500),
+              : Icon(Icons.lock, size: 16, color: Colors.white60),
               ),
             ),
     );
@@ -251,36 +251,36 @@ class PermissionDropdownField<T> extends StatelessWidget {
       tooltipText: tooltipText,
       icon: prefixIcon,
       child: DropdownButtonFormField<T>(
-        value: value,
+        initialValue: value,
         validator: validator,
         decoration: InputDecoration(
           labelText: labelText,
           prefixIcon: prefixIcon != null 
               ? Icon(
                   prefixIcon,
-                  color: canEdit ? Colors.green.shade600 : Colors.grey.shade500,
+                  color: canEdit ? Colors.green.shade600 : Colors.white60,
                 )
               : null,
           border: OutlineInputBorder(
             borderSide: BorderSide(
-              color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+              color: canEdit ? Colors.green.shade300 : Colors.white70,
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+              color: canEdit ? Colors.green.shade300 : Colors.white70,
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: canEdit ? Colors.green.shade500 : Colors.grey.shade400,
+              color: canEdit ? Colors.green.shade500 : Colors.white70,
             ),
           ),
           filled: true,
-          fillColor: canEdit ? Colors.green.shade50 : Colors.grey.shade50,
+          fillColor: canEdit ? Colors.green.shade50 : Colors.white.withValues(alpha: 0.06),
           suffixIcon: canEdit 
               ? Icon(Icons.arrow_drop_down, color: Colors.green.shade600)
-              : Icon(Icons.lock, size: 16, color: Colors.grey.shade500),
+              : Icon(Icons.lock, size: 16, color: Colors.white60),
         ),
         items: items,
         onChanged: canEdit ? onChanged : null,

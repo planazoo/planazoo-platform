@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
@@ -25,7 +24,7 @@ class WdDashboardMyStatusCell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final headerBg = kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
+    final headerBg = const Color(0xFF111827);
     final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
 
@@ -71,9 +70,9 @@ class WdDashboardMyStatusCell extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
-          color: Colors.grey.shade800,
+          color: const Color(0xFF1F2937),
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.grey.shade600, width: 1),
+          border: Border.all(color: Colors.white60, width: 1),
         ),
         child: Text(
           loc.myStatusLabel,

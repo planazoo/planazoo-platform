@@ -12,12 +12,12 @@ class UserPerspectiveSelector extends StatelessWidget {
   final String? currentTimezone;
 
   const UserPerspectiveSelector({
-    Key? key,
+    super.key,
     required this.participations,
     required this.selectedUserId,
     required this.onUserSelected,
     this.currentTimezone,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +40,7 @@ class UserPerspectiveSelector extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(16),
       ),
       child: FutureBuilder<String>(

@@ -765,6 +765,122 @@ exports.sendPushNotification = functions.https.onCall(async (data, context) => {
   }
 });
 
+/**
+ * Push FCM al invitado cuando el invitador dispara una invitación con participación pending.
+ * Valida que [context.auth.uid] sea el [invitedBy] de esa participación (no permite spam a userIds arbitrarios).
+ */
+exports.sendInvitationPush = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Debes estar autenticado'
+    );
+  }
+  const caller = context.auth.uid;
+  const { invitedUserId, planId, title, body } = data || {};
+
+  if (!invitedUserId || !planId || !title || !body) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'invitedUserId, planId, title y body son requeridos'
+    );
+  }
+  if (caller === invitedUserId) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Invitación inválida'
+    );
+  }
+
+  const db = admin.firestore();
+  const pq = await db
+    .collection('plan_participations')
+    .where('planId', '==', planId)
+    .where('userId', '==', invitedUserId)
+    .limit(5)
+    .get();
+
+  if (pq.empty) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'No existe participación para este plan e invitado'
+    );
+  }
+
+  let ok = false;
+  pq.forEach((doc) => {
+    const p = doc.data();
+    if (
+      p.invitedBy === caller &&
+      p.status === 'pending' &&
+      p.isActive !== false
+    ) {
+      ok = true;
+    }
+  });
+
+  if (!ok) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'No tienes permiso para notificar a este usuario en este plan'
+    );
+  }
+
+  const tokensSnapshot = await db
+    .collection('users')
+    .doc(invitedUserId)
+    .collection('fcmTokens')
+    .get();
+
+  if (tokensSnapshot.empty) {
+    console.log(`sendInvitationPush: sin tokens FCM para ${invitedUserId}`);
+    return { success: false, message: 'Usuario sin tokens FCM' };
+  }
+
+  const tokens = tokensSnapshot.docs.map((d) => d.data().token).filter(Boolean);
+  const dataPayload = {
+    planId: String(planId),
+    type: 'invitation',
+    tab: 'participants',
+  };
+
+  const message = {
+    notification: { title: String(title), body: String(body) },
+    data: dataPayload,
+    tokens,
+  };
+
+  try {
+    const response = await admin.messaging().sendEachForMulticast(message);
+    console.log(
+      `sendInvitationPush: enviados ${response.successCount}/${tokens.length} a ${invitedUserId}`
+    );
+    if (response.failureCount > 0) {
+      const batch = db.batch();
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success && tokens[idx]) {
+          batch.delete(
+            db.collection('users').doc(invitedUserId).collection('fcmTokens').doc(tokens[idx])
+          );
+        }
+      });
+      await batch.commit();
+    }
+    return {
+      success: true,
+      sent: response.successCount,
+      failed: response.failureCount,
+      total: tokens.length,
+    };
+  } catch (error) {
+    console.error('sendInvitationPush error:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error enviando push: ${error.message}`
+    );
+  }
+});
+
 // ============================================
 // Eventos desde correo (T134): recepción y validación
 // POST body: { from: string, subject: string, text?: string, html?: string }

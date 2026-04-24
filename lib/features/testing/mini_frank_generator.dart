@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches, unused_element
+
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';

@@ -24,7 +24,7 @@ class AppLayoutWrapper extends StatelessWidget {
             if (!isSmallScreen)
               Container(
                 width: columnWidth,
-                color: Colors.grey.shade100,
+                color: Colors.white.withValues(alpha: 0.08),
                 child: const Center(
                   child: Icon(Icons.calendar_today_outlined),
                 ),
@@ -44,7 +44,7 @@ class AppLayoutWrapper extends StatelessWidget {
             if (!isSmallScreen)
               Container(
                 width: columnWidth,
-                color: Colors.grey.shade100,
+                color: Colors.white.withValues(alpha: 0.08),
                 child: const Center(
                   child: Icon(Icons.settings_outlined),
                 ),

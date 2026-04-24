@@ -110,6 +110,11 @@ class _AnnouncementDialogState extends ConsumerState<AnnouncementDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: const Color(0xFF1F2937),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: const Text('Publicar Aviso'),
       content: SizedBox(
         width: 500,
@@ -147,7 +152,7 @@ class _AnnouncementDialogState extends ConsumerState<AnnouncementDialog> {
                 const SizedBox(height: 16),
                 // Tipo de aviso
                 DropdownButtonFormField<String>(
-                  value: _selectedType,
+                  initialValue: _selectedType,
                   decoration: const InputDecoration(
                     labelText: 'Tipo',
                     border: OutlineInputBorder(),
@@ -198,20 +203,20 @@ class _AnnouncementDialogState extends ConsumerState<AnnouncementDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: Colors.blue.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade200),
+                    border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                      const Icon(Icons.info_outline, size: 16, color: Colors.blue),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Este aviso será visible para todos los participantes del plan.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.blue.shade700,
+                            color: Colors.white70,
                           ),
                         ),
                       ),

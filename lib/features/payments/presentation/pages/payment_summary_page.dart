@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -29,60 +28,31 @@ class PaymentSummaryPage extends ConsumerWidget {
     this.embedInPlanDetail = false,
   });
 
-  static const Color _webPageBg = Color(0xFFF1F5F9);
-  static const Color _webOnSurface = Color(0xFF0F172A);
-  static const Color _webMuted = Color(0xFF64748B);
-  static const Color _webBorder = Color(0xFFE2E8F0);
+  static const Color _cPageBg = Color(0xFF111827);
+  static const Color _cSurfaceBg = Color(0xFF1F2937);
+  static const Color _cTextPrimary = Colors.white;
+  static const Color _cTextSecondary = Colors.white70;
+  static const Color _cTextTertiary = Colors.white60;
+  static const Color _cDanger = Colors.redAccent;
+  static const double _aBorderStrong = 0.12;
+  static const double _aBorderSubtle = 0.08;
+  static const double _aSurfaceMuted = 0.04;
+  static const double _aSurfaceChip = 0.06;
+  static const double _aAccentSelected = 0.32;
 
-  BoxDecoration _darkCardDecoration() {
-    return BoxDecoration(
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xFF424242),
-          Color(0xFF2C2C2C),
-        ],
-      ),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(
-        color: Colors.grey.shade700,
-        width: 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.4),
-          blurRadius: 24,
-          offset: const Offset(0, 6),
-          spreadRadius: 0,
-        ),
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.2),
-          blurRadius: 12,
-          offset: const Offset(0, 2),
-          spreadRadius: -4,
-        ),
-      ],
-    );
-  }
+  static const double _fsAppBar = 16;
+  static const double _fsSectionTitle = 12;
+  static const double _fsSectionSubtitle = 11;
+  static const double _fsValue = 13;
+  static const double _sp8 = 8;
+  static const double _sp12 = 12;
+  static const double _sp16 = 16;
 
-  BoxDecoration _cardDecoration() {
-    if (kIsWeb) {
-      return BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _webBorder),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+  BoxDecoration _cardDecoration() => BoxDecoration(
+        color: _cSurfaceBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
       );
-    }
-    return _darkCardDecoration();
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -91,29 +61,24 @@ class PaymentSummaryPage extends ConsumerWidget {
     final balanceService = ref.watch(balanceServiceProvider);
 
     return Theme(
-      data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
+      data: AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: kIsWeb ? _webPageBg : Colors.grey.shade900,
+        backgroundColor: _cPageBg,
         appBar: AppBar(
           automaticallyImplyLeading: !embedInPlanDetail,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
-          shape: kIsWeb
-              ? const Border(bottom: BorderSide(color: _webBorder))
-              : null,
           title: Text(
             loc.paymentsSummaryTitle,
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: _fsAppBar,
               fontWeight: FontWeight.w600,
-              color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+              color: _cTextPrimary,
             ),
           ),
-          backgroundColor: kIsWeb ? _webPageBg : AppColorScheme.color2,
-          foregroundColor: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
-          iconTheme: IconThemeData(
-            color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
-          ),
+          backgroundColor: _cPageBg,
+          foregroundColor: _cTextPrimary,
+          iconTheme: const IconThemeData(color: _cTextPrimary),
           actions: [
             IconButton(
               icon: const Icon(Icons.add),
@@ -148,14 +113,14 @@ class PaymentSummaryPage extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                    const Icon(Icons.error_outline, size: 64, color: _cDanger),
                     const SizedBox(height: 16),
                     Text(
                       loc.paymentsSummaryError,
                       style: GoogleFonts.poppins(
-                        fontSize: 18,
+                        fontSize: _fsAppBar,
                         fontWeight: FontWeight.w600,
-                        color: Colors.red.shade300,
+                        color: _cDanger,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -164,7 +129,7 @@ class PaymentSummaryPage extends ConsumerWidget {
                       error.toString(),
                       style: GoogleFonts.poppins(
                         fontSize: 14,
-                        color: kIsWeb ? _webMuted : Colors.grey.shade400,
+                        color: _cTextSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -185,30 +150,30 @@ class PaymentSummaryPage extends ConsumerWidget {
     List<TransferSuggestion> transferSuggestions,
   ) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(_sp12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // T220: Aviso legal — la app no procesa cobros
           _buildPaymentDisclaimer(context),
-          const SizedBox(height: 16),
+          const SizedBox(height: _sp16),
 
           // Resumen general
           _buildGeneralSummary(context, summary),
-          const SizedBox(height: 24),
+          const SizedBox(height: _sp16),
 
           // Actividad (gastos tipo Tricount)
           _buildActivitySection(context, ref, summary),
-          const SizedBox(height: 24),
+          const SizedBox(height: _sp16),
 
           // Balances por participante
           _buildBalancesSection(context, ref, summary),
-          const SizedBox(height: 24),
+          const SizedBox(height: _sp16),
 
           // Sugerencias de transferencias
           if (transferSuggestions.isNotEmpty) ...[
             _buildTransferSuggestionsSection(context, transferSuggestions),
-            const SizedBox(height: 24),
+            const SizedBox(height: _sp16),
           ],
         ],
       ),
@@ -218,45 +183,12 @@ class PaymentSummaryPage extends ConsumerWidget {
   /// T220: Aviso breve de que la app no procesa cobros (solo anotación y cuadre).
   Widget _buildPaymentDisclaimer(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    if (kIsWeb) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFFBEB),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.amber.shade200),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.info_outline, color: Colors.amber.shade800, size: 22),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                loc.paymentsDisclaimerText,
-                style: AppTypography.bodyStyle.copyWith(
-                  fontSize: 13,
-                  color: Colors.amber.shade900,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF424242),
-            Color(0xFF2C2C2C),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColorScheme.color3),
+        color: _cSurfaceBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColorScheme.color3.withValues(alpha: 0.8)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,9 +198,9 @@ class PaymentSummaryPage extends ConsumerWidget {
           Expanded(
             child: Text(
               loc.paymentsDisclaimerText,
-              style: AppTypography.bodyStyle.copyWith(
-                fontSize: 13,
-                color: Colors.white.withValues(alpha: 0.9),
+                style: GoogleFonts.poppins(
+                  fontSize: _fsValue,
+                  color: _cTextSecondary,
               ),
             ),
           ),
@@ -281,26 +213,26 @@ class PaymentSummaryPage extends ConsumerWidget {
     final planCurrency = plan.currency; // T153
     final loc = AppLocalizations.of(context)!;
     final totalBalance = summary.totalPaid - summary.totalCost;
-    final smallStyle = AppTypography.bodyStyle.copyWith(
-      fontSize: 13,
-      color: kIsWeb ? _webOnSurface : Colors.white,
+    final smallStyle = GoogleFonts.poppins(
+      fontSize: _fsValue,
+      color: _cTextPrimary,
     );
 
     return Container(
       decoration: _cardDecoration(),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(_sp12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             loc.paymentsGeneralSummaryTitle,
-            style: AppTypography.bodyStyle.copyWith(
-              fontSize: 15,
-              color: kIsWeb ? _webOnSurface : Colors.white,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.poppins(
+              fontSize: _fsSectionTitle,
+              color: _cTextPrimary,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: _sp12),
           Row(
             children: [
               Expanded(
@@ -316,13 +248,13 @@ class PaymentSummaryPage extends ConsumerWidget {
                 child: _buildStatCard(
                   loc.paymentsGeneralSummaryTotalPaid,
                   CurrencyFormatterService.formatAmount(summary.totalPaid, planCurrency),
-                  Colors.green,
+                  Colors.green.shade400,
                   smallStyle: smallStyle,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: _sp12),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -367,28 +299,12 @@ class PaymentSummaryPage extends ConsumerWidget {
   }
 
   Widget _buildStatCard(String label, String value, Color color, {TextStyle? smallStyle}) {
-    final style = smallStyle ?? AppTypography.bodyStyle;
+    final style = smallStyle ?? GoogleFonts.poppins(color: _cTextPrimary);
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(_sp12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: kIsWeb
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFFF8FAFC),
-                  Colors.white,
-                ],
-              )
-            : LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.black.withValues(alpha: 0.4),
-                  Colors.black.withValues(alpha: 0.2),
-                ],
-              ),
+        borderRadius: BorderRadius.circular(12),
+        color: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
         border: Border.all(color: color.withValues(alpha: 0.6)),
       ),
       child: Column(
@@ -397,17 +313,17 @@ class PaymentSummaryPage extends ConsumerWidget {
           Text(
             label,
             style: style.copyWith(
-              fontSize: 12,
-              color: kIsWeb ? _webMuted : Colors.grey.shade300,
+              fontSize: _fsSectionSubtitle,
+              color: _cTextSecondary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             value,
             style: style.copyWith(
               color: color,
               fontWeight: FontWeight.bold,
-              fontSize: 13,
+              fontSize: _fsValue,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -488,7 +404,7 @@ class PaymentSummaryPage extends ConsumerWidget {
     };
     return Container(
       decoration: _cardDecoration(),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(_sp12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -498,9 +414,9 @@ class PaymentSummaryPage extends ConsumerWidget {
               Text(
                 loc.paymentsActivityTitle,
                 style: AppTypography.bodyStyle.copyWith(
-                  fontSize: 15,
-                  color: kIsWeb ? _webOnSurface : Colors.white,
-                  fontWeight: FontWeight.bold,
+                  fontSize: _fsSectionTitle,
+                  color: _cTextPrimary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               TextButton.icon(
@@ -522,15 +438,15 @@ class PaymentSummaryPage extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: _sp12),
           if (expenses.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 loc.paymentsActivityEmpty,
                 style: AppTypography.bodyStyle.copyWith(
-                  fontSize: 13,
-                  color: kIsWeb ? _webMuted : Colors.grey.shade500,
+                  fontSize: _fsValue,
+                  color: _cTextSecondary,
                 ),
               ),
             )
@@ -569,11 +485,11 @@ class PaymentSummaryPage extends ConsumerWidget {
     final dateStr = DateFormat('dd/MM/yyyy').format(expense.expenseDate);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: _sp8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.receipt, size: 20, color: kIsWeb ? _webMuted : Colors.grey.shade400),
+          const Icon(Icons.receipt, size: 20, color: _cTextSecondary),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -584,8 +500,8 @@ class PaymentSummaryPage extends ConsumerWidget {
                       ? expense.concept!
                       : loc.paymentsExpenseDefaultConcept,
                   style: AppTypography.bodyStyle.copyWith(
-                    fontSize: 13,
-                    color: kIsWeb ? _webOnSurface : Colors.white,
+                    fontSize: _fsValue,
+                    color: _cTextPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -593,8 +509,8 @@ class PaymentSummaryPage extends ConsumerWidget {
                 Text(
                   loc.paymentsExpenseRowMeta(dateStr, payerName),
                   style: AppTypography.bodyStyle.copyWith(
-                    fontSize: 11,
-                    color: kIsWeb ? _webMuted : Colors.grey.shade500,
+                    fontSize: _fsSectionSubtitle,
+                    color: _cTextTertiary,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -604,7 +520,7 @@ class PaymentSummaryPage extends ConsumerWidget {
                   Text(
                     '· ${eventTitles[expense.eventId!] ?? loc.paymentsExpenseUnknownLinkedEvent}',
                     style: AppTypography.bodyStyle.copyWith(
-                      fontSize: 11,
+                      fontSize: _fsSectionSubtitle,
                       color: AppColorScheme.color3,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -618,7 +534,7 @@ class PaymentSummaryPage extends ConsumerWidget {
           Text(
             CurrencyFormatterService.formatAmount(expense.amount, planCurrency),
             style: AppTypography.bodyStyle.copyWith(
-              fontSize: 13,
+              fontSize: _fsValue,
               fontWeight: FontWeight.bold,
               color: Colors.green,
             ),
@@ -627,7 +543,7 @@ class PaymentSummaryPage extends ConsumerWidget {
           if (expense.id != null && canManage) ...[
             const SizedBox(width: 4),
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: kIsWeb ? _webMuted : Colors.grey.shade400, size: 22),
+              icon: const Icon(Icons.more_vert, color: _cTextSecondary, size: 22),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               onSelected: (value) async {
@@ -668,12 +584,6 @@ class PaymentSummaryPage extends ConsumerWidget {
                           ),
                         ],
                       );
-                      if (kIsWeb) {
-                        return Theme(
-                          data: AppTheme.lightTheme,
-                          child: dialog,
-                        );
-                      }
                       return dialog;
                     },
                   );
@@ -725,27 +635,27 @@ class PaymentSummaryPage extends ConsumerWidget {
 
     return Container(
       decoration: _cardDecoration(),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(_sp12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             loc.paymentsBalancesSectionTitle,
             style: AppTypography.bodyStyle.copyWith(
-              fontSize: 15,
-              color: kIsWeb ? _webOnSurface : Colors.white,
-              fontWeight: FontWeight.bold,
+              fontSize: _fsSectionTitle,
+              color: _cTextPrimary,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             loc.paymentsBalancesTricountHint,
             style: AppTypography.bodyStyle.copyWith(
-              fontSize: 12,
-              color: kIsWeb ? _webMuted : Colors.grey.shade500,
+              fontSize: _fsSectionSubtitle,
+              color: _cTextTertiary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: _sp16),
           ...balances.map((balance) => _buildParticipantBalanceCard(context, ref, balance)),
         ],
       ),
@@ -761,13 +671,12 @@ class PaymentSummaryPage extends ConsumerWidget {
     final planCurrency = plan.currency; // T153
     final balanceColor = _getBalanceColor(balance.balance);
     final amountText = CurrencyFormatterService.formatAmount(balance.balance, planCurrency);
-    final cardBg =
-        kIsWeb ? const Color(0xFFF8FAFC) : Colors.black.withValues(alpha: 0.25);
+    final cardBg = _cTextPrimary.withValues(alpha: _aSurfaceMuted);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         color: cardBg,
         border: Border.all(
           color: balanceColor.withValues(alpha: 0.4),
@@ -783,7 +692,7 @@ class PaymentSummaryPage extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: kIsWeb ? Colors.white : Colors.grey.shade900,
+                color: _cPageBg,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: balanceColor.withValues(alpha: 0.5),
@@ -793,7 +702,7 @@ class PaymentSummaryPage extends ConsumerWidget {
               child: Text(
                 amountText,
                 style: AppTypography.bodyStyle.copyWith(
-                  fontSize: 12,
+                  fontSize: _fsSectionSubtitle,
                   color: balanceColor,
                   fontWeight: FontWeight.bold,
                 ),
@@ -803,13 +712,11 @@ class PaymentSummaryPage extends ConsumerWidget {
           ),
           ExpansionTile(
             collapsedBackgroundColor: Colors.transparent,
-            backgroundColor: kIsWeb
-                ? const Color(0xFFF1F5F9)
-                : Colors.black.withValues(alpha: 0.2),
-            textColor: kIsWeb ? _webOnSurface : Colors.white,
-            collapsedTextColor: kIsWeb ? _webOnSurface : Colors.white,
-            iconColor: kIsWeb ? _webMuted : Colors.white,
-            collapsedIconColor: kIsWeb ? _webMuted : Colors.white,
+            backgroundColor: _cTextPrimary.withValues(alpha: _aSurfaceChip),
+            textColor: _cTextPrimary,
+            collapsedTextColor: _cTextPrimary,
+            iconColor: _cTextSecondary,
+            collapsedIconColor: _cTextSecondary,
             leading: CircleAvatar(
               backgroundColor: balanceColor.withValues(alpha: 0.2),
               child: Icon(
@@ -820,17 +727,17 @@ class PaymentSummaryPage extends ConsumerWidget {
             title: Text(
               balance.userName,
               style: AppTypography.bodyStyle.copyWith(
-                fontSize: 14,
+                fontSize: _fsValue,
                 fontWeight: FontWeight.bold,
-                color: kIsWeb ? _webOnSurface : Colors.white,
+                color: _cTextPrimary,
               ),
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
               _getBalanceStatusText(context, balance),
               style: AppTypography.bodyStyle.copyWith(
-                fontSize: 12,
-                color: kIsWeb ? _webMuted : Colors.grey.shade400,
+                fontSize: _fsSectionSubtitle,
+                color: _cTextSecondary,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -851,7 +758,7 @@ class PaymentSummaryPage extends ConsumerWidget {
                       CurrencyFormatterService.formatAmount(balance.totalPaid, planCurrency),
                     ),
                     const SizedBox(height: 8),
-                    Divider(color: kIsWeb ? _webBorder : Colors.grey.shade700),
+                    Divider(color: _cTextPrimary.withValues(alpha: _aBorderSubtle)),
                     const SizedBox(height: 8),
                     _buildBalanceDetailRow(
                       loc.paymentsGeneralSummaryBalanceTitle,
@@ -865,7 +772,7 @@ class PaymentSummaryPage extends ConsumerWidget {
                         loc.paymentsBalancePaymentsTitle,
                         style: AppTypography.bodyStyle.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: kIsWeb ? _webOnSurface : Colors.white,
+                          color: _cTextPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -879,8 +786,8 @@ class PaymentSummaryPage extends ConsumerWidget {
                                   child: Text(
                                     '${CurrencyFormatterService.formatAmount(payment.amount, planCurrency)} - ${payment.concept ?? payment.eventDescription ?? "Sin concepto"}',
                                     style: AppTypography.bodyStyle.copyWith(
-                                      fontSize: 12,
-                                      color: kIsWeb ? _webOnSurface : Colors.white70,
+                                      fontSize: _fsSectionSubtitle,
+                                      color: _cTextSecondary,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -889,8 +796,8 @@ class PaymentSummaryPage extends ConsumerWidget {
                                 Text(
                                   DateFormat('dd/MM/yyyy').format(payment.paymentDate),
                                   style: AppTypography.bodyStyle.copyWith(
-                                    fontSize: 11,
-                                    color: kIsWeb ? _webMuted : Colors.grey.shade400,
+                                    fontSize: _fsSectionSubtitle,
+                                    color: _cTextTertiary,
                                   ),
                                 ),
                               ],
@@ -915,7 +822,7 @@ class PaymentSummaryPage extends ConsumerWidget {
           child: Text(
             label,
             style: AppTypography.bodyStyle.copyWith(
-              color: kIsWeb ? _webMuted : Colors.grey.shade300,
+              color: _cTextSecondary,
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
             ),
             overflow: TextOverflow.ellipsis,
@@ -927,7 +834,7 @@ class PaymentSummaryPage extends ConsumerWidget {
             value,
             style: AppTypography.bodyStyle.copyWith(
               fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: color ?? (kIsWeb ? _webOnSurface : Colors.white),
+              color: color ?? _cTextPrimary,
             ),
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.end,
@@ -943,7 +850,7 @@ class PaymentSummaryPage extends ConsumerWidget {
 
     return Container(
       decoration: _cardDecoration(),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(_sp12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -954,7 +861,7 @@ class PaymentSummaryPage extends ConsumerWidget {
               Text(
                 loc.paymentsTransferSuggestionsTitle,
                 style: AppTypography.titleStyle.copyWith(
-                  color: kIsWeb ? _webOnSurface : Colors.white,
+                  color: _cTextPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -964,20 +871,20 @@ class PaymentSummaryPage extends ConsumerWidget {
           Text(
             loc.paymentsTransferSuggestionsSubtitle,
             style: AppTypography.bodyStyle.copyWith(
-              fontSize: 12,
-              color: kIsWeb ? _webMuted : Colors.grey.shade500,
+              fontSize: _fsSectionSubtitle,
+              color: _cTextTertiary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: _sp16),
           ...suggestions.map((suggestion) => Container(
                 margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(_sp12),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: kIsWeb
-                      ? const Color(0xFFF8FAFC)
-                      : Colors.black.withValues(alpha: 0.3),
-                  border: Border.all(color: AppColorScheme.color2.withValues(alpha: 0.7)),
+                  borderRadius: BorderRadius.circular(12),
+                  color: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
+                  border: Border.all(
+                    color: AppColorScheme.color2.withValues(alpha: _aAccentSelected),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -986,7 +893,7 @@ class PaymentSummaryPage extends ConsumerWidget {
                         suggestion.fromUserName,
                         style: AppTypography.bodyStyle.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: kIsWeb ? _webOnSurface : Colors.white,
+                          color: _cTextPrimary,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -998,7 +905,7 @@ class PaymentSummaryPage extends ConsumerWidget {
                       style: AppTypography.bodyStyle.copyWith(
                         color: AppColorScheme.color2,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontSize: _fsValue,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1010,7 +917,7 @@ class PaymentSummaryPage extends ConsumerWidget {
                         suggestion.toUserName,
                         style: AppTypography.bodyStyle.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: kIsWeb ? _webOnSurface : Colors.white,
+                          color: _cTextPrimary,
                         ),
                         textAlign: TextAlign.end,
                         overflow: TextOverflow.ellipsis,
@@ -1028,7 +935,7 @@ class PaymentSummaryPage extends ConsumerWidget {
     if (balance > 0) {
       return Colors.green; // Acreedor
     } else if (balance < 0) {
-      return Colors.red; // Deudor
+      return _cDanger; // Deudor
     } else {
       return Colors.grey; // Equilibrado
     }

@@ -5,6 +5,25 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// Evita resolver artefactos AndroidX que exigen AGP >= 8.9.1.
+// Mantiene una matriz estable para Flutter 3.41 + AGP 8.1.1 en este proyecto.
+configurations.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == "androidx.core" &&
+            details.requested.name == "core-ktx") {
+            details.useVersion "1.13.1"
+        }
+        if (details.requested.group == "androidx.core" &&
+            details.requested.name == "core") {
+            details.useVersion "1.13.1"
+        }
+        if (details.requested.group == "androidx.browser" &&
+            details.requested.name == "browser") {
+            details.useVersion "1.8.0"
+        }
+    }
+}
+
 android {
     namespace = "com.pzoo.planazoo"
     compileSdk = flutter.compileSdkVersion

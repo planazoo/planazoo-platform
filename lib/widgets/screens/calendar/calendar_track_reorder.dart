@@ -50,6 +50,7 @@ class CalendarTrackReorder {
                 // Persistir en Firestore
                 await _trackService.saveOrderToFirestore(planId, newOrderIds);
                 await _trackService.saveSelectionToFirestore(planId, selectedIds);
+                if (!context.mounted) return;
                 
                 onReorderComplete();
                 onSelectionComplete();
@@ -129,7 +130,7 @@ class CalendarTrackReorder {
                 key: ValueKey(track.id),
                 margin: const EdgeInsets.symmetric(vertical: 2),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: Colors.white70),
                   borderRadius: BorderRadius.circular(8),
                   color: isSelected ? Colors.blue.shade50 : Colors.white,
                 ),

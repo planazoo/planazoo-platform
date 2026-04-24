@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../features/security/services/rate_limiter_service.dart';
 import '../../../../shared/services/logger_service.dart';

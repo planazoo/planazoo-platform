@@ -140,7 +140,7 @@ class _DaysRemainingIndicatorState extends State<DaysRemainingIndicator> {
         color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
         border: backgroundColor != null
-            ? Border.all(color: textColor.withOpacity(0.3), width: 1)
+            ? Border.all(color: textColor.withValues(alpha: 0.3), width: 1)
             : null,
       ),
         child: Row(

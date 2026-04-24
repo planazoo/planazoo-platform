@@ -112,7 +112,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         loc.registerSuccessSpamNote,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                         ),
                       ),
                     ],
@@ -133,7 +133,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         // Redirigir a la página de login después de un breve delay
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            Navigator.of(context).pop();
+            Navigator.of(this.context).pop();
           }
         });
       }
@@ -142,7 +142,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade900,
+        backgroundColor: const Color(0xFF111827),
         body: SafeArea(
           child: Stack(
             children: [
@@ -151,25 +151,60 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 child: Center(
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 480),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Título "Planazoo" centrado
+                    child: Card(
+                      color: const Color(0xFF1F2937),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
                           Center(
-                            child: Text(
-                              AppLocalizations.of(context)!.appTitle,
-                              style: GoogleFonts.poppins(
-                                fontSize: 32,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.1,
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: 'planaz',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 32,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.1,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: 'oo',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 32,
+                                      color: AppColorScheme.color2,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.1,
+                                    ),
+                                  ),
+                                ],
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 6),
+                          Center(
+                            child: Text(
+                              AppLocalizations.of(context)!.registerSubtitle,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 28),
                           // Campo de nombre
                           _buildNameField(),
                           const SizedBox(height: 20),
@@ -197,18 +232,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           // Divider
                           Row(
                             children: [
-                              Expanded(child: Divider(color: Colors.grey.shade700)),
+                              Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.12))),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 16),
                                 child: Text(
-                                  'o',
+                                  Localizations.localeOf(context).languageCode == 'en' ? 'or' : 'o',
                                   style: GoogleFonts.poppins(
-                                    color: Colors.grey.shade400,
+                                    color: Colors.white70,
                                     fontSize: 14,
                                   ),
                                 ),
                               ),
-                              Expanded(child: Divider(color: Colors.grey.shade700)),
+                              Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.12))),
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -216,6 +251,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           _buildLoginLink(),
                           const SizedBox(height: 32),
                         ],
+                      ),
+                        ),
                       ),
                     ),
                   ),
@@ -246,21 +283,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _buildNameField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: const Color(0xFF1F2937), // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 3),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 6,
             offset: const Offset(0, 1),
             spreadRadius: -2,
@@ -283,15 +320,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           labelText: '${AppLocalizations.of(context)!.nameLabel} *',
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade400,
+            color: Colors.white70,
             fontWeight: FontWeight.w500,
           ),
           hintText: AppLocalizations.of(context)!.nameHint,
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade500,
+            color: Colors.white60,
           ),
-          prefixIcon: Icon(Icons.person_outlined, color: Colors.grey.shade400),
+          prefixIcon: Icon(Icons.person_outlined, color: Colors.white70),
           filled: true,
           fillColor: Colors.transparent,
           border: OutlineInputBorder(
@@ -337,21 +374,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _buildEmailField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: const Color(0xFF1F2937), // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 3),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 6,
             offset: const Offset(0, 1),
             spreadRadius: -2,
@@ -380,15 +417,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           labelText: '${AppLocalizations.of(context)!.emailLabel} *',
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade400,
+            color: Colors.white70,
             fontWeight: FontWeight.w500,
           ),
           hintText: AppLocalizations.of(context)!.emailHint,
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade500,
+            color: Colors.white60,
           ),
-          prefixIcon: Icon(Icons.email_outlined, color: Colors.grey.shade400),
+          prefixIcon: Icon(Icons.email_outlined, color: Colors.white70),
           errorMaxLines: 2,
           filled: true,
           fillColor: Colors.transparent,
@@ -439,21 +476,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade800, // Color sólido, sin gradiente
+            color: const Color(0xFF1F2937), // Color sólido, sin gradiente
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: Colors.grey.shade700.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 blurRadius: 12,
                 offset: const Offset(0, 3),
                 spreadRadius: 0,
               ),
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 6,
                 offset: const Offset(0, 1),
                 spreadRadius: -2,
@@ -475,15 +512,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               labelText: '${AppLocalizations.of(context)!.usernameLabel} *',
               labelStyle: GoogleFonts.poppins(
                 fontSize: 13,
-                color: Colors.grey.shade400,
+                color: Colors.white70,
                 fontWeight: FontWeight.w500,
               ),
               hintText: AppLocalizations.of(context)!.usernameHint,
               hintStyle: GoogleFonts.poppins(
                 fontSize: 14,
-                color: Colors.grey.shade500,
+                color: Colors.white60,
               ),
-              prefixIcon: Icon(Icons.alternate_email, color: Colors.grey.shade400),
+              prefixIcon: Icon(Icons.alternate_email, color: Colors.white70),
               errorText: _usernameError,
               errorMaxLines: 3,
               filled: true,
@@ -606,7 +643,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         // Forzar validación del formulario para limpiar el error visual
                         _formKey.currentState?.validate();
                       },
-                      backgroundColor: Colors.orange.shade900.withOpacity(0.3),
+                      backgroundColor: Colors.orange.shade900.withValues(alpha: 0.3),
                       labelStyle: GoogleFonts.poppins(
                         color: Colors.orange.shade300,
                         fontSize: 12,
@@ -625,21 +662,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _buildPasswordField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: const Color(0xFF1F2937), // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 3),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 6,
             offset: const Offset(0, 1),
             spreadRadius: -2,
@@ -669,20 +706,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           labelText: '${AppLocalizations.of(context)!.passwordLabel} *',
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade400,
+            color: Colors.white70,
             fontWeight: FontWeight.w500,
           ),
           hintText: AppLocalizations.of(context)!.passwordHint,
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade500,
+            color: Colors.white60,
           ),
-          prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey.shade400),
+          prefixIcon: Icon(Icons.lock_outlined, color: Colors.white70),
           errorMaxLines: 2,
           suffixIcon: IconButton(
             icon: Icon(
               _obscurePassword ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey.shade400,
+              color: Colors.white70,
             ),
             onPressed: () {
               setState(() {
@@ -754,21 +791,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _buildConfirmPasswordField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: const Color(0xFF1F2937), // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 3),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 6,
             offset: const Offset(0, 1),
             spreadRadius: -2,
@@ -802,20 +839,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           labelText: '${AppLocalizations.of(context)!.confirmPasswordLabel} *',
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade400,
+            color: Colors.white70,
             fontWeight: FontWeight.w500,
           ),
           hintText: AppLocalizations.of(context)!.confirmPasswordHint,
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade500,
+            color: Colors.white60,
           ),
-          prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey.shade400),
+          prefixIcon: Icon(Icons.lock_outlined, color: Colors.white70),
           errorMaxLines: 2,
           suffixIcon: IconButton(
             icon: Icon(
               _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey.shade400,
+              color: Colors.white70,
             ),
             onPressed: () {
               setState(() {
@@ -891,7 +928,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               child: RichText(
                 text: TextSpan(
                   style: AppTypography.bodyStyle.copyWith(
-                    color: Colors.grey.shade600,
+                    color: Colors.white60,
                   ),
                   children: [
                     TextSpan(text: AppLocalizations.of(context)!.acceptTerms),
@@ -935,9 +972,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     
     // Verificar que no haya errores de validación
     if (name.length < 2) return false;
-    if (!email.contains('@')) return false;
+    if (!Validator.isValidEmail(email)) return false;
     if (username.isEmpty || username != username.toLowerCase() || !Validator.isValidUsername(username.toLowerCase())) return false;
-    if (password.length < 6) return false;
+    if (!Validator.validatePassword(password).isValid) return false;
     if (password != confirmPassword) return false;
     if (_usernameError != null) return false;
     
@@ -953,13 +990,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: AppColorScheme.color2.withOpacity(0.4),
+            color: AppColorScheme.color2.withValues(alpha: 0.4),
             blurRadius: 16,
             offset: const Offset(0, 6),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
             spreadRadius: -2,
@@ -1002,15 +1039,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: const Color(0xFF1F2937), // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1023,7 +1060,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             AppLocalizations.of(context)!.loginLink,
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.grey.shade400,
+              color: Colors.white70,
             ),
           ),
         ],

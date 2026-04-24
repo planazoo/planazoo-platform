@@ -1,5 +1,6 @@
+// ignore_for_file: unused_element
+
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
@@ -21,11 +22,8 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:unp_calendario/features/security/utils/sanitizer.dart';
-import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 
-import 'package:unp_calendario/widgets/grid/wd_grid_painter.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_participants_screen.dart';
@@ -40,13 +38,9 @@ import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
 import 'package:unp_calendario/pages/pg_admin_page.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
-import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
-import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
-import 'package:unp_calendario/widgets/screens/wd_pending_email_events_screen.dart';
-import 'package:unp_calendario/widgets/screens/wd_unified_notifications_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_summary_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
@@ -66,7 +60,6 @@ import 'package:unp_calendario/widgets/dialogs/wd_create_plan_modal.dart';
 import 'package:unp_calendario/widgets/notifications/wd_notification_list_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/services.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -76,12 +69,12 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
-  bool get _isWeb => kIsWeb;
+  bool get _isWeb => false;
   ThemeData get _dashboardTheme => _isWeb ? AppTheme.lightTheme : AppTheme.darkTheme;
-  Color get _surfacePrimary => _isWeb ? const Color(0xFFF5F7FA) : Colors.grey.shade800;
-  Color get _surfaceSecondary => _isWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
+  Color get _surfacePrimary => _isWeb ? const Color(0xFFF5F7FA) : const Color(0xFF1F2937);
+  Color get _surfaceSecondary => _isWeb ? const Color(0xFFF1F5F9) : const Color(0xFF111827);
   Color get _onSurfacePrimary => _isWeb ? const Color(0xFF1F2937) : Colors.white;
-  Color get _onSurfaceMuted => _isWeb ? const Color(0xFF6B7280) : Colors.grey.shade400;
+  Color get _onSurfaceMuted => _isWeb ? const Color(0xFF6B7280) : Colors.white70;
   // Estado para el planazoo seleccionado
   String? selectedPlanId;
   Plan? selectedPlan;
@@ -103,7 +96,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   String _calendarPanelView = 'calendar';
 
   // Flag para evitar procesar transiciones múltiples veces en la misma carga
-  List<String> _processedPlanIds = [];
+  final List<String> _processedPlanIds = [];
   final PlanParticipationService _participationService = PlanParticipationService();
   final Map<String, List<String>> _planParticipantNames = {};
   final Map<String, StreamSubscription<List<PlanParticipation>>> _participantSubscriptions = {};
@@ -200,6 +193,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             stateService.checkAndExecuteAutomaticTransitions(planId: plan.id!).catchError((e) {
               LoggerService.error('Error checking automatic transitions for plan ${plan.id}',
                   context: 'DASHBOARD', error: e);
+              return false;
             });
           }
         }
@@ -299,8 +293,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         resolved = user.displayName!.trim();
       } else if (user.username != null && user.username!.trim().isNotEmpty) {
         resolved = '@${user.username!.trim()}';
-      } else if (user.email != null && user.email!.trim().isNotEmpty) {
-        resolved = user.email!.trim();
+      } else if (user.email.trim().isNotEmpty) {
+        resolved = user.email.trim();
       } else {
         resolved = userId;
       }
@@ -546,6 +540,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         final success = await planService.deletePlan(planId);
         
         if (success) {
+          if (!mounted) return;
           // Si el plan eliminado estaba seleccionado, limpiar la selección
           if (selectedPlanId == planId) {
             setState(() {
@@ -565,6 +560,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       LoggerService.error('Error deleting planazoo', context: 'MAIN_PAGE', error: e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -577,7 +573,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
     final authState = ref.watch(authNotifierProvider);
     final timezoneSuggestion = authState.timezoneSuggestion;
     final deviceTimezoneSuggestion = authState.deviceTimezone;
@@ -1211,9 +1206,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     try {
       final auth = FirebaseAuth.instance;
       final firestore = FirebaseFirestore.instance;
-      final userService = UserService();
 
-      int deletedAuthCount = 0;
       int deletedFirestoreCount = 0;
       int notFoundCount = 0;
       int errorCount = 0;
@@ -1267,7 +1260,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               // Intentar eliminar de Firebase Auth usando Admin SDK si está disponible
               // Por ahora, solo eliminamos de Firestore
               // Nota: Para eliminar de Auth, necesitaríamos Firebase Admin SDK o hacerlo manualmente desde Console
-              deletedAuthCount++; // Contamos como intentado, aunque no se elimine de Auth
             } else {
               notFoundCount++;
             }
@@ -1719,10 +1711,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return Positioned(
       left: w31X,
       top: w31Y,
-      child: Container(
+      child: SizedBox(
         width: w31Width,
         height: w31Height,
-        // Sin recuadro de color (T194)
         child: noPlans
             ? _buildNoPlansYet()
             : (needsPlanSelection && !hasSelectedPlan)
@@ -1733,8 +1724,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   Widget _buildNoPlansYet() {
-    final user = ref.watch(currentUserProvider);
-    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -1825,7 +1814,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             : Center(
                 child: Text(
                   AppLocalizations.of(context)!.dashboardSelectPlanToSeeNotifications,
-                  style: TextStyle(color: Colors.grey.shade400),
+                  style: TextStyle(color: Colors.white70),
                 ),
               );
         break;
@@ -1968,10 +1957,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         onSaved: (updatedAccommodation) async {
           final accommodationService = ref.read(accommodationServiceProvider);
           final success = await accommodationService.saveAccommodation(updatedAccommodation);
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
-          if (!success && mounted) {
+          if (!context.mounted) return;
+          Navigator.of(context).pop();
+          if (!success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Error al guardar el alojamiento. Por favor, inténtalo de nuevo.'),
@@ -1984,10 +1972,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         onDeleted: (accommodationId) async {
           final accommodationService = ref.read(accommodationServiceProvider);
           final success = await accommodationService.deleteAccommodation(accommodationId);
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
-          if (!success && mounted) {
+          if (!context.mounted) return;
+          Navigator.of(context).pop();
+          if (!success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Error al eliminar el alojamiento. Por favor, inténtalo de nuevo.'),
@@ -2053,7 +2040,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   hintText: AppLocalizations.of(context)!.dashboardIntroduceEmail,
                   hintStyle: AppTypography.interactiveStyle.copyWith(
                     fontSize: 14,
-                    color: Colors.grey.shade500,
+                    color: Colors.white60,
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -2172,7 +2159,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       loc.dashboardInvitationsPendingCount(invitations.length),
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: _isWeb ? const Color(0xFF475569) : Colors.grey.shade300,
+                        color: _isWeb ? const Color(0xFF475569) : Colors.white70,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

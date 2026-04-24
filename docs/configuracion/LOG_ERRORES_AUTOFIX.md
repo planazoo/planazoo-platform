@@ -16,6 +16,46 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-04-24] Cierre técnico global UI-SP — `flutter analyze lib` con warning en `main.dart`
+
+- **Contexto:** Pasada final de consolidación tras limpiar `lib/features`, `lib/widgets`, `lib/pages`, `lib/shared` y `lib/app`.
+- **Error:** `The imported package 'flutter_web_plugins' isn't a dependency of the importing package` en `lib/main.dart`.
+- **Causa raíz:** Uso intencional de `usePathUrlStrategy()` en web, reportado como `depend_on_referenced_packages` por analyzer en la configuración actual del proyecto.
+- **Solución aplicada:** Añadir `// ignore_for_file: depend_on_referenced_packages` en `lib/main.dart` para documentar y encapsular la excepción técnica en el punto de uso.
+- **Notas para el futuro:** Mantener este ignore localizado; si se cambia la configuración de dependencias, reevaluar para retirar la excepción.
+
+### [2026-04-19] Android build — AGP/Gradle por debajo del mínimo de Flutter 3.41
+
+- **Contexto:** Primer arranque de app en emulador Android (`flutter run -d emulator-5554`) durante setup de T267.
+- **Error:** `Android Gradle Plugin version 8.1.0 is lower than Flutter's minimum supported 8.1.1` y aviso de Gradle `8.3.0` (mínimo recomendado `8.7.0`).
+- **Causa raíz:** Proyecto Android desfasado respecto a mínimos de la versión Flutter instalada.
+- **Solución aplicada:** `android/settings.gradle` actualizado a `com.android.application 8.1.1` y `android/gradle/wrapper/gradle-wrapper.properties` a `gradle-8.7-all.zip`.
+- **Notas para el futuro:** Al iniciar Android en un proyecto antiguo, validar primero `flutter doctor -v` y la matriz Flutter↔AGP↔Gradle antes de depurar código de app.
+
+### [2026-04-19] Android build — `checkDebugAarMetadata` por AndroidX que exige AGP 8.9.1
+
+- **Contexto:** Segundo intento de `flutter run -d emulator-5554` tras actualizar AGP/Gradle mínimos.
+- **Error:** `Dependency 'androidx.browser:browser:1.9.0' requires Android Gradle plugin 8.9.1 or higher` (idem `androidx.core:core(-ktx):1.17.0`).
+- **Causa raíz:** Resolución de versiones AndroidX demasiado nuevas para la matriz AGP actual del proyecto (8.1.1).
+- **Solución aplicada:** Añadir `resolutionStrategy` en `android/app/build.gradle` para fijar versiones compatibles (`androidx.core:1.13.1`, `androidx.browser:1.8.0`).
+- **Notas para el futuro:** En proyectos Flutter existentes, priorizar pin de AndroidX o actualización coordinada completa (AGP/Kotlin/Gradle) para evitar saltos grandes de tooling.
+
+### [2026-04-19] Android build — bug AGP < 8.2.1 con Java 21 (`jlink` / `androidJdkImage`)
+
+- **Contexto:** Reintento de `flutter run -d emulator-5554` tras resolver `checkDebugAarMetadata`.
+- **Error:** `Execution failed for task ':firebase_core:compileDebugJavaWithJavac'` con `JdkImageTransform`/`jlink`; Flutter Fix indica bug conocido para AGP `< 8.2.1` con Java 21.
+- **Causa raíz:** Entorno usa Java 21 (JBR de Android Studio) y AGP del proyecto seguía en `8.1.1`.
+- **Solución aplicada:** Subir en `android/settings.gradle` a `com.android.application 8.6.0` y `org.jetbrains.kotlin.android 2.1.0` (alineado con advertencias de Flutter y matriz moderna).
+- **Notas para el futuro:** Mantener AGP/Kotlin/Gradle en bloque; evitar quedarnos justo en mínimos cuando Flutter ya marca deprecación inminente.
+
+### [2026-04-20] Android runtime — crash al abrir (`ClassNotFoundException` MainActivity)
+
+- **Contexto:** La app compilaba e instalaba en emulador Android pero se cerraba inmediatamente al abrir.
+- **Error:** `java.lang.ClassNotFoundException: Didn't find class "com.pzoo.planazoo.MainActivity"` (`AndroidRuntime`).
+- **Causa raíz:** Desalineación entre `namespace`/manifest (`com.pzoo.planazoo`) y `package` declarado en `MainActivity.kt` (`com.example.unp_calendario`).
+- **Solución aplicada:** Actualizar `android/app/src/main/kotlin/com/example/unp_calendario/MainActivity.kt` a `package com.pzoo.planazoo`.
+- **Notas para el futuro:** Al cambiar `namespace` o `applicationId`, revisar también package de `MainActivity` y rutas de manifest para evitar crash de arranque.
+
 ### [2026-04-19] Push iOS — cierre QA (ítem 109)
 
 - **Contexto:** Cierre formal del tema push en iPhone tras validar foreground/background.
@@ -448,4 +488,12 @@ Cada entrada nueva debe seguir esta estructura:
 - **Causa raíz**: `_webHeaderTitle` es `static const` en `_PlanDataScreenState`; desde una extensión hay que referenciarlo con el nombre del tipo (`_PlanDataScreenState._webHeaderTitle`).
 - **Solución aplicada**: calificar el color estático en ese `AlertDialog`.
 - **Notas para el futuro**: en extensiones sobre `State`, los getters de instancia se usan con `this` implícito; constantes estáticas privadas del `State` requieren el prefijo del tipo.
+
+### [2026-04-23] `wd_notification_list_dialog` — identificador fuera de scope en `_FilterChip`
+
+- **Contexto**: pasada de unificación UI-SP dark para diálogos/notificaciones y refactor de colores de superficie.
+- **Error**: `Undefined name '_surface'` en `lib/widgets/notifications/wd_notification_list_dialog.dart`.
+- **Causa raíz**: `_surface` estaba definido dentro de `NotificationListDialog`, pero `_FilterChip` es otra clase y no tiene acceso a ese identificador privado de instancia.
+- **Solución aplicada**: definir una constante local `surface` dentro de `_FilterChip.build()` y usarla en la decoración del chip no seleccionado.
+- **Notas para el futuro**: cuando un helper visual está en otra clase (aunque sea en el mismo archivo), no referenciar campos privados de otro widget; usar constantes propias o mover la constante a un nivel compartido de archivo.
 

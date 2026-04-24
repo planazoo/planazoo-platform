@@ -61,7 +61,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade900,
+        backgroundColor: const Color(0xFF111827),
         body: SafeArea(
           child: Stack(
             children: [
@@ -70,25 +70,59 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Center(
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 480),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                              // Título "Planazoo" centrado
+                    child: Card(
+                      color: const Color(0xFF1F2937),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Center(
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: 'planaz',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 32,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.1,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: 'oo',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 32,
+                                          color: AppColorScheme.color2,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
                               Center(
                                 child: Text(
-                                  AppLocalizations.of(context)!.appTitle,
+                                  AppLocalizations.of(context)!.loginSubtitle,
                                   style: GoogleFonts.poppins(
-                                    fontSize: 32,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.1,
+                                    color: Colors.white70,
+                                    fontSize: 13,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 40),
+                              const SizedBox(height: 28),
                               // Campo de email
                               _buildEmailField(),
                               const SizedBox(height: 20),
@@ -149,35 +183,49 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               // Divider
                               Row(
                                 children: [
-                                  Expanded(child: Divider(color: Colors.grey.shade700)),
+                                  Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.12))),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 16),
                                     child: Text(
-                                      'o',
+                                      Localizations.localeOf(context).languageCode == 'en' ? 'or' : 'o',
                                       style: GoogleFonts.poppins(
-                                        color: Colors.grey.shade400,
+                                        color: Colors.white70,
                                         fontSize: 14,
                                       ),
                                     ),
                                   ),
-                                  Expanded(child: Divider(color: Colors.grey.shade700)),
+                                  Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.12))),
                                 ],
                               ),
                               const SizedBox(height: 24),
-                              Align(
-                                alignment: Alignment.center,
-                                child: TextButton.icon(
-                                  onPressed: () => Navigator.of(context).pushNamed('/help'),
-                                  icon: Icon(Icons.help_outline, color: AppColorScheme.color2, size: 18),
-                                  label: Text(
-                                    AppLocalizations.of(context)!.helpManualOpenFromLogin,
-                                    style: GoogleFonts.poppins(
-                                      color: AppColorScheme.color2,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () => Navigator.of(context).pushNamed('/help'),
+                                    icon: Icon(Icons.help_outline, color: Colors.white60, size: 16),
+                                    label: Text(
+                                      AppLocalizations.of(context)!.helpManualOpenFromLogin,
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white60,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
-                                ),
+                                  TextButton.icon(
+                                    onPressed: () => Navigator.of(context).pushNamed('/demo/ui-review'),
+                                    icon: Icon(Icons.design_services_outlined, color: Colors.white54, size: 16),
+                                    label: Text(
+                                      'UI Review Hub',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white54,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 8),
                               // Botón de Google Sign-In
@@ -188,6 +236,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               const SizedBox(height: 32),
                             ],
                           ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -198,15 +248,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 right: 16,
                 child: const LanguageSelector(),
               ),
-              if (authState.status == AuthStatus.loading && authState.isLoading)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.2),
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
@@ -267,24 +308,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: const Color(0xFF1F2937), // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.35),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 6,
-            offset: const Offset(0, 1),
-            spreadRadius: -2,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -309,19 +343,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           labelText: AppLocalizations.of(context)!.emailOrUsernameLabel,
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade400,
+            color: Colors.white70,
             fontWeight: FontWeight.w500,
           ),
           hintText: AppLocalizations.of(context)!.emailOrUsernameHint,
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade500,
+            color: Colors.white60,
           ),
           prefixIcon: Icon(
             isEmail ? Icons.email_outlined : Icons.alternate_email,
             color: _emailController.text.isNotEmpty
                 ? AppColorScheme.color2
-                : Colors.grey.shade400,
+                : Colors.white70,
           ),
           suffixIcon: textFieldClearSuffix(
             _emailController,
@@ -377,21 +411,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget _buildPasswordField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: const Color(0xFF1F2937), // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 12,
             offset: const Offset(0, 3),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 6,
             offset: const Offset(0, 1),
             spreadRadius: -2,
@@ -422,19 +456,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           labelText: AppLocalizations.of(context)!.passwordLabel,
           labelStyle: GoogleFonts.poppins(
             fontSize: 13,
-            color: Colors.grey.shade400,
+            color: Colors.white70,
             fontWeight: FontWeight.w500,
           ),
           hintText: AppLocalizations.of(context)!.passwordHint,
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade500,
+            color: Colors.white60,
           ),
           prefixIcon: Icon(
             Icons.lock_outlined,
             color: _passwordController.text.isNotEmpty && _passwordController.text.length >= 6
                 ? AppColorScheme.color2
-                : Colors.grey.shade400,
+                : Colors.white70,
           ),
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
@@ -446,7 +480,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey.shade400,
+                  color: Colors.white70,
                 ),
                 onPressed: () {
                   setState(() {
@@ -487,7 +521,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         if (value == null || value.isEmpty) {
           return AppLocalizations.of(context)!.passwordRequired;
         }
-        if (value.length < 6) {
+        if (value.length < 8) {
           return AppLocalizations.of(context)!.passwordMinLength;
         }
         return null;
@@ -500,24 +534,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: const Color(0xFF1F2937), // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.35),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 6,
-            offset: const Offset(0, 1),
-            spreadRadius: -2,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -541,9 +568,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               )
             : _buildGoogleIcon(),
         label: Text(
-          isLoading
-              ? 'Iniciando…'
-              : AppLocalizations.of(context)!.continueWithGoogle,
+          AppLocalizations.of(context)!.continueWithGoogle,
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w600,
@@ -563,16 +588,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: AppColorScheme.color2.withOpacity(0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
+            color: AppColorScheme.color2.withValues(alpha: 0.25),
+            blurRadius: 10,
             offset: const Offset(0, 2),
-            spreadRadius: -2,
           ),
         ],
       ),
@@ -626,15 +644,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800, // Color sólido, sin gradiente
+        color: const Color(0xFF1F2937), // Color sólido, sin gradiente
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: Colors.grey.shade700.withOpacity(0.5),
+          color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -647,7 +665,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             child: Text(
               '${AppLocalizations.of(context)!.noAccount} ',
               style: GoogleFonts.poppins(
-                color: Colors.grey.shade400,
+                color: Colors.white70,
                 fontSize: 14,
               ),
             ),
@@ -768,10 +786,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     showDialog(
       context: context,
-      builder: (context) => Theme(
+      builder: (dialogContext) => Theme(
         data: AppTheme.darkTheme,
         child: AlertDialog(
-          backgroundColor: Colors.grey.shade800,
+          backgroundColor: const Color(0xFF1F2937),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          ),
           title: Row(
             children: [
               Icon(Icons.email_outlined, color: Colors.orange.shade400),
@@ -796,31 +818,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   AppLocalizations.of(context)!.resendVerificationMessage,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
-                    color: Colors.grey.shade400,
+                    color: Colors.white70,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.grey.shade800,
-                        const Color(0xFF2C2C2C),
-                      ],
-                    ),
+                    color: Colors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.grey.shade700.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.35),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                        spreadRadius: 0,
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -834,18 +848,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       fontWeight: FontWeight.w500,
                     ),
                     decoration: InputDecoration(
-                      labelText: 'Email',
+                      labelText: AppLocalizations.of(context)!.emailLabel,
                       labelStyle: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: Colors.grey.shade400,
+                        color: Colors.white70,
                         fontWeight: FontWeight.w500,
                       ),
-                      hintText: 'tu@email.com',
+                      hintText: AppLocalizations.of(context)!.emailHint,
                       hintStyle: GoogleFonts.poppins(
                         fontSize: 14,
-                        color: Colors.grey.shade500,
+                        color: Colors.white60,
                       ),
-                      prefixIcon: Icon(Icons.email_outlined, color: Colors.grey.shade400),
+                      prefixIcon: Icon(Icons.email_outlined, color: Colors.white70),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
@@ -879,25 +893,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 const SizedBox(height: 12),
                 Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.grey.shade800,
-                        const Color(0xFF2C2C2C),
-                      ],
-                    ),
+                    color: Colors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.grey.shade700.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.35),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                        spreadRadius: 0,
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -911,18 +917,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       fontWeight: FontWeight.w500,
                     ),
                     decoration: InputDecoration(
-                      labelText: 'Contraseña',
+                      labelText: AppLocalizations.of(context)!.passwordLabel,
                       labelStyle: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: Colors.grey.shade400,
+                        color: Colors.white70,
                         fontWeight: FontWeight.w500,
                       ),
-                      hintText: 'Tu contraseña',
+                      hintText: AppLocalizations.of(context)!.passwordHint,
                       hintStyle: GoogleFonts.poppins(
                         fontSize: 14,
-                        color: Colors.grey.shade500,
+                        color: Colors.white60,
                       ),
-                      prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey.shade400),
+                      prefixIcon: Icon(Icons.lock_outlined, color: Colors.white70),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
@@ -957,7 +963,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.grey.shade400,
+              foregroundColor: Colors.white70,
             ),
             child: Text(
               AppLocalizations.of(context)!.cancel,
@@ -969,27 +975,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.orange.shade600,
-                  Colors.orange.shade600.withOpacity(0.85),
-                ],
-              ),
+              color: AppColorScheme.color2,
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.orange.shade600.withOpacity(0.4),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 8,
+                  color: AppColorScheme.color2.withValues(alpha: 0.25),
+                  blurRadius: 10,
                   offset: const Offset(0, 2),
-                  spreadRadius: -2,
                 ),
               ],
             ),
@@ -1003,14 +995,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           passwordController.text,
                         );
 
-                    Navigator.of(context).pop();
+                    if (!mounted || !dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Row(
                           children: [
                             const Icon(Icons.check_circle, color: Colors.white, size: 20),
                             const SizedBox(width: 8),
-                            const Text('Email de verificación reenviado'),
+                            Text(AppLocalizations.of(context)!.emailVerificationSent),
                           ],
                         ),
                         backgroundColor: Colors.green.shade600,
@@ -1024,7 +1017,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     );
                   } catch (e) {
                     // El error se manejará automáticamente por el listener
-                    Navigator.of(context).pop();
+                    if (!mounted || !dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
                   }
                 }
               },
@@ -1059,12 +1053,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     showDialog(
       context: context,
-      builder: (context) => Theme(
+      builder: (dialogContext) => Theme(
         data: AppTheme.darkTheme,
         child: AlertDialog(
-          backgroundColor: Colors.grey.shade800,
+          backgroundColor: const Color(0xFF1F2937),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
           ),
           title: Row(
             children: [
@@ -1094,31 +1089,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 AppLocalizations.of(context)!.forgotPasswordMessage,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: Colors.grey.shade400,
+                  color: Colors.white70,
                 ),
               ),
               const SizedBox(height: 20),
               Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.grey.shade800,
-                      const Color(0xFF2C2C2C),
-                    ],
-                  ),
+                  color: Colors.white.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.grey.shade700.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.35),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 3),
-                      spreadRadius: 0,
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -1131,18 +1118,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: AppLocalizations.of(context)!.emailLabel,
                     labelStyle: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: Colors.grey.shade400,
+                      color: Colors.white70,
                       fontWeight: FontWeight.w500,
                     ),
-                    hintText: 'tu@email.com',
+                    hintText: AppLocalizations.of(context)!.emailHint,
                     hintStyle: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: Colors.grey.shade500,
+                      color: Colors.white60,
                     ),
-                    prefixIcon: Icon(Icons.email_outlined, color: Colors.grey.shade400),
+                    prefixIcon: Icon(Icons.email_outlined, color: Colors.white70),
                     filled: true,
                     fillColor: Colors.transparent,
                     border: OutlineInputBorder(
@@ -1180,7 +1167,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.grey.shade400,
+              foregroundColor: Colors.white70,
             ),
             child: Text(
               AppLocalizations.of(context)!.cancel,
@@ -1192,20 +1179,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
           Container(
             decoration: BoxDecoration(
-        color: AppColorScheme.color2, // Color sólido, sin gradiente
+              color: AppColorScheme.color2,
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: AppColorScheme.color2.withOpacity(0.4),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 8,
+                  color: AppColorScheme.color2.withValues(alpha: 0.25),
+                  blurRadius: 10,
                   offset: const Offset(0, 2),
-                  spreadRadius: -2,
                 ),
               ],
             ),
@@ -1216,14 +1196,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     await ref.read(authNotifierProvider.notifier)
                         .sendPasswordResetEmail(emailController.text.trim());
 
-                    Navigator.of(context).pop();
+                    if (!mounted || !dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Row(
                           children: [
                             const Icon(Icons.check_circle, color: Colors.white, size: 20),
                             const SizedBox(width: 8),
-                            const Text('Email de restablecimiento enviado'),
+                            Text(AppLocalizations.of(context)!.passwordResetSent),
                           ],
                         ),
                         backgroundColor: Colors.green.shade600,
@@ -1237,7 +1218,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     );
                   } catch (e) {
                     // El error se manejará automáticamente por el listener
-                    Navigator.of(context).pop();
+                    if (!mounted || !dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
                   }
                 }
               },

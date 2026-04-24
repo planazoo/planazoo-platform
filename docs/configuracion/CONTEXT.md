@@ -15,8 +15,10 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - `docs/guias/PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
 - `docs/guias/PROMPT_INICIO_CHAT.md` - Texto para pegar al iniciar un chat nuevo (cargar contexto y normas)
 - `docs/guias/PROMPT_TRABAJO_AUTONOMO.md` - Prompt para sesiones autónomas (revisión doc/código, limpieza)
+- `docs/guias/GUIA_UI.md` - **Documento canónico único de UI** (reglas visuales + tokenización estricta)
 - `docs/configuracion/FASTLANE_IOS_APPSTORE.md` - **Publicación iOS (TestFlight / App Store):** `flutter build ipa`, `fastlane beta`, contraseña específica de apps (`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`), errores típicos de firma y subida
 - `docs/configuracion/FASTLANE_IOS_CHECKLIST.md` - Checklist paso a paso para la primera publicación iOS
+- `docs/configuracion/SETUP_ANDROID_LOCAL.md` - **Arranque Android local (SDK, dispositivo/emulador, `flutter run`)** y smoke test inicial
 - `docs/flujos/FLUJO_NOTAS_PLAN.md` - **Flujo implementado** de Notas del plan (común/personal, preparación, permisos)
 - `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md` - **Especificación de producto** de Notas del plan (T262 en progreso; roadmap de plantillas y cierre)
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
@@ -61,7 +63,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 ### 5) UI/UX y Calidad
 - **⚠️ Estilo Base:** La aplicación Planazoo utiliza una UI oscura por defecto. No es un "modo oscuro" opcional, sino el diseño estándar de la app. Consultar `docs/ux/estilos/ESTILO_SOFISTICADO.md` (renombrado a "Estilo Base") para detalles.
-- **⚠️ Consistencia Web e iOS:** Todos los cambios de UI y flujos han de aplicarse y verse de forma coherente en web y en iOS (ver sección 6, norma "Consistencia Web e iOS").
+- **⚠️ Consistencia Web/iOS/Android:** Todos los cambios de UI y flujos han de aplicarse y verse de forma coherente en web, iOS y Android (ver sección 6, norma de consistencia multi-plataforma).
 - **⚠️ Excepción documentada (Calendario):** El **drag & drop de eventos** se mantiene **solo en Web/Dashboard**. En iOS/Android (móvil) la edición de eventos se realiza por tap + diálogo. Tratar esta diferencia como decisión de producto explícita.
 - **⚡ Regla de proximidad de acciones (obligatoria):** Diseñar navegación y accesos para que las opciones más usadas estén a **1 click/tap** desde la pantalla actual; el resto de acciones relevantes deben estar, como máximo, a **2 clicks/taps**. Antes de añadir pasos extra, priorizar accesos rápidos, acciones contextuales y reducción de fricción.
 - Mantener UI consistente: tamaños, tipografías, colores según `AppColorScheme` y el Estilo Base.
@@ -82,9 +84,9 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
   - **Excepciones:** Solo se permite hardcodear textos técnicos/debug que nunca se muestran al usuario
   - **Ver T158:** Sistema multi-idioma en progreso (~65% completado). Consultar `docs/tareas/TASKS.md` para estado actual
 - **Multi-plataforma:** App soporta Web + iOS + Android. Verificar compatibilidad de plugins/APIs en las 3 plataformas antes de usar. Priorizar soluciones cross-platform. Consultar `docs/arquitectura/PLATFORM_STRATEGY.md` para estrategia de desarrollo multi-plataforma.
-- **⚠️ Consistencia Web e iOS (obligatorio):** A partir de ahora, **todos los cambios** (UI, flujos, funcionalidad, iconos, navegación) han de ser **consistentes en web y en iOS** (y en Android cuando aplique). No introducir comportamiento, diseño o elementos que solo existan o se vean en una plataforma sin replicarlos en las demás. Al implementar una funcionalidad nueva o modificar una existente, verificar y ajustar tanto la experiencia web como la móvil (p. ej. lista de planes, barra inferior, cards, modales).
+- **⚠️ Consistencia Web/iOS/Android (obligatorio):** A partir de ahora, **todos los cambios** (UI, flujos, funcionalidad, iconos, navegación) han de ser **consistentes en web, iOS y Android**. No introducir comportamiento, diseño o elementos que solo existan o se vean en una plataforma sin replicarlos en las demás salvo decisión explícita documentada. Al implementar una funcionalidad nueva o modificar una existente, verificar y ajustar tanto la experiencia web como la móvil en ambas plataformas.
 - **Offline-First (móvil):** Criterios y datos locales en Hive: `docs/testing/TESTING_OFFLINE_FIRST.md`. En web la prioridad es distinta (sin las mismas boxes).
-- **UI/UX:** Consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar siempre `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons` para mantener consistencia. Documentar componentes nuevos en la guía.
+- **UI/UX:** Consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Es el documento principal y único para reglas UI y tokenización.
 - **Seguridad:** Consultar `docs/guias/GUIA_SEGURIDAD.md` antes de implementar funcionalidades y verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
 - **Patrón Común/Personal:** Consultar `docs/guias/GUIA_PATRON_COMUN_PERSONAL.md` para implementar eventos y alojamientos con información compartida e individual por participante. Usar EventCommonPart/EventPersonalPart y AccommodationCommonPart/AccommodationPersonalPart.
 - **Flujos de Proceso:** Consular flujos en `docs/flujos/` antes de tomar decisiones o implementar funcionalidades:
@@ -157,5 +159,5 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 Mantenemos este documento corto y de alto impacto. Cualquier nueva norma estable se añade aquí.
 
-*Última actualización: Marzo 2026 (normas: consistencia web e iOS; publicación iOS §10.1; T262 notas del plan enlazado en documentos complementarios).*
+*Última actualización: Abril 2026 (consistencia web/iOS/Android + guía setup Android local enlazada).*
 

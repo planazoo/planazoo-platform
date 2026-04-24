@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,7 +14,7 @@ void showPlansWithUnreadChatModal({
 }) {
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900,
+    backgroundColor: const Color(0xFF111827),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -30,6 +29,7 @@ void showPlansWithUnreadChatModal({
 }
 
 class _PlansWithUnreadChatModal extends ConsumerWidget {
+  static const Color _pageBg = Color(0xFF111827);
   final List<Plan> plans;
   final void Function(Plan plan) onPlanSelected;
 
@@ -56,51 +56,59 @@ class _PlansWithUnreadChatModal extends ConsumerWidget {
       maxChildSize: 0.9,
       expand: false,
       builder: (context, scrollController) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                loc.dashboardTabChat,
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+        return Container(
+          decoration: const BoxDecoration(
+            color: _pageBg,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 10, bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(99),
                 ),
               ),
-            ),
-            Divider(
-              height: 1,
-              color: kIsWeb ? const Color(0xFFE2E8F0) : Colors.grey.shade700,
-            ),
-            Flexible(
-              child: withUnread.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        loc.notificationsEmpty,
-                        style: GoogleFonts.poppins(
-                          color: kIsWeb
-                              ? const Color(0xFF64748B)
-                              : Colors.grey.shade400,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Text(
+                  loc.dashboardTabChat,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const Divider(height: 1, color: Colors.white12),
+              Flexible(
+                child: withUnread.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          loc.notificationsEmpty,
+                          style: GoogleFonts.poppins(color: Colors.white60),
                         ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        shrinkWrap: true,
+                        itemCount: withUnread.length,
+                        itemBuilder: (context, index) {
+                          final plan = withUnread[index];
+                          return _PlanUnreadTile(
+                            plan: plan,
+                            onTap: () => onPlanSelected(plan),
+                          );
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      controller: scrollController,
-                      shrinkWrap: true,
-                      itemCount: withUnread.length,
-                      itemBuilder: (context, index) {
-                        final plan = withUnread[index];
-                        return _PlanUnreadTile(
-                          plan: plan,
-                          onTap: () => onPlanSelected(plan),
-                        );
-                      },
-                    ),
-            ),
-          ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -108,6 +116,7 @@ class _PlansWithUnreadChatModal extends ConsumerWidget {
 }
 
 class _PlanUnreadTile extends ConsumerWidget {
+  static const Color _surface = Color(0xFF1F2937);
   final Plan plan;
   final VoidCallback onTap;
 
@@ -124,19 +133,48 @@ class _PlanUnreadTile extends ConsumerWidget {
 
     if (count == 0) return const SizedBox.shrink();
 
-    return ListTile(
-      title: Text(
-        plan.name,
-        style: GoogleFonts.poppins(
-          color: kIsWeb ? const Color(0xFF0F172A) : Colors.white,
-          fontWeight: FontWeight.w500,
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: ListTile(
+        title: Text(
+          plan.name,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$count',
+                style: GoogleFonts.poppins(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.chevron_right,
+              color: Colors.white60,
+            ),
+          ],
+        ),
+        onTap: onTap,
       ),
-      trailing: Icon(
-        Icons.chevron_right,
-        color: kIsWeb ? const Color(0xFF64748B) : Colors.grey.shade400,
-      ),
-      onTap: onTap,
     );
   }
 }

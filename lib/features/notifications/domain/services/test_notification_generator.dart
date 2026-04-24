@@ -4,7 +4,6 @@ import 'package:crypto/crypto.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
 import '../../../calendar/domain/models/plan_invitation.dart';
-import '../../../calendar/domain/models/pending_email_event.dart';
 import '../../../calendar/domain/services/plan_service.dart';
 
 /// Genera notificaciones de prueba de todos los tipos y para varios planes.

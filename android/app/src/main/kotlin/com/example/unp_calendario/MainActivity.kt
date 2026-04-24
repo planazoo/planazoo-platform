@@ -1,4 +1,4 @@
-package com.example.unp_calendario
+package com.pzoo.planazoo
 
 import io.flutter.embedding.android.FlutterActivity
 

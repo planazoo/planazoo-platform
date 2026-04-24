@@ -23,7 +23,7 @@ class ProfilePage extends ConsumerWidget {
     final appLocalizations = AppLocalizations.of(context)!;
 
     // Método para formatear fechas
-    String _formatDate(DateTime date) {
+    String formatDate(DateTime date) {
       return '${date.day}/${date.month}/${date.year}';
     }
 
@@ -151,22 +151,22 @@ class ProfilePage extends ConsumerWidget {
                                   Text(
                                     currentUser.email,
                                     style: AppTypography.bodyStyle.copyWith(
-                                      color: Colors.grey.shade600,
+                                      color: Colors.white60,
                                       fontSize: 14,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    appLocalizations.profileMemberSince(_formatDate(currentUser.createdAt)),
+                                    appLocalizations.profileMemberSince(formatDate(currentUser.createdAt)),
                                     style: AppTypography.caption.copyWith(
-                                      color: Colors.grey.shade500,
+                                      color: Colors.white60,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     appLocalizations.profileCurrentTimezone(currentTimezoneDisplay),
                                     style: AppTypography.bodyStyle.copyWith(
-                                      color: Colors.grey.shade600,
+                                      color: Colors.white60,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -283,7 +283,7 @@ class ProfilePage extends ConsumerWidget {
             ),
             Icon(
               Icons.arrow_forward_ios,
-              color: Colors.grey.shade400,
+              color: Colors.white70,
               size: 16,
             ),
           ],
@@ -330,7 +330,7 @@ class ProfilePage extends ConsumerWidget {
             Text(
               subtitle,
               style: AppTypography.bodyStyle.copyWith(
-                color: Colors.grey.shade600,
+                color: Colors.white60,
                 fontSize: 14,
               ),
             ),
@@ -386,7 +386,7 @@ class ProfilePage extends ConsumerWidget {
                 Text(
                   loc.profileTimezoneDialogDescription(selectedDisplay),
                   style: AppTypography.bodyStyle.copyWith(
-                    color: Colors.grey.shade600,
+                    color: Colors.white60,
                     fontSize: 13,
                   ),
                 ),
@@ -402,7 +402,7 @@ class ProfilePage extends ConsumerWidget {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.08),
+                        color: Colors.blue.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -444,7 +444,7 @@ class ProfilePage extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
-                    fillColor: Colors.grey.shade100,
+                    fillColor: Colors.white.withValues(alpha: 0.08),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -461,37 +461,37 @@ class ProfilePage extends ConsumerWidget {
                           child: Text(
                             loc.profileTimezoneDialogNoResults,
                             style: AppTypography.bodyStyle.copyWith(
-                              color: Colors.grey.shade600,
+                              color: Colors.white60,
                             ),
                           ),
                         )
-                      : ListView.separated(
-                          itemCount: filteredTimezones.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final timezone = filteredTimezones[index];
-                            final displayName = TimezoneService.getTimezoneDisplayName(timezone);
-                            return RadioListTile<String>(
-                              value: timezone,
-                              groupValue: selectedTimezone,
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() {
-                                    selectedTimezone = value;
-                                  });
-                                }
-                              },
-                              title: Text(displayName),
-                              subtitle: timezone == systemTimezone
-                                  ? Text(
-                                      loc.profileTimezoneDialogSystemTag,
-                                      style: AppTypography.caption.copyWith(
-                                        color: Colors.blueGrey.shade700,
-                                      ),
-                                    )
-                                  : null,
-                            );
+                      : RadioGroup<String>(
+                          groupValue: selectedTimezone,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedTimezone = value ?? selectedTimezone;
+                            });
                           },
+                          child: ListView.separated(
+                            itemCount: filteredTimezones.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final timezone = filteredTimezones[index];
+                              final displayName = TimezoneService.getTimezoneDisplayName(timezone);
+                              return RadioListTile<String>(
+                                value: timezone,
+                                title: Text(displayName),
+                                subtitle: timezone == systemTimezone
+                                    ? Text(
+                                        loc.profileTimezoneDialogSystemTag,
+                                        style: AppTypography.caption.copyWith(
+                                          color: Colors.blueGrey.shade700,
+                                        ),
+                                      )
+                                    : null,
+                              );
+                            },
+                          ),
                         ),
                 ),
               ],
@@ -624,7 +624,7 @@ class ProfilePage extends ConsumerWidget {
                   Text(
                     loc.changePasswordSubtitle,
                     style: AppTypography.bodyStyle.copyWith(
-                      color: Colors.grey.shade600,
+                      color: Colors.white60,
                       fontSize: 13,
                     ),
                   ),
@@ -823,17 +823,21 @@ class ProfilePage extends ConsumerWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              RadioListTile<String>(
-                value: 'es',
+              RadioGroup<String>(
                 groupValue: selectedLanguageCode,
-                title: Text(loc.profileLanguageOptionSpanish),
                 onChanged: (value) => setState(() => selectedLanguageCode = value ?? selectedLanguageCode),
-              ),
-              RadioListTile<String>(
-                value: 'en',
-                groupValue: selectedLanguageCode,
-                title: Text(loc.profileLanguageOptionEnglish),
-                onChanged: (value) => setState(() => selectedLanguageCode = value ?? selectedLanguageCode),
+                child: Column(
+                  children: [
+                    RadioListTile<String>(
+                      value: 'es',
+                      title: Text(loc.profileLanguageOptionSpanish),
+                    ),
+                    RadioListTile<String>(
+                      value: 'en',
+                      title: Text(loc.profileLanguageOptionEnglish),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

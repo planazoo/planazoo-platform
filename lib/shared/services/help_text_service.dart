@@ -21,7 +21,11 @@ class HelpTextService {
   Future<SharedPreferences?> _getPrefs() async {
     if (_prefs != null) return _prefs;
     if (_resolvedPrefs != null) return _resolvedPrefs;
-    _resolvedPrefs = await SharedPreferences.getInstance().catchError((_) => null);
+    try {
+      _resolvedPrefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      _resolvedPrefs = null;
+    }
     return _resolvedPrefs;
   }
 

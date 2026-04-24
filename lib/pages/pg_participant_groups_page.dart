@@ -5,10 +5,13 @@ import 'package:unp_calendario/features/calendar/presentation/providers/particip
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/dialogs/group_edit_dialog.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/app/theme/color_scheme.dart';
 
 /// T123: Página para gestionar grupos de participantes
 class ParticipantGroupsPage extends ConsumerWidget {
   const ParticipantGroupsPage({super.key});
+  static const Color _pageBg = Color(0xFF111827);
+  static const Color _surface = Color(0xFF1F2937);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,13 +20,17 @@ class ParticipantGroupsPage extends ConsumerWidget {
     
     if (currentUser == null) {
       return Scaffold(
+        backgroundColor: _pageBg,
         appBar: AppBar(
           title: const Text('Grupos de Participantes'),
-          backgroundColor: Colors.blue,
+          backgroundColor: AppColorScheme.color2,
           foregroundColor: Colors.white,
         ),
         body: const Center(
-          child: Text('Debes iniciar sesión para gestionar grupos'),
+          child: Text(
+            'Debes iniciar sesión para gestionar grupos',
+            style: TextStyle(color: Colors.white70),
+          ),
         ),
       );
     }
@@ -31,9 +38,10 @@ class ParticipantGroupsPage extends ConsumerWidget {
     final groupsAsync = ref.watch(userGroupsStreamProvider(currentUser.id));
 
     return Scaffold(
+      backgroundColor: _pageBg,
       appBar: AppBar(
         title: const Text('Grupos de Participantes'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppColorScheme.color2,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -50,13 +58,13 @@ class ParticipantGroupsPage extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.group_add, size: 64, color: Colors.grey.shade400),
+                  Icon(Icons.group_add, size: 64, color: Colors.white60),
                   const SizedBox(height: 16),
                   Text(
                     'No tienes grupos creados',
                     style: TextStyle(
                       fontSize: 18,
-                      color: Colors.grey.shade600,
+                      color: Colors.white70,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -64,7 +72,7 @@ class ParticipantGroupsPage extends ConsumerWidget {
                     'Crea un grupo para invitar múltiples personas a la vez',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey.shade500,
+                      color: Colors.white60,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -99,7 +107,7 @@ class ParticipantGroupsPage extends ConsumerWidget {
                 'Error al cargar grupos',
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.grey.shade600,
+                  color: Colors.white70,
                 ),
               ),
               const SizedBox(height: 8),
@@ -107,7 +115,7 @@ class ParticipantGroupsPage extends ConsumerWidget {
                 error.toString(),
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade500,
+                  color: Colors.white60,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -121,7 +129,12 @@ class ParticipantGroupsPage extends ConsumerWidget {
   Widget _buildGroupCard(BuildContext context, WidgetRef ref, ParticipantGroup group) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      color: _surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: _getGroupColor(group),
@@ -138,6 +151,7 @@ class ParticipantGroupsPage extends ConsumerWidget {
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
+            color: Colors.white,
           ),
         ),
         subtitle: Column(
@@ -150,7 +164,7 @@ class ParticipantGroupsPage extends ConsumerWidget {
                   group.description!,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey.shade600,
+                    color: Colors.white70,
                   ),
                 ),
               ),
@@ -159,7 +173,7 @@ class ParticipantGroupsPage extends ConsumerWidget {
               '${group.totalMembers} miembro${group.totalMembers != 1 ? 's' : ''}',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade500,
+                color: Colors.white60,
               ),
             ),
           ],

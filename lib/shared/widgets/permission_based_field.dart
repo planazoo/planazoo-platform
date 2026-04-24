@@ -121,9 +121,9 @@ class PermissionInfoWidget extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _getRoleColor(userPermissions!.role).withOpacity(0.1),
+        color: _getRoleColor(userPermissions!.role).withValues(alpha: 0.1),
         border: Border.all(
-          color: _getRoleColor(userPermissions!.role).withOpacity(0.3),
+          color: _getRoleColor(userPermissions!.role).withValues(alpha: 0.3),
         ),
         borderRadius: BorderRadius.circular(8),
       ),
@@ -285,21 +285,21 @@ class PermissionBasedTextField extends StatelessWidget {
         ),
         border: OutlineInputBorder(
           borderSide: BorderSide(
-            color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+            color: canEdit ? Colors.green.shade300 : Colors.white70,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(
-            color: canEdit ? Colors.green.shade300 : Colors.grey.shade300,
+            color: canEdit ? Colors.green.shade300 : Colors.white70,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(
-            color: canEdit ? Colors.green.shade500 : Colors.grey.shade400,
+            color: canEdit ? Colors.green.shade500 : Colors.white70,
           ),
         ),
         filled: true,
-        fillColor: canEdit ? Colors.green.shade50 : Colors.grey.shade50,
+        fillColor: canEdit ? Colors.green.shade50 : Colors.white.withValues(alpha: 0.06),
       ),
     );
   }

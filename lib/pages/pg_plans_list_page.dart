@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
-import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
-import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
-import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
-import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
-import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/widgets/plan/plan_calendar_view.dart';
@@ -21,14 +15,12 @@ import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/features/security/utils/sanitizer.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
-import 'package:unp_calendario/widgets/notifications/wd_notification_badge.dart';
-import 'package:unp_calendario/shared/services/logger_service.dart';
-import 'package:unp_calendario/widgets/plan/plan_summary_button.dart';
-import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
 import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
+import 'package:unp_calendario/widgets/notifications/wd_notification_list_dialog.dart';
+import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
 import 'package:unp_calendario/widgets/dialogs/wd_plans_with_unread_chat_modal.dart';
-import 'package:unp_calendario/widgets/plan/plan_status_chip_actions.dart';
 
 /// Página de lista de planes para móviles (iOS/Android)
 /// Incluye: barra superior con botón crear plan, búsqueda, filtros, lista y navegación inferior
@@ -40,13 +32,20 @@ class PlansListPage extends ConsumerStatefulWidget {
 }
 
 class _PlansListPageState extends ConsumerState<PlansListPage> {
+  static const Color _cPageBg = Color(0xFF111827);
+  static const Color _cSurfaceBg = Color(0xFF1F2937);
+  static const Color _cTextPrimary = Colors.white;
+  static const Color _cTextSecondary = Colors.white70;
+  static const Color _cTextTertiary = Colors.white60;
+  static const double _aBorderStrong = 0.12;
+
   List<Plan> _allPlans = [];
   List<Plan> _filteredPlans = [];
   String _searchQuery = '';
   String _selectedFilter = 'todos'; // 'todos', 'estoy_in', 'pendientes', 'cerrados'
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _unpIdController = TextEditingController();
-  bool _isCreating = false;
+  final bool _isCreating = false;
   /// Vista lista vs calendario mensual (paridad con web / lista puntos P8).
   bool _useCalendarView = false;
 
@@ -163,11 +162,12 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
         totalChatUnread += ref.watch(unreadMessagesCountProvider(p.id!)).valueOrNull ?? 0;
       }
     }
+    final unreadNotifications = ref.watch(globalUnreadCountProvider).valueOrNull ?? 0;
 
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade900,
+        backgroundColor: _cPageBg,
         appBar: AppBar(
           title: Text(
             loc.appTitle,
@@ -175,53 +175,42 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
               fontSize: 18,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.1,
-              color: Colors.white,
+              color: _cTextPrimary,
             ),
           ),
-          backgroundColor: Colors.grey.shade900,
-          foregroundColor: Colors.white,
+          backgroundColor: _cPageBg,
+          foregroundColor: _cTextPrimary,
           elevation: 0,
           flexibleSpace: Container(
             decoration: BoxDecoration(
-              color: Colors.grey.shade900,
+              color: _cPageBg,
             ),
           ),
           actions: [
             // Botón crear plan (arriba a la derecha)
             Padding(
               padding: const EdgeInsets.only(right: 16),
-              child: GestureDetector(
-                onTap: _showCreatePlanDialog,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-            color: AppColorScheme.color2, // Color sólido, sin gradiente
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColorScheme.color2.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                        spreadRadius: 0,
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                        spreadRadius: -2,
-                      ),
-                    ],
+              child: SizedBox(
+                width: 40,
+                height: 40,
+                child: FilledButton(
+                  onPressed: _showCreatePlanDialog,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColorScheme.color2,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: EdgeInsets.zero,
+                    elevation: 0,
                   ),
-                  child: Center(
-                    child: Text(
-                      '+',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                      ),
+                  child: Text(
+                    '+',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
@@ -248,10 +237,13 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                     child: PopupMenuButton<String>(
                       tooltip: loc.plansListFiltersButton,
                       initialValue: _selectedFilter,
-                      color: Colors.grey.shade900,
+                      color: _cSurfaceBg,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: AppColorScheme.color2.withValues(alpha: 0.7), width: 1.5),
+                        side: BorderSide(
+                          color: _cTextPrimary.withValues(alpha: _aBorderStrong),
+                          width: 1,
+                        ),
                       ),
                       onSelected: (value) {
                         setState(() => _selectedFilter = value);
@@ -279,11 +271,11 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                         height: 44,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade800,
+                          color: _cSurfaceBg,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppColorScheme.color2.withValues(alpha: 0.7),
-                            width: 1.5,
+                            color: _cTextPrimary.withValues(alpha: _aBorderStrong),
+                            width: 1,
                           ),
                         ),
                         child: Row(
@@ -300,7 +292,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                                     loc.plansListFiltersButton,
                                     style: GoogleFonts.poppins(
                                       fontSize: 11,
-                                      color: Colors.grey.shade500,
+                                      color: _cTextTertiary,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -308,7 +300,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                                     _filterLabelForSelected(loc),
                                     style: GoogleFonts.poppins(
                                       fontSize: 13,
-                                      color: Colors.white,
+                                      color: _cTextPrimary,
                                       fontWeight: FontWeight.w600,
                                     ),
                                     maxLines: 1,
@@ -317,7 +309,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                                 ],
                               ),
                             ),
-                            Icon(Icons.arrow_drop_down, color: Colors.grey.shade400, size: 22),
+                            Icon(Icons.arrow_drop_down, color: _cTextSecondary, size: 22),
                           ],
                         ),
                       ),
@@ -330,9 +322,11 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                       isSelected: [!_useCalendarView, _useCalendarView],
                       onPressed: (i) => setState(() => _useCalendarView = i == 1),
                       borderRadius: BorderRadius.circular(12),
+                      borderColor: _cTextPrimary.withValues(alpha: _aBorderStrong),
+                      selectedBorderColor: AppColorScheme.color2,
                       selectedColor: Colors.white,
                       fillColor: AppColorScheme.color2,
-                      color: Colors.grey.shade400,
+                      color: _cTextSecondary,
                       constraints: const BoxConstraints(minHeight: 44, minWidth: 48),
                       children: const [
                         Padding(
@@ -362,7 +356,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                           Icon(
                             Icons.calendar_today_outlined,
                             size: 64,
-                            color: Colors.grey.shade600,
+                            color: _cTextTertiary,
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -370,7 +364,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade400,
+                              color: _cTextSecondary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -378,7 +372,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                             loc.plansListCreateFirstPlan,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: Colors.grey.shade500,
+                              color: _cTextTertiary,
                             ),
                           ),
                         ],
@@ -394,7 +388,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                           Icon(
                             Icons.search_off,
                             size: 64,
-                            color: Colors.grey.shade600,
+                            color: _cTextTertiary,
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -402,7 +396,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade400,
+                              color: _cTextSecondary,
                             ),
                           ),
                         ],
@@ -452,7 +446,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade400,
+                          color: _cTextSecondary,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -460,7 +454,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                         error.toString(),
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.grey.shade500,
+                          color: _cTextTertiary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -474,21 +468,10 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
         // Barra inferior con acceso al perfil
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.grey.shade800,
-                const Color(0xFF2C2C2C),
-              ],
+            color: _cPageBg,
+            border: Border(
+              top: BorderSide(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.4),
-                blurRadius: 12,
-                offset: const Offset(0, -3),
-              ),
-            ],
           ),
           child: SafeArea(
             child: Container(
@@ -498,19 +481,18 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Notificaciones (icono naranja si hay no leídas)
-                  const NotificationBadge(
-                    iconColor: Colors.white,
-                    iconSize: 28,
+                  _buildBottomNotificationNavIcon(
+                    context: context,
+                    unreadCount: unreadNotifications,
                   ),
                   const SizedBox(width: 8),
                   // Chat (icono relleno naranja si hay no leídos)
-                  IconButton(
-                    icon: Icon(
-                      totalChatUnread > 0 ? Icons.chat_bubble : Icons.chat_bubble_outline,
-                      size: 28,
-                      color: totalChatUnread > 0 ? AppColorScheme.color3 : Colors.white,
-                    ),
-                    onPressed: () {
+                  _buildBottomNavIcon(
+                    icon: totalChatUnread > 0
+                        ? Icons.chat_bubble
+                        : Icons.chat_bubble_outline,
+                    isActive: totalChatUnread > 0,
+                    onTap: () {
                       showPlansWithUnreadChatModal(
                         context: context,
                         plans: _allPlans,
@@ -526,26 +508,27 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                     tooltip: loc.dashboardTabChat,
                   ),
                   const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.help_outline,
-                      size: 28,
-                      color: Colors.white,
-                    ),
-                    onPressed: () {
+                  _buildBottomNavIcon(
+                    icon: Icons.help_outline,
+                    onTap: () {
                       Navigator.of(context).pushNamed('/help');
                     },
                     tooltip: loc.helpManualOpenFromLogin,
                   ),
                   const SizedBox(width: 8),
+                  // Hub temporal para revisar demos UI
+                  _buildBottomNavIcon(
+                    icon: Icons.design_services_outlined,
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/demo/ui-review');
+                    },
+                    tooltip: 'UI Review Hub',
+                  ),
+                  const SizedBox(width: 8),
                   // Icono de perfil
-                  IconButton(
-                    icon: Icon(
-                      Icons.person,
-                      size: 28,
-                      color: Colors.white,
-                    ),
-                    onPressed: () {
+                  _buildBottomNavIcon(
+                    icon: Icons.person,
+                    onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => const ProfilePage(),
@@ -577,6 +560,107 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
     }
   }
 
+  Widget _buildBottomNavIcon({
+    required VoidCallback onTap,
+    required IconData icon,
+    required String tooltip,
+    bool isActive = false,
+    Color? iconColorOverride,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: isActive ? AppColorScheme.color2 : _cSurfaceBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isActive
+                  ? AppColorScheme.color2
+                  : _cTextPrimary.withValues(alpha: _aBorderStrong),
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: 22,
+            color: iconColorOverride ?? _cTextPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNotificationNavIcon({
+    required BuildContext context,
+    required int unreadCount,
+  }) {
+    final hasUnread = unreadCount > 0;
+    return Tooltip(
+      message: AppLocalizations.of(context)!.notificationsTitle,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (_) => const NotificationListDialog(),
+          );
+        },
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: hasUnread ? AppColorScheme.color2 : _cSurfaceBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: hasUnread
+                  ? AppColorScheme.color2
+                  : _cTextPrimary.withValues(alpha: _aBorderStrong),
+            ),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Center(
+                child: Icon(
+                  Icons.notifications_outlined,
+                  size: 22,
+                  color: _cTextPrimary,
+                ),
+              ),
+              if (hasUnread)
+                Positioned(
+                  right: -2,
+                  top: -2,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: AppColorScheme.color3,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: _cPageBg, width: 1),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      unreadCount > 99 ? '99+' : '$unreadCount',
+                      style: GoogleFonts.poppins(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _filterMenuRow(String label, String filterValue) {
     final selected = _selectedFilter == filterValue;
     return Row(
@@ -592,7 +676,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
             label,
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.white,
+              color: _cTextPrimary,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
@@ -634,177 +718,6 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
     );
   }
 
-  Widget _buildInteractivePlanCardStatusChip(
-    BuildContext context,
-    WidgetRef ref, {
-    required Plan plan,
-    required bool isIn,
-    required bool isOut,
-    required bool isPending,
-    required bool hasPendingInvitation,
-    required bool hasPendingParticipation,
-  }) {
-    final chip = _buildPlanCardStatusChip(context, isIn: isIn, isOut: isOut, isPending: isPending);
-    final uid = ref.read(currentUserProvider)?.id;
-    final pid = plan.id;
-    if (pid == null || uid == null) return chip;
-
-    if (isPending) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => planStatusChipShowPendingActions(
-          context,
-          ref,
-          planId: pid,
-          userId: uid,
-          hasPendingInvitation: hasPendingInvitation,
-          hasPendingParticipation: hasPendingParticipation,
-        ),
-        child: chip,
-      );
-    }
-    if (isIn) {
-      final isOrganizer = plan.userId == uid;
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          if (isOrganizer) {
-            final loc = AppLocalizations.of(context)!;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(loc.planCardOrganizerChipMessage)),
-            );
-          } else {
-            planStatusChipShowLeavePlan(context, ref, plan: plan, userId: uid);
-          }
-        },
-        child: chip,
-      );
-    }
-    if (isOut) {
-      final loc = AppLocalizations.of(context)!;
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(loc.planStatusRejectedSnackbar, style: GoogleFonts.poppins(color: Colors.white)),
-              backgroundColor: Colors.grey.shade800,
-            ),
-          );
-        },
-        child: chip,
-      );
-    }
-    return chip;
-  }
-
-  static const double _cardBadgeIconSize = 20.0;
-  static const double _planCardImageSize = 48.0;
-
-  Widget _buildPlanCardStatusChip(
-    BuildContext context, {
-    required bool isIn,
-    required bool isOut,
-    required bool isPending,
-  }) {
-    String label;
-    Color bg;
-    Color textColor;
-    Color borderColor;
-    if (isPending) {
-      label = '?';
-      bg = PlanUserStatusColors.pendingBg;
-      textColor = PlanUserStatusColors.pendingText;
-      borderColor = PlanUserStatusColors.pendingBorder;
-    } else if (isOut) {
-      label = 'out';
-      bg = PlanUserStatusColors.outBg;
-      textColor = PlanUserStatusColors.outText;
-      borderColor = PlanUserStatusColors.outBorder;
-    } else {
-      label = 'in';
-      bg = PlanUserStatusColors.inBg;
-      textColor = PlanUserStatusColors.inText;
-      borderColor = PlanUserStatusColors.inBorder;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  Widget _buildPlanCardImage(Plan plan) {
-    if (plan.imageUrl != null && ImageService.isValidImageUrl(plan.imageUrl)) {
-      return Container(
-        width: _planCardImageSize,
-        height: _planCardImageSize,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: CachedNetworkImage(
-            imageUrl: plan.imageUrl!,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Container(
-              color: AppColorScheme.color2.withOpacity(0.1),
-              child: const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            ),
-            errorWidget: (context, url, error) => _buildPlanCardPlaceholderImage(),
-          ),
-        ),
-      );
-    }
-    return _buildPlanCardPlaceholderImage();
-  }
-
-  Widget _buildPlanCardPlaceholderImage() {
-    return Container(
-      width: _planCardImageSize,
-      height: _planCardImageSize,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
-        color: AppColorScheme.color2.withOpacity(0.1),
-      ),
-      child: Icon(
-        Icons.image,
-        color: AppColorScheme.color2.withOpacity(0.5),
-        size: 24,
-      ),
-    );
-  }
-
-  Widget _buildPlanCardBadgeIcon({
-    required IconData icon,
-    required Color color,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Icon(icon, size: _cardBadgeIconSize, color: color),
-    );
-  }
 }
 
 // Modal para crear plan (reutilizado de DashboardPage)
@@ -922,7 +835,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
     return Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
-        backgroundColor: Colors.grey.shade800,
+        backgroundColor: const Color(0xFF1F2937),
         title: Text(
           loc.createPlan,
           style: GoogleFonts.poppins(
@@ -942,21 +855,21 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade800, // Color sólido, sin gradiente
+                    color: const Color(0xFF1F2937), // Color sólido, sin gradiente
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.grey.shade700.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
+                        color: Colors.black.withValues(alpha: 0.4),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                         spreadRadius: 0,
                       ),
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 6,
                         offset: const Offset(0, 1),
                         spreadRadius: -2,
@@ -975,15 +888,15 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
                       labelText: loc.createPlanNameLabel,
                       labelStyle: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: Colors.grey.shade400,
+                        color: Colors.white70,
                         fontWeight: FontWeight.w500,
                       ),
                       hintText: loc.createPlanNameHint,
                       hintStyle: GoogleFonts.poppins(
                         fontSize: 14,
-                        color: Colors.grey.shade500,
+                        color: Colors.white60,
                       ),
-                      prefixIcon: Icon(Icons.edit, color: Colors.grey.shade400),
+                      prefixIcon: Icon(Icons.edit, color: Colors.white70),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide.none,
@@ -1027,14 +940,14 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
                       : loc.createPlanUnpIdHeader(widget.unpIdController.text),
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: Colors.grey.shade400,
+                    color: Colors.white70,
                   ),
                 ),
               const SizedBox(height: 16),
               Text(
                 loc.createPlanQuickIntro,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
+                      color: Colors.white60,
                     ),
               ),
             ],
@@ -1045,7 +958,7 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
           TextButton(
             onPressed: _isCreating ? null : () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.grey.shade400,
+              foregroundColor: Colors.white70,
             ),
             child: Text(
               loc.cancel,
@@ -1061,13 +974,13 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: AppColorScheme.color2.withOpacity(0.4),
+                  color: AppColorScheme.color2.withValues(alpha: 0.4),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                   spreadRadius: 0,
                 ),
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                   spreadRadius: -2,

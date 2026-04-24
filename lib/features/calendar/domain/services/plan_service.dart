@@ -8,6 +8,8 @@ import '../models/plan_participation.dart';
 import 'plan_participation_service.dart';
 import 'invitation_service.dart';
 import 'event_participant_service.dart';
+import '../../../auth/domain/services/user_service.dart';
+import '../../../notifications/domain/services/notification_helper.dart';
 import '../../../plan_notes/domain/services/plan_notes_service.dart';
 
 class PlanService {
@@ -297,7 +299,7 @@ class PlanService {
       
       if (success) {
         LoggerService.database(
-          'Plan expanded: ${plan.id} to ${newColumnCount} days',
+          'Plan expanded: ${plan.id} to $newColumnCount days',
           operation: 'UPDATE',
         );
       }
@@ -483,6 +485,29 @@ class PlanService {
         
         if (participationId != null) {
           LoggerService.database('User $userIdOrEmail invited to plan $planId', operation: 'CREATE');
+          try {
+            final userService = UserService();
+            final invitedUser = await userService.getUser(userIdOrEmail);
+            final inviter =
+                invitedBy != null ? await userService.getUser(invitedBy) : null;
+            final plan = await getPlanById(planId);
+            await NotificationHelper().notifyInvitationCreated(
+              planId: planId,
+              invitedUserId: userIdOrEmail,
+              invitedEmail: invitedUser?.email ?? userIdOrEmail,
+              inviterUserId: invitedBy ?? '',
+              invitationToken: '',
+              planName: plan?.name,
+              inviterName: inviter?.displayName ?? inviter?.email,
+            );
+          } catch (e, st) {
+            LoggerService.error(
+              'notifyInvitationCreated tras invite por userId',
+              context: 'PLAN_SERVICE',
+              error: e,
+              stackTrace: st,
+            );
+          }
           return true;
         }
         return false;

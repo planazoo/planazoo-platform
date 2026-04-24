@@ -13,13 +13,13 @@ class PlanLocalService extends LocalStorageService<Plan> {
     final firestoreMap = plan.toFirestore();
     
     // Función recursiva para convertir Timestamps a strings ISO
-    dynamic _convertTimestamp(dynamic value) {
+    dynamic convertTimestamp(dynamic value) {
       if (value is Timestamp) {
         return value.toDate().toIso8601String();
       } else if (value is Map) {
-        return value.map((key, val) => MapEntry(key, _convertTimestamp(val)));
+        return value.map((key, val) => MapEntry(key, convertTimestamp(val)));
       } else if (value is List) {
-        return value.map((item) => _convertTimestamp(item)).toList();
+        return value.map((item) => convertTimestamp(item)).toList();
       } else {
         return value;
       }
@@ -27,7 +27,7 @@ class PlanLocalService extends LocalStorageService<Plan> {
     
     final hiveMap = <String, dynamic>{};
     for (var entry in firestoreMap.entries) {
-      hiveMap[entry.key] = _convertTimestamp(entry.value);
+      hiveMap[entry.key] = convertTimestamp(entry.value);
     }
     
     // Añadimos el ID si existe

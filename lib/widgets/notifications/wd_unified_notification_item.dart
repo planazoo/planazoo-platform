@@ -7,7 +7,6 @@ import '../../features/calendar/domain/models/pending_email_event.dart';
 import '../../features/notifications/domain/models/unified_notification.dart';
 import '../../features/notifications/presentation/providers/notification_providers.dart';
 import '../../features/calendar/presentation/providers/invitation_providers.dart';
-import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../widgets/screens/wd_pending_event_card.dart';
 import '../../shared/utils/date_formatter.dart';
 import '../../l10n/app_localizations.dart';
@@ -90,7 +89,7 @@ class InvitationNotificationTile extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.orange.shade900.withOpacity(0.2),
+        color: Colors.orange.shade900.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.orange.shade700),
       ),
@@ -109,7 +108,7 @@ class InvitationNotificationTile extends ConsumerWidget {
           if (invitation.role != null)
             Text(
               loc.invitationRoleLabel(invitation.role!),
-              style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade400),
+              style: GoogleFonts.poppins(fontSize: 11, color: Colors.white70),
             ),
           const SizedBox(height: 6),
           Row(
@@ -184,12 +183,12 @@ class InformativeNotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // Las de acción se consideran no leídas hasta que se realiza la acción.
     final isUnread = notification.requiresAction || !notification.isRead;
-    final bg = isUnread ? Colors.grey.shade800 : Colors.transparent;
-    final borderColor = isUnread ? AppColorScheme.color2.withOpacity(0.6) : Colors.grey.shade700.withOpacity(0.6);
-    final iconColor = isUnread ? AppColorScheme.color2 : Colors.grey.shade500;
-    final titleColor = isUnread ? Colors.white : Colors.grey.shade300;
-    final bodyColor = isUnread ? Colors.grey.shade300 : Colors.grey.shade500;
-    final timeColor = isUnread ? Colors.grey.shade400 : Colors.grey.shade600;
+    final bg = isUnread ? const Color(0xFF1F2937) : Colors.transparent;
+    final borderColor = isUnread ? AppColorScheme.color2.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.6);
+    final iconColor = isUnread ? AppColorScheme.color2 : Colors.white60;
+    final titleColor = isUnread ? Colors.white : Colors.white70;
+    final bodyColor = isUnread ? Colors.white70 : Colors.white60;
+    final timeColor = isUnread ? Colors.white70 : Colors.white60;
 
     return Material(
       color: Colors.transparent,
@@ -211,7 +210,7 @@ class InformativeNotificationTile extends StatelessWidget {
                 width: isUnread ? 3 : 1,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: isUnread ? AppColorScheme.color2 : Colors.grey.shade600,
+                  color: isUnread ? AppColorScheme.color2 : Colors.white60,
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
@@ -262,7 +261,7 @@ class InformativeNotificationTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(99),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColorScheme.color3.withOpacity(0.35),
+                          color: AppColorScheme.color3.withValues(alpha: 0.35),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),

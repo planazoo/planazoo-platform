@@ -30,6 +30,7 @@ class _WdPlanSummaryScreenState extends State<WdPlanSummaryScreen> {
   bool _copied = false;
 
   static final _summaryService = PlanSummaryService();
+  static const Color _surface = Color(0xFF1F2937);
 
   @override
   void initState() {
@@ -80,7 +81,7 @@ class _WdPlanSummaryScreenState extends State<WdPlanSummaryScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Material(
-          color: Colors.grey.shade800,
+          color: _surface,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
@@ -142,7 +143,7 @@ class _WdPlanSummaryScreenState extends State<WdPlanSummaryScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+            const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
             const SizedBox(height: 12),
             Text(
               l10n.planSummaryError,

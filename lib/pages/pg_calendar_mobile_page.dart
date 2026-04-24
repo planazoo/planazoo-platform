@@ -1,12 +1,11 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
-import 'package:unp_calendario/features/calendar/domain/models/calendar_state.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/track_service.dart';
@@ -22,7 +21,6 @@ import 'package:unp_calendario/widgets/screens/calendar/components/calendar_grid
 import 'package:unp_calendario/widgets/screens/calendar/components/calendar_tracks.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_event_logic.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_accommodation_logic.dart';
-import 'package:unp_calendario/widgets/screens/calendar/calendar_calculations.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
@@ -31,7 +29,6 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
-import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
 import 'package:unp_calendario/widgets/dialogs/manage_roles_dialog.dart';
 import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
@@ -78,7 +75,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
 
   // Número de días visibles (1, 2 o 3); iOS por defecto 3 (ID 51).
   int _visibleDays =
-      (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ? 3 : 1;
+      (defaultTargetPlatform == TargetPlatform.iOS) ? 3 : 1;
 
   /// Índice 1-based: primer día del plan en la columna izquierda.
   int _firstVisiblePlanDay = 1;
@@ -101,7 +98,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   
   // Variables para filtros
   String? _currentUserId;
-  List<String> _filteredParticipantIds = [];
+  final List<String> _filteredParticipantIds = [];
   
   // Variables para perspectiva de usuario
   String? _selectedPerspectiveUserId;
@@ -253,7 +250,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     return Border(
       right: includeRight
           ? BorderSide(
-              color: Colors.white.withOpacity(CalendarConstants.calendarSeparatorOpacityMobile),
+              color: Colors.white.withValues(alpha: CalendarConstants.calendarSeparatorOpacityMobile),
               width: CalendarConstants.calendarVerticalSeparatorWidth,
             )
           : BorderSide.none,
@@ -303,13 +300,8 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   Color _getDataCellColor(dynamic column, int visibleDayIndex) {
     final dayData = column as Map<String, dynamic>;
     final isEmpty = dayData['isEmpty'] as bool;
-    if (isEmpty) return Colors.grey.shade100;
+    if (isEmpty) return Colors.white.withValues(alpha: 0.08);
     return visibleDayIndex % 2 == 0 ? const Color(0xFF1E1E1E) : const Color(0xFF161616);
-  }
-
-  bool _isActiveTrack(ParticipantTrack track) {
-    final activeUserId = _selectedPerspectiveUserId ?? _currentUserId;
-    return activeUserId != null && track.participantId == activeUserId;
   }
 
   Widget _buildEventCellWithSubColumns(int hourIndex, dynamic column, List<ParticipantTrack> participants) {
@@ -344,12 +336,12 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: isActiveTrack 
-                        ? AppColorScheme.color2.withOpacity(0.05)
+                        ? AppColorScheme.color2.withValues(alpha: 0.05)
                         : Colors.transparent,
                     border: isActiveTrack && !isLastTrack
                         ? Border(
                             right: BorderSide(
-                              color: AppColorScheme.gridLineColor.withOpacity(CalendarConstants.gridLineOpacity),
+                              color: AppColorScheme.gridLineColor.withValues(alpha: CalendarConstants.gridLineOpacity),
                               width: 1.5,
                             ),
                           )
@@ -396,7 +388,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
               return Container(
                 height: AppConstants.cellHeight,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColorScheme.gridLineColor.withOpacity(CalendarConstants.gridLineOpacity)),
+                  border: Border.all(color: AppColorScheme.gridLineColor.withValues(alpha: CalendarConstants.gridLineOpacity)),
                   color: _getDataCellColor(column, visibleDayIndex),
                 ),
                 child: _buildEventCellWithSubColumns(hourIndex, column, participants),
@@ -645,7 +637,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
                             '${eventTracks.length} participantes',
                             style: GoogleFonts.poppins(
                               fontSize: 8,
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                             ),
                           ),
                       ],
@@ -995,7 +987,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade900,
+        backgroundColor: const Color(0xFF111827),
         appBar: widget.hideAppBar
             ? null
             : _buildAppBar(startDay, endDay, totalDays),
@@ -1040,7 +1032,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
 
   PreferredSizeWidget _buildAppBar(int startDay, int endDay, int totalDays) {
     return AppBar(
-      backgroundColor: Colors.grey.shade900,
+      backgroundColor: const Color(0xFF111827),
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -1076,10 +1068,10 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.grey.shade800, // Color sólido, sin gradiente
+            color: const Color(0xFF1F2937), // Color sólido, sin gradiente
             border: Border(
               bottom: BorderSide(
-                color: Colors.grey.shade700.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
                 width: 1,
               ),
             ),
@@ -1112,22 +1104,22 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
                   end: Alignment.bottomRight,
                   colors: [
                     AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
+                    AppColorScheme.color2.withValues(alpha: 0.85),
                   ],
                 )
               : null,
-          color: isSelected ? null : Colors.grey.shade800,
+          color: isSelected ? null : const Color(0xFF1F2937),
           border: Border.all(
             color: isSelected
                 ? AppColorScheme.color2
-                : Colors.grey.shade700.withOpacity(0.5),
+                : Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColorScheme.color2.withOpacity(0.3),
+                    color: AppColorScheme.color2.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1137,7 +1129,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         child: Text(
           '$days día${days > 1 ? 's' : ''}',
           style: GoogleFonts.poppins(
-            color: isSelected ? Colors.white : Colors.grey.shade400,
+            color: isSelected ? Colors.white : Colors.white70,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),

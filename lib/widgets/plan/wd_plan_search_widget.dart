@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme/color_scheme.dart';
 
@@ -20,6 +19,11 @@ class PlanSearchWidget extends StatefulWidget {
 }
 
 class _PlanSearchWidgetState extends State<PlanSearchWidget> {
+  static const Color _surface = Color(0xFF1F2937);
+  static const Color _textPrimary = Colors.white;
+  static const Color _textSecondary = Colors.white70;
+  static const Color _textTertiary = Colors.white60;
+  static const Color _border = Colors.white12;
   late final TextEditingController _controller;
 
   @override
@@ -61,7 +65,7 @@ class _PlanSearchWidgetState extends State<PlanSearchWidget> {
         child: Center(
           child: Icon(
             Icons.close,
-            color: kIsWeb ? const Color(0xFF94A3B8) : Colors.grey.shade400,
+            color: _textSecondary,
             size: 20,
           ),
         ),
@@ -78,56 +82,34 @@ class _PlanSearchWidgetState extends State<PlanSearchWidget> {
 
   @override
   Widget build(BuildContext context) {
-    const double fieldHeight = 36;
-    final isWebLight = kIsWeb;
-    final bgColor = isWebLight ? const Color(0xFFF8FAFC) : Colors.grey.shade800;
-    final borderColor = isWebLight ? const Color(0xFFE2E8F0) : Colors.grey.shade700.withOpacity(0.5);
-    final textColor = isWebLight ? const Color(0xFF0F172A) : Colors.white;
-    final hintColor = isWebLight ? const Color(0xFF94A3B8) : Colors.grey.shade500;
-    final iconColor = isWebLight ? const Color(0xFF94A3B8) : Colors.grey.shade400;
+    const double fieldHeight = 40;
 
     return Container(
       height: fieldHeight,
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(14),
+        color: _surface,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: borderColor,
+          color: _border,
           width: 1,
         ),
-        boxShadow: isWebLight
-            ? const []
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 6,
-                  offset: const Offset(0, 1),
-                  spreadRadius: -2,
-                ),
-              ],
       ),
       child: TextField(
         controller: _controller,
         style: GoogleFonts.poppins(
           fontSize: 14,
-          color: textColor,
+          color: _textPrimary,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           hintText: 'Buscar planes...',
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
-            color: hintColor,
+            color: _textTertiary,
           ),
           prefixIcon: Icon(
             Icons.search,
-            color: iconColor,
+            color: _textSecondary,
             size: 22,
           ),
           suffixIcon: _controller.text.isEmpty
@@ -141,18 +123,18 @@ class _PlanSearchWidgetState extends State<PlanSearchWidget> {
           fillColor: Colors.transparent,
           isDense: true,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
               color: AppColorScheme.color2,
-              width: 2.5,
+              width: 2,
             ),
           ),
           contentPadding: const EdgeInsets.symmetric(

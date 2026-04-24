@@ -73,7 +73,7 @@ class AppTheme {
       colorScheme: ColorScheme.dark(
         primary: AppColorScheme.color2,
         secondary: AppColorScheme.color3,
-        surface: Colors.grey.shade900,
+        surface: const Color(0xFF111827),
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: Colors.white,
@@ -92,17 +92,17 @@ class AppTheme {
         titleSmall: AppTypography.mediumTitle.copyWith(color: Colors.white),
         bodyLarge: AppTypography.bodyStyle.copyWith(color: Colors.white),
         bodyMedium: AppTypography.bodyStyle.copyWith(color: Colors.white),
-        bodySmall: AppTypography.smallBody.copyWith(color: Colors.grey.shade400),
+        bodySmall: AppTypography.smallBody.copyWith(color: Colors.white70),
         labelLarge: AppTypography.interactiveStyle.copyWith(color: Colors.white),
         labelMedium: AppTypography.interactiveStyle.copyWith(color: Colors.white),
-        labelSmall: AppTypography.caption.copyWith(color: Colors.grey.shade400),
+        labelSmall: AppTypography.caption.copyWith(color: Colors.white70),
       ),
       
       // Tema de AppBar
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 2,
-        backgroundColor: Colors.grey.shade800,
+        backgroundColor: const Color(0xFF1F2937),
         foregroundColor: Colors.white,
         titleTextStyle: AppTypography.titleStyle.copyWith(color: Colors.white),
       ),
@@ -119,7 +119,7 @@ class AppTheme {
       
       // Tema de tarjetas
       cardTheme: CardThemeData(
-        color: Colors.grey.shade800,
+        color: const Color(0xFF1F2937),
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),

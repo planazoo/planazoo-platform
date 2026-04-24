@@ -199,7 +199,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DropdownButtonFormField<String>(
-          value: _paymentCurrency ?? _planCurrency ?? 'EUR',
+          initialValue: _paymentCurrency ?? _planCurrency ?? 'EUR',
           decoration: InputDecoration(
             labelText: loc.paymentsPersonalPaymentCurrency,
             prefixIcon: Icon(
@@ -269,7 +269,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                       const SizedBox(width: 8),
                       Text(loc.paymentsPersonalCalculating,
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade700)),
+                              fontSize: 12, color: Colors.white70)),
                     ],
                   ),
                 );
@@ -280,9 +280,9 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                 return Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: Colors.blue.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.blue.shade200),
+                    border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,14 +290,14 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                       Row(
                         children: [
                           Icon(Icons.info_outline,
-                              size: 16, color: Colors.blue.shade700),
+                              size: 16, color: Colors.blue),
                           const SizedBox(width: 4),
                           Text(
                             loc.paymentsPersonalConvertedTo(_planCurrency!),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade700,
+                              color: Colors.white70,
                             ),
                           ),
                         ],
@@ -309,7 +309,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade900,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -317,7 +317,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                         loc.paymentsPersonalExchangeDisclaimer,
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.grey.shade700,
+                          color: Colors.white60,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -551,7 +551,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                         .where((p) => p.role != 'observer')
                         .toList();
                     return DropdownButtonFormField<String>(
-                      value: _selectedParticipantId,
+                      initialValue: _selectedParticipantId,
                       isExpanded: true,
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.person),
@@ -623,7 +623,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedPaymentMethod,
+                initialValue: _selectedPaymentMethod,
                 decoration: InputDecoration(
                   labelText: loc.paymentsPersonalMethod,
                   prefixIcon: const Icon(Icons.payment),
@@ -671,7 +671,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
               const SizedBox(height: 16),
               if (widget.payment != null) ...[
                 DropdownButtonFormField<String>(
-                  value: _selectedStatus,
+                  initialValue: _selectedStatus,
                   decoration: InputDecoration(
                     labelText: loc.paymentsPersonalStatus,
                     prefixIcon: const Icon(Icons.info_outline),

@@ -138,7 +138,7 @@ class _InvitationResponseDialogState extends ConsumerState<InvitationResponseDia
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColorScheme.color1.withOpacity(0.1),
+              color: AppColorScheme.color1.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColorScheme.color2, width: 1),
             ),

@@ -159,7 +159,7 @@ class PaymentService {
       // Solo contar pagos con status 'paid'
       return payments
           .where((p) => p.status == 'paid')
-          .fold<double>(0.0, (sum, payment) => sum + payment.amount);
+          .fold<double>(0.0, (total, payment) => total + payment.amount);
     } catch (e) {
       LoggerService.error(
         'Error getting total paid',
@@ -179,7 +179,7 @@ class PaymentService {
 
       return payments
           .where((p) => p.status == 'paid')
-          .fold<double>(0.0, (sum, payment) => sum + payment.amount);
+          .fold<double>(0.0, (total, payment) => total + payment.amount);
     } catch (e) {
       LoggerService.error(
         'Error getting total paid in plan',

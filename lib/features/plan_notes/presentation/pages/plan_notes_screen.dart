@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -53,32 +52,21 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
   String? _lastAppliedCommonFp;
   String? _lastAppliedPersonalFp;
 
-  static const Color _webPageBg = Color(0xFFF1F5F9);
-  static const Color _webOnSurface = Color(0xFF1F2937);
-  static const Color _webBodyText = Color(0xFF0F172A);
-  static const Color _webMuted = Color(0xFF64748B);
-  static const Color _webInputFill = Color(0xFFF8FAFC);
-  static const Color _webBorder = Color(0xFFE2E8F0);
+  static const Color _pageBg = Color(0xFF111827);
+  static const Color _surface = Color(0xFF1F2937);
+  static const Color _borderSubtle = Colors.white12;
 
-  bool get _webLight => kIsWeb;
+  Color get _textPrimary => Colors.white;
 
-  Color get _pageBg => _webLight ? _webPageBg : Colors.grey.shade900;
+  Color get _textSecondary => Colors.white70;
 
-  Color get _textPrimary => _webLight ? _webBodyText : Colors.white;
+  Color get _labelMuted => Colors.white70;
 
-  Color get _textSecondary => _webLight ? _webMuted : Colors.grey.shade400;
+  Color get _inputFill => _surface;
 
-  Color get _labelMuted => _webLight ? _webMuted : Colors.white70;
+  Color get _cardSurface => _surface;
 
-  Color get _inputFill => _webLight ? _webInputFill : Colors.grey.shade800;
-
-  Color get _cardSurface => _webLight ? Colors.white : Colors.grey.shade800;
-
-  Color get _borderSubtle =>
-      _webLight ? _webBorder : Colors.grey.shade700;
-
-  Color get _readOnlyHintColor =>
-      _webLight ? Colors.amber.shade900 : Colors.amber.shade200;
+  Color get _readOnlyHintColor => Colors.amber.shade200;
 
   @override
   void initState() {
@@ -211,14 +199,12 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
         return StatefulBuilder(
           builder: (context, setLocal) {
             return Theme(
-              data: _webLight ? AppTheme.lightTheme : AppTheme.darkTheme,
+              data: AppTheme.darkTheme,
               child: AlertDialog(
-                backgroundColor:
-                    _webLight ? Colors.white : const Color(0xFF2C2C2C),
+                backgroundColor: _surface,
                 title: Text(
                   loc.planNotesSelectParticipantsTitle,
-                  style: TextStyle(
-                      color: _webLight ? _webOnSurface : Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
                 content: SizedBox(
                   width: double.maxFinite,
@@ -240,8 +226,7 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
                             },
                             title: Text(
                               names[p.userId] ?? p.userId,
-                              style: TextStyle(
-                                  color: _webLight ? _webBodyText : Colors.white70),
+                              style: const TextStyle(color: Colors.white70),
                             ),
                             activeColor: AppColorScheme.color2,
                           ),
@@ -341,9 +326,9 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
     final nameMapAsync = ref.watch(planParticipantDisplayNamesProvider(planId));
     final notesTabBar = TabBar(
       controller: _tabController,
-      indicatorColor: kIsWeb ? AppColorScheme.color2 : Colors.white,
-      labelColor: kIsWeb ? _webBodyText : Colors.white,
-      unselectedLabelColor: kIsWeb ? _webMuted : Colors.white70,
+      indicatorColor: AppColorScheme.color2,
+      labelColor: Colors.white,
+      unselectedLabelColor: Colors.white70,
       labelStyle: GoogleFonts.poppins(
         fontWeight: FontWeight.w600,
         fontSize: _fsSm,
@@ -355,7 +340,7 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
     );
 
     return Theme(
-      data: kIsWeb ? AppTheme.lightTheme : AppTheme.darkTheme,
+      data: AppTheme.darkTheme,
       child: MediaQuery(
         data: MediaQuery.of(context).copyWith(
           textScaler: const TextScaler.linear(_notesTextScale),
@@ -366,7 +351,7 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
           body: Column(
             children: [
               Material(
-                color: kIsWeb ? _webPageBg : AppColorScheme.color2,
+                color: _surface,
                 child: notesTabBar,
               ),
               Expanded(
@@ -748,11 +733,10 @@ class _PlanNotesScreenState extends ConsumerState<PlanNotesScreen>
     required ValueChanged<bool> onToggle,
     required VoidCallback? onDelete,
   }) {
-    final strikeColor =
-        _webLight ? _webMuted : Colors.white54;
+    const strikeColor = Colors.white54;
     return Card(
       color: _cardSurface,
-      elevation: _webLight ? 0 : null,
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: _borderSubtle.withValues(alpha: 0.9)),

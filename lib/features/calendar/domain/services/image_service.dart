@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as path;
 import '../../../../shared/services/logger_service.dart';
 
 class ImageService {
@@ -29,9 +28,9 @@ class ImageService {
 
   /// Obtiene la extensión del archivo de forma compatible con web (XFile.name o path).
   static String _getExtension(XFile image) {
-    final name = image.name;
-    final pathStr = name ?? image.path;
-    final ext = path.extension(pathStr).toLowerCase().replaceFirst('.', '');
+    final pathStr = image.name;
+    final dotIndex = pathStr.lastIndexOf('.');
+    final ext = dotIndex >= 0 ? pathStr.substring(dotIndex + 1).toLowerCase() : '';
     if (ext.isNotEmpty) return ext;
     final mime = image.mimeType?.toLowerCase() ?? '';
     if (mime.contains('jpeg') || mime.contains('jpg')) return 'jpg';

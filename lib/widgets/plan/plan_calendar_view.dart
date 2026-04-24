@@ -91,7 +91,7 @@ class _PlanCalendarViewState extends State<PlanCalendarView> {
         child: Text(
           loc.planCalendarEmpty,
           style: AppTypography.bodyStyle.copyWith(
-            color: Colors.grey.shade600,
+            color: Colors.white60,
           ),
           textAlign: TextAlign.center,
         ),
@@ -280,7 +280,7 @@ class _WeekdayHeader extends StatelessWidget {
                 child: Text(
                   day.toUpperCase(),
                   style: AppTypography.caption.copyWith(
-                    color: Colors.grey.shade600,
+                    color: Colors.white60,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -323,10 +323,10 @@ class _DayCell extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: hasPlans ? AppColorScheme.color2.withOpacity(0.75) : Colors.grey.shade300,
+            color: hasPlans ? AppColorScheme.color2.withValues(alpha: 0.75) : Colors.white70,
             width: 0.8,
           ),
-          color: hasPlans ? AppColorScheme.color2.withOpacity(0.08) : Colors.white,
+          color: hasPlans ? AppColorScheme.color2.withValues(alpha: 0.08) : Colors.white,
         ),
         child: Stack(
           children: [
@@ -338,7 +338,7 @@ class _DayCell extends StatelessWidget {
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: hasPlans ? AppColorScheme.color2 : Colors.grey.shade700,
+                  color: hasPlans ? AppColorScheme.color2 : Colors.white.withValues(alpha: 0.12),
                 ),
               ),
             ),

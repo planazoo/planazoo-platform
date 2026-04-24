@@ -2,8 +2,8 @@
 
 > Documento vivo que debe actualizarse cada vez que se completa una tarea o se añade nueva funcionalidad.
 
-**Versión:** 1.7  
-**Última actualización:** Abril 2026 (REG-2026-022, enlaces ítem 58 / offline Firestore-first)  
+**Versión:** 1.8  
+**Última actualización:** Abril 2026 (arranque Android local + paridad push iOS/Android en seguimiento)  
 **Mantenedor:** Equipo de desarrollo
 
 ---
@@ -18,6 +18,16 @@
 6. **Pruebas E2E tres usuarios (flujo completo):** Para simular un ciclo real con UA/UB/UC (crear plan → invitaciones → eventos → chat → aprobar → durante plan → cerrar), ver [docs/testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md). Incluye tabla de huecos/situaciones no contempladas para derivar tareas.
 7. **QA nocturno (futuro):** Para el diseño del sistema de E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac, alertas), ver [docs/testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md](../testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md).
 8. **Offline-first (solo iOS/Android):** Arquitectura **Firestore-first** (cola del SDK) + réplica Hive y perfil `current_user` — [docs/testing/TESTING_OFFLINE_FIRST.md](../testing/TESTING_OFFLINE_FIRST.md); flujo de usuario en [docs/flujos/FLUJO_CRUD_USUARIOS.md](../flujos/FLUJO_CRUD_USUARIOS.md) (sección *Snapshot de perfil en Hive*). **Ítem 58** de [LISTA_PUNTOS_CORREGIR_APP.md](../testing/LISTA_PUNTOS_CORREGIR_APP.md) cerrado con esa guía y `CONTEXT.md` (2026-04-08). Regresión sugerida: **REG-2026-022** (§12.3) y §15.
+9. **Setup Android local (cuando aplique móvil Android):** Ver [docs/configuracion/SETUP_ANDROID_LOCAL.md](../configuracion/SETUP_ANDROID_LOCAL.md) para SDK/dispositivo/emulador y `flutter run`.
+
+---
+
+## 📱 MATRIZ DE PLATAFORMA (mínimo por release)
+
+- **Web:** smoke de login + navegación base + planes.
+- **iOS físico:** smoke + push foreground/background + apertura por tap.
+- **Android físico:** smoke + push foreground/background + apertura por tap.
+- Si una plataforma no se ejecuta en la ronda, dejar evidencia del bloqueo y abrir/actualizar tarea en `TASKS.md` (ej.: T267 Android).
 
 ---
 

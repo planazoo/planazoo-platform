@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -11,8 +10,6 @@ import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
-import 'package:unp_calendario/pages/pg_ui_showcase_page.dart';
-import 'package:unp_calendario/shared/providers/help_text_providers.dart';
 
 /// Barra superior del dashboard (W2–W6): logo, botón crear plan, showcase, imagen e info del plan.
 class WdDashboardHeaderBar extends ConsumerWidget {
@@ -37,7 +34,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final headerBg = kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
+    final headerBg = const Color(0xFF111827);
     return Stack(
       children: [
         _buildW2(context, ref, columnWidth, rowHeight, headerBg),
@@ -56,7 +53,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     double rowHeight,
     Color bg,
   ) {
-    final text = kIsWeb ? const Color(0xFF1F2937) : Colors.white;
+    const text = Colors.white;
     return Positioned(
       left: columnWidth,
       top: 0,
@@ -98,12 +95,12 @@ class WdDashboardHeaderBar extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColorScheme.color3.withOpacity(0.4),
+                    color: AppColorScheme.color3.withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -181,7 +178,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
         imageUrl: selectedPlan!.imageUrl!,
         fit: BoxFit.cover,
         placeholder: (context, url) => Container(
-          color: AppColorScheme.color2.withOpacity(0.1),
+          color: AppColorScheme.color2.withValues(alpha: 0.1),
           child: const Center(
             child: SizedBox(
               width: 20,
@@ -198,7 +195,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
 
   Widget _buildDefaultIcon() {
     return Container(
-      color: AppColorScheme.color2.withOpacity(0.1),
+      color: AppColorScheme.color2.withValues(alpha: 0.1),
       child: Center(
         child: Icon(
           Icons.image_outlined,
@@ -291,7 +288,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+                  color: Colors.white,
                   letterSpacing: 0.1,
                 ),
                 maxLines: 1,
@@ -304,13 +301,13 @@ class WdDashboardHeaderBar extends ConsumerWidget {
                     '${_formatDateDDMMAA(plan.startDate)} - ${_formatDateDDMMAA(plan.endDate)}',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: kIsWeb ? const Color(0xFF334155) : Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (statusLine != null && statusLine.isNotEmpty) ...[
+                  if (statusLine.isNotEmpty) ...[
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
@@ -318,8 +315,8 @@ class WdDashboardHeaderBar extends ConsumerWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: (hasPendingInvitation || hasPendingParticipation)
-                              ? (kIsWeb ? Colors.orange.shade700 : Colors.orange.shade200)
-                              : (kIsWeb ? const Color(0xFF64748B) : Colors.white.withOpacity(0.75)),
+                              ? Colors.orange.shade200
+                              : Colors.white.withValues(alpha: 0.75),
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -357,7 +354,7 @@ class WdDashboardHeaderBar extends ConsumerWidget {
         AppLocalizations.of(context)!.dashboardSelectPlan,
         style: GoogleFonts.poppins(
           fontSize: 10,
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -404,8 +401,8 @@ class WdDashboardHeaderBar extends ConsumerWidget {
     if (user == null) return '';
     final username = user.username?.trim();
     if (username != null && username.isNotEmpty) return '@$username';
-    final email = user.email?.trim();
-    if (email != null && email.isNotEmpty) return email;
+    final email = user.email.trim();
+    if (email.isNotEmpty) return email;
     final displayName = user.displayName?.trim();
     if (displayName != null && displayName.isNotEmpty) return displayName;
     return '';

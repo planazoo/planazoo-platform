@@ -151,6 +151,11 @@ class _WdCreatePlanModalState extends ConsumerState<WdCreatePlanModal> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return AlertDialog(
+      backgroundColor: const Color(0xFF1F2937),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: Row(
         children: [
           Expanded(child: Text(loc.createPlan)),
@@ -201,14 +206,14 @@ class _WdCreatePlanModalState extends ConsumerState<WdCreatePlanModal> {
               Text(
                 loc.createPlanQuickIntro,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
+                      color: Colors.white70,
                     ),
               ),
               const SizedBox(height: 10),
               Text(
                 loc.createPlanDatesOptionalHint,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade500,
+                      color: Colors.white60,
                       fontStyle: FontStyle.italic,
                     ),
               ),

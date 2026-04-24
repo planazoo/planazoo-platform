@@ -24,19 +24,19 @@ Future<void> planStatusChipShowPendingActions(
     builder: (ctx) => Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
-        backgroundColor: Colors.grey.shade800,
+        backgroundColor: const Color(0xFF1F2937),
         title: Text(
           loc.statusInvitationPending,
           style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         content: Text(
           loc.planCardChipInvitationQuestion,
-          style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
+          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(loc.cancel, style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+            child: Text(loc.cancel, style: GoogleFonts.poppins(color: Colors.white70)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop('reject'),
@@ -123,19 +123,19 @@ Future<void> planStatusChipShowLeavePlan(
     builder: (ctx) => Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
-        backgroundColor: Colors.grey.shade800,
+        backgroundColor: const Color(0xFF1F2937),
         title: Text(
           loc.planCardLeavePlanTitle,
           style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         content: Text(
           loc.planCardLeavePlanConfirmBody(plan.name),
-          style: GoogleFonts.poppins(color: Colors.grey.shade300, fontSize: 14),
+          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(loc.cancel, style: GoogleFonts.poppins(color: Colors.grey.shade400)),
+            child: Text(loc.cancel, style: GoogleFonts.poppins(color: Colors.white70)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),

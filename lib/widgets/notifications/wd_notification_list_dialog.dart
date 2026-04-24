@@ -6,13 +6,14 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/notifications/domain/models/unified_notification.dart';
 import '../../features/notifications/presentation/providers/notification_providers.dart';
 import '../../features/calendar/presentation/providers/invitation_providers.dart';
-import '../../features/notifications/domain/services/test_notification_generator.dart';
 import 'wd_unified_notification_item.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Diálogo que muestra la lista global de notificaciones (campana).
 class NotificationListDialog extends ConsumerWidget {
   const NotificationListDialog({super.key});
+  static const Color _pageBg = Color(0xFF111827);
+  static const Color _surface = Color(0xFF1F2937);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,12 +26,12 @@ class NotificationListDialog extends ConsumerWidget {
     final isCompactWidth = size.width < 420;
 
     return Dialog(
-      backgroundColor: Colors.grey.shade900,
+      backgroundColor: _pageBg,
       insetPadding: EdgeInsets.zero,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.zero,
       ),
-      child: Container(
+      child: SizedBox(
         width: size.width,
         height: size.height,
         child: Column(
@@ -40,7 +41,7 @@ class NotificationListDialog extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade800,
+                color: _surface,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(18),
                   topRight: Radius.circular(18),
@@ -72,7 +73,7 @@ class NotificationListDialog extends ConsumerWidget {
                                 loc.notificationsMarkAllAsRead,
                                 style: GoogleFonts.poppins(),
                               ),
-                              backgroundColor: Colors.grey.shade800,
+                              backgroundColor: _surface,
                             ),
                           );
                         }
@@ -138,14 +139,14 @@ class NotificationListDialog extends ConsumerWidget {
                             Icon(
                               Icons.notifications_none,
                               size: 64,
-                              color: Colors.grey.shade600,
+                              color: Colors.white60,
                             ),
                             const SizedBox(height: 16),
                             Text(
                               loc.notificationsEmpty,
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
-                                color: Colors.grey.shade400,
+                                color: Colors.white60,
                               ),
                             ),
                           ],
@@ -187,14 +188,14 @@ class NotificationListDialog extends ConsumerWidget {
                         Icon(
                           Icons.error_outline,
                           size: 64,
-                          color: Colors.red.shade400,
+                          color: Colors.redAccent,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'Error: $error',
                           style: GoogleFonts.poppins(
                             fontSize: 16,
-                            color: Colors.grey.shade400,
+                            color: Colors.white60,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -231,19 +232,21 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const surface = Color(0xFF1F2937);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColorScheme.color2 : Colors.grey.shade800,
+          color: selected ? AppColorScheme.color2 : surface,
           borderRadius: BorderRadius.circular(20),
+          border: selected ? null : Border.all(color: Colors.white12),
         ),
         child: Text(
           label,
           style: GoogleFonts.poppins(
             fontSize: 12,
-            color: selected ? Colors.white : Colors.grey.shade400,
+            color: selected ? Colors.white : Colors.white70,
           ),
         ),
       ),

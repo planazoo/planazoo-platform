@@ -171,7 +171,7 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
         // Contador de participantes
         Row(
           children: [
-            Icon(Icons.people, size: 16, color: Colors.grey.shade600),
+            Icon(Icons.people, size: 16, color: Colors.white60),
             const SizedBox(width: 8),
             Text(
               '$count ${count == 1 ? 'persona apuntada' : 'personas apuntadas'}',
@@ -183,7 +183,7 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
               Text(
                 ' / $maxParticipants',
                 style: AppTypography.bodyStyle.copyWith(
-                  color: Colors.grey.shade600,
+                  color: Colors.white60,
                 ),
               ),
           ],
@@ -199,16 +199,16 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: Colors.white.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
+                Icon(Icons.info_outline, size: 16, color: Colors.white60),
                 const SizedBox(width: 8),
                 Text(
                   'Nadie se ha apuntado todavía',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  style: TextStyle(color: Colors.white60, fontSize: 12),
                 ),
               ],
             ),
@@ -224,7 +224,7 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
   ) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Colors.white70),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -239,14 +239,14 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
               final displayName = snapshot.data ?? participant.userId.substring(0, 8);
               return Container(
                 decoration: BoxDecoration(
-                  border: isLast ? null : Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                  border: isLast ? null : Border(bottom: BorderSide(color: Colors.white70)),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: AppColorScheme.color3.withOpacity(0.2),
+                      backgroundColor: AppColorScheme.color3.withValues(alpha: 0.2),
                       child: Text(
                         displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                         style: TextStyle(
@@ -541,16 +541,16 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: Colors.white.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.grey.shade600),
+                Icon(Icons.info_outline, size: 16, color: Colors.white60),
                 const SizedBox(width: 8),
                 Text(
                   'Aún no hay confirmaciones',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  style: TextStyle(color: Colors.white60, fontSize: 12),
                 ),
               ],
             ),
@@ -563,9 +563,9 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         max != null ? '$label: $count/$max' : '$label: $count',
@@ -612,9 +612,9 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: color.withOpacity(0.3)),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
             borderRadius: BorderRadius.circular(8),
-            color: color.withOpacity(0.05),
+            color: color.withValues(alpha: 0.05),
           ),
           child: Column(
             children: participants.map((participant) {
@@ -626,14 +626,14 @@ class EventParticipantRegistrationWidget extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       border: participant != participants.last
-                          ? Border(bottom: BorderSide(color: color.withOpacity(0.2)))
+                          ? Border(bottom: BorderSide(color: color.withValues(alpha: 0.2)))
                           : null,
                     ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 14,
-                          backgroundColor: color.withOpacity(0.2),
+                          backgroundColor: color.withValues(alpha: 0.2),
                           child: Text(
                             displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                             style: TextStyle(

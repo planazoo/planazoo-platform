@@ -45,8 +45,8 @@ class Sanitizer {
         final titleMatch = RegExp('title="([^"]*)"|title=\'([^\']*)\'').firstMatch(attrs);
         final title = (titleMatch?.group(1) ?? titleMatch?.group(2) ?? '').trim();
         final safe = StringBuffer('<a');
-        if (href.isNotEmpty) safe.write(' href=\"$href\" rel=\"noopener noreferrer\"');
-        if (title.isNotEmpty) safe.write(' title=\"$title\"');
+        if (href.isNotEmpty) safe.write(' href="$href" rel="noopener noreferrer"');
+        if (title.isNotEmpty) safe.write(' title="$title"');
         safe.write('>');
         return safe.toString();
       }

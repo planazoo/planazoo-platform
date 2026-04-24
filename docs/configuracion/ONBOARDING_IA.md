@@ -131,7 +131,7 @@
 - ✅ Visualización de timezones
 
 **UI/UX:**
-- ✅ Sistema de diseño consistente (`AppColors`, `AppTypography`, etc.)
+- ✅ Sistema de diseño consistente (ver `docs/guias/GUIA_UI.md` y su tokenización estricta)
 - ✅ Multi-idioma (Español/Inglés) - ~65% completado
 - ✅ Responsive design
 
@@ -257,7 +257,7 @@ lib/
 - ✅ **Multi-idioma obligatorio:** NUNCA hardcodear textos en español, SIEMPRE usar `AppLocalizations`
 - ✅ **Limpieza:** Eliminar `print()`, debugs y código temporal al cerrar tareas
 - ✅ **Linting:** Revisar lints tras cada cambio
-- ✅ **Consistencia UI:** Usar siempre `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons`
+- ✅ **Consistencia UI:** Usar siempre `docs/guias/GUIA_UI.md` como fuente canónica única (reglas + tokens + tokenización)
 
 ### Git
 - ⚠️ **NUNCA hacer push sin confirmación explícita del usuario**

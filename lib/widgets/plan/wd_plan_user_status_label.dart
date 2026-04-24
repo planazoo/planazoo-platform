@@ -136,7 +136,7 @@ class PlanUserStatusLabel extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(loc.planStatusRejectedSnackbar, style: GoogleFonts.poppins(color: Colors.white)),
-                backgroundColor: Colors.grey.shade800,
+                backgroundColor: const Color(0xFF1F2937),
               ),
             );
           },
@@ -157,15 +157,15 @@ class PlanUserStatusLabel extends ConsumerWidget {
       Color borderColor;
       Color textColor;
       if (isPending) {
-        bgColor = Colors.orange.shade400.withOpacity(0.25);
+        bgColor = Colors.orange.shade400.withValues(alpha: 0.25);
         borderColor = Colors.orange.shade400;
         textColor = Colors.orange.shade100;
       } else if (isRejected) {
-        bgColor = Colors.red.shade400.withOpacity(0.25);
+        bgColor = Colors.red.shade400.withValues(alpha: 0.25);
         borderColor = Colors.red.shade400;
         textColor = Colors.red.shade100;
       } else {
-        bgColor = AppColorScheme.color2.withOpacity(0.3);
+        bgColor = AppColorScheme.color2.withValues(alpha: 0.3);
         borderColor = AppColorScheme.color2;
         textColor = Colors.white;
       }
@@ -213,15 +213,15 @@ class PlanUserStatusLabel extends ConsumerWidget {
 
 /// Colores del estado in/out/pending para reutilizar en cards y chips.
 class PlanUserStatusColors {
-  static Color get inBg => AppColorScheme.color2.withOpacity(0.3);
+  static Color get inBg => AppColorScheme.color2.withValues(alpha: 0.3);
   static Color get inBorder => AppColorScheme.color2;
   static Color get inText => Colors.white;
 
-  static Color get outBg => Colors.red.shade400.withOpacity(0.25);
+  static Color get outBg => Colors.red.shade400.withValues(alpha: 0.25);
   static Color get outBorder => Colors.red.shade400;
   static Color get outText => Colors.red.shade100;
 
-  static Color get pendingBg => Colors.orange.shade400.withOpacity(0.25);
+  static Color get pendingBg => Colors.orange.shade400.withValues(alpha: 0.25);
   static Color get pendingBorder => Colors.orange.shade400;
   static Color get pendingText => Colors.orange.shade100;
 }

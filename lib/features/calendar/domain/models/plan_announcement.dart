@@ -88,7 +88,8 @@ class PlanAnnouncement {
 
   @override
   String toString() {
-    return 'PlanAnnouncement(id: $id, planId: $planId, userId: $userId, message: ${message.length > 50 ? message.substring(0, 50) + "..." : message}, type: $type, createdAt: $createdAt)';
+    final preview = message.length > 50 ? '${message.substring(0, 50)}...' : message;
+    return 'PlanAnnouncement(id: $id, planId: $planId, userId: $userId, message: $preview, type: $type, createdAt: $createdAt)';
   }
 }
 

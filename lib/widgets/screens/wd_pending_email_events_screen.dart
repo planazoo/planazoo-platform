@@ -34,7 +34,7 @@ class WdPendingEmailEventsScreen extends ConsumerWidget {
                 child: SelectableText(
                   'ID usuario (Auth UID): $authUid',
                   style: AppTypography.caption.copyWith(
-                    color: AppColorScheme.color4.withOpacity(0.7),
+                    color: AppColorScheme.color4.withValues(alpha: 0.7),
                     fontSize: 11,
                     fontFamily: 'monospace',
                   ),
@@ -83,7 +83,7 @@ class WdPendingEmailEventsScreen extends ConsumerWidget {
           child: SelectableText(
             'ID usuario (Auth UID): $authUid',
             style: AppTypography.caption.copyWith(
-              color: AppColorScheme.color4.withOpacity(0.7),
+              color: AppColorScheme.color4.withValues(alpha: 0.7),
               fontSize: 11,
               fontFamily: 'monospace',
             ),
@@ -112,7 +112,7 @@ class WdPendingEmailEventsScreen extends ConsumerWidget {
                           'Firestore: users / $authUid / pending_email_events · status = "pending"',
                           textAlign: TextAlign.center,
                           style: AppTypography.caption.copyWith(
-                            color: AppColorScheme.color4.withOpacity(0.8),
+                            color: AppColorScheme.color4.withValues(alpha: 0.8),
                             fontSize: 12,
                           ),
                         ),
@@ -121,7 +121,7 @@ class WdPendingEmailEventsScreen extends ConsumerWidget {
                           debugInfo,
                           textAlign: TextAlign.center,
                           style: AppTypography.caption.copyWith(
-                            color: AppColorScheme.color4.withOpacity(0.8),
+                            color: AppColorScheme.color4.withValues(alpha: 0.8),
                             fontSize: 12,
                             fontFamily: 'monospace',
                           ),
@@ -131,7 +131,7 @@ class WdPendingEmailEventsScreen extends ConsumerWidget {
                           'Si "Documentos...: 0": la ruta no tiene docs o falta createdAt. Si "Con status pending: 0" pero hay documentos: el campo status no es exactamente "pending".',
                           textAlign: TextAlign.center,
                           style: AppTypography.caption.copyWith(
-                            color: AppColorScheme.color4.withOpacity(0.8),
+                            color: AppColorScheme.color4.withValues(alpha: 0.8),
                             fontSize: 11,
                           ),
                         ),

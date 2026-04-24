@@ -12,6 +12,15 @@ import 'package:unp_calendario/pages/pg_dashboard_page.dart';
 import 'package:unp_calendario/pages/pg_plans_list_page.dart';
 import 'package:unp_calendario/shared/utils/platform_utils.dart';
 import 'package:unp_calendario/features/help/presentation/pages/help_manual_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/login_demo_v2_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/ui_review_hub_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/plans_list_demo_v1_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/plan_summary_demo_v1_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/calendar_demo_v1_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/event_form_demo_v1_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/accommodation_form_demo_v1_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/ui_standard_page_demo_v1_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/ui_standard_form_demo_v1_page.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -61,6 +70,7 @@ class _AppState extends ConsumerState<App> {
       case 'event_change':
       case 'event_proposed':
       case 'invitation':
+        return 'participants';
       case 'invitation_accepted':
       case 'invitation_rejected':
         return 'planNotifications';
@@ -175,6 +185,60 @@ class _AppState extends ConsumerState<App> {
         if (settings.name == '/help') {
           return MaterialPageRoute(
             builder: (context) => const HelpManualPage(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/login-v2') {
+          return MaterialPageRoute(
+            builder: (context) => const LoginDemoV2Page(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/ui-review') {
+          return MaterialPageRoute(
+            builder: (context) => const UiReviewHubPage(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/plans-list-v1') {
+          return MaterialPageRoute(
+            builder: (context) => const PlansListDemoV1Page(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/plan-summary-v1') {
+          return MaterialPageRoute(
+            builder: (context) => const PlanSummaryDemoV1Page(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/calendar-v1') {
+          return MaterialPageRoute(
+            builder: (context) => const CalendarDemoV1Page(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/event-form-v1') {
+          return MaterialPageRoute(
+            builder: (context) => const EventFormDemoV1Page(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/accommodation-form-v1') {
+          return MaterialPageRoute(
+            builder: (context) => const AccommodationFormDemoV1Page(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/ui-standard-page-v1') {
+          return MaterialPageRoute(
+            builder: (context) => const UiStandardPageDemoV1Page(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/ui-standard-form-v1') {
+          return MaterialPageRoute(
+            builder: (context) => const UiStandardFormDemoV1Page(),
             settings: settings,
           );
         }

@@ -298,7 +298,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
 
         if (updatedCheck.requiresCaptcha) {
-          errorMessage = 'Por seguridad, completa el CAPTCHA para continuar. ${errorMessage}';
+          errorMessage = 'Por seguridad, completa el CAPTCHA para continuar. $errorMessage';
         } else if (!updatedCheck.allowed) {
           errorMessage = updatedCheck.getErrorMessage();
         }
@@ -755,7 +755,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> deleteAccount(String password) async {
     if (state.user == null) return;
 
-    final userId = state.user!.id!;
+    final userId = state.user!.id;
     final userEmail = state.user!.email;
 
     // Reautenticar usuario

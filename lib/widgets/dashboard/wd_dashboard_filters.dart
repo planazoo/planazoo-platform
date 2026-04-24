@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
@@ -41,12 +40,11 @@ class WdDashboardFilters extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const double controlHeight = 36;
-    final panelBg = kIsWeb ? const Color(0xFFF1F5F9) : Colors.grey.shade900;
-    final controlBg = kIsWeb ? const Color(0xFFF8FAFC) : Colors.grey.shade800;
-    final textColor = kIsWeb ? const Color(0xFF0F172A) : Colors.white;
-    final controlBorderColor =
-        kIsWeb ? const Color(0xFFE2E8F0) : AppColorScheme.color2.withValues(alpha: 0.7);
-    final controlBorderWidth = kIsWeb ? 1.0 : 1.5;
+    final panelBg = const Color(0xFF111827);
+    final controlBg = const Color(0xFF1F2937);
+    const textColor = Colors.white;
+    final controlBorderColor = AppColorScheme.color2.withValues(alpha: 0.7);
+    const controlBorderWidth = 1.5;
     final loc = AppLocalizations.of(context)!;
     return Positioned(
       left: columnWidth,
@@ -122,7 +120,7 @@ class WdDashboardFilters extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Icon(Icons.arrow_drop_down, color: kIsWeb ? const Color(0xFF64748B) : Colors.grey.shade400, size: 20),
+                                Icon(Icons.arrow_drop_down, color: Colors.white70, size: 20),
                               ],
                             ),
                           ),
@@ -141,7 +139,7 @@ class WdDashboardFilters extends StatelessWidget {
                         renderBorder: false,
                         fillColor: AppColorScheme.color2,
                         selectedColor: Colors.white,
-                        color: Colors.grey.shade400,
+                        color: Colors.white70,
                         constraints: BoxConstraints(
                           minHeight: controlHeight,
                           minWidth: 44,
@@ -184,7 +182,7 @@ class WdDashboardFilters extends StatelessWidget {
             label,
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: kIsWeb ? const Color(0xFF0F172A) : Colors.white,
+              color: Colors.white,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mode.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -55,8 +54,7 @@ class CalendarAppBar {
     final endDay = startDay + visibleDays - 1;
     final totalDays = plan.durationInDays;
 
-    final webBar = kIsWeb;
-    final onBar = webBar ? const Color(0xFF1F2937) : Colors.white;
+    const onBar = Colors.white;
 
     return AppBar(
       toolbarHeight: 48.0,
@@ -65,11 +63,6 @@ class CalendarAppBar {
       scrolledUnderElevation: 0,
       iconTheme: IconThemeData(color: onBar, size: 22),
       actionsIconTheme: IconThemeData(color: onBar, size: 22),
-      shape: webBar
-          ? const Border(
-              bottom: BorderSide(color: Color(0xFFE2E8F0)),
-            )
-          : null,
       title: _buildTitle(context, startDay, endDay, totalDays, onPreviousDayGroup, onNextDayGroup),
       actions: _buildActions(
         context,
@@ -87,8 +80,8 @@ class CalendarAppBar {
         eventDraftFilter: eventDraftFilter,
         onEventDraftFilterChanged: onEventDraftFilterChanged,
       ),
-      backgroundColor: kIsWeb ? const Color(0xFFF1F5F9) : AppColorScheme.color2,
-      foregroundColor: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+      backgroundColor: AppColorScheme.color2,
+      foregroundColor: Colors.white,
     );
   }
 
@@ -106,7 +99,7 @@ class CalendarAppBar {
         Text(
           loc.calendarTitleDaysRange(startDay, endDay, totalDays, visibleDays),
           style: TextStyle(
-            color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+            color: Colors.white,
             fontWeight: FontWeight.w500,
             fontSize: 13,
           ),
@@ -147,12 +140,12 @@ class CalendarAppBar {
             icon: Icon(
               Icons.summarize,
               size: 18,
-              color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+              color: Colors.white,
             ),
             label: Text(
               summaryButtonLabel,
               style: TextStyle(
-                color: kIsWeb ? const Color(0xFF1F2937) : Colors.white,
+                color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -196,10 +189,10 @@ class CalendarAppBar {
   }) {
     final loc = AppLocalizations.of(context)!;
     return PopupMenuButton<String>(
-      color: kIsWeb ? Colors.white : null,
+      color: const Color(0xFF1F2937),
       icon: Icon(
         Icons.more_vert,
-        color: kIsWeb ? const Color(0xFF334155) : Colors.white,
+        color: Colors.white,
       ),
       tooltip: loc.calendarOptionsTooltip,
       onSelected: (String value) {

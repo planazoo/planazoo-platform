@@ -88,7 +88,7 @@ class PlanParticipation {
       invitedBy: invitedBy ?? this.invitedBy,
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
       status: status ?? this.status,
-      adminCreatedBy: adminCreatedBy ?? this._adminCreatedBy,
+      adminCreatedBy: adminCreatedBy ?? _adminCreatedBy,
     );
   }
 

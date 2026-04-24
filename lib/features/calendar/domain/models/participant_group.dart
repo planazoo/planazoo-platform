@@ -134,7 +134,7 @@ class ParticipantGroup {
 
   @override
   String toString() {
-    return 'ParticipantGroup(id: $id, userId: $userId, name: $name, members: ${totalMembers})';
+    return 'ParticipantGroup(id: $id, userId: $userId, name: $name, members: $totalMembers)';
   }
 }
 

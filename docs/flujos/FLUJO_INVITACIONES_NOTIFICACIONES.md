@@ -3,8 +3,8 @@
 > Define el sistema de invitaciones a planes y notificaciones de cambios
 
 **Relacionado con:** T104, T105, T110, T259  
-**Versión:** 1.3  
-**Fecha:** Abril 2026 (actualizado con estado FCM/tap push y checklist iOS A1/A2)
+**Versión:** 1.4  
+**Fecha:** Abril 2026 (push de invitación desde acciones app + alcance Android)
 
 ---
 
@@ -98,7 +98,14 @@ Buscar usuario por nombre/email
   ↓
 Pulsar "Invitar" en el usuario deseado
   ↓
-Sistema crea plan_invitation (pending) + notificación in-app al invitado
+Sistema crea plan_invitation / participación pending + notificación in-app al invitado
+  ↓
+App dispara push FCM (Cloud Function `sendInvitationPush`)
+  ↓
+Payload incluye:
+- planId
+- type = invitation
+- tab = participants
   ↓
 Invitado recibe notificación → abre → [Aceptar] / [Rechazar]
   ↓
@@ -538,7 +545,7 @@ La especificación de producto está en **`docs/producto/NOTIFICACIONES_ESPECIFI
 
 ## ✅ IMPLEMENTACIÓN ACTUAL
 
-**Estado:** ⚠️ Parcialmente implementado (Base de avisos y confirmación de invitaciones completada, notificaciones push pendientes)
+**Estado:** ⚠️ Parcialmente implementado (base invitaciones/notificaciones operativa; pendiente cierre paridad Android end-to-end)
 
 **Lo que está implementado:**
 - ✅ Sistema de avisos unidireccionales - Base (T105)
@@ -573,7 +580,9 @@ La especificación de producto está en **`docs/producto/NOTIFICACIONES_ESPECIFI
   - ✅ Cloud Function **markInvitationAccepted** para actualizar el estado de la invitación a "accepted" (evita problemas de permisos en Firestore)
   - ✅ Link de invitación puede incluir `?action=accept`; la app hace strip del param tras usarlo
   - ⚠️ Pendiente: Invitaciones por username/nickname (T104 - parte opcional)
-- ⚠️ Notificaciones push (estado 2026-04): base FCM reforzada (init idempotente, listeners sin duplicar, tap handler central y background handler), pendiente validación completa en iPhone físico y cierre operativo según checklist A1.
+- ✅ Notificaciones push iOS (estado 2026-04): flujo foreground/background estabilizado; cierre QA del ítem 109.
+- ✅ Push de invitación desde acción app (usuario registrado): al invitar se crea notificación in-app y se llama a Cloud Function `sendInvitationPush` (valida que el llamador sea `invitedBy` de la participación pending) con `type=invitation` + `tab=participants`.
+- ⚠️ Android: pendiente validación operativa completa del mismo flujo en dispositivo Android físico (T267).
 - ✅ **Sistema unificado de notificaciones** (Feb 2026): Implementado según `docs/producto/NOTIFICACIONES_ESPECIFICACION.md`. Campana = lista global (GlobalNotificationsService + globalNotificationsListProvider, filtro por acción, badge con globalUnreadCountProvider). W20 = WdPlanNotificationsScreen(plan) con notificaciones del plan (planId) + sección eventos desde correo pendientes. Modelo UnifiedNotification; widget reutilizable UnifiedNotificationItem.
 - ✅ Sistema de confirmación de asistencia a eventos - Base (T120 Fase 2):
   - ✅ Campo requiresConfirmation en Event
@@ -592,12 +601,17 @@ La especificación de producto está en **`docs/producto/NOTIFICACIONES_ESPECIFI
 ---
 
 *Documento de flujo de invitaciones y notificaciones*  
-*Última actualización: Abril 2026 (revisión sincronizada con sistema unificado + estado push iOS A1/A2)*
+*Última actualización: Abril 2026 (push invitación app + estado iOS cerrado + seguimiento Android T267)*
 
 **Cambios recientes (v1.3):**
 - ✅ Implementación del sistema unificado: campana con lista global + filtro + badge; W20 con notificaciones del plan + eventos desde correo.
 - ✅ Estado push actualizado: FCM con tap handler central en `App`, contrato de payload documentado y background handler en `main.dart`; validación final en dispositivo iOS físico pendiente.
 - ✅ Referencia operativa para cierre iOS: `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` y seguimiento en `docs/testing/ACCIONES_PENDIENTES_APP.md`.
+
+**Cambios recientes (v1.4):**
+- ✅ Invitación desde acción app ahora dispara push FCM (Cloud Function `sendInvitationPush`) con navegación a pestaña `participants`.
+- ✅ Documentado control de permisos server-side para evitar envío arbitrario de push.
+- ⚠️ Añadido seguimiento explícito Android (T267) para validar paridad del flujo.
 
 **Cambios recientes (v1.2):**
 - ✅ Añadida sección "Acceso a notificaciones en la app (campana vs W20)" y referencia a `NOTIFICACIONES_ESPECIFICACION.md`.

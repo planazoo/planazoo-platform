@@ -33,7 +33,7 @@
   - **Estado actual:** T158 en progreso (~65%). Consultar `docs/tareas/TASKS.md` para detalles
 - **Multi-plataforma**: Verificar compatibilidad Web/iOS/Android antes de usar plugins o APIs. Priorizar soluciones cross-platform.
 - **Offline-First**: Se implementará cuando empecemos con versiones iOS y Android. Por ahora en web no es prioridad.
-- **⚠️ CONSISTENCIA DE UI**: Siempre consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Usar `AppColors`, `AppTypography`, `AppSpacing`, `AppIcons`. NO crear componentes sin seguir el sistema de diseño. Documentar componentes nuevos en la guía.
+- **⚠️ CONSISTENCIA DE UI**: Siempre consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Aplicar tokens y tokenización estricta definidos en esa guía. NO crear componentes sin seguir el sistema de diseño canónico.
 - **Actualización de tareas**: Pedir confirmación antes de actualizar tareas. Usar sistema `TASKS.md` para tracking de progreso y completar tareas. Seguir reglas del documento TASKS.md (numeración, prioridades, estados). Actualizar al completar, crear nuevas tareas o cambiar estado.
 - **Actualización de Testing Checklist**: Tras completar una tarea, actualizar `docs/configuracion/TESTING_CHECKLIST.md`:
   - Marcar funcionalidades nuevas como probadas (✅) o pendientes (🔄)

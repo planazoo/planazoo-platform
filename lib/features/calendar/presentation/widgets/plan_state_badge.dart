@@ -31,8 +31,12 @@ class PlanStateBadge extends StatelessWidget {
     final stateIcon = stateInfo['icon'] as IconData;
 
     final useContrast = onColoredBackground;
-    final bgColor = useContrast ? Colors.white.withOpacity(0.25) : stateColor.withOpacity(0.1);
-    final borderColor = useContrast ? Colors.white.withOpacity(0.5) : stateColor.withOpacity(0.3);
+    final bgColor = useContrast
+        ? Colors.white.withValues(alpha: 0.25)
+        : stateColor.withValues(alpha: 0.1);
+    final borderColor = useContrast
+        ? Colors.white.withValues(alpha: 0.5)
+        : stateColor.withValues(alpha: 0.3);
     final textAndIconColor = useContrast ? Colors.white : stateColor;
 
     return Container(

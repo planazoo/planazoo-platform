@@ -97,6 +97,11 @@ class _GroupEditDialogState extends ConsumerState<GroupEditDialog> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return AlertDialog(
+      backgroundColor: const Color(0xFF1F2937),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: Text(widget.group == null ? 'Crear Grupo' : 'Editar Grupo'),
       content: SizedBox(
         width: 500,
@@ -151,7 +156,7 @@ class _GroupEditDialogState extends ConsumerState<GroupEditDialog> {
 
                 // Color
                 DropdownButtonFormField<String>(
-                  value: _selectedColor,
+                  initialValue: _selectedColor,
                   decoration: const InputDecoration(
                     labelText: 'Color',
                     border: OutlineInputBorder(),
@@ -231,7 +236,7 @@ class _GroupEditDialogState extends ConsumerState<GroupEditDialog> {
                     child: Text(
                       'No hay miembros añadidos',
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: Colors.white70,
                         fontSize: 14,
                       ),
                     ),
@@ -240,7 +245,7 @@ class _GroupEditDialogState extends ConsumerState<GroupEditDialog> {
                   Container(
                     constraints: const BoxConstraints(maxHeight: 200),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(color: Colors.white12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: ListView(
@@ -274,7 +279,10 @@ class _GroupEditDialogState extends ConsumerState<GroupEditDialog> {
                             dense: true,
                             leading: const Icon(Icons.person, size: 20),
                             title: Text(user.displayName ?? user.email),
-                            subtitle: Text(user.email, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                            subtitle: Text(
+                              user.email,
+                              style: const TextStyle(fontSize: 11, color: Colors.white70),
+                            ),
                             trailing: IconButton(
                               icon: const Icon(Icons.remove_circle, color: Colors.red, size: 20),
                               onPressed: () {

@@ -29,6 +29,11 @@ class ExpandPlanDialog extends StatelessWidget {
     final dateFormat = DateFormat('dd/MM/yyyy');
 
     return AlertDialog(
+      backgroundColor: const Color(0xFF1F2937),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: const Row(
         children: [
           Icon(Icons.expand_more, color: Colors.orange),
@@ -54,8 +59,9 @@ class ExpandPlanDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: Colors.white10,
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white12),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,17 +71,17 @@ class ExpandPlanDialog extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
+                      color: Colors.white70,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '${dateFormat.format(plan.startDate)} - ${dateFormat.format(plan.endDate)}',
-                    style: const TextStyle(fontSize: 14),
+                    style: const TextStyle(fontSize: 14, color: Colors.white),
                   ),
                   Text(
                     'Duración: ${plan.columnCount} días',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
                   ),
                 ],
               ),
@@ -90,7 +96,7 @@ class ExpandPlanDialog extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade700,
+                  color: Colors.white70,
                 ),
               ),
               const SizedBox(height: 8),
@@ -114,9 +120,9 @@ class ExpandPlanDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.green.shade50,
+                color: Colors.green.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.shade200),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +132,7 @@ class ExpandPlanDialog extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green.shade800,
+                      color: Colors.green,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -135,14 +141,14 @@ class ExpandPlanDialog extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.green.shade900,
+                      color: Colors.white,
                     ),
                   ),
                   Text(
                     'Nueva duración: $newColumnCount días',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.green.shade700,
+                      color: Colors.white70,
                     ),
                   ),
                 ],
@@ -155,21 +161,21 @@ class ExpandPlanDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: Colors.orange.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, size: 20, color: Colors.orange.shade700),
+                  const Icon(Icons.info_outline, size: 20, color: Colors.orange),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Todos los participantes serán notificados del cambio de duración del plan.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.orange.shade900,
+                        color: Colors.white70,
                       ),
                     ),
                   ),
@@ -201,7 +207,7 @@ class ExpandPlanDialog extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Colors.orange.shade700),
+          Icon(icon, size: 18, color: Colors.orange),
           const SizedBox(width: 8),
           Text(
             '$label: ',
@@ -212,7 +218,7 @@ class ExpandPlanDialog extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.orange.shade700,
+              color: Colors.orange,
             ),
           ),
         ],

@@ -21,11 +21,16 @@ class PlanStatsPage extends ConsumerWidget {
     this.embedInPlanDetail = false,
   });
 
+  static const Color _pageBg = Color(0xFF111827);
+  static const Color _surface = Color(0xFF1F2937);
+  static const Color _border = Colors.white12;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(planStatsProvider(plan.id!));
 
     return Scaffold(
+      backgroundColor: _pageBg,
       appBar: AppBar(
         automaticallyImplyLeading: !embedInPlanDetail,
         title: const Text('Estadísticas del Plan'),
@@ -48,7 +53,7 @@ class PlanStatsPage extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 error.toString(),
-                style: AppTypography.bodyStyle.copyWith(color: Colors.grey),
+                style: AppTypography.bodyStyle.copyWith(color: Colors.white70),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -102,8 +107,12 @@ class PlanStatsPage extends ConsumerWidget {
 
   Widget _buildSummarySection(PlanStats stats) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: _surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: _border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -112,7 +121,7 @@ class PlanStatsPage extends ConsumerWidget {
             Text(
               'Resumen General',
               style: AppTypography.titleStyle.copyWith(
-                color: AppColorScheme.color4,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -170,9 +179,9 @@ class PlanStatsPage extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,7 +200,7 @@ class PlanStatsPage extends ConsumerWidget {
           Text(
             label,
             style: AppTypography.bodyStyle.copyWith(
-              color: AppColorScheme.color4,
+              color: Colors.white70,
               fontSize: 12,
             ),
           ),
@@ -202,8 +211,12 @@ class PlanStatsPage extends ConsumerWidget {
 
   Widget _buildEventsByFamilySection(PlanStats stats) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: _surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: _border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -212,7 +225,7 @@ class PlanStatsPage extends ConsumerWidget {
             Text(
               'Eventos por Tipo',
               style: AppTypography.titleStyle.copyWith(
-                color: AppColorScheme.color4,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -248,14 +261,14 @@ class PlanStatsPage extends ConsumerWidget {
                   label,
                   style: AppTypography.bodyStyle.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColorScheme.color4,
+                    color: Colors.white,
                   ),
                 ),
               ),
               Text(
                 '$value (${percentage.toStringAsFixed(1)}%)',
                 style: AppTypography.bodyStyle.copyWith(
-                  color: AppColorScheme.color4,
+                  color: Colors.white70,
                 ),
               ),
             ],
@@ -266,7 +279,7 @@ class PlanStatsPage extends ConsumerWidget {
             child: LinearProgressIndicator(
               value: percentage / 100,
               minHeight: 24,
-              backgroundColor: color.withOpacity(0.2),
+              backgroundColor: color.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
@@ -282,8 +295,12 @@ class PlanStatsPage extends ConsumerWidget {
     final maxEvents = stats.eventsByDate.values.reduce((a, b) => a > b ? a : b);
     
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: _surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: _border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -292,7 +309,7 @@ class PlanStatsPage extends ConsumerWidget {
             Text(
               'Distribución Temporal',
               style: AppTypography.titleStyle.copyWith(
-                color: AppColorScheme.color4,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -300,7 +317,7 @@ class PlanStatsPage extends ConsumerWidget {
             Text(
               '${stats.daysWithEvents} días con eventos',
               style: AppTypography.bodyStyle.copyWith(
-                color: Colors.grey.shade600,
+                color: Colors.white70,
                 fontSize: 12,
               ),
             ),
@@ -321,7 +338,7 @@ class PlanStatsPage extends ConsumerWidget {
                 child: Text(
                   '... y ${sortedDates.length - 10} días más',
                   style: AppTypography.bodyStyle.copyWith(
-                    color: Colors.grey.shade600,
+                    color: Colors.white60,
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
                   ),
@@ -335,8 +352,12 @@ class PlanStatsPage extends ConsumerWidget {
 
   Widget _buildParticipantsSection(BuildContext context, WidgetRef ref, PlanStats stats) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: _surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: _border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -345,7 +366,7 @@ class PlanStatsPage extends ConsumerWidget {
             Text(
               'Participantes',
               style: AppTypography.titleStyle.copyWith(
-                color: AppColorScheme.color4,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -376,7 +397,7 @@ class PlanStatsPage extends ConsumerWidget {
               Text(
                 'Actividad: ${stats.participantActivityPercentage.toStringAsFixed(1)}%',
                 style: AppTypography.bodyStyle.copyWith(
-                  color: AppColorScheme.color4,
+                  color: Colors.white70,
                 ),
               ),
             ],
@@ -385,7 +406,7 @@ class PlanStatsPage extends ConsumerWidget {
               'Distribución de Eventos',
               style: AppTypography.bodyStyle.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColorScheme.color4,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 8),
@@ -405,8 +426,12 @@ class PlanStatsPage extends ConsumerWidget {
 
   Widget _buildEventsBySubtypeSection(PlanStats stats) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: _surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: _border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -415,7 +440,7 @@ class PlanStatsPage extends ConsumerWidget {
             Text(
               'Eventos por Subtipo',
               style: AppTypography.titleStyle.copyWith(
-                color: AppColorScheme.color4,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -477,8 +502,12 @@ class PlanStatsPage extends ConsumerWidget {
     final planCurrency = plan.currency; // T153
     
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: _surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: _border),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -487,7 +516,7 @@ class PlanStatsPage extends ConsumerWidget {
             Text(
               'Presupuesto',
               style: AppTypography.titleStyle.copyWith(
-                color: AppColorScheme.color4,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -497,9 +526,11 @@ class PlanStatsPage extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColorScheme.color2.withOpacity(0.1),
+                color: AppColorScheme.color2.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColorScheme.color2.withOpacity(0.3)),
+                border: Border.all(
+                  color: AppColorScheme.color2.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -511,7 +542,7 @@ class PlanStatsPage extends ConsumerWidget {
                         'Coste Total',
                         style: AppTypography.bodyStyle.copyWith(
                           fontSize: 12,
-                          color: Colors.grey.shade600,
+                          color: Colors.white70,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -528,7 +559,7 @@ class PlanStatsPage extends ConsumerWidget {
                   Icon(
                     Icons.account_balance_wallet,
                     size: 48,
-                    color: AppColorScheme.color2.withOpacity(0.5),
+                    color: AppColorScheme.color2.withValues(alpha: 0.5),
                   ),
                 ],
               ),
@@ -541,7 +572,7 @@ class PlanStatsPage extends ConsumerWidget {
                 'Por Tipo de Evento',
                 style: AppTypography.bodyStyle.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColorScheme.color4,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
@@ -591,9 +622,9 @@ class PlanStatsPage extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: Colors.blue.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,9 +634,9 @@ class PlanStatsPage extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       '${budget.eventsWithCost} eventos y ${budget.accommodationsWithCost} alojamientos con coste definido',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.blue.shade900,
+                        color: Colors.white70,
                       ),
                     ),
                   ),
@@ -634,14 +665,14 @@ class PlanStatsPage extends ConsumerWidget {
                   label,
                   style: AppTypography.bodyStyle.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColorScheme.color4,
+                    color: Colors.white,
                   ),
                 ),
               ),
               Text(
                 '${CurrencyFormatterService.formatAmount(value, planCurrency)} (${percentage.toStringAsFixed(1)}%)',
                 style: AppTypography.bodyStyle.copyWith(
-                  color: AppColorScheme.color4,
+                  color: Colors.white70,
                 ),
               ),
             ],
@@ -652,7 +683,7 @@ class PlanStatsPage extends ConsumerWidget {
             child: LinearProgressIndicator(
               value: percentage / 100,
               minHeight: 24,
-              backgroundColor: color.withOpacity(0.2),
+              backgroundColor: color.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),

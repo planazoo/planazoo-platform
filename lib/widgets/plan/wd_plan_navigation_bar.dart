@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
@@ -17,6 +16,8 @@ class PlanNavigationBar extends StatelessWidget {
     required this.onOptionSelected,
     this.showStatsTab = true,
   });
+
+  static const Color _surface = Color(0xFF1F2937);
 
   // Opciones principales del plan (T252: añadida "Mi resumen")
   static List<NavigationOption> _allOptions(BuildContext context) {
@@ -73,7 +74,6 @@ class PlanNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const webBorder = Color(0xFFE2E8F0);
     final options = _allOptions(context)
         .where((o) => o.id != 'stats' || showStatsTab)
         .toList();
@@ -87,41 +87,13 @@ class PlanNavigationBar extends StatelessWidget {
     return Container(
       height: barHeight,
       decoration: BoxDecoration(
-        gradient: kIsWeb
-            ? const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFF1F5F9), Color(0xFFF8FAFC)],
-              )
-            : LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.grey.shade900,
-                  Colors.grey.shade800,
-                ],
-              ),
+        color: _surface,
         border: Border(
           bottom: BorderSide(
-            color: kIsWeb ? webBorder : Colors.grey.shade700.withOpacity(0.3),
+            color: Colors.white.withValues(alpha: 0.12),
             width: 1,
           ),
         ),
-        boxShadow: kIsWeb
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                  blurRadius: 6,
-                  offset: const Offset(0, 1),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -174,8 +146,6 @@ class _NavigationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const webBorder = Color(0xFFE2E8F0);
-    const webMuted = Color(0xFF64748B);
     final side = compact ? 42.0 : 48.0;
     final iconSize = compact ? 20.0 : 24.0;
     return GestureDetector(
@@ -186,64 +156,16 @@ class _NavigationButton extends StatelessWidget {
         width: side,
         height: side,
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColorScheme.color2,
-                    AppColorScheme.color2.withOpacity(0.85),
-                  ],
-                )
-              : (kIsWeb
-                  ? const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Colors.white, Color(0xFFF8FAFC)],
-                    )
-                  : LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.grey.shade800,
-                        const Color(0xFF2C2C2C),
-                      ],
-                    )),
+          color: isSelected
+              ? AppColorScheme.color2
+              : const Color(0xFF1F2937),
           border: Border.all(
             color: isSelected
-                ? AppColorScheme.color2
-                : (kIsWeb ? webBorder : Colors.grey.shade700.withOpacity(0.5)),
-            width: isSelected ? 2 : 1,
+                ? AppColorScheme.color2.withValues(alpha: 0.9)
+                : Colors.white.withValues(alpha: 0.12),
+            width: 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColorScheme.color2.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 2),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 6,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : (kIsWeb
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ]),
         ),
         child: Center(
           child: Semantics(
@@ -254,7 +176,7 @@ class _NavigationButton extends StatelessWidget {
               option.icon,
               color: isSelected
                   ? Colors.white
-                  : (kIsWeb ? webMuted : AppColorScheme.color2),
+                  : Colors.white70,
               size: iconSize,
             ),
           ),

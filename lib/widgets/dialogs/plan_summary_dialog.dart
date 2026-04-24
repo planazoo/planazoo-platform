@@ -38,6 +38,7 @@ class _PlanSummaryDialogState extends State<_PlanSummaryDialog> {
   String? _summary;
   Object? _error;
   bool _copied = false;
+  static const Color _surface = Color(0xFF1F2937);
 
   @override
   void initState() {
@@ -75,7 +76,11 @@ class _PlanSummaryDialogState extends State<_PlanSummaryDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      backgroundColor: Colors.grey.shade800,
+      backgroundColor: _surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: Row(
         children: [
           Icon(Icons.summarize, color: AppColorScheme.color2),
@@ -116,7 +121,7 @@ class _PlanSummaryDialogState extends State<_PlanSummaryDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+            const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
             const SizedBox(height: 12),
             Text(
               l10n.planSummaryError,
@@ -126,7 +131,7 @@ class _PlanSummaryDialogState extends State<_PlanSummaryDialog> {
             const SizedBox(height: 8),
             Text(
               _error.toString(),
-              style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+              style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12),
               textAlign: TextAlign.center,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,

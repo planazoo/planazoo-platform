@@ -16,7 +16,7 @@ class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.blue.withOpacity(0.1)
+      ..color = Colors.blue.withValues(alpha: 0.1)
       ..strokeWidth = 1.0;
 
     // Draw vertical lines (except between W5 and W6)

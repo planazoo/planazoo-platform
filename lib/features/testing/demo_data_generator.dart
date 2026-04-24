@@ -1,3 +1,5 @@
+// ignore_for_file: empty_catches, unused_element
+
 import 'package:flutter/foundation.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
@@ -700,7 +702,8 @@ class DemoDataGenerator {
         // Verificar si hay participantes en común
         for (final participantId in participantTrackIds) {
           if (existingEvent.participantTrackIds.contains(participantId)) {
-            debugPrint('⚠️ CONFLICTO DETECTADO: $participantId en ${existingEvent.description} (${existingEvent.hour}:${existingEvent.startMinute.toString().padLeft(2, '0')}) y nuevo evento (${hour}:${startMinute.toString().padLeft(2, '0')})');
+            final existingDescription = existingEvent.description;
+            debugPrint('⚠️ CONFLICTO DETECTADO: $participantId en $existingDescription (${existingEvent.hour}:${existingEvent.startMinute.toString().padLeft(2, '0')}) y nuevo evento ($hour:${startMinute.toString().padLeft(2, '0')})');
             return true; // HAY CONFLICTO
           }
         }

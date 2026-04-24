@@ -379,9 +379,9 @@ final planEventsStreamProvider = StreamProvider.family<List<Event>, String>((ref
 /// Solo tiene sentido para el organizador; filtrar en UI por currentUser.id == plan.userId.
 final planProposalEventsStreamProvider = StreamProvider.family<List<Event>, String>((ref, planId) async* {
   final plan = await ref.read(planServiceProvider).getPlanById(planId);
-  if (plan == null || plan.userId == null) return;
+  if (plan == null) return;
   final eventService = ref.read(eventServiceProvider);
-  await for (final list in eventService.getEventsByPlanId(planId, plan.userId!)) {
+  await for (final list in eventService.getEventsByPlanId(planId, plan.userId)) {
     yield list.where((e) => e.isDraft && e.userId != plan.userId).toList();
   }
 });

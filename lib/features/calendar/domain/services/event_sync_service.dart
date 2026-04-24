@@ -41,7 +41,7 @@ class EventSyncService {
       final eventCopies = await _getEventCopies(eventId);
       
       // 3. Usar transacción para actualizar todas las copias atómicamente
-      return await _firestore.runTransaction((transaction) async {
+      final transactionOk = await _firestore.runTransaction((transaction) async {
         // Actualizar el evento original directamente (sin usar saveEvent para evitar bucles)
         final baseEventRef = _firestore.collection(_collectionName).doc(eventId);
         transaction.update(baseEventRef, {
@@ -64,18 +64,17 @@ class EventSyncService {
 
         return true;
       });
+      if (!transactionOk) return false;
 
       // 4. Crear notificaciones después de la transacción (para evitar problemas)
       final affectedUserIds = eventCopies.map((e) => e.userId).toList();
-      if (affectedUserIds.isNotEmpty) {
-        _notificationService.notifyCommonPartChange(
-          eventId: eventId,
-          eventTitle: newCommonPart.description,
-          changedBy: changedBy,
-          affectedUserIds: affectedUserIds,
-          changeDescription: 'Se actualizó la información general del evento',
-        );
-      }
+      _notificationService.notifyCommonPartChange(
+        eventId: eventId,
+        eventTitle: newCommonPart.description,
+        changedBy: changedBy,
+        affectedUserIds: affectedUserIds,
+        changeDescription: 'Se actualizó la información general del evento',
+      );
 
       return true;
     } catch (e) {

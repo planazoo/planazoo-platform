@@ -1,4 +1,5 @@
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/services/push_notification_sender.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
 import '../../../calendar/domain/services/plan_participation_service.dart';
@@ -185,6 +186,12 @@ class NotificationHelper {
           'Invitation notification created for user: $invitedUserId, plan: $planId',
           context: 'NOTIFICATION_HELPER',
         );
+        await PushNotificationSender.trySendInvitationPush(
+          invitedUserId: invitedUserId,
+          planId: planId,
+          title: notification.title,
+          body: notification.body,
+        );
         return true;
       }
 
@@ -274,7 +281,9 @@ class NotificationHelper {
         if (plan != null) finalPlanName = plan.name;
       }
       final body = eventDescription != null && eventDescription.isNotEmpty
-          ? '${eventDescription.length > 80 ? '${eventDescription.substring(0, 80)}...' : eventDescription}'
+          ? (eventDescription.length > 80
+              ? '${eventDescription.substring(0, 80)}...'
+              : eventDescription)
           : 'Un participante ha propuesto un nuevo evento.';
       final notification = NotificationModel(
         userId: organizerUserId,

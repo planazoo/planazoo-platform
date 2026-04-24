@@ -39,17 +39,17 @@ class _WdTimezoneBannerState extends ConsumerState<WdTimezoneBanner> {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: const Color(0xFF1F2937),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 24,
             offset: const Offset(0, 6),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 12,
             offset: const Offset(0, 2),
             spreadRadius: -4,
@@ -79,7 +79,7 @@ class _WdTimezoneBannerState extends ConsumerState<WdTimezoneBanner> {
             loc.timezoneBannerMessage(deviceDisplay, userDisplay),
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.grey.shade400,
+              color: Colors.white70,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -90,7 +90,7 @@ class _WdTimezoneBannerState extends ConsumerState<WdTimezoneBanner> {
                 loc.profileTimezoneDialogDeviceHint,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.grey.shade500,
+                  color: Colors.white60,
                 ),
               ),
             ),
@@ -104,19 +104,19 @@ class _WdTimezoneBannerState extends ConsumerState<WdTimezoneBanner> {
                     end: Alignment.bottomRight,
                     colors: [
                       AppColorScheme.color2,
-                      AppColorScheme.color2.withOpacity(0.85),
+                      AppColorScheme.color2.withValues(alpha: 0.85),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColorScheme.color2.withOpacity(0.4),
+                      color: AppColorScheme.color2.withValues(alpha: 0.4),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                       spreadRadius: 0,
                     ),
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.black.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                       spreadRadius: -2,
@@ -127,13 +127,14 @@ class _WdTimezoneBannerState extends ConsumerState<WdTimezoneBanner> {
                   onPressed: _isLoading
                       ? null
                       : () async {
+                          final messenger = ScaffoldMessenger.of(context);
                           setState(() => _isLoading = true);
                           try {
                             await ref
                                 .read(authNotifierProvider.notifier)
                                 .updateDefaultTimezone(widget.deviceTimezone);
                             if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: Text(loc.timezoneBannerUpdateSuccess),
                                 backgroundColor: Colors.green.shade600,
@@ -145,7 +146,7 @@ class _WdTimezoneBannerState extends ConsumerState<WdTimezoneBanner> {
                           } catch (e) {
                             if (!mounted) return;
                             setState(() => _isLoading = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 content: Text(loc.timezoneBannerUpdateError),
                                 backgroundColor: Colors.red.shade600,
@@ -202,7 +203,7 @@ class _WdTimezoneBannerState extends ConsumerState<WdTimezoneBanner> {
                   loc.timezoneBannerKeepButton(userDisplay),
                   style: GoogleFonts.poppins(
                     fontSize: 14,
-                    color: Colors.grey.shade400,
+                    color: Colors.white70,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

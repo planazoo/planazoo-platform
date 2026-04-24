@@ -75,7 +75,7 @@ class EventParticipant {
       registeredAt: registeredAt ?? this.registeredAt,
       status: status ?? this.status,
       confirmationStatus: confirmationStatus ?? this.confirmationStatus,
-      adminCreatedBy: adminCreatedBy ?? this._adminCreatedBy,
+      adminCreatedBy: adminCreatedBy ?? _adminCreatedBy,
     );
   }
 

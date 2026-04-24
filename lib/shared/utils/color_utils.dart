@@ -44,7 +44,8 @@ class ColorUtils {
       if (isDraft) {
         // T91: Para borradores, crear versión más clara y apagada del color personalizado
         // Mezclar con blanco y aumentar luminosidad para mejor distinción visual
-        return Color.lerp(color, Colors.white, 0.5)?.withOpacity(0.7) ?? Colors.grey.shade400;
+        return Color.lerp(color, Colors.white, 0.5)?.withValues(alpha: 0.7) ??
+            Colors.white70;
       }
       return color;
     }

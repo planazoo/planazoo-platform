@@ -8,6 +8,8 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 /// Ruta pública web: /help
 class HelpManualPage extends StatelessWidget {
   const HelpManualPage({super.key});
+  static const Color _pageBg = Color(0xFF111827);
+  static const Color _surface = Color(0xFF1F2937);
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +17,7 @@ class HelpManualPage extends StatelessWidget {
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade900,
+        backgroundColor: _pageBg,
         appBar: AppBar(
           title: Text(
             loc.helpManualTitle,
@@ -38,7 +40,7 @@ class HelpManualPage extends StatelessWidget {
                     loc.helpManualIntro,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: Colors.grey.shade300,
+                      color: Colors.white70,
                       height: 1.45,
                     ),
                   ),
@@ -112,9 +114,9 @@ class HelpManualPage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade700),
+        color: _surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +153,7 @@ class HelpManualPage extends StatelessWidget {
                     child: Text(
                       b,
                       style: GoogleFonts.poppins(
-                        color: Colors.grey.shade300,
+                        color: Colors.white70,
                         fontSize: 13,
                         height: 1.4,
                       ),

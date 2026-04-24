@@ -59,7 +59,7 @@ class AuthGuard extends ConsumerWidget {
               'Cargando...',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey.shade600,
+                color: Colors.white60,
               ),
             ),
           ],
@@ -93,7 +93,7 @@ class AuthGuard extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
+                  color: const Color(0xFF1F2937),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -102,7 +102,7 @@ class AuthGuard extends ConsumerWidget {
                 errorMessage,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade600,
+                  color: Colors.white60,
                 ),
                 textAlign: TextAlign.center,
               ),

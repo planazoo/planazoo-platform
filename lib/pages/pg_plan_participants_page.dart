@@ -8,6 +8,7 @@ import 'package:unp_calendario/widgets/dialogs/invite_group_dialog.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
+import 'package:unp_calendario/app/theme/color_scheme.dart';
 
 class PlanParticipantsPage extends ConsumerStatefulWidget {
   final Plan plan;
@@ -62,7 +63,7 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(loc.participants),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF111827),
         foregroundColor: Colors.white,
         actions: [
           // T109: Deshabilitar botones según estado del plan
@@ -94,7 +95,7 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
-              color: Colors.blue.shade50,
+              color: const Color(0xFF1F2937),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -102,19 +103,19 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
                     'Total',
                     participantCount.toString(),
                     Icons.people,
-                    Colors.blue,
+                    AppColorScheme.color2,
                   ),
                   _buildStatCard(
-                    'Organizadores',
+                    loc.planRoleOrganizer,
                     organizerCount.toString(),
                     Icons.admin_panel_settings,
-                    Colors.orange,
+                    Colors.orange.shade300,
                   ),
                   _buildStatCard(
-                    'Participantes',
+                    loc.participants,
                     (participantCount - organizerCount).toString(),
                     Icons.person,
-                    Colors.green,
+                    Colors.green.shade300,
                   ),
                 ],
               ),
@@ -123,7 +124,7 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Text(
-                'Registrados',
+                loc.participantsRegistered,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
@@ -139,19 +140,17 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                'Invitaciones pendientes',
+                loc.invitationsSectionTitle,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
             pendingInvitationsAsync.when(
               data: (invites) {
                 if (invites.isEmpty) {
-                  return const Padding(
+                  return Padding(
                     padding: EdgeInsets.fromLTRB(16, 8, 16, 20),
-                    child: Text(
-                      'No hay invitaciones pendientes',
-                      style: TextStyle(color: Colors.grey),
-                    ),
+                    child: Text(loc.notificationsEmpty,
+                        style: const TextStyle(color: Colors.grey)),
                   );
                 }
                 return Padding(
@@ -164,16 +163,17 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
                       final invite = invites[index];
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
+                        color: const Color(0xFF1F2937),
                         child: ListTile(
                           dense: true,
-                          leading: const Icon(Icons.mail_outline, color: Colors.blue),
+                          leading: const Icon(Icons.mail_outline, color: AppColorScheme.color2),
                           title: Text(
                             invite.email,
                             overflow: TextOverflow.ellipsis,
                           ),
                           subtitle: Text(
-                            'Pendiente · expira ${invite.expiresAt.day}/${invite.expiresAt.month}',
-                            style: const TextStyle(color: Colors.grey),
+                            '${loc.statusShortPending} · ${invite.expiresAt.day}/${invite.expiresAt.month}',
+                            style: const TextStyle(color: Colors.white70),
                           ),
                         ),
                       );
@@ -188,7 +188,7 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
               error: (err, _) => Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                 child: Text(
-                  'Error al cargar invitaciones: $err',
+                  loc.errorLoadingParticipants(err.toString()),
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
@@ -216,7 +216,7 @@ class _PlanParticipantsPageState extends ConsumerState<PlanParticipantsPage> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade600,
+            color: Colors.white60,
           ),
         ),
       ],

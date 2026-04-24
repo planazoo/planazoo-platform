@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../shared/utils/plan_validation_utils.dart';
 import '../../app/theme/typography.dart';
-import '../../app/theme/color_scheme.dart';
 
 /// VALID-1, VALID-2: Diálogo para mostrar validaciones del plan antes de confirmar
 class PlanValidationDialog extends StatelessWidget {
@@ -22,6 +21,11 @@ class PlanValidationDialog extends StatelessWidget {
     }
 
     return AlertDialog(
+      backgroundColor: const Color(0xFF1F2937),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Colors.white12),
+      ),
       title: Row(
         children: [
           Icon(
@@ -54,6 +58,7 @@ class PlanValidationDialog extends StatelessWidget {
                   : 'Se han detectado las siguientes observaciones:',
               style: AppTypography.bodyStyle.copyWith(
                 fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 16),
@@ -74,7 +79,7 @@ class PlanValidationDialog extends StatelessWidget {
                 Text(
                   'Aunque el plan puede confirmarse, te recomendamos revisar:',
                   style: AppTypography.bodyStyle.copyWith(
-                    color: Colors.grey.shade600,
+                    color: Colors.white70,
                     fontSize: 12,
                   ),
                 ),
@@ -92,14 +97,14 @@ class PlanValidationDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: Colors.blue.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.help_outline, size: 20, color: Colors.blue.shade700),
+                  Icon(Icons.help_outline, size: 20, color: Colors.blue),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -108,7 +113,7 @@ class PlanValidationDialog extends StatelessWidget {
                           : 'Puedes continuar con la confirmación o volver a revisar el plan.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.blue.shade900,
+                        color: Colors.white70,
                       ),
                     ),
                   ),
@@ -135,10 +140,10 @@ class PlanValidationDialog extends StatelessWidget {
         ] else ...[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cerrar'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
+            child: const Text('Cerrar'),
           ),
         ],
       ],
@@ -157,7 +162,7 @@ class PlanValidationDialog extends StatelessWidget {
             child: Text(
               text,
               style: AppTypography.bodyStyle.copyWith(
-                color: AppColorScheme.color4,
+                color: Colors.white,
               ),
             ),
           ),

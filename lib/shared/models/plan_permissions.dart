@@ -83,7 +83,7 @@ class PlanPermissions {
       assignedAt: assignedAt ?? this.assignedAt,
       expiresAt: expiresAt ?? this.expiresAt,
       metadata: metadata ?? this.metadata,
-      adminCreatedBy: adminCreatedBy ?? this._adminCreatedBy,
+      adminCreatedBy: adminCreatedBy ?? _adminCreatedBy,
     );
   }
 

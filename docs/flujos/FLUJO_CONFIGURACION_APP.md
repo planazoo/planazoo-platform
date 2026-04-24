@@ -3,8 +3,8 @@
 > Define qué elementos son configurables por el usuario y por plan
 
 **Relacionado con:** T50, T105, T124  
-**Versión:** 1.2  
-**Fecha:** Abril 2026 (revisión de coherencia documental con implementación actual de configuración)
+**Versión:** 1.3  
+**Fecha:** Abril 2026 (revisión de coherencia documental + alcance explícito Android)
 
 ---
 
@@ -132,6 +132,7 @@ class QuietHours {
 **Consideraciones:**
 - Flutter tiene soporte nativo para theme y font sizes
 - Multi-plataforma: Web/iOS/Android mantienen consistencia
+- En móvil (iOS/Android), validar rendering de tipografía y densidad en pantallas pequeñas
 
 #### 2.4 - Accesibilidad
 
@@ -300,6 +301,11 @@ graph TD
 - Preferencias de notificaciones, privacidad granular, tema claro/oscuro/sistema, accesibilidad
 - `lib/features/preferences/` (no existe aún)
 
+### Nota de plataforma (Android)
+
+- El flujo funcional es común para Web/iOS/Android.
+- Para ejecutar en Android local y validar configuración/idioma/notificaciones, seguir `docs/configuracion/SETUP_ANDROID_LOCAL.md`.
+
 ## 📌 IMPLEMENTACIÓN SUGERIDA (archivos a crear)
 
 **Archivos a crear:**
@@ -318,5 +324,5 @@ graph TD
 ---
 
 *Documento de flujo de configuración de la app*  
-*Última actualización: Abril 2026 (revisión sincronizada con código y alcance vigente)*
+*Última actualización: Abril 2026 (alcance Android explícito y referencia a setup local)*
 

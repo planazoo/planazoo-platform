@@ -150,7 +150,7 @@ class _AdminInsightsScreenState extends ConsumerState<AdminInsightsScreen> {
     }
 
     await Clipboard.setData(ClipboardData(text: buffer.toString()));
-    if (!mounted) return;
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(loc.adminInsightsExportCopied)),
     );
@@ -219,12 +219,12 @@ class _AdminInsightsScreenState extends ConsumerState<AdminInsightsScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: Colors.white70),
                   ),
                   child: Text(
                     loc.adminInsightsEmpty,
                     style: AppTypography.bodyStyle.copyWith(
-                      color: Colors.grey.shade600,
+                      color: Colors.white60,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -321,7 +321,7 @@ class _PlanParticipantsMatrix extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColorScheme.color2.withOpacity(0.15),
+                    color: AppColorScheme.color2.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -346,8 +346,8 @@ class _PlanParticipantsMatrix extends StatelessWidget {
       child: DataTable(
         columns: columns,
         rows: rows,
-        headingRowColor: MaterialStateProperty.all(Colors.grey.shade100),
-        dataRowColor: MaterialStateProperty.all(Colors.white),
+        headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.08)),
+        dataRowColor: WidgetStateProperty.all(Colors.white),
         columnSpacing: 24,
       ),
     );
@@ -370,7 +370,7 @@ class _PlanDetailsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.white70),
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -381,7 +381,7 @@ class _PlanDetailsCard extends StatelessWidget {
         ),
         subtitle: Text(
           '${DateFormatter.formatDate(entry.plan.startDate)} · ${DateFormatter.formatDate(entry.plan.endDate)}',
-          style: AppTypography.caption.copyWith(color: Colors.grey.shade600),
+          style: AppTypography.caption.copyWith(color: Colors.white60),
         ),
         children: [
           _SectionTitle(label: loc.adminInsightsParticipantsSection),
@@ -412,7 +412,7 @@ class _ParticipantsTable extends StatelessWidget {
     if (entry.participations.isEmpty) {
       return Text(
         AppLocalizations.of(context)!.adminInsightsNoParticipants,
-        style: AppTypography.bodyStyle.copyWith(color: Colors.grey.shade600),
+        style: AppTypography.bodyStyle.copyWith(color: Colors.white60),
       );
     }
 
@@ -452,7 +452,7 @@ class _EventsTable extends StatelessWidget {
     if (entry.events.isEmpty) {
       return Text(
         loc.adminInsightsNoEvents,
-        style: AppTypography.bodyStyle.copyWith(color: Colors.grey.shade600),
+        style: AppTypography.bodyStyle.copyWith(color: Colors.white60),
       );
     }
 
@@ -507,8 +507,8 @@ class _EventsTable extends StatelessWidget {
       child: DataTable(
         columns: columns,
         rows: rows,
-        headingRowColor: MaterialStateProperty.all(Colors.grey.shade100),
-        dataRowColor: MaterialStateProperty.all(Colors.white),
+        headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.08)),
+        dataRowColor: WidgetStateProperty.all(Colors.white),
         columnSpacing: 24,
       ),
     );
@@ -525,7 +525,7 @@ class _AccommodationsTable extends StatelessWidget {
     if (accommodations.isEmpty) {
       return Text(
         AppLocalizations.of(context)!.adminInsightsNoAccommodations,
-        style: AppTypography.bodyStyle.copyWith(color: Colors.grey.shade600),
+        style: AppTypography.bodyStyle.copyWith(color: Colors.white60),
       );
     }
 
@@ -618,7 +618,7 @@ Widget _buildEventParticipantCell({
 
   if (participant == null) {
     participationLabel = loc.adminInsightsEventStatusNotRegistered;
-    participationColor = Colors.grey.shade500;
+    participationColor = Colors.white60;
   } else if (participant.isCancelled) {
     participationLabel = loc.adminInsightsEventStatusCancelled;
     participationColor = Colors.red.shade500;
@@ -627,7 +627,7 @@ Widget _buildEventParticipantCell({
     participationColor = Colors.green.shade600;
   } else {
     participationLabel = loc.adminInsightsEventStatusNotRegistered;
-    participationColor = Colors.grey.shade500;
+    participationColor = Colors.white60;
   }
 
   String? confirmationLabel;
@@ -646,7 +646,7 @@ Widget _buildEventParticipantCell({
       confirmationColor = Colors.orange.shade700;
     } else {
       confirmationLabel = loc.adminInsightsEventConfirmationMissing;
-      confirmationColor = Colors.grey.shade500;
+      confirmationColor = Colors.white60;
     }
   }
 
@@ -665,9 +665,9 @@ Widget _buildEventParticipantCell({
         ),
         if (confirmationLabel != null)
           Text(
-            confirmationLabel!,
+            confirmationLabel,
             style: _statusSecondaryStyle.copyWith(
-              color: confirmationColor ?? Colors.grey.shade600,
+              color: confirmationColor ?? Colors.white60,
               fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,

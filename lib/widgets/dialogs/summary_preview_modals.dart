@@ -14,7 +14,7 @@ void showEventSummaryPreviewModal({
 }) {
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: Colors.grey.shade900,
+    backgroundColor: const Color(0xFF111827),
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -35,7 +35,7 @@ void showEventSummaryPreviewModal({
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade600,
+                color: Colors.white24,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -81,7 +81,7 @@ void showEventSummaryPreviewModal({
             _DetailRow(
               icon: Icons.payments_outlined,
               label: 'Coste',
-              value: '${event.cost!.toStringAsFixed(2)}',
+            value: event.cost!.toStringAsFixed(2),
             ),
           ],
           if (event.commonPart?.url != null && event.commonPart!.url!.trim().isNotEmpty) ...[
@@ -120,7 +120,7 @@ void showAccommodationSummaryPreviewModal({
 }) {
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: Colors.grey.shade900,
+    backgroundColor: const Color(0xFF111827),
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -141,7 +141,7 @@ void showAccommodationSummaryPreviewModal({
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade600,
+                color: Colors.white24,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -187,7 +187,7 @@ void showAccommodationSummaryPreviewModal({
             _DetailRow(
               icon: Icons.payments_outlined,
               label: 'Coste',
-              value: '${accommodation.cost!.toStringAsFixed(2)}',
+            value: accommodation.cost!.toStringAsFixed(2),
             ),
           ],
           if (accommodation.commonPart?.url != null && accommodation.commonPart!.url!.trim().isNotEmpty) ...[
@@ -234,7 +234,7 @@ class _DetailRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: Colors.grey.shade400),
+        Icon(icon, size: 18, color: Colors.white60),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -244,7 +244,7 @@ class _DetailRow extends StatelessWidget {
                 label,
                 style: GoogleFonts.poppins(
                   fontSize: 11,
-                  color: Colors.grey.shade500,
+                  color: Colors.white60,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -291,7 +291,7 @@ class _LinkRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: Colors.grey.shade400),
+        Icon(icon, size: 18, color: Colors.white60),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -301,7 +301,7 @@ class _LinkRow extends StatelessWidget {
                 label,
                 style: GoogleFonts.poppins(
                   fontSize: 11,
-                  color: Colors.grey.shade500,
+                  color: Colors.white60,
                   fontWeight: FontWeight.w500,
                 ),
               ),

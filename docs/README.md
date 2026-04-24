@@ -109,11 +109,11 @@ Configuración y contexto del proyecto:
 ### Para Desarrolladores
 1. Lee [Contexto del Proyecto](./configuracion/CONTEXT.md) para entender las normas
 2. Consulta [Prompt Base](./guias/PROMPT_BASE.md) para la metodología de trabajo
-3. Revisa [Guía de UI](./guias/GUIA_UI.md) para componentes, estilos y grid 17×13
+3. Revisa [Guía de UI](./guias/GUIA_UI.md) para componentes, estilos, tokens y tokenización estricta
 4. Explora los [Flujos de Proceso](./flujos/) para entender funcionalidades
 
 ### Para Diseñadores
-1. Consulta [Guía de UI](./guias/GUIA_UI.md) para el sistema de diseño y grid 17×13
+1. Consulta [Guía de UI](./guias/GUIA_UI.md) para el sistema de diseño y reglas canónicas de UI
 2. Revisa [Documentación UX](./ux/) para entender la interfaz
 3. Explora [Especificaciones](./especificaciones/) para detalles técnicos
 

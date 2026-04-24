@@ -23,7 +23,7 @@ class FlightStatusService {
       final data = result.data as Map<String, dynamic>?;
       if (data == null) return null;
       return FlightStatusResult.fromMap(data);
-    } on FirebaseFunctionsException catch (e) {
+    } on FirebaseFunctionsException {
       rethrow;
     }
   }
