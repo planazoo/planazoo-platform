@@ -64,8 +64,8 @@ class PaymentSummaryPage extends ConsumerWidget {
       data: AppTheme.darkTheme,
       child: Scaffold(
         backgroundColor: _cPageBg,
-        appBar: AppBar(
-          automaticallyImplyLeading: !embedInPlanDetail,
+        appBar: embedInPlanDetail ? null : AppBar(
+          automaticallyImplyLeading: true,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           title: Text(

@@ -108,6 +108,27 @@ Cada pantalla debe declarar y reutilizar un set mínimo de tokens.
 - Chips de enlace (maps/web): contenedor compacto oscuro con borde de acento semitransparente; icono en `cAccent`.
 - Chat (burbujas y reacciones): burbuja propia en `cAccent`, resto en `cSurfaceBg`; metadatos en texto secundario; reacciones como chips compactos de bajo contraste.
 
+### Header de sección (SectionTitleBar)
+
+Componente estándar para titular cada sección principal dentro de una pantalla de plan.
+
+- **Uso:** encima del contenido de cada pestaña/sección principal (`Info`, `Calendario`, `Participantes`, `Chat`, etc.).
+- **Altura fija:** `48`.
+- **Fondo:** `cPageBg`.
+- **Separador inferior:** borde `aBorderSoft` (blanco semitransparente).
+- **Título:** `GoogleFonts.poppins`, `16`, `w600`, color `cTextPrimary`.
+- **Alineación:** título a la izquierda, centrado vertical.
+- **Padding horizontal:** `20`.
+
+#### Acciones en header (iconos/botones)
+
+- Se permiten acciones a la derecha (iconos, chips compactos o botón secundario).
+- Mantener prioridad visual del título: máximo 1-3 acciones compactas (excepción válida en vistas densas como "Mi resumen").
+- Iconografía por defecto en `cTextSecondary`; estado activo en `cAccent`.
+- Si hay acción destructiva, usar color semántico (`cDanger`) solo en esa acción.
+- Evitar CTA primario grande en este header; el primario debe vivir en el contenido o barra de acciones.
+- Si hay chips de modo/filtro en el header, alinear a la derecha y usar variante compacta: fondo de superficie oscura en estado normal, acento tenue en estado activo, borde sutil constante.
+
 ### Modales y hojas inferiores (norma)
 
 - `AlertDialog` y `Dialog`: usar superficie `cSurfaceBg`, radio `12` y borde sutil `aBorderStrong` (blanco alpha `0.12`).

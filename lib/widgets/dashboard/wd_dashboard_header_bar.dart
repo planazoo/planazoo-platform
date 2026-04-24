@@ -62,13 +62,28 @@ class WdDashboardHeaderBar extends ConsumerWidget {
         height: rowHeight,
         decoration: BoxDecoration(color: bg),
         child: Center(
-          child: Text(
-            AppLocalizations.of(context)!.dashboardLogo,
-            style: GoogleFonts.poppins(
-              color: text,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
+          child: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'planaz',
+                  style: GoogleFonts.poppins(
+                    color: text,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+                TextSpan(
+                  text: 'oo',
+                  style: GoogleFonts.poppins(
+                    color: AppColorScheme.color2,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

@@ -169,13 +169,28 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
       child: Scaffold(
         backgroundColor: _cPageBg,
         appBar: AppBar(
-          title: Text(
-            loc.appTitle,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
-              color: _cTextPrimary,
+          title: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'planaz',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.1,
+                    color: _cTextPrimary,
+                  ),
+                ),
+                TextSpan(
+                  text: 'oo',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.1,
+                    color: AppColorScheme.color2,
+                  ),
+                ),
+              ],
             ),
           ),
           backgroundColor: _cPageBg,

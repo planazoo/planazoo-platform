@@ -29,6 +29,12 @@ class MyPlanSummaryScreen extends ConsumerStatefulWidget {
   /// FAB "+": mismo flujo que calendario sin cambiar de pestaña (ID 44).
   final VoidCallback? onRequestCreateEvent;
   final VoidCallback? onRequestCreateAccommodation;
+  final bool showTopSummaryBar;
+  final String? viewMode;
+  final ValueChanged<String>? onViewModeChanged;
+  final bool? draftOnlyFilter;
+  final ValueChanged<bool>? onDraftOnlyFilterChanged;
+  final ValueChanged<bool>? onDraftFilterVisibilityChanged;
 
   const MyPlanSummaryScreen({
     super.key,
@@ -38,6 +44,12 @@ class MyPlanSummaryScreen extends ConsumerStatefulWidget {
     this.onGoToCalendar,
     this.onRequestCreateEvent,
     this.onRequestCreateAccommodation,
+    this.showTopSummaryBar = true,
+    this.viewMode,
+    this.onViewModeChanged,
+    this.draftOnlyFilter,
+    this.onDraftOnlyFilterChanged,
+    this.onDraftFilterVisibilityChanged,
   });
 
   @override
@@ -61,10 +73,29 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
   static const int _chronoLimit = 15;
   bool _chronoExpanded = false;
   /// 'mine' = solo mis eventos; 'plan' = todos los participantes.
-  String _viewMode = 'mine';
+  String _internalViewMode = 'mine';
   String? _activeQuickPanel;
   /// Ítem 81: en planificando, mostrar solo eventos borrador / no confirmados.
-  bool _draftOnlyFilter = false;
+  bool _internalDraftOnlyFilter = false;
+
+  String get _viewMode => widget.viewMode ?? _internalViewMode;
+  bool get _draftOnlyFilter => widget.draftOnlyFilter ?? _internalDraftOnlyFilter;
+
+  void _setViewMode(String mode) {
+    if (widget.onViewModeChanged != null) {
+      widget.onViewModeChanged!(mode);
+      return;
+    }
+    setState(() => _internalViewMode = mode);
+  }
+
+  void _setDraftOnlyFilter(bool value) {
+    if (widget.onDraftOnlyFilterChanged != null) {
+      widget.onDraftOnlyFilterChanged!(value);
+      return;
+    }
+    setState(() => _internalDraftOnlyFilter = value);
+  }
 
   /// Orden por fecha, hora de inicio, creación e id (lista §3.2 ítem 88).
   static int _compareEventsBySchedule(Event a, Event b) {
@@ -119,11 +150,13 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         final hasDrafts =
             allEvents.any((e) => e.isDraft || (e.commonPart?.isDraft == true));
         final showDraftFilter = planStateNorm == 'planificando' && hasDrafts;
-        if (!showDraftFilter && _draftOnlyFilter) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) setState(() => _draftOnlyFilter = false);
-          });
-        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          widget.onDraftFilterVisibilityChanged?.call(showDraftFilter);
+          if (!showDraftFilter && _draftOnlyFilter) {
+            _setDraftOnlyFilter(false);
+          }
+        });
 
         var displayEvents = _viewMode == 'plan'
             ? List<Event>.from(allEvents)
@@ -142,10 +175,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         final bar = _buildSummaryBar(
           loc: loc,
           viewMode: _viewMode,
-          onViewModeChanged: (mode) => setState(() => _viewMode = mode),
+          onViewModeChanged: _setViewMode,
           showDraftFilter: showDraftFilter,
           draftsOnlyActive: _draftOnlyFilter,
-          onDraftOnlyToggle: () => setState(() => _draftOnlyFilter = !_draftOnlyFilter),
+          onDraftOnlyToggle: () => _setDraftOnlyFilter(!_draftOnlyFilter),
         );
 
         final dimPastInCourse = widget.plan.state == 'en_curso';
@@ -167,7 +200,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            bar,
+            if (widget.showTopSummaryBar) bar,
             Expanded(
               child: ColoredBox(
                 color: Colors.transparent,
@@ -227,7 +260,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           _buildSummaryBar(
             loc: loc,
             viewMode: _viewMode,
-            onViewModeChanged: (mode) => setState(() => _viewMode = mode),
+            onViewModeChanged: _setViewMode,
             showDraftFilter: false,
             draftsOnlyActive: false,
             onDraftOnlyToggle: () {},
@@ -248,7 +281,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           _buildSummaryBar(
             loc: loc,
             viewMode: _viewMode,
-            onViewModeChanged: (mode) => setState(() => _viewMode = mode),
+            onViewModeChanged: _setViewMode,
             showDraftFilter: false,
             draftsOnlyActive: false,
             onDraftOnlyToggle: () {},

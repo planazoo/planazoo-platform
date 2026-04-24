@@ -62,6 +62,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   static const double _aBorderStrong = 0.12;
 
   late String _selectedOption;
+  String _summaryViewMode = 'mine';
+  bool _summaryDraftOnly = false;
+  bool _summaryShowDraftFilter = false;
   bool _hasSetInitialTabForParticipant = false;
   /// Estado del calendario embebido: días visibles (1/2/3) y grupo actual (barra unificada).
   /// iOS: 3 días por defecto (lista §3.1 / ID 51).
@@ -157,6 +160,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                 },
                 showStatsTab: isOrganizer,
               ),
+              _buildSectionTitleBar(),
               // Contenido según la opción seleccionada
               Expanded(
                 child: _buildContent(plan),
@@ -226,6 +230,193 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         ),
       ],
     );
+  }
+
+  Widget _buildSectionTitleBar() {
+    final loc = AppLocalizations.of(context)!;
+    return Container(
+      height: 48,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: _cPageBg,
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+        ),
+      ),
+      alignment: Alignment.centerLeft,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _currentSectionTitle(loc),
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                letterSpacing: 0.1,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (_selectedOption == 'mySummary') ...[
+            const SizedBox(width: 8),
+            Flexible(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildSummaryViewModeChip(
+                        label: loc.myPlanSummaryViewMine,
+                        selected: _summaryViewMode == 'mine',
+                        onTap: () => setState(() => _summaryViewMode = 'mine'),
+                      ),
+                      const SizedBox(width: 6),
+                      _buildSummaryViewModeChip(
+                        label: loc.myPlanSummaryViewPlan,
+                        selected: _summaryViewMode == 'plan',
+                        onTap: () => setState(() => _summaryViewMode = 'plan'),
+                      ),
+                      if (_summaryShowDraftFilter) ...[
+                        const SizedBox(width: 6),
+                        _buildSummaryHeaderFilterButton(
+                          tooltip: loc.myPlanSummaryDraftsOnlyTooltip,
+                          active: _summaryDraftOnly,
+                          onTap: () => setState(() => _summaryDraftOnly = !_summaryDraftOnly),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+          if (_selectedOption == 'payments') ...[
+            const SizedBox(width: 8),
+            Tooltip(
+              message: loc.paymentsAddExpense,
+              child: InkWell(
+                onTap: _quickCreatePayment,
+                borderRadius: BorderRadius.circular(17),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F2937),
+                    borderRadius: BorderRadius.circular(17),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryHeaderFilterButton({
+    required String tooltip,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(17),
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: active
+                ? Colors.orange.shade200.withValues(alpha: 0.2)
+                : const Color(0xFF1F2937),
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(
+              color: active
+                  ? Colors.orange.shade200.withValues(alpha: 0.8)
+                  : Colors.white.withValues(alpha: 0.12),
+              width: 1,
+            ),
+          ),
+          child: Icon(
+            active ? Icons.filter_alt : Icons.filter_alt_outlined,
+            color: active ? Colors.orange.shade200 : Colors.white70,
+            size: 18,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryViewModeChip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: selected ? AppColorScheme.color2.withValues(alpha: 0.22) : const Color(0xFF1F2937),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: selected ? Colors.white : Colors.white70,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _currentSectionTitle(AppLocalizations loc) {
+    switch (_selectedOption) {
+      case 'planData':
+        return 'Info';
+      case 'mySummary':
+        return loc.myPlanSummaryTab;
+      case 'calendar':
+        return _capitalize(loc.dashboardTabCalendar);
+      case 'participants':
+        return loc.participants;
+      case 'chat':
+        return _capitalize(loc.dashboardTabChat);
+      case 'payments':
+        return loc.paymentsSummaryTitle;
+      case 'planNotifications':
+        return loc.notificationsTitle;
+      case 'planNotes':
+        return loc.planNotesTabTitle;
+      case 'stats':
+        return _capitalize(loc.dashboardTabStats);
+      default:
+        return 'Info';
+    }
+  }
+
+  String _capitalize(String value) {
+    if (value.isEmpty) return value;
+    return '${value[0].toUpperCase()}${value.substring(1)}';
   }
 
   Widget _buildQuickActionsBar(Plan plan) {
@@ -395,6 +586,16 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           onGoToCalendar: () => setState(() => _selectedOption = 'calendar'),
           onRequestCreateEvent: () => _openCreateEventDialog(switchToCalendar: false),
           onRequestCreateAccommodation: () => _openCreateAccommodationDialog(switchToCalendar: false),
+          showTopSummaryBar: false,
+          viewMode: _summaryViewMode,
+          onViewModeChanged: (mode) => setState(() => _summaryViewMode = mode),
+          draftOnlyFilter: _summaryDraftOnly,
+          onDraftOnlyFilterChanged: (value) => setState(() => _summaryDraftOnly = value),
+          onDraftFilterVisibilityChanged: (visible) {
+            if (_summaryShowDraftFilter != visible) {
+              setState(() => _summaryShowDraftFilter = visible);
+            }
+          },
         );
       
       case 'calendar':
@@ -404,6 +605,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         return ParticipantsScreen(
           plan: plan,
           embedInScaffold: false,
+          showEmbeddedHeader: false,
         );
       
       case 'chat':

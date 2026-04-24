@@ -24,12 +24,15 @@ class ParticipantsScreen extends ConsumerStatefulWidget {
   final VoidCallback? onBack;
   /// Si false, no se envuelve en Scaffold/AppBar (p. ej. cuando se usa dentro de PlanDetailPage en iOS).
   final bool embedInScaffold;
+  /// Si true y está embebido, dibuja barra superior interna "Participantes".
+  final bool showEmbeddedHeader;
 
   const ParticipantsScreen({
     super.key,
     required this.plan,
     this.onBack,
     this.embedInScaffold = true,
+    this.showEmbeddedHeader = true,
   });
 
   @override
@@ -2217,7 +2220,7 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
       );
 
       // P15: misma barra verde que otras pestañas cuando está embebido en PlanDetailPage (iOS).
-      if (isCompact && !widget.embedInScaffold) {
+      if (isCompact && !widget.embedInScaffold && widget.showEmbeddedHeader) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
