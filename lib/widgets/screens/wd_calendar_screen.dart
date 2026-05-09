@@ -34,6 +34,7 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.d
 import 'package:unp_calendario/widgets/screens/calendar/calendar_app_bar.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_styles.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_event_logic.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_accommodation_logic.dart';
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
@@ -61,10 +62,6 @@ class CalendarScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
-  // Constantes para dimensiones y estilos
-  // Constantes para alturas y dimensiones
-  static const double _gridLineOpacity = CalendarConstants.gridLineOpacity;
-  
   // Estado para la navegación de días (grupos dinámicos según días visibles)
   int _currentDayGroup = 0; // Grupo actual (0 = primeros días, 1 = siguientes días, etc.)
   
@@ -458,8 +455,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Border(
       right: includeRight
           ? BorderSide(
-              color: Colors.white.withValues(
-                  alpha: CalendarConstants.calendarSeparatorOpacityWeb),
+              color: CalendarStyles.calendarDaySeparatorWeb,
               width: CalendarConstants.calendarVerticalSeparatorWidth,
             )
           : BorderSide.none,
@@ -508,7 +504,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       shouldShowAccommodationInTrack: _shouldShowAccommodationInTrack,
       getFilteredTracks: _getFilteredTracks,
       createGridBorder: _createGridBorder,
-      gridLineOpacity: _gridLineOpacity,
       getParticipantTimezone: _getParticipantTimezone,
     );
   }
@@ -629,7 +624,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     border: isActiveTrack && !isLastTrack
                         ? Border(
                             right: BorderSide(
-                              color: AppColorScheme.gridLineColor.withValues(alpha: _gridLineOpacity),
+                              color: CalendarStyles.calendarGridLineColor,
                               width: 1.5, // Borde más grueso
                             ),
                           )
@@ -842,6 +837,68 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return OverlappingSegmentGroup.detectOverlappingGroups(segments);
   }
 
+  // ── Tarjetas UI-ST opción B: superficie + borde GUÍA + carril semántico (tipo evento) ──────────
+
+  static const double _eventOutlineRailWidth = 4;
+
+  Color _eventOutlineTitleColor(bool isDraft) =>
+      isDraft ? const Color(0xFFE8EAF0) : Colors.white;
+
+  Color _eventOutlineSubtitleColor(bool isDraft) =>
+      isDraft ? Colors.white60 : Colors.white70;
+
+  /// Borde marcado cuando es para todos / multi-track / capa solapada.
+  (Color, double) _outlineEventFrame(Map<String, dynamic> participantInfo,
+      Color accentColor, bool isMultiTrack, bool isOverlapping) {
+    final highlight = participantInfo['isForAll'] == true ||
+        isOverlapping ||
+        isMultiTrack;
+    final frameColor = highlight
+        ? accentColor.withValues(alpha: 0.55)
+        : CalendarStyles.calendarGridLineColor;
+    final frameWidth = highlight ? 2.0 : 1.0;
+    return (frameColor, frameWidth);
+  }
+
+  Widget _buildEventOutlineRailChrome({
+    required Color accentColor,
+    required Color frameColor,
+    required double frameWidth,
+    required Widget child,
+  }) {
+    final radius = BorderRadius.circular(CalendarConstants.borderRadius);
+    return ClipRRect(
+      borderRadius: radius,
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        clipBehavior: Clip.hardEdge,
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: CalendarStyles.cSurfaceBg,
+                border: Border.all(color: frameColor, width: frameWidth),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: _eventOutlineRailWidth,
+            child: ColoredBox(color: accentColor),
+          ),
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.only(left: _eventOutlineRailWidth),
+              child: child,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   /// Construye un evento draggable para continuación (cuando está solapada)
   Widget _buildDraggableEventForContinuation(Event continuationEvent, double height) {
@@ -857,6 +914,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       fontSize = 10;
     }
 
+    final participantInfo = _getParticipantInfo(continuationEvent);
+    final continuationGroups =
+        _getConsecutiveTrackGroupsForEvent(continuationEvent);
+    final isMultiTrack =
+        continuationGroups.any((group) => group.length > 1);
+    final contColor = ColorUtils.getEventColor(continuationEvent.typeFamily,
+        continuationEvent.isDraft,
+        customColor: continuationEvent.color);
+    final (frameColorCont, frameWidthCont) = _outlineEventFrame(
+      participantInfo,
+      contColor,
+      isMultiTrack,
+      false,
+    );
+
     return GestureDetector(
       onTap: () {
         // Al hacer click, abrir el diálogo del evento original
@@ -867,45 +939,46 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           Container(
           decoration: BoxDecoration(
-            color: ColorUtils.getEventColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: ColorUtils.getEventBorderColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
-              width: 1,
-            ),
+            borderRadius:
+                BorderRadius.circular(CalendarConstants.borderRadius),
           ),
-          child: ClipRect(
-            child: Padding(
-              padding: const EdgeInsets.all(1),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Descripción del evento
-                  Text(
-                    continuationEvent.description,
-                    style: TextStyle(
-                      color: ColorUtils.getEventTextColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  // Hora - para continuaciones siempre es 00:00 - XX:XX
-                  Flexible(
-                    child: Text(
-                      '00:00 - ${continuationEvent.durationMinutes ~/ 60}:${(continuationEvent.durationMinutes % 60).toString().padLeft(2, '0')}',
+          child: _buildEventOutlineRailChrome(
+            accentColor: contColor,
+            frameColor: frameColorCont,
+            frameWidth: frameWidthCont,
+            child: ClipRect(
+              child: Padding(
+                padding: const EdgeInsets.all(1),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      continuationEvent.description,
                       style: TextStyle(
-                        color: ColorUtils.getEventTextColor(continuationEvent.typeFamily, continuationEvent.isDraft, customColor: continuationEvent.color),
-                        fontSize: fontSize - 2,
-                        fontWeight: FontWeight.w500,
+                        color: _eventOutlineTitleColor(
+                            continuationEvent.isDraft),
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.bold,
                       ),
-                      textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                    Flexible(
+                      child: Text(
+                        '00:00 - ${continuationEvent.durationMinutes ~/ 60}:${(continuationEvent.durationMinutes % 60).toString().padLeft(2, '0')}',
+                        style: TextStyle(
+                          color: _eventOutlineSubtitleColor(
+                              continuationEvent.isDraft),
+                          fontSize: fontSize - 2,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -921,70 +994,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final startTime = event.hour * 60 + event.startMinute;
     final endTime = startTime + event.durationMinutes;
     return endTime > 1440; // 1440 minutos = 24 horas
-  }
-
-  /// Verifica si un evento crearía conflictos de solapamiento por participante
-  /// 
-  /// Regla de negocio: Un participante no puede tener eventos confirmados solapados
-  /// Los eventos en borrador SÍ pueden solaparse
-  /// 
-  /// [eventToCheck] - El evento que queremos añadir/mover
-  /// [targetDate] - La fecha donde queremos colocar el evento
-  /// [eventIdToExclude] - ID del evento a excluir del conteo (cuando editamos un evento existente)
-  /// 
-  /// Returns true si hay conflicto de solapamiento por participante
-  bool _wouldCreateParticipantConflict({
-    required Event eventToCheck,
-    required DateTime targetDate,
-    String? eventIdToExclude,
-  }) {
-    // Los borradores pueden solaparse, no validar
-    if (eventToCheck.isDraft) return false;
-    
-    // Si no tiene participantes, no hay conflicto
-    if (eventToCheck.participantTrackIds.isEmpty) return false;
-
-    // Usar métodos timezone-aware para calcular minutos reales
-    final eventDate = DateTime(eventToCheck.date.year, eventToCheck.date.month, eventToCheck.date.day);
-    final eventStartMinutes = _getRealStartMinutes(eventToCheck, eventDate);
-    final eventEndMinutes = _getRealEndMinutes(eventToCheck, eventDate);
-
-    // Obtener eventos para la fecha objetivo
-    final eventsForDate = ref.read(eventsForDateProvider(
-      EventsForDateParams(
-        calendarParams: CalendarNotifierParams(
-          planId: widget.plan.id ?? '',
-          userId: widget.plan.userId,
-          initialDate: widget.plan.startDate,
-          initialColumnCount: widget.plan.durationInDays,
-        ),
-        date: targetDate,
-      ),
-    ));
-
-    // Buscar eventos existentes en la misma fecha
-    for (final existingEvent in eventsForDate) {
-      if (existingEvent.id == eventIdToExclude) continue; // Excluir el evento que estamos editando
-      if (existingEvent.isDraft) continue; // Ignorar borradores
-      if (existingEvent.date != targetDate) continue;
-
-      // Usar métodos timezone-aware para eventos existentes también
-      final existingEventDate = DateTime(existingEvent.date.year, existingEvent.date.month, existingEvent.date.day);
-      final existingStartMinutes = _getRealStartMinutes(existingEvent, existingEventDate);
-      final existingEndMinutes = _getRealEndMinutes(existingEvent, existingEventDate);
-
-      // Verificar si hay solapamiento temporal
-      if (eventStartMinutes < existingEndMinutes && eventEndMinutes > existingStartMinutes) {
-        // Verificar si hay participantes en común
-        for (final participantId in eventToCheck.participantTrackIds) {
-          if (existingEvent.participantTrackIds.contains(participantId)) {
-            return true; // HAY CONFLICTO
-          }
-        }
-      }
-    }
-
-    return false; // NO HAY CONFLICTO
   }
 
   /// Verifica si añadir/mover un evento excedería el límite de 3 eventos solapados
@@ -1103,12 +1112,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Obtener información de participantes (T50)
     final participantInfo = _getParticipantInfo(event);
     final eventColor = ColorUtils.getEventColor(event.typeFamily, event.isDraft, customColor: event.color);
-    final borderColor = ColorUtils.getEventBorderColor(event.typeFamily, event.isDraft, customColor: event.color);
-    
-    // T89: Determinar si es multi-participante
-    final isMultiParticipant = (participantInfo['participantCount'] as int) > 1 || (participantInfo['isForAll'] as bool) == true;
     final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(event);
     final isMultiTrack = consecutiveGroups.any((group) => group.length > 1);
+    final (frameColorNd, frameWidthNd) =
+        _outlineEventFrame(participantInfo, eventColor, isMultiTrack, false);
 
     return GestureDetector(
       onTap: () => _showEventDialog(event),
@@ -1127,25 +1134,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
             child: Container(
           decoration: BoxDecoration(
-            // T89: Gradiente para eventos multi-participante cuando abarcan múltiples tracks
-            gradient: isMultiParticipant && isMultiTrack
-                ? LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      eventColor,
-                      eventColor.withValues(alpha: 0.85),
-                      eventColor.withValues(alpha: 0.75),
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  )
-                : null,
-            color: isMultiParticipant && isMultiTrack ? null : eventColor,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: borderColor,
-              width: (participantInfo['isForAll'] == true || isMultiTrack) ? 2 : 1, // Borde más grueso para eventos multi-participante (T89)
-            ),
+            borderRadius:
+                BorderRadius.circular(CalendarConstants.borderRadius),
             boxShadow: isThisEventDragging ? [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.3),
@@ -1154,73 +1144,68 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               )
             ] : null,
           ),
-          child: ClipRect(
-            child: Padding(
-              padding: const EdgeInsets.all(1), // Padding mínimo
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Título del evento
-                  Flexible(
-                    child: Text(
-                      _eventTitleWithTransportCode(event),
-                      style: TextStyle(
-                        color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1, // Solo una línea para eventos pequeños
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  
-                  // Mostrar horas solo si hay espacio suficiente
-                  if (height > 25) ...[
-                    const SizedBox(height: 2),
-                    
-                    // Horas en una sola línea para eventos multi-día
+          child: _buildEventOutlineRailChrome(
+            accentColor: eventColor,
+            frameColor: frameColorNd,
+            frameWidth: frameWidthNd,
+            child: ClipRect(
+              child: Padding(
+                padding: const EdgeInsets.all(1),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                     Flexible(
                       child: Text(
-                        '00:00 - ${_formatNextDayEndTime(event)}',
+                        _eventTitleWithTransportCode(event),
                         style: TextStyle(
-                          color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
-                          fontSize: fontSize - 2,
-                          fontWeight: FontWeight.w500,
+                          color: _eventOutlineTitleColor(event.isDraft),
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.bold,
                         ),
-                        textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ],
-                  
-                  // Indicador de participantes (T50/T89) - solo si hay espacio suficiente
-                  if (height > 30 && participantInfo['showIndicator'] == true) ...[
-                    const SizedBox(height: 2),
-                    _buildParticipantIndicator(participantInfo, fontSize - 3, event, isMultiTrack: isMultiTrack),
-                  ],
-                  
-                  // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
-                  if (height > 10 && _getFlightDetails(event).isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    
-                    Flexible(
-                      child: Text(
-                        _getFlightDetails(event),
-                        style: TextStyle(
-                          color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
-                          fontSize: fontSize - 3,
-                          fontWeight: FontWeight.w400,
+                    if (height > 25) ...[
+                      const SizedBox(height: 2),
+                      Flexible(
+                        child: Text(
+                          '00:00 - ${_formatNextDayEndTime(event)}',
+                          style: TextStyle(
+                            color: _eventOutlineSubtitleColor(event.isDraft),
+                            fontSize: fontSize - 2,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        textAlign: TextAlign.left,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
+                    ],
+                    if (height > 30 && participantInfo['showIndicator'] == true) ...[
+                      const SizedBox(height: 2),
+                      _buildParticipantIndicator(participantInfo, fontSize - 3, event, isMultiTrack: isMultiTrack),
+                    ],
+                    if (height > 10 && _getFlightDetails(event).isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Flexible(
+                        child: Text(
+                          _getFlightDetails(event),
+                          style: TextStyle(
+                            color: _eventOutlineSubtitleColor(event.isDraft),
+                            fontSize: fontSize - 3,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          textAlign: TextAlign.left,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -1872,11 +1857,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Obtener información de participantes (T50)
     final participantInfo = _getParticipantInfo(segment.originalEvent);
     final eventColor = ColorUtils.getEventColor(segment.typeFamily, segment.isDraft, customColor: segment.color);
-    final borderColor = ColorUtils.getEventBorderColor(segment.typeFamily, segment.isDraft, customColor: segment.color);
-    
-    // T89: Aplicar gradiente para eventos multi-track
-    final isMultiParticipant = isMultiTrack || (participantInfo['participantCount'] as int) > 1 || (participantInfo['isForAll'] as bool) == true;
-    
+    final (frameColorSg, frameWidthSg) =
+        _outlineEventFrame(participantInfo, eventColor, isMultiTrack, isOverlapping);
+
     return Stack(
       children: [
         AnimatedContainer(
@@ -1891,25 +1874,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           height: double.infinity,
           width: double.infinity,
           decoration: BoxDecoration(
-            // T89: Gradiente para eventos multi-participante
-            gradient: isMultiParticipant && isMultiTrack
-                ? LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      eventColor,
-                      eventColor.withValues(alpha: 0.85),
-                      eventColor.withValues(alpha: 0.75),
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  )
-                : null,
-            color: isMultiParticipant && isMultiTrack ? null : eventColor,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: borderColor,
-              width: (participantInfo['isForAll'] == true || isOverlapping || isMultiTrack) ? 2 : 1, // Borde más grueso para eventos multi-participante (T89)
-            ),
+            borderRadius:
+                BorderRadius.circular(CalendarConstants.borderRadius),
             boxShadow: isDragging ? [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.3),
@@ -1917,7 +1883,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 offset: const Offset(0, 4),
               )
             ] : isOverlapping ? [
-              // Sombra para eventos superpuestos (más capas = más sombra)
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.1 + (layerIndex * 0.05)),
                 blurRadius: 2 + (layerIndex * 2),
@@ -1925,19 +1890,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               )
             ] : null,
           ),
-          child: ClipRect(
+          child: _buildEventOutlineRailChrome(
+            accentColor: eventColor,
+            frameColor: frameColorSg,
+            frameWidth: frameWidthSg,
+            child: ClipRect(
             child: Padding(
               padding: EdgeInsets.all(height < 15 ? 0.5 : 1),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Descripción del evento
                   Flexible(
                     child: Text(
                       _eventTitleWithTransportCode(segment.originalEvent),
                       style: TextStyle(
-                        color: ColorUtils.getEventTextColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
+                        color: _eventOutlineTitleColor(segment.isDraft),
                         fontSize: fontSize,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1947,7 +1915,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  // T239: Texto "modo borrador" cuando hay altura suficiente
                   if (segment.isDraft &&
                       height > 20 &&
                       segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes)
@@ -1956,7 +1923,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       child: Text(
                         AppLocalizations.of(context)!.isDraft,
                         style: TextStyle(
-                          color: ColorUtils.getEventTextColor(segment.typeFamily, true, customColor: segment.color),
+                          color: _eventOutlineSubtitleColor(true),
                           fontSize: fontSize - 3,
                           fontWeight: FontWeight.w500,
                           fontStyle: FontStyle.italic,
@@ -1965,14 +1932,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  // Hora
                   if (height > 26 &&
                       segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes)
                     Flexible(
                       child: Text(
                         _formatSegmentTime(segment),
                         style: TextStyle(
-                          color: ColorUtils.getEventTextColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
+                          color: _eventOutlineSubtitleColor(segment.isDraft),
                           fontSize: fontSize - 2,
                           fontWeight: FontWeight.w500,
                         ),
@@ -1981,26 +1947,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  
-                  // Indicador de participantes (T50/T89) - solo si hay espacio suficiente
                   if (height > 40 &&
                       participantInfo['showIndicator'] == true &&
                       segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes) ...[
                     const SizedBox(height: 2),
                     _buildParticipantIndicator(participantInfo, fontSize - 3, segment.originalEvent, isMultiTrack: isMultiTrack),
                   ],
-                  
-                  // Mostrar detalles de vuelo si hay espacio suficiente y es un vuelo
                   if (height > 48 &&
                       _getFlightDetails(segment.originalEvent).isNotEmpty &&
                       segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes) ...[
                     const SizedBox(height: 2),
-                    
                     Flexible(
                       child: Text(
                         _getFlightDetails(segment.originalEvent),
                         style: TextStyle(
-                          color: ColorUtils.getEventTextColor(segment.typeFamily, segment.isDraft, customColor: segment.color),
+                          color: _eventOutlineSubtitleColor(segment.isDraft),
                           fontSize: fontSize - 3,
                           fontWeight: FontWeight.w400,
                         ),
@@ -2013,6 +1974,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ],
               ),
             ),
+          ),
           ),
         ),
       ),
@@ -2043,32 +2005,47 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
+  /// Iguala [PerspectiveService] (Desplazamiento / Transporte) y datos legacy en minúsculas.
+  bool _isDisplacementTypeFamilyUi(String? typeFamily) {
+    if (typeFamily == null || typeFamily.isEmpty) return false;
+    if (typeFamily == 'Desplazamiento' || typeFamily == 'Transporte') return true;
+    final lower = typeFamily.toLowerCase();
+    return lower == 'desplazamiento' || lower == 'transporte';
+  }
+
   /// Formatea el tiempo de un segmento según si es inicio, continuación o fin
   /// Ahora usa la perspectiva del usuario seleccionado
   String _formatSegmentTime(EventSegment segment) {
     // Obtener la perspectiva del evento para el usuario seleccionado
     final perspective = _getEventPerspective(segment.originalEvent);
-    
-    
-    // Si es un evento de desplazamiento con perspectiva de participante, usar la perspectiva
-    if (segment.originalEvent.typeFamily == 'Desplazamiento' && 
-        perspective.perspectiveType == EventPerspectiveType.participant) {
-      
-      // Para eventos multi-día, calcular la hora correcta para cada segmento
-      if (segment.isLast) {
-        // Último día: usar la hora de llegada de la perspectiva
+
+    final isDisplacementParticipant = _isDisplacementTypeFamilyUi(
+          segment.originalEvent.typeFamily,
+        ) &&
+        perspective.perspectiveType == EventPerspectiveType.participant;
+
+    if (isDisplacementParticipant) {
+      // Un solo día: isFirst && isLast a la vez; hay que resolverlo antes que isLast solo
+      // (si no, se mostraría incorrectamente como "último tramo": 00:00 - llegada).
+      if (segment.isFirst && segment.isLast) {
+        final sh = perspective.displayStartTime.hour;
+        final sm = perspective.displayStartTime.minute;
+        final eh = perspective.displayEndTime.hour;
+        final em = perspective.displayEndTime.minute;
+        return '${sh.toString().padLeft(2, '0')}:${sm.toString().padLeft(2, '0')} - '
+            '${eh.toString().padLeft(2, '0')}:${em.toString().padLeft(2, '0')}';
+      }
+      if (!segment.isFirst && segment.isLast) {
         final endHour = perspective.displayEndTime.hour;
         final endMin = perspective.displayEndTime.minute;
         return '00:00 - ${endHour.toString().padLeft(2, '0')}:${endMin.toString().padLeft(2, '0')}';
-      } else if (segment.isFirst) {
-        // Primer día: usar la hora de salida de la perspectiva
+      }
+      if (segment.isFirst && !segment.isLast) {
         final startHour = perspective.displayStartTime.hour;
         final startMin = perspective.displayStartTime.minute;
         return '${startHour.toString().padLeft(2, '0')}:${startMin.toString().padLeft(2, '0')} - 23:59';
-      } else {
-        // Día intermedio
-        return '00:00 - 23:59';
       }
+      return '00:00 - 23:59';
     }
     
     // Para eventos regulares o observadores, usar la lógica original
@@ -2119,12 +2096,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Obtener información de participantes (T50)
     final participantInfo = _getParticipantInfo(event);
     final eventColor = ColorUtils.getEventColor(event.typeFamily, event.isDraft, customColor: event.color);
-    final borderColor = ColorUtils.getEventBorderColor(event.typeFamily, event.isDraft, customColor: event.color);
-    
-    // T89: Determinar si es multi-participante para aplicar gradiente
-    final isMultiParticipant = (participantInfo['participantCount'] as int) > 1 || (participantInfo['isForAll'] as bool) == true;
     final consecutiveGroups = _getConsecutiveTrackGroupsForEvent(event);
     final isMultiTrack = consecutiveGroups.any((group) => group.length > 1);
+    final (frameColorEv, frameWidthEv) =
+        _outlineEventFrame(participantInfo, eventColor, isMultiTrack, false);
     
     // T100: Construir tooltip con información de timezone
     final timezoneTooltip = _buildTimezoneTooltip(event);
@@ -2143,25 +2118,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             children: [
               Container(
             decoration: BoxDecoration(
-              // T89: Gradiente para eventos multi-participante cuando abarcan múltiples tracks
-              gradient: isMultiParticipant && isMultiTrack
-                  ? LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        eventColor,
-                        eventColor.withValues(alpha: 0.85),
-                        eventColor.withValues(alpha: 0.75),
-                      ],
-                      stops: const [0.0, 0.5, 1.0],
-                    )
-                  : null,
-              color: isMultiParticipant && isMultiTrack ? null : eventColor,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(
-                color: borderColor,
-                width: (participantInfo['isForAll'] == true || isMultiTrack) ? 2 : 1, // Borde más grueso para eventos multi-participante (T89)
-              ),
+              borderRadius:
+                  BorderRadius.circular(CalendarConstants.borderRadius),
               boxShadow: isThisEventDragging ? [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.3),
@@ -2170,7 +2128,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
               ] : null,
             ),
-            child: ClipRect(
+            child: _buildEventOutlineRailChrome(
+              accentColor: eventColor,
+              frameColor: frameColorEv,
+              frameWidth: frameWidthEv,
+              child: ClipRect(
               child: Padding(
                 padding: EdgeInsets.all(eventHeight < 30 ? 1 : 2), // Padding más pequeño
                 child: Column(
@@ -2183,7 +2145,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       child: Text(
                         _eventTitleWithTransportCode(event),
                         style: TextStyle(
-                          color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                          color: _eventOutlineTitleColor(event.isDraft),
                           fontSize: fontSize,
                           fontWeight: FontWeight.bold,
                         ),
@@ -2203,7 +2165,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         child: Text(
                           _getEventTimeRange(event),
                           style: TextStyle(
-                            color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                            color: _eventOutlineSubtitleColor(event.isDraft),
                             fontSize: fontSize - 2,
                             fontWeight: FontWeight.w500,
                           ),
@@ -2232,7 +2194,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         child: Text(
                           _getFlightDetails(event),
                           style: TextStyle(
-                            color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+                            color: _eventOutlineSubtitleColor(event.isDraft),
                             fontSize: fontSize - 3,
                             fontWeight: FontWeight.w400,
                           ),
@@ -2245,6 +2207,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ],
                 ),
               ),
+            ),
             ),
               ),
               _buildEventActionsMenuButton(event, eventHeight),
@@ -2390,35 +2353,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           updatedAt: DateTime.now(),
         );
         
-        // VALIDAR: ¿Crearía conflicto de participante?
-        if (_wouldCreateParticipantConflict(
-          eventToCheck: updatedEvent,
-          targetDate: updatedEvent.date,
-          eventIdToExclude: eventToUpdate.id, // Excluir el evento que estamos moviendo
-        )) {
-          // Mostrar mensaje y cancelar el drag
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '⚠️ No se puede mover: un participante ya tiene un evento confirmado en ese horario',
-                    style: GoogleFonts.poppins(color: Colors.white),
-                  ),
-                  backgroundColor: Colors.red.shade600,
-                duration: Duration(seconds: 4),
-              ),
-            );
-          }
-          
-          // Limpiar estado (el evento vuelve a su posición original)
-          setState(() {
-            _draggingEvent = null;
-            _isDragging = false;
-            _dragOffset = Offset.zero;
-          });
-          return; // Cancelar el drag
-        }
-
         // VALIDAR: ¿Excedería el límite de 3 solapados en la nueva posición?
         if (_wouldExceedOverlapLimit(
           eventToCheck: updatedEvent,
@@ -2592,28 +2526,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         event: eventToShow,
         planId: widget.plan.id ?? '',
         onSaved: (updatedEvent) async {
-          // VALIDAR: ¿Crearía conflicto de participante?
-          if (_wouldCreateParticipantConflict(
-            eventToCheck: updatedEvent,
-            targetDate: updatedEvent.date,
-            eventIdToExclude: event.id, // Excluir el evento actual del conteo
-          )) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '⚠️ No se puede guardar: un participante ya tiene un evento confirmado en ese horario.\n'
-                    'Por favor, elige otra hora, reduce la duración o cambia los participantes.',
-                    style: GoogleFonts.poppins(color: Colors.white),
-                  ),
-                  backgroundColor: Colors.red.shade600,
-                  duration: Duration(seconds: 5),
-                ),
-              );
-            }
-            return; // No guardar
-          }
-
           // VALIDAR: ¿Excedería el límite de 3 solapados?
           if (_wouldExceedOverlapLimit(
             eventToCheck: updatedEvent,
@@ -2907,28 +2819,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         initialHour: hour,
         initialStartMinute: initialStartMinute,
         onSaved: (newEvent) async {
-          // VALIDAR: ¿Crearía conflicto de participante?
-          if (_wouldCreateParticipantConflict(
-            eventToCheck: newEvent,
-            targetDate: newEvent.date,
-            eventIdToExclude: null, // No excluir nada, es evento nuevo
-          )) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '⚠️ No se puede crear: un participante ya tiene un evento confirmado en ese horario.\n'
-                    'Por favor, elige otra hora, reduce la duración o cambia los participantes.',
-                    style: GoogleFonts.poppins(color: Colors.white),
-                  ),
-                  backgroundColor: Colors.red.shade600,
-                  duration: Duration(seconds: 5),
-                ),
-              );
-            }
-            return; // No guardar
-          }
-
           // VALIDAR: ¿Excedería el límite de 3 solapados?
           if (_wouldExceedOverlapLimit(
             eventToCheck: newEvent,
@@ -4024,14 +3914,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         Icon(
           indicatorIcon,
           size: fontSize + (isMultiTrack ? 1 : 0), // Icono ligeramente más grande para multi-track
-          color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+          color: _eventOutlineSubtitleColor(event.isDraft),
         ),
         const SizedBox(width: 2),
         Flexible(
           child: Text(
             indicatorText,
             style: TextStyle(
-              color: ColorUtils.getEventTextColor(event.typeFamily, event.isDraft, customColor: event.color),
+              color: _eventOutlineSubtitleColor(event.isDraft),
               fontSize: fontSize,
               fontWeight: isMultiTrack ? FontWeight.w600 : FontWeight.w400, // Más negrita para multi-track (T89)
             ),
