@@ -34,6 +34,8 @@ class PlaceAutocompleteField extends StatefulWidget {
   final InputBorder? border;
   /// Icono a la izquierda. Por defecto [Icons.search].
   final IconData? prefixIcon;
+  /// Icono/acciones a la derecha (p. ej. abrir en Maps). Si hay carga, se muestra el spinner.
+  final Widget? suffixIcon;
   /// Tras seleccionar un lugar, dejar el [displayName] en el campo (útil como nombre de alojamiento).
   final bool preferDisplayName;
   final FormFieldValidator<String>? validator;
@@ -52,6 +54,7 @@ class PlaceAutocompleteField extends StatefulWidget {
     this.fillColor,
     this.border,
     this.prefixIcon,
+    this.suffixIcon,
     this.preferDisplayName = false,
     this.validator,
   });
@@ -286,7 +289,7 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 )
-              : null,
+              : widget.suffixIcon,
           fillColor: widget.fillColor,
           filled: widget.fillColor != null,
           border: widget.border ?? const OutlineInputBorder(),

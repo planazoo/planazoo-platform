@@ -3332,6 +3332,48 @@ abstract class AppLocalizations {
   /// **'Abrir en Google Maps'**
   String get openInGoogleMaps;
 
+  /// Abre Maps con origen y destino para ver ruta y duración
+  ///
+  /// In es, this message translates to:
+  /// **'Ver ruta en Google Maps'**
+  String get openRouteInGoogleMaps;
+
+  /// Tooltip cuando faltan origen o destino para abrir la ruta
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas origen y destino'**
+  String get openRouteInGoogleMapsHint;
+
+  /// Botón para rellenar localización desde el evento/alojamiento anterior del mismo día
+  ///
+  /// In es, this message translates to:
+  /// **'Usar del anterior'**
+  String get usePreviousLocation;
+
+  /// Botón con nombre del lugar anterior
+  ///
+  /// In es, this message translates to:
+  /// **'Usar: {label}'**
+  String usePreviousLocationFrom(String label);
+
+  /// Cuando el anterior es un desplazamiento, sugerir su destino
+  ///
+  /// In es, this message translates to:
+  /// **'Usar destino anterior: {label}'**
+  String usePreviousDestinationFrom(String label);
+
+  /// Rellenar destino del trayecto con el hotel del día
+  ///
+  /// In es, this message translates to:
+  /// **'Usar alojamiento: {label}'**
+  String useAccommodationAsDestination(String label);
+
+  /// Menú cuando hay varios alojamientos el mismo día
+  ///
+  /// In es, this message translates to:
+  /// **'Usar alojamiento…'**
+  String get useAccommodationAsDestinationMenu;
+
   /// Botón para abrir la URL del campo enlace web
   ///
   /// In es, this message translates to:

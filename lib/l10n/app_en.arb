@@ -1598,6 +1598,49 @@
   "@openInGoogleMaps": {
     "description": "Button to open location in Google Maps"
   },
+  "openRouteInGoogleMaps": "View route in Google Maps",
+  "@openRouteInGoogleMaps": {
+    "description": "Opens Maps with origin and destination to show route and duration"
+  },
+  "openRouteInGoogleMapsHint": "Origin and destination required",
+  "@openRouteInGoogleMapsHint": {
+    "description": "Tooltip when origin or destination is missing for the route link"
+  },
+  "usePreviousLocation": "Use previous",
+  "@usePreviousLocation": {
+    "description": "Button to fill location from previous same-day event/accommodation"
+  },
+  "usePreviousLocationFrom": "Use: {label}",
+  "@usePreviousLocationFrom": {
+    "description": "Button with previous place name",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "usePreviousDestinationFrom": "Use previous destination: {label}",
+  "@usePreviousDestinationFrom": {
+    "description": "When previous item is transport, suggest its destination",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "useAccommodationAsDestination": "Use accommodation: {label}",
+  "@useAccommodationAsDestination": {
+    "description": "Fill transport destination with same-day hotel",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "useAccommodationAsDestinationMenu": "Use accommodation…",
+  "@useAccommodationAsDestinationMenu": {
+    "description": "Menu when several accommodations exist that day"
+  },
   "openWebLink": "Open link",
   "@openWebLink": {
     "description": "Button to open the URL from the web link field"

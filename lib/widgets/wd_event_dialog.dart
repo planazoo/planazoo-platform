@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/services/previous_plan_location_helper.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
@@ -914,13 +916,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Un solo campo: dirección del evento (Places) + acceso a Maps.
+  /// Un solo campo: dirección del evento (Places) + acceso a Maps dentro del campo.
   Widget _buildUnifiedLocationField() {
     final loc = AppLocalizations.of(context)!;
-    final hasCoords = _lastPlaceDetails?.lat != null ||
-        (widget.event?.commonPart?.extraData?['placeLat'] != null);
-    final hasAddress = _locationController.text.trim().isNotEmpty;
-    final canOpenMaps = hasCoords || hasAddress;
+    final previous = _lookupPreviousPlanLocation();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -951,6 +950,29 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               fontSize: 14,
               fillColor: Colors.transparent,
               border: InputBorder.none,
+              suffixIcon: ListenableBuilder(
+                listenable: _locationController,
+                builder: (context, _) {
+                  final hasCoords = _lastPlaceDetails?.lat != null ||
+                      (widget.event?.commonPart?.extraData?['placeLat'] !=
+                          null);
+                  final hasAddress =
+                      _locationController.text.trim().isNotEmpty;
+                  final canOpenMaps = hasCoords || hasAddress;
+                  return IconButton(
+                    tooltip: loc.openInGoogleMaps,
+                    onPressed:
+                        canOpenMaps ? _openLocationInGoogleMaps : null,
+                    icon: Icon(
+                      Icons.map_outlined,
+                      size: _fieldIconSize,
+                      color: canOpenMaps
+                          ? AppColorScheme.color2
+                          : Colors.white60,
+                    ),
+                  );
+                },
+              ),
               onPlaceSelected: (PlaceDetails details) {
                 setState(() {
                   _lastPlaceDetails = details;
@@ -965,18 +987,228 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ),
           ),
         ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: IconButton(
-            icon: Icon(
-              Icons.map_outlined,
-              color: canOpenMaps ? AppColorScheme.color2 : Colors.white60,
+        if (previous != null &&
+            (_canEditGeneral || _canEditGeneralInitial)) ...[
+          const SizedBox(height: 8),
+          _buildUsePreviousLocationButton(
+            previous: previous,
+            onApply: _applyPreviousPlanLocation,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildUsePreviousLocationButton({
+    required PreviousPlanLocation previous,
+    required void Function(PreviousPlanLocation previous) onApply,
+  }) {
+    final loc = AppLocalizations.of(context)!;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        onPressed: () => onApply(previous),
+        icon: Icon(
+          Icons.history,
+          size: 16,
+          color: AppColorScheme.color2,
+        ),
+        label: Text(
+          _previousLocationButtonLabel(loc, previous),
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppColorScheme.color2,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          visualDensity: VisualDensity.compact,
+          foregroundColor: AppColorScheme.color2,
+        ),
+      ),
+    );
+  }
+
+  String _previousLocationButtonLabel(
+    AppLocalizations loc,
+    PreviousPlanLocation previous,
+  ) {
+    final raw = (previous.sourceLabel ?? previous.address).trim();
+    final short =
+        raw.length > 32 ? '${raw.substring(0, 30)}…' : raw;
+    if (raw.isEmpty) return loc.usePreviousLocation;
+    if (previous.role == PreviousLocationRole.transportDestination) {
+      return loc.usePreviousDestinationFrom(short);
+    }
+    return loc.usePreviousLocationFrom(short);
+  }
+
+  PreviousPlanLocation? _lookupPreviousPlanLocation() {
+    final planId = widget.planId;
+    final user = ref.watch(currentUserProvider);
+    if (planId == null || user == null) return null;
+
+    final eventsAsync = ref.watch(planEventsStreamProvider(planId));
+    final events = eventsAsync.valueOrNull ?? const <Event>[];
+
+    final accParams = AccommodationNotifierParams(planId: planId);
+    ref.watch(accommodationNotifierProvider(accParams));
+    final accommodations = ref.watch(accommodationsProvider(accParams));
+
+    final targetStart = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedHour,
+      _selectedStartMinute,
+    );
+
+    return PreviousPlanLocationHelper.find(
+      userId: user.id,
+      targetStart: targetStart,
+      events: events,
+      accommodations: accommodations,
+      excludeEventId: widget.event?.id,
+    );
+  }
+
+  List<PreviousPlanLocation> _lookupSameDayAccommodations() {
+    final planId = widget.planId;
+    final user = ref.watch(currentUserProvider);
+    if (planId == null || user == null) return const [];
+
+    final accParams = AccommodationNotifierParams(planId: planId);
+    ref.watch(accommodationNotifierProvider(accParams));
+    final accommodations = ref.watch(accommodationsProvider(accParams));
+
+    return PreviousPlanLocationHelper.sameDayAccommodations(
+      userId: user.id,
+      day: _selectedDate,
+      accommodations: accommodations,
+    );
+  }
+
+  void _applyPreviousPlanLocation(PreviousPlanLocation previous) {
+    setState(() {
+      _locationController.text = previous.address;
+      _lastPlaceDetails = PlaceDetails(
+        displayName: (previous.sourceLabel ?? previous.address).trim(),
+        formattedAddress: previous.address,
+        lat: previous.lat,
+        lng: previous.lng,
+      );
+    });
+  }
+
+  void _applyPreviousPlanLocationToOrigin(PreviousPlanLocation previous) {
+    setState(() {
+      _taxiOriginController.text = previous.address;
+      _taxiOriginDetails = PlaceDetails(
+        displayName: (previous.sourceLabel ?? previous.address).trim(),
+        formattedAddress: previous.address,
+        lat: previous.lat,
+        lng: previous.lng,
+      );
+      _taxiOriginStoredLat = previous.lat;
+      _taxiOriginStoredLng = previous.lng;
+    });
+  }
+
+  void _applyPreviousPlanLocationToDestination(PreviousPlanLocation previous) {
+    setState(() {
+      _taxiDestinationController.text = previous.address;
+      _taxiDestinationDetails = PlaceDetails(
+        displayName: (previous.sourceLabel ?? previous.address).trim(),
+        formattedAddress: previous.address,
+        lat: previous.lat,
+        lng: previous.lng,
+      );
+      _taxiDestinationStoredLat = previous.lat;
+      _taxiDestinationStoredLng = previous.lng;
+    });
+  }
+
+  /// Botón(es) para destinar el trayecto al alojamiento del día.
+  Widget? _buildAccommodationDestinationActions() {
+    if (!(_canEditGeneral || _canEditGeneralInitial)) return null;
+    final hotels = _lookupSameDayAccommodations();
+    if (hotels.isEmpty) return null;
+    final loc = AppLocalizations.of(context)!;
+
+    if (hotels.length == 1) {
+      final hotel = hotels.first;
+      final label = (hotel.sourceLabel ?? hotel.address).trim();
+      final short =
+          label.length > 32 ? '${label.substring(0, 30)}…' : label;
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: TextButton.icon(
+          onPressed: () => _applyPreviousPlanLocationToDestination(hotel),
+          icon: Icon(
+            Icons.hotel_outlined,
+            size: 16,
+            color: AppColorScheme.color2,
+          ),
+          label: Text(
+            loc.useAccommodationAsDestination(short),
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColorScheme.color2,
             ),
-            tooltip: loc.openInGoogleMaps,
-            onPressed: canOpenMaps ? _openLocationInGoogleMaps : null,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            visualDensity: VisualDensity.compact,
+            foregroundColor: AppColorScheme.color2,
           ),
         ),
-      ],
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: PopupMenuButton<PreviousPlanLocation>(
+        tooltip: loc.useAccommodationAsDestinationMenu,
+        onSelected: _applyPreviousPlanLocationToDestination,
+        itemBuilder: (context) => hotels
+            .map(
+              (h) => PopupMenuItem(
+                value: h,
+                child: Text(
+                  h.sourceLabel ?? h.address,
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+              ),
+            )
+            .toList(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.hotel_outlined,
+                  size: 16, color: AppColorScheme.color2),
+              const SizedBox(width: 6),
+              Text(
+                loc.useAccommodationAsDestinationMenu,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColorScheme.color2,
+                ),
+              ),
+              Icon(Icons.arrow_drop_down,
+                  size: 18, color: AppColorScheme.color2),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1807,6 +2039,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   /// [showPlazas] true solo para Taxi.
   Widget _buildTransportOriginDestinationBlock({required bool showPlazas}) {
     final loc = AppLocalizations.of(context)!;
+    final previous = _lookupPreviousPlanLocation();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1859,6 +2092,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ],
           ),
         ),
+        if (previous != null &&
+            (_canEditGeneral || _canEditGeneralInitial)) ...[
+          const SizedBox(height: 6),
+          _buildUsePreviousLocationButton(
+            previous: previous,
+            onApply: _applyPreviousPlanLocationToOrigin,
+          ),
+        ],
         const SizedBox(height: 12),
         // Destino
         _buildLabelOnBorderField(
@@ -1908,6 +2149,58 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ],
           ),
+        ),
+        Builder(
+          builder: (context) {
+            final hotelAction = _buildAccommodationDestinationActions();
+            if (hotelAction == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: hotelAction,
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        ListenableBuilder(
+          listenable: Listenable.merge([
+            _taxiOriginController,
+            _taxiDestinationController,
+          ]),
+          builder: (context, _) {
+            final canOpenRoute =
+                _taxiOriginController.text.trim().isNotEmpty &&
+                    _taxiDestinationController.text.trim().isNotEmpty;
+            return OutlinedButton.icon(
+              onPressed:
+                  canOpenRoute ? _openTransportRouteInGoogleMaps : null,
+              icon: Icon(
+                Icons.directions,
+                size: 18,
+                color: canOpenRoute ? AppColorScheme.color2 : Colors.white38,
+              ),
+              label: Text(
+                loc.openRouteInGoogleMaps,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: canOpenRoute ? Colors.white : Colors.white38,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: BorderSide(
+                  color: canOpenRoute
+                      ? AppColorScheme.color2.withValues(alpha: 0.7)
+                      : Colors.white24,
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(_fieldRadius),
+                ),
+              ),
+            );
+          },
         ),
         if (showPlazas) ...[
           const SizedBox(height: 12),
@@ -2286,6 +2579,57 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  /// Modo de viaje para la URL de direcciones según el subtipo.
+  String _transportMapsTravelMode() {
+    switch (_typeSubtypeController.text) {
+      case 'Caminar':
+        return 'walking';
+      case 'Autobús':
+      case 'Tren':
+      case 'Shuttle':
+      case 'Transfer':
+        return 'transit';
+      case 'Coche':
+      case 'Taxi':
+      default:
+        return 'driving';
+    }
+  }
+
+  String _mapsDirPoint({
+    required String address,
+    double? lat,
+    double? lng,
+  }) {
+    if (lat != null && lng != null) return '$lat,$lng';
+    return address.trim();
+  }
+
+  /// Abre Google Maps con ruta origen → destino (muestra duración en Maps).
+  Future<void> _openTransportRouteInGoogleMaps() async {
+    final origin = _mapsDirPoint(
+      address: _taxiOriginController.text.trim(),
+      lat: _taxiOriginDetails?.lat ?? _taxiOriginStoredLat,
+      lng: _taxiOriginDetails?.lng ?? _taxiOriginStoredLng,
+    );
+    final destination = _mapsDirPoint(
+      address: _taxiDestinationController.text.trim(),
+      lat: _taxiDestinationDetails?.lat ?? _taxiDestinationStoredLat,
+      lng: _taxiDestinationDetails?.lng ?? _taxiDestinationStoredLng,
+    );
+    if (origin.isEmpty || destination.isEmpty) return;
+
+    final url = Uri.https('www.google.com', '/maps/dir/', {
+      'api': '1',
+      'origin': origin,
+      'destination': destination,
+      'travelmode': _transportMapsTravelMode(),
+    });
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -3534,7 +3878,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
           if (widget.event != null || _hasGeneralEventTypeSelected()) ...[
-            // Descripción
+            // 2. Descripción
             _wrapReadOnlyIfNeeded(
               child: Container(
                 decoration: _buildLoginStyleDecoration(),
@@ -3567,7 +3911,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
             SizedBox(height: spacing),
-            // Fecha / Hora / Duración
+            // 3. Fecha / Hora / Duración
             Row(
               children: [
                 Expanded(
@@ -3612,11 +3956,83 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ),
             SizedBox(height: spacing),
             if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text == 'Avión')
+                _typeSubtypeController.text == 'Avión') ...[
               _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text == 'Avión')
               SizedBox(height: spacing),
+            ],
+            // 4. Ubicación / transporte / extras
+            if (_typeFamilyController.text != 'Desplazamiento') ...[
+              _buildUnifiedLocationField(),
+              SizedBox(height: spacing),
+            ],
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text.isNotEmpty &&
+                _typeSubtypeController.text != 'Avión') ...[
+              _wrapReadOnlyIfNeeded(
+                  child: _buildTransportOriginDestinationBlock(
+                      showPlazas: _typeSubtypeController.text == 'Taxi')),
+              SizedBox(height: spacing),
+            ],
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                (_typeSubtypeController.text == 'Shuttle' ||
+                    _typeSubtypeController.text == 'Transfer')) ...[
+              _wrapReadOnlyIfNeeded(
+                  child: _buildGroundTransferAirportExtraFields()),
+              SizedBox(height: spacing),
+            ],
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text.isNotEmpty) ...[
+              _buildStaticSponsorCard(),
+              SizedBox(height: spacing),
+            ],
+            if (_isRentalVehicleActionSubtype) ...[
+              _wrapReadOnlyIfNeeded(child: _buildRentalVehicleActionFields()),
+              SizedBox(height: spacing),
+            ],
+            // 5. Timezone junto a cuándo/dónde
+            if (_typeFamilyController.text != 'Desplazamiento') ...[
+              _buildNonTransportTimezoneSelector(),
+              SizedBox(height: spacing),
+            ],
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text != 'Avión') ...[
+              _wrapReadOnlyIfNeeded(
+                child: _buildTimezoneFieldOnBorder(
+                  label: AppLocalizations.of(context)!.timezone,
+                  value: _selectedTimezone,
+                  leadingIcon: Icons.public,
+                  showCityInMenuAndGmtSelected: true,
+                  onChanged: _canEditGeneral
+                      ? (value) {
+                          setState(() {
+                            _selectedTimezone = value ?? 'Europe/Madrid';
+                          });
+                        }
+                      : null,
+                ),
+              ),
+              SizedBox(height: spacing),
+              _wrapReadOnlyIfNeeded(
+                child: _buildTimezoneFieldOnBorder(
+                  label: AppLocalizations.of(context)!.arrivalTimezone,
+                  value: _selectedArrivalTimezone,
+                  leadingIcon: Icons.flight_land,
+                  showCityInMenuAndGmtSelected: true,
+                  onChanged: _canEditGeneral
+                      ? (value) {
+                          setState(() {
+                            _selectedArrivalTimezone = value ?? 'Europe/Madrid';
+                          });
+                        }
+                      : null,
+                ),
+              ),
+              SizedBox(height: spacing),
+            ],
+            // 6. URL
+            _wrapReadOnlyIfNeeded(child: _buildUrlField()),
+            SizedBox(height: spacing),
+            // 7. Notas
             _wrapReadOnlyIfNeeded(
               child: Container(
                 decoration: _buildLoginStyleDecoration(),
@@ -3643,7 +4059,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
             SizedBox(height: spacing),
-            if (widget.planId != null)
+            // 8. Adjuntos
+            if (widget.planId != null) ...[
               EntityAttachmentsSection(
                 title:
                     AppLocalizations.of(context)!.entityAttachmentsEventTitle,
@@ -3655,89 +4072,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     : null,
                 onDelete: _deleteEventAttachment,
               ),
-            if (widget.planId != null) SizedBox(height: spacing),
-            if (_typeFamilyController.text != 'Desplazamiento') ...[
-              _buildUnifiedLocationField(),
               SizedBox(height: spacing),
             ],
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text.isNotEmpty &&
-                _typeSubtypeController.text != 'Avión')
-              _wrapReadOnlyIfNeeded(
-                  child: _buildTransportOriginDestinationBlock(
-                      showPlazas: _typeSubtypeController.text == 'Taxi')),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text.isNotEmpty &&
-                _typeSubtypeController.text != 'Avión')
-              SizedBox(height: spacing),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                (_typeSubtypeController.text == 'Shuttle' ||
-                    _typeSubtypeController.text == 'Transfer')) ...[
-              _wrapReadOnlyIfNeeded(
-                  child: _buildGroundTransferAirportExtraFields()),
-              SizedBox(height: spacing),
-            ],
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text.isNotEmpty) ...[
-              _buildStaticSponsorCard(),
-              SizedBox(height: spacing),
-            ],
-            if (_isRentalVehicleActionSubtype) ...[
-              _wrapReadOnlyIfNeeded(child: _buildRentalVehicleActionFields()),
-              SizedBox(height: spacing),
-            ],
-            _wrapReadOnlyIfNeeded(child: _buildUrlField()),
-            SizedBox(height: spacing),
-            if (_typeFamilyController.text != 'Desplazamiento')
-              _buildNonTransportTimezoneSelector(),
-            if (_typeFamilyController.text != 'Desplazamiento')
-              SizedBox(height: spacing),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text != 'Avión')
-              _wrapReadOnlyIfNeeded(
-                child: _buildTimezoneFieldOnBorder(
-                  label: AppLocalizations.of(context)!.timezone,
-                  value: _selectedTimezone,
-                  leadingIcon: Icons.public,
-                  showCityInMenuAndGmtSelected: true,
-                  onChanged: _canEditGeneral
-                      ? (value) {
-                          setState(() {
-                            _selectedTimezone = value ?? 'Europe/Madrid';
-                          });
-                        }
-                      : null,
-                ),
-              ),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text != 'Avión')
-              SizedBox(height: spacing),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text != 'Avión')
-              _wrapReadOnlyIfNeeded(
-                child: _buildTimezoneFieldOnBorder(
-                  label: AppLocalizations.of(context)!.arrivalTimezone,
-                  value: _selectedArrivalTimezone,
-                  leadingIcon: Icons.flight_land,
-                  showCityInMenuAndGmtSelected: true,
-                  onChanged: _canEditGeneral
-                      ? (value) {
-                          setState(() {
-                            _selectedArrivalTimezone = value ?? 'Europe/Madrid';
-                          });
-                        }
-                      : null,
-                ),
-              ),
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text != 'Avión')
-              SizedBox(height: spacing),
-
+            // 9. Participantes
             _buildIsForAllParticipantsSelector(),
             SizedBox(height: spacing),
             _wrapReadOnlyIfNeeded(child: _buildParticipantsSection()),
             SizedBox(height: spacing),
-
             if (widget.event != null && widget.planId != null) ...[
               Container(
                 padding: const EdgeInsets.all(14),
@@ -3775,82 +4116,20 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
               SizedBox(height: spacing),
             ],
+            // 10. Coste
             if (_planCurrency != null) ...[
               _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
               SizedBox(height: spacing),
             ],
-            _wrapReadOnlyIfNeeded(
-              child: Container(
-                decoration: _buildLoginStyleDecoration(),
-                child: TextFormField(
-                  controller: _maxParticipantsController,
-                  readOnly: !_canEditGeneral,
-                  keyboardType: TextInputType.number,
-                  style: _valueStyle,
-                  decoration: _standardFieldDecoration(
-                    labelText: 'Límite de participantes (opcional)',
-                    hintText: 'Ej: 10 (dejar vacío para sin límite)',
-                    prefixIcon: Icons.people_outline,
-                  ),
-                  validator: (value) {
-                    if (!_canEditGeneral) return null;
-                    final v = value?.trim() ?? '';
-                    if (v.isEmpty) return null;
-                    final intValue = int.tryParse(v);
-                    if (intValue == null) return 'Debe ser un número válido';
-                    if (intValue < 1) return 'Debe ser mayor que 0';
-                    if (intValue > 1000) return 'Máximo 1000 participantes';
-                    return null;
-                  },
-                ),
-              ),
-            ),
+            // 11. Color compacto (fila + picker)
+            _wrapReadOnlyIfNeeded(child: _buildColorSelectorRow()),
             SizedBox(height: spacing),
-            if (_canEditGeneral)
-              Material(
-                color: _fieldSurface,
-                elevation: 1,
-                shadowColor: Colors.black.withValues(alpha: 0.18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(_fieldRadius),
-                  side: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    width: 1,
-                  ),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: CheckboxListTile(
-                  title: Text(
-                    AppLocalizations.of(context)!.requiresConfirmation,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Text(
-                    AppLocalizations.of(context)!.requiresConfirmationSubtitle,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
-                  ),
-                  value: _requiresConfirmation,
-                  activeColor: AppColorScheme.color2,
-                  onChanged: (value) {
-                    setState(() {
-                      _requiresConfirmation = value ?? false;
-                    });
-                  },
-                  secondary: Icon(Icons.assignment_turned_in_outlined,
-                      color: AppColorScheme.color2),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                ),
+            // 12. Avanzado (colapsado)
+            Theme(
+              data: Theme.of(context).copyWith(
+                dividerColor: Colors.transparent,
+                splashColor: Colors.transparent,
               ),
-            if (_canEditGeneral) SizedBox(height: spacing),
-
-            _wrapReadOnlyIfNeeded(
               child: Material(
                 color: _fieldSurface,
                 elevation: 1,
@@ -3863,57 +4142,98 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   ),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: ListTile(
-                  leading: Icon(Icons.palette, color: AppColorScheme.color2),
+                child: ExpansionTile(
+                  initiallyExpanded: false,
+                  tilePadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  iconColor: Colors.white70,
+                  collapsedIconColor: Colors.white70,
                   title: Text(
-                    'Color',
+                    'Opciones avanzadas',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  subtitle: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _eventColors.map((colorName) {
-                        final color = _getColorFromName(colorName);
-                        return GestureDetector(
-                          onTap: !_canEditGeneral
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _selectedColor = colorName;
-                                  });
-                                },
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: _selectedColor == colorName
-                                  ? Border.all(color: Colors.white, width: 2.5)
-                                  : Border.all(
-                                      color: Colors.white60,
-                                      width: 1,
-                                    ),
-                              boxShadow: _selectedColor == colorName
-                                  ? [
-                                      BoxShadow(
-                                        color: color.withValues(alpha: 0.5),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                  subtitle: Text(
+                    'Límite de aforo y confirmación',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white60,
+                      fontSize: 12,
                     ),
                   ),
+                  children: [
+                    _wrapReadOnlyIfNeeded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.08),
+                          ),
+                        ),
+                        child: TextFormField(
+                          controller: _maxParticipantsController,
+                          readOnly: !_canEditGeneral,
+                          keyboardType: TextInputType.number,
+                          style: _valueStyle,
+                          decoration: _standardFieldDecoration(
+                            labelText: 'Límite de participantes (opcional)',
+                            hintText: 'Ej: 10 (dejar vacío para sin límite)',
+                            prefixIcon: Icons.people_outline,
+                          ),
+                          validator: (value) {
+                            if (!_canEditGeneral) return null;
+                            final v = value?.trim() ?? '';
+                            if (v.isEmpty) return null;
+                            final intValue = int.tryParse(v);
+                            if (intValue == null) {
+                              return 'Debe ser un número válido';
+                            }
+                            if (intValue < 1) return 'Debe ser mayor que 0';
+                            if (intValue > 1000) {
+                              return 'Máximo 1000 participantes';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                    if (_canEditGeneral) ...[
+                      const SizedBox(height: 10),
+                      CheckboxListTile(
+                        title: Text(
+                          AppLocalizations.of(context)!.requiresConfirmation,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        subtitle: Text(
+                          AppLocalizations.of(context)!
+                              .requiresConfirmationSubtitle,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                        value: _requiresConfirmation,
+                        activeColor: AppColorScheme.color2,
+                        onChanged: (value) {
+                          setState(() {
+                            _requiresConfirmation = value ?? false;
+                          });
+                        },
+                        secondary: Icon(Icons.assignment_turned_in_outlined,
+                            color: AppColorScheme.color2),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 0),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -3924,92 +4244,36 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   Widget _buildMyInfoTabScroll(bool isMobile) {
-    final pad = isMobile ? 6.0 : 8.0;
+    final pad = isMobile ? 4.0 : 8.0;
+    final gap = isMobile ? _fieldGap : 16.0;
     return SingleChildScrollView(
-      padding: EdgeInsets.all(pad),
+      padding: EdgeInsets.fromLTRB(pad, pad, pad, isMobile ? 16 : 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(height: isMobile ? 12 : 16),
           Text(
-            'Información personal para este evento',
+            'Solo visible para ti en este evento',
             style: GoogleFonts.poppins(
-              fontSize: isMobile ? 16 : 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+              fontSize: 12,
+              color: Colors.white60,
+              fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Campo: Asiento (estética tipo login)
-          Container(
-            decoration: _buildLoginStyleDecoration(),
-            child: TextFormField(
-              controller: _asientoController,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context)!.seat,
-                hintText: AppLocalizations.of(context)!.seatHint,
-                labelStyle: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w500,
-                ),
-                hintStyle: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.white60,
-                ),
-                prefixIcon: Icon(Icons.chair, color: Colors.white70),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: AppColorScheme.color2,
-                    width: 2.5,
-                  ),
-                ),
-                errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: Colors.red.shade400,
-                    width: 1,
-                  ),
-                ),
-                focusedErrorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: Colors.red.shade400,
-                    width: 2.5,
-                  ),
-                ),
-                fillColor: Colors.transparent,
-                filled: true,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-              ),
-              validator: (value) {
-                final v = value?.trim() ?? '';
-                if (v.isEmpty) return null;
-                if (v.length > 50) return 'Máximo 50 caracteres';
-                return null;
-              },
-            ),
+          SizedBox(height: gap),
+          _buildPersonalTextField(
+            controller: _asientoController,
+            labelText: AppLocalizations.of(context)!.seat,
+            hintText: AppLocalizations.of(context)!.seatHint,
+            icon: Icons.chair,
+            validator: (value) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) return null;
+              if (v.length > 50) return 'Máximo 50 caracteres';
+              return null;
+            },
           ),
-          const SizedBox(height: 16),
-
-          // Campos personalizados según tipo de evento (ID 49).
+          SizedBox(height: gap),
           if (_typeFamilyController.text == 'Actividad') ...[
             _buildPersonalTextField(
               controller: _activityEntryCodeController,
@@ -4023,7 +4287,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: gap),
             _buildPersonalTextField(
               controller: _activityEntryDocUrlController,
               labelText: 'URL del ticket/archivo (opcional)',
@@ -4037,9 +4301,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: gap),
           ] else ...[
-            // Campo: Menú/Comida
             _buildPersonalTextField(
               controller: _menuController,
               labelText: AppLocalizations.of(context)!.menu,
@@ -4052,9 +4315,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
-
-            // Campo: Preferencias
+            SizedBox(height: gap),
             _buildPersonalTextField(
               controller: _preferenciasController,
               labelText: AppLocalizations.of(context)!.preferences,
@@ -4068,9 +4329,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
-
-            // Campo: Número de reserva
+            SizedBox(height: gap),
             _buildPersonalTextField(
               controller: _numeroReservaController,
               labelText: AppLocalizations.of(context)!.reservationNumber,
@@ -4083,9 +4342,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
-
-            // Campo: Puerta/Gate
+            SizedBox(height: gap),
             _buildPersonalTextField(
               controller: _gateController,
               labelText: AppLocalizations.of(context)!.gate,
@@ -4098,38 +4355,47 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: gap),
           ],
-
-          // Switch: Tarjeta obtenida
-          SwitchListTile.adaptive(
-            title: Text(
-              AppLocalizations.of(context)!.cardObtained,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+          Material(
+            color: _fieldSurface,
+            elevation: 1,
+            shadowColor: Colors.black.withValues(alpha: 0.18),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_fieldRadius),
+              side: BorderSide(
+                color: Colors.white.withValues(alpha: 0.12),
+                width: 1,
               ),
             ),
-            subtitle: Text(
-              AppLocalizations.of(context)!.cardObtainedSubtitle,
-              style: GoogleFonts.poppins(
-                color: Colors.white70,
-                fontSize: 12,
+            clipBehavior: Clip.antiAlias,
+            child: SwitchListTile.adaptive(
+              title: Text(
+                AppLocalizations.of(context)!.cardObtained,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
+              subtitle: Text(
+                AppLocalizations.of(context)!.cardObtainedSubtitle,
+                style: GoogleFonts.poppins(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+              ),
+              value: _tarjetaObtenida,
+              activeThumbColor: AppColorScheme.color2,
+              activeTrackColor: AppColorScheme.color2.withValues(alpha: 0.5),
+              onChanged: (value) {
+                setState(() {
+                  _tarjetaObtenida = value;
+                });
+              },
             ),
-            value: _tarjetaObtenida,
-            activeThumbColor: AppColorScheme.color2,
-            activeTrackColor: AppColorScheme.color2.withValues(alpha: 0.5),
-            onChanged: (value) {
-              setState(() {
-                _tarjetaObtenida = value;
-              });
-            },
           ),
-          const SizedBox(height: 16),
-
-          // Campo: Notas personales
+          SizedBox(height: gap),
           _buildPersonalTextField(
             controller: _notasPersonalesController,
             labelText: AppLocalizations.of(context)!.personalNotes,
@@ -4143,25 +4409,24 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               return null;
             },
           ),
-          const SizedBox(height: 24),
-
-          // Info sobre privacidad
+          SizedBox(height: gap),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: _buildLoginStyleDecoration().copyWith(
-              borderRadius: BorderRadius.circular(18),
+            decoration: BoxDecoration(
+              color: AppColorScheme.color2.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(_fieldRadius),
               border: Border.all(
-                color: AppColorScheme.color2.withValues(alpha: 0.5),
-                width: 1,
+                color: AppColorScheme.color2.withValues(alpha: 0.45),
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: AppColorScheme.color2),
+                Icon(Icons.lock_outline,
+                    color: AppColorScheme.color2, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Esta información es solo tuya. Otros participantes no la verán.',
+                    'Otros participantes no verán estos datos.',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 12,
@@ -4231,17 +4496,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 16),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
-            decoration: _buildLoginStyleDecoration().copyWith(
-              borderRadius: BorderRadius.circular(18),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade400.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(_fieldRadius),
               border: Border.all(
                 color: Colors.orange.shade400.withValues(alpha: 0.5),
                 width: 1,
@@ -4249,11 +4514,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ),
             child: Row(
               children: [
-                Icon(Icons.admin_panel_settings, color: Colors.orange.shade300),
+                Icon(Icons.admin_panel_settings,
+                    color: Colors.orange.shade300, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Como administrador, puedes ver y editar la información personal de otros participantes.',
+                    'Como administrador puedes ver la información personal de otros participantes.',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 12,
@@ -4264,7 +4530,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           ...otherParticipants
               .map((participantId) => _buildParticipantCard(participantId)),
         ],
@@ -4278,36 +4544,37 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final personalFields = personalPart?.fields ?? {};
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: _buildLoginStyleDecoration().copyWith(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: _buildLoginStyleDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.person, color: AppColorScheme.color2),
+                Icon(Icons.person, color: AppColorScheme.color2, size: 20),
                 const SizedBox(width: 8),
                 FutureBuilder<String>(
                   future: _getUserDisplayName(participantId),
                   builder: (context, snapshot) {
                     final displayName = snapshot.data ?? participantId;
-                    return Text(
-                      displayName,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                    return Flexible(
+                      child: Text(
+                        displayName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     );
                   },
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             // Campos de información personal del participante
             _buildReadOnlyField('Asiento', personalFields['asiento']),
@@ -4402,7 +4669,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Construye un campo de texto personal con estilo base
+  /// Campo de texto personal con tokens de formulario (login-style).
   Widget _buildPersonalTextField({
     required TextEditingController controller,
     required String labelText,
@@ -4418,57 +4685,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
+        style: _valueStyle,
+        decoration: _standardFieldDecoration(
           labelText: labelText,
           hintText: hintText,
-          labelStyle: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.white70,
-            fontWeight: FontWeight.w500,
-          ),
-          hintStyle: GoogleFonts.poppins(
-            fontSize: 14,
-            color: Colors.white60,
-          ),
-          prefixIcon: Icon(icon, color: Colors.white70),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: AppColorScheme.color2,
-              width: 2.5,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: Colors.red.shade400,
-              width: 1,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: Colors.red.shade400,
-              width: 2.5,
-            ),
-          ),
-          fillColor: Colors.transparent,
-          filled: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          prefixIcon: icon,
         ),
         validator: validator,
       ),
@@ -4611,6 +4832,112 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   Color _getColorFromName(String colorName) {
     return ColorUtils.colorFromName(colorName);
+  }
+
+  Widget _buildColorSelectorRow() {
+    final loc = AppLocalizations.of(context)!;
+    final selected = _getColorFromName(_selectedColor);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _canEditGeneral ? _showColorPicker : _showReadOnlySnackBar,
+        borderRadius: BorderRadius.circular(_fieldRadius),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: _buildLoginStyleDecoration(),
+          child: Row(
+            children: [
+              _fieldIcon(Icons.palette_outlined),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(loc.color, style: _valueStyle),
+              ),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: selected,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.45),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.expand_more,
+                  size: _fieldIconSize, color: Colors.white54),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showColorPicker() async {
+    final loc = AppLocalizations.of(context)!;
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return Theme(
+          data: AppTheme.darkTheme,
+          child: AlertDialog(
+            backgroundColor: _formSurface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+            ),
+            title: Text(
+              loc.color,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            content: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _eventColors.map((colorName) {
+                final color = _getColorFromName(colorName);
+                final isSelected = _selectedColor == colorName;
+                return GestureDetector(
+                  onTap: () => Navigator.of(ctx).pop(colorName),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColorScheme.color2
+                            : Colors.white38,
+                        width: isSelected ? 2.5 : 1,
+                      ),
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, color: Colors.white, size: 18)
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  loc.cancel,
+                  style: GoogleFonts.poppins(color: Colors.white70),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _selectedColor = picked);
   }
 
   /// Obtiene el nombre de visualización de un usuario por su ID

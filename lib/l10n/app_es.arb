@@ -1598,6 +1598,49 @@
   "@openInGoogleMaps": {
     "description": "Botón para abrir la ubicación en Google Maps"
   },
+  "openRouteInGoogleMaps": "Ver ruta en Google Maps",
+  "@openRouteInGoogleMaps": {
+    "description": "Abre Maps con origen y destino para ver ruta y duración"
+  },
+  "openRouteInGoogleMapsHint": "Necesitas origen y destino",
+  "@openRouteInGoogleMapsHint": {
+    "description": "Tooltip cuando faltan origen o destino para abrir la ruta"
+  },
+  "usePreviousLocation": "Usar del anterior",
+  "@usePreviousLocation": {
+    "description": "Botón para rellenar localización desde el evento/alojamiento anterior del mismo día"
+  },
+  "usePreviousLocationFrom": "Usar: {label}",
+  "@usePreviousLocationFrom": {
+    "description": "Botón con nombre del lugar anterior",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "usePreviousDestinationFrom": "Usar destino anterior: {label}",
+  "@usePreviousDestinationFrom": {
+    "description": "Cuando el anterior es un desplazamiento, sugerir su destino",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "useAccommodationAsDestination": "Usar alojamiento: {label}",
+  "@useAccommodationAsDestination": {
+    "description": "Rellenar destino del trayecto con el hotel del día",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "useAccommodationAsDestinationMenu": "Usar alojamiento…",
+  "@useAccommodationAsDestinationMenu": {
+    "description": "Menú cuando hay varios alojamientos el mismo día"
+  },
   "openWebLink": "Abrir enlace",
   "@openWebLink": {
     "description": "Botón para abrir la URL del campo enlace web"

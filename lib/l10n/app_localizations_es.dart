@@ -1819,6 +1819,33 @@ class AppLocalizationsEs extends AppLocalizations {
   String get openInGoogleMaps => 'Abrir en Google Maps';
 
   @override
+  String get openRouteInGoogleMaps => 'Ver ruta en Google Maps';
+
+  @override
+  String get openRouteInGoogleMapsHint => 'Necesitas origen y destino';
+
+  @override
+  String get usePreviousLocation => 'Usar del anterior';
+
+  @override
+  String usePreviousLocationFrom(String label) {
+    return 'Usar: $label';
+  }
+
+  @override
+  String usePreviousDestinationFrom(String label) {
+    return 'Usar destino anterior: $label';
+  }
+
+  @override
+  String useAccommodationAsDestination(String label) {
+    return 'Usar alojamiento: $label';
+  }
+
+  @override
+  String get useAccommodationAsDestinationMenu => 'Usar alojamiento…';
+
+  @override
   String get openWebLink => 'Abrir enlace';
 
   @override
