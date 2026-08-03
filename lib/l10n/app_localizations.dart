@@ -1118,6 +1118,180 @@ abstract class AppLocalizations {
   /// **'Ver perfil'**
   String get profileTooltip;
 
+  /// Tooltip del icono de directorio de usuarios en W1
+  ///
+  /// In es, this message translates to:
+  /// **'Usuarios de la plataforma'**
+  String get usersDirectoryTooltip;
+
+  /// Título de la página de directorio de usuarios
+  ///
+  /// In es, this message translates to:
+  /// **'Usuarios'**
+  String get usersDirectoryTitle;
+
+  /// Subtítulo explicativo del directorio de usuarios
+  ///
+  /// In es, this message translates to:
+  /// **'Listado de cuentas en Firestore (solo lectura). Visible temporalmente para todos los usuarios autenticados.'**
+  String get usersDirectorySubtitle;
+
+  /// Mensaje si un usuario normal intenta abrir el directorio
+  ///
+  /// In es, this message translates to:
+  /// **'Solo los power_admin pueden ver el directorio de usuarios.'**
+  String get usersDirectoryAdminOnly;
+
+  /// Hint del campo de búsqueda del directorio
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar por email, nombre, username o id…'**
+  String get usersDirectorySearchHint;
+
+  /// Tooltip botón refrescar listado de usuarios
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizar'**
+  String get usersDirectoryRefresh;
+
+  /// Mensaje cuando el filtro no devuelve usuarios
+  ///
+  /// In es, this message translates to:
+  /// **'No hay usuarios que coincidan'**
+  String get usersDirectoryEmpty;
+
+  /// Error al cargar usuarios
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar los usuarios: {error}'**
+  String usersDirectoryLoadError(String error);
+
+  /// Contador de usuarios filtrados
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrando {shown} de {total}'**
+  String usersDirectoryCount(int shown, int total);
+
+  /// Etiqueta de acceso administrador de plataforma
+  ///
+  /// In es, this message translates to:
+  /// **'power_admin'**
+  String get usersDirectoryAccessPowerAdmin;
+
+  /// Etiqueta de acceso usuario normal
+  ///
+  /// In es, this message translates to:
+  /// **'user'**
+  String get usersDirectoryAccessUser;
+
+  /// Estado activo del usuario
+  ///
+  /// In es, this message translates to:
+  /// **'activo'**
+  String get usersDirectoryStatusActive;
+
+  /// Estado inactivo del usuario
+  ///
+  /// In es, this message translates to:
+  /// **'inactivo'**
+  String get usersDirectoryStatusInactive;
+
+  /// No description provided for @usersDirectoryFieldEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'Email'**
+  String get usersDirectoryFieldEmail;
+
+  /// No description provided for @usersDirectoryFieldUsername.
+  ///
+  /// In es, this message translates to:
+  /// **'Username'**
+  String get usersDirectoryFieldUsername;
+
+  /// No description provided for @usersDirectoryFieldId.
+  ///
+  /// In es, this message translates to:
+  /// **'User ID'**
+  String get usersDirectoryFieldId;
+
+  /// No description provided for @usersDirectoryFieldTimezone.
+  ///
+  /// In es, this message translates to:
+  /// **'Timezone'**
+  String get usersDirectoryFieldTimezone;
+
+  /// No description provided for @usersDirectoryFieldCreated.
+  ///
+  /// In es, this message translates to:
+  /// **'Creado'**
+  String get usersDirectoryFieldCreated;
+
+  /// No description provided for @usersDirectoryFieldLastLogin.
+  ///
+  /// In es, this message translates to:
+  /// **'Último login'**
+  String get usersDirectoryFieldLastLogin;
+
+  /// No description provided for @usersDirectoryFieldAccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Acceso'**
+  String get usersDirectoryFieldAccess;
+
+  /// No description provided for @usersDirectoryFieldStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Estado'**
+  String get usersDirectoryFieldStatus;
+
+  /// No description provided for @usersDirectoryFieldDisplayName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre'**
+  String get usersDirectoryFieldDisplayName;
+
+  /// No description provided for @usersDirectoryFieldPhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto URL'**
+  String get usersDirectoryFieldPhoto;
+
+  /// Botón para copiar todas las fichas visibles
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar todas'**
+  String get usersDirectoryCopyAll;
+
+  /// Confirmación al copiar todas las fichas
+  ///
+  /// In es, this message translates to:
+  /// **'Copiadas {count} fichas'**
+  String usersDirectoryAllCopied(int count);
+
+  /// No description provided for @usersDirectoryCopyId.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar user id'**
+  String get usersDirectoryCopyId;
+
+  /// No description provided for @usersDirectoryIdCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'User id copiado'**
+  String get usersDirectoryIdCopied;
+
+  /// No description provided for @usersDirectoryCopyCard.
+  ///
+  /// In es, this message translates to:
+  /// **'Copiar ficha completa'**
+  String get usersDirectoryCopyCard;
+
+  /// No description provided for @usersDirectoryCardCopied.
+  ///
+  /// In es, this message translates to:
+  /// **'Ficha de usuario copiada'**
+  String get usersDirectoryCardCopied;
+
   /// Texto que muestra la zona horaria actual del usuario en el perfil
   ///
   /// In es, this message translates to:
@@ -3014,6 +3188,18 @@ abstract class AppLocalizations {
   /// **'Descripción (opcional)'**
   String get descriptionOptional;
 
+  /// Label del campo de notas libres del alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Notas'**
+  String get accommodationNotes;
+
+  /// Hint del campo de notas libres del alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe aquí lo que quieras recordar…'**
+  String get accommodationNotesHint;
+
   /// Hint de notas adicionales
   ///
   /// In es, this message translates to:
@@ -3043,6 +3229,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Dirección'**
   String get placeAddressLabel;
+
+  /// Label del campo Places en el form de alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar alojamiento'**
+  String get accommodationPlaceLabel;
+
+  /// Enlace para editar nombre y dirección sin Places
+  ///
+  /// In es, this message translates to:
+  /// **'Introducir a mano'**
+  String get enterLocationManually;
+
+  /// Volver al modo búsqueda Places desde entrada manual
+  ///
+  /// In es, this message translates to:
+  /// **'Usar búsqueda'**
+  String get usePlaceSearch;
 
   /// Label de moneda del coste
   ///
@@ -3127,6 +3331,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Abrir en Google Maps'**
   String get openInGoogleMaps;
+
+  /// Botón para abrir la URL del campo enlace web
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir enlace'**
+  String get openWebLink;
 
   /// No description provided for @departureAirportLabel.
   ///
@@ -3350,6 +3560,18 @@ abstract class AppLocalizations {
   /// **'Tipo de evento'**
   String get eventType;
 
+  /// Hint del buscador en el selector de tipo de evento
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar tipo o subtipo'**
+  String get eventTypeSearchHint;
+
+  /// Mensaje cuando el buscador de tipo/subtipo no encuentra nada
+  ///
+  /// In es, this message translates to:
+  /// **'Sin coincidencias'**
+  String get eventTypeSearchEmpty;
+
   /// Label de subtipo de evento
   ///
   /// In es, this message translates to:
@@ -3554,6 +3776,60 @@ abstract class AppLocalizations {
   /// **'Duración'**
   String get duration;
 
+  /// Sección de duraciones rápidas (15–180 min)
+  ///
+  /// In es, this message translates to:
+  /// **'Duración común'**
+  String get eventDurationCommon;
+
+  /// Sección de duraciones de 4h a 24h
+  ///
+  /// In es, this message translates to:
+  /// **'Duraciones largas'**
+  String get eventDurationLong;
+
+  /// Sección para escribir la duración a mano
+  ///
+  /// In es, this message translates to:
+  /// **'Personalizada'**
+  String get eventDurationCustom;
+
+  /// Hint del campo único de duración personalizada
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 90 o 1:30'**
+  String get eventDurationCustomHint;
+
+  /// Opción para fijar duración eligiendo hora de fin
+  ///
+  /// In es, this message translates to:
+  /// **'Hora fin'**
+  String get eventDurationEndTime;
+
+  /// Subtítulo de hora fin; {time} es la hora de inicio
+  ///
+  /// In es, this message translates to:
+  /// **'Se calcula desde la hora de inicio ({time})'**
+  String eventDurationEndTimeHint(String time);
+
+  /// Botón para aplicar duración escrita a mano
+  ///
+  /// In es, this message translates to:
+  /// **'Usar esta duración'**
+  String get eventDurationApplyCustom;
+
+  /// Error si la duración manual no se entiende o está fuera de rango
+  ///
+  /// In es, this message translates to:
+  /// **'Usa minutos (90) o horas:minutos (1:30). Entre 1 min y 24 h.'**
+  String get eventDurationCustomInvalid;
+
+  /// Aviso de límite de duración de eventos
+  ///
+  /// In es, this message translates to:
+  /// **'Máximo 24 h. Si necesitas más, usa Alojamientos.'**
+  String get eventDurationMaxHint;
+
   /// Duración en minutos (menos de 1 h)
   ///
   /// In es, this message translates to:
@@ -3757,6 +4033,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Check-in'**
   String get checkIn;
+
+  /// Texto de ayuda del date range picker de estancia
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona check-in y check-out'**
+  String get accommodationStayDatesHelp;
 
   /// Label de check-out
   ///

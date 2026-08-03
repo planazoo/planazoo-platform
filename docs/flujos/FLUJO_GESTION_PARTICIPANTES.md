@@ -2,10 +2,13 @@
 
 > Define cómo añadir, eliminar y gestionar participantes en un plan
 
-**Relacionado con:** T51 - Validación de formularios (✅), T104, T117, T120, T123, T126 - Rate limiting (✅)  
+**Diagrama contrato (Mermaid):** [`DIAGRAMA_ALTAS_BAJAS_PLAN.md`](./DIAGRAMA_ALTAS_BAJAS_PLAN.md) — usar para acordar cambios e implementar.  
+**Mapa de flujos:** [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md)
+
+**Relacionado con:** T51 - Validación de formularios (✅), T104, T117, T120, T123, T126 - Rate limiting (✅), **T268** recordatorios  
 **Ver CRUD completo:** `FLUJO_CRUD_PLANES.md`  
-**Versión:** 1.3  
-**Fecha:** Abril 2026 (revisión de coherencia documental con estado actual de invitaciones/notificaciones)
+**Versión:** 1.4  
+**Fecha:** Julio 2026 (enlace a diagrama altas/bajas AS-IS)
 
 ---
 

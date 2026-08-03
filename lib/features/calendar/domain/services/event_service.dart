@@ -182,6 +182,10 @@ class EventService {
         return true;
       });
       if (!isParticipant) {
+        LoggerService.warning(
+          'createEvent blocked: user ${event.userId} is not participant of plan ${event.planId}',
+          context: 'EVENT_SERVICE',
+        );
         return null;
       }
 
@@ -193,8 +197,15 @@ class EventService {
       // Registrar creación exitosa de evento
       await rateLimiter.recordEventCreation(event.planId);
 
+      LoggerService.database('Event created: ${docRef.id}', operation: 'CREATE');
       return docRef.id;
-    } catch (e) {
+    } catch (e, st) {
+      LoggerService.error(
+        'Error creating event for plan ${event.planId}',
+        context: 'EVENT_SERVICE',
+        error: e,
+        stackTrace: st,
+      );
       return null;
     }
   }

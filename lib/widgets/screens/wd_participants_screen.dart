@@ -753,8 +753,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                                       final normalizedEmail = email.toLowerCase().trim();
                                       final existingUser = await userService.getUserByEmail(normalizedEmail);
                                       if (existingUser != null) {
-                                        final isAlreadyParticipant = await participationService.isUserParticipant(widget.plan.id!, existingUser.id);
-                                        if (isAlreadyParticipant) {
+                                        final existingPart = await participationService.getParticipation(
+                                          widget.plan.id!,
+                                          existingUser.id,
+                                        );
+                                        if (existingPart != null &&
+                                            existingPart.isActive &&
+                                            existingPart.status == 'accepted') {
                                           setInnerState(() {
                                             errorMessage = loc.snackUserAlreadyParticipant;
                                             isLoading = false;

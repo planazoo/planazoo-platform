@@ -13,6 +13,7 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_accommodation_l
 import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
+import 'package:unp_calendario/shared/utils/color_utils.dart';
 
 /// Componente que representa los headers y estructura de tracks (participantes)
 /// 
@@ -57,6 +58,9 @@ class CalendarTracks extends ConsumerWidget {
   /// Función para obtener el timezone de un participante por su ID
   final String? Function(String participantId) getParticipantTimezone;
 
+  /// Filtro compartido con eventos: all / draft / confirmed / proposals.
+  final String draftFilter;
+
   const CalendarTracks({
     super.key,
     required this.columns,
@@ -70,6 +74,7 @@ class CalendarTracks extends ConsumerWidget {
     required this.createGridBorder,
     required this.gridLineOpacity,
     required this.getParticipantTimezone,
+    this.draftFilter = 'all',
   });
 
   @override
@@ -402,7 +407,10 @@ class CalendarTracks extends ConsumerWidget {
     ));
     
     final dayDate = plan.dateForPlanDayIndex(actualDayIndex);
-    final accommodationsForDay = accommodations.where((acc) => acc.isDateInRange(dayDate)).toList();
+    final accommodationsForDay = accommodations
+        .where((acc) => acc.isDateInRange(dayDate))
+        .where(_matchesDraftFilter)
+        .toList();
     
     if (accommodationsForDay.isEmpty) {
       return const SizedBox.shrink();
@@ -410,6 +418,20 @@ class CalendarTracks extends ConsumerWidget {
     
     // Mostrar alojamientos como tracks
     return _buildAccommodationTracksRow(ref, accommodationsForDay, availableWidth, dayDate);
+  }
+
+  bool _matchesDraftFilter(Accommodation acc) {
+    switch (draftFilter) {
+      case 'draft':
+        return acc.isDraft;
+      case 'confirmed':
+        return !acc.isDraft;
+      case 'proposals':
+        // Los alojamientos no tienen propuestas de participante; ocultar en este filtro.
+        return false;
+      default:
+        return true;
+    }
   }
 
   /// Construye la fila de tracks de alojamiento
@@ -568,43 +590,75 @@ class CalendarTracks extends ConsumerWidget {
           height: 20,
           child: GestureDetector(
             onTap: () => onShowAccommodationDialog(accommodation),
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: width * 0.04, vertical: 0),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              decoration: BoxDecoration(
-                color: accommodation.displayColor.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: accommodation.displayColor.withValues(alpha: 0.5),
-                  width: 1,
-                ),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(1),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        _getAccommodationDayText(accommodation, dayDate),
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            child: _buildAccommodationChip(
+              accommodation: accommodation,
+              dayDate: dayDate,
+              width: width,
             ),
           ),
         );
       }).toList(),
+    );
+  }
+
+  /// Franja de alojamiento: confirmado = borde continuo; borrador = borde de puntos.
+  Widget _buildAccommodationChip({
+    required Accommodation accommodation,
+    required DateTime dayDate,
+    required double width,
+  }) {
+    final baseColor = ColorUtils.colorFromName(accommodation.color ?? 'blue');
+    final isDraft = accommodation.isDraft;
+    final fill = baseColor.withValues(alpha: isDraft ? 0.18 : 0.3);
+    final borderColor = baseColor.withValues(alpha: isDraft ? 0.95 : 0.55);
+
+    final content = Container(
+      margin: EdgeInsets.symmetric(horizontal: width * 0.04, vertical: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(4),
+        border: isDraft
+            ? null
+            : Border.all(color: borderColor, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(1),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                _getAccommodationDayText(accommodation, dayDate),
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                  fontStyle: isDraft ? FontStyle.italic : FontStyle.normal,
+                  color: Colors.white.withValues(alpha: isDraft ? 0.9 : 1),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (!isDraft) return content;
+
+    return CustomPaint(
+      foregroundPainter: _DashedRRectBorderPainter(
+        color: borderColor,
+        radius: 4,
+        strokeWidth: 1.4,
+        dashLength: 3,
+        gapLength: 2.5,
+        inset: width * 0.04,
+      ),
+      child: content,
     );
   }
 
@@ -654,12 +708,69 @@ class CalendarTracks extends ConsumerWidget {
     final normalizedCheckOut = DateTime(checkOutDate.year, checkOutDate.month, checkOutDate.day);
     
     if (normalizedDayDate.isAtSameMomentAs(normalizedCheckIn)) {
-      return '${accommodation.hotelName} ➡️';
+      return '${accommodation.isDraft ? '· ' : ''}${accommodation.hotelName} ➡️';
     } else if (normalizedDayDate.isAtSameMomentAs(normalizedCheckOut)) {
-      return '${accommodation.hotelName} ⬅️';
+      return '${accommodation.isDraft ? '· ' : ''}${accommodation.hotelName} ⬅️';
     } else {
-      return accommodation.hotelName;
+      return '${accommodation.isDraft ? '· ' : ''}${accommodation.hotelName}';
     }
+  }
+}
+
+/// Borde discontinuo redondeado para franjas de alojamiento en borrador.
+class _DashedRRectBorderPainter extends CustomPainter {
+  _DashedRRectBorderPainter({
+    required this.color,
+    required this.radius,
+    this.strokeWidth = 1.4,
+    this.dashLength = 3,
+    this.gapLength = 2.5,
+    this.inset = 0,
+  });
+
+  final Color color;
+  final double radius;
+  final double strokeWidth;
+  final double dashLength;
+  final double gapLength;
+  final double inset;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(
+      inset + strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - inset * 2 - strokeWidth,
+      size.height - strokeWidth,
+    );
+    if (rect.width <= 0 || rect.height <= 0) return;
+
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final next = (distance + dashLength).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, next), paint);
+        distance = next + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedRRectBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.radius != radius ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.dashLength != dashLength ||
+        oldDelegate.gapLength != gapLength ||
+        oldDelegate.inset != inset;
   }
 }
 

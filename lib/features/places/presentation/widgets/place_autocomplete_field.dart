@@ -32,6 +32,11 @@ class PlaceAutocompleteField extends StatefulWidget {
   final Color? fillColor;
   /// Borde del campo. Si no se pasa, usa OutlineInputBorder. InputBorder.none para quitar recuadro.
   final InputBorder? border;
+  /// Icono a la izquierda. Por defecto [Icons.search].
+  final IconData? prefixIcon;
+  /// Tras seleccionar un lugar, dejar el [displayName] en el campo (útil como nombre de alojamiento).
+  final bool preferDisplayName;
+  final FormFieldValidator<String>? validator;
 
   const PlaceAutocompleteField({
     super.key,
@@ -46,6 +51,9 @@ class PlaceAutocompleteField extends StatefulWidget {
     this.fontSize,
     this.fillColor,
     this.border,
+    this.prefixIcon,
+    this.preferDisplayName = false,
+    this.validator,
   });
 
   @override
@@ -239,7 +247,9 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
     setState(() => _loading = false);
     if (details != null) {
       _skipNextFetch = true;
-      _controller.text = details.formattedAddress ?? details.displayName;
+      _controller.text = widget.preferDisplayName
+          ? details.displayName
+          : (details.formattedAddress ?? details.displayName);
       // Ejecutar callback en el siguiente frame para que el setState del padre
       // corra después de cerrar el overlay y los campos se actualicen correctamente.
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -259,13 +269,14 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
       child: TextFormField(
         controller: _controller,
         focusNode: _focusNode,
+        validator: widget.validator,
         style: widget.fontSize != null
             ? TextStyle(fontSize: widget.fontSize)
             : null,
         decoration: InputDecoration(
           labelText: widget.labelText ?? loc.placeAddressLabel,
           hintText: widget.hintText ?? loc.placeSearchHint,
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: Icon(widget.prefixIcon ?? Icons.search),
           suffixIcon: _loading
               ? const Padding(
                   padding: EdgeInsets.all(12),

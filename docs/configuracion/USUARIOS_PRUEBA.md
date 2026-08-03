@@ -2,19 +2,20 @@
 
 > Documento completo para testing y desarrollo. Usa Gmail con alias para crear múltiples usuarios desde una sola cuenta.
 
-**Última actualización:** Febrero 2026
+**Última actualización:** Julio 2026
 
 ---
 
 ## 📚 Tabla de Contenidos
 
 1. [Configuración Base](#-configuración-base)
-2. [Usuarios Recomendados por Rol](#-usuarios-recomendados-por-rol)
-3. [Matriz de Usuarios por Caso de Prueba](#-matriz-de-usuarios-por-caso-de-prueba)
-4. [Crear Usuarios de Prueba](#-crear-usuarios-de-prueba)
-5. [Estrategia de Usuarios para Pruebas](#-estrategia-de-usuarios-para-pruebas)
-6. [Flujo de Testing Recomendado](#-flujo-de-testing-recomendado)
-7. [Datos Semilla Formales](#-datos-semilla-formales)
+2. [Matriz mínima multiplataforma](#-matriz-mínima-multiplataforma-3-usuarios--3-dispositivos)
+3. [Usuarios Recomendados por Rol](#-usuarios-recomendados-por-rol)
+4. [Matriz de Usuarios por Caso de Prueba](#-matriz-de-usuarios-por-caso-de-prueba)
+5. [Crear Usuarios de Prueba](#-crear-usuarios-de-prueba)
+6. [Estrategia de Usuarios para Pruebas](#-estrategia-de-usuarios-para-pruebas)
+7. [Flujo de Testing Recomendado](#-flujo-de-testing-recomendado)
+8. [Datos Semilla Formales](#-datos-semilla-formales)
 
 ---
 
@@ -51,6 +52,55 @@ unplanazoo@gmail.com
 **Solo necesitas:**
 - ✅ Usar el email con alias al registrarte en la app
 - ✅ O crear usuarios manualmente en Firebase Console con esos emails
+
+---
+
+## 📱 Matriz mínima multiplataforma (3 usuarios × 3 dispositivos)
+
+> Objetivo: **máxima cobertura con el mínimo de sesiones** (web + iPhone + Android).  
+> Complementa el E2E de tres usuarios (histórico centrado en web): [`PLAN_PRUEBAS_E2E_TRES_USUARIOS.md`](../testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md).
+
+| Dispositivo | Id | Email sugerido | Rol en el plan | Qué cubre |
+|-------------|----|----------------|----------------|-----------|
+| **iPhone** (simulador/físico) | **UA** | `unplanazoo+cricla@gmail.com` (o tu cuenta diaria organizadora) | Organizador / dueño | Crear plan, invitar, push iOS, calendario móvil |
+| **Android** (emulador/físico) | **UB** | `unplanazoo+part1@gmail.com` (o `+marbat`) | Participante | Aceptar/rechazar, push Android, paridad móvil |
+| **Chrome (web)** | **UC** | `unplanazoo+obs@gmail.com` *o* `+part2` | Observador *o* 2.º participante | Layout web, campana, permisos lectura vs edición |
+
+**Admin de plataforma** (`power_admin`: `adminp` / `cricla_pa`): **no** hace falta en el ciclo diario. Smoke de 5 min aparte en **web** (directorio, tools). Ver [`ADMINS_WHITELIST.md`](../admin/ADMINS_WHITELIST.md) y [`ROLES_Y_TIPOS_USUARIO.md`](./ROLES_Y_TIPOS_USUARIO.md).
+
+### Orden de sesión corta
+
+1. **Web o iPhone UA** — crear plan → invitar a UB y UC.  
+2. **Android UB** — aceptar (push + campana).  
+3. **iPhone UA** — comprobar que UB entra; notificaciones / reenviar.  
+4. **Web UC** — aceptar (observador o participante) y comprobar límites.  
+5. Opcional — **Web admin** smoke 5’.
+
+### Si solo hay ~30 min
+
+| Dispositivo | Usuario |
+|-------------|---------|
+| iPhone | UA organizador |
+| Android | UB participante |
+
+(Observador y admin: otra pasada.)
+
+### Arranque de dispositivos
+
+```bash
+# iOS (ya en marcha o):
+flutter run -d <id_iphone>
+
+# Android (AVD ejemplo Pixel_8):
+flutter emulators --launch Pixel_8
+# o: ~/Library/Android/sdk/emulator/emulator -avd Pixel_8 &
+flutter run -d <id_android>
+
+# Web:
+flutter run -d chrome
+```
+
+Cada plataforma en **su terminal** (tres `flutter run` en paralelo).
 
 ---
 

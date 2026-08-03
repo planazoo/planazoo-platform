@@ -19,18 +19,21 @@ class PlacePrediction {
   });
 }
 
-/// Datos de un lugar tras Place Details (nombre, dirección, coordenadas).
+/// Datos de un lugar tras Place Details (nombre, dirección, coordenadas, web).
 class PlaceDetails {
   final String displayName;
   final String? formattedAddress;
   final double? lat;
   final double? lng;
+  /// URL oficial del lugar (Places `websiteUri`), si existe.
+  final String? websiteUri;
 
   const PlaceDetails({
     required this.displayName,
     this.formattedAddress,
     this.lat,
     this.lng,
+    this.websiteUri,
   });
 }
 
@@ -184,14 +187,17 @@ class PlacesApiService {
     }
     var uri = Uri.parse('$_baseUrl/places/$placeId').replace(
       queryParameters: {
-        'fields': 'displayName,formattedAddress,location',
         if (sessionToken != null) 'sessionToken': sessionToken,
         if (languageCode != null) 'languageCode': languageCode,
       },
     );
     final response = await http.get(
       uri,
-      headers: {'X-Goog-Api-Key': apiKey},
+      headers: {
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask':
+            'id,name,displayName,formattedAddress,location,websiteUri',
+      },
     );
     if (response.statusCode != 200) {
       debugPrint('PLACES[details][direct]: status=${response.statusCode} body=${response.body}');
@@ -259,6 +265,7 @@ class PlacesApiService {
       formattedAddress: formattedAddress,
       lat: lat,
       lng: lng,
+      websiteUri: data['websiteUri'] as String?,
     );
   }
 

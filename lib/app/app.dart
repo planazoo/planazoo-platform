@@ -25,6 +25,7 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_service.da
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/widgets/dialogs/invitation_response_dialog.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -93,11 +94,29 @@ class _AppState extends ConsumerState<App> {
     final plan = await _planService.getPlanById(planId);
     if (!mounted || plan == null) return;
 
+    final rawType = (data['type'] ?? data['notificationType'] ?? data['category'])
+        ?.toString()
+        .trim()
+        .toLowerCase();
+    final isInvitation = rawType == 'invitation';
+
+    final nav = _rootNavigatorKey.currentState;
+    final ctx = _rootNavigatorKey.currentContext;
+    if (nav == null || ctx == null || !ctx.mounted) return;
+
+    // Invitación: abrir modal aceptar/rechazar directamente (no solo la pestaña).
+    if (isInvitation) {
+      await showDialog<void>(
+        context: ctx,
+        barrierDismissible: false,
+        builder: (dialogContext) => InvitationResponseDialog(plan: plan),
+      );
+      return;
+    }
+
     final rawTab = data['tab'] ?? data['initialTab'];
     final initialTab = _normalizeInitialTab(rawTab?.toString()) ??
         _inferInitialTabFromPayload(data);
-    final nav = _rootNavigatorKey.currentState;
-    if (nav == null) return;
 
     nav.push(
       MaterialPageRoute<void>(

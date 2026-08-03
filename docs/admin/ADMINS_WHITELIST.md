@@ -2,7 +2,7 @@
 
 > **Documento de seguridad:** Lista oficial de usuarios administradores de la plataforma con permisos para realizar tareas de mantenimiento y gestión administrativa en Firestore.
 
-**Última actualización:** Enero 2025  
+**Última actualización:** Julio 2026  
 **Mantenedor:** Equipo de desarrollo
 
 ---
@@ -11,7 +11,10 @@
 
 | Username | Email | UserId (Firebase Auth) | Fecha de asignación | Notas |
 |----------|-------|------------------------|---------------------|-------|
-| `user_admin` | `unplanazoo+admin@gmail.com` | *Se completará al crear el usuario* | *Pendiente* | Administrador principal de la plataforma. Acceso completo a herramientas administrativas. |
+| `adminp` | `unplanazoo+admin@gmail.com` | `h0bb1yiLcYhXa12XON35XpZqAmo1` | Nov 2025 | Admin de prueba / break-glass (`unplanazoo+`). |
+| `cricla_pa` | `cricla@hotmail.com` | `obPIAaQykOW4baua8UzOHUVIgwb2` | 26 Jul 2026 | Power admin personal (respaldo operativo). |
+
+Cuenta de uso diario (no admin): `@cristianclaraso` / `unplanazoo+cricla@gmail.com` — rol plataforma `user`.
 
 ---
 
@@ -79,9 +82,9 @@ Los usuarios con `isAdmin: true` pueden:
 
 ## 📝 Notas Importantes
 
-- **Lista blanca:** Solo los usuarios listados aquí deben tener `isAdmin: true`.
+- **Lista blanca:** Solo los usuarios listados aquí deben tener `isAdmin: true` (legado; semántica objetivo: `power_admin` — ver [`ROLES_Y_TIPOS_USUARIO.md`](../configuracion/ROLES_Y_TIPOS_USUARIO.md)).
 - **Auditoría:** Todas las acciones administrativas deben ser registradas (futuro: sistema de logs).
-- **Principio de menor privilegio:** Solo otorgar permisos de admin cuando sea absolutamente necesario.
+- **Principio de menor privilegio:** Solo otorgar permisos de admin cuando sea absolutamente necesario. El admin de plataforma **no** implica navegar planes ajenos por defecto.
 - **Revisión periódica:** Revisar y actualizar esta lista regularmente.
 
 ---

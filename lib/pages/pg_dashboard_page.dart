@@ -37,6 +37,7 @@ import 'package:unp_calendario/widgets/plan/plan_calendar_view.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_search_widget.dart';
 import 'package:unp_calendario/pages/pg_profile_page.dart';
 import 'package:unp_calendario/pages/pg_admin_page.dart';
+import 'package:unp_calendario/pages/pg_users_directory_page.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
@@ -402,7 +403,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // NUEVO: Método para cambiar la pantalla mostrada en W31
   void _changeScreen(String screen) {
     setState(() {
-      if (screen == 'profile' || screen == 'admin') {
+      if (screen == 'profile' || screen == 'admin' || screen == 'usersDirectory') {
         if (currentScreen != screen) {
           _previousScreen = currentScreen;
         }
@@ -424,6 +425,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   void _closeAdminScreen() {
     setState(() {
       final target = _previousScreen == 'admin' ? 'calendar' : _previousScreen;
+      currentScreen = target;
+    });
+  }
+
+  void _closeUsersDirectoryScreen() {
+    setState(() {
+      final target =
+          _previousScreen == 'usersDirectory' ? 'calendar' : _previousScreen;
       currentScreen = target;
     });
   }
@@ -1459,6 +1468,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 columnWidth: columnWidth,
                 gridHeight: gridHeight,
                 onProfileTap: () => _changeScreen('profile'),
+                onUsersDirectoryTap: () => _changeScreen('usersDirectory'),
                 onAdminTap: () => _changeScreen('admin'),
                 onHelpTap: () => Navigator.of(context).pushNamed('/help'),
                 plans: displayedPlans,
@@ -1690,6 +1700,24 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           height: overlayHeight,
           color: AppColorScheme.color0,
           child: _buildAdminScreen(),
+        ),
+      );
+    }
+
+    if (currentScreen == 'usersDirectory') {
+      final overlayLeft = columnWidth;
+      final overlayTop = 0.0;
+      final overlayWidth = columnWidth * 16;
+      final overlayHeight = rowHeight * 13;
+
+      return Positioned(
+        left: overlayLeft,
+        top: overlayTop,
+        child: Container(
+          width: overlayWidth,
+          height: overlayHeight,
+          color: AppColorScheme.color0,
+          child: UsersDirectoryPage(onClose: _closeUsersDirectoryScreen),
         ),
       );
     }

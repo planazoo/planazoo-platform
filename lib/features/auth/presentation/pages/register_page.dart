@@ -57,6 +57,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
             ref.read(authNotifierProvider.notifier).clearError();
           }
         });
+
+        if (next.errorMessage!.contains('username-taken')) {
+          final base = _usernameController.text.trim().toLowerCase();
+          setState(() {
+            _usernameError = AppLocalizations.of(context)!.usernameTaken;
+            _usernameSuggestions = _generateUsernameSuggestions(base);
+          });
+          _formKey.currentState?.validate();
+        }
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -227,7 +236,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           _buildTermsCheckbox(),
                           const SizedBox(height: 32),
                           // Botón de registro
-                          _buildRegisterButton(authNotifier, authState.isLoading),
+                          _buildRegisterButton(
+                            authNotifier,
+                            authState.isLoading || authState.status == AuthStatus.loading,
+                          ),
                           const SizedBox(height: 24),
                           // Divider
                           Row(
@@ -982,32 +994,42 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Widget _buildRegisterButton(AuthNotifier authNotifier, bool isLoading) {
-    final isFormValid = _isFormValid();
+    final canSubmit = _acceptTerms && _isFormValid();
+    final buttonColor = isLoading
+        ? AppColorScheme.color2.withValues(alpha: 0.7)
+        : canSubmit
+            ? AppColorScheme.color2
+            : AppColorScheme.color2.withValues(alpha: 0.45);
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: AppColorScheme.color2, // Color sólido, sin gradiente
+        color: buttonColor,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: AppColorScheme.color2.withValues(alpha: 0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-            spreadRadius: -2,
-          ),
-        ],
+        boxShadow: canSubmit && !isLoading
+            ? [
+                BoxShadow(
+                  color: AppColorScheme.color2.withValues(alpha: 0.4),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                  spreadRadius: -2,
+                ),
+              ]
+            : null,
       ),
       child: ElevatedButton(
-        onPressed: isLoading || !_acceptTerms || !isFormValid ? null : () => _handleRegister(authNotifier),
+        // Siempre tappable si no está cargando: si el form es inválido,
+        // _handleRegister muestra errores (en iOS un onPressed null parece “roto”).
+        onPressed: isLoading ? null : () => _handleRegister(authNotifier),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
+          disabledForegroundColor: Colors.white70,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -1113,6 +1135,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Future<void> _handleRegister(AuthNotifier authNotifier) async {
+    FocusScope.of(context).unfocus();
+
     // Activar flag para mostrar errores en todos los campos
     setState(() {
       _hasAttemptedSubmit = true;
@@ -1130,10 +1154,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       return;
     }
 
-    // Validar username antes de registrar
+    // Validar formato de username (la disponibilidad se comprueba en AuthNotifier
+    // tras crear la cuenta Auth: sin sesión, Firestore niega list/query de users).
     final username = _usernameController.text.trim().toLowerCase();
-    
-    // Validar formato
+
     if (!Validator.isValidUsername(username)) {
       setState(() {
         _usernameError = AppLocalizations.of(context)!.usernameInvalid;
@@ -1142,23 +1166,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       return;
     }
 
-    // Verificar disponibilidad
-    final userService = ref.read(userServiceProvider);
-    final isAvailable = await userService.isUsernameAvailable(username);
-    
-    if (!isAvailable) {
-      // Generar sugerencias
-      final suggestions = _generateUsernameSuggestions(username);
-      setState(() {
-        _usernameError = AppLocalizations.of(context)!.usernameTaken;
-        _usernameSuggestions = suggestions;
-      });
-      _formKey.currentState!.validate();
-      return;
-    }
-
-    // Si todo está bien, proceder con el registro
-    authNotifier.createUserWithEmailAndPassword(
+    await authNotifier.createUserWithEmailAndPassword(
       _emailController.text.trim(),
       _passwordController.text,
       displayName: _nameController.text.trim(),

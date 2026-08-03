@@ -569,6 +569,98 @@
   "@profileTooltip": {
     "description": "Tooltip del icono de perfil en W1"
   },
+  "usersDirectoryTooltip": "Usuarios de la plataforma",
+  "@usersDirectoryTooltip": {
+    "description": "Tooltip del icono de directorio de usuarios en W1"
+  },
+  "usersDirectoryTitle": "Usuarios",
+  "@usersDirectoryTitle": {
+    "description": "Título de la página de directorio de usuarios"
+  },
+  "usersDirectorySubtitle": "Listado de cuentas en Firestore (solo lectura). Visible temporalmente para todos los usuarios autenticados.",
+  "@usersDirectorySubtitle": {
+    "description": "Subtítulo explicativo del directorio de usuarios"
+  },
+  "usersDirectoryAdminOnly": "Solo los power_admin pueden ver el directorio de usuarios.",
+  "@usersDirectoryAdminOnly": {
+    "description": "Mensaje si un usuario normal intenta abrir el directorio"
+  },
+  "usersDirectorySearchHint": "Buscar por email, nombre, username o id…",
+  "@usersDirectorySearchHint": {
+    "description": "Hint del campo de búsqueda del directorio"
+  },
+  "usersDirectoryRefresh": "Actualizar",
+  "@usersDirectoryRefresh": {
+    "description": "Tooltip botón refrescar listado de usuarios"
+  },
+  "usersDirectoryEmpty": "No hay usuarios que coincidan",
+  "@usersDirectoryEmpty": {
+    "description": "Mensaje cuando el filtro no devuelve usuarios"
+  },
+  "usersDirectoryLoadError": "No se pudieron cargar los usuarios: {error}",
+  "@usersDirectoryLoadError": {
+    "description": "Error al cargar usuarios",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "usersDirectoryCount": "Mostrando {shown} de {total}",
+  "@usersDirectoryCount": {
+    "description": "Contador de usuarios filtrados",
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "usersDirectoryAccessPowerAdmin": "power_admin",
+  "@usersDirectoryAccessPowerAdmin": {
+    "description": "Etiqueta de acceso administrador de plataforma"
+  },
+  "usersDirectoryAccessUser": "user",
+  "@usersDirectoryAccessUser": {
+    "description": "Etiqueta de acceso usuario normal"
+  },
+  "usersDirectoryStatusActive": "activo",
+  "@usersDirectoryStatusActive": {
+    "description": "Estado activo del usuario"
+  },
+  "usersDirectoryStatusInactive": "inactivo",
+  "@usersDirectoryStatusInactive": {
+    "description": "Estado inactivo del usuario"
+  },
+  "usersDirectoryFieldEmail": "Email",
+  "usersDirectoryFieldUsername": "Username",
+  "usersDirectoryFieldId": "User ID",
+  "usersDirectoryFieldTimezone": "Timezone",
+  "usersDirectoryFieldCreated": "Creado",
+  "usersDirectoryFieldLastLogin": "Último login",
+  "usersDirectoryFieldAccess": "Acceso",
+  "usersDirectoryFieldStatus": "Estado",
+  "usersDirectoryFieldDisplayName": "Nombre",
+  "usersDirectoryFieldPhoto": "Foto URL",
+  "usersDirectoryCopyAll": "Copiar todas",
+  "@usersDirectoryCopyAll": {
+    "description": "Botón para copiar todas las fichas visibles"
+  },
+  "usersDirectoryAllCopied": "Copiadas {count} fichas",
+  "@usersDirectoryAllCopied": {
+    "description": "Confirmación al copiar todas las fichas",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "usersDirectoryCopyId": "Copiar user id",
+  "usersDirectoryIdCopied": "User id copiado",
+  "usersDirectoryCopyCard": "Copiar ficha completa",
+  "usersDirectoryCardCopied": "Ficha de usuario copiada",
   "profileCurrentTimezone": "Zona horaria actual: {timezone}",
   "@profileCurrentTimezone": {
     "description": "Texto que muestra la zona horaria actual del usuario en el perfil",
@@ -1419,6 +1511,14 @@
   "@descriptionOptional": {
     "description": "Label de descripción opcional"
   },
+  "accommodationNotes": "Notas",
+  "@accommodationNotes": {
+    "description": "Label del campo de notas libres del alojamiento"
+  },
+  "accommodationNotesHint": "Escribe aquí lo que quieras recordar…",
+  "@accommodationNotesHint": {
+    "description": "Hint del campo de notas libres del alojamiento"
+  },
   "additionalNotes": "Notas adicionales",
   "@additionalNotes": {
     "description": "Hint de notas adicionales"
@@ -1439,6 +1539,18 @@
   "placeAddressLabel": "Dirección",
   "@placeAddressLabel": {
     "description": "Label del campo dirección del lugar"
+  },
+  "accommodationPlaceLabel": "Buscar alojamiento",
+  "@accommodationPlaceLabel": {
+    "description": "Label del campo Places en el form de alojamiento"
+  },
+  "enterLocationManually": "Introducir a mano",
+  "@enterLocationManually": {
+    "description": "Enlace para editar nombre y dirección sin Places"
+  },
+  "usePlaceSearch": "Usar búsqueda",
+  "@usePlaceSearch": {
+    "description": "Volver al modo búsqueda Places desde entrada manual"
   },
   "costCurrency": "Moneda del coste",
   "@costCurrency": {
@@ -1486,6 +1598,10 @@
   "@openInGoogleMaps": {
     "description": "Botón para abrir la ubicación en Google Maps"
   },
+  "openWebLink": "Abrir enlace",
+  "@openWebLink": {
+    "description": "Botón para abrir la URL del campo enlace web"
+  },
   "departureAirportLabel": "Aeropuerto de salida",
   "departureAirportHint": "Ej: Madrid Barajas, MAD",
   "arrivalAirportLabel": "Aeropuerto de llegada",
@@ -1528,6 +1644,14 @@
   "eventType": "Tipo de evento",
   "@eventType": {
     "description": "Label de tipo de evento"
+  },
+  "eventTypeSearchHint": "Buscar tipo o subtipo",
+  "@eventTypeSearchHint": {
+    "description": "Hint del buscador en el selector de tipo de evento"
+  },
+  "eventTypeSearchEmpty": "Sin coincidencias",
+  "@eventTypeSearchEmpty": {
+    "description": "Mensaje cuando el buscador de tipo/subtipo no encuentra nada"
   },
   "eventSubtype": "Subtipo",
   "@eventSubtype": {
@@ -1597,6 +1721,47 @@
   "duration": "Duración",
   "@duration": {
     "description": "Label de duración"
+  },
+  "eventDurationCommon": "Duración común",
+  "@eventDurationCommon": {
+    "description": "Sección de duraciones rápidas (15–180 min)"
+  },
+  "eventDurationLong": "Duraciones largas",
+  "@eventDurationLong": {
+    "description": "Sección de duraciones de 4h a 24h"
+  },
+  "eventDurationCustom": "Personalizada",
+  "@eventDurationCustom": {
+    "description": "Sección para escribir la duración a mano"
+  },
+  "eventDurationCustomHint": "Ej: 90 o 1:30",
+  "@eventDurationCustomHint": {
+    "description": "Hint del campo único de duración personalizada"
+  },
+  "eventDurationEndTime": "Hora fin",
+  "@eventDurationEndTime": {
+    "description": "Opción para fijar duración eligiendo hora de fin"
+  },
+  "eventDurationEndTimeHint": "Se calcula desde la hora de inicio ({time})",
+  "@eventDurationEndTimeHint": {
+    "description": "Subtítulo de hora fin; {time} es la hora de inicio",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "eventDurationApplyCustom": "Usar esta duración",
+  "@eventDurationApplyCustom": {
+    "description": "Botón para aplicar duración escrita a mano"
+  },
+  "eventDurationCustomInvalid": "Usa minutos (90) o horas:minutos (1:30). Entre 1 min y 24 h.",
+  "@eventDurationCustomInvalid": {
+    "description": "Error si la duración manual no se entiende o está fuera de rango"
+  },
+  "eventDurationMaxHint": "Máximo 24 h. Si necesitas más, usa Alojamientos.",
+  "@eventDurationMaxHint": {
+    "description": "Aviso de límite de duración de eventos"
   },
   "eventDurationFormatMinutes": "{minutes} min",
   "@eventDurationFormatMinutes": {
@@ -1761,6 +1926,10 @@
   "checkIn": "Check-in",
   "@checkIn": {
     "description": "Label de check-in"
+  },
+  "accommodationStayDatesHelp": "Selecciona check-in y check-out",
+  "@accommodationStayDatesHelp": {
+    "description": "Texto de ayuda del date range picker de estancia"
   },
   "checkOut": "Check-out",
   "@checkOut": {

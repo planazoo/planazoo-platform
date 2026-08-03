@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -35,6 +37,7 @@ import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/input/text_field_clear_suffix.dart';
+import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/features/payments/presentation/widgets/add_expense_dialog.dart';
 import 'package:unp_calendario/features/payments/presentation/providers/payment_providers.dart';
 
@@ -46,8 +49,8 @@ class EventDialog extends ConsumerStatefulWidget {
 
   /// Minuto de inicio si se fija [initialHour] desde fuera (p. ej. FAB con plan en curso = ahora).
   final int? initialStartMinute;
-  final Function(Event)? onSaved;
-  final Function(String)? onDeleted;
+  final FutureOr<void> Function(Event)? onSaved;
+  final FutureOr<void> Function(String)? onDeleted;
 
   const EventDialog({
     super.key,
@@ -222,8 +225,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     'Acción': [
       'Embarque',
       'Entrega vehículo alquiler',
-      'Fin viaje',
-      'Inicio viaje',
       'Otro',
       'Punto de encuentro',
       'Recogida vehículo alquiler',
@@ -269,6 +270,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     'Acción|Entrega': Icons.inventory_2,
     'Acción|Recogida vehículo alquiler': Icons.shopping_bag,
     'Acción|Entrega vehículo alquiler': Icons.inventory_2,
+    // Legados: ya no se ofrecen al crear; icono si el evento aún los tiene.
     'Acción|Fin viaje': Icons.flag,
     'Acción|Inicio viaje': Icons.flag_outlined,
     'Acción|Punto de encuentro': Icons.place,
@@ -284,6 +286,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   /// Selector gráfico subtipo: true = mostrar rejilla de subtipos (cuando hay tipo).
   bool _subtypePickerExpanded = true;
+
+  /// Filtro rápido sobre tipo/subtipo (solo visible con la rejilla abierta).
+  late final TextEditingController _typeSearchController;
 
   @override
   void initState() {
@@ -316,6 +321,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
     _typeFamilyController = TextEditingController(text: initialFamily);
     _typeSubtypeController = TextEditingController(text: initialSubtype);
+    _typeSearchController = TextEditingController();
 
     // Inicializar controladores de información personal
     final currentUser = ref.read(currentUserProvider);
@@ -717,6 +723,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _urlController.dispose();
     _typeFamilyController.dispose();
     _typeSubtypeController.dispose();
+    _typeSearchController.dispose();
     _asientoController.dispose();
     _menuController.dispose();
     _preferenciasController.dispose();
@@ -743,11 +750,43 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     super.dispose();
   }
 
+  // Surfaces alineados con alojamientos: panel más claro, campos más oscuros.
+  static const Color _formSurface = Color(0xFF374151);
+  static const Color _fieldSurface = Color(0xFF1F2937);
+  static const double _fieldRadius = 14;
+  static const double _fieldGap = 14;
+  static const double _fieldIconSize = 20;
+  static const EdgeInsets _fieldContentPadding =
+      EdgeInsets.symmetric(horizontal: 16, vertical: 14);
+
+  TextStyle get _labelStyle => GoogleFonts.poppins(
+        fontSize: 13,
+        color: Colors.white70,
+        fontWeight: FontWeight.w500,
+      );
+
+  TextStyle get _valueStyle => GoogleFonts.poppins(
+        fontSize: 14,
+        color: Colors.white,
+        fontWeight: FontWeight.w500,
+        height: 1.2,
+      );
+
+  TextStyle get _hintStyle => GoogleFonts.poppins(
+        fontSize: 14,
+        color: Colors.white60,
+        fontWeight: FontWeight.w400,
+        height: 1.2,
+      );
+
+  Icon _fieldIcon(IconData icon) =>
+      Icon(icon, size: _fieldIconSize, color: Colors.white70);
+
   /// Decoración tipo login: fondo sólido, borde y sombra (estética unificada).
   BoxDecoration _buildLoginStyleDecoration() {
     return BoxDecoration(
-      color: const Color(0xFF1F2937),
-      borderRadius: BorderRadius.circular(12),
+      color: _fieldSurface,
+      borderRadius: BorderRadius.circular(_fieldRadius),
       border: Border.all(
         color: Colors.white.withValues(alpha: 0.12),
         width: 1,
@@ -762,10 +801,46 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Decoración para campos con título sobre el borde (sin sombra).
+  InputDecoration _standardFieldDecoration({
+    required String labelText,
+    String? hintText,
+    IconData? prefixIcon,
+    bool showErrorBorder = false,
+    String? counterText,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      counterText: counterText,
+      labelStyle: _labelStyle,
+      hintStyle: _hintStyle,
+      prefixIcon: prefixIcon != null ? _fieldIcon(prefixIcon) : null,
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      errorBorder: showErrorBorder
+          ? OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_fieldRadius),
+              borderSide: BorderSide(color: Colors.red.shade400, width: 1),
+            )
+          : InputBorder.none,
+      focusedErrorBorder: showErrorBorder
+          ? OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_fieldRadius),
+              borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+            )
+          : InputBorder.none,
+      filled: true,
+      fillColor: Colors.transparent,
+      isDense: true,
+      contentPadding: _fieldContentPadding,
+    );
+  }
+
+  /// Decoración para campos con título sobre el borde (fecha/hora compactos).
   BoxDecoration get _borderedFieldDecoration => BoxDecoration(
-        color: const Color(0xFF1F2937),
-        borderRadius: BorderRadius.circular(12),
+        color: _fieldSurface,
+        borderRadius: BorderRadius.circular(_fieldRadius),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.12),
           width: 1,
@@ -779,25 +854,24 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         fontWeight: FontWeight.w500,
       );
 
-  /// Campo con título sobre el borde superior (formato unificado Descripción, Timezone, etc.).
-  /// [contentPadding] por defecto (18) para campos estándar; (8) para campos con icono/botón a la derecha.
+  /// Campo con título sobre el borde superior (fecha/hora/duración, timezone).
   Widget _buildLabelOnBorderField({
     required String label,
     required Widget child,
     EdgeInsetsGeometry? contentPadding,
   }) {
     final padding = contentPadding ??
-        const EdgeInsets.only(top: 14, left: 18, right: 18, bottom: 18);
+        const EdgeInsets.only(top: 12, left: 14, right: 14, bottom: 12);
     return Container(
       decoration: _borderedFieldDecoration,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Positioned(
-            left: 14,
+            left: 12,
             top: -7,
             child: Container(
-              color: const Color(0xFF1F2937),
+              color: _fieldSurface,
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(label, style: _labelOnBorderStyle),
             ),
@@ -840,9 +914,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Un solo campo: dirección del evento (Places) + acceso a Maps con marcador.
-  /// Se usa solo cuando el evento NO es Desplazamiento (para eventos localizados: 1 dirección).
-  /// Dentro del campo se muestra "Localización".
+  /// Un solo campo: dirección del evento (Places) + acceso a Maps.
   Widget _buildUnifiedLocationField() {
     final loc = AppLocalizations.of(context)!;
     final hasCoords = _lastPlaceDetails?.lat != null ||
@@ -853,32 +925,53 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PlaceAutocompleteField(
-          controller: _locationController,
-          initialAddress: widget.event?.commonPart?.location,
-          lodgingOnly: false,
-          labelText: loc.eventAddressSingleLabel,
-          hintText: loc.eventAddressSingleHint,
-          fontSize: 12,
-          onPlaceSelected: (PlaceDetails details) {
-            setState(() {
-              _lastPlaceDetails = details;
-              final addr = details.formattedAddress;
-              _locationController.text = (addr != null &&
-                      addr.isNotEmpty &&
-                      addr != details.displayName)
-                  ? '${details.displayName}, $addr'
-                  : details.displayName;
-            });
-          },
+        Container(
+          decoration: _buildLoginStyleDecoration(),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              inputDecorationTheme: InputDecorationTheme(
+                labelStyle: _labelStyle,
+                hintStyle: _hintStyle,
+                prefixIconColor: Colors.white70,
+                contentPadding: _fieldContentPadding,
+                filled: true,
+                fillColor: Colors.transparent,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+              ),
+            ),
+            child: PlaceAutocompleteField(
+              controller: _locationController,
+              initialAddress: widget.event?.commonPart?.location,
+              lodgingOnly: false,
+              labelText: loc.eventAddressSingleLabel,
+              hintText: loc.eventAddressSingleHint,
+              prefixIcon: Icons.place,
+              fontSize: 14,
+              fillColor: Colors.transparent,
+              border: InputBorder.none,
+              onPlaceSelected: (PlaceDetails details) {
+                setState(() {
+                  _lastPlaceDetails = details;
+                  final addr = details.formattedAddress;
+                  _locationController.text = (addr != null &&
+                          addr.isNotEmpty &&
+                          addr != details.displayName)
+                      ? '${details.displayName}, $addr'
+                      : details.displayName;
+                });
+              },
+            ),
+          ),
         ),
-        const SizedBox(height: 6),
         Align(
           alignment: Alignment.centerRight,
           child: IconButton(
-            icon: Icon(Icons.location_on,
-                color:
-                    canOpenMaps ? AppColorScheme.color2 : Colors.white60),
+            icon: Icon(
+              Icons.map_outlined,
+              color: canOpenMaps ? AppColorScheme.color2 : Colors.white60,
+            ),
             tooltip: loc.openInGoogleMaps,
             onPressed: canOpenMaps ? _openLocationInGoogleMaps : null,
           ),
@@ -922,7 +1015,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       child: _buildLabelOnBorderField(
         label: loc.eventDialogParticipantsScopeLabel,
         contentPadding: const EdgeInsets.fromLTRB(14, 20, 14, 12),
-        child: CheckboxTheme(
+          child: CheckboxTheme(
           data: CheckboxThemeData(
             fillColor: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
@@ -934,42 +1027,45 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           ),
-          child: CheckboxListTile(
-            title: Text(
-              loc.eventDialogForAllParticipantsTitle,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                fontSize: 14,
-              ),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                _isForAllParticipants
-                    ? loc.eventDialogForAllParticipantsSubtitleOn
-                    : loc.eventDialogForAllParticipantsSubtitleOff,
+          child: Material(
+            color: Colors.transparent,
+            child: CheckboxListTile(
+              title: Text(
+                loc.eventDialogForAllParticipantsTitle,
                 style: GoogleFonts.poppins(
-                  color: Colors.white70,
-                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  fontSize: 14,
                 ),
               ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _isForAllParticipants
+                      ? loc.eventDialogForAllParticipantsSubtitleOn
+                      : loc.eventDialogForAllParticipantsSubtitleOff,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              value: _isForAllParticipants,
+              onChanged: _canEditGeneral
+                  ? (value) {
+                      setState(() {
+                        _isForAllParticipants = value ?? true;
+                        if (_isForAllParticipants) {
+                          _selectedParticipantIds.clear();
+                        }
+                      });
+                    }
+                  : null,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+              horizontalTitleGap: 10,
             ),
-            value: _isForAllParticipants,
-            onChanged: _canEditGeneral
-                ? (value) {
-                    setState(() {
-                      _isForAllParticipants = value ?? true;
-                      if (_isForAllParticipants) {
-                        _selectedParticipantIds.clear();
-                      }
-                    });
-                  }
-                : null,
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            dense: true,
-            horizontalTitleGap: 10,
           ),
         ),
       ),
@@ -979,17 +1075,16 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   /// Campo opcional: enlace web del evento (p. ej. reserva, web del lugar).
   Widget _buildUrlField() {
     final loc = AppLocalizations.of(context)!;
-    return _buildLabelOnBorderField(
-      label: loc.eventUrlLabel,
+    return Container(
+      decoration: _buildLoginStyleDecoration(),
       child: TextFormField(
         controller: _urlController,
         readOnly: !_canEditGeneral,
-        decoration: InputDecoration(
+        style: _valueStyle,
+        decoration: _standardFieldDecoration(
+          labelText: loc.eventUrlLabel,
           hintText: loc.eventUrlHint,
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+          prefixIcon: Icons.link,
           counterText: '',
         ),
         keyboardType: TextInputType.url,
@@ -1162,11 +1257,86 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
   }
 
+  void _clearTypeSearch() {
+    if (_typeSearchController.text.isEmpty) return;
+    _typeSearchController.clear();
+  }
+
+  bool _matchesTypeQuery(String value, String query) {
+    if (query.isEmpty) return true;
+    return value.toLowerCase().contains(query);
+  }
+
+  /// Resultados de búsqueda global (familia y/o subtipo).
+  List<({String family, String? subtype})> _typeSearchHits(String rawQuery) {
+    final query = rawQuery.trim().toLowerCase();
+    if (query.isEmpty) return const [];
+    final hits = <({String family, String? subtype})>[];
+    for (final family in _typeFamilies) {
+      if (_matchesTypeQuery(family, query)) {
+        hits.add((family: family, subtype: null));
+      }
+      for (final subtype in _typeSubtypes[family] ?? const <String>[]) {
+        if (_matchesTypeQuery(subtype, query)) {
+          hits.add((family: family, subtype: subtype));
+        }
+      }
+    }
+    hits.sort((a, b) {
+      final la = a.subtype ?? a.family;
+      final lb = b.subtype ?? b.family;
+      return la.toLowerCase().compareTo(lb.toLowerCase());
+    });
+    return hits;
+  }
+
+  Widget _buildEventTypeSearchField() {
+    final loc = AppLocalizations.of(context)!;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: TextField(
+        controller: _typeSearchController,
+        style: _valueStyle.copyWith(fontSize: 13),
+        cursorColor: AppColorScheme.color2,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: loc.eventTypeSearchHint,
+          hintStyle: _hintStyle.copyWith(fontSize: 13),
+          prefixIcon: const Icon(Icons.search, size: 18, color: Colors.white70),
+          prefixIconConstraints:
+              const BoxConstraints(minWidth: 36, minHeight: 36),
+          suffixIcon: _typeSearchController.text.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: loc.search,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 36, minHeight: 36),
+                  onPressed: () {
+                    setState(_clearTypeSearch);
+                  },
+                  icon: const Icon(Icons.close, size: 16, color: Colors.white60),
+                ),
+          border: InputBorder.none,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        ),
+        onChanged: (_) => setState(() {}),
+      ),
+    );
+  }
+
   /// Selector gráfico de tipo y subtipo de evento (iconos + chips con "+" para reabrir).
   Widget _buildTypeSubtypeSelector() {
     final loc = AppLocalizations.of(context)!;
     final narrow = MediaQuery.sizeOf(context).width < 520;
-    final typeGridAspect = narrow ? 2.05 : 2.65;
+    // Celdas un poco más bajas: tipografía 2 líneas + icono sin exceso de aire.
+    final typeGridAspect = narrow ? 1.28 : 1.55;
     final hasType = _typeFamilyController.text.isNotEmpty &&
         _typeFamilies.contains(_typeFamilyController.text);
     final subtypes = hasType
@@ -1174,6 +1344,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         : <String>[];
     // Mostrar siempre tipo + subtipo cuando hay texto de subtipo (evita que solo quede visible el subtipo).
     final hasSubtype = _typeSubtypeController.text.trim().isNotEmpty;
+    final searchQuery = _typeSearchController.text.trim().toLowerCase();
+    final showSearch = _typePickerExpanded ||
+        (hasType && _subtypePickerExpanded);
 
     if (!_canEditGeneral) {
       return _buildLabelOnBorderField(
@@ -1225,9 +1398,65 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (showSearch) ...[
+            _buildEventTypeSearchField(),
+            const SizedBox(height: 10),
+          ],
           if (_typePickerExpanded) ...[
             Builder(
               builder: (context) {
+                if (searchQuery.isNotEmpty) {
+                  final hits = _typeSearchHits(searchQuery);
+                  if (hits.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        loc.eventTypeSearchEmpty,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.white60,
+                        ),
+                      ),
+                    );
+                  }
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: narrow ? 8 : 10,
+                      mainAxisSpacing: narrow ? 8 : 10,
+                      childAspectRatio: typeGridAspect,
+                    ),
+                    itemCount: hits.length,
+                    itemBuilder: (context, index) {
+                      final hit = hits[index];
+                      final isSubtype = hit.subtype != null;
+                      final label = isSubtype
+                          ? '${hit.subtype}\n${hit.family}'
+                          : hit.family;
+                      final icon = isSubtype
+                          ? (_subtypeIcons['${hit.family}|${hit.subtype}'] ??
+                              Icons.label)
+                          : (_typeIcons[hit.family] ?? Icons.category);
+                      return _buildTypeSubtypeChip(
+                        label: label,
+                        icon: icon,
+                        gridTile: true,
+                        onTap: () {
+                          setState(() {
+                            _typeFamilyController.text = hit.family;
+                            _typeSubtypeController.text = hit.subtype ?? '';
+                            _typePickerExpanded = false;
+                            _subtypePickerExpanded = hit.subtype == null;
+                            _clearTypeSearch();
+                          });
+                        },
+                      );
+                    },
+                  );
+                }
+
                 final sortedFamilies = [..._typeFamilies]
                   ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
                 return GridView.builder(
@@ -1235,8 +1464,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
+                    crossAxisSpacing: narrow ? 8 : 10,
+                    mainAxisSpacing: narrow ? 8 : 10,
                     childAspectRatio: typeGridAspect,
                   ),
                   itemCount: sortedFamilies.length,
@@ -1247,12 +1476,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       label: family,
                       icon: _typeIcons[family] ?? Icons.category,
                       selected: selected,
+                      gridTile: true,
                       onTap: () {
                         setState(() {
                           _typeFamilyController.text = family;
                           _typeSubtypeController.text = '';
                           _typePickerExpanded = false;
                           _subtypePickerExpanded = true;
+                          _clearTypeSearch();
                         });
                       },
                     );
@@ -1271,6 +1502,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   setState(() {
                     _typePickerExpanded = true;
                     _subtypePickerExpanded = false;
+                    _clearTypeSearch();
                   });
                 },
               ),
@@ -1286,21 +1518,37 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               const SizedBox(height: 8),
               Builder(
                 builder: (context) {
-                  final sortedSubtypes = [
-                    ...subtypes
-                  ]..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                  final sortedSubtypes = [...subtypes]
+                    ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                  final filtered = searchQuery.isEmpty
+                      ? sortedSubtypes
+                      : sortedSubtypes
+                          .where((s) => _matchesTypeQuery(s, searchQuery))
+                          .toList();
+                  if (filtered.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        loc.eventTypeSearchEmpty,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.white60,
+                        ),
+                      ),
+                    );
+                  }
                   return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
+                      crossAxisSpacing: narrow ? 8 : 10,
+                      mainAxisSpacing: narrow ? 8 : 10,
                       childAspectRatio: typeGridAspect,
                     ),
-                    itemCount: sortedSubtypes.length,
+                    itemCount: filtered.length,
                     itemBuilder: (context, index) {
-                      final subtype = sortedSubtypes[index];
+                      final subtype = filtered[index];
                       final selected = _typeSubtypeController.text == subtype;
                       return _buildTypeSubtypeChip(
                         label: subtype,
@@ -1308,10 +1556,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                                 '${_typeFamilyController.text}|$subtype'] ??
                             Icons.label,
                         selected: selected,
+                        gridTile: true,
                         onTap: () {
                           setState(() {
                             _typeSubtypeController.text = subtype;
                             _subtypePickerExpanded = false;
+                            _clearTypeSearch();
                           });
                         },
                       );
@@ -1336,6 +1586,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       setState(() {
                         _typePickerExpanded = true;
                         _subtypePickerExpanded = false;
+                        _clearTypeSearch();
                       });
                     },
                   ),
@@ -1348,7 +1599,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       selected: true,
                       showPlus: true,
                       onTap: () {
-                        setState(() => _subtypePickerExpanded = true);
+                        setState(() {
+                          _subtypePickerExpanded = true;
+                          _clearTypeSearch();
+                        });
                       },
                     )
                   else
@@ -1358,7 +1612,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       selected: false,
                       showPlus: false,
                       onTap: () {
-                        setState(() => _subtypePickerExpanded = true);
+                        setState(() {
+                          _subtypePickerExpanded = true;
+                          _clearTypeSearch();
+                        });
                       },
                     ),
                 ],
@@ -1375,6 +1632,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     required IconData icon,
     bool selected = false,
     bool showPlus = false,
+    bool gridTile = false,
     VoidCallback? onTap,
   }) {
     final color = selected
@@ -1383,48 +1641,81 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final borderColor = selected
         ? AppColorScheme.color2
         : Colors.white.withValues(alpha: 0.12);
+    final labelColor = selected ? Colors.white : Colors.white70;
+
+    final Widget content;
+    if (gridTile) {
+      content = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: labelColor),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 10.5,
+                height: 1.1,
+                fontWeight: FontWeight.w500,
+                color: labelColor,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      content = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: labelColor),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  height: 1.15,
+                  fontWeight: FontWeight.w500,
+                  color: labelColor,
+                ),
+              ),
+            ),
+            if (showPlus) ...[
+              const SizedBox(width: 4),
+              Icon(
+                Icons.add_circle_outline,
+                size: 15,
+                color: selected ? Colors.white : Colors.white54,
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          width: gridTile ? double.infinity : null,
+          height: gridTile ? double.infinity : null,
+          alignment: gridTile ? Alignment.center : null,
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: borderColor, width: 1),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon,
-                  size: 20,
-                  color:
-                      selected ? Colors.white : Colors.white70),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: selected ? Colors.white : Colors.white70,
-                  ),
-                ),
-              ),
-              if (showPlus) ...[
-                const SizedBox(width: 6),
-                Icon(
-                  Icons.add_circle_outline,
-                  size: 16,
-                  color: selected ? Colors.white : Colors.white54,
-                ),
-              ],
-            ],
-          ),
+          child: content,
         ),
       ),
     );
@@ -2696,9 +2987,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         vertical: isMobile ? 10 : 14,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF111827),
+        color: _formSurface,
         border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
         ),
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(isMobile ? 0 : 18),
@@ -2868,9 +3159,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return Theme(
         data: AppTheme.darkTheme,
         child: AlertDialog(
-          backgroundColor: const Color(0xFF111827),
+          backgroundColor: _formSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
+            side: isMobile
+                ? BorderSide.none
+                : BorderSide(
+                    color: Colors.white.withValues(alpha: 0.22), width: 1),
           ),
           insetPadding: isMobile
               ? EdgeInsets.zero
@@ -2930,9 +3225,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       data: AppTheme.darkTheme,
       child: AlertDialog(
         scrollable: true,
-        backgroundColor: const Color(0xFF111827),
+        backgroundColor: _formSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
+          side: isMobile
+              ? BorderSide.none
+              : BorderSide(
+                  color: Colors.white.withValues(alpha: 0.22), width: 1),
         ),
         insetPadding: isMobile
             ? EdgeInsets.zero
@@ -2964,7 +3263,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               isMobile
                   ? Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                         child: Form(
                           key: _formKey,
                           child: SizedBox(
@@ -3201,78 +3500,33 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return f.isNotEmpty && _typeFamilies.contains(f);
   }
 
-  Widget _buildGeneralSectionHeader(String title, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: Colors.white60,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDemoSectionCard({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1F2937),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
+      decoration: _buildLoginStyleDecoration(),
       child: child,
     );
   }
 
-  Widget _buildSectionTitleInCard({
-    required String title,
-    required String subtitle,
-  }) {
-    return _buildDemoSectionCard(
-      child: _buildGeneralSectionHeader(title, subtitle),
-    );
-  }
-
   Widget _buildGeneralTabScroll(bool isMobile) {
-    final pad = isMobile ? 8.0 : 10.0;
+    final pad = isMobile ? 4.0 : 8.0;
     final fsBody = isMobile ? 13.0 : 14.0;
-    final contentPad = isMobile ? 14.0 : 18.0;
-    final spacing = isMobile ? 10.0 : 12.0;
+    final spacing = isMobile ? _fieldGap : 16.0;
+    final whenGap = isMobile ? 6.0 : 8.0;
     return SingleChildScrollView(
-      padding: EdgeInsets.all(pad),
+      padding: EdgeInsets.fromLTRB(pad, pad, pad, isMobile ? 16 : 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Identidad: Tipo y subtipo (referencia visual demo)
-          _buildSectionTitleInCard(
-            title: 'Identidad del evento',
-            subtitle: 'Tipo, subtipo y color para reconocimiento rapido',
-          ),
-          const SizedBox(height: 8),
+          // Tipo / subtipo (sin card de título)
           _buildDemoSectionCard(
             child: _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
           ),
           SizedBox(height: spacing),
           if (widget.event == null && !_hasGeneralEventTypeSelected())
             Padding(
-              padding: EdgeInsets.fromLTRB(contentPad, 0, contentPad, 12),
+              padding: EdgeInsets.only(bottom: spacing),
               child: Text(
                 AppLocalizations.of(context)!.eventSelectTypeFirstHint,
                 style: GoogleFonts.poppins(
@@ -3280,150 +3534,83 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
           if (widget.event != null || _hasGeneralEventTypeSelected()) ...[
-            _buildSectionTitleInCard(
-              title: 'Informacion general',
-              subtitle: 'Lo minimo para crear un evento claro',
-            ),
-            const SizedBox(height: 8),
-            // Descripción del evento
-            _buildDemoSectionCard(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _wrapReadOnlyIfNeeded(
-                    child: _buildLabelOnBorderField(
-                      label: AppLocalizations.of(context)!.eventDescription,
-                      child: TextFormField(
-                        controller: _descriptionController,
-                        readOnly: !(_canEditGeneral || _canEditGeneralInitial),
-                        maxLines: 1,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        decoration: InputDecoration(
-                          hintText:
-                              AppLocalizations.of(context)!.eventDescriptionHint,
-                          labelStyle: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.white70,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          hintStyle: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.white60,
-                          ),
-                          prefixIcon:
-                              Icon(Icons.subject, color: Colors.white70),
-                          suffixIcon: textFieldClearSuffix(
-                            _descriptionController,
-                            onCleared: () => setState(() {}),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: AppColorScheme.color2,
-                              width: 2.5,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: Colors.red.shade400,
-                              width: 1,
-                            ),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: Colors.red.shade400,
-                              width: 2.5,
-                            ),
-                          ),
-                          fillColor: Colors.transparent,
-                          filled: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 0, vertical: 12),
-                        ),
-                        validator: (value) {
-                          if (!_canEditGeneral) return null;
-                          final v = value?.trim() ?? '';
-                          if (v.isNotEmpty && v.length < 3) {
-                            return 'Mínimo 3 caracteres';
-                          }
-                          if (v.length > 1000) return 'Máximo 1000 caracteres';
-                          return null;
-                        },
-                      ),
+            // Descripción
+            _wrapReadOnlyIfNeeded(
+              child: Container(
+                decoration: _buildLoginStyleDecoration(),
+                child: TextFormField(
+                  controller: _descriptionController,
+                  readOnly: !(_canEditGeneral || _canEditGeneralInitial),
+                  maxLines: 1,
+                  style: _valueStyle,
+                  decoration: _standardFieldDecoration(
+                    labelText: AppLocalizations.of(context)!.eventDescription,
+                    hintText:
+                        AppLocalizations.of(context)!.eventDescriptionHint,
+                    prefixIcon: Icons.subject,
+                  ).copyWith(
+                    suffixIcon: textFieldClearSuffix(
+                      _descriptionController,
+                      onCleared: () => setState(() {}),
                     ),
                   ),
-                  SizedBox(height: spacing),
-                  // Fecha / Hora / Duración justo debajo de Descripción.
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildWhenField(
-                          label: AppLocalizations.of(context)!.date,
-                          value: DateFormatter.formatDate(_selectedDate),
-                          onTap: _canEditGeneral
-                              ? _selectDate
-                              : _showReadOnlySnackBar,
-                          isMobile: isMobile,
-                          fsBody: fsBody,
-                        ),
-                      ),
-                      SizedBox(width: isMobile ? 6 : 8),
-                      Expanded(
-                        child: _buildWhenField(
-                          label: AppLocalizations.of(context)!.time,
-                          value: DateFormatter.formatTimeOnly(
-                            DateTime(
-                                2000, 1, 1, _selectedHour, _selectedStartMinute),
-                          ),
-                          onTap: _canEditGeneral
-                              ? _selectStartTime
-                              : _showReadOnlySnackBar,
-                          isMobile: isMobile,
-                          fsBody: fsBody,
-                        ),
-                      ),
-                      SizedBox(width: isMobile ? 6 : 8),
-                      Expanded(
-                        child: _buildWhenField(
-                          label: AppLocalizations.of(context)!.duration,
-                          value: _formatDuration(_selectedDurationMinutes),
-                          onTap: _canEditGeneral
-                              ? _selectDuration
-                              : _showReadOnlySnackBar,
-                          isMobile: isMobile,
-                          fsBody: fsBody,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  validator: (value) {
+                    if (!_canEditGeneral) return null;
+                    final v = value?.trim() ?? '';
+                    if (v.isNotEmpty && v.length < 3) {
+                      return 'Mínimo 3 caracteres';
+                    }
+                    if (v.length > 1000) return 'Máximo 1000 caracteres';
+                    return null;
+                  },
+                ),
               ),
             ),
             SizedBox(height: spacing),
-            // Desplazamiento/Avión: priorizar campos críticos del vuelo justo tras fecha/hora/duración.
-            if (_typeFamilyController.text == 'Desplazamiento' &&
-                _typeSubtypeController.text == 'Avión')
-              _buildDemoSectionCard(
-                child: _buildGeneralSectionHeader(
-                  'Vuelo',
-                  'Numero de vuelo, aeropuertos y zona horaria',
+            // Fecha / Hora / Duración
+            Row(
+              children: [
+                Expanded(
+                  child: _buildWhenField(
+                    label: AppLocalizations.of(context)!.date,
+                    value: DateFormatter.formatDate(_selectedDate),
+                    onTap: _canEditGeneral
+                        ? _selectDate
+                        : _showReadOnlySnackBar,
+                    isMobile: isMobile,
+                    fsBody: fsBody,
+                  ),
                 ),
-              ),
+                SizedBox(width: whenGap),
+                Expanded(
+                  child: _buildWhenField(
+                    label: AppLocalizations.of(context)!.time,
+                    value: DateFormatter.formatTimeOnly(
+                      DateTime(
+                          2000, 1, 1, _selectedHour, _selectedStartMinute),
+                    ),
+                    onTap: _canEditGeneral
+                        ? _selectStartTime
+                        : _showReadOnlySnackBar,
+                    isMobile: isMobile,
+                    fsBody: fsBody,
+                  ),
+                ),
+                SizedBox(width: whenGap),
+                Expanded(
+                  child: _buildWhenField(
+                    label: AppLocalizations.of(context)!.duration,
+                    value: _formatDuration(_selectedDurationMinutes),
+                    onTap: _canEditGeneral
+                        ? _selectDuration
+                        : _showReadOnlySnackBar,
+                    isMobile: isMobile,
+                    fsBody: fsBody,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: spacing),
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text == 'Avión')
               _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
@@ -3431,56 +3618,26 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 _typeSubtypeController.text == 'Avión')
               SizedBox(height: spacing),
             _wrapReadOnlyIfNeeded(
-              child: _buildLabelOnBorderField(
-                label: AppLocalizations.of(context)!.eventLongNotesLabel,
+              child: Container(
+                decoration: _buildLoginStyleDecoration(),
                 child: TextFormField(
                   controller: _longNotesController,
                   readOnly: !(_canEditGeneral || _canEditGeneralInitial),
-                  minLines: 1,
-                  maxLines: 3,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: AppLocalizations.of(context)!.eventLongNotesLabel,
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    hintStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.white60,
-                    ),
-                    prefixIcon: Icon(Icons.article_outlined,
-                        color: Colors.white70),
+                  minLines: 2,
+                  maxLines: 4,
+                  style: _valueStyle,
+                  decoration: _standardFieldDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.eventLongNotesLabel,
+                    hintText:
+                        AppLocalizations.of(context)!.eventLongNotesLabel,
+                    prefixIcon: Icons.article_outlined,
+                  ).copyWith(
                     suffixIcon: IconButton(
                       tooltip: 'Ampliar',
                       onPressed: _openLongNotesEditor,
-                      icon:
-                          Icon(Icons.open_in_full, color: Colors.white70),
+                      icon: _fieldIcon(Icons.open_in_full),
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: AppColorScheme.color2,
-                        width: 2.5,
-                      ),
-                    ),
-                    fillColor: Colors.transparent,
-                    filled: true,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
                   ),
                 ),
               ),
@@ -3499,12 +3656,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 onDelete: _deleteEventAttachment,
               ),
             if (widget.planId != null) SizedBox(height: spacing),
-            // Dirección: 1 campo (Dirección del evento) si NO es Desplazamiento; 2 campos (Origen, Destino) si es Desplazamiento
             if (_typeFamilyController.text != 'Desplazamiento') ...[
               _buildUnifiedLocationField(),
               SizedBox(height: spacing),
             ],
-            // Desplazamiento: Origen + Destino para subtipos no avión.
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text.isNotEmpty &&
                 _typeSubtypeController.text != 'Avión')
@@ -3533,13 +3688,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ],
             _wrapReadOnlyIfNeeded(child: _buildUrlField()),
             SizedBox(height: spacing),
-            // Timezone:
-            // - No desplazamiento: selector rápido estilo vuelo (ID 45).
-            // - Desplazamiento no avión: selector clásico ida/llegada.
             if (_typeFamilyController.text != 'Desplazamiento')
               _buildNonTransportTimezoneSelector(),
             if (_typeFamilyController.text != 'Desplazamiento')
-              const SizedBox(height: 12),
+              SizedBox(height: spacing),
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text != 'Avión')
               _wrapReadOnlyIfNeeded(
@@ -3559,9 +3711,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text != 'Avión')
-              const SizedBox(height: 12),
-
-            // Timezone de llegada (solo desplazamiento no avión)
+              SizedBox(height: spacing),
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text != 'Avión')
               _wrapReadOnlyIfNeeded(
@@ -3579,31 +3729,19 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       : null,
                 ),
               ),
-            const SizedBox(height: 16),
-            _buildSectionTitleInCard(
-              title: 'Participacion y limites',
-              subtitle: 'Alcance del evento, asistentes y restricciones',
-            ),
-            const SizedBox(height: 8),
+            if (_typeFamilyController.text == 'Desplazamiento' &&
+                _typeSubtypeController.text != 'Avión')
+              SizedBox(height: spacing),
+
             _buildIsForAllParticipantsSelector(),
             SizedBox(height: spacing),
-            // 4. Participación: asignación y registro (ID 47/48)
-            // Participantes (tracks asignados)
             _wrapReadOnlyIfNeeded(child: _buildParticipantsSection()),
-            const SizedBox(height: 16),
+            SizedBox(height: spacing),
 
-            // Registro de participantes (quién se ha apuntado)
-            if (widget.event != null && widget.planId != null)
+            if (widget.event != null && widget.planId != null) ...[
               Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1F2937),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    width: 1,
-                  ),
-                ),
+                padding: const EdgeInsets.all(14),
+                decoration: _buildLoginStyleDecoration(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -3635,82 +3773,24 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   ],
                 ),
               ),
-            const SizedBox(height: 16),
-            if (_planCurrency != null)
-              _buildSectionTitleInCard(
-                title: 'Coste',
-                subtitle: 'Importe y moneda del evento',
-              ),
-            if (_planCurrency != null) const SizedBox(height: 8),
-            if (_planCurrency != null)
+              SizedBox(height: spacing),
+            ],
+            if (_planCurrency != null) ...[
               _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
-            if (_planCurrency != null) const SizedBox(height: 16),
-            _buildSectionTitleInCard(
-              title: 'Opciones avanzadas',
-              subtitle: 'Configuraciones adicionales del evento',
-            ),
-            const SizedBox(height: 8),
-            _buildDemoSectionCard(
-              child: _buildGeneralSectionHeader(
-                'Limites y confirmacion',
-                'Control del aforo y aprobacion de asistencia',
-              ),
-            ),
-            const SizedBox(height: 8),
-            // 5. Opciones avanzadas al final (ID 47)
+              SizedBox(height: spacing),
+            ],
             _wrapReadOnlyIfNeeded(
-              child: _buildLabelOnBorderField(
-                label: 'Límite de participantes (opcional)',
+              child: Container(
+                decoration: _buildLoginStyleDecoration(),
                 child: TextFormField(
                   controller: _maxParticipantsController,
                   readOnly: !_canEditGeneral,
                   keyboardType: TextInputType.number,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
+                  style: _valueStyle,
+                  decoration: _standardFieldDecoration(
+                    labelText: 'Límite de participantes (opcional)',
                     hintText: 'Ej: 10 (dejar vacío para sin límite)',
-                    hintStyle: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white60,
-                    ),
-                    prefixIcon:
-                        Icon(Icons.people_outline, color: Colors.white70),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: AppColorScheme.color2,
-                        width: 2.5,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 1,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 2.5,
-                      ),
-                    ),
-                    fillColor: Colors.transparent,
-                    filled: true,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+                    prefixIcon: Icons.people_outline,
                   ),
                   validator: (value) {
                     if (!_canEditGeneral) return null;
@@ -3725,95 +3805,114 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: spacing),
             if (_canEditGeneral)
-              CheckboxListTile(
-                title: Text(
-                  AppLocalizations.of(context)!.requiresConfirmation,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+              Material(
+                color: _fieldSurface,
+                elevation: 1,
+                shadowColor: Colors.black.withValues(alpha: 0.18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(_fieldRadius),
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    width: 1,
                   ),
                 ),
-                subtitle: Text(
-                  AppLocalizations.of(context)!.requiresConfirmationSubtitle,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white70,
-                    fontSize: 12,
+                clipBehavior: Clip.antiAlias,
+                child: CheckboxListTile(
+                  title: Text(
+                    AppLocalizations.of(context)!.requiresConfirmation,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
+                  subtitle: Text(
+                    AppLocalizations.of(context)!.requiresConfirmationSubtitle,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                  value: _requiresConfirmation,
+                  activeColor: AppColorScheme.color2,
+                  onChanged: (value) {
+                    setState(() {
+                      _requiresConfirmation = value ?? false;
+                    });
+                  },
+                  secondary: Icon(Icons.assignment_turned_in_outlined,
+                      color: AppColorScheme.color2),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 ),
-                value: _requiresConfirmation,
-                activeColor: AppColorScheme.color2,
-                onChanged: (value) {
-                  setState(() {
-                    _requiresConfirmation = value ?? false;
-                  });
-                },
-                secondary: Icon(Icons.assignment_turned_in_outlined,
-                    color: AppColorScheme.color2),
-                contentPadding: EdgeInsets.zero,
               ),
-            const SizedBox(height: 16),
+            if (_canEditGeneral) SizedBox(height: spacing),
 
-            // 5. Apariencia: Color
-            _buildDemoSectionCard(
-              child: _buildGeneralSectionHeader(
-                'Apariencia',
-                'Color del evento en el calendario',
-              ),
-            ),
-            const SizedBox(height: 8),
             _wrapReadOnlyIfNeeded(
-              child: ListTile(
-                leading: Icon(Icons.palette, color: AppColorScheme.color2),
-                title: Text(
-                  'Color',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+              child: Material(
+                color: _fieldSurface,
+                elevation: 1,
+                shadowColor: Colors.black.withValues(alpha: 0.18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(_fieldRadius),
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    width: 1,
                   ),
                 ),
-                subtitle: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: _eventColors.map((colorName) {
-                      final color = _getColorFromName(colorName);
-                      return GestureDetector(
-                        onTap: !_canEditGeneral
-                            ? null
-                            : () {
-                                setState(() {
-                                  _selectedColor = colorName;
-                                });
-                              },
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: _selectedColor == colorName
-                                ? Border.all(color: Colors.white, width: 2.5)
-                                : Border.all(
-                                    color: Colors.white60,
-                                    width: 1,
-                                  ),
-                            boxShadow: _selectedColor == colorName
-                                ? [
-                                    BoxShadow(
-                                      color: color.withValues(alpha: 0.5),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
+                clipBehavior: Clip.antiAlias,
+                child: ListTile(
+                  leading: Icon(Icons.palette, color: AppColorScheme.color2),
+                  title: Text(
+                    'Color',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _eventColors.map((colorName) {
+                        final color = _getColorFromName(colorName);
+                        return GestureDetector(
+                          onTap: !_canEditGeneral
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _selectedColor = colorName;
+                                  });
+                                },
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: _selectedColor == colorName
+                                  ? Border.all(color: Colors.white, width: 2.5)
+                                  : Border.all(
+                                      color: Colors.white60,
+                                      width: 1,
                                     ),
-                                  ]
-                                : null,
+                              boxShadow: _selectedColor == colorName
+                                  ? [
+                                      BoxShadow(
+                                        color: color.withValues(alpha: 0.5),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ),
@@ -4475,100 +4574,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Future<void> _selectDuration() async {
     final int? durationMinutes = await showDialog<int>(
       context: context,
-      builder: (context) => Theme(
-        data: AppTheme.darkTheme,
-        child: AlertDialog(
-          backgroundColor: const Color(0xFF1F2937),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          title: Text(
-            'Duración',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Opciones rápidas comunes (hasta 3 horas = 180 min)
-                Text(
-                  'Duración común:',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...List.generate(12, (index) {
-                  final minutes =
-                      (index + 1) * 15; // 15, 30, 45, 60, 75, 90, etc.
-                  return ListTile(
-                    title: Text(
-                      _formatDuration(minutes),
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                    ),
-                    onTap: () => Navigator.of(context).pop(minutes),
-                  );
-                }),
-                const Divider(color: Colors.grey),
-                // Opciones personalizadas (hasta 24 horas)
-                Text(
-                  'Duraciones largas:',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...List.generate(21, (index) {
-                  final hours = index + 4; // 4h, 5h, 6h... hasta 24h
-                  final minutes = hours * 60;
-                  return ListTile(
-                    title: Text(
-                      _formatDuration(minutes),
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                    ),
-                    onTap: () => Navigator.of(context).pop(minutes),
-                    trailing: hours == 24
-                        ? Text(
-                            '(máximo)',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: Colors.white70,
-                            ),
-                          )
-                        : null,
-                  );
-                }),
-                const Divider(color: Colors.grey),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    '💡 Eventos máximo 24h.\nSi necesitas más → usa Alojamientos',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: Colors.white70,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+      builder: (context) => _EventDurationPickerDialog(
+        initialMinutes: _selectedDurationMinutes,
+        startHour: _selectedHour,
+        startMinute: _selectedStartMinute,
+        formatDuration: _formatDuration,
       ),
     );
 
@@ -5579,7 +5589,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       }
 
       // Descripción: si el usuario dejó el campo vacío, generar una a partir de tipo, subtipo y ubicación
-      final descriptionToSave = _buildDescriptionForSave();
+      var descriptionToSave = _buildDescriptionForSave().trim();
+      // Firestore rules: description.size() >= 3
+      if (descriptionToSave.length < 3) {
+        descriptionToSave = 'Evento';
+      }
 
       // T247: calcular metadatos de conexión
       Map<String, dynamic>? connection;
@@ -5835,7 +5849,25 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       }
 
       if (widget.onSaved != null) {
-        widget.onSaved!(event);
+        await widget.onSaved!(event);
+      }
+    } catch (e, st) {
+      LoggerService.error(
+        'Error saving event from dialog',
+        context: 'EVENT_DIALOG',
+        error: e,
+        stackTrace: st,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.eventNotSaved,
+              style: GoogleFonts.poppins(color: Colors.white),
+            ),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -5850,6 +5882,327 @@ class _StaticSponsorData {
   final String url;
 
   const _StaticSponsorData({required this.name, required this.url});
+}
+
+/// Diálogo de duración: campo manual, hora fin (calcula duración) y presets.
+class _EventDurationPickerDialog extends StatefulWidget {
+  const _EventDurationPickerDialog({
+    required this.initialMinutes,
+    required this.startHour,
+    required this.startMinute,
+    required this.formatDuration,
+  });
+
+  final int initialMinutes;
+  final int startHour;
+  final int startMinute;
+  final String Function(int minutes) formatDuration;
+
+  @override
+  State<_EventDurationPickerDialog> createState() =>
+      _EventDurationPickerDialogState();
+}
+
+class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> {
+  late final TextEditingController _customController;
+  String? _customError;
+
+  DateTime get _startAsDateTime =>
+      DateTime(2000, 1, 1, widget.startHour, widget.startMinute);
+
+  TimeOfDay get _impliedEndTime {
+    final end = _startAsDateTime
+        .add(Duration(minutes: widget.initialMinutes.clamp(1, 1440)));
+    return TimeOfDay(hour: end.hour, minute: end.minute);
+  }
+
+  String get _startTimeLabel =>
+      DateFormatter.formatTimeOnly(_startAsDateTime);
+
+  @override
+  void initState() {
+    super.initState();
+    _customController = TextEditingController(
+      text: _formatCustomInput(widget.initialMinutes.clamp(1, 1440)),
+    );
+  }
+
+  @override
+  void dispose() {
+    _customController.dispose();
+    super.dispose();
+  }
+
+  /// Preferir `H:MM` si hay horas; si no, solo minutos.
+  String _formatCustomInput(int minutes) {
+    if (minutes < 60) return '$minutes';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    return '$h:${m.toString().padLeft(2, '0')}';
+  }
+
+  /// Acepta: `90`, `1:30`, `1h30`, `1h 30m`, `2h`.
+  int? _parseCustomDuration(String raw) {
+    final text = raw.trim().toLowerCase().replaceAll(',', '.');
+    if (text.isEmpty) return null;
+
+    final hm = RegExp(r'^(\d+)\s*[h:]\s*(\d{1,2})\s*m?$').firstMatch(text);
+    if (hm != null) {
+      final hours = int.parse(hm.group(1)!);
+      final minutes = int.parse(hm.group(2)!);
+      if (minutes > 59) return null;
+      return hours * 60 + minutes;
+    }
+
+    final hoursOnly = RegExp(r'^(\d+)\s*h$').firstMatch(text);
+    if (hoursOnly != null) {
+      return int.parse(hoursOnly.group(1)!) * 60;
+    }
+
+    final minutesOnly = RegExp(r'^(\d+)\s*m(?:in)?$').firstMatch(text);
+    if (minutesOnly != null) {
+      return int.parse(minutesOnly.group(1)!);
+    }
+
+    final asInt = int.tryParse(text);
+    if (asInt != null) return asInt;
+
+    return null;
+  }
+
+  int _durationFromEndTime(TimeOfDay end) {
+    final startMin = widget.startHour * 60 + widget.startMinute;
+    var endMin = end.hour * 60 + end.minute;
+    // Si fin ≤ inicio, asumimos que cruza medianoche (máx. 24 h).
+    if (endMin <= startMin) {
+      endMin += 24 * 60;
+    }
+    return endMin - startMin;
+  }
+
+  Future<void> _pickEndTime() async {
+    final greenTheme = Theme.of(context).copyWith(
+      colorScheme: Theme.of(context)
+          .colorScheme
+          .copyWith(primary: Colors.green.shade600),
+    );
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _impliedEndTime,
+      builder: (context, child) => Theme(data: greenTheme, child: child!),
+    );
+    if (!mounted || picked == null) return;
+
+    final total = _durationFromEndTime(picked);
+    if (total < 1 || total > 1440) {
+      setState(() => _customError =
+          AppLocalizations.of(context)!.eventDurationCustomInvalid);
+      return;
+    }
+    Navigator.of(context).pop(total);
+  }
+
+  void _applyCustom() {
+    final total = _parseCustomDuration(_customController.text);
+    if (total == null || total < 1 || total > 1440) {
+      setState(() => _customError =
+          AppLocalizations.of(context)!.eventDurationCustomInvalid);
+      return;
+    }
+    Navigator.of(context).pop(total);
+  }
+
+  InputDecoration _fieldDecoration(String label, String hint) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      labelStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
+      hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.white54),
+      filled: true,
+      fillColor: const Color(0xFF111827),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColorScheme.color2, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      prefixIcon: const Icon(Icons.timelapse, color: Colors.white70, size: 20),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final sectionStyle = GoogleFonts.poppins(
+      fontWeight: FontWeight.w600,
+      color: Colors.white,
+      fontSize: 14,
+    );
+    final itemStyle = GoogleFonts.poppins(color: Colors.white, fontSize: 14);
+    final endLabel = DateFormatter.formatTimeOnly(
+      DateTime(2000, 1, 1, _impliedEndTime.hour, _impliedEndTime.minute),
+    );
+
+    return Theme(
+      data: AppTheme.darkTheme,
+      child: AlertDialog(
+        backgroundColor: const Color(0xFF374151),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(
+          loc.duration,
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        content: SizedBox(
+          width: 360,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Material(
+                  color: const Color(0xFF1F2937),
+                  borderRadius: BorderRadius.circular(12),
+                  child: ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    leading: const Icon(Icons.schedule, color: Colors.white70),
+                    title: Text(
+                      '${loc.eventDurationEndTime}: $endLabel',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    subtitle: Text(
+                      loc.eventDurationEndTimeHint(_startTimeLabel),
+                      style: GoogleFonts.poppins(
+                        color: Colors.white60,
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.edit_outlined,
+                        color: Colors.white54, size: 18),
+                    onTap: _pickEndTime,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(loc.eventDurationCustom, style: sectionStyle),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _customController,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.done,
+                  style: itemStyle,
+                  decoration: _fieldDecoration(
+                    loc.eventDurationCustom,
+                    loc.eventDurationCustomHint,
+                  ),
+                  onChanged: (_) {
+                    if (_customError != null) {
+                      setState(() => _customError = null);
+                    }
+                  },
+                  onSubmitted: (_) => _applyCustom(),
+                ),
+                if (_customError != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    _customError!,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.red.shade300,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                FilledButton(
+                  onPressed: _applyCustom,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColorScheme.color2,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    loc.eventDurationApplyCustom,
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white24),
+                const SizedBox(height: 8),
+                Text(loc.eventDurationCommon, style: sectionStyle),
+                const SizedBox(height: 4),
+                ...List.generate(12, (index) {
+                  final minutes = (index + 1) * 15;
+                  return ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title:
+                        Text(widget.formatDuration(minutes), style: itemStyle),
+                    onTap: () => Navigator.of(context).pop(minutes),
+                  );
+                }),
+                const Divider(color: Colors.white24),
+                Text(loc.eventDurationLong, style: sectionStyle),
+                const SizedBox(height: 4),
+                ...List.generate(21, (index) {
+                  final hours = index + 4;
+                  final minutes = hours * 60;
+                  return ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title:
+                        Text(widget.formatDuration(minutes), style: itemStyle),
+                    onTap: () => Navigator.of(context).pop(minutes),
+                    trailing: hours == 24
+                        ? Text(
+                            '(máx.)',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: Colors.white70,
+                            ),
+                          )
+                        : null,
+                  );
+                }),
+                const SizedBox(height: 8),
+                Text(
+                  loc.eventDurationMaxHint,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: Colors.white70,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Chip de pestaña del diálogo de evento (estilo W14/W15: fondo destacado si seleccionado).

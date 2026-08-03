@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart' show EventDocument;
+import 'package:unp_calendario/shared/utils/color_utils.dart';
 
 class Accommodation {
   final String? id;
@@ -22,6 +23,8 @@ class Accommodation {
   final double? cost; // Coste total del alojamiento (opcional)
   /// Archivos adjuntos (PDF/JPG/PNG), mismo esquema que en eventos.
   final List<EventDocument>? documents;
+  /// Igual que eventos: true = borrador, false = confirmado.
+  final bool isDraft;
 
   const Accommodation({
     this.id,
@@ -40,11 +43,15 @@ class Accommodation {
     this.personalParts,
     this.cost, // null por defecto (sin coste definido)
     this.documents,
+    this.isDraft = false,
   });
 
   /// Crear desde un documento de Firestore
   factory Accommodation.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    final commonPart = data['commonPart'] != null
+        ? AccommodationCommonPart.fromMap(data['commonPart'] as Map<String, dynamic>)
+        : null;
     
     return Accommodation(
       id: doc.id,
@@ -59,9 +66,7 @@ class Accommodation {
       participantTrackIds: List<String>.from(data['participantTrackIds'] ?? []),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-      commonPart: data['commonPart'] != null 
-          ? AccommodationCommonPart.fromMap(data['commonPart'] as Map<String, dynamic>)
-          : null,
+      commonPart: commonPart,
       personalParts: data['personalParts'] != null
           ? (data['personalParts'] as Map<String, dynamic>).map((k, v) => MapEntry(k, AccommodationPersonalPart.fromMap(v as Map<String, dynamic>)))
           : null,
@@ -69,6 +74,7 @@ class Accommodation {
       documents: (data['documents'] as List<dynamic>?)
           ?.map((e) => EventDocument.fromMap(Map<String, dynamic>.from(e as Map)))
           .toList(),
+      isDraft: data['isDraft'] ?? commonPart?.isDraft ?? false,
     );
   }
 
@@ -86,6 +92,7 @@ class Accommodation {
       'participantTrackIds': participantTrackIds,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'isDraft': isDraft,
       if (cost != null) 'cost': cost, // T101
     };
     // Escribir estructura nueva si está presente
@@ -119,6 +126,7 @@ class Accommodation {
     Map<String, AccommodationPersonalPart>? personalParts,
     double? cost,
     List<EventDocument>? documents,
+    bool? isDraft,
   }) {
     return Accommodation(
       id: id ?? this.id,
@@ -137,6 +145,7 @@ class Accommodation {
       personalParts: personalParts ?? this.personalParts,
       cost: cost ?? this.cost,
       documents: documents ?? this.documents,
+      isDraft: isDraft ?? this.isDraft,
     );
   }
 
@@ -177,29 +186,19 @@ class Accommodation {
            normalizedCheckOut.isBefore(normalizedPlanEnd.add(const Duration(days: 1)));
   }
 
-  /// Obtener el color del alojamiento
+  /// Color del alojamiento (aplica estilo borrador como en eventos).
   Color get displayColor {
-    if (color != null) {
-      switch (color!.toLowerCase()) {
-        case 'red': return const Color(0xFFE57373);
-        case 'blue': return const Color(0xFF81C784);
-        case 'green': return const Color(0xFF64B5F6);
-        case 'yellow': return const Color(0xFFFFB74D);
-        case 'purple': return const Color(0xFFBA68C8);
-        case 'orange': return const Color(0xFFFF8A65);
-        case 'pink': return const Color(0xFFF06292);
-        case 'brown': return const Color(0xFFA1887F);
-        case 'grey':
-        case 'gray': return const Color(0xFF90A4AE);
-        default: return const Color(0xFF64B5F6); // Azul por defecto
-      }
+    final base = ColorUtils.colorFromName(color ?? 'blue');
+    if (isDraft) {
+      return Color.lerp(base, Colors.white, 0.5)?.withValues(alpha: 0.7) ??
+          Colors.white70;
     }
-    return const Color(0xFF64B5F6); // Azul por defecto
+    return base;
   }
 
   @override
   String toString() {
-    return 'Accommodation(id: $id, planId: $planId, hotelName: $hotelName, checkIn: $checkIn, checkOut: $checkOut)';
+    return 'Accommodation(id: $id, planId: $planId, hotelName: $hotelName, checkIn: $checkIn, checkOut: $checkOut, isDraft: $isDraft)';
   }
 
   @override
@@ -210,12 +209,13 @@ class Accommodation {
         other.planId == planId &&
         other.checkIn == checkIn &&
         other.checkOut == checkOut &&
-        other.hotelName == hotelName;
+        other.hotelName == hotelName &&
+        other.isDraft == isDraft;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, planId, checkIn, checkOut, hotelName);
+    return Object.hash(id, planId, checkIn, checkOut, hotelName, isDraft);
   }
 }
 
@@ -238,6 +238,7 @@ class AccommodationCommonPart {
   final List<String> participantIds; // participantes incluidos en la parte común
   final bool isForAllParticipants;
   final Map<String, dynamic>? extraData;
+  final bool isDraft;
 
   const AccommodationCommonPart({
     required this.hotelName,
@@ -256,6 +257,7 @@ class AccommodationCommonPart {
     this.participantIds = const [],
     this.isForAllParticipants = true,
     this.extraData,
+    this.isDraft = false,
   });
 
   factory AccommodationCommonPart.fromMap(Map<String, dynamic> map) {
@@ -280,6 +282,7 @@ class AccommodationCommonPart {
       participantIds: (map['participantIds'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
       isForAllParticipants: map['isForAllParticipants'] ?? true,
       extraData: map['extraData'] as Map<String, dynamic>?,
+      isDraft: map['isDraft'] ?? false,
     );
   }
 
@@ -300,6 +303,7 @@ class AccommodationCommonPart {
       if (maxCapacity != null) 'maxCapacity': maxCapacity,
       'participantIds': participantIds,
       'isForAllParticipants': isForAllParticipants,
+      'isDraft': isDraft,
       if (extraData != null) 'extraData': extraData,
     };
   }

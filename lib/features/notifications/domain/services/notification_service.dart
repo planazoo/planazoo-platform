@@ -257,4 +257,45 @@ class NotificationService {
       return false;
     }
   }
+
+  /// Borra notificaciones in-app de tipo `invitation` para un plan (avisos accionables del invitado).
+  Future<int> deleteInvitationNotificationsForPlan({
+    required String userId,
+    required String planId,
+  }) async {
+    try {
+      final snapshot = await _firestore
+          .collection(_collectionName)
+          .doc(userId)
+          .collection(_subCollectionName)
+          .where('planId', isEqualTo: planId)
+          .get();
+
+      final toDelete = snapshot.docs.where((doc) {
+        final type = doc.data()['type'] as String?;
+        return type == NotificationType.invitation.name;
+      }).toList();
+
+      if (toDelete.isEmpty) return 0;
+
+      final batch = _firestore.batch();
+      for (final doc in toDelete) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+
+      LoggerService.database(
+        'Deleted ${toDelete.length} invitation notification(s) for $userId plan $planId',
+        operation: 'DELETE_BATCH',
+      );
+      return toDelete.length;
+    } catch (e) {
+      LoggerService.error(
+        'Error deleting invitation notifications: $userId / $planId',
+        context: 'NOTIFICATION_SERVICE',
+        error: e,
+      );
+      return 0;
+    }
+  }
 }

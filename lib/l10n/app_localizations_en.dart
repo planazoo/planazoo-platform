@@ -554,6 +554,102 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileTooltip => 'View profile';
 
   @override
+  String get usersDirectoryTooltip => 'Platform users';
+
+  @override
+  String get usersDirectoryTitle => 'Users';
+
+  @override
+  String get usersDirectorySubtitle =>
+      'Firestore accounts directory (read-only). Temporarily visible to all signed-in users.';
+
+  @override
+  String get usersDirectoryAdminOnly =>
+      'Only power_admin users can view the users directory.';
+
+  @override
+  String get usersDirectorySearchHint =>
+      'Search by email, name, username or id…';
+
+  @override
+  String get usersDirectoryRefresh => 'Refresh';
+
+  @override
+  String get usersDirectoryEmpty => 'No matching users';
+
+  @override
+  String usersDirectoryLoadError(String error) {
+    return 'Could not load users: $error';
+  }
+
+  @override
+  String usersDirectoryCount(int shown, int total) {
+    return 'Showing $shown of $total';
+  }
+
+  @override
+  String get usersDirectoryAccessPowerAdmin => 'power_admin';
+
+  @override
+  String get usersDirectoryAccessUser => 'user';
+
+  @override
+  String get usersDirectoryStatusActive => 'active';
+
+  @override
+  String get usersDirectoryStatusInactive => 'inactive';
+
+  @override
+  String get usersDirectoryFieldEmail => 'Email';
+
+  @override
+  String get usersDirectoryFieldUsername => 'Username';
+
+  @override
+  String get usersDirectoryFieldId => 'User ID';
+
+  @override
+  String get usersDirectoryFieldTimezone => 'Timezone';
+
+  @override
+  String get usersDirectoryFieldCreated => 'Created';
+
+  @override
+  String get usersDirectoryFieldLastLogin => 'Last login';
+
+  @override
+  String get usersDirectoryFieldAccess => 'Access';
+
+  @override
+  String get usersDirectoryFieldStatus => 'Status';
+
+  @override
+  String get usersDirectoryFieldDisplayName => 'Display name';
+
+  @override
+  String get usersDirectoryFieldPhoto => 'Photo URL';
+
+  @override
+  String get usersDirectoryCopyAll => 'Copy all';
+
+  @override
+  String usersDirectoryAllCopied(int count) {
+    return 'Copied $count cards';
+  }
+
+  @override
+  String get usersDirectoryCopyId => 'Copy user id';
+
+  @override
+  String get usersDirectoryIdCopied => 'User id copied';
+
+  @override
+  String get usersDirectoryCopyCard => 'Copy full card';
+
+  @override
+  String get usersDirectoryCardCopied => 'User card copied';
+
+  @override
   String profileCurrentTimezone(String timezone) {
     return 'Current timezone: $timezone';
   }
@@ -1635,6 +1731,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get descriptionOptional => 'Description (optional)';
 
   @override
+  String get accommodationNotes => 'Notes';
+
+  @override
+  String get accommodationNotesHint => 'Write anything you want to remember…';
+
+  @override
   String get additionalNotes => 'Additional notes';
 
   @override
@@ -1648,6 +1750,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get placeAddressLabel => 'Address';
+
+  @override
+  String get accommodationPlaceLabel => 'Search accommodation';
+
+  @override
+  String get enterLocationManually => 'Enter manually';
+
+  @override
+  String get usePlaceSearch => 'Use search';
 
   @override
   String get costCurrency => 'Cost currency';
@@ -1690,6 +1801,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openInGoogleMaps => 'Open in Google Maps';
+
+  @override
+  String get openWebLink => 'Open link';
 
   @override
   String get departureAirportLabel => 'Departure airport';
@@ -1805,6 +1919,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventType => 'Event type';
 
   @override
+  String get eventTypeSearchHint => 'Search type or subtype';
+
+  @override
+  String get eventTypeSearchEmpty => 'No matches';
+
+  @override
   String get eventSubtype => 'Subtype';
 
   @override
@@ -1917,6 +2037,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get duration => 'Duration';
 
   @override
+  String get eventDurationCommon => 'Common durations';
+
+  @override
+  String get eventDurationLong => 'Longer durations';
+
+  @override
+  String get eventDurationCustom => 'Custom';
+
+  @override
+  String get eventDurationCustomHint => 'E.g. 90 or 1:30';
+
+  @override
+  String get eventDurationEndTime => 'End time';
+
+  @override
+  String eventDurationEndTimeHint(String time) {
+    return 'Calculated from start time ($time)';
+  }
+
+  @override
+  String get eventDurationApplyCustom => 'Use this duration';
+
+  @override
+  String get eventDurationCustomInvalid =>
+      'Use minutes (90) or hours:minutes (1:30). Between 1 min and 24 h.';
+
+  @override
+  String get eventDurationMaxHint =>
+      'Max 24 h. For longer stays, use Accommodations.';
+
+  @override
   String eventDurationFormatMinutes(int minutes) {
     return '$minutes min';
   }
@@ -2027,6 +2178,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get checkIn => 'Check-in';
+
+  @override
+  String get accommodationStayDatesHelp => 'Select check-in and check-out';
 
   @override
   String get checkOut => 'Check-out';

@@ -569,6 +569,98 @@
   "@profileTooltip": {
     "description": "Tooltip for the profile icon in W1"
   },
+  "usersDirectoryTooltip": "Platform users",
+  "@usersDirectoryTooltip": {
+    "description": "Tooltip for the users directory icon in W1"
+  },
+  "usersDirectoryTitle": "Users",
+  "@usersDirectoryTitle": {
+    "description": "Users directory page title"
+  },
+  "usersDirectorySubtitle": "Firestore accounts directory (read-only). Temporarily visible to all signed-in users.",
+  "@usersDirectorySubtitle": {
+    "description": "Users directory subtitle"
+  },
+  "usersDirectoryAdminOnly": "Only power_admin users can view the users directory.",
+  "@usersDirectoryAdminOnly": {
+    "description": "Shown when a non-admin opens the users directory"
+  },
+  "usersDirectorySearchHint": "Search by email, name, username or id…",
+  "@usersDirectorySearchHint": {
+    "description": "Users directory search hint"
+  },
+  "usersDirectoryRefresh": "Refresh",
+  "@usersDirectoryRefresh": {
+    "description": "Refresh users list tooltip"
+  },
+  "usersDirectoryEmpty": "No matching users",
+  "@usersDirectoryEmpty": {
+    "description": "Empty filtered users message"
+  },
+  "usersDirectoryLoadError": "Could not load users: {error}",
+  "@usersDirectoryLoadError": {
+    "description": "Error loading users",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "usersDirectoryCount": "Showing {shown} of {total}",
+  "@usersDirectoryCount": {
+    "description": "Filtered users count",
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "usersDirectoryAccessPowerAdmin": "power_admin",
+  "@usersDirectoryAccessPowerAdmin": {
+    "description": "Platform admin access label"
+  },
+  "usersDirectoryAccessUser": "user",
+  "@usersDirectoryAccessUser": {
+    "description": "Normal user access label"
+  },
+  "usersDirectoryStatusActive": "active",
+  "@usersDirectoryStatusActive": {
+    "description": "Active user status"
+  },
+  "usersDirectoryStatusInactive": "inactive",
+  "@usersDirectoryStatusInactive": {
+    "description": "Inactive user status"
+  },
+  "usersDirectoryFieldEmail": "Email",
+  "usersDirectoryFieldUsername": "Username",
+  "usersDirectoryFieldId": "User ID",
+  "usersDirectoryFieldTimezone": "Timezone",
+  "usersDirectoryFieldCreated": "Created",
+  "usersDirectoryFieldLastLogin": "Last login",
+  "usersDirectoryFieldAccess": "Access",
+  "usersDirectoryFieldStatus": "Status",
+  "usersDirectoryFieldDisplayName": "Display name",
+  "usersDirectoryFieldPhoto": "Photo URL",
+  "usersDirectoryCopyAll": "Copy all",
+  "@usersDirectoryCopyAll": {
+    "description": "Button to copy all visible user cards"
+  },
+  "usersDirectoryAllCopied": "Copied {count} cards",
+  "@usersDirectoryAllCopied": {
+    "description": "Confirmation after copying all cards",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "usersDirectoryCopyId": "Copy user id",
+  "usersDirectoryIdCopied": "User id copied",
+  "usersDirectoryCopyCard": "Copy full card",
+  "usersDirectoryCardCopied": "User card copied",
   "profileCurrentTimezone": "Current timezone: {timezone}",
   "@profileCurrentTimezone": {
     "description": "Text that shows the user's current timezone on the profile page",
@@ -1419,6 +1511,14 @@
   "@descriptionOptional": {
     "description": "Optional description label"
   },
+  "accommodationNotes": "Notes",
+  "@accommodationNotes": {
+    "description": "Label for free-text notes on accommodation form"
+  },
+  "accommodationNotesHint": "Write anything you want to remember…",
+  "@accommodationNotesHint": {
+    "description": "Hint for free-text notes on accommodation form"
+  },
   "additionalNotes": "Additional notes",
   "@additionalNotes": {
     "description": "Additional notes hint"
@@ -1439,6 +1539,18 @@
   "placeAddressLabel": "Address",
   "@placeAddressLabel": {
     "description": "Place address field label"
+  },
+  "accommodationPlaceLabel": "Search accommodation",
+  "@accommodationPlaceLabel": {
+    "description": "Places search field label in accommodation form"
+  },
+  "enterLocationManually": "Enter manually",
+  "@enterLocationManually": {
+    "description": "Link to edit name and address without Places"
+  },
+  "usePlaceSearch": "Use search",
+  "@usePlaceSearch": {
+    "description": "Switch back from manual entry to Places search"
   },
   "costCurrency": "Cost currency",
   "@costCurrency": {
@@ -1486,6 +1598,10 @@
   "@openInGoogleMaps": {
     "description": "Button to open location in Google Maps"
   },
+  "openWebLink": "Open link",
+  "@openWebLink": {
+    "description": "Button to open the URL from the web link field"
+  },
   "departureAirportLabel": "Departure airport",
   "departureAirportHint": "E.g. Madrid Barajas, MAD",
   "arrivalAirportLabel": "Arrival airport",
@@ -1528,6 +1644,14 @@
   "eventType": "Event type",
   "@eventType": {
     "description": "Event type label"
+  },
+  "eventTypeSearchHint": "Search type or subtype",
+  "@eventTypeSearchHint": {
+    "description": "Hint for the event type/subtype search field"
+  },
+  "eventTypeSearchEmpty": "No matches",
+  "@eventTypeSearchEmpty": {
+    "description": "Message when event type/subtype search finds nothing"
   },
   "eventSubtype": "Subtype",
   "@eventSubtype": {
@@ -1594,6 +1718,47 @@
   "duration": "Duration",
   "@duration": {
     "description": "Duration label"
+  },
+  "eventDurationCommon": "Common durations",
+  "@eventDurationCommon": {
+    "description": "Quick duration presets section (15–180 min)"
+  },
+  "eventDurationLong": "Longer durations",
+  "@eventDurationLong": {
+    "description": "Long duration section (4h–24h)"
+  },
+  "eventDurationCustom": "Custom",
+  "@eventDurationCustom": {
+    "description": "Section to type duration manually"
+  },
+  "eventDurationCustomHint": "E.g. 90 or 1:30",
+  "@eventDurationCustomHint": {
+    "description": "Hint for the single custom duration field"
+  },
+  "eventDurationEndTime": "End time",
+  "@eventDurationEndTime": {
+    "description": "Option to set duration by choosing an end time"
+  },
+  "eventDurationEndTimeHint": "Calculated from start time ({time})",
+  "@eventDurationEndTimeHint": {
+    "description": "Subtitle for end time; {time} is the start time",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "eventDurationApplyCustom": "Use this duration",
+  "@eventDurationApplyCustom": {
+    "description": "Button to apply manually entered duration"
+  },
+  "eventDurationCustomInvalid": "Use minutes (90) or hours:minutes (1:30). Between 1 min and 24 h.",
+  "@eventDurationCustomInvalid": {
+    "description": "Error when custom duration is invalid or out of range"
+  },
+  "eventDurationMaxHint": "Max 24 h. For longer stays, use Accommodations.",
+  "@eventDurationMaxHint": {
+    "description": "Hint about event duration limit"
   },
   "eventDurationFormatMinutes": "{minutes} min",
   "@eventDurationFormatMinutes": {
@@ -1758,6 +1923,10 @@
   "checkIn": "Check-in",
   "@checkIn": {
     "description": "Check-in label"
+  },
+  "accommodationStayDatesHelp": "Select check-in and check-out",
+  "@accommodationStayDatesHelp": {
+    "description": "Help text for accommodation stay date range picker"
   },
   "checkOut": "Check-out",
   "@checkOut": {

@@ -16,6 +16,120 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-07-30] Invitaciones — borrar avisos al decidir + push al organizador
+
+- **Contexto:** T269 parcial / decisiones §1.1 (3 y 5) del diagrama altas-bajas.
+- **Problema:** Al aceptar/rechazar no se borraban notifs `invitation`; organizador solo recibía in-app (sin push); accept no validaba estado del plan.
+- **Solución aplicada:** `deleteInvitationNotificationsForPlan`; cleanup en `accept/rejectInvitationByPlanId`; validación `canAddParticipants` + mensajes; `expirePendingInvitation`; push vía `sendPushNotification` en `notifyInvitationResponded`; `InvitationRespondResult` en UI.
+- **Notas:** Pendiente del T269 completo: buzón Mis invitaciones, email al registrado, modal al abrir app, dedupe reenvío.
+
+### [2026-07-27] Login iPhone — RenderFlex overflow 29px (Row ayuda / UI Review)
+
+- **Contexto:** `login_page.dart` en simulador/iPhone estrecho (~294px de ancho útil).
+- **Error:** `A RenderFlex overflowed by 29 pixels on the right` en `Row` (línea ~201).
+- **Causa raíz:** Dos `TextButton.icon` en un `Row` sin flex; el texto localizado + “UI Review Hub” no cabe en horizontal.
+- **Solución aplicada:** Sustituir `Row` por `Wrap` centrado para que pasen a segunda línea si hace falta.
+- **Notas para el futuro:** En login/register móvil, preferir `Wrap`/`Flexible` frente a `Row` con textos largos.
+
+### [2026-07-27] Registro iPhone — botón Guardar/Registrar “no hace nada”
+
+- **Contexto:** Alta de usuario nuevo en iPhone (`RegisterPage`).
+- **Error:** El botón parece activo pero no responde / no hay feedback de carga.
+- **Causa raíz:** (1) `onPressed` era `null` si faltaban términos o el form no pasaba `_isFormValid()`; el contenedor seguía en verde pleno → sensación de botón roto. (2) `registerWithEmailAndPassword` ponía `status: loading` **sin** `isLoading: true`, así que no se mostraba el spinner.
+- **Solución aplicada:** Botón siempre tappable (salvo loading); si inválido, valida y muestra errores/snackbar. Estilo atenuado si no se puede enviar. Al registrar: `isLoading: true`. Cerrar teclado al enviar.
+- **Notas para el futuro:** En móvil, preferir feedback al tap frente a `onPressed: null` silencioso; alinear `AuthStatus.loading` con `isLoading: true`.
+
+### [2026-07-26] Push iOS — FCM OK (1/1) pero sin banner en dispositivo
+
+- **Contexto:** Tras desplegar `sendInvitationPush`; logs: `enviados 1/1` a Matilde; campana OK; iOS sin banner.
+- **Hallazgos:** Token existe; CF y Admin SDK aceptan el mensaje. Posible mismatch `aps-environment=development` en Release/TestFlight + payload APNs incompleto.
+- **Solución aplicada:** Payload APNs `alert` + `apns-priority/push-type`; Release/Profile → `RunnerRelease.entitlements` (`production`); push title sin emoji; log del result de la CF.
+- **Prueba:** Reinstalar/abrir app iOS (para refrescar token según entorno), app en **segundo plano**, re-invitar. Comprobar “Invitacion de prueba Planazoo” enviada en diagnóstico.
+
+### [2026-07-26] Push iOS invitación — CF `sendInvitationPush` no desplegada
+
+- **Contexto:** Campana in-app OK tras fix de rules; push iOS no llega.
+- **Causa raíz:** Cliente llama `httpsCallable('sendInvitationPush')` pero la función no estaba en el proyecto (solo `sendPushNotification`). Logs CF vacíos.
+- **Solución aplicada:** `firebase deploy --only functions:sendInvitationPush`.
+- **Notas:** El invitado necesita token en `users/{uid}/fcmTokens` (abrir app iOS logueado + permisos). Sin token, CF responde `sin tokens FCM`.
+
+### [2026-07-26] Invitación a usuario registrado — sin notificación in-app
+
+- **Contexto:** Invitar desde web a un usuario ya registrado; participación pending sí, campana no.
+- **Error:** `[cloud_firestore/permission-denied]` al crear `users/{invitedId}/notifications`.
+- **Causa raíz:** Reglas solo permitían create en notificaciones propias o `type == eventProposed`. `invitation` (y aceptada/rechazada) las escribe otro uid.
+- **Solución aplicada:** Ampliar `allow create` a tipos cross-user (`invitation`, `invitationAccepted`, `invitationRejected`, avisos, eventos, etc.). Desplegar rules.
+- **Notas:** Push FCM sigue dependiendo de tokens móviles del invitado; in-app debe verse en campana web/móvil.
+
+### [2026-07-26] Directorio usuarios — restringido a power_admin
+
+- **Contexto:** Limpieza tras tener 2 power_admin.
+- **Cambio:** Sidebar/página solo `isAdmin`; `users` list solo admin; `get` autenticado; `email_lookup` para invitaciones; backfill 8 emails; reglas desplegadas.
+- **Notas:** Invitaciones por email ya no dependen de listar `users`.
+
+### [2026-07-26] Login por username — índice vacío
+
+- **Contexto:** Tras arreglar login por email; username seguía fallando.
+- **Causa raíz:** `username_lookup` no existía para usuarios legacy (solo se rellenaba al crear/actualizar).
+- **Solución aplicada:** Backfill Admin SDK de los 8 usernames; reglas permiten admin upsert; strip de `@` en resolve; ensure más robusto.
+- **Notas:** Usernames reales en BD: `cristianclaraso`, `cricla_pa` (hotmail), etc.
+
+### [2026-07-26] Login — `permission-denied` al iniciar sesión
+
+- **Contexto:** Login email/password tras restringir `users` list/read a autenticados.
+- **Error:** `permission-denied` (consulta `getUserByEmail` / `getUserByUsername` sin sesión).
+- **Causa raíz:** Pre-check en Firestore antes de Firebase Auth.
+- **Solución aplicada:** Login por email va directo a Auth. Username resuelve email vía `username_lookup/{username}` (get público). Sync del índice en create/update/ensure al entrar.
+- **Notas:** Desplegar `firestore.rules`. Usuarios legacy: el índice se rellena al hacer login con email una vez.
+
+### [2026-07-26] Registro — `permission-denied` al comprobar username
+
+- **Contexto:** Alta de usuario nuevo (`RegisterPage` / `AuthNotifier.registerWithEmailAndPassword`).
+- **Error:** `[cloud_firestore/permission-denied] Missing or insufficient permissions`.
+- **Causa raíz:** `isUsernameAvailable` (query a `users`) se ejecutaba **antes** de `createUserWithEmailAndPassword`. Las reglas exigen `isAuthenticated()` para `list`/`read` de `users`.
+- **Solución aplicada:** Crear cuenta Auth primero; luego comprobar username y crear doc Firestore. En UI quitar el pre-check sin sesión. Si username ocupado, borrar el Auth user recién creado.
+- **Notas para el futuro:** No consultar `users` sin sesión. Login por email/username tiene el mismo riesgo (`getUserByEmail` / `getUserByUsername` pre-Auth).
+
+### [2026-07-26] iOS — createEvent bloqueado: owner sin plan_participations
+
+- **Contexto:** Tras corregir el await de guardado; log: `createEvent blocked: user … is not participant of plan …`.
+- **Error:** `isUserParticipant` devolvía false → diálogo no cierra y no guarda.
+- **Causa raíz:** Solo se miraba `plan_participations` con `isActive==true`. El usuario era `plans.userId` (owner) pero sin doc de participación (legacy / fallo al crear).
+- **Solución aplicada:** En `isUserParticipant`, si no hay participación activa pero `plans.userId == userId`, devolver true y recrear participación organizer (best-effort).
+- **Notas para el futuro:** Owner ≡ participante; no depender solo de `plan_participations` para escritura de eventos.
+
+### [2026-07-26] iOS — crear evento no persistía / diálogo cerraba en falso éxito
+
+- **Contexto:** Creación de eventos desde calendario mobile / PlanDetailPage en iOS.
+- **Síntoma:** Tras Crear, el diálogo cerraba pero el evento no aparecía (o fallaba en silencio).
+- **Causa raíz:** (1) `EventDialog` no hacía `await` de `onSaved`. (2) En mobile se hacía `pop` + `refresh` **antes** de que terminara `createEvent`. (3) `createEvent` devolvía `null` ante permission-denied/`isParticipant` sin log ni feedback. (4) Reglas Firestore exigen `description.length >= 3`.
+- **Solución aplicada:** `await onSaved`; description mínima «Evento»; log en `createEvent`; callers comprueban `null` y lanzan para no cerrar; pop/refresh solo tras create OK.
+- **Notas para el futuro:** Nunca cerrar el diálogo de evento hasta confirmar ID de Firestore (o cola offline explícita).
+
+### [2026-07-26] Event dialog — assertion ListTile ink bajo DecoratedBox
+
+- **Contexto:** Abrir diálogo de evento / Places autocomplete en iOS; consola llena de `ListTile background color or ink splashes may be invisible`.
+- **Error:** ListTile (CheckboxListTile dense) dentro de `DecoratedBox` con fondo `0xFF1F2937` (`_buildLabelOnBorderField`).
+- **Causa raíz:** El ink del ListTile se pinta en el Material ancestro; el DecoratedBox intermedio con color lo tapa → assertion de Flutter.
+- **Solución aplicada:** Envolver el `CheckboxListTile` de `_buildIsForAllParticipantsSelector` en `Material(color: Colors.transparent)`.
+- **Notas para el futuro:** Cualquier ListTile/Checkbox/Radio dentro de `_buildLabelOnBorderField` necesita su propio `Material`.
+
+### [2026-07-26] iOS Info del plan — cambios no se guardaban (faltaba barra Guardar)
+
+- **Contexto:** En `PlanDetailPage` la pestaña Info embebe `PlanDataScreen(showAppBar: false)`.
+- **Error:** Los campos se editaban pero no persistían; en web sí.
+- **Causa raíz:** `buildHeader()` (Cancelar/Guardar) solo se mostraba si `showAppBar == true`. Sin botón, nunca se llamaba a `updatePlan`.
+- **Solución aplicada:** Barra embebida `buildEmbeddedSaveBar()` cuando hay cambios sin guardar y `showAppBar` es false; `PopScope` también en modo embebido.
+- **Notas para el futuro:** No acoplar la UI de guardar al flag `showAppBar` en pantallas embebidas en iOS.
+
+### [2026-07-26] iOS build — Firebase SPM exige iOS 15.0 (proyecto en 13.0)
+
+- **Contexto:** `flutter run` en simulador iPhone 16e tras actualización Flutter/SPM.
+- **Error:** `The package product 'cloud-firestore' (y resto Firebase) requires minimum platform version 15.0 … but this target supports 13.0`.
+- **Causa raíz:** `IPHONEOS_DEPLOYMENT_TARGET = 13.0` en `ios/Runner.xcodeproj/project.pbxproj` mientras el Podfile ya estaba en 15.0; Flutter añadió Swift Package Manager y los paquetes Firebase exigen ≥ 15.0.
+- **Solución aplicada:** Subir `IPHONEOS_DEPLOYMENT_TARGET` a `15.0` en el `project.pbxproj` (Debug/Release/Profile) y forzar `15.0` en `post_install` del Podfile.
+- **Notas para el futuro:** Si Flutter integra SPM y falla el mínimo de OS, alinear Podfile + pbxproj (no solo uno). El aviso de migrar fuera de CocoaPods es aparte y no bloquea si el deployment target es correcto.
+
 ### [2026-04-24] Cierre técnico global UI-SP — `flutter analyze lib` con warning en `main.dart`
 
 - **Contexto:** Pasada final de consolidación tras limpiar `lib/features`, `lib/widgets`, `lib/pages`, `lib/shared` y `lib/app`.
@@ -496,4 +610,28 @@ Cada entrada nueva debe seguir esta estructura:
 - **Causa raíz**: `_surface` estaba definido dentro de `NotificationListDialog`, pero `_FilterChip` es otra clase y no tiene acceso a ese identificador privado de instancia.
 - **Solución aplicada**: definir una constante local `surface` dentro de `_FilterChip.build()` y usarla en la decoración del chip no seleccionado.
 - **Notas para el futuro**: cuando un helper visual está en otra clase (aunque sea en el mismo archivo), no referenciar campos privados de otro widget; usar constantes propias o mover la constante a un nivel compartido de archivo.
+
+### [2026-07-12] Release 1.0.0 — `flutter analyze` en HEAD sin WIP
+
+- **Contexto**: preparar rama `release/1.0.0` solo con código commiteado (criterio prudente).
+- **Error**: `undefined_getter` (`calendarDaySeparatorWeb`, `calendarGridLineColor`, `cSurfaceBg`) y `missing_required_argument` (`gridLineOpacity` en `CalendarTracks`).
+- **Causa raíz**: commit `e4f8197` actualizó `wd_calendar_screen.dart` pero no incluyó los getters en `calendar_styles.dart` ni pasaba `gridLineOpacity` al widget.
+- **Solución aplicada**: restaurar `calendar_styles.dart` desde stash (solo ese archivo) y añadir `gridLineOpacity: CalendarConstants.gridLineOpacity` en `_buildFixedRows()`.
+- **Notas para el futuro**: tras commits de calendario, ejecutar `flutter analyze` antes de etiquetar release; no asumir que HEAD compila si hay WIP local que enmascara el fallo.
+
+### [2026-07-12] Release 1.0.0 — `flutter build ipa` exportArchive
+
+- **Contexto**: build IPA TestFlight en rama `release/1.0.0` (`1.0.0+2`); archive OK (~915 s).
+- **Error**: `PLA Update available`; `No signing certificate "iOS Distribution" found`; provisioning profile sin Push Notifications / `aps-environment`.
+- **Causa raíz**: acuerdo Apple Developer pendiente de aceptar; certificado de distribución ausente o caducado en Keychain; perfil App Store desincronizado con capability Push en Xcode.
+- **Solución aplicada**: pendiente manual en Mac — ver pasos en conversación release 1.0.0 (App Store Connect → acuerdos; Xcode → Signing & Capabilities → Push + Apple Distribution; exportar desde Organizer o `fastlane beta`).
+- **Notas para el futuro**: el `.xcarchive` en `build/ios/archive/Runner.xcarchive` sirve para export manual si `flutter build ipa` falla solo en export.
+
+### [2026-08-02] `wd_event_dialog` — typo en minuto al reescribir tab General
+
+- **Contexto**: simplificación UI eventos (pasos 1–2, surfaces + sin headers).
+- **Error**: `Undefined name '_selectedTimeMinute'`.
+- **Causa raíz**: al regenerar `_buildGeneralTabScroll`, el campo real es `_selectedStartMinute`.
+- **Solución aplicada**: corregir el identificador en el `DateTime` de la fila Hora.
+- **Notas**: revisar nombres de estado (`_selectedStartMinute` / `_selectedDurationMinutes`) antes de pegar bloques grandes del formulario.
 

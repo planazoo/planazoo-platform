@@ -41,58 +41,85 @@ class EntityAttachmentsSection extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF111827),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.55)),
+        color: const Color(0xFF1F2937),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.12),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.attach_file, size: 16, color: Colors.white70),
-              const SizedBox(width: 6),
+              const Icon(Icons.attach_file, size: 20, color: Colors.white70),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
                   style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white70,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
                   ),
                 ),
               ),
               if (canManage)
                 TextButton.icon(
                   onPressed: (isUploading || onUpload == null) ? null : onUpload,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColorScheme.color2,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   icon: isUploading
                       ? const SizedBox(
                           width: 14,
                           height: 14,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.upload_file, size: 16),
+                      : const Icon(Icons.upload_file, size: 18),
                   label: Text(
-                    isUploading ? loc.entityAttachmentsUploading : loc.entityAttachmentsUpload,
-                    style: GoogleFonts.poppins(fontSize: 12),
+                    isUploading
+                        ? loc.entityAttachmentsUploading
+                        : loc.entityAttachmentsUpload,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           if (files.isEmpty)
-            Text(
-              'Sin archivos adjuntos',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
+            Padding(
+              padding: const EdgeInsets.only(left: 30),
+              child: Text(
+                loc.entityAttachmentsEmpty,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: Colors.white60,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
             )
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: files.map((file) {
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.only(bottom: 6, left: 30),
                   child: Row(
                     children: [
                       Expanded(
@@ -103,6 +130,7 @@ class EntityAttachmentsSection extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               color: AppColorScheme.color2,
                               fontSize: 13,
+                              fontWeight: FontWeight.w500,
                               decoration: TextDecoration.underline,
                             ),
                             maxLines: 1,
@@ -113,7 +141,10 @@ class EntityAttachmentsSection extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         formatFileSize(file.size),
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.white70),
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.white70,
+                        ),
                       ),
                       if (canManage) ...[
                         const SizedBox(width: 4),
@@ -122,7 +153,10 @@ class EntityAttachmentsSection extends StatelessWidget {
                           onPressed: isUploading ? null : () => onDelete(file),
                           icon: const Icon(Icons.delete_outline, size: 18),
                           color: Colors.red.shade300,
-                          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                          constraints: const BoxConstraints(
+                            minWidth: 28,
+                            minHeight: 28,
+                          ),
                           padding: EdgeInsets.zero,
                         ),
                       ],

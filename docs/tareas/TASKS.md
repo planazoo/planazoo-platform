@@ -4,7 +4,7 @@
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
 > **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T268**
+**Siguiente código de tarea: T270**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
@@ -15,7 +15,7 @@
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), **T267 (app Android + push FCM)**, T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña), T263-T266 (items 63/64/65/98 de lista QA)**, etc.
+- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), **T267 (app Android + push FCM)**, **T268 (recordatorios diarios invitaciones pendientes)**, T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña), T263-T266 (items 63/64/65/98 de lista QA)**, etc.
 - **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
 **Total aproximado: ~100 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
@@ -198,6 +198,8 @@
 | **T121** | Revisión y enriquecimiento de formularios EventDialog y AccommodationDialog por tipo. | Media |
 | **T122** | Guardar plan como plantilla (local, editar, usar plantilla). | Baja |
 | **T224** | **Reenviar invitación:** Permitir al organizador reenviar una invitación pendiente (por email o desde lista) por si el usuario no la ha recibido (email no llegó, notificación perdida, etc.). UI en Participantes → sección Invitaciones: acción "Reenviar" por invitación pendiente; regenerar/enviar de nuevo notificación y, si aplica, email con link. Relacionado con T104, T105; ver FLUJO_INVITACIONES_NOTIFICACIONES. | Media |
+| **T268** | **Recordatorios diarios de invitaciones pendientes:** Enviar recordatorio al **invitado** cada **24 h** mientras la invitación/participación siga `pending` (hasta aceptar, rechazar o caducar). Canales: **in-app + push FCM + email**. Cubrir invitaciones por email (`plan_invitations`) y directas (`plan_participations` pending). Implementación típica: Cloud Function scheduled (cron diario) + dedupe (no spam el mismo día). Relacionado: T104, T105, T224, `FLUJO_INVITACIONES_NOTIFICACIONES.md`. | Media |
+| **T269** | **Buzón “Mis invitaciones” + validación robusta al entrar por avisos (casos raros):** Crear espacio claro para el invitado (lista de invitaciones pendientes accionables) y unificar la lógica de entrada desde campana/push/email/apertura app con validación previa de estado (invitación, participación, plan, identidad/sesión). Incluir mensajes específicos para casos inválidos (caducada, ya respondida, plan en curso/finalizado/cancelado, aviso huérfano, cuenta equivocada), limpieza de avisos al resolver o invalidar, revalidación al confirmar (evitar carreras), y alineación con `docs/flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md` (§1.1, §1.2, §1.3). Relacionado con T224, T233, T234, T259, T268. | Alta |
 | **T233** | Página Participantes: (1) La lista de participantes ha de ser lo primero; hacerla más compacta para ver el máximo posible. (2) La parte de invitar va a continuación de la lista. (3) Revisar si la parte de aceptar invitaciones es necesaria — *aclarar al abordar la tarea*: ¿se refiere a la vista del organizador (gestionar invitaciones) o a la del invitado (aceptar/rechazar)? (4) Eliminar el botón «Aceptar/Rechazar por token» y todo el código y documentación relacionada (opción ya no activa). (5) Eliminar el icono «X» para cerrar si ya no es necesario. (6) En la barra superior solo ha de aparecer el nombre de la página, sin el nombre del plan. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T234** | Invitaciones: (1) Cuando la invitación está enviada, el usuario invitado (ej. UB) ha de aparecer en la lista de participantes con estado «pendiente de aceptar invitación» (verificar si ya está implementado). (2) Cuando el invitado acepta o rechaza, el organizador (ej. UA) ha de recibir notificación. (3) En el recuadro de enviar por mail, añadir icono «?» para explicar cada tipo de usuario (participante, observador). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T261** | **Cancelar plan (flujo completo y comunicación):** Evaluar e implementar todo el flujo cuando un plan se cancela, con foco en avisar correctamente a participantes. Incluir: (1) estado/acción de cancelación y permisos; (2) impacto en visibilidad del plan y eventos; (3) notificaciones in-app y push/email a organizador e invitados/participantes; (4) texto legal/UX del mensaje de cancelación; (5) comportamiento offline/sincronización; (6) pruebas E2E web+iOS. Actualizar flujos y documentación relacionados (`FLUJO_CRUD_PLANES.md`, `FLUJO_INVITACIONES_NOTIFICACIONES.md`, checklist de testing). | Alta |

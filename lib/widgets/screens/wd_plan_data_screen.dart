@@ -712,6 +712,68 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     ];
     final cancelFg = Colors.orange.shade200;
 
+    void discardUnsavedChanges() {
+      _nameController.text = currentPlan.name;
+      _descriptionController.text = currentPlan.description ?? '';
+      _referenceNotesController.text = currentPlan.referenceNotes ?? '';
+      _budget = currentPlan.budget;
+      _budgetController.text =
+          _budget != null ? _formatBudgetForInput(_budget!) : '';
+      _selectedVisibility = currentPlan.visibility ?? 'private';
+      _selectedCurrency = currentPlan.currency;
+      _startDate = currentPlan.startDate;
+      _endDate = currentPlan.endDate;
+      _selectedTimezone =
+          currentPlan.timezone ?? TimezoneService.getSystemTimezone();
+      _planAttachments = List<PlanAttachment>.from(currentPlan.attachments);
+      setState(() => _hasUnsavedChanges = false);
+    }
+
+    Widget buildSaveActions() {
+      if (!_hasUnsavedChanges) return const SizedBox.shrink();
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextButton(
+            onPressed: _isSavingPlan ? null : discardUnsavedChanges,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              foregroundColor: cancelFg,
+            ),
+            child: Text(loc.planDetailsBarCancelShort,
+                style: GoogleFonts.poppins(fontSize: 12, color: cancelFg)),
+          ),
+          const SizedBox(width: 6),
+          FilledButton(
+            onPressed: _isSavingPlan ||
+                    PlanStatePermissions.isReadOnly(currentPlan)
+                ? null
+                : _savePlanDetails,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColorScheme.color3,
+              foregroundColor: Colors.white,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              elevation: 2,
+            ),
+            child: _isSavingPlan
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : Text(loc.planDetailsBarSaveShort,
+                    style: GoogleFonts.poppins(
+                        fontSize: 12, color: Colors.white)),
+          ),
+        ],
+      );
+    }
+
+    /// Cabecera completa W31 (web / showAppBar).
     Widget buildHeader() {
       return Container(
         width: double.infinity,
@@ -738,72 +800,42 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_hasUnsavedChanges) ...[
-                      TextButton(
-                        onPressed: _isSavingPlan
-                            ? null
-                            : () {
-                                _nameController.text = currentPlan.name;
-                                _descriptionController.text =
-                                    currentPlan.description ?? '';
-                                _referenceNotesController.text =
-                                    currentPlan.referenceNotes ?? '';
-                                _budget = currentPlan.budget;
-                                _budgetController.text = _budget != null
-                                    ? _formatBudgetForInput(_budget!)
-                                    : '';
-                                _selectedVisibility =
-                                    currentPlan.visibility ?? 'private';
-                                _selectedCurrency = currentPlan.currency;
-                                _startDate = currentPlan.startDate;
-                                _endDate = currentPlan.endDate;
-                                _selectedTimezone = currentPlan.timezone ??
-                                    TimezoneService.getSystemTimezone();
-                                _planAttachments = List<PlanAttachment>.from(
-                                    currentPlan.attachments);
-                                setState(() => _hasUnsavedChanges = false);
-                              },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          foregroundColor: cancelFg,
-                        ),
-                        child: Text(loc.planDetailsBarCancelShort,
-                            style: GoogleFonts.poppins(
-                                fontSize: 12, color: cancelFg)),
-                      ),
-                      const SizedBox(width: 6),
-                      FilledButton(
-                        onPressed: _isSavingPlan ||
-                                PlanStatePermissions.isReadOnly(currentPlan)
-                            ? null
-                            : _savePlanDetails,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColorScheme.color3,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          elevation: 2,
-                        ),
-                        child: _isSavingPlan
-                            ? SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : Text(loc.planDetailsBarSaveShort,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, color: Colors.white)),
-                      ),
-                    ],
-                  ],
+                child: buildSaveActions(),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    /// Barra Cancelar/Guardar al embeber en PlanDetailPage (iOS): sin título duplicado.
+    Widget buildEmbeddedSaveBar() {
+      return Container(
+        width: double.infinity,
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: headerBg,
+          boxShadow: headerShadow,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                loc.planDetailsBarUnsavedShort,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: headerTitleColor,
+                  fontWeight: FontWeight.w600,
                 ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: buildSaveActions(),
               ),
             ),
           ],
@@ -819,7 +851,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         color: _pageBackground,
         child: Column(
           children: [
-            if (widget.showAppBar) buildHeader(),
+            if (widget.showAppBar)
+              buildHeader()
+            else if (_hasUnsavedChanges)
+              buildEmbeddedSaveBar(),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
@@ -917,9 +952,17 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       );
     }
 
-    return Theme(
-      data: AppTheme.darkTheme,
-      child: body,
+    // Embebido en PlanDetailPage (iOS): barra Guardar + aviso al salir atrás.
+    return PopScope(
+      canPop: !_hasUnsavedChanges,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleExitRequest();
+      },
+      child: Theme(
+        data: AppTheme.darkTheme,
+        child: body,
+      ),
     );
   }
 

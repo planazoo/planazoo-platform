@@ -10,6 +10,8 @@ import 'package:unp_calendario/shared/services/logger_service.dart';
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _collection = 'users';
+  static const String _usernameLookupCollection = 'username_lookup';
+  static const String _emailLookupCollection = 'email_lookup';
   
   // Servicios para eliminación en cascada (lazy initialization para evitar dependencias circulares)
   PlanService? _planService;
@@ -34,6 +36,7 @@ class UserService {
           .get();
 
       if (doc.exists) {
+        await ensureUserLookups(user);
         return user.id; // Usuario ya existe
       }
 
@@ -42,6 +45,7 @@ class UserService {
           .collection(_collection)
           .doc(user.id)
           .set(user.toFirestore());
+      await ensureUserLookups(user);
       return user.id;
     } catch (e) {
       throw 'Error al crear usuario: $e';
@@ -87,15 +91,33 @@ class UserService {
   // Obtener usuario por email
   Future<UserModel?> getUserByEmail(String email) async {
     try {
-      final querySnapshot = await _firestore
-          .collection(_collection)
-          .where('email', isEqualTo: email)
-          .limit(1)
-          .get();
+      final normalized = email.trim().toLowerCase();
+      if (normalized.isEmpty) return null;
 
-      if (querySnapshot.docs.isNotEmpty) {
-        return UserModel.fromFirestore(querySnapshot.docs.first);
+      final lookup = await _firestore
+          .collection(_emailLookupCollection)
+          .doc(normalized)
+          .get();
+      if (lookup.exists) {
+        final userId = lookup.data()?['userId'] as String?;
+        if (userId != null && userId.isNotEmpty) {
+          return await getUser(userId);
+        }
       }
+
+      // Fallback legacy (solo power_admin puede listar `users`)
+      try {
+        final querySnapshot = await _firestore
+            .collection(_collection)
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
+        if (querySnapshot.docs.isNotEmpty) {
+          final user = UserModel.fromFirestore(querySnapshot.docs.first);
+          await ensureUserLookups(user);
+          return user;
+        }
+      } catch (_) {}
       return null;
     } catch (e) {
       throw 'Error al obtener usuario por email: $e';
@@ -106,19 +128,91 @@ class UserService {
   Future<UserModel?> getUserByUsername(String username) async {
     try {
       final normalized = username.trim().toLowerCase();
-      final querySnapshot = await _firestore
-          .collection(_collection)
-          .where('usernameLower', isEqualTo: normalized)
-          .limit(1)
-          .get();
+      final email = await getEmailByUsername(normalized);
+      if (email == null) return null;
 
-      if (querySnapshot.docs.isNotEmpty) {
-        return UserModel.fromFirestore(querySnapshot.docs.first);
-      }
-      return null;
+      // Preferir perfil completo si las reglas lo permiten
+      final byEmail = await getUserByEmail(email);
+      if (byEmail != null) return byEmail;
+
+      final lookup = await _firestore
+          .collection(_usernameLookupCollection)
+          .doc(normalized)
+          .get();
+      final userId = lookup.data()?['userId'] as String?;
+      if (userId == null) return null;
+      return UserModel(
+        id: userId,
+        email: email,
+        username: normalized,
+        createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+      );
     } catch (e) {
       throw 'Error al obtener usuario por username: $e';
     }
+  }
+
+  /// Mantiene índices `username_lookup` + `email_lookup`.
+  Future<void> ensureUserLookups(UserModel user, {String? previousUsername}) async {
+    await ensureUsernameLookup(user, previousUsername: previousUsername);
+    await ensureEmailLookup(user);
+  }
+
+  /// Alias conservado.
+  Future<void> ensureUsernameLookup(UserModel user, {String? previousUsername}) async {
+    final currentRaw = user.username?.trim().toLowerCase() ?? '';
+    final previousRaw = previousUsername?.trim().toLowerCase() ?? '';
+    final current = currentRaw.startsWith('@') ? currentRaw.substring(1) : currentRaw;
+    final previous =
+        previousRaw.startsWith('@') ? previousRaw.substring(1) : previousRaw;
+    if (current.isEmpty && previous.isEmpty) {
+      return;
+    }
+    if (user.email.trim().isEmpty) {
+      return;
+    }
+
+    final batch = _firestore.batch();
+    if (previous.isNotEmpty && previous != current) {
+      batch.delete(_firestore.collection(_usernameLookupCollection).doc(previous));
+    }
+    if (current.isNotEmpty) {
+      batch.set(
+        _firestore.collection(_usernameLookupCollection).doc(current),
+        {
+          'userId': user.id,
+          'email': user.email.trim(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      );
+    }
+    await batch.commit();
+  }
+
+  Future<void> ensureEmailLookup(UserModel user) async {
+    final emailKey = user.email.trim().toLowerCase();
+    if (emailKey.isEmpty) return;
+    await _firestore.collection(_emailLookupCollection).doc(emailKey).set({
+      'userId': user.id,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Resuelve email desde username sin listar `users` (login sin sesión).
+  Future<String?> getEmailByUsername(String username) async {
+    var normalized = username.trim().toLowerCase();
+    if (normalized.startsWith('@')) {
+      normalized = normalized.substring(1);
+    }
+    if (normalized.isEmpty) return null;
+    final lookup = await _firestore
+        .collection(_usernameLookupCollection)
+        .doc(normalized)
+        .get();
+    if (!lookup.exists) return null;
+    final email = lookup.data()?['email'] as String?;
+    if (email == null || email.trim().isEmpty) return null;
+    return email.trim();
   }
 
   // Actualizar usuario
@@ -128,6 +222,7 @@ class UserService {
           .collection(_collection)
           .doc(user.id)
           .update(user.toFirestore());
+      await ensureUserLookups(user);
     } catch (e) {
       throw Exception('Error al actualizar usuario: $e');
     }
@@ -454,17 +549,47 @@ class UserService {
     }
   }
 
-  // Obtener todos los usuarios (para administración)
+  // Obtener todos los usuarios (directorio / administración)
   Future<List<UserModel>> getAllUsers() async {
     try {
-      final querySnapshot = await _firestore
-          .collection(_collection)
-          .orderBy('createdAt', descending: true)
-          .get();
+      QuerySnapshot querySnapshot;
+      try {
+        querySnapshot = await _firestore
+            .collection(_collection)
+            .orderBy('createdAt', descending: true)
+            .get();
+      } catch (_) {
+        // Sin índice o docs sin createdAt: listado sin orden.
+        querySnapshot = await _firestore.collection(_collection).get();
+      }
 
-      return querySnapshot.docs
-          .map((doc) => UserModel.fromFirestore(doc))
-          .toList();
+      final users = <UserModel>[];
+      for (final doc in querySnapshot.docs) {
+        try {
+          users.add(UserModel.fromFirestore(doc));
+        } catch (e) {
+          // Doc incompleto: mapear con defaults seguros.
+          final data = doc.data() as Map<String, dynamic>? ?? {};
+          users.add(UserModel(
+            id: doc.id,
+            email: data['email']?.toString() ?? '',
+            username: data['username']?.toString(),
+            displayName: data['displayName']?.toString(),
+            photoURL: data['photoURL']?.toString(),
+            defaultTimezone: data['defaultTimezone']?.toString(),
+            createdAt: data['createdAt'] is Timestamp
+                ? (data['createdAt'] as Timestamp).toDate()
+                : DateTime.fromMillisecondsSinceEpoch(0),
+            lastLoginAt: data['lastLoginAt'] is Timestamp
+                ? (data['lastLoginAt'] as Timestamp).toDate()
+                : null,
+            isActive: data['isActive'] as bool? ?? true,
+            isAdmin: data['isAdmin'] as bool? ?? false,
+          ));
+        }
+      }
+      users.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return users;
     } catch (e) {
       throw 'Error al obtener usuarios: $e';
     }
@@ -538,14 +663,25 @@ class UserService {
   // Verificar disponibilidad de username (case-insensitive)
   Future<bool> isUsernameAvailable(String candidate, {String? excludeUserId}) async {
     final u = candidate.trim().toLowerCase();
-    final snapshot = await _firestore
-        .collection(_collection)
-        .where('usernameLower', isEqualTo: u)
-        .limit(1)
-        .get();
-    if (snapshot.docs.isEmpty) return true;
-    // Si existe, permitir solo si pertenece al mismo usuario (edición propia)
-    if (excludeUserId != null && snapshot.docs.first.id == excludeUserId) return true;
+    final lookup = await _firestore.collection(_usernameLookupCollection).doc(u).get();
+    if (!lookup.exists) {
+      // Fallback legacy (usuarios aún sin índice), solo si hay sesión
+      try {
+        final snapshot = await _firestore
+            .collection(_collection)
+            .where('usernameLower', isEqualTo: u)
+            .limit(1)
+            .get();
+        if (snapshot.docs.isEmpty) return true;
+        if (excludeUserId != null && snapshot.docs.first.id == excludeUserId) return true;
+        return false;
+      } catch (_) {
+        // Sin sesión y sin lookup → tratar como disponible
+        return true;
+      }
+    }
+    final ownerId = lookup.data()?['userId'] as String?;
+    if (excludeUserId != null && ownerId == excludeUserId) return true;
     return false;
   }
 
@@ -556,13 +692,26 @@ class UserService {
     final available = await isUsernameAvailable(normalized, excludeUserId: userId);
     if (!available) return false;
 
-    await _firestore
-        .collection(_collection)
-        .doc(userId)
-        .update({
-          'username': normalized,
-          'usernameLower': normalized,
-        });
+    final existing = await getUser(userId);
+    final previous = existing?.username;
+
+    await _firestore.collection(_collection).doc(userId).update({
+      'username': normalized,
+      'usernameLower': normalized,
+    });
+
+    final email = existing?.email;
+    if (email != null) {
+      await ensureUserLookups(
+        UserModel(
+          id: userId,
+          email: email,
+          username: normalized,
+          createdAt: existing?.createdAt ?? DateTime.now(),
+        ),
+        previousUsername: previous,
+      );
+    }
     return true;
   }
 }

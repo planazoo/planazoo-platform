@@ -4,7 +4,34 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
 
 /// Clase que maneja los estilos del calendario
+///
+/// Tokens alineados a [GUIA_UI.md]: fondo página, superficie, bordes y franjas
+/// de la rejilla (sin grises Material ni `gridLineColor` claro heredado).
 class CalendarStyles {
+  // —— UI-SP (tokens base) ——
+  static const Color cPageBg = Color(0xFF111827);
+  static const Color cSurfaceBg = Color(0xFF1F2937);
+  /// Franja de columna-día más clara (alterna por índice de columna **visible**: 0,2,4…).
+  /// Ligeramente por encima de [cSurfaceBg] para contrastar el grid con tarjetas (opción B).
+  static const Color cGridStripeLight = Color(0xFF303B4F);
+  /// Franja alterna oscura de columna-día (índices impares en la vista).
+  static const Color cGridStripeAlt = Color(0xFF182331);
+  static const double aBorderStrong = 0.12;
+
+  /// Borde estándar de celdas / líneas de rejilla (GUIA: blanco ~0.12).
+  static Color get calendarGridLineColor =>
+      Colors.white.withValues(alpha: aBorderStrong);
+
+  /// Separador vertical entre días (móvil).
+  static Color get calendarDaySeparatorMobile => Colors.white.withValues(
+        alpha: CalendarConstants.calendarSeparatorOpacityMobile,
+      );
+
+  /// Separador vertical entre días (web).
+  static Color get calendarDaySeparatorWeb => Colors.white.withValues(
+        alpha: CalendarConstants.calendarSeparatorOpacityWeb,
+      );
+
   /// Obtiene el estilo del header de días
   static TextStyle getDayHeaderStyle({bool isToday = false}) {
     return GoogleFonts.poppins(
@@ -36,7 +63,7 @@ class CalendarStyles {
 
   /// Obtiene el estilo del texto de eventos
   static TextStyle getEventTextStyle() {
-    return const TextStyle(
+    return GoogleFonts.poppins(
       color: Colors.white,
       fontSize: CalendarConstants.eventFontSize,
       fontWeight: FontWeight.w500,
@@ -45,7 +72,7 @@ class CalendarStyles {
 
   /// Obtiene el estilo del texto de alojamientos
   static TextStyle getAccommodationTextStyle() {
-    return const TextStyle(
+    return GoogleFonts.poppins(
       color: Colors.white,
       fontSize: CalendarConstants.accommodationFontSize,
       fontWeight: FontWeight.w500,
@@ -63,30 +90,31 @@ class CalendarStyles {
 
   /// Obtiene el estilo del texto de alojamiento en la columna fija
   static TextStyle getFixedAccommodationTextStyle() {
-    return const TextStyle(
-      fontWeight: FontWeight.bold, 
+    return GoogleFonts.poppins(
+      fontWeight: FontWeight.bold,
       fontSize: CalendarConstants.participantFontSize,
+      color: Colors.white,
     );
   }
 
   /// Obtiene la decoración del header de días (sin bordes, estilo limpio)
   static BoxDecoration getDayHeaderDecoration() {
-    return BoxDecoration(
-      color: const Color(0xFF1F2937),
+    return const BoxDecoration(
+      color: cSurfaceBg,
     );
   }
 
   /// Obtiene la decoración del header de participantes (sin bordes)
   static BoxDecoration getParticipantHeaderDecoration() {
-    return BoxDecoration(
-      color: const Color(0xFF1F2937),
+    return const BoxDecoration(
+      color: cSurfaceBg,
     );
   }
 
   /// Obtiene la decoración del header mini de participantes (sin bordes)
   static BoxDecoration getMiniParticipantHeaderDecoration() {
     return BoxDecoration(
-      color: const Color(0xFF1F2937).withValues(alpha: 0.6),
+      color: cSurfaceBg.withValues(alpha: 0.6),
     );
   }
 
@@ -101,11 +129,17 @@ class CalendarStyles {
 
   /// Obtiene la decoración de un alojamiento
   static BoxDecoration getAccommodationDecoration() {
+    final fill = AppColorScheme.color2.withValues(
+      alpha: CalendarConstants.accommodationBackgroundOpacity,
+    );
+    final stroke = AppColorScheme.color2.withValues(
+      alpha: CalendarConstants.accommodationBorderOpacity,
+    );
     return BoxDecoration(
-      color: Colors.green.withValues(alpha: CalendarConstants.accommodationBackgroundOpacity),
+      color: fill,
       borderRadius: BorderRadius.circular(3),
       border: Border.all(
-        color: Colors.green.withValues(alpha: CalendarConstants.accommodationBorderOpacity),
+        color: stroke,
         width: 1,
       ),
     );
@@ -113,8 +147,8 @@ class CalendarStyles {
 
   /// Obtiene la decoración de la columna fija de horas (sin bordes)
   static BoxDecoration getFixedHoursColumnDecoration() {
-    return BoxDecoration(
-      color: const Color(0xFF1F2937),
+    return const BoxDecoration(
+      color: cSurfaceBg,
     );
   }
 
@@ -122,17 +156,17 @@ class CalendarStyles {
   static BoxDecoration getHourCellDecoration() {
     return BoxDecoration(
       border: Border.all(
-        color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.7),
+        color: calendarGridLineColor,
         width: 0.5,
       ),
-      color: const Color(0xFF1F2937).withValues(alpha: 0.3),
+      color: cSurfaceBg,
     );
   }
 
   /// Obtiene la decoración de la fila fija de alojamientos (sin bordes)
   static BoxDecoration getFixedAccommodationRowDecoration() {
-    return BoxDecoration(
-      color: const Color(0xFF1F2937),
+    return const BoxDecoration(
+      color: cSurfaceBg,
     );
   }
 
@@ -153,7 +187,7 @@ class CalendarStyles {
 
   /// Obtiene el color de fondo del AppBar
   static Color getAppBarBackgroundColor() {
-    return const Color(0xFF1F2937);
+    return cSurfaceBg;
   }
 
   /// Obtiene el color de texto del AppBar

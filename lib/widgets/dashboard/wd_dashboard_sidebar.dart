@@ -14,6 +14,8 @@ class WdDashboardSidebar extends ConsumerWidget {
   final double columnWidth;
   final double gridHeight;
   final VoidCallback onProfileTap;
+  /// Lista de usuarios de la plataforma (directorio W1). Visible temporalmente para autenticados.
+  final VoidCallback? onUsersDirectoryTap;
   /// Si el usuario es admin, se muestra un icono que llama a este callback.
   final VoidCallback? onAdminTap;
   /// Lista de planes del usuario (para modal de chats no leídos y badge global).
@@ -28,6 +30,7 @@ class WdDashboardSidebar extends ConsumerWidget {
     required this.columnWidth,
     required this.gridHeight,
     required this.onProfileTap,
+    this.onUsersDirectoryTap,
     this.onAdminTap,
     this.plans = const [],
     this.onOpenChatForPlan,
@@ -114,29 +117,44 @@ class WdDashboardSidebar extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
-              child: Tooltip(
-                message: loc.profileTooltip,
-                child: GestureDetector(
-                  onTap: onProfileTap,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 2,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onUsersDirectoryTap != null) ...[
+                    Tooltip(
+                      message: loc.usersDirectoryTooltip,
+                      child: IconButton(
+                        icon: Icon(Icons.people_outline, color: iconColor, size: 24),
+                        onPressed: onUsersDirectoryTap,
                       ),
                     ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.person,
-                      color: iconColor,
-                      size: 24,
+                    const SizedBox(height: 4),
+                  ],
+                  Tooltip(
+                    message: loc.profileTooltip,
+                    child: GestureDetector(
+                      onTap: onProfileTap,
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 2,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.person,
+                          color: iconColor,
+                          size: 24,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ],

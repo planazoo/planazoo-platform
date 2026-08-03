@@ -713,20 +713,28 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         initialStartMinute: initialStartMinute,
         onSaved: (newEvent) async {
           final eventService = ref.read(eventServiceProvider);
-          final createEventFuture = eventService.createEvent(newEvent);
+          final eventId = await eventService.createEvent(newEvent);
+          if (eventId == null) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'No se pudo guardar el evento. Inténtalo de nuevo.',
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.red.shade700,
+                ),
+              );
+            }
+            throw Exception('createEvent returned null');
+          }
 
-          // Cerrar el diálogo inmediatamente para no bloquear UX si Firestore tarda en offline.
           if (context.mounted) {
             Navigator.of(context).pop();
           }
           if (mounted) {
             _invalidateEventProviders();
           }
-
-          final eventId = await createEventFuture.timeout(
-            const Duration(seconds: 4),
-            onTimeout: () => null,
-          );
 
           // T252: notificación best-effort (no bloquear UX en offline).
           if (newEvent.isDraft &&

@@ -504,7 +504,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       shouldShowAccommodationInTrack: _shouldShowAccommodationInTrack,
       getFilteredTracks: _getFilteredTracks,
       createGridBorder: _createGridBorder,
+      gridLineOpacity: CalendarConstants.gridLineOpacity,
       getParticipantTimezone: _getParticipantTimezone,
+      draftFilter: _eventDraftFilter,
     );
   }
 
@@ -2838,14 +2840,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
               );
             }
-            return; // No guardar
+            throw Exception('overlap limit'); // No cerrar diálogo
           }
           
           // Si pasa validación, crear evento
           final eventService = ref.read(eventServiceProvider);
           final eventId = await eventService.createEvent(newEvent);
+          if (eventId == null) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'No se pudo guardar el evento. Inténtalo de nuevo.',
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.red.shade700,
+                ),
+              );
+            }
+            throw Exception('createEvent returned null');
+          }
 
-          // Cerrar el diálogo antes de side-effects de red (offline-safe).
           if (context.mounted) {
             Navigator.of(context).pop();
           }
@@ -2867,13 +2882,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             });
           }
           
-          // Esperar un poco y luego invalidar providers
           await Future.delayed(const Duration(milliseconds: 100));
           _invalidateEventProviders();
           
-          // Esperar un poco más y forzar otra actualización
           await Future.delayed(const Duration(milliseconds: 200));
-          setState(() {});
+          if (mounted) setState(() {});
         },
         onDeleted: (eventId) {
           Navigator.of(context).pop();

@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/theme/color_scheme.dart';
 import '../../features/calendar/domain/models/plan_invitation.dart';
 import '../../features/calendar/domain/models/pending_email_event.dart';
+import '../../features/calendar/domain/services/plan_service.dart';
 import '../../features/notifications/domain/models/unified_notification.dart';
 import '../../features/notifications/presentation/providers/notification_providers.dart';
 import '../../features/calendar/presentation/providers/invitation_providers.dart';
 import '../../widgets/screens/wd_pending_event_card.dart';
+import '../../widgets/dialogs/invitation_response_dialog.dart';
 import '../../shared/utils/date_formatter.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -28,16 +30,44 @@ class UnifiedNotificationItem extends ConsumerWidget {
     this.onPendingEventAction,
   });
 
+  Future<void> _openInvitationDialog(BuildContext context, WidgetRef ref) async {
+    final planId = notification.planId;
+    if (planId == null || planId.isEmpty) return;
+    final plan = await PlanService().getPlanById(planId);
+    if (!context.mounted || plan == null) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => InvitationResponseDialog(plan: plan),
+    );
+    if (userId != null &&
+        notification.source == UnifiedNotificationSource.usersNotifications) {
+      final id = notification.data?['notificationId'] as String?;
+      if (id != null) {
+        await ref.read(notificationServiceProvider).markAsRead(userId!, id);
+      }
+    }
+    onInvitationResponded?.call();
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (notification.type == UnifiedNotificationType.invitation &&
-        notification.sourcePayload is PlanInvitation &&
-        userId != null) {
-      final inv = notification.sourcePayload as PlanInvitation;
-      return InvitationNotificationTile(
-        invitation: inv,
-        userId: userId!,
-        onResponded: onInvitationResponded ?? () {},
+    if (notification.type == UnifiedNotificationType.invitation) {
+      if (notification.sourcePayload is PlanInvitation && userId != null) {
+        final inv = notification.sourcePayload as PlanInvitation;
+        return InvitationNotificationTile(
+          invitation: inv,
+          userId: userId!,
+          onResponded: onInvitationResponded ?? () {},
+          onOpenDialog: () => _openInvitationDialog(context, ref),
+        );
+      }
+      // Invitación directa (NotificationModel): abrir modal al tocar.
+      return InformativeNotificationTile(
+        notification: notification,
+        userId: userId,
+        onMarkRead: null,
+        onTap: () => _openInvitationDialog(context, ref),
       );
     }
     if (notification.type == UnifiedNotificationType.emailEvent &&
@@ -74,18 +104,25 @@ class InvitationNotificationTile extends ConsumerWidget {
   final PlanInvitation invitation;
   final String userId;
   final VoidCallback onResponded;
+  final VoidCallback? onOpenDialog;
 
   const InvitationNotificationTile({
     super.key,
     required this.invitation,
     required this.userId,
     required this.onResponded,
+    this.onOpenDialog,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loc = AppLocalizations.of(context)!;
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onOpenDialog,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -116,14 +153,17 @@ class InvitationNotificationTile extends ConsumerWidget {
             children: [
               OutlinedButton.icon(
                 onPressed: () async {
-                  final ok = await ref.read(invitationServiceProvider).rejectInvitationByPlanId(invitation.planId, userId);
+                  final result = await ref.read(invitationServiceProvider).rejectInvitationByPlanId(invitation.planId, userId);
                   if (context.mounted) {
-                    if (ok) {
+                    if (result.success) {
                       onResponded();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(loc.invitationRejected), backgroundColor: AppColorScheme.color4),
-                      );
                     }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(result.success ? loc.invitationRejected : result.message),
+                        backgroundColor: result.success ? AppColorScheme.color4 : Colors.red,
+                      ),
+                    );
                   }
                 },
                 icon: const Icon(Icons.close, size: 14),
@@ -139,14 +179,17 @@ class InvitationNotificationTile extends ConsumerWidget {
               const SizedBox(width: 8),
               FilledButton.icon(
                 onPressed: () async {
-                  final ok = await ref.read(invitationServiceProvider).acceptInvitationByPlanId(invitation.planId, userId);
+                  final result = await ref.read(invitationServiceProvider).acceptInvitationByPlanId(invitation.planId, userId);
                   if (context.mounted) {
-                    if (ok) {
+                    if (result.success) {
                       onResponded();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(loc.invitationAcceptedParticipant), backgroundColor: AppColorScheme.color3),
-                      );
                     }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(result.success ? loc.invitationAcceptedParticipant : result.message),
+                        backgroundColor: result.success ? AppColorScheme.color3 : Colors.red,
+                      ),
+                    );
                   }
                 },
                 icon: const Icon(Icons.check, size: 14),
@@ -163,6 +206,8 @@ class InvitationNotificationTile extends ConsumerWidget {
           ),
         ],
       ),
+    ),
+      ),
     );
   }
 }
@@ -171,12 +216,14 @@ class InformativeNotificationTile extends StatelessWidget {
   final UnifiedNotification notification;
   final String? userId;
   final VoidCallback? onMarkRead;
+  final VoidCallback? onTap;
 
   const InformativeNotificationTile({
     super.key,
     required this.notification,
     this.userId,
     this.onMarkRead,
+    this.onTap,
   });
 
   @override
@@ -193,7 +240,7 @@ class InformativeNotificationTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onMarkRead,
+        onTap: onTap ?? onMarkRead,
         borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

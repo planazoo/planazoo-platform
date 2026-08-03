@@ -84,6 +84,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
                 .updateUser(updatedUser)
                 .timeout(const Duration(seconds: 2), onTimeout: () {});
 
+            try {
+              await _userService.ensureUserLookups(updatedUser);
+            } catch (_) {}
+
             final deviceTimezone = TimezoneService.getSystemTimezone();
             final shouldSuggestTimezone = updatedUser.defaultTimezone != null &&
                 updatedUser.defaultTimezone != deviceTimezone;
@@ -220,48 +224,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // Iniciar sesión con email/username y contraseña
   Future<void> signInWithEmailAndPassword(String emailOrUsername, String password) async {
     try {
-      String email = emailOrUsername;
-      
+      String email = emailOrUsername.trim();
+
       // Detectar si es email o username
-      final trimmed = emailOrUsername.trim();
-      final isEmail = trimmed.contains('@');
-      
+      final isEmail = email.contains('@');
+
       if (!isEmail) {
-        // Es username - buscar el email asociado
-        String username = trimmed;
-        // Quitar @ si está presente
+        // Username → email vía índice público (sin listar `users` sin sesión)
+        String username = email;
         if (username.startsWith('@')) {
           username = username.substring(1);
         }
-        
-        final user = await _userService.getUserByUsername(username);
-        if (user == null) {
-          state = AuthState(
+
+        final resolvedEmail = await _userService.getEmailByUsername(username);
+        if (resolvedEmail == null || resolvedEmail.isEmpty) {
+          state = const AuthState(
             status: AuthStatus.error,
             errorMessage: 'username-not-found',
           );
           return;
         }
-        email = user.email;
+        email = resolvedEmail;
       }
-      else {
-        // Verificar si el email existe en Firestore antes de intentar login
-        final normalizedEmail = trimmed;
-        final existingUser = await _userService.getUserByEmail(normalizedEmail);
-        if (existingUser == null) {
-          _pendingErrorMessage = 'user-not-found';
-          state = const AuthState(
-            status: AuthStatus.error,
-            errorMessage: 'user-not-found',
-          );
-          return;
-        }
-        email = normalizedEmail;
-      }
-      
+
       // Verificar rate limiting antes de intentar login
       final rateLimitCheck = await _rateLimiter.checkLoginAttempt(email);
-      
+
       if (!rateLimitCheck.allowed) {
         state = AuthState(
           status: AuthStatus.error,
@@ -275,7 +263,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         user: state.user,
         isLoading: true,
       );
-      
+
       try {
         await _authService.signInWithEmailAndPassword(email, password);
         // Login exitoso - limpiar contador
@@ -286,10 +274,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       } catch (e) {
         // Login fallido - registrar intento
         await _rateLimiter.recordLoginAttempt(email, false);
-        
+
         // Re-verificar rate limiting para mostrar mensaje actualizado
         final updatedCheck = await _rateLimiter.checkLoginAttempt(email);
-        
+
         // Extraer el código de error del mensaje
         String errorMessage = e.toString();
         // Si viene como "Exception: wrong-password", extraer solo "wrong-password"
@@ -304,7 +292,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
 
         _pendingErrorMessage = errorMessage;
-        
+
         state = AuthState(
           status: AuthStatus.error,
           errorMessage: errorMessage,
@@ -333,36 +321,46 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> registerWithEmailAndPassword(String email, String password, {String? displayName, String? username}) async {
     try {
       _isRegistering = true; // Marcar que estamos registrando
-      state = state.copyWith(status: AuthStatus.loading);
-      
-      // Validar y normalizar username si se proporciona
+      // isLoading debe ir a true: la UI del botón depende de ese flag (no solo de status).
+      state = state.copyWith(
+        status: AuthStatus.loading,
+        isLoading: true,
+      );
+
+      // Auth primero: las reglas de Firestore exigen autenticación para listar/consultar users
+      // (p. ej. isUsernameAvailable). Comprobar username antes de Auth provoca permission-denied.
+      await _authService.registerWithEmailAndPassword(email, password);
+
+      // Validar y normalizar username si se proporciona (ya autenticados)
       String? normalizedUsername;
       if (username != null && username.isNotEmpty) {
         normalizedUsername = username.trim().toLowerCase();
-        // Verificar disponibilidad (la validación de formato ya se hizo en la UI)
         final isAvailable = await _userService.isUsernameAvailable(normalizedUsername);
         if (!isAvailable) {
+          try {
+            await _authService.deleteUser();
+          } catch (_) {
+            await _authService.signOut();
+          }
           _isRegistering = false;
-          state = AuthState(
+          state = const AuthState(
             status: AuthStatus.error,
             errorMessage: 'username-taken',
           );
           return;
         }
       }
-      
-      await _authService.registerWithEmailAndPassword(email, password);
-      
+
       // Sanitizar displayName si se proporciona
       final sanitizedDisplayName = displayName != null && displayName.isNotEmpty
           ? Sanitizer.sanitizePlainText(displayName, maxLength: 100)
           : null;
-      
+
       // Actualizar displayName si se proporciona
       if (sanitizedDisplayName != null && sanitizedDisplayName.isNotEmpty) {
         await _authService.updateDisplayName(sanitizedDisplayName);
       }
-      
+
       // Crear usuario en Firestore después del registro exitoso
       final currentUser = _authService.currentUser;
       if (currentUser != null) {
@@ -373,23 +371,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
           username: normalizedUsername,
         );
         await _userService.createUser(userModelWithData);
-        
+
         // Enviar email de verificación
         await _authService.sendEmailVerification();
-        
+
         // Cerrar sesión inmediatamente después del registro
         await _authService.signOut();
-        
+
         // Emitir estado de éxito de registro
         state = AuthState(
           status: AuthStatus.registrationSuccess,
           user: userModelWithData,
         );
       }
-      
+
       _isRegistering = false; // Marcar que terminamos de registrar
     } catch (e) {
       _isRegistering = false; // Marcar que terminamos de registrar
+      try {
+        // Si Auth quedó creado pero falló Firestore, no dejar sesión a medias
+        if (_authService.currentUser != null) {
+          await _authService.signOut();
+        }
+      } catch (_) {}
       state = AuthState(
         status: AuthStatus.error,
         errorMessage: e.toString(),

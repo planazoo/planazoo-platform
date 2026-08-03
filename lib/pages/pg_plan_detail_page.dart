@@ -677,6 +677,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     final p = _planFromStreamRead();
     if (event.id == null) {
       final eventId = await eventService.createEvent(event);
+      if (eventId == null) {
+        throw Exception('createEvent returned null');
+      }
       if (event.isDraft && event.userId != p.userId && p.id != null) {
         // Best-effort: no bloquear cierre de diálogo ni UX en offline.
         Future<void>(() async {
@@ -694,7 +697,10 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         });
       }
     } else {
-      await eventService.updateEvent(event);
+      final ok = await eventService.updateEvent(event);
+      if (!ok) {
+        throw Exception('updateEvent failed');
+      }
     }
   }
 

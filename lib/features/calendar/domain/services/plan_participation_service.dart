@@ -74,7 +74,30 @@ class PlanParticipationService {
           .limit(1)
           .get();
       
-      return querySnapshot.docs.isNotEmpty;
+      if (querySnapshot.docs.isNotEmpty) {
+        return true;
+      }
+
+      // Fallback: el creador del plan es siempre participante aunque falte
+      // el doc en plan_participations (planes legacy / participación no creada).
+      final planDoc = await _firestore.collection('plans').doc(planId).get();
+      if (planDoc.exists && planDoc.data()?['userId'] == userId) {
+        LoggerService.warning(
+          'isUserParticipant: no active participation for owner $userId on plan $planId; treating as participant via plans.userId',
+          context: 'PLAN_PARTICIPATION_SERVICE',
+        );
+        // Best-effort: recrear participación de organizador para no repetir el hueco.
+        // ignore: unawaited_futures
+        createParticipation(
+          planId: planId,
+          userId: userId,
+          role: 'organizer',
+          autoAccept: true,
+        );
+        return true;
+      }
+
+      return false;
     } catch (e) {
       // No registrar errores de permisos cuando el usuario no está autenticado (comportamiento esperado después de logout)
       final errorString = e.toString();
@@ -133,6 +156,23 @@ class PlanParticipationService {
         final doc = existingParticipation.docs.first;
         final data = PlanParticipation.fromFirestore(doc);
         if (data.isActive) {
+          // Reinvitar tras rechazo/caducidad: volver a pending (sigue visible en lista).
+          final canReinvite = !autoAccept &&
+              (data.status == 'rejected' || data.status == 'expired');
+          if (canReinvite) {
+            await doc.reference.update({
+              'status': 'pending',
+              'role': role,
+              if (invitedBy != null) 'invitedBy': invitedBy,
+              'joinedAt': Timestamp.fromDate(DateTime.now()),
+              'lastActiveAt': Timestamp.fromDate(DateTime.now()),
+            });
+            LoggerService.database(
+              'Participation re-invited after ${data.status}: ${doc.id}',
+              operation: 'UPDATE',
+            );
+            return doc.id;
+          }
           LoggerService.warning('User $userId already participates in plan $planId');
           return data.id;
         } else {
@@ -141,6 +181,7 @@ class PlanParticipationService {
             'status': autoAccept ? 'accepted' : 'pending',
             'joinedAt': Timestamp.fromDate(DateTime.now()),
             'lastActiveAt': Timestamp.fromDate(DateTime.now()),
+            if (invitedBy != null) 'invitedBy': invitedBy,
           });
           try {
             await _firestore.collection('plans').doc(planId).update({
@@ -774,6 +815,33 @@ class PlanParticipationService {
     } catch (e) {
       LoggerService.error('Error accepting invitation: $planId, $userId', 
           context: 'PLAN_PARTICIPATION_SERVICE', error: e);
+      return false;
+    }
+  }
+
+  /// Marca una participación pending como `expired` (plan cerrado / invitación inválida).
+  Future<bool> expirePendingInvitation(String planId, String userId) async {
+    try {
+      final participation = await getParticipation(planId, userId);
+      if (participation == null || participation.id == null) return false;
+      if (participation.status != null && participation.status != 'pending') {
+        return false;
+      }
+      await _firestore.collection(_collectionName).doc(participation.id!).update({
+        'status': 'expired',
+        'lastActiveAt': Timestamp.fromDate(DateTime.now()),
+      });
+      LoggerService.database(
+        'Invitation expired: $planId, $userId',
+        operation: 'UPDATE',
+      );
+      return true;
+    } catch (e) {
+      LoggerService.error(
+        'Error expiring invitation: $planId, $userId',
+        context: 'PLAN_PARTICIPATION_SERVICE',
+        error: e,
+      );
       return false;
     }
   }

@@ -160,7 +160,7 @@ class NotificationHelper {
       // Usar el nombre del organizador proporcionado o el por defecto
       String finalInviterName = inviterName ?? 'Un usuario';
 
-      // Crear notificación
+      // Crear notificación in-app (con emoji) y push (texto limpio para APNs)
       final notification = NotificationModel(
         userId: invitedUserId,
         type: NotificationType.invitation,
@@ -186,15 +186,22 @@ class NotificationHelper {
           'Invitation notification created for user: $invitedUserId, plan: $planId',
           context: 'NOTIFICATION_HELPER',
         );
+        final pushTitle = 'Invitación a "$finalPlanName"';
+        final pushBody =
+            '$finalInviterName te ha invitado a unirte al plan "$finalPlanName"';
         await PushNotificationSender.trySendInvitationPush(
           invitedUserId: invitedUserId,
           planId: planId,
-          title: notification.title,
-          body: notification.body,
+          title: pushTitle,
+          body: pushBody,
         );
         return true;
       }
 
+      LoggerService.warning(
+        'Invitation notification NOT created for user: $invitedUserId, plan: $planId (createNotification returned null)',
+        context: 'NOTIFICATION_HELPER',
+      );
       return false;
     } catch (e) {
       LoggerService.error(
@@ -247,6 +254,18 @@ class NotificationHelper {
         LoggerService.info(
           'Invitation response notification created for inviter: $inviterUserId, plan: $planId',
           context: 'NOTIFICATION_HELPER',
+        );
+        final pushTitle = accepted ? 'Invitación aceptada' : 'Invitación rechazada';
+        await PushNotificationSender.trySendPushNotification(
+          userId: inviterUserId,
+          title: pushTitle,
+          body: body,
+          data: {
+            'type': type.name,
+            'planId': planId,
+            'plan_id': planId,
+            'accepted': accepted ? 'true' : 'false',
+          },
         );
         return true;
       }

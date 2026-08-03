@@ -501,7 +501,7 @@ exports.placesDetails = functions.https.onCall(async (data, context) => {
   const url = `${PLACES_BASE}/places/${encodeURIComponent(placeId)}${params.toString() ? `?${params}` : ''}`;
   const headers = {
     'X-Goog-Api-Key': PLACES_API_KEY,
-    'X-Goog-FieldMask': 'id,name,displayName,formattedAddress,location',
+    'X-Goog-FieldMask': 'id,name,displayName,formattedAddress,location,websiteUri',
   };
   const res = await fetch(url, { headers });
   const json = await res.json().catch(() => ({}));
@@ -838,16 +838,45 @@ exports.sendInvitationPush = functions.https.onCall(async (data, context) => {
   }
 
   const tokens = tokensSnapshot.docs.map((d) => d.data().token).filter(Boolean);
+  if (!tokens.length) {
+    console.log(`sendInvitationPush: tokens vacíos para ${invitedUserId}`);
+    return { success: false, message: 'Usuario sin tokens FCM válidos' };
+  }
+
   const dataPayload = {
     planId: String(planId),
     type: 'invitation',
     tab: 'participants',
   };
 
+  // iOS: sin cabeceras APNs alert el sistema puede tragar el mensaje o tratarlo como silencioso.
   const message = {
     notification: { title: String(title), body: String(body) },
     data: dataPayload,
     tokens,
+    apns: {
+      headers: {
+        'apns-priority': '10',
+        'apns-push-type': 'alert',
+      },
+      payload: {
+        aps: {
+          alert: {
+            title: String(title),
+            body: String(body),
+          },
+          sound: 'default',
+          badge: 1,
+        },
+      },
+    },
+    android: {
+      priority: 'high',
+      notification: {
+        channelId: 'planazoo_default',
+        sound: 'default',
+      },
+    },
   };
 
   try {
@@ -855,6 +884,17 @@ exports.sendInvitationPush = functions.https.onCall(async (data, context) => {
     console.log(
       `sendInvitationPush: enviados ${response.successCount}/${tokens.length} a ${invitedUserId}`
     );
+    response.responses.forEach((resp, idx) => {
+      if (!resp.success) {
+        console.error(
+          `sendInvitationPush fail token#${idx}:`,
+          resp.error?.code,
+          resp.error?.message
+        );
+      } else {
+        console.log(`sendInvitationPush ok token#${idx} messageId=${resp.messageId}`);
+      }
+    });
     if (response.failureCount > 0) {
       const batch = db.batch();
       response.responses.forEach((resp, idx) => {
@@ -867,7 +907,7 @@ exports.sendInvitationPush = functions.https.onCall(async (data, context) => {
       await batch.commit();
     }
     return {
-      success: true,
+      success: response.successCount > 0,
       sent: response.successCount,
       failed: response.failureCount,
       total: tokens.length,

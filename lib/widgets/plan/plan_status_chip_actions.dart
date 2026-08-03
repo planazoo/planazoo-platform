@@ -57,35 +57,37 @@ Future<void> planStatusChipShowPendingActions(
 
   try {
     if (choice == 'accept') {
-      var ok = false;
-      if (hasPendingInvitation) {
-        ok = await invSvc.acceptInvitationByPlanId(planId, userId);
-      }
+      final result = await invSvc.acceptInvitationByPlanId(planId, userId);
+      var ok = result.success;
+      var detail = result.message;
       if (!ok && hasPendingParticipation) {
         ok = await partSvc.acceptInvitation(planId, userId);
+        if (ok) detail = loc.invitationAcceptedAddedToPlan;
       }
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            ok ? loc.invitationAcceptedAddedToPlan : loc.invitationAcceptFailed,
+            ok
+                ? loc.invitationAcceptedAddedToPlan
+                : detail,
             style: GoogleFonts.poppins(),
           ),
         ),
       );
     } else {
-      var ok = false;
-      if (hasPendingInvitation) {
-        ok = await invSvc.rejectInvitationByPlanId(planId, userId);
-      }
+      final result = await invSvc.rejectInvitationByPlanId(planId, userId);
+      var ok = result.success;
+      var detail = result.message;
       if (!ok && hasPendingParticipation) {
         ok = await partSvc.rejectInvitation(planId, userId);
+        if (ok) detail = loc.invitationRejectedSuccess;
       }
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            ok ? loc.invitationRejectedSuccess : loc.invitationRejectFailed,
+            ok ? loc.invitationRejectedSuccess : detail,
             style: GoogleFonts.poppins(),
           ),
         ),

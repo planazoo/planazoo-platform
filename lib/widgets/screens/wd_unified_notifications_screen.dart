@@ -82,33 +82,31 @@ class WdUnifiedNotificationsScreen extends ConsumerWidget {
                         invitation: inv,
                         userId: user.id,
                         onAccept: () async {
-                          final ok = await ref.read(invitationServiceProvider).acceptInvitationByPlanId(inv.planId, user.id);
+                          final result = await ref.read(invitationServiceProvider).acceptInvitationByPlanId(inv.planId, user.id);
                           if (context.mounted) {
-                            if (ok) {
+                            if (result.success) {
                               ref.invalidate(userPendingInvitationsProvider);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(loc.invitationAcceptedParticipant), backgroundColor: Colors.green),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(loc.invitationAcceptFailed), backgroundColor: Colors.red),
-                              );
                             }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result.success ? loc.invitationAcceptedParticipant : result.message),
+                                backgroundColor: result.success ? Colors.green : Colors.red,
+                              ),
+                            );
                           }
                         },
                         onReject: () async {
-                          final ok = await ref.read(invitationServiceProvider).rejectInvitationByPlanId(inv.planId, user.id);
+                          final result = await ref.read(invitationServiceProvider).rejectInvitationByPlanId(inv.planId, user.id);
                           if (context.mounted) {
-                            if (ok) {
+                            if (result.success) {
                               ref.invalidate(userPendingInvitationsProvider);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(loc.invitationRejected), backgroundColor: Colors.orange),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(loc.invitationRejectFailed), backgroundColor: Colors.red),
-                              );
                             }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result.success ? loc.invitationRejected : result.message),
+                                backgroundColor: result.success ? Colors.orange : Colors.red,
+                              ),
+                            );
                           }
                         },
                       )),

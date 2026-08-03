@@ -18,7 +18,7 @@ class BudgetService {
     
     // Filtrar solo alojamientos con coste
     final accommodationsWithCost = accommodations
-        .where((a) => a.cost != null)
+        .where((a) => !a.isDraft && a.cost != null)
         .toList();
     
     // Suma total de eventos

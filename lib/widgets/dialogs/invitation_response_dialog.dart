@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
-import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -43,62 +42,29 @@ class _InvitationResponseDialogState extends ConsumerState<InvitationResponseDia
         return;
       }
 
-      if (accept) {
-        // Aceptar invitación directamente (sin token) - actualiza tanto participación como invitación
-        final invitationService = ref.read(invitationServiceProvider);
-        final success = await invitationService.acceptInvitationByPlanId(
-          widget.plan.id!,
-          currentUser.id,
+      final invitationService = ref.read(invitationServiceProvider);
+      final result = accept
+          ? await invitationService.acceptInvitationByPlanId(
+              widget.plan.id!,
+              currentUser.id,
+            )
+          : await invitationService.rejectInvitationByPlanId(
+              widget.plan.id!,
+              currentUser.id,
+            );
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.success
+                  ? (accept ? '✅ ${result.message}' : result.message)
+                  : '❌ ${result.message}',
+            ),
+            backgroundColor: result.success ? Colors.green : Colors.red,
+          ),
         );
-        
-        if (mounted) {
-          Navigator.of(context).pop(); // Cerrar diálogo
-          
-          if (success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('✅ Has aceptado la invitación'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('❌ Error al aceptar la invitación'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-        return;
-      } else {
-        // Rechazar invitación (solo actualiza participación)
-        final participationService = ref.read(planParticipationServiceProvider);
-        final success = await participationService.rejectInvitation(
-          widget.plan.id!,
-          currentUser.id,
-        );
-        
-        if (mounted) {
-          Navigator.of(context).pop(); // Cerrar diálogo
-          
-          if (success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Has rechazado la invitación'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('❌ Error al rechazar la invitación'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-        return;
       }
     } catch (e) {
       LoggerService.error('Error responding to invitation', context: 'INVITATION_RESPONSE_DIALOG', error: e);
@@ -159,7 +125,6 @@ class _InvitationResponseDialogState extends ConsumerState<InvitationResponseDia
         ],
       ),
       actions: [
-        // Botón rechazar
         TextButton(
           onPressed: _isProcessing ? null : () => _respondToInvitation(false),
           child: Text(
@@ -167,7 +132,6 @@ class _InvitationResponseDialogState extends ConsumerState<InvitationResponseDia
             style: AppTypography.bodyStyle.copyWith(color: Colors.red),
           ),
         ),
-        // Botón aceptar
         ElevatedButton(
           onPressed: _isProcessing ? null : () => _respondToInvitation(true),
           style: ElevatedButton.styleFrom(
@@ -189,4 +153,3 @@ class _InvitationResponseDialogState extends ConsumerState<InvitationResponseDia
     );
   }
 }
-

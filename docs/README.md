@@ -23,6 +23,8 @@ Flujos específicos del ciclo de vida de la aplicación:
 - [CRUD Alojamientos](./flujos/FLUJO_CRUD_ALOJAMIENTOS.md) - Gestión completa de alojamientos
 - [Estados del Plan](./flujos/FLUJO_ESTADOS_PLAN.md) - Transiciones entre estados
 - [Gestión de Participantes](./flujos/FLUJO_GESTION_PARTICIPANTES.md) - Invitaciones y gestión
+- [**Diagrama altas/bajas (Mermaid)**](./flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md) - Contrato visual para acordar e implementar
+- [Mapa de flujos](./flujos/MAPA_FLUJOS.md) - Índice de dominios
 - [Presupuesto y Pagos](./flujos/FLUJO_PRESUPUESTO_PAGOS.md) - Sistema financiero
 - [Invitaciones y Notificaciones](./flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md) - Comunicación
 - [Notas del Plan](./flujos/FLUJO_NOTAS_PLAN.md) - Notas comunes/personales y preparación
@@ -62,6 +64,8 @@ Gestión de tareas del proyecto:
 
 ### 🔧 [Admin](./admin/)
 - [Lista blanca de administradores](./admin/ADMINS_WHITELIST.md)
+- **[Roles y tipos de usuario](./configuracion/ROLES_Y_TIPOS_USUARIO.md)** - Plataforma (`power_admin`) vs plan (owner/organizer/participant/observer); acceso break-glass y límites RGPD
+- [Usuarios de prueba](./configuracion/USUARIOS_PRUEBA.md) - Datos semilla y pruebas
 
 ### 🎨 [Design](./design/)
 - [Paleta de colores de eventos](./design/EVENT_COLOR_PALETTE.md)
@@ -79,6 +83,8 @@ Gestión de tareas del proyecto:
 
 ### ⚙️ [Configuración](./configuracion/)
 Configuración y contexto del proyecto:
+- **[Accesos y cuentas](./configuracion/ACCESOS_Y_CUENTAS.md)** - Inventario de consolas (Google, Apple, remoto, etc.); sin contraseñas en el repo
+- [Índice de configuraciones del proyecto](./configuracion/CONFIGURACIONES_PROYECTO.md) - Dónde está cada integración en el repo
 - [Contexto del Proyecto](./configuracion/CONTEXT.md) - Normas y reglas de colaboración
 - [Índice del Sistema de Planes](./configuracion/INDICE_SISTEMA_PLANES.md) - Visión general del sistema
 - [Despliegue Web en Firebase Hosting](./configuracion/DEPLOY_WEB_FIREBASE_HOSTING.md) - Guía completa de despliegue

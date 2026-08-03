@@ -2,6 +2,8 @@
 
 Índice de todas las configuraciones relevantes del proyecto: Cursor, Firebase, Google, Apple/Fastlane, Android, variables de entorno y referencias a documentación existente.
 
+**Inventario de accesos (quién entra a qué consola / remoto):** [ACCESOS_Y_CUENTAS.md](./ACCESOS_Y_CUENTAS.md) — no confundir con este índice técnico.
+
 **Mantener este documento actualizado** cuando se añadan nuevas integraciones o se cambie dónde se documenta cada cosa.
 
 ---
@@ -50,7 +52,7 @@
 | Apple Developer | Cuenta en [developer.apple.com](https://developer.apple.com) | Inscripción en Apple Developer Program (99 €/año). Team ID en Membership. |
 | App Store Connect | [appstoreconnect.apple.com](https://appstoreconnect.apple.com) | Crear la app con el mismo Bundle ID que el proyecto. itc_team_id en Users and Access. |
 | Fastlane (iOS) | `ios/Gemfile`, `ios/fastlane/Appfile`, `ios/fastlane/Fastfile` | Appfile: `app_identifier`, `apple_id`, `team_id`, `itc_team_id`. No hay "cuenta Fastlane"; usa Apple ID. Ver [FASTLANE_IOS_APPSTORE.md](./FASTLANE_IOS_APPSTORE.md), [FASTLANE_IOS_CHECKLIST.md](./FASTLANE_IOS_CHECKLIST.md). |
-| Bundle ID (iOS) | `ios/Runner.xcodeproj` (y `ios/fastlane/Appfile`) | Actual: `com.example.unpCalendario`. Debe coincidir con el registrado en App Store Connect. |
+| Bundle ID (iOS) | `ios/Runner.xcodeproj` (y `ios/fastlane/Appfile`) | Actual: `com.mycompany.myplanazoo`. Debe coincidir con el registrado en App Store Connect. |
 | Firma iOS | Xcode → Runner → Signing & Capabilities | Certificados y perfiles de aprovisionamiento (Automatically manage signing + Team). |
 
 ---

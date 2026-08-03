@@ -3,10 +3,12 @@
 > Prueba sistemática del flujo completo de la app: creación del plan, durante el plan y finalización.  
 > **Objetivo:** validar el flujo real con mínimo 3 usuarios que interactúan en todo el ciclo.  
 > **Enfoque:** flujo completo > control de errores. Incluir anotación de situaciones no contempladas como tareas.  
-> **Ámbito:** solo **web** (por ahora no incluye app móvil). **Local = 1 ordenador** (tres sesiones en el mismo equipo). **Idiomas:** las pruebas deben incluir **al menos dos idiomas** (p. ej. español e inglés).
+> **Ámbito histórico:** este plan se diseñó para **web** (tres sesiones en el mismo equipo).  
+> **Multiplataforma (web + iOS + Android):** usar la **matriz mínima** en [`USUARIOS_PRUEBA.md`](../configuracion/USUARIOS_PRUEBA.md#matriz-mínima-multiplataforma-3-usuarios--3-dispositivos) (UA iPhone / UB Android / UC web).  
+> **Idiomas:** las pruebas deben incluir **al menos dos idiomas** (p. ej. español e inglés).
 
-**Versión:** 1.3  
-**Última actualización:** Febrero 2026
+**Versión:** 1.4  
+**Última actualización:** Julio 2026
 
 ---
 
@@ -39,7 +41,8 @@
 
 ## 1. Resumen y enfoque
 
-- **Usuarios:** UA (organizador), UB, UC (participantes). Emails en sección 2.
+- **Usuarios:** UA (organizador), UB, UC (participantes). Emails en sección 2.  
+- **Dispositivos (recomendado multiplataforma):** ver [matriz mínima](../configuracion/USUARIOS_PRUEBA.md#matriz-mínima-multiplataforma-3-usuarios--3-dispositivos) — iPhone=UA, Android=UB, Web=UC.
 - **Ciclo:** Registro → Crear plan (sin eventos) → **Sistema de invitaciones** (Invitar → email → Aceptar/Rechazar → Re-invitar) → Eventos (borrador, timezones, apuntarse) → Notificaciones → Asignar a eventos → Chat → Aprobar plan → Durante el plan (chat, proponer/modificar) → UC deja → UC vuelve → Cerrar plan.
 - **Criterios:** Cada paso con resultado esperado; **Resultado** = ✅ / ❌ / ⚠️ Bloqueado / 🔶 No implementado; anotar huecos en sección 19.
 - **Idiomas:** Ejecutar el flujo (o partes clave) en **español** y en **inglés**; comprobar que la UI, mensajes y estados se ven correctamente en ambos (ver sección 5.5).

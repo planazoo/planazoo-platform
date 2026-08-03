@@ -18,6 +18,8 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - `docs/guias/GUIA_UI.md` - **Documento canónico único de UI** (reglas visuales + tokenización estricta)
 - `docs/configuracion/FASTLANE_IOS_APPSTORE.md` - **Publicación iOS (TestFlight / App Store):** `flutter build ipa`, `fastlane beta`, contraseña específica de apps (`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`), errores típicos de firma y subida
 - `docs/configuracion/FASTLANE_IOS_CHECKLIST.md` - Checklist paso a paso para la primera publicación iOS
+- `docs/configuracion/ACCESOS_Y_CUENTAS.md` - **Inventario de accesos** (consolas Google/Apple, remoto, secretos en gestor; sin contraseñas en el repo)
+- `docs/configuracion/CONFIGURACIONES_PROYECTO.md` - Índice técnico de integraciones en el repo
 - `docs/configuracion/SETUP_ANDROID_LOCAL.md` - **Arranque Android local (SDK, dispositivo/emulador, `flutter run`)** y smoke test inicial
 - `docs/flujos/FLUJO_NOTAS_PLAN.md` - **Flujo implementado** de Notas del plan (común/personal, preparación, permisos)
 - `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md` - **Especificación de producto** de Notas del plan (T262 en progreso; roadmap de plantillas y cierre)

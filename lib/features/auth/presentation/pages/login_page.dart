@@ -198,8 +198,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 ],
                               ),
                               const SizedBox(height: 24),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 4,
+                                runSpacing: 0,
                                 children: [
                                   TextButton.icon(
                                     onPressed: () => Navigator.of(context).pushNamed('/help'),

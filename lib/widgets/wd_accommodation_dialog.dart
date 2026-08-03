@@ -50,7 +50,7 @@ class AccommodationDialog extends ConsumerStatefulWidget {
 class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _hotelNameController;
-  late TextEditingController _addressController; // T225: dirección desde Places
+  late TextEditingController _addressController; // T225: dirección desde Places o a mano
   late TextEditingController _urlController; // Enlace web del alojamiento
   PlaceDetails? _lastPlaceDetails; // T225: último lugar seleccionado (lat/lng en extraData)
   late TextEditingController _descriptionController;
@@ -64,6 +64,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   late String _selectedColor;
   late List<String> _selectedParticipantTrackIds;
   late bool _isForAllParticipants; // Checkbox principal "Para todos"
+  late bool _isDraft; // Borrador / Confirmado (igual que eventos)
 
   // Colores predefinidos para alojamientos
   final List<String> _accommodationColors = [
@@ -112,7 +113,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       text: widget.accommodation?.description ?? '',
     );
     _costController = TextEditingController(
-      text: widget.accommodation?.cost?.toString() ?? '',
+      text: _formatCostForInput(widget.accommodation?.cost),
     );
     
     // Inicializar fechas
@@ -133,6 +134,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     // Priorizar bandera explícita de commonPart y, si no existe, usar compatibilidad legacy.
     _isForAllParticipants = existingIsForAll ?? existingParticipantIds.isEmpty;
     _selectedParticipantTrackIds = existingParticipantIds.toList();
+    _isDraft = widget.accommodation?.isDraft ??
+        widget.accommodation?.commonPart?.isDraft ??
+        false;
     
     // Si es un alojamiento nuevo, por defecto está marcado "para todos" (no necesitamos seleccionar participantes)
     // Si es un alojamiento existente y no está marcado "para todos" pero no hay participantes,
@@ -310,10 +314,52 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   }
 
   /// Decoración tipo login (estética unificada con evento y login).
+  static const Color _fieldSurface = Color(0xFF1F2937);
+  static const double _fieldRadius = 14;
+  static const double _fieldGap = 16;
+  static const double _fieldIconSize = 20;
+  static const EdgeInsets _fieldContentPadding =
+      EdgeInsets.symmetric(horizontal: 16, vertical: 16);
+
+  TextStyle get _labelStyle => GoogleFonts.poppins(
+        fontSize: 13,
+        color: Colors.white70,
+        fontWeight: FontWeight.w500,
+      );
+
+  TextStyle get _valueStyle => GoogleFonts.poppins(
+        fontSize: 14,
+        color: Colors.white,
+        fontWeight: FontWeight.w500,
+        height: 1.2,
+      );
+
+  TextStyle get _hintStyle => GoogleFonts.poppins(
+        fontSize: 14,
+        color: Colors.white60,
+        fontWeight: FontWeight.w400,
+        height: 1.2,
+      );
+
+  TextStyle get _captionStyle => GoogleFonts.poppins(
+        fontSize: 12,
+        color: Colors.white70,
+        fontWeight: FontWeight.w400,
+      );
+
+  TextStyle get _linkStyle => GoogleFonts.poppins(
+        fontSize: 13,
+        color: AppColorScheme.color2,
+        fontWeight: FontWeight.w600,
+      );
+
+  Icon _fieldIcon(IconData icon) =>
+      Icon(icon, size: _fieldIconSize, color: Colors.white70);
+
   BoxDecoration _buildLoginStyleDecoration() {
     return BoxDecoration(
-      color: const Color(0xFF1F2937),
-      borderRadius: BorderRadius.circular(12),
+      color: _fieldSurface,
+      borderRadius: BorderRadius.circular(_fieldRadius),
       border: Border.all(
         color: Colors.white.withValues(alpha: 0.12),
         width: 1,
@@ -329,113 +375,175 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   }
 
   Widget _buildSectionCard({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1F2937),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: child,
-    );
-  }
-
-  Widget _buildSectionHeader({
-    required String title,
-    required String subtitle,
-  }) {
-    return _buildSectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: Colors.white60,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Card de ubicación: dirección y enlace a Google Maps.
-  Widget _buildLocationDetailsCard() {
-    final hasCoords = _lastPlaceDetails?.lat != null || (widget.accommodation?.commonPart?.extraData?['placeLat'] != null);
-    final address = _lastPlaceDetails?.formattedAddress
-        ?? widget.accommodation?.commonPart?.extraData?['placeAddress'] as String?
-        ?? _addressController.text.trim();
-    final hasAddress = address.isNotEmpty;
-    if (!hasAddress && !hasCoords) return const SizedBox.shrink();
-    final displayAddress = address;
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: _buildLoginStyleDecoration(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (displayAddress.isNotEmpty) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.location_on_outlined, size: 18, color: Colors.white70),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      displayAddress,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-            ],
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _openLocationInGoogleMaps,
-                icon: const Icon(Icons.map_outlined, size: 18),
-                label: Text(
-                  AppLocalizations.of(context)!.openInGoogleMaps,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColorScheme.color2,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppColorScheme.color2.withValues(alpha: 0.8)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                ),
-              ),
-            ),
-          ],
+    return Material(
+      color: _fieldSurface,
+      elevation: 1,
+      shadowColor: Colors.black.withValues(alpha: 0.18),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_fieldRadius),
+        side: BorderSide(
+          color: Colors.white.withValues(alpha: 0.12),
+          width: 1,
         ),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: child,
+      ),
     );
+  }
+
+  bool get _canOpenLocationInMaps {
+    final address = _addressController.text.trim();
+    return _lastPlaceDetails?.lat != null ||
+        (widget.accommodation?.commonPart?.extraData?['placeLat'] != null) ||
+        address.isNotEmpty;
+  }
+
+  InputDecoration _standardFieldDecoration({
+    required String labelText,
+    String? hintText,
+    IconData? prefixIcon,
+    bool showErrorBorder = false,
+    String? counterText,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      counterText: counterText,
+      labelStyle: _labelStyle,
+      hintStyle: _hintStyle,
+      prefixIcon: prefixIcon != null ? _fieldIcon(prefixIcon) : null,
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      errorBorder: showErrorBorder
+          ? OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_fieldRadius),
+              borderSide: BorderSide(color: Colors.red.shade400, width: 1),
+            )
+          : InputBorder.none,
+      focusedErrorBorder: showErrorBorder
+          ? OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_fieldRadius),
+              borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+            )
+          : InputBorder.none,
+      filled: true,
+      fillColor: Colors.transparent,
+      isDense: true,
+      contentPadding: _fieldContentPadding,
+    );
+  }
+
+  Widget _buildLocationSection() {
+    final loc = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Nombre = búsqueda Places (también se puede escribir a mano)
+        Container(
+          decoration: _buildLoginStyleDecoration(),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              inputDecorationTheme: InputDecorationTheme(
+                labelStyle: _labelStyle,
+                hintStyle: _hintStyle,
+                prefixIconColor: Colors.white70,
+                contentPadding: _fieldContentPadding,
+                filled: true,
+                fillColor: Colors.transparent,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+              ),
+            ),
+            child: PlaceAutocompleteField(
+              controller: _hotelNameController,
+              initialAddress: _hotelNameController.text.isNotEmpty
+                  ? _hotelNameController.text
+                  : null,
+              lodgingOnly: false,
+              preferDisplayName: true,
+              labelText: loc.accommodationName,
+              hintText: loc.placeSearchHint,
+              prefixIcon: Icons.hotel,
+              fontSize: 14,
+              fillColor: Colors.transparent,
+              border: InputBorder.none,
+              validator: (value) {
+                final v = value?.trim() ?? '';
+                if (v.isEmpty) return loc.accommodationNameRequired;
+                if (v.length < 2) return loc.minCharacters(2);
+                if (v.length > 100) return loc.maxCharacters(100);
+                return null;
+              },
+              onPlaceSelected: (PlaceDetails details) {
+                setState(() {
+                  _lastPlaceDetails = details;
+                  _hotelNameController.text = details.displayName;
+                  if ((details.formattedAddress ?? '').trim().isNotEmpty) {
+                    _addressController.text = details.formattedAddress!;
+                  }
+                  final web = details.websiteUri?.trim();
+                  if (web != null && web.isNotEmpty) {
+                    _urlController.text = web;
+                  }
+                });
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: _fieldGap),
+        // Dirección: se rellena desde Places o se escribe a mano
+        Container(
+          decoration: _buildLoginStyleDecoration(),
+          child: TextFormField(
+            controller: _addressController,
+            maxLines: 2,
+            style: _valueStyle,
+            decoration: _standardFieldDecoration(
+              labelText: loc.placeAddressLabel,
+              hintText: loc.placeSearchHint,
+              prefixIcon: Icons.place,
+            ).copyWith(
+              suffixIcon: _canOpenLocationInMaps
+                  ? IconButton(
+                      tooltip: loc.openInGoogleMaps,
+                      onPressed: _openLocationInGoogleMaps,
+                      icon: Icon(
+                        Icons.map_outlined,
+                        size: _fieldIconSize,
+                        color: AppColorScheme.color2,
+                      ),
+                    )
+                  : null,
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool get _canOpenWebLink {
+    final raw = _urlController.text.trim();
+    if (raw.isEmpty) return false;
+    final withScheme = raw.contains('://') ? raw : 'https://$raw';
+    final uri = Uri.tryParse(withScheme);
+    return uri != null && uri.hasScheme && uri.host.isNotEmpty;
+  }
+
+  Future<void> _openAccommodationWebLink() async {
+    final raw = _urlController.text.trim();
+    if (raw.isEmpty) return;
+    final withScheme = raw.contains('://') ? raw : 'https://$raw';
+    final uri = Uri.tryParse(withScheme);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<void> _openLocationInGoogleMaps() async {
@@ -467,12 +575,18 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     final screenSize = MediaQuery.sizeOf(context);
     final contentWidth = isMobile ? screenSize.width : null;
     final contentHeight = isMobile ? screenSize.height - 64 : null;
+    // Fondo del panel del form: más claro que el backdrop (111827) para ver márgenes en web.
+    // Mismo color en móvil (pantalla completa). Campos internos siguen en gris más oscuro.
+    const formSurface = _formSurface;
     return Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
-        backgroundColor: const Color(0xFF111827),
+        backgroundColor: formSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
+          side: isMobile
+              ? BorderSide.none
+              : BorderSide(color: Colors.white.withValues(alpha: 0.22), width: 1),
         ),
         insetPadding: isMobile
             ? EdgeInsets.zero
@@ -486,28 +600,38 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // T240 / T226: Barra verde superior con título (UI estándar modales)
+              // T240 / T226: barra superior con título + Borrador/Confirmado
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111827),
+                  color: formSurface,
                   border: Border(
-                    bottom: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+                    bottom: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
                   ),
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(isMobile ? 0 : 18),
                   ),
                 ),
-              child: Text(
-                title,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (_canSaveAccommodation()) ...[
+                      const SizedBox(width: 8),
+                      _buildDraftStatusToggle(isMobile: isMobile),
+                    ],
+                  ],
                 ),
               ),
-            ),
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
@@ -517,211 +641,23 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader(
-                        title: '1. Datos generales',
-                        subtitle: 'Nombre, dirección y tipo de alojamiento',
-                      ),
-                      const SizedBox(height: 10),
-                      // T225: Búsqueda de lugar (Places API) – rellena nombre y dirección
-                      PlaceAutocompleteField(
-                        initialAddress: widget.accommodation?.commonPart?.address,
-                        lodgingOnly: false,
-                        onPlaceSelected: (PlaceDetails details) {
-                          setState(() {
-                            _lastPlaceDetails = details;
-                            _hotelNameController.text = details.displayName;
-                            _addressController.text = details.formattedAddress ?? '';
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      // Nombre del hotel/alojamiento (estética tipo login)
-                      Container(
-                        decoration: _buildLoginStyleDecoration(),
-                        child: TextFormField(
-                          controller: _hotelNameController,
-                          maxLines: 1,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: AppLocalizations.of(context)!.accommodationName,
-                            hintText: AppLocalizations.of(context)!.accommodationNameHint,
-                            labelStyle: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            hintStyle: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.white60,
-                            ),
-                            prefixIcon: Icon(Icons.hotel, color: Colors.white70),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: AppColorScheme.color2,
-                                width: 2.5,
-                              ),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: Colors.red.shade400, width: 1),
-                            ),
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                          ),
-                          validator: (value) {
-                            final v = value?.trim() ?? '';
-                            if (v.isEmpty) return AppLocalizations.of(context)!.accommodationNameRequired;
-                            if (v.length < 2) return AppLocalizations.of(context)!.minCharacters(2);
-                            if (v.length > 100) return AppLocalizations.of(context)!.maxCharacters(100);
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Dirección (visible; se rellena desde la búsqueda o se edita a mano)
-                      Container(
-                        decoration: _buildLoginStyleDecoration(),
-                        child: TextFormField(
-                          controller: _addressController,
-                          maxLines: 2,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: AppLocalizations.of(context)!.placeAddressLabel,
-                            hintText: AppLocalizations.of(context)!.placeSearchHint,
-                            labelStyle: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            hintStyle: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.white60,
-                            ),
-                            prefixIcon: Icon(Icons.place, color: Colors.white70),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: AppColorScheme.color2,
-                                width: 2.5,
-                              ),
-                            ),
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                          ),
-                        ),
-                      ),
-                      _buildLocationDetailsCard(),
-                      const SizedBox(height: 16),
-                      _buildSectionHeader(
-                        title: '2. Información adicional',
-                        subtitle: 'Enlace, descripción y archivos',
-                      ),
-                      const SizedBox(height: 10),
-                      // Enlace web
-                      Container(
-                        decoration: _buildLoginStyleDecoration(),
-                        child: TextFormField(
-                          controller: _urlController,
-                          keyboardType: TextInputType.url,
-                          maxLength: 500,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: AppLocalizations.of(context)!.eventUrlLabel,
-                            hintText: AppLocalizations.of(context)!.eventUrlHint,
-                            labelStyle: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            hintStyle: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.white60,
-                            ),
-                            prefixIcon: Icon(Icons.link, color: Colors.white70),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: AppColorScheme.color2,
-                                width: 2.5,
-                              ),
-                            ),
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Tipo de alojamiento
+                      // Qué / dónde: Places + resumen (o entrada manual) → tipo
+                      _buildLocationSection(),
+                      const SizedBox(height: _fieldGap),
                       Container(
                         decoration: _buildLoginStyleDecoration(),
                         child: DropdownButtonFormField<String>(
                           initialValue: _selectedType,
-                          decoration: InputDecoration(
+                          decoration: _standardFieldDecoration(
                             labelText: AppLocalizations.of(context)!.accommodationType,
-                            labelStyle: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            border: InputBorder.none,
-                            prefixIcon: Icon(Icons.category, color: Colors.white70),
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                            prefixIcon: Icons.category,
                           ),
-                          dropdownColor: const Color(0xFF1F2937),
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          dropdownColor: _fieldSurface,
+                          style: _valueStyle,
                           items: _accommodationTypes.map((type) {
                             return DropdownMenuItem(
                               value: type,
-                              child: Text(
-                                type,
-                                style: GoogleFonts.poppins(color: Colors.white),
-                              ),
+                              child: Text(type, style: _valueStyle),
                             );
                           }).toList(),
                           onChanged: (value) {
@@ -737,195 +673,151 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      // Descripción (estética tipo login)
+                      const SizedBox(height: _fieldGap),
+                      // Cuándo: check-in / check-out (mismo range picker) + noches
+                      Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildStayDateTile(
+                                  label: AppLocalizations.of(context)!.checkIn,
+                                  date: _selectedCheckIn,
+                                  icon: Icons.login,
+                                ),
+                              ),
+                              const SizedBox(width: _fieldGap),
+                              Expanded(
+                                child: _buildStayDateTile(
+                                  label: AppLocalizations.of(context)!.checkOut,
+                                  date: _selectedCheckOut,
+                                  icon: Icons.logout,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: _buildLoginStyleDecoration(),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.nights_stay,
+                                  size: _fieldIconSize,
+                                  color: AppColorScheme.color2,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  AppLocalizations.of(context)!.nights(
+                                    _calculateNights(
+                                      _selectedCheckIn,
+                                      _selectedCheckOut,
+                                    ),
+                                  ),
+                                  style: _valueStyle,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: _fieldGap),
+                      // Coste
+                      if (_planCurrency != null) ...[
+                        _buildCostFieldWithCurrency(),
+                        const SizedBox(height: _fieldGap),
+                      ],
+                      // Extras: enlace → descripción → adjuntos
+                      Container(
+                        decoration: _buildLoginStyleDecoration(),
+                        child: TextFormField(
+                          controller: _urlController,
+                          keyboardType: TextInputType.url,
+                          maxLength: 500,
+                          style: _valueStyle,
+                          onChanged: (_) => setState(() {}),
+                          decoration: _standardFieldDecoration(
+                            labelText: AppLocalizations.of(context)!.eventUrlLabel,
+                            hintText: AppLocalizations.of(context)!.eventUrlHint,
+                            prefixIcon: Icons.link,
+                            counterText: '',
+                          ).copyWith(
+                            suffixIcon: _canOpenWebLink
+                                ? IconButton(
+                                    tooltip:
+                                        AppLocalizations.of(context)!.openWebLink,
+                                    onPressed: _openAccommodationWebLink,
+                                    icon: Icon(
+                                      Icons.open_in_new,
+                                      size: _fieldIconSize,
+                                      color: AppColorScheme.color2,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: _fieldGap),
                       Container(
                         decoration: _buildLoginStyleDecoration(),
                         child: TextFormField(
                           controller: _descriptionController,
-                          maxLines: 3,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: AppLocalizations.of(context)!.descriptionOptional,
-                            hintText: AppLocalizations.of(context)!.additionalNotes,
-                            labelStyle: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            hintStyle: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.white60,
-                            ),
-                            prefixIcon: Icon(Icons.notes, color: Colors.white70),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(
-                                color: AppColorScheme.color2,
-                                width: 2.5,
-                              ),
-                            ),
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                          minLines: 3,
+                          maxLines: 8,
+                          keyboardType: TextInputType.multiline,
+                          textCapitalization: TextCapitalization.sentences,
+                          style: _valueStyle,
+                          decoration: _standardFieldDecoration(
+                            labelText:
+                                AppLocalizations.of(context)!.accommodationNotes,
+                            hintText: AppLocalizations.of(context)!
+                                .accommodationNotesHint,
+                            prefixIcon: Icons.notes,
+                          ).copyWith(
+                            alignLabelWithHint: true,
                           ),
                           validator: (value) {
                             final v = value?.trim() ?? '';
                             if (v.isEmpty) return null;
-                            if (v.length > 1000) return AppLocalizations.of(context)!.maxCharacters(1000);
+                            if (v.length > 1000) {
+                              return AppLocalizations.of(context)!
+                                  .maxCharacters(1000);
+                            }
                             return null;
                           },
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: _fieldGap),
                       EntityAttachmentsSection(
-                        title: AppLocalizations.of(context)!.entityAttachmentsAccommodationTitle,
+                        title: AppLocalizations.of(context)!
+                            .entityAttachmentsAccommodationTitle,
                         files: _accommodationDocuments,
                         canManage: _canSaveAccommodation(),
                         isUploading: _uploadingAccAttachment,
-                        onUpload: _canSaveAccommodation() ? _pickAccommodationAttachment : null,
+                        onUpload: _canSaveAccommodation()
+                            ? _pickAccommodationAttachment
+                            : null,
                         onDelete: _deleteAccommodationAttachment,
                       ),
-                      const SizedBox(height: 16),
-                      _buildSectionHeader(
-                        title: '3. Coste y estancia',
-                        subtitle: 'Importe, fechas y duración',
-                      ),
-                      const SizedBox(height: 10),
-                      // Coste del alojamiento (T101/T153)
-                      if (_planCurrency != null) _buildCostFieldWithCurrency(),
-              const SizedBox(height: 16),
-              
+                      const SizedBox(height: _fieldGap),
+                      // Participantes (separado del color)
                       _buildSectionCard(
-                        child: Column(
-                          children: [
-                            // Check-in (estética oscura)
-                            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.login, color: Colors.white70),
-              title: Text(
-                AppLocalizations.of(context)!.checkIn,
-                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
-              ),
-              subtitle: Text(
-                '${_selectedCheckIn.day}/${_selectedCheckIn.month}/${_selectedCheckIn.year}',
-                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
-              ),
-              onTap: _selectCheckInDate,
-            ),
-            // Check-out (estética oscura)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.logout, color: Colors.white70),
-              title: Text(
-                AppLocalizations.of(context)!.checkOut,
-                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
-              ),
-              subtitle: Text(
-                '${_selectedCheckOut.day}/${_selectedCheckOut.month}/${_selectedCheckOut.year}',
-                style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
-              ),
-              onTap: _selectCheckOutDate,
-            ),
-            const SizedBox(height: 8),
-            // Duración (estética tipo login)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: _buildLoginStyleDecoration(),
-              child: Row(
-                children: [
-                  Icon(Icons.nights_stay, size: 20, color: AppColorScheme.color2),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppLocalizations.of(context)!.nights(
-                      _calculateNights(_selectedCheckIn, _selectedCheckOut),
-                    ),
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-                          ],
-                        ),
+                        child: _buildParticipantSelection(),
                       ),
-            const SizedBox(height: 16),
-            _buildSectionHeader(
-              title: '4. Apariencia y participación',
-              subtitle: 'Color y personas asignadas al alojamiento',
-            ),
-            const SizedBox(height: 10),
-            _buildSectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.color,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
+                      const SizedBox(height: _fieldGap),
+                      // Color compacto: muestra el seleccionado; al tocar abre selector
+                      _buildColorSelectorRow(),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: _accommodationColors.map((colorName) {
-                      final color = _getColorFromName(colorName);
-                      final isSelected = _selectedColor == colorName;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedColor = colorName;
-                          });
-                        },
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: isSelected
-                                ? Border.all(color: AppColorScheme.color2, width: 2.5)
-                                : Border.all(
-                                    color: Colors.white.withValues(alpha: 0.35),
-                                    width: 1,
-                                  ),
-                          ),
-                          child: isSelected
-                              ? const Icon(Icons.check, color: Colors.white, size: 18)
-                              : null,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 14),
-                  _buildParticipantSelection(),
-                ],
-              ),
-            ),
-                  ],
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
         ),
       actions: [
         if (widget.accommodation != null)
@@ -933,14 +825,22 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             onPressed: _canDeleteAccommodation() ? () => _confirmDelete() : null,
             child: Text(
               'Eliminar',
-              style: GoogleFonts.poppins(color: Colors.red.shade400, fontWeight: FontWeight.w500),
+              style: GoogleFonts.poppins(
+                color: Colors.red.shade400,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
             ),
           ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             AppLocalizations.of(context)!.cancel,
-            style: GoogleFonts.poppins(color: Colors.white70),
+            style: GoogleFonts.poppins(
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
           ),
         ),
         ElevatedButton(
@@ -949,13 +849,18 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             backgroundColor: AppColorScheme.color2,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(_fieldRadius),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           ),
           child: Text(
-            widget.accommodation == null ? AppLocalizations.of(context)!.create : AppLocalizations.of(context)!.save,
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            widget.accommodation == null
+                ? AppLocalizations.of(context)!.create
+                : AppLocalizations.of(context)!.save,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
           ),
         ),
       ],
@@ -963,42 +868,333 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     );
   }
 
-  Future<void> _selectCheckInDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedCheckIn,
-      firstDate: widget.planStartDate,
-      lastDate: widget.planEndDate ?? widget.planStartDate.add(const Duration(days: 365)),
+  Widget _buildDraftStatusToggle({required bool isMobile}) {
+    final loc = AppLocalizations.of(context)!;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white38, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDraftStatusOption(
+            label: loc.eventStatusDraft,
+            selected: _isDraft,
+            isMobile: isMobile,
+            onTap: () => setState(() => _isDraft = true),
+          ),
+          _buildDraftStatusOption(
+            label: loc.eventStatusConfirmed,
+            selected: !_isDraft,
+            isMobile: isMobile,
+            onTap: () => setState(() => _isDraft = false),
+          ),
+        ],
+      ),
     );
-    
-    if (!mounted) return;
-    
-    if (picked != null && picked != _selectedCheckIn) {
-      setState(() {
-        _selectedCheckIn = picked;
-        // Asegurar que check-out es después de check-in
-        if (_selectedCheckOut.isBefore(_selectedCheckIn) || _selectedCheckOut.isAtSameMomentAs(_selectedCheckIn)) {
-          _selectedCheckOut = _selectedCheckIn.add(const Duration(days: 1));
-        }
-      });
-    }
   }
 
-  Future<void> _selectCheckOutDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedCheckOut,
-      firstDate: _selectedCheckIn.add(const Duration(days: 1)),
-      lastDate: widget.planEndDate ?? widget.planStartDate.add(const Duration(days: 365)),
+  Widget _buildDraftStatusOption({
+    required String label,
+    required bool selected,
+    required bool isMobile,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(9),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 8 : 10,
+          vertical: isMobile ? 6 : 7,
+        ),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColorScheme.color2.withValues(alpha: 0.85)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: isMobile ? 11 : 12,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: Colors.white.withValues(alpha: selected ? 1 : 0.75),
+          ),
+        ),
+      ),
     );
-    
-    if (!mounted) return;
-    
-    if (picked != null && picked != _selectedCheckOut) {
-      setState(() {
-        _selectedCheckOut = picked;
-      });
+  }
+
+  Widget _buildStayDateTile({
+    required String label,
+    required DateTime date,
+    required IconData icon,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _selectStayDateRange,
+        borderRadius: BorderRadius.circular(_fieldRadius),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: _buildLoginStyleDecoration(),
+          child: Row(
+            children: [
+              _fieldIcon(icon),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: _labelStyle),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${date.day}/${date.month}/${date.year}',
+                      style: _valueStyle,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Fondo del panel del form (web/móvil); mismo tono en el date range picker.
+  static const Color _formSurface = Color(0xFF374151);
+
+  Future<void> _selectStayDateRange() async {
+    final loc = AppLocalizations.of(context)!;
+    final firstDate = DateTime(
+      widget.planStartDate.year,
+      widget.planStartDate.month,
+      widget.planStartDate.day,
+    );
+    final lastDate = widget.planEndDate != null
+        ? DateTime(
+            widget.planEndDate!.year,
+            widget.planEndDate!.month,
+            widget.planEndDate!.day,
+          )
+        : firstDate.add(const Duration(days: 365));
+
+    var start = DateTime(_selectedCheckIn.year, _selectedCheckIn.month, _selectedCheckIn.day);
+    var end = DateTime(_selectedCheckOut.year, _selectedCheckOut.month, _selectedCheckOut.day);
+    if (start.isBefore(firstDate)) start = firstDate;
+    if (end.isAfter(lastDate)) end = lastDate;
+    if (!end.isAfter(start)) {
+      end = start.add(const Duration(days: 1));
+      if (end.isAfter(lastDate)) end = lastDate;
     }
+
+    final rangeTheme = Theme.of(context).copyWith(
+      colorScheme: Theme.of(context).colorScheme.copyWith(
+            primary: AppColorScheme.color2,
+            onPrimary: Colors.white,
+            surface: _formSurface,
+            onSurface: Colors.white,
+          ),
+      scaffoldBackgroundColor: _formSurface,
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: _formSurface,
+        rangePickerBackgroundColor: _formSurface,
+        rangePickerHeaderBackgroundColor: _formSurface,
+        rangePickerHeaderForegroundColor: Colors.white,
+        rangePickerElevation: 8,
+        rangePickerSurfaceTintColor: Colors.transparent,
+        rangePickerShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+        ),
+        headerBackgroundColor: _formSurface,
+        headerForegroundColor: Colors.white,
+        rangeSelectionBackgroundColor: AppColorScheme.color2.withValues(alpha: 0.28),
+        rangeSelectionOverlayColor: WidgetStateProperty.all(
+          AppColorScheme.color2.withValues(alpha: 0.12),
+        ),
+        todayForegroundColor: WidgetStateProperty.all(AppColorScheme.color2),
+        todayBorder: BorderSide(color: AppColorScheme.color2),
+        dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          return Colors.white;
+        }),
+        dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return AppColorScheme.color2;
+          return null;
+        }),
+        cancelButtonStyle: TextButton.styleFrom(
+          foregroundColor: Colors.white70,
+          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+        ),
+        confirmButtonStyle: TextButton.styleFrom(
+          foregroundColor: AppColorScheme.color2,
+          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: _formSurface,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColorScheme.color2,
+          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      initialDateRange: DateTimeRange(start: start, end: end),
+      helpText: loc.accommodationStayDatesHelp,
+      cancelText: loc.cancel,
+      confirmText: loc.accept,
+      saveText: loc.accept,
+      builder: (context, child) {
+        // Material fuerza el range calendar a tamaño de pantalla; limitamos
+        // MediaQuery para que se comporte como modal centrado.
+        final screen = MediaQuery.sizeOf(context);
+        final width = (screen.width - 48).clamp(280.0, 420.0);
+        final height = (screen.height - 48).clamp(420.0, 560.0);
+        final modalSize = Size(width, height);
+        return Theme(
+          data: rangeTheme,
+          child: Center(
+            child: SizedBox(
+              width: modalSize.width,
+              height: modalSize.height,
+              child: MediaQuery(
+                data: MediaQuery.of(context).copyWith(size: modalSize),
+                child: child!,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || picked == null) return;
+
+    setState(() {
+      _selectedCheckIn = DateTime(picked.start.year, picked.start.month, picked.start.day);
+      var checkOut = DateTime(picked.end.year, picked.end.month, picked.end.day);
+      if (!checkOut.isAfter(_selectedCheckIn)) {
+        checkOut = _selectedCheckIn.add(const Duration(days: 1));
+      }
+      _selectedCheckOut = checkOut;
+    });
+  }
+
+  Widget _buildColorSelectorRow() {
+    final loc = AppLocalizations.of(context)!;
+    final selected = _getColorFromName(_selectedColor);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _showColorPicker,
+        borderRadius: BorderRadius.circular(_fieldRadius),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: _buildLoginStyleDecoration(),
+          child: Row(
+            children: [
+              _fieldIcon(Icons.palette_outlined),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(loc.color, style: _valueStyle),
+              ),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: selected,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.45),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.expand_more, size: _fieldIconSize, color: Colors.white54),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showColorPicker() async {
+    final loc = AppLocalizations.of(context)!;
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return Theme(
+          data: AppTheme.darkTheme,
+          child: AlertDialog(
+            backgroundColor: _formSurface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+            ),
+            title: Text(
+              loc.color,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            content: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _accommodationColors.map((colorName) {
+                final color = _getColorFromName(colorName);
+                final isSelected = _selectedColor == colorName;
+                return GestureDetector(
+                  onTap: () => Navigator.of(ctx).pop(colorName),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? AppColorScheme.color2 : Colors.white38,
+                        width: isSelected ? 2.5 : 1,
+                      ),
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, color: Colors.white, size: 18)
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  loc.cancel,
+                  style: GoogleFonts.poppins(color: Colors.white70),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _selectedColor = picked);
   }
 
   Color _getColorFromName(String colorName) {
@@ -1024,21 +1220,11 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Checkbox principal "Este alojamiento es para todos" (igual que eventos)
                 CheckboxListTile(
                   title: Text(
-                    'Este alojamiento es para todos los participantes del plan',
-                    style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
+                    'Para todos los participantes',
+                    style: _valueStyle,
                   ),
-                  subtitle: _isForAllParticipants
-                      ? Text(
-                          'Todos los participantes estarán incluidos automáticamente',
-                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
-                        )
-                      : Text(
-                          'Selecciona participantes específicos abajo',
-                          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
-                        ),
                   value: _isForAllParticipants,
                   onChanged: (value) {
                     setState(() {
@@ -1046,34 +1232,27 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                       if (_isForAllParticipants) {
                         _selectedParticipantTrackIds.clear();
                       } else {
-                        if (currentUserId != null && !_selectedParticipantTrackIds.contains(currentUserId)) {
+                        if (currentUserId != null &&
+                            !_selectedParticipantTrackIds.contains(currentUserId)) {
                           _selectedParticipantTrackIds.add(currentUserId);
                         }
                       }
                     });
                   },
                   activeColor: AppColorScheme.color2,
+                  controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
                 ),
-                const SizedBox(height: 8),
-                
-                // Lista de participantes (solo visible si checkbox principal está desmarcado)
                 if (!_isForAllParticipants) ...[
-                  const Text(
-                    'Seleccionar participantes:',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                   const SizedBox(height: 8),
-                  
-                  // Lista de FilterChips de participantes
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: participations.map((participation) {
-                      final isSelected = _selectedParticipantTrackIds.contains(participation.userId);
+                      final isSelected =
+                          _selectedParticipantTrackIds.contains(participation.userId);
                       return FutureBuilder<String>(
                         future: _getUserDisplayName(participation.userId),
                         builder: (context, snapshot) {
@@ -1084,18 +1263,23 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                             onSelected: (selected) {
                               setState(() {
                                 if (selected) {
-                                  if (!_selectedParticipantTrackIds.contains(participation.userId)) {
-                                    _selectedParticipantTrackIds.add(participation.userId);
+                                  if (!_selectedParticipantTrackIds
+                                      .contains(participation.userId)) {
+                                    _selectedParticipantTrackIds
+                                        .add(participation.userId);
                                   }
                                 } else {
-                                  // No permitir deseleccionar si es el único seleccionado
                                   if (_selectedParticipantTrackIds.length > 1) {
-                                    _selectedParticipantTrackIds.remove(participation.userId);
+                                    _selectedParticipantTrackIds
+                                        .remove(participation.userId);
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Debe haber al menos un participante seleccionado'),
-                                        duration: Duration(seconds: 2),
+                                      SnackBar(
+                                        content: Text(
+                                          'Elige al menos un participante',
+                                          style: GoogleFonts.poppins(),
+                                        ),
+                                        duration: const Duration(seconds: 2),
                                       ),
                                     );
                                   }
@@ -1114,22 +1298,20 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                             checkmarkColor: Colors.white,
                             labelStyle: GoogleFonts.poppins(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 13,
                             ),
                           );
                         },
                       );
                     }).toList(),
                   ),
-                  
-                  // Mensaje de validación
                   if (_selectedParticipantTrackIds.isEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
-                        'Debes seleccionar al menos un participante',
-                        style: TextStyle(
-                          color: Colors.red.shade700,
+                        'Elige al menos un participante',
+                        style: GoogleFonts.poppins(
+                          color: Colors.red.shade400,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -1157,75 +1339,106 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   /// T153: Construir campo de coste con selector de moneda y conversión automática (estética tipo login)
   Widget _buildCostFieldWithCurrency() {
     final exchangeRateService = ExchangeRateService();
+    final currencyValue = _costCurrency ?? _planCurrency ?? 'EUR';
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _buildLoginStyleDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DropdownButtonFormField<String>(
-            initialValue: _costCurrency ?? _planCurrency ?? 'EUR',
-            decoration: InputDecoration(
-              labelText: AppLocalizations.of(context)!.costCurrency,
-              labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
-              prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'), color: Colors.white70),
-              border: InputBorder.none,
-              filled: true,
-              fillColor: Colors.transparent,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            ),
-            dropdownColor: const Color(0xFF1F2937),
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
-            items: Currency.supportedCurrencies.map((currency) {
-              return DropdownMenuItem<String>(
-                value: currency.code,
-                child: Text('${currency.code} - ${currency.symbol} ${currency.name}', style: GoogleFonts.poppins(color: Colors.white)),
-              );
-            }).toList(),
-            onChanged: (value) async {
-              if (value == null) return;
-              setState(() => _costCurrency = value);
-              await _convertCostToPlanCurrency(exchangeRateService);
-            },
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _costController,
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500),
-            decoration: InputDecoration(
-              labelText: AppLocalizations.of(context)!.costOptional,
-              hintText: AppLocalizations.of(context)!.costHint,
-              labelStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
-              hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.white60),
-              prefixIcon: Icon(_getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'), color: Colors.white70),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColorScheme.color2, width: 2.5),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 2,
+                child: Container(
+                  decoration: _buildLoginStyleDecoration(),
+                  alignment: Alignment.center,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: currencyValue,
+                    isExpanded: true,
+                    decoration: _standardFieldDecoration(
+                      labelText: AppLocalizations.of(context)!.costCurrency,
+                      prefixIcon: _getCurrencyIcon(currencyValue),
+                    ),
+                    dropdownColor: _fieldSurface,
+                    style: _valueStyle,
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.white70,
+                      size: 22,
+                    ),
+                    selectedItemBuilder: (context) {
+                      return Currency.supportedCurrencies.map((currency) {
+                        return Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            currency.code,
+                            overflow: TextOverflow.ellipsis,
+                            style: _valueStyle,
+                          ),
+                        );
+                      }).toList();
+                    },
+                    items: Currency.supportedCurrencies.map((currency) {
+                      return DropdownMenuItem<String>(
+                        value: currency.code,
+                        child: Text(
+                          '${currency.code} - ${currency.symbol} ${currency.name}',
+                          style: _valueStyle,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) async {
+                      if (value == null) return;
+                      setState(() => _costCurrency = value);
+                      await _convertCostToPlanCurrency(exchangeRateService);
+                    },
+                  ),
+                ),
               ),
-              filled: true,
-              fillColor: Colors.transparent,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            ),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (value) async {
-              await _convertCostToPlanCurrency(exchangeRateService);
-            },
-            validator: (value) {
-              final v = value?.trim() ?? '';
-              if (v.isEmpty) return null;
-              final doubleValue = double.tryParse(v.replaceAll(',', '.'));
-              if (doubleValue == null) return AppLocalizations.of(context)!.mustBeValidNumber;
-              if (doubleValue < 0) return AppLocalizations.of(context)!.cannotBeNegative;
-              if (doubleValue > 1000000) return AppLocalizations.of(context)!.maxAmount;
-              return null;
-            },
+              const SizedBox(width: _fieldGap),
+              Expanded(
+                flex: 3,
+                child: Container(
+                  decoration: _buildLoginStyleDecoration(),
+                  alignment: Alignment.center,
+                  child: TextFormField(
+                    controller: _costController,
+                    style: _valueStyle,
+                    decoration: _standardFieldDecoration(
+                      labelText: AppLocalizations.of(context)!.cost,
+                      hintText: AppLocalizations.of(context)!.costHint,
+                      prefixIcon: Icons.payments_outlined,
+                    ),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (value) async {
+                      await _convertCostToPlanCurrency(exchangeRateService);
+                    },
+                    validator: (value) {
+                      final v = value?.trim() ?? '';
+                      if (v.isEmpty) return null;
+                      final doubleValue =
+                          double.tryParse(v.replaceAll(',', '.'));
+                      if (doubleValue == null) {
+                        return AppLocalizations.of(context)!.mustBeValidNumber;
+                      }
+                      if (doubleValue < 0) {
+                        return AppLocalizations.of(context)!.cannotBeNegative;
+                      }
+                      if (doubleValue > 1000000) {
+                        return AppLocalizations.of(context)!.maxAmount;
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
-          // Mostrar conversión si la moneda local es diferente a la del plan
-        if (_costCurrency != null && 
-            _planCurrency != null && 
+        ),
+        if (_costCurrency != null &&
+            _planCurrency != null &&
             _costCurrency != _planCurrency &&
             _costController.text.trim().isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -1241,80 +1454,89 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                       const SizedBox(width: 8),
-                      Text(AppLocalizations.of(context)!.calculating, style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
+                      Text(
+                        AppLocalizations.of(context)!.calculating,
+                        style: _captionStyle,
+                      ),
                     ],
                   ),
                 );
               }
-              
+
               if (snapshot.hasData && snapshot.data != null) {
                 final convertedAmount = snapshot.data!;
                 return Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColorScheme.color2.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: AppColorScheme.color2.withValues(alpha: 0.5)),
+                    borderRadius: BorderRadius.circular(_fieldRadius),
+                    border: Border.all(
+                      color: AppColorScheme.color2.withValues(alpha: 0.5),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.info_outline, size: 16, color: AppColorScheme.color2),
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: AppColorScheme.color2,
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            AppLocalizations.of(context)!.convertedTo(_planCurrency!),
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColorScheme.color2,
-                            ),
+                            AppLocalizations.of(context)!
+                                .convertedTo(_planCurrency!),
+                            style: _linkStyle.copyWith(fontSize: 12),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        CurrencyFormatterService.formatAmount(convertedAmount, _planCurrency!),
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                        CurrencyFormatterService.formatAmount(
+                          convertedAmount,
+                          _planCurrency!,
                         ),
+                        style: _valueStyle.copyWith(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '⚠️ Los tipos de cambio son orientativos. El valor real será el aplicado por tu banco o tarjeta de crédito al momento del pago.',
-                        style: GoogleFonts.poppins(
+                        style: _captionStyle.copyWith(
                           fontSize: 10,
-                          color: Colors.white70,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
                     ],
                   ),
                 );
-        }
-              
+              }
+
               if (snapshot.hasError) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Text(
                     AppLocalizations.of(context)!.conversionError,
-                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.orange.shade400),
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: Colors.orange.shade400,
+                    ),
                   ),
                 );
               }
-              
+
               return const SizedBox.shrink();
             },
           ),
         ],
       ],
-      ),
     );
   }
 
@@ -1334,7 +1556,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     }
   }
 
-  /// T153: Obtener coste convertido a la moneda del plan
+  /// T153: Obtener coste convertido a la moneda del plan (redondeado a decimales de la moneda).
   Future<double?> _getConvertedCost() async {
     if (_costController.text.trim().isEmpty) return null;
     
@@ -1342,19 +1564,33 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     if (localAmount == null) return null;
     
     if (_costCurrency == null || _planCurrency == null || _costCurrency == _planCurrency) {
-      return localAmount;
+      return _roundCost(localAmount, _planCurrency ?? _costCurrency);
     }
     
     final exchangeRateService = ExchangeRateService();
     try {
-      return await exchangeRateService.convertAmount(
+      final converted = await exchangeRateService.convertAmount(
         localAmount,
         _costCurrency!,
         _planCurrency!,
       );
+      if (converted == null) return _roundCost(localAmount, _planCurrency);
+      return _roundCost(converted, _planCurrency);
     } catch (e) {
-      return localAmount;
+      return _roundCost(localAmount, _planCurrency);
     }
+  }
+
+  String _formatCostForInput(double? amount) {
+    if (amount == null) return '';
+    final currencyCode = _planCurrency ?? _costCurrency ?? 'EUR';
+    final digits = Currency.fromCodeOrEur(currencyCode).decimalDigits;
+    return amount.toStringAsFixed(digits);
+  }
+
+  double _roundCost(double amount, String? currencyCode) {
+    final digits = Currency.fromCodeOrEur(currencyCode ?? 'EUR').decimalDigits;
+    return double.parse(amount.toStringAsFixed(digits));
   }
 
   /// T153: Convertir coste a moneda del plan automáticamente
@@ -1539,6 +1775,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       participantIds: _isForAllParticipants ? [] : selectedParticipantIds,
       isForAllParticipants: _isForAllParticipants,
       extraData: baseExtra.isEmpty ? null : baseExtra,
+      isDraft: _isDraft,
     );
 
     final accommodation = Accommodation(
@@ -1557,6 +1794,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       updatedAt: DateTime.now(),
       commonPart: commonPart,
       documents: _accommodationDocuments.isEmpty ? null : List<EventDocument>.from(_accommodationDocuments),
+      isDraft: _isDraft,
     );
 
     if (widget.onSaved != null) {

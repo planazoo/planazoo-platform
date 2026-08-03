@@ -6,10 +6,24 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../models/plan.dart';
 import '../models/plan_invitation.dart';
 import 'plan_participation_service.dart';
+import 'plan_state_permissions.dart';
 import '../../../auth/domain/services/user_service.dart';
 import '../../../notifications/domain/services/notification_helper.dart';
+import '../../../notifications/domain/services/notification_service.dart';
+
+/// Resultado de aceptar/rechazar invitación (mensaje listo para UI).
+class InvitationRespondResult {
+  final bool success;
+  final String message;
+
+  const InvitationRespondResult({
+    required this.success,
+    required this.message,
+  });
+}
 
 /// Servicio para gestionar invitaciones a planes por email (T104)
 /// 
@@ -20,6 +34,7 @@ class InvitationService {
   static const String _collectionName = 'plan_invitations';
   final PlanParticipationService _participationService = PlanParticipationService();
   final UserService _userService = UserService();
+  final NotificationService _notificationService = NotificationService();
 
   /// Genera un token único para una invitación
   String _generateToken() {
@@ -50,21 +65,43 @@ class InvitationService {
       // para que aparezca en la lista de participantes y reciba notificación in-app.
       final existingUser = await _userService.getUserByEmail(normalizedEmail);
       if (existingUser != null) {
-        final isAlreadyParticipant = await _participationService.isUserParticipant(planId, existingUser.id);
-        if (isAlreadyParticipant) {
+        final existingParticipation =
+            await _participationService.getParticipation(planId, existingUser.id);
+        if (existingParticipation != null &&
+            existingParticipation.isActive &&
+            existingParticipation.status == 'accepted') {
           LoggerService.warning(
             'User $normalizedEmail already participates in plan $planId',
           );
           return null;
         }
-        // Usuario registrado pero no participante: invitación directa (participación pending)
-        final participationId = await _participationService.createParticipation(
-          planId: planId,
-          userId: existingUser.id,
-          role: role,
-          invitedBy: invitedBy,
-          autoAccept: false,
-        );
+
+        // Usuario registrado: participación pending (nueva o ya existente sin notificación).
+        String? participationId = existingParticipation?.id;
+        if (participationId == null ||
+            existingParticipation?.isActive != true ||
+            existingParticipation?.status != 'pending') {
+          participationId = await _participationService.createParticipation(
+            planId: planId,
+            userId: existingUser.id,
+            role: role,
+            invitedBy: invitedBy,
+            autoAccept: false,
+          );
+        } else if (invitedBy != null &&
+            existingParticipation!.invitedBy != invitedBy &&
+            participationId != null) {
+          // Alinear invitedBy con quien reenvía (la CF de push lo exige).
+          try {
+            await _firestore.collection('plan_participations').doc(participationId).update({
+              'invitedBy': invitedBy,
+            });
+          } catch (e) {
+            LoggerService.warning(
+              'Could not update invitedBy on pending participation $participationId: $e',
+            );
+          }
+        }
         if (participationId != null) {
           String? inviterName;
           if (invitedBy != null) {
@@ -249,20 +286,57 @@ class InvitationService {
     }
   }
 
+  Future<void> _cleanupInviteeInvitationNotifications(String userId, String planId) async {
+    await _notificationService.deleteInvitationNotificationsForPlan(
+      userId: userId,
+      planId: planId,
+    );
+  }
+
+  /// Si el plan no admite altas, limpia avisos y marca participación expired.
+  Future<InvitationRespondResult?> _blockIfPlanNotJoinable({
+    required String planId,
+    required String userId,
+  }) async {
+    final planDoc = await _firestore.collection('plans').doc(planId).get();
+    if (!planDoc.exists) {
+      await _participationService.expirePendingInvitation(planId, userId);
+      await _cleanupInviteeInvitationNotifications(userId, planId);
+      return const InvitationRespondResult(
+        success: false,
+        message: 'Esta invitación ya no está disponible',
+      );
+    }
+    final plan = Plan.fromFirestore(planDoc);
+    if (PlanStatePermissions.canAddParticipants(plan)) {
+      return null;
+    }
+    await _participationService.expirePendingInvitation(planId, userId);
+    await _cleanupInviteeInvitationNotifications(userId, planId);
+    final state = plan.state ?? 'planificando';
+    final message = switch (state) {
+      'en_curso' => 'El plan ya ha empezado; ya no puedes unirte',
+      'finalizado' => 'Este plan ya ha terminado',
+      'cancelado' => 'Este plan fue cancelado',
+      _ => 'Ya no puedes unirte a este plan',
+    };
+    return InvitationRespondResult(success: false, message: message);
+  }
+
   /// Aceptar invitación directamente por planId y userId (sin token)
-  /// 
-  /// Útil cuando el usuario está autenticado y el email coincide con la invitación.
-  /// Actualiza tanto la participación como el estado de la invitación.
-  Future<bool> acceptInvitationByPlanId(String planId, String userId) async {
+  Future<InvitationRespondResult> acceptInvitationByPlanId(String planId, String userId) async {
     try {
-      // Obtener el email del usuario
       final user = await _userService.getUser(userId);
       if (user == null || user.email == null) {
-        LoggerService.warning('User not found or has no email: $userId');
-        return false;
+        return const InvitationRespondResult(
+          success: false,
+          message: 'Error: usuario no encontrado',
+        );
       }
 
-      // Buscar la invitación pendiente para este plan y email
+      final blocked = await _blockIfPlanNotJoinable(planId: planId, userId: userId);
+      if (blocked != null) return blocked;
+
       final normalizedEmail = user.email!.toLowerCase().trim();
       final querySnapshot = await _firestore
           .collection(_collectionName)
@@ -273,28 +347,64 @@ class InvitationService {
           .get();
 
       if (querySnapshot.docs.isEmpty) {
-        LoggerService.warning('No pending invitation found for plan: $planId, email: $normalizedEmail');
-        return false;
+        final ok = await _participationService.acceptInvitation(planId, userId);
+        if (ok) {
+          final respondedDisplay =
+              user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
+          final part = await _participationService.getParticipation(planId, userId);
+          await NotificationHelper().notifyInvitationResponded(
+            inviterUserId: part?.invitedBy,
+            planId: planId,
+            respondedUserDisplay: respondedDisplay,
+            accepted: true,
+          );
+          await _cleanupInviteeInvitationNotifications(userId, planId);
+          return const InvitationRespondResult(
+            success: true,
+            message: 'Has aceptado la invitación',
+          );
+        }
+        await _cleanupInviteeInvitationNotifications(userId, planId);
+        return const InvitationRespondResult(
+          success: false,
+          message: 'Esta invitación ya no está pendiente',
+        );
       }
 
       final invitationDoc = querySnapshot.docs.first;
       final invitation = PlanInvitation.fromFirestore(invitationDoc);
 
-      // Crear o actualizar la participación
+      if (invitation.isExpired) {
+        await invitationDoc.reference.update({
+          'status': 'expired',
+          'respondedAt': Timestamp.fromDate(DateTime.now()),
+        });
+        await _participationService.expirePendingInvitation(planId, userId);
+        await _cleanupInviteeInvitationNotifications(userId, planId);
+        return const InvitationRespondResult(
+          success: false,
+          message: 'Esta invitación ha caducado',
+        );
+      }
+
       final participationId = await _participationService.createParticipation(
         planId: planId,
         userId: userId,
         role: invitation.role ?? 'participant',
         invitedBy: invitation.invitedBy,
-        autoAccept: true, // Aceptar directamente
+        autoAccept: true,
       );
 
       if (participationId == null) {
-        LoggerService.warning('Failed to create participation for plan: $planId, userId: $userId');
-        return false;
+        return const InvitationRespondResult(
+          success: false,
+          message: 'No se pudo aceptar la invitación',
+        );
       }
 
-      // Marcar invitación como aceptada vía Cloud Function (mismo flujo que por token)
+      // Si ya había pending, createParticipation puede no haber pasado a accepted.
+      await _participationService.acceptInvitation(planId, userId);
+
       final token = invitation.token;
       if (token.isNotEmpty) {
         if (kDebugMode) {
@@ -327,24 +437,34 @@ class InvitationService {
         respondedUserDisplay: respondedDisplay,
         accepted: true,
       );
-      return true;
+      await _cleanupInviteeInvitationNotifications(userId, planId);
+      return const InvitationRespondResult(
+        success: true,
+        message: 'Has aceptado la invitación',
+      );
     } catch (e) {
       LoggerService.error(
         'Error accepting invitation by planId: $planId, userId: $userId',
         context: 'INVITATION_SERVICE',
         error: e,
       );
-      return false;
+      return InvitationRespondResult(
+        success: false,
+        message: 'Error al aceptar la invitación',
+      );
     }
   }
 
   /// Rechazar invitación directamente por planId y userId (sin token)
-  ///
-  /// El email del usuario debe coincidir con el de la invitación pendiente.
-  Future<bool> rejectInvitationByPlanId(String planId, String userId) async {
+  Future<InvitationRespondResult> rejectInvitationByPlanId(String planId, String userId) async {
     try {
       final user = await _userService.getUser(userId);
-      if (user == null || user.email == null) return false;
+      if (user == null || user.email == null) {
+        return const InvitationRespondResult(
+          success: false,
+          message: 'Error: usuario no encontrado',
+        );
+      }
 
       final normalizedEmail = user.email!.toLowerCase().trim();
       final querySnapshot = await _firestore
@@ -355,31 +475,67 @@ class InvitationService {
           .limit(1)
           .get();
 
-      if (querySnapshot.docs.isEmpty) return false;
+      String? inviterUserId;
+
+      if (querySnapshot.docs.isEmpty) {
+        final ok = await _participationService.rejectInvitation(planId, userId);
+        if (ok) {
+          final respondedDisplay =
+              user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
+          final part = await _participationService.getParticipation(planId, userId);
+          inviterUserId = part?.invitedBy;
+          await NotificationHelper().notifyInvitationResponded(
+            inviterUserId: inviterUserId,
+            planId: planId,
+            respondedUserDisplay: respondedDisplay,
+            accepted: false,
+          );
+          await _cleanupInviteeInvitationNotifications(userId, planId);
+          return const InvitationRespondResult(
+            success: true,
+            message: 'Has rechazado la invitación',
+          );
+        }
+        await _cleanupInviteeInvitationNotifications(userId, planId);
+        return const InvitationRespondResult(
+          success: false,
+          message: 'Esta invitación ya no está pendiente',
+        );
+      }
 
       final doc = querySnapshot.docs.first;
       final inv = PlanInvitation.fromFirestore(doc);
+      inviterUserId = inv.invitedBy;
       await doc.reference.update({
         'status': 'rejected',
         'respondedAt': Timestamp.fromDate(DateTime.now()),
       });
+      // Mantener participación alineada si existía pending.
+      await _participationService.rejectInvitation(planId, userId);
       LoggerService.database('Invitation rejected by planId: ${doc.id}', operation: 'UPDATE');
 
       final respondedDisplay = user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
       await NotificationHelper().notifyInvitationResponded(
-        inviterUserId: inv.invitedBy,
+        inviterUserId: inviterUserId,
         planId: planId,
         respondedUserDisplay: respondedDisplay,
         accepted: false,
       );
-      return true;
+      await _cleanupInviteeInvitationNotifications(userId, planId);
+      return const InvitationRespondResult(
+        success: true,
+        message: 'Has rechazado la invitación',
+      );
     } catch (e) {
       LoggerService.error(
         'Error rejecting invitation by planId: $planId, userId: $userId',
         context: 'INVITATION_SERVICE',
         error: e,
       );
-      return false;
+      return const InvitationRespondResult(
+        success: false,
+        message: 'Error al rechazar la invitación',
+      );
     }
   }
 
