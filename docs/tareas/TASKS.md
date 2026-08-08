@@ -4,14 +4,14 @@
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
 > **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T272**
+**Siguiente código de tarea: T273**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
 - **Administración:** T183-T191, T223 (vista admin, export CSV, seed, espacio admin RUD toda la BD, T188 en progreso), **T270 (catálogo admin tipos/subtipos de evento)**
 - **Auth / Perfil:** T159-T162, T173, T174, T226-T228, T232 (permisos Firestore, verificación, perfil, registro, modales)
 - **Seguridad avanzada:** T166-T172 (2FA, token refresh, legal, etc.)
-- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T246, T238, T242, T243, T250 (campos tipo/subtipo), **T271 (fotos Places/cache)**
+- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T246, T238, T242, T243, T250 (campos tipo/subtipo), **T271 (fotos Places/cache)**, **T272 (colores tipos evento por plan)**
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
@@ -103,6 +103,7 @@
 | **T243** | Copiar planes, eventos y alojamientos: (1) Revisar si ya existe tarea (T35, T211 para eventos). (2) Crear ambas opciones: (a) copiar eventos y alojamientos dentro del mismo plan (pegar en el plan actual); (b) duplicar plan entero (plan nuevo con eventos y alojamientos copiados). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T250** | **Definir campos por combinación tipo-subtipo de evento:** Para cada par tipo/subtipo (Desplazamiento/Avión, Desplazamiento/Taxi, Restauración/Comida, etc.), especificar qué campos son visibles, editables, obligatorios u opcionales, y en qué contexto (crear vs editar, rol del usuario). Documentar en `docs/especificaciones/EVENT_FORM_FIELDS.md` o anexo; alinear después el formulario `wd_event_dialog.dart` con esa definición. | Media |
 | **T271** | **Fotos automáticas de lugares/alojamientos (Places Photos + cache):** Evaluar e implementar imagen por evento/alojamiento para enriquecer resumen y detalle. Preferencia: **Google Place Photos** al crear/editar (cuando haya `placeId`), **descargar 1 miniatura** y **guardarla en storage propio** (Firebase/GCS) para no repetir el SKU Place Photos en cada vista (~$7/1.000 requests). Criterios: 1 foto por entidad; lazy-load; atribución Places; override/quitar manual; coste controlado (no hotlink de URLs de Places; no galería). Alternativas/fallback gratis a valorar: Wikimedia / Unsplash. Dejado en espera a propósito (2026-08); no implementar hasta priorizar. | Baja |
+| **T272** | **Colores de tipos de evento a nivel de plan (carril/borde):** En Info del plan, color **base** + color por **familia** (Desplazamiento, Restauración, Actividad, Acción, Otro). Al crear evento se aplica esa config; al cambiar un color se propagan a todos los eventos de esa familia (sin respetar override manual). Solo carril/borde; alojamientos fuera; solo organizador edita. Planes sin config → base `color2`. Especificación en `docs/tareas/T272_COLORES_TIPOS_EVENTO_PLAN.md`. | Media |
 ---
 
 ### 3. Administración y datos
@@ -240,7 +241,7 @@
 | **T263** | **Brief y decisión de icono app (traslado de ítem 63):** Definir brief final de marca para icono Planazoo (concepto visual de las dos “oo”, variantes, criterios de legibilidad en tamaños pequeños, versión iOS/Android, exportables necesarios) y dejar decisión cerrada para implementación en T258. | Baja |
 | **T264** | **Navegación inferior + patrón de creación (traslado de ítem 64):** Decidir diseño de producto para barras inferiores/FAB y menú de creación contextual (“Otros…” incluido), con criterio de paridad web/iOS y plan de implementación por fases (sin codificar hasta cierre de diseño). | Media |
 | **T265** | **Offline first amplio (traslado de ítem 65):** Definir roadmap funcional y técnico para consulta offline total (móvil y enfoque web/PWA), priorizar MVP y fases sobre T56-T62, con criterios de éxito y checklist de validación. | Alta |
-| **T266** | **Asistente por reglas (traslado de ítem 98):** Definir alcance de producto para sugerencias inteligentes basadas en reglas (ej. vuelo→taxi, estado plan vs fechas), catálogo inicial de reglas, UX de presentación y métricas de valor antes de implementación. | Media |
+| **T266** | **Asistente por reglas (traslado de ítem 98):** Sugerencias inteligentes al crear/completar el itinerario (desplazamientos, paquetes vuelo↔hotel, huecos, restauración, etc.). Catálogo de reglas R01–R25, UX de confirmación en 1–2 toques y MVP priorizado. **Especificación en `docs/tareas/T266_ASISTENTE_POR_REGLAS.md`.** Sin implementar hasta cerrar alcance/MVP de ese doc. | Media |
 
 ---
 

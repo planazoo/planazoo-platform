@@ -1092,6 +1092,27 @@
   },
   "planDetailsSaveError": "No se pudieron guardar los cambios.",
   "@planDetailsSaveError": {},
+  "planEventColorsTitle": "Colores del calendario",
+  "@planEventColorsTitle": { "description": "T272 sección colores por tipo en Info del plan" },
+  "planEventColorsSubtitle": "Color del carril/borde de los eventos. Al cambiar un color se actualizan todos los eventos de ese tipo.",
+  "@planEventColorsSubtitle": {},
+  "planEventColorsBase": "Color base del plan",
+  "@planEventColorsBase": {},
+  "planEventColorsRestore": "Restaurar defaults",
+  "@planEventColorsRestore": {},
+  "planEventColorsUpdated": "Actualizados {count} eventos.",
+  "@planEventColorsUpdated": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "planEventColorsFamilyDesplazamiento": "Desplazamiento",
+  "planEventColorsFamilyRestauracion": "Restauración",
+  "planEventColorsFamilyActividad": "Actividad",
+  "planEventColorsFamilyAccion": "Acción",
+  "planEventColorsFamilyOtro": "Otro",
+  "planEventColorsPickTitle": "Elegir color",
+  "@planEventColorsPickTitle": {},
   "planDeleteDialogTitle": "Eliminar plan",
   "@planDeleteDialogTitle": {},
   "planDeleteDialogMessage": "¿Quieres eliminar este plan definitivamente?\\n\\nSe borrarán el plan, sus eventos y participaciones. Esta acción no se puede deshacer. Introduce tu contraseña para confirmarlo.",

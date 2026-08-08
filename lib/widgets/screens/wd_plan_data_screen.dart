@@ -33,6 +33,8 @@ import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/constants/help_context_ids.dart';
 import 'package:unp_calendario/widgets/help/help_icon_button.dart';
+import 'package:unp_calendario/shared/utils/color_utils.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_event_accent_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
@@ -78,6 +80,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   String? _selectedTimezone;
   double? _budget;
   bool _hasUnsavedChanges = false;
+  bool _isUpdatingEventColors = false;
   bool _isSavingPlan = false;
   List<PlanAttachment> _planAttachments = [];
   // P12: secciones Info colapsables (Participantes / Avisos / Eliminar plan)
@@ -894,6 +897,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                               isCompact: isCompact),
                           const SizedBox(height: cardSpacing),
                           if (isOrganizer) ...[
+                            _buildEventColorsSection(loc, isCompact: isCompact),
+                            const SizedBox(height: cardSpacing),
                             _buildAnnouncementsSection(isCompact: isCompact),
                             const SizedBox(height: cardSpacing),
                             _buildInfoSection(loc,
@@ -2509,6 +2514,315 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
         ],
       ),
     );
+  }
+
+  String _familyLabel(AppLocalizations loc, String family) {
+    switch (family) {
+      case 'Desplazamiento':
+        return loc.planEventColorsFamilyDesplazamiento;
+      case 'Restauración':
+        return loc.planEventColorsFamilyRestauracion;
+      case 'Actividad':
+        return loc.planEventColorsFamilyActividad;
+      case 'Acción':
+        return loc.planEventColorsFamilyAccion;
+      case 'Otro':
+        return loc.planEventColorsFamilyOtro;
+      default:
+        return family;
+    }
+  }
+
+  IconData _familyIcon(String family) {
+    switch (family) {
+      case 'Desplazamiento':
+        return Icons.directions_car;
+      case 'Restauración':
+        return Icons.restaurant;
+      case 'Actividad':
+        return Icons.local_activity;
+      case 'Acción':
+        return Icons.touch_app;
+      default:
+        return Icons.more_horiz;
+    }
+  }
+
+  Widget _buildEventColorsSection(AppLocalizations loc, {bool isCompact = false}) {
+    final base = PlanEventAccentColors.baseColor(currentPlan);
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 12 : 14,
+        vertical: isCompact ? 12 : 14,
+      ),
+      decoration: BoxDecoration(
+        color: _cardBackgroundStart,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _cardBorder.withValues(alpha: 0.9)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.palette_outlined, size: 18, color: AppColorScheme.color2),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  loc.planEventColorsTitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: isCompact ? 14 : 15,
+                    fontWeight: FontWeight.w600,
+                    color: _textPrimary,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: _isUpdatingEventColors ? null : _restoreEventColorDefaults,
+                child: Text(
+                  loc.planEventColorsRestore,
+                  style: GoogleFonts.poppins(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            loc.planEventColorsSubtitle,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: _textSecondary,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildEventColorRow(
+            loc,
+            label: loc.planEventColorsBase,
+            icon: Icons.circle,
+            colorName: base,
+            onPick: () => _pickAndApplyBaseColor(loc),
+          ),
+          const Divider(height: 20),
+          for (final family in PlanEventAccentColors.typeFamilies)
+            _buildEventColorRow(
+              loc,
+              label: _familyLabel(loc, family),
+              icon: _familyIcon(family),
+              colorName:
+                  PlanEventAccentColors.effectiveFamilyColor(currentPlan, family),
+              onPick: () => _pickAndApplyFamilyColor(loc, family),
+            ),
+          if (_isUpdatingEventColors) ...[
+            const SizedBox(height: 8),
+            const LinearProgressIndicator(minHeight: 2),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEventColorRow(
+    AppLocalizations loc, {
+    required String label,
+    required IconData icon,
+    required String colorName,
+    required VoidCallback onPick,
+  }) {
+    final color = ColorUtils.colorFromName(colorName);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: _textSecondary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(fontSize: 13, color: _textPrimary),
+            ),
+          ),
+          InkWell(
+            onTap: _isUpdatingEventColors ? null : onPick,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white54, width: 2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _showColorPickerSheet(AppLocalizations loc, String current) async {
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1F2937),
+          title: Text(
+            loc.planEventColorsPickTitle,
+            style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
+          ),
+          content: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: PlanEventAccentColors.palette.map((name) {
+              final selected = name == current;
+              return GestureDetector(
+                onTap: () => Navigator.of(ctx).pop(name),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: ColorUtils.colorFromName(name),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected ? Colors.white : Colors.white38,
+                      width: selected ? 2.5 : 1,
+                    ),
+                  ),
+                  child: selected
+                      ? const Icon(Icons.check, color: Colors.white, size: 18)
+                      : null,
+                ),
+              );
+            }).toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(loc.cancel, style: GoogleFonts.poppins(color: Colors.white70)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _pickAndApplyBaseColor(AppLocalizations loc) async {
+    final current = PlanEventAccentColors.baseColor(currentPlan);
+    final picked = await _showColorPickerSheet(loc, current);
+    if (picked == null || picked == current || !mounted) return;
+    await _applyAccentConfig(
+      loc,
+      nextPlan: PlanEventAccentColors.applyBaseColorChange(currentPlan, picked),
+      familiesToPropagate:
+          PlanEventAccentColors.familiesAffectedByBaseChange(currentPlan, picked),
+      colorForFamilies: picked,
+    );
+  }
+
+  Future<void> _pickAndApplyFamilyColor(
+    AppLocalizations loc,
+    String family,
+  ) async {
+    final current =
+        PlanEventAccentColors.effectiveFamilyColor(currentPlan, family);
+    final picked = await _showColorPickerSheet(loc, current);
+    if (picked == null || picked == current || !mounted) return;
+    await _applyAccentConfig(
+      loc,
+      nextPlan:
+          PlanEventAccentColors.applyFamilyColorChange(currentPlan, family, picked),
+      familiesToPropagate: [family],
+      colorForFamilies: picked,
+    );
+  }
+
+  Future<void> _restoreEventColorDefaults() async {
+    final loc = AppLocalizations.of(context)!;
+    final next = PlanEventAccentColors.restoreDefaults(currentPlan);
+    final base = PlanEventAccentColors.baseColor(next);
+    await _applyAccentConfig(
+      loc,
+      nextPlan: next,
+      familiesToPropagate: PlanEventAccentColors.typeFamilies,
+      colorForFamilies: base,
+    );
+  }
+
+  Future<void> _applyAccentConfig(
+    AppLocalizations loc, {
+    required Plan nextPlan,
+    required List<String> familiesToPropagate,
+    required String colorForFamilies,
+  }) async {
+    if (currentPlan.id == null) return;
+    _setScreenState(() => _isUpdatingEventColors = true);
+    try {
+      final planService = ref.read(planServiceProvider);
+      final eventService = ref.read(eventServiceProvider);
+      final planId = currentPlan.id!;
+      final ok = await planService.updateEventAccentColors(
+        planId: planId,
+        baseColor: PlanEventAccentColors.baseColor(nextPlan),
+        typeColors: nextPlan.eventTypeAccentColors,
+      );
+      if (!ok) {
+        if (mounted) {
+          _setScreenState(() => _isUpdatingEventColors = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.planDetailsSaveError)),
+          );
+        }
+        return;
+      }
+      var updated = 0;
+      // Restaurar defaults / base: cada familia puede requerir su color; aquí
+      // colorForFamilies sirve para un solo color. Si restore, todas usan base.
+      if (familiesToPropagate.length == 1) {
+        updated = await eventService.updateAccentColorForTypeFamilies(
+          planId: planId,
+          typeFamilies: familiesToPropagate,
+          colorName: colorForFamilies,
+        );
+      } else {
+        // Propagar por familia con el color efectivo del nextPlan.
+        for (final fam in familiesToPropagate) {
+          final color =
+              PlanEventAccentColors.effectiveFamilyColor(nextPlan, fam);
+          updated += await eventService.updateAccentColorForTypeFamilies(
+            planId: planId,
+            typeFamilies: [fam],
+            colorName: color,
+          );
+        }
+      }
+      if (!mounted) return;
+      final savedPlan = nextPlan.copyWith(id: planId);
+      _setScreenState(() {
+        currentPlan = savedPlan;
+        _isUpdatingEventColors = false;
+      });
+      widget.onPlanUpdated?.call(savedPlan);
+      ref.invalidate(planEventsStreamProvider(planId));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.planEventColorsUpdated(updated))),
+      );
+    } catch (e, st) {
+      LoggerService.error(
+        'T272 accent colors update failed',
+        context: 'PLAN_DATA',
+        error: e,
+        stackTrace: st,
+      );
+      if (mounted) {
+        _setScreenState(() => _isUpdatingEventColors = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${loc.planDetailsSaveError} (${e.toString()})'),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildPlanSummarySection(

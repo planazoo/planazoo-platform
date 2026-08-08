@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mode.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_track_reorder.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
@@ -222,7 +223,20 @@ class CalendarAppBar {
           case 'days_1':
           case 'days_3':
           case 'days_7':
-            onVisibleDaysChanged(int.parse(value.split('_')[1]));
+            onVisibleDaysChanged(
+              CalendarConstants.resolveVisibleDays(
+                int.parse(value.split('_')[1]),
+                plan.durationInDays,
+              ),
+            );
+            break;
+          case 'days_all_plan':
+            onVisibleDaysChanged(
+              CalendarConstants.resolveVisibleDays(
+                plan.durationInDays,
+                plan.durationInDays,
+              ),
+            );
             break;
           case 'participants':
             onReorderTracks();
@@ -255,7 +269,8 @@ class CalendarAppBar {
         entries.add(PopupMenuItem<String>(value: 'days_1', child: Row(children: [Icon(Icons.calendar_view_day, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDays1)])));
         entries.add(PopupMenuItem<String>(value: 'days_3', child: Row(children: [Icon(Icons.calendar_view_week, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDays3)])));
         entries.add(PopupMenuItem<String>(value: 'days_7', child: Row(children: [Icon(Icons.calendar_view_month, size: 18, color: AppColorScheme.color2), const SizedBox(width: 8), Text(loc.calendarMenuDays7)])));
-        if (plan.durationInDays > 7) {
+        // Solo si el plan cabe en una pantalla (≤7 días): evita columnas vacías y cablea el ítem 110.
+        if (CalendarConstants.canShowAllPlanDaysOnScreen(plan.durationInDays)) {
           entries.add(PopupMenuItem<String>(
             value: 'days_all_plan',
             child: Row(

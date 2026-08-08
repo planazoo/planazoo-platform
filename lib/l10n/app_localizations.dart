@@ -1994,6 +1994,72 @@ abstract class AppLocalizations {
   /// **'No se pudieron guardar los cambios.'**
   String get planDetailsSaveError;
 
+  /// T272 sección colores por tipo en Info del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Colores del calendario'**
+  String get planEventColorsTitle;
+
+  /// No description provided for @planEventColorsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Color del carril/borde de los eventos. Al cambiar un color se actualizan todos los eventos de ese tipo.'**
+  String get planEventColorsSubtitle;
+
+  /// No description provided for @planEventColorsBase.
+  ///
+  /// In es, this message translates to:
+  /// **'Color base del plan'**
+  String get planEventColorsBase;
+
+  /// No description provided for @planEventColorsRestore.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar defaults'**
+  String get planEventColorsRestore;
+
+  /// No description provided for @planEventColorsUpdated.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizados {count} eventos.'**
+  String planEventColorsUpdated(int count);
+
+  /// No description provided for @planEventColorsFamilyDesplazamiento.
+  ///
+  /// In es, this message translates to:
+  /// **'Desplazamiento'**
+  String get planEventColorsFamilyDesplazamiento;
+
+  /// No description provided for @planEventColorsFamilyRestauracion.
+  ///
+  /// In es, this message translates to:
+  /// **'Restauración'**
+  String get planEventColorsFamilyRestauracion;
+
+  /// No description provided for @planEventColorsFamilyActividad.
+  ///
+  /// In es, this message translates to:
+  /// **'Actividad'**
+  String get planEventColorsFamilyActividad;
+
+  /// No description provided for @planEventColorsFamilyAccion.
+  ///
+  /// In es, this message translates to:
+  /// **'Acción'**
+  String get planEventColorsFamilyAccion;
+
+  /// No description provided for @planEventColorsFamilyOtro.
+  ///
+  /// In es, this message translates to:
+  /// **'Otro'**
+  String get planEventColorsFamilyOtro;
+
+  /// No description provided for @planEventColorsPickTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir color'**
+  String get planEventColorsPickTitle;
+
   /// No description provided for @planDeleteDialogTitle.
   ///
   /// In es, this message translates to:

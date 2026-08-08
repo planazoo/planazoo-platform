@@ -2339,10 +2339,10 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Línea separadora entre días; indicación visual de estado no confirmado coherente con flujo actual (sin dependencia de "borrador").
   - Estado: 🔄
 
-- [ ] **REG-2026-014:** Calendario — opción "Todos los días del plan"
-  - Pasos: En menú de opciones del calendario, activar "Todos los días del plan".
-  - Esperado: Se muestran los días hasta el límite configurado (`maxVisibleDays`) sin degradación grave de UX.
-  - Estado: 🔄
+- [x] **REG-2026-014:** Calendario — opción "Todos los días del plan"
+  - Pasos: En menú de opciones del calendario (plan de 2–7 días), activar "Todos los días del plan".
+  - Esperado: Se muestran exactamente los días del plan en una sola pantalla (sin columnas vacías). Si el plan tiene >7 días, la opción no aparece (usar 1/3/7 + paginación).
+  - Estado: ✅ 2026-08 (ítem 110)
 
 - [ ] **REG-2026-015:** Calendario/resumen refrescan tras CRUD de evento
   - Pasos: Crear, editar y eliminar evento; volver a calendario y resumen.

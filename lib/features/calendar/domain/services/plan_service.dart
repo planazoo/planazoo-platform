@@ -246,14 +246,43 @@ class PlanService {
     
     try {
       final updatedPlan = plan.copyWith(updatedAt: DateTime.now());
+      // No reenviar createdAt: las rules exigen igualdad exacta con el Timestamp
+      // del servidor y DateTime↔Timestamp puede perder precisión.
+      final data = updatedPlan.toFirestore();
+      data.remove('createdAt');
       await _firestore
           .collection(_collectionName)
           .doc(plan.id)
-          .update(updatedPlan.toFirestore());
+          .update(data);
       LoggerService.database('Plan updated successfully: ${plan.id}', operation: 'UPDATE');
       return true;
     } catch (e) {
       LoggerService.error('Error updating plan: ${plan.id}', context: 'PLAN_SERVICE', error: e);
+      return false;
+    }
+  }
+
+  /// T272: actualiza solo la config de colores de acento (sin tocar createdAt ni el resto).
+  Future<bool> updateEventAccentColors({
+    required String planId,
+    required String baseColor,
+    required Map<String, String> typeColors,
+  }) async {
+    if (planId.isEmpty) return false;
+    try {
+      await _firestore.collection(_collectionName).doc(planId).update({
+        'eventAccentBaseColor': baseColor,
+        'eventTypeAccentColors': typeColors,
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      });
+      return true;
+    } catch (e, st) {
+      LoggerService.error(
+        'Error updating event accent colors: $planId',
+        context: 'PLAN_SERVICE',
+        error: e,
+        stackTrace: st,
+      );
       return false;
     }
   }

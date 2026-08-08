@@ -1060,6 +1060,42 @@ class AppLocalizationsEs extends AppLocalizations {
   String get planDetailsSaveError => 'No se pudieron guardar los cambios.';
 
   @override
+  String get planEventColorsTitle => 'Colores del calendario';
+
+  @override
+  String get planEventColorsSubtitle =>
+      'Color del carril/borde de los eventos. Al cambiar un color se actualizan todos los eventos de ese tipo.';
+
+  @override
+  String get planEventColorsBase => 'Color base del plan';
+
+  @override
+  String get planEventColorsRestore => 'Restaurar defaults';
+
+  @override
+  String planEventColorsUpdated(int count) {
+    return 'Actualizados $count eventos.';
+  }
+
+  @override
+  String get planEventColorsFamilyDesplazamiento => 'Desplazamiento';
+
+  @override
+  String get planEventColorsFamilyRestauracion => 'Restauración';
+
+  @override
+  String get planEventColorsFamilyActividad => 'Actividad';
+
+  @override
+  String get planEventColorsFamilyAccion => 'Acción';
+
+  @override
+  String get planEventColorsFamilyOtro => 'Otro';
+
+  @override
+  String get planEventColorsPickTitle => 'Elegir color';
+
+  @override
   String get planDeleteDialogTitle => 'Eliminar plan';
 
   @override

@@ -24,6 +24,10 @@ class Plan {
   /// Archivos adjuntos del plan (PDF/JPG/PNG).
   final List<PlanAttachment> attachments;
   final String currency; // T153: Código ISO de moneda (EUR, USD, GBP, JPY, etc.) - default: EUR
+  /// T272: color base del carril/borde de eventos del plan (nombre de paleta).
+  final String? eventAccentBaseColor;
+  /// T272: color de acento por familia de tipo (Desplazamiento, …).
+  final Map<String, String> eventTypeAccentColors;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime savedAt;
@@ -48,6 +52,8 @@ class Plan {
     this.referenceNotes,
     this.attachments = const [],
     this.currency = 'EUR', // T153: Default EUR
+    this.eventAccentBaseColor,
+    this.eventTypeAccentColors = const {},
     required this.createdAt,
     required this.updatedAt,
     required this.savedAt,
@@ -98,10 +104,25 @@ class Plan {
               .toList() ??
           const [],
       currency: data['currency'] ?? 'EUR', // T153: Default EUR para migración
+      eventAccentBaseColor: data['eventAccentBaseColor'] as String?,
+      eventTypeAccentColors: _parseStringMap(data['eventTypeAccentColors']),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       savedAt: (data['savedAt'] as Timestamp).toDate(),
     );
+  }
+
+  static Map<String, String> _parseStringMap(dynamic raw) {
+    if (raw is! Map) return const {};
+    final out = <String, String>{};
+    raw.forEach((key, value) {
+      if (key == null || value == null) return;
+      final k = key.toString().trim();
+      final v = value.toString().trim();
+      if (k.isEmpty || v.isEmpty) return;
+      out[k] = v;
+    });
+    return out;
   }
 
   // Convertir a Firestore
@@ -126,6 +147,9 @@ class Plan {
       if (attachments.isNotEmpty)
         'attachments': attachments.map((attachment) => attachment.toMap()).toList(),
       'currency': currency, // T153
+      if (eventAccentBaseColor != null && eventAccentBaseColor!.trim().isNotEmpty)
+        'eventAccentBaseColor': eventAccentBaseColor,
+      'eventTypeAccentColors': eventTypeAccentColors,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'savedAt': Timestamp.fromDate(savedAt),
@@ -153,6 +177,8 @@ class Plan {
     String? referenceNotes,
     List<PlanAttachment>? attachments,
     String? currency, // T153
+    String? eventAccentBaseColor,
+    Map<String, String>? eventTypeAccentColors,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? savedAt,
@@ -177,6 +203,9 @@ class Plan {
       referenceNotes: referenceNotes ?? this.referenceNotes,
       attachments: attachments ?? this.attachments,
       currency: currency ?? this.currency, // T153
+      eventAccentBaseColor: eventAccentBaseColor ?? this.eventAccentBaseColor,
+      eventTypeAccentColors:
+          eventTypeAccentColors ?? this.eventTypeAccentColors,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       savedAt: savedAt ?? this.savedAt,

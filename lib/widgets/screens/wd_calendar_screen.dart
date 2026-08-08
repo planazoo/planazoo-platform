@@ -112,6 +112,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (widget.initialVisibleDays != null) {
       _visibleDays = widget.initialVisibleDays!;
     }
+    _visibleDays = CalendarConstants.resolveVisibleDays(
+      _visibleDays,
+      widget.plan.durationInDays,
+    );
     _currentDayGroup = (Plan.initialVisiblePlanDayIndex(widget.plan, _visibleDays) - 1) ~/ _visibleDays;
 
     // Inicializar el servicio de tracks
@@ -363,7 +367,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       onNextDayGroup: _nextDayGroup,
       onVisibleDaysChanged: (int value) {
         setState(() {
-          _visibleDays = value;
+          _visibleDays = CalendarConstants.resolveVisibleDays(
+            value,
+            widget.plan.durationInDays,
+          );
           // Resetear al primer grupo si el grupo actual ya no es válido
           final totalDays = widget.plan.durationInDays;
           final currentStartDay = _currentDayGroup * _visibleDays + 1;
@@ -1302,8 +1309,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     
     // Calcular la posición de scroll
     final cellHeight = AppConstants.cellHeight;
-    final headerHeight = 60.0; // Altura de la fila de días
-    final accommodationHeight = 30.0; // Altura de la fila de alojamientos
+    final headerHeight = CalendarConstants.headerHeight;
+    final accommodationHeight = CalendarConstants.accommodationRowHeight;
     final totalFixedHeight = headerHeight + accommodationHeight;
     
     // Determinar la posición de scroll basada en el tipo de evento

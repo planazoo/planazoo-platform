@@ -1092,6 +1092,27 @@
   },
   "planDetailsSaveError": "Could not save the changes.",
   "@planDetailsSaveError": {},
+  "planEventColorsTitle": "Calendar colors",
+  "@planEventColorsTitle": { "description": "T272 plan event type accent colors section" },
+  "planEventColorsSubtitle": "Event rail/border color. Changing a color updates all events of that type.",
+  "@planEventColorsSubtitle": {},
+  "planEventColorsBase": "Plan base color",
+  "@planEventColorsBase": {},
+  "planEventColorsRestore": "Restore defaults",
+  "@planEventColorsRestore": {},
+  "planEventColorsUpdated": "Updated {count} events.",
+  "@planEventColorsUpdated": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "planEventColorsFamilyDesplazamiento": "Transport",
+  "planEventColorsFamilyRestauracion": "Food & drink",
+  "planEventColorsFamilyActividad": "Activity",
+  "planEventColorsFamilyAccion": "Action",
+  "planEventColorsFamilyOtro": "Other",
+  "planEventColorsPickTitle": "Choose color",
+  "@planEventColorsPickTitle": {},
   "planDeleteDialogTitle": "Delete plan",
   "@planDeleteDialogTitle": {},
   "planDeleteDialogMessage": "This will permanently remove the plan, all events, and participations.\\n\\nPlease re-enter your password to confirm.",

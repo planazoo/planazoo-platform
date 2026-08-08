@@ -16,6 +16,14 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-08-08] T272 — guardar colores del plan fallaba sin detalle en terminal
+
+- **Contexto:** Info del plan → Colores del calendario; snackbar «No se pudieron guardar los cambios».
+- **Error:** `updatePlan` devolvía `false` (permission-denied típico); LoggerService no siempre se ve en la consola de `flutter run`.
+- **Causa raíz:** `update(toFirestore())` reescribía `createdAt`; las rules exigen `request.resource.data.createdAt == resource.data.createdAt` y el round-trip DateTime↔Timestamp puede romper la igualdad.
+- **Solución aplicada:** `PlanService.updateEventAccentColors` (solo base + mapa + `updatedAt`); `updatePlan` ya no reenvía `createdAt`.
+- **Notas:** Preferir updates parciales en campos nuevos; no tocar `createdAt` en updates de plan.
+
 ### [2026-07-30] Invitaciones — borrar avisos al decidir + push al organizador
 
 - **Contexto:** T269 parcial / decisiones §1.1 (3 y 5) del diagrama altas-bajas.

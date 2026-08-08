@@ -7,6 +7,7 @@ import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_event_accent_colors.dart';
 import 'package:unp_calendario/features/calendar/domain/services/previous_plan_location_helper.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
@@ -639,6 +640,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           // Si no hay moneda de coste establecida, usar la del plan
           _costCurrency ??= plan.currency;
           _plan = plan; // T109: Guardar plan para verificar estado
+          if (widget.event == null) {
+            _syncAccentColorFromPlanConfig();
+          }
         });
       }
     } catch (e) {
@@ -680,11 +684,24 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           if (currentUser != null && plan.userId == currentUser.id) {
             _canEditGeneral = true;
           }
+          if (widget.event == null) {
+            _syncAccentColorFromPlanConfig();
+          }
         });
       }
     } catch (e) {
       // Si falla, no hacer nada
     }
+  }
+
+  /// T272: color de carril desde la config del plan (crear o al cambiar familia).
+  void _syncAccentColorFromPlanConfig({bool force = false}) {
+    if (_plan == null) return;
+    if (!force && widget.event != null) return;
+    _selectedColor = PlanEventAccentColors.resolve(
+      _plan!,
+      _typeFamilyController.text,
+    );
   }
 
   /// Inicializa los permisos del usuario en el plan
@@ -1792,6 +1809,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             _typePickerExpanded = false;
                             _subtypePickerExpanded = hit.subtype == null;
                             _clearTypeSearch();
+                            _syncAccentColorFromPlanConfig(force: true);
                           });
                         },
                       );
@@ -1826,6 +1844,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                           _typePickerExpanded = false;
                           _subtypePickerExpanded = true;
                           _clearTypeSearch();
+                          _syncAccentColorFromPlanConfig(force: true);
                         });
                       },
                     );

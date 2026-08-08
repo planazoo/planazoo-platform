@@ -98,6 +98,7 @@ class CalendarTracks extends ConsumerWidget {
                     // Encabezado: líneas sup/inf + franjas alternas por día (ID 52, 54)
                     Container(
                       height: CalendarConstants.headerHeight,
+                      width: double.infinity,
                       clipBehavior: Clip.hardEdge,
                       decoration: BoxDecoration(
                         color: _getHeaderColor(column, visibleDayIndex),
@@ -112,9 +113,7 @@ class CalendarTracks extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      child: Center(
-                        child: _buildHeaderContent(column),
-                      ),
+                      child: _buildHeaderContent(column, colW),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -169,20 +168,24 @@ class CalendarTracks extends ConsumerWidget {
     return base;
   }
 
-  /// Construye el contenido del header
-  Widget _buildHeaderContent(dynamic column) {
+  /// Construye el contenido del header.
+  /// [columnWidth] debe ser el ancho real de la columna-día para alinear
+  /// las iniciales de participantes con las subcolumnas del grid de horas.
+  Widget _buildHeaderContent(dynamic column, double columnWidth) {
     final dayData = column as Map<String, dynamic>;
     final actualDayIndex = dayData['index'] as int;
     final isEmpty = dayData['isEmpty'] as bool;
     final participants = dayData['participants'] as List<ParticipantTrack>;
     
     if (isEmpty) {
-      return Text(
-        'Vacío',
-        style: GoogleFonts.poppins(
-          fontSize: CalendarConstants.headerFontSize,
-          fontWeight: FontWeight.w500,
-          color: Colors.white70,
+      return Center(
+        child: Text(
+          'Vacío',
+          style: GoogleFonts.poppins(
+            fontSize: CalendarConstants.headerFontSize,
+            fontWeight: FontWeight.w500,
+            color: Colors.white70,
+          ),
         ),
       );
     }
@@ -198,48 +201,56 @@ class CalendarTracks extends ConsumerWidget {
     // Obtener el nombre del día de la semana (traducible)
     final dayOfWeek = DateFormat.E().format(dayDate); // 'lun', 'mar', etc.
 
-    // En vista de 1 día la fecha más pequeña para que no desborde y no domine
-    final isOneDayView = columns.length == 1;
-    final dateFontSize = isOneDayView ? 14.0 : CalendarConstants.headerFontSize;
+    // Tipografía según densidad de columnas (evitar overflow vertical en header 52px).
+    final dayCount = columns.length;
+    final isOneDayView = dayCount == 1;
+    final dateFontSize = isOneDayView
+        ? 14.0
+        : (dayCount <= 3 ? 13.0 : 11.0);
     final dayHeaderStyle = CalendarStyles.getDayHeaderStyle(isToday: isToday)
-        .copyWith(fontSize: dateFontSize, fontWeight: FontWeight.w600);
+        .copyWith(
+          fontSize: dateFontSize,
+          fontWeight: FontWeight.w600,
+          height: 1.1,
+        );
 
-    // FittedBox evita overflow cuando la celda tiene menos altura (p. ej. móvil).
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.center,
-        child: SizedBox(
-          width: 200,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Día $actualDayIndex - $dayOfWeek $formattedDate',
-                style: dayHeaderStyle,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: isOneDayView ? 1 : 2),
-              _buildMiniParticipantHeaders(participants),
-            ],
+    return SizedBox(
+      width: columnWidth,
+      height: CalendarConstants.headerHeight,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              'Día $actualDayIndex - $dayOfWeek $formattedDate',
+              style: dayHeaderStyle,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
+          const SizedBox(height: 2),
+          SizedBox(
+            height: CalendarConstants.miniHeaderHeight,
+            width: double.infinity,
+            // Mismo ancho que las Expanded del grid de horas.
+            child: _buildMiniParticipantHeaders(participants),
+          ),
+        ],
       ),
     );
   }
 
   /// Construye mini headers de participantes para el header principal
   Widget _buildMiniParticipantHeaders(List<ParticipantTrack> participants) {
-    // En vista de 3 días las iniciales un poco más grandes para mejor lectura
-    final isThreeDayView = columns.length == 3;
-    final initialsFontSize = isThreeDayView ? 13.0 : CalendarConstants.miniParticipantFontSize;
+    final dayCount = columns.length;
+    final initialsFontSize = dayCount == 1
+        ? 12.0
+        : (dayCount <= 3 ? 11.0 : CalendarConstants.miniParticipantFontSize);
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: participants.asMap().entries.map((entry) {
         final index = entry.key;
         final participant = entry.value;
@@ -267,11 +278,14 @@ class CalendarTracks extends ConsumerWidget {
                       ? TimezoneService.getTimezoneDisplayName(participantTimezone)
                       : 'Timezone no configurada',
                   child: Stack(
+                    clipBehavior: Clip.hardEdge,
                     children: [
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
-                        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                        width: double.infinity,
+                        height: CalendarConstants.miniHeaderHeight,
+                        padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 0),
                         decoration: BoxDecoration(
                           // Fondo diferenciado para track activo
                           color: isActiveTrack 
@@ -296,8 +310,12 @@ class CalendarTracks extends ConsumerWidget {
                               fontSize: initialsFontSize,
                               fontWeight: isActiveTrack ? FontWeight.w900 : FontWeight.bold,
                               color: Colors.white,
+                              height: 1.0,
                             ),
                             textAlign: TextAlign.center,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.clip,
                           ),
                         ),
                       ),

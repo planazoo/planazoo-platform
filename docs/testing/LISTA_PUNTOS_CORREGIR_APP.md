@@ -43,12 +43,12 @@
 ### 4. Puntos abiertos
 
 #### 110. Calendario — opción "Todos los días del plan" no aplicada en selector
-- **Plataforma:** iOS / Android / Web
+- **Plataforma:** Web (menú calendario)
 - **Pantalla / flujo:** Calendario del plan → menú opciones → "Todos los días del plan"
 - **Tipo:** bug
 - **Gravedad:** media
-- **Descripción breve:** En la auditoría de código, el menú expone la opción `days_all_plan`, pero no aparece gestionada en el `switch` de selección del menú. Debemos confirmar comportamiento real y, si aplica, completar wiring para que aplique `visibleDays` al rango esperado (`maxVisibleDays`).
-- **Estado:** pendiente
+- **Descripción breve:** El menú exponía `days_all_plan` sin handler; además solo aparecía si el plan tenía **más** de 7 días.
+- **Estado:** corregido (2026-08) — la opción se muestra cuando el plan dura **2–7 días**, aplica `visibleDays = durationInDays` (sin columnas vacías) y clamp de presets 1/3/7 a la duración del plan. Ver `CalendarConstants.resolveVisibleDays` / `canShowAllPlanDaysOnScreen`.
 - **Referencia histórica:** ítem 29 / `REG-2026-014`
 
 #### 111. Calendario — separadores verticales entre días (criterio de constantes) no trazado al 100%

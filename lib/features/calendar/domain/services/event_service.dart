@@ -8,6 +8,7 @@ import 'plan_participation_service.dart';
 import 'event_participant_service.dart';
 import 'event_sync_service.dart';
 import 'timezone_service.dart';
+import 'plan_event_accent_colors.dart';
 
 class EventService {
   static const String _collectionName = 'events';
@@ -233,6 +234,73 @@ class EventService {
     } catch (e) {
       LoggerService.error('Error updating event', context: 'EVENT_SERVICE', error: e);
       return false;
+    }
+  }
+
+  /// T272: actualiza color/carril de todos los eventos del plan cuya familia esté en [typeFamilies].
+  /// Familia «Otro» incluye eventos sin `typeFamily`. Devuelve el número de documentos tocados.
+  Future<int> updateAccentColorForTypeFamilies({
+    required String planId,
+    required List<String> typeFamilies,
+    required String colorName,
+  }) async {
+    if (planId.isEmpty || typeFamilies.isEmpty || colorName.trim().isEmpty) {
+      return 0;
+    }
+    final targets = typeFamilies
+        .map(PlanEventAccentColors.normalizeFamily)
+        .toSet();
+    final includeEmptyAsOtro = targets.contains('Otro');
+    final color = colorName.trim();
+
+    try {
+      final snap = await _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .get();
+
+      final refs = <DocumentReference<Map<String, dynamic>>>[];
+      for (final doc in snap.docs) {
+        if (!_isEventDoc(doc)) continue;
+        final data = doc.data();
+        final topFamily = data['typeFamily']?.toString();
+        final common = data['commonPart'];
+        final commonFamily = common is Map ? common['family']?.toString() : null;
+        final rawFamily = (topFamily != null && topFamily.trim().isNotEmpty)
+            ? topFamily
+            : commonFamily;
+        final normalized = PlanEventAccentColors.normalizeFamily(rawFamily);
+        final empty =
+            rawFamily == null || rawFamily.trim().isEmpty;
+        if (!targets.contains(normalized) &&
+            !(includeEmptyAsOtro && empty)) {
+          continue;
+        }
+        refs.add(doc.reference);
+      }
+
+      const chunkSize = 400;
+      for (var i = 0; i < refs.length; i += chunkSize) {
+        final batch = _firestore.batch();
+        final end = (i + chunkSize < refs.length) ? i + chunkSize : refs.length;
+        for (var j = i; j < end; j++) {
+          batch.update(refs[j], {
+            'color': color,
+            'commonPart.customColor': color,
+            'updatedAt': Timestamp.fromDate(DateTime.now()),
+          });
+        }
+        await batch.commit();
+      }
+      return refs.length;
+    } catch (e, st) {
+      LoggerService.error(
+        'Error updating accent colors for plan $planId',
+        context: 'EVENT_SERVICE',
+        error: e,
+        stackTrace: st,
+      );
+      return 0;
     }
   }
 

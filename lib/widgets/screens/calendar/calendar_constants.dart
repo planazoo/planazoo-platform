@@ -3,10 +3,11 @@ class CalendarConstants {
   // Alturas de filas
   static const double eventRowHeight = 54.0;
   static const double accommodationRowHeight = 30.0;
-  static const double headerHeight = 40.0;
+  /// Día + iniciales de participantes (fecha + mini-headers).
+  static const double headerHeight = 52.0;
   /// Por debajo de esta duración (min), en calendario solo se muestra el título del evento.
   static const int shortEventTitleOnlyMaxMinutes = 45;
-  static const double miniHeaderHeight = 20.0;
+  static const double miniHeaderHeight = 18.0;
   
   // Anchos (columna de horas reducida en iOS/móvil para más espacio a los días)
   static const double hoursColumnWidth = 56.0;
@@ -39,10 +40,30 @@ class CalendarConstants {
   static const double borderRadius = 4.0;
   
   // Límites
-  /// Límite superior para poder mostrar todo el plan en una vista (p. ej. 2–3 semanas).
+  /// Tope técnico histórico (validaciones); la UX web de «todo el plan» usa [singleScreenMaxVisibleDays].
   static const int maxVisibleDays = 45;
   static const int minVisibleDays = 1;
+  /// Preset «7 días» y máximo de columnas en una sola pantalla (web).
   static const int defaultVisibleDays = 7;
+  static const int singleScreenMaxVisibleDays = 7;
+
+  /// True si el plan cabe entero en una pantalla (2…7 días).
+  static bool canShowAllPlanDaysOnScreen(int planDurationDays) {
+    return planDurationDays >= 2 &&
+        planDurationDays <= singleScreenMaxVisibleDays;
+  }
+
+  /// Ajusta días visibles: no menos de 1, no más del plan ni del tope de pantalla.
+  static int resolveVisibleDays(int requested, int planDurationDays) {
+    final planDays = planDurationDays < 1 ? 1 : planDurationDays;
+    final screenCap = planDays <= singleScreenMaxVisibleDays
+        ? planDays
+        : singleScreenMaxVisibleDays;
+    var value = requested;
+    if (value < minVisibleDays) value = minVisibleDays;
+    if (value > screenCap) value = screenCap;
+    return value;
+  }
   
   // Colores de estado
   static const double todayHighlightOpacity = 0.1;
