@@ -37,6 +37,26 @@ class PlaceDetails {
   });
 }
 
+/// Nombre en 1ª línea y dirección en 2ª (para un solo TextField).
+String formatPlaceNameAndAddress(String name, String? address) {
+  final n = name.trim();
+  final a = (address ?? '').trim();
+  if (n.isEmpty) return a;
+  if (a.isEmpty || a == n) return n;
+  return '$n\n$a';
+}
+
+/// Parte un texto `nombre\ndirección` (o legado de una sola línea).
+({String name, String address}) parsePlaceNameAndAddress(String text) {
+  final trimmed = text.trim();
+  if (trimmed.isEmpty) return (name: '', address: '');
+  final newline = trimmed.indexOf('\n');
+  if (newline < 0) return (name: trimmed, address: '');
+  final name = trimmed.substring(0, newline).trim();
+  final address = trimmed.substring(newline + 1).trim();
+  return (name: name, address: address);
+}
+
 /// Servicio para Places API (New): autocomplete y place details.
 /// API key: pasar por --dart-define=PLACES_API_KEY=xxx (nunca commitear).
 class PlacesApiService {

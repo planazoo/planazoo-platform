@@ -81,6 +81,8 @@ dependencies:
 
   # Open URLs (e.g. Google Maps) from the app
   url_launcher: ^6.2.5
+  # Share itinerary / resumen (system share sheet)
+  share_plus: ^10.1.4
   file_picker: ^10.3.10
 
 dev_dependencies:

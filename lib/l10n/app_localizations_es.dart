@@ -1804,6 +1804,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get eventAddressSingleHint => 'Lugar o dirección del evento';
 
   @override
+  String get eventPlaceNameLabel => 'Nombre del lugar';
+
+  @override
+  String get eventPlaceNameHint => 'Buscar lugar (museo, restaurante…)';
+
+  @override
   String get eventUrlLabel => 'Enlace web';
 
   @override
@@ -1844,6 +1850,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get useAccommodationAsDestinationMenu => 'Usar alojamiento…';
+
+  @override
+  String useAccommodationAsOrigin(String label) {
+    return 'Usar alojamiento anterior: $label';
+  }
+
+  @override
+  String get useAccommodationAsOriginMenu => 'Usar alojamiento anterior…';
 
   @override
   String get openWebLink => 'Abrir enlace';
@@ -2573,6 +2587,48 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPlanSummaryDraftsOnlyTooltip => 'Solo borradores';
+
+  @override
+  String get myPlanSummaryShareTooltip => 'Compartir resumen';
+
+  @override
+  String myPlanSummaryShareSubject(String planName) {
+    return 'Resumen: $planName';
+  }
+
+  @override
+  String get myPlanSummaryShareViewMine => 'Vista: mío';
+
+  @override
+  String get myPlanSummaryShareViewPlan => 'Vista: todos';
+
+  @override
+  String get myPlanSummaryShareMapsLabel => 'maps';
+
+  @override
+  String get myPlanSummaryShareWebLabel => 'web';
+
+  @override
+  String get myPlanSummaryShareRouteLabel => 'ruta';
+
+  @override
+  String get myPlanSummaryShareFailed => 'No se pudo compartir el resumen';
+
+  @override
+  String get myPlanSummarySharePreviewTitle => 'Vista previa del resumen';
+
+  @override
+  String get myPlanSummarySharePreviewHint =>
+      'Los enlaces se muestran como texto subrayado. Al enviar se adjunta un HTML con los mismos links.';
+
+  @override
+  String get myPlanSummaryShareSend => 'Compartir';
+
+  @override
+  String get myPlanSummaryShareSectionHotels => 'Alojamientos';
+
+  @override
+  String get myPlanSummaryShareSectionItinerary => 'Itinerario';
 
   @override
   String myPlanSummaryParticipantsCount(int count) {

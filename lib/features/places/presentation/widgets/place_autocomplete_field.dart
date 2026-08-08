@@ -38,6 +38,10 @@ class PlaceAutocompleteField extends StatefulWidget {
   final Widget? suffixIcon;
   /// Tras seleccionar un lugar, dejar el [displayName] en el campo (útil como nombre de alojamiento).
   final bool preferDisplayName;
+  /// Tras seleccionar, mostrar nombre en 1ª línea y dirección en 2ª (`nombre\ndirección`).
+  final bool preferNameAndAddressTwoLines;
+  /// Líneas del campo de texto. Usar 2+ con [preferNameAndAddressTwoLines].
+  final int maxLines;
   final FormFieldValidator<String>? validator;
 
   const PlaceAutocompleteField({
@@ -56,6 +60,8 @@ class PlaceAutocompleteField extends StatefulWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.preferDisplayName = false,
+    this.preferNameAndAddressTwoLines = false,
+    this.maxLines = 1,
     this.validator,
   });
 
@@ -118,7 +124,9 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 350), () {
       if (!mounted) return;
-      _fetchPredictions(_controller.text);
+      // Con formato nombre\ndirección, buscar solo por la primera línea.
+      final query = _controller.text.split('\n').first;
+      _fetchPredictions(query);
     });
   }
 
@@ -250,9 +258,7 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
     setState(() => _loading = false);
     if (details != null) {
       _skipNextFetch = true;
-      _controller.text = widget.preferDisplayName
-          ? details.displayName
-          : (details.formattedAddress ?? details.displayName);
+      _controller.text = _textForSelectedPlace(details);
       // Ejecutar callback en el siguiente frame para que el setState del padre
       // corra después de cerrar el overlay y los campos se actualicen correctamente.
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -262,6 +268,17 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
         widget.onPlaceSelected(details);
       });
     }
+  }
+
+  String _textForSelectedPlace(PlaceDetails details) {
+    if (widget.preferNameAndAddressTwoLines) {
+      return formatPlaceNameAndAddress(
+        details.displayName,
+        details.formattedAddress,
+      );
+    }
+    if (widget.preferDisplayName) return details.displayName;
+    return details.formattedAddress ?? details.displayName;
   }
 
   @override
@@ -296,10 +313,11 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
           enabledBorder: widget.border,
           focusedBorder: widget.border,
         ),
-        maxLines: 1,
+        maxLines: widget.maxLines,
         onTap: () {
-          if (_controller.text.trim().length >= 2 && _predictions.isEmpty && !_loading) {
-            _fetchPredictions(_controller.text);
+          final query = _controller.text.split('\n').first.trim();
+          if (query.length >= 2 && _predictions.isEmpty && !_loading) {
+            _fetchPredictions(query);
           }
         },
       ),

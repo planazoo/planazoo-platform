@@ -204,4 +204,64 @@ class CalendarStyles {
   static Color getAppBarIconColor() {
     return Colors.white;
   }
+
+  /// Acento visual de eventos/alojamientos en borrador (borde + título).
+  static const Color draftAccentOrange = Color(0xFFFF9800);
+}
+
+/// Borde discontinuo redondeado (chips de calendario en borrador).
+class CalendarDashedRRectBorderPainter extends CustomPainter {
+  CalendarDashedRRectBorderPainter({
+    required this.color,
+    required this.radius,
+    this.strokeWidth = 1.4,
+    this.dashLength = 3,
+    this.gapLength = 2.5,
+    this.inset = 0,
+  });
+
+  final Color color;
+  final double radius;
+  final double strokeWidth;
+  final double dashLength;
+  final double gapLength;
+  final double inset;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(
+      inset + strokeWidth / 2,
+      strokeWidth / 2,
+      size.width - inset * 2 - strokeWidth,
+      size.height - strokeWidth,
+    );
+    if (rect.width <= 0 || rect.height <= 0) return;
+
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final next = (distance + dashLength).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, next), paint);
+        distance = next + gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CalendarDashedRRectBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.radius != radius ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.dashLength != dashLength ||
+        oldDelegate.gapLength != gapLength ||
+        oldDelegate.inset != inset;
+  }
 }

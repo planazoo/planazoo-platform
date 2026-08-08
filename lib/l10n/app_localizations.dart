@@ -3302,6 +3302,18 @@ abstract class AppLocalizations {
   /// **'Lugar o dirección del evento'**
   String get eventAddressSingleHint;
 
+  /// No description provided for @eventPlaceNameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del lugar'**
+  String get eventPlaceNameLabel;
+
+  /// No description provided for @eventPlaceNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar lugar (museo, restaurante…)'**
+  String get eventPlaceNameHint;
+
   /// Campo opcional URL del evento
   ///
   /// In es, this message translates to:
@@ -3362,17 +3374,29 @@ abstract class AppLocalizations {
   /// **'Usar destino anterior: {label}'**
   String usePreviousDestinationFrom(String label);
 
-  /// Rellenar destino del trayecto con el hotel del día
+  /// Rellenar destino del trayecto con el hotel del día del evento
   ///
   /// In es, this message translates to:
   /// **'Usar alojamiento: {label}'**
   String useAccommodationAsDestination(String label);
 
-  /// Menú cuando hay varios alojamientos el mismo día
+  /// Menú destino cuando hay varios alojamientos el mismo día
   ///
   /// In es, this message translates to:
   /// **'Usar alojamiento…'**
   String get useAccommodationAsDestinationMenu;
+
+  /// Rellenar origen con el hotel de la noche anterior (día D-1)
+  ///
+  /// In es, this message translates to:
+  /// **'Usar alojamiento anterior: {label}'**
+  String useAccommodationAsOrigin(String label);
+
+  /// Menú origen cuando hay varios alojamientos el día anterior
+  ///
+  /// In es, this message translates to:
+  /// **'Usar alojamiento anterior…'**
+  String get useAccommodationAsOriginMenu;
 
   /// Botón para abrir la URL del campo enlace web
   ///
@@ -4729,6 +4753,84 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Solo borradores'**
   String get myPlanSummaryDraftsOnlyTooltip;
+
+  /// Botón barra superior: compartir itinerario con links
+  ///
+  /// In es, this message translates to:
+  /// **'Compartir resumen'**
+  String get myPlanSummaryShareTooltip;
+
+  /// Asunto al compartir resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Resumen: {planName}'**
+  String myPlanSummaryShareSubject(String planName);
+
+  /// Cabecera texto compartido (filtro mío)
+  ///
+  /// In es, this message translates to:
+  /// **'Vista: mío'**
+  String get myPlanSummaryShareViewMine;
+
+  /// Cabecera texto compartido (filtro todos)
+  ///
+  /// In es, this message translates to:
+  /// **'Vista: todos'**
+  String get myPlanSummaryShareViewPlan;
+
+  /// Etiqueta corta link Maps
+  ///
+  /// In es, this message translates to:
+  /// **'maps'**
+  String get myPlanSummaryShareMapsLabel;
+
+  /// Etiqueta corta link web
+  ///
+  /// In es, this message translates to:
+  /// **'web'**
+  String get myPlanSummaryShareWebLabel;
+
+  /// Etiqueta corta link ruta
+  ///
+  /// In es, this message translates to:
+  /// **'ruta'**
+  String get myPlanSummaryShareRouteLabel;
+
+  /// Error al abrir el sheet de compartir
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo compartir el resumen'**
+  String get myPlanSummaryShareFailed;
+
+  /// Título sheet preview antes de compartir
+  ///
+  /// In es, this message translates to:
+  /// **'Vista previa del resumen'**
+  String get myPlanSummarySharePreviewTitle;
+
+  /// Ayuda en preview de compartir resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Los enlaces se muestran como texto subrayado. Al enviar se adjunta un HTML con los mismos links.'**
+  String get myPlanSummarySharePreviewHint;
+
+  /// Botón enviar desde preview de resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Compartir'**
+  String get myPlanSummaryShareSend;
+
+  /// Sección hoteles en preview/HTML
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamientos'**
+  String get myPlanSummaryShareSectionHotels;
+
+  /// Sección itinerario en preview/HTML
+  ///
+  /// In es, this message translates to:
+  /// **'Itinerario'**
+  String get myPlanSummaryShareSectionItinerary;
 
   /// Ítem 74: recuento en Lo más importante
   ///

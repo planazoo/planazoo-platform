@@ -844,10 +844,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   static const double _eventOutlineRailWidth = 4;
 
   Color _eventOutlineTitleColor(bool isDraft) =>
-      isDraft ? const Color(0xFFE8EAF0) : Colors.white;
+      isDraft ? CalendarStyles.draftAccentOrange : Colors.white;
 
   Color _eventOutlineSubtitleColor(bool isDraft) =>
-      isDraft ? Colors.white60 : Colors.white70;
+      isDraft ? CalendarStyles.draftAccentOrange.withValues(alpha: 0.75) : Colors.white70;
 
   /// Borde marcado cuando es para todos / multi-track / capa solapada.
   (Color, double) _outlineEventFrame(Map<String, dynamic> participantInfo,
@@ -867,9 +867,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     required Color frameColor,
     required double frameWidth,
     required Widget child,
+    bool isDraft = false,
   }) {
-    final radius = BorderRadius.circular(CalendarConstants.borderRadius);
-    return ClipRRect(
+    final radiusValue = CalendarConstants.borderRadius;
+    final radius = BorderRadius.circular(radiusValue);
+    final chrome = ClipRRect(
       borderRadius: radius,
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -880,7 +882,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: CalendarStyles.cSurfaceBg,
-                border: Border.all(color: frameColor, width: frameWidth),
+                border: isDraft
+                    ? null
+                    : Border.all(color: frameColor, width: frameWidth),
               ),
             ),
           ),
@@ -889,7 +893,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             top: 0,
             bottom: 0,
             width: _eventOutlineRailWidth,
-            child: ColoredBox(color: accentColor),
+            child: ColoredBox(
+              color: isDraft ? CalendarStyles.draftAccentOrange : accentColor,
+            ),
           ),
           Positioned.fill(
             child: Padding(
@@ -899,6 +905,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         ],
       ),
+    );
+
+    if (!isDraft) return chrome;
+
+    return CustomPaint(
+      foregroundPainter: CalendarDashedRRectBorderPainter(
+        color: CalendarStyles.draftAccentOrange,
+        radius: radiusValue,
+        strokeWidth: 1.6,
+        dashLength: 3.5,
+        gapLength: 2.5,
+      ),
+      child: chrome,
     );
   }
 
@@ -948,6 +967,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             accentColor: contColor,
             frameColor: frameColorCont,
             frameWidth: frameWidthCont,
+            isDraft: continuationEvent.isDraft,
             child: ClipRect(
               child: Padding(
                 padding: const EdgeInsets.all(1),
@@ -1150,6 +1170,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             accentColor: eventColor,
             frameColor: frameColorNd,
             frameWidth: frameWidthNd,
+            isDraft: event.isDraft,
             child: ClipRect(
               child: Padding(
                 padding: const EdgeInsets.all(1),
@@ -1896,6 +1917,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             accentColor: eventColor,
             frameColor: frameColorSg,
             frameWidth: frameWidthSg,
+            isDraft: segment.isDraft,
             child: ClipRect(
             child: Padding(
               padding: EdgeInsets.all(height < 15 ? 0.5 : 1),
@@ -2134,6 +2156,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               accentColor: eventColor,
               frameColor: frameColorEv,
               frameWidth: frameWidthEv,
+              isDraft: event.isDraft,
               child: ClipRect(
               child: Padding(
                 padding: EdgeInsets.all(eventHeight < 30 ? 1 : 2), // Padding más pequeño

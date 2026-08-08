@@ -1579,6 +1579,8 @@
   "eventLocationLabel": "Location",
   "eventAddressSingleLabel": "Location",
   "eventAddressSingleHint": "Place or address of the event",
+  "eventPlaceNameLabel": "Place name",
+  "eventPlaceNameHint": "Search place (museum, restaurant…)",
   "eventUrlLabel": "Web link",
   "@eventUrlLabel": { "description": "Optional event URL field" },
   "eventUrlHint": "https://...",
@@ -1640,6 +1642,19 @@
   "useAccommodationAsDestinationMenu": "Use accommodation…",
   "@useAccommodationAsDestinationMenu": {
     "description": "Menu when several accommodations exist that day"
+  },
+  "useAccommodationAsOrigin": "Use previous accommodation: {label}",
+  "@useAccommodationAsOrigin": {
+    "description": "Fill origin with hotel from previous night (day D-1)",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "useAccommodationAsOriginMenu": "Use previous accommodation…",
+  "@useAccommodationAsOriginMenu": {
+    "description": "Origin menu when several accommodations the previous day"
   },
   "openWebLink": "Open link",
   "@openWebLink": {
@@ -2209,6 +2224,35 @@
   "@myPlanSummarySeeLess": { "description": "Collapse chronological list" },
   "myPlanSummaryDraftsOnlyTooltip": "Drafts only",
   "@myPlanSummaryDraftsOnlyTooltip": { "description": "Item 81: filter unconfirmed events" },
+  "myPlanSummaryShareTooltip": "Share summary",
+  "@myPlanSummaryShareTooltip": { "description": "Top bar button: share itinerary with links" },
+  "myPlanSummaryShareSubject": "Summary: {planName}",
+  "@myPlanSummaryShareSubject": {
+    "description": "Subject when sharing summary",
+    "placeholders": { "planName": { "type": "String" } }
+  },
+  "myPlanSummaryShareViewMine": "View: mine",
+  "@myPlanSummaryShareViewMine": { "description": "Shared text header (mine filter)" },
+  "myPlanSummaryShareViewPlan": "View: everyone",
+  "@myPlanSummaryShareViewPlan": { "description": "Shared text header (all filter)" },
+  "myPlanSummaryShareMapsLabel": "maps",
+  "@myPlanSummaryShareMapsLabel": { "description": "Short Maps link label" },
+  "myPlanSummaryShareWebLabel": "web",
+  "@myPlanSummaryShareWebLabel": { "description": "Short web link label" },
+  "myPlanSummaryShareRouteLabel": "route",
+  "@myPlanSummaryShareRouteLabel": { "description": "Short route link label" },
+  "myPlanSummaryShareFailed": "Could not share the summary",
+  "@myPlanSummaryShareFailed": { "description": "Error opening the share sheet" },
+  "myPlanSummarySharePreviewTitle": "Summary preview",
+  "@myPlanSummarySharePreviewTitle": { "description": "Preview sheet title before sharing" },
+  "myPlanSummarySharePreviewHint": "Links appear as underlined text. When you send, an HTML file with the same links is attached.",
+  "@myPlanSummarySharePreviewHint": { "description": "Help text on summary share preview" },
+  "myPlanSummaryShareSend": "Share",
+  "@myPlanSummaryShareSend": { "description": "Send button from summary preview" },
+  "myPlanSummaryShareSectionHotels": "Accommodations",
+  "@myPlanSummaryShareSectionHotels": { "description": "Hotels section in preview/HTML" },
+  "myPlanSummaryShareSectionItinerary": "Itinerary",
+  "@myPlanSummaryShareSectionItinerary": { "description": "Itinerary section in preview/HTML" },
   "myPlanSummaryParticipantsCount": "{count} participants",
   "@myPlanSummaryParticipantsCount": {
     "description": "Item 74: participant count in important block",

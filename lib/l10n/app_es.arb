@@ -1579,6 +1579,8 @@
   "eventLocationLabel": "Lugar",
   "eventAddressSingleLabel": "Localización",
   "eventAddressSingleHint": "Lugar o dirección del evento",
+  "eventPlaceNameLabel": "Nombre del lugar",
+  "eventPlaceNameHint": "Buscar lugar (museo, restaurante…)",
   "eventUrlLabel": "Enlace web",
   "@eventUrlLabel": { "description": "Campo opcional URL del evento" },
   "eventUrlHint": "https://...",
@@ -1630,7 +1632,7 @@
   },
   "useAccommodationAsDestination": "Usar alojamiento: {label}",
   "@useAccommodationAsDestination": {
-    "description": "Rellenar destino del trayecto con el hotel del día",
+    "description": "Rellenar destino del trayecto con el hotel del día del evento",
     "placeholders": {
       "label": {
         "type": "String"
@@ -1639,7 +1641,20 @@
   },
   "useAccommodationAsDestinationMenu": "Usar alojamiento…",
   "@useAccommodationAsDestinationMenu": {
-    "description": "Menú cuando hay varios alojamientos el mismo día"
+    "description": "Menú destino cuando hay varios alojamientos el mismo día"
+  },
+  "useAccommodationAsOrigin": "Usar alojamiento anterior: {label}",
+  "@useAccommodationAsOrigin": {
+    "description": "Rellenar origen con el hotel de la noche anterior (día D-1)",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "useAccommodationAsOriginMenu": "Usar alojamiento anterior…",
+  "@useAccommodationAsOriginMenu": {
+    "description": "Menú origen cuando hay varios alojamientos el día anterior"
   },
   "openWebLink": "Abrir enlace",
   "@openWebLink": {
@@ -2212,6 +2227,35 @@
   "@myPlanSummarySeeLess": { "description": "Colapsar lista cronológica" },
   "myPlanSummaryDraftsOnlyTooltip": "Solo borradores",
   "@myPlanSummaryDraftsOnlyTooltip": { "description": "Ítem 81: filtrar eventos no confirmados" },
+  "myPlanSummaryShareTooltip": "Compartir resumen",
+  "@myPlanSummaryShareTooltip": { "description": "Botón barra superior: compartir itinerario con links" },
+  "myPlanSummaryShareSubject": "Resumen: {planName}",
+  "@myPlanSummaryShareSubject": {
+    "description": "Asunto al compartir resumen",
+    "placeholders": { "planName": { "type": "String" } }
+  },
+  "myPlanSummaryShareViewMine": "Vista: mío",
+  "@myPlanSummaryShareViewMine": { "description": "Cabecera texto compartido (filtro mío)" },
+  "myPlanSummaryShareViewPlan": "Vista: todos",
+  "@myPlanSummaryShareViewPlan": { "description": "Cabecera texto compartido (filtro todos)" },
+  "myPlanSummaryShareMapsLabel": "maps",
+  "@myPlanSummaryShareMapsLabel": { "description": "Etiqueta corta link Maps" },
+  "myPlanSummaryShareWebLabel": "web",
+  "@myPlanSummaryShareWebLabel": { "description": "Etiqueta corta link web" },
+  "myPlanSummaryShareRouteLabel": "ruta",
+  "@myPlanSummaryShareRouteLabel": { "description": "Etiqueta corta link ruta" },
+  "myPlanSummaryShareFailed": "No se pudo compartir el resumen",
+  "@myPlanSummaryShareFailed": { "description": "Error al abrir el sheet de compartir" },
+  "myPlanSummarySharePreviewTitle": "Vista previa del resumen",
+  "@myPlanSummarySharePreviewTitle": { "description": "Título sheet preview antes de compartir" },
+  "myPlanSummarySharePreviewHint": "Los enlaces se muestran como texto subrayado. Al enviar se adjunta un HTML con los mismos links.",
+  "@myPlanSummarySharePreviewHint": { "description": "Ayuda en preview de compartir resumen" },
+  "myPlanSummaryShareSend": "Compartir",
+  "@myPlanSummaryShareSend": { "description": "Botón enviar desde preview de resumen" },
+  "myPlanSummaryShareSectionHotels": "Alojamientos",
+  "@myPlanSummaryShareSectionHotels": { "description": "Sección hoteles en preview/HTML" },
+  "myPlanSummaryShareSectionItinerary": "Itinerario",
+  "@myPlanSummaryShareSectionItinerary": { "description": "Sección itinerario en preview/HTML" },
   "myPlanSummaryParticipantsCount": "{count} participantes",
   "@myPlanSummaryParticipantsCount": {
     "description": "Ítem 74: recuento en Lo más importante",

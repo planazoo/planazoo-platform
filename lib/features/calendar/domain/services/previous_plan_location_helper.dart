@@ -109,16 +109,21 @@ class PreviousPlanLocationHelper {
     final subtype = (common?.subtype ?? event.typeSubtype ?? '').trim();
     final label = common?.description ?? event.description;
 
+    final taxiDestName =
+        (extra?['taxiDestinationName'] as String?)?.trim() ?? '';
     final taxiDest =
         (extra?['taxiDestinationAddress'] as String?)?.trim() ?? '';
-    if (taxiDest.isNotEmpty) {
+    final destText = taxiDest.isNotEmpty
+        ? taxiDest
+        : taxiDestName;
+    if (destText.isNotEmpty) {
       return PreviousPlanLocation(
-        address: taxiDest,
+        address: destText,
         lat: (extra?['taxiDestinationLat'] as num?)?.toDouble(),
         lng: (extra?['taxiDestinationLng'] as num?)?.toDouble(),
         sourceKind: 'event',
         sourceId: event.id ?? '',
-        sourceLabel: label,
+        sourceLabel: taxiDestName.isNotEmpty ? taxiDestName : null,
         role: PreviousLocationRole.transportDestination,
       );
     }
@@ -150,18 +155,25 @@ class PreviousPlanLocationHelper {
       return _destinationFromTransport(event);
     }
 
+    final placeName = (extra?['placeName'] as String?)?.trim() ?? '';
+    final placeAddress = (extra?['placeAddress'] as String?)?.trim() ?? '';
     final location = (common?.location ?? event.details?['location'] as String?)
             ?.trim() ??
         '';
-    if (location.isEmpty) return null;
+    final address = placeAddress.isNotEmpty
+        ? placeAddress
+        : (location.isNotEmpty ? location : placeName);
+    if (address.isEmpty) return null;
 
     return PreviousPlanLocation(
-      address: location,
+      address: address,
       lat: (extra?['placeLat'] as num?)?.toDouble(),
       lng: (extra?['placeLng'] as num?)?.toDouble(),
       sourceKind: 'event',
       sourceId: event.id ?? '',
-      sourceLabel: common?.description ?? event.description,
+      sourceLabel: placeName.isNotEmpty
+          ? placeName
+          : (location.isNotEmpty && location != address ? location : null),
       role: PreviousLocationRole.place,
     );
   }

@@ -4,14 +4,14 @@
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
 > **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T270**
+**Siguiente código de tarea: T272**
 
 **📊 Resumen (solo pendientes):**
 - **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
-- **Administración:** T183-T191, T223 (vista admin, export CSV, seed, espacio admin RUD toda la BD, T188 en progreso)
+- **Administración:** T183-T191, T223 (vista admin, export CSV, seed, espacio admin RUD toda la BD, T188 en progreso), **T270 (catálogo admin tipos/subtipos de evento)**
 - **Auth / Perfil:** T159-T162, T173, T174, T226-T228, T232 (permisos Firestore, verificación, perfil, registro, modales)
 - **Seguridad avanzada:** T166-T172 (2FA, token refresh, legal, etc.)
-- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T246, T238, T242, T243, T250 (campos tipo/subtipo)
+- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T246, T238, T242, T243, T250 (campos tipo/subtipo), **T271 (fotos Places/cache)**
 - **Offline:** T56-T62
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
@@ -102,6 +102,7 @@
 | **T242** | **(parcial)** Página Calendario: (1) ~~Eliminar la opción «perspectiva de usuario».~~ ✅ Hecho. (2) Agrupar las opciones de la barra en un menú categorizado; revisar cuáles son necesarias. (3) Añadir menú de filtros de eventos: todos, borrador. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T243** | Copiar planes, eventos y alojamientos: (1) Revisar si ya existe tarea (T35, T211 para eventos). (2) Crear ambas opciones: (a) copiar eventos y alojamientos dentro del mismo plan (pegar en el plan actual); (b) duplicar plan entero (plan nuevo con eventos y alojamientos copiados). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T250** | **Definir campos por combinación tipo-subtipo de evento:** Para cada par tipo/subtipo (Desplazamiento/Avión, Desplazamiento/Taxi, Restauración/Comida, etc.), especificar qué campos son visibles, editables, obligatorios u opcionales, y en qué contexto (crear vs editar, rol del usuario). Documentar en `docs/especificaciones/EVENT_FORM_FIELDS.md` o anexo; alinear después el formulario `wd_event_dialog.dart` con esa definición. | Media |
+| **T271** | **Fotos automáticas de lugares/alojamientos (Places Photos + cache):** Evaluar e implementar imagen por evento/alojamiento para enriquecer resumen y detalle. Preferencia: **Google Place Photos** al crear/editar (cuando haya `placeId`), **descargar 1 miniatura** y **guardarla en storage propio** (Firebase/GCS) para no repetir el SKU Place Photos en cada vista (~$7/1.000 requests). Criterios: 1 foto por entidad; lazy-load; atribución Places; override/quitar manual; coste controlado (no hotlink de URLs de Places; no galería). Alternativas/fallback gratis a valorar: Wikimedia / Unsplash. Dejado en espera a propósito (2026-08); no implementar hasta priorizar. | Baja |
 ---
 
 ### 3. Administración y datos
@@ -116,6 +117,7 @@
 | **T188** | Sistema de gestión administrativa — **En progreso** (Fase 1 hecha; Fase 2: _adminCreatedBy, scripts, doc). | Alta |
 | **T191** | Completar UserId del administrador en ADMINS_WHITELIST.md. | Baja |
 | **T223** | **Espacio admin para gestionar toda la BD (RUD + huérfanos):** Panel desde el que un administrador pueda **leer** todos los documentos de Firestore (y listar usuarios Auth), **actualizar de forma masiva** y **eliminar** documentos concretos. Incluye: (1) eliminar un usuario completo con todos sus datos relacionados (Auth + Firestore, vía UserService.deleteAllUserData o equivalente con Admin SDK); (2) **detectar y listar documentos huérfanos** — documentos que referencian entidades ya eliminadas (p. ej. `plan_participations` con `userId` o `planId` inexistente, `events` con `planId` inexistente, `event_participants` con `eventId` o `userId` inexistente, `plan_invitations`/`plan_permissions` con plan o usuario borrado). El panel debe permitir revisar esos huérfanos y eliminarlos en lote o uno a uno. La (C) de crear no es prioritaria (se hace desde la app). Relacionado con T183, T187, T188. | Alta |
+| **T270** | **Catálogo admin de tipos y subtipos de evento:** Hoy el catálogo vive hardcodeado en `wd_event_dialog.dart` (`_typeFamilies` / `_typeSubtypes` / iconos). Pasar a una **base de datos gestionable por admin** (Firestore, p. ej. `event_type_catalog` o colección de familias + subtipos) con UI admin para crear/editar/desactivar/ordenar familias y subtipos (nombre persistido ES, etiquetas l10n opcionales, icono, orden, `active`). La app carga el catálogo en runtime con **fallback** al listado hardcodeado actual. Criterios: eventos existentes con valores legacy siguen visibles; no romper validación al guardar; documentar modelo y reglas Firestore; alinear con T250 (campos por tipo/subtipo) y T223 (espacio admin). | Media |
 
 ---
 

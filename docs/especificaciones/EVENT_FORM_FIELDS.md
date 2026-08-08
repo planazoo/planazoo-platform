@@ -79,10 +79,12 @@ Los valores en **español** son los que se persisten en `typeFamily` / `subtype`
 | Desplazamiento | Taxi, Avión, Tren, Autobús, Coche, Caminar, Shuttle, Transfer |
 | Restauración | Desayuno, Comida, Cena, Snack, Bebida |
 | Actividad | Concierto, Deporte, **Disfrutar hotel**, Monumento, Museo, Parque, Teatro, Tour |
-| Acción | Embarque, **Entrega vehículo alquiler**, Otro, **Punto de encuentro**, **Recogida vehículo alquiler** |
+| Acción | Embarque, **Entrega vehículo alquiler**, Otro, **Punto de encuentro**, **Recogida vehículo alquiler**, **Tiempo en aeropuerto** |
 | Otro | Compra, Reunión, Trabajo, Personal |
 
 Al abrir un evento existente, **Recogida** → **Recogida vehículo alquiler** y **Entrega** → **Entrega vehículo alquiler** (migración de UI al guardar de nuevo).
+
+**Acción / Tiempo en aeropuerto (ago 2026):** margen antes del vuelo para facturación, controles de seguridad/pasaporte, etc. Mismos campos generales que otras acciones (localización del aeropuerto/terminal, duración, participantes). Icono: maleta (`Icons.luggage`).
 
 **Shuttle / Transfer (mar 2026, lista §3.2 ítem 90):** además de origen y destino (mismo bloque que taxi/tren), el formulario ofrece **Terminal / puerta**, **Aerolínea / vuelo** y **Presentación en aeropuerto** (texto libre: hora anticipación, mostrador, etc.). Se guardan en `commonPart.extraData`: `transferTerminal`, `transferAirline`, `transferAirportMeet`. Si el subtipo deja de ser Shuttle/Transfer, esas claves se eliminan al guardar.
 

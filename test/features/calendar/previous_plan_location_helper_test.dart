@@ -212,6 +212,38 @@ void main() {
       expect(list.first.role, PreviousLocationRole.accommodation);
     });
 
+    test('checkout morning hotel is on previous day only (origin case)', () {
+      // Noche del 2 → checkout el 3: activo solo el 2 (checkOut exclusive).
+      final nightBefore = _hotel(
+        id: 'prev',
+        checkIn: DateTime(2026, 8, 2, 15, 0),
+        checkOut: DateTime(2026, 8, 3, 11, 0),
+        userId: user,
+        hotelName: 'Hotel Ayer',
+        address: 'Calle Ayer 1',
+      );
+      final tonight = _hotel(
+        id: 'today',
+        checkIn: DateTime(2026, 8, 3, 15, 0),
+        checkOut: DateTime(2026, 8, 4, 11, 0),
+        userId: user,
+        hotelName: 'Hotel Hoy',
+        address: 'Calle Hoy 1',
+      );
+      final forOrigin = PreviousPlanLocationHelper.sameDayAccommodations(
+        userId: user,
+        day: DateTime(2026, 8, 2),
+        accommodations: [nightBefore, tonight],
+      );
+      final forDestination = PreviousPlanLocationHelper.sameDayAccommodations(
+        userId: user,
+        day: day,
+        accommodations: [nightBefore, tonight],
+      );
+      expect(forOrigin.map((e) => e.sourceLabel), ['Hotel Ayer']);
+      expect(forDestination.map((e) => e.sourceLabel), ['Hotel Hoy']);
+    });
+
     test('hotel on same day can be previous location', () {
       final hotel = _hotel(
         id: 'h1',

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_summary_share_text.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
@@ -172,6 +174,16 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         }
         displayEvents.sort(_compareEventsBySchedule);
 
+        final dimPastInCourse = widget.plan.state == 'en_curso';
+
+        final displayAccommodations = _viewMode == 'plan'
+            ? List<Accommodation>.from(accommodations)
+            : accommodations
+                .where((a) =>
+                    a.participantTrackIds.isEmpty ||
+                    a.participantTrackIds.contains(userId))
+                .toList();
+
         final bar = _buildSummaryBar(
           loc: loc,
           viewMode: _viewMode,
@@ -179,14 +191,12 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           showDraftFilter: showDraftFilter,
           draftsOnlyActive: _draftOnlyFilter,
           onDraftOnlyToggle: () => _setDraftOnlyFilter(!_draftOnlyFilter),
+          onShare: () => _shareVisibleSummary(
+            loc: loc,
+            events: displayEvents,
+            accommodations: displayAccommodations,
+          ),
         );
-
-        final dimPastInCourse = widget.plan.state == 'en_curso';
-
-        final displayAccommodations = _viewMode == 'plan'
-            ? List<Accommodation>.from(accommodations)
-            : accommodations.where((a) =>
-                a.participantTrackIds.isEmpty || a.participantTrackIds.contains(userId)).toList();
 
         final flights = displayEvents.where((e) {
           final fam = (e.typeFamily ?? '').toLowerCase();
@@ -489,6 +499,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     required bool showDraftFilter,
     required bool draftsOnlyActive,
     required VoidCallback onDraftOnlyToggle,
+    VoidCallback? onShare,
   }) {
     return Container(
       width: double.infinity,
@@ -517,6 +528,17 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.1,
               ),
+            ),
+          ),
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            tooltip: loc.myPlanSummaryShareTooltip,
+            onPressed: onShare,
+            icon: Icon(
+              Icons.ios_share,
+              color: onShare != null ? Colors.white : Colors.white38,
+              size: 22,
             ),
           ),
           if (showDraftFilter) ...[
@@ -559,6 +581,257 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _shareVisibleSummary({
+    required AppLocalizations loc,
+    required List<Event> events,
+    required List<Accommodation> accommodations,
+  }) async {
+    final planName = widget.plan.name.trim().isEmpty
+        ? loc.myPlanSummaryTab
+        : widget.plan.name.trim();
+    final content = PlanSummaryShareContent.fromData(
+      planName: planName,
+      planStart: widget.plan.startDate,
+      planEnd: widget.plan.endDate,
+      viewLabel: _viewMode == 'plan'
+          ? loc.myPlanSummaryShareViewPlan
+          : loc.myPlanSummaryShareViewMine,
+      events: events,
+      accommodations: accommodations,
+      formatEventTime: (e) => _formatEventTime(e, loc),
+      mapsLabel: loc.myPlanSummaryShareMapsLabel,
+      webLabel: loc.myPlanSummaryShareWebLabel,
+      routeLabel: loc.myPlanSummaryShareRouteLabel,
+    );
+
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: _pageBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 12,
+              bottom: 16 + MediaQuery.viewInsetsOf(ctx).bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  loc.myPlanSummarySharePreviewTitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  loc.myPlanSummarySharePreviewHint,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: _textTertiary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.sizeOf(ctx).height * 0.52,
+                  ),
+                  child: SingleChildScrollView(
+                    child: _buildSharePreviewBody(loc, content),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    await _shareSummaryContent(loc, content);
+                  },
+                  icon: const Icon(Icons.ios_share, size: 18),
+                  label: Text(loc.myPlanSummaryShareSend),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColorScheme.color2,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSharePreviewBody(
+    AppLocalizations loc,
+    PlanSummaryShareContent content,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          content.planName,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        for (final line in content.headerLines)
+          Text(
+            line,
+            style: GoogleFonts.poppins(fontSize: 13, color: _textSecondary),
+          ),
+        if (content.daySections.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text(
+            loc.myPlanSummaryShareSectionItinerary,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.white70,
+            ),
+          ),
+          for (final section in content.daySections) ...[
+            const SizedBox(height: 8),
+            Text(
+              section.dayLabel,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColorScheme.color2,
+              ),
+            ),
+            for (final b in section.items) _buildSharePreviewBlock(b),
+          ],
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSharePreviewBlock(PlanSummaryShareBlock block) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: block.isAccommodation ? 10 : 0,
+        bottom: 10,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (block.isAccommodation)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Divider(color: Colors.white.withValues(alpha: 0.15)),
+            ),
+          Text(
+            block.title,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              fontStyle:
+                  block.isAccommodation ? FontStyle.italic : FontStyle.normal,
+            ),
+          ),
+          if (block.subtitle != null && block.subtitle!.trim().isNotEmpty)
+            Text(
+              block.subtitle!,
+              style: GoogleFonts.poppins(fontSize: 12, color: _textTertiary),
+            ),
+          if (block.links.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 2,
+                children: [
+                  for (final link in block.links)
+                    InkWell(
+                      onTap: () => _openWebUrl(link.url),
+                      child: Text(
+                        link.label,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppColorScheme.color2,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppColorScheme.color2,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _shareSummaryContent(
+    AppLocalizations loc,
+    PlanSummaryShareContent content,
+  ) async {
+    final subject = loc.myPlanSummaryShareSubject(content.planName);
+    final markdown = content.toMarkdown();
+    final htmlBytes = content.toHtmlBytes();
+    final safeName = content.planName
+        .replaceAll(RegExp(r'[^\w\-]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_');
+    final fileName =
+        'resumen_${safeName.isEmpty ? 'plan' : safeName}.html';
+
+    try {
+      final box = context.findRenderObject() as RenderBox?;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : null;
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            htmlBytes,
+            mimeType: 'text/html',
+            name: fileName,
+          ),
+        ],
+        subject: subject,
+        text: markdown,
+        sharePositionOrigin: origin,
+      );
+    } catch (_) {
+      try {
+        await Share.share(
+          markdown,
+          subject: subject,
+        );
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.myPlanSummaryShareFailed)),
+        );
+      }
+    }
   }
 
   Widget _buildViewModeChip(String label, bool selected, VoidCallback onTap) {

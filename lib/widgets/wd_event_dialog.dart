@@ -76,7 +76,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   /// Notas largas / texto de agencia (commonPart.notes).
   late TextEditingController _longNotesController;
   late TextEditingController
-      _locationController; // T225: lugar del evento (Places)
+      _locationController; // T225: lugar (nombre\ndirección)
   late TextEditingController _urlController; // Enlace web del evento
   PlaceDetails?
       _lastPlaceDetails; // T225: último lugar seleccionado (para lat/lng en extraData)
@@ -230,6 +230,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       'Otro',
       'Punto de encuentro',
       'Recogida vehículo alquiler',
+      'Tiempo en aeropuerto',
     ],
     'Otro': ['Compra', 'Reunión', 'Trabajo', 'Personal'],
   };
@@ -276,6 +277,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     'Acción|Fin viaje': Icons.flag,
     'Acción|Inicio viaje': Icons.flag_outlined,
     'Acción|Punto de encuentro': Icons.place,
+    'Acción|Tiempo en aeropuerto': Icons.luggage,
     'Acción|Otro': Icons.more_horiz,
     'Otro|Compra': Icons.shopping_cart,
     'Otro|Reunión': Icons.groups,
@@ -305,8 +307,16 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
     _eventDocuments =
         List<EventDocument>.from(widget.event?.documents ?? const []);
+    final edLoc = widget.event?.commonPart?.extraData;
+    final savedPlaceName = (edLoc?['placeName'] as String?)?.trim() ?? '';
+    final savedPlaceAddress =
+        (edLoc?['placeAddress'] as String?)?.trim() ?? '';
+    final savedLocation = widget.event?.commonPart?.location?.trim() ?? '';
     _locationController = TextEditingController(
-      text: widget.event?.commonPart?.location ?? '',
+      text: formatPlaceNameAndAddress(
+        savedPlaceName.isNotEmpty ? savedPlaceName : savedLocation,
+        savedPlaceName.isNotEmpty ? savedPlaceAddress : null,
+      ),
     );
     _urlController = TextEditingController(
       text: widget.event?.commonPart?.url ?? '',
@@ -369,11 +379,23 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         '';
     _departureAirportController = TextEditingController(text: depAirport);
     _arrivalAirportController = TextEditingController(text: arrAirport);
+    final originName = (ed?['taxiOriginName'] as String?)?.trim() ?? '';
+    final originAddress =
+        (ed?['taxiOriginAddress'] as String?)?.trim() ?? '';
     _taxiOriginController = TextEditingController(
-      text: ed?['taxiOriginAddress'] as String? ?? '',
+      text: formatPlaceNameAndAddress(
+        originName.isNotEmpty ? originName : originAddress,
+        originName.isNotEmpty ? originAddress : null,
+      ),
     );
+    final destName = (ed?['taxiDestinationName'] as String?)?.trim() ?? '';
+    final destAddress =
+        (ed?['taxiDestinationAddress'] as String?)?.trim() ?? '';
     _taxiDestinationController = TextEditingController(
-      text: ed?['taxiDestinationAddress'] as String? ?? '',
+      text: formatPlaceNameAndAddress(
+        destName.isNotEmpty ? destName : destAddress,
+        destName.isNotEmpty ? destAddress : null,
+      ),
     );
     final oLat = ed?['taxiOriginLat'];
     final oLng = ed?['taxiOriginLng'];
@@ -916,7 +938,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Un solo campo: dirección del evento (Places) + acceso a Maps dentro del campo.
+  /// Localización: un solo campo con nombre (1ª línea) y dirección (2ª).
   Widget _buildUnifiedLocationField() {
     final loc = AppLocalizations.of(context)!;
     final previous = _lookupPreviousPlanLocation();
@@ -942,8 +964,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             ),
             child: PlaceAutocompleteField(
               controller: _locationController,
-              initialAddress: widget.event?.commonPart?.location,
+              initialAddress: _locationController.text.isNotEmpty
+                  ? _locationController.text
+                  : null,
               lodgingOnly: false,
+              preferNameAndAddressTwoLines: true,
+              maxLines: 2,
               labelText: loc.eventAddressSingleLabel,
               hintText: loc.eventAddressSingleHint,
               prefixIcon: Icons.place,
@@ -953,12 +979,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               suffixIcon: ListenableBuilder(
                 listenable: _locationController,
                 builder: (context, _) {
-                  final hasCoords = _lastPlaceDetails?.lat != null ||
-                      (widget.event?.commonPart?.extraData?['placeLat'] !=
-                          null);
-                  final hasAddress =
-                      _locationController.text.trim().isNotEmpty;
-                  final canOpenMaps = hasCoords || hasAddress;
+                  final canOpenMaps = _canOpenEventLocationInMaps;
                   return IconButton(
                     tooltip: loc.openInGoogleMaps,
                     onPressed:
@@ -976,12 +997,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               onPlaceSelected: (PlaceDetails details) {
                 setState(() {
                   _lastPlaceDetails = details;
-                  final addr = details.formattedAddress;
-                  _locationController.text = (addr != null &&
-                          addr.isNotEmpty &&
-                          addr != details.displayName)
-                      ? '${details.displayName}, $addr'
-                      : details.displayName;
+                  _locationController.text = formatPlaceNameAndAddress(
+                    details.displayName,
+                    details.formattedAddress,
+                  );
+                  final web = details.websiteUri?.trim();
+                  if (web != null && web.isNotEmpty) {
+                    _urlController.text = web;
+                  }
                 });
               },
             ),
@@ -997,6 +1020,19 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ],
       ],
     );
+  }
+
+  bool get _canOpenEventLocationInMaps {
+    final hasCoords = _lastPlaceDetails?.lat != null ||
+        (widget.event?.commonPart?.extraData?['placeLat'] != null);
+    return hasCoords || _locationController.text.trim().isNotEmpty;
+  }
+
+  /// Texto corto de localización (1ª línea = nombre).
+  String get _eventLocationDisplayText {
+    final parsed = parsePlaceNameAndAddress(_locationController.text);
+    if (parsed.name.isNotEmpty) return parsed.name;
+    return parsed.address;
   }
 
   Widget _buildUsePreviousLocationButton({
@@ -1075,7 +1111,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  List<PreviousPlanLocation> _lookupSameDayAccommodations() {
+  /// Alojamientos con ubicación el [day] (check-in inclusive / check-out exclusive).
+  List<PreviousPlanLocation> _lookupAccommodationsForDay(DateTime day) {
     final planId = widget.planId;
     final user = ref.watch(currentUserProvider);
     if (planId == null || user == null) return const [];
@@ -1086,17 +1123,33 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
     return PreviousPlanLocationHelper.sameDayAccommodations(
       userId: user.id,
-      day: _selectedDate,
+      day: day,
       accommodations: accommodations,
     );
   }
 
+  /// Destino: hotel del día del evento.
+  List<PreviousPlanLocation> _lookupSameDayAccommodations() =>
+      _lookupAccommodationsForDay(_selectedDate);
+
+  /// Origen: hotel de la noche anterior (día civil previo al evento).
+  List<PreviousPlanLocation> _lookupPreviousDayAccommodations() =>
+      _lookupAccommodationsForDay(
+        DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day)
+            .subtract(const Duration(days: 1)),
+      );
+
   void _applyPreviousPlanLocation(PreviousPlanLocation previous) {
     setState(() {
-      _locationController.text = previous.address;
+      final label = (previous.sourceLabel ?? '').trim();
+      final address = previous.address.trim();
+      _locationController.text = formatPlaceNameAndAddress(
+        label.isNotEmpty ? label : address,
+        label.isNotEmpty ? address : null,
+      );
       _lastPlaceDetails = PlaceDetails(
-        displayName: (previous.sourceLabel ?? previous.address).trim(),
-        formattedAddress: previous.address,
+        displayName: label.isNotEmpty ? label : address,
+        formattedAddress: address.isNotEmpty ? address : null,
         lat: previous.lat,
         lng: previous.lng,
       );
@@ -1105,10 +1158,15 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   void _applyPreviousPlanLocationToOrigin(PreviousPlanLocation previous) {
     setState(() {
-      _taxiOriginController.text = previous.address;
+      final label = (previous.sourceLabel ?? '').trim();
+      final address = previous.address.trim();
+      _taxiOriginController.text = formatPlaceNameAndAddress(
+        label.isNotEmpty ? label : address,
+        label.isNotEmpty ? address : null,
+      );
       _taxiOriginDetails = PlaceDetails(
-        displayName: (previous.sourceLabel ?? previous.address).trim(),
-        formattedAddress: previous.address,
+        displayName: label.isNotEmpty ? label : address,
+        formattedAddress: address.isNotEmpty ? address : null,
         lat: previous.lat,
         lng: previous.lng,
       );
@@ -1119,10 +1177,15 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   void _applyPreviousPlanLocationToDestination(PreviousPlanLocation previous) {
     setState(() {
-      _taxiDestinationController.text = previous.address;
+      final label = (previous.sourceLabel ?? '').trim();
+      final address = previous.address.trim();
+      _taxiDestinationController.text = formatPlaceNameAndAddress(
+        label.isNotEmpty ? label : address,
+        label.isNotEmpty ? address : null,
+      );
       _taxiDestinationDetails = PlaceDetails(
-        displayName: (previous.sourceLabel ?? previous.address).trim(),
-        formattedAddress: previous.address,
+        displayName: label.isNotEmpty ? label : address,
+        formattedAddress: address.isNotEmpty ? address : null,
         lat: previous.lat,
         lng: previous.lng,
       );
@@ -1131,12 +1194,27 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     });
   }
 
-  /// Botón(es) para destinar el trayecto al alojamiento del día.
-  Widget? _buildAccommodationDestinationActions() {
+  String _twoLinePlaceDisplayName(String text) {
+    final parsed = parsePlaceNameAndAddress(text);
+    if (parsed.name.isNotEmpty) return parsed.name;
+    return parsed.address;
+  }
+
+  String _twoLinePlaceMapsQuery(String text) {
+    final parsed = parsePlaceNameAndAddress(text);
+    if (parsed.address.isNotEmpty) return parsed.address;
+    return parsed.name;
+  }
+
+  /// Botón(es) para usar un alojamiento como origen o destino.
+  Widget? _buildAccommodationEndpointActions({
+    required List<PreviousPlanLocation> hotels,
+    required void Function(PreviousPlanLocation hotel) onApply,
+    required String Function(String shortLabel) singleLabel,
+    required String menuLabel,
+  }) {
     if (!(_canEditGeneral || _canEditGeneralInitial)) return null;
-    final hotels = _lookupSameDayAccommodations();
     if (hotels.isEmpty) return null;
-    final loc = AppLocalizations.of(context)!;
 
     if (hotels.length == 1) {
       final hotel = hotels.first;
@@ -1146,14 +1224,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return Align(
         alignment: Alignment.centerLeft,
         child: TextButton.icon(
-          onPressed: () => _applyPreviousPlanLocationToDestination(hotel),
+          onPressed: () => onApply(hotel),
           icon: Icon(
             Icons.hotel_outlined,
             size: 16,
             color: AppColorScheme.color2,
           ),
           label: Text(
-            loc.useAccommodationAsDestination(short),
+            singleLabel(short),
             style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -1174,8 +1252,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return Align(
       alignment: Alignment.centerLeft,
       child: PopupMenuButton<PreviousPlanLocation>(
-        tooltip: loc.useAccommodationAsDestinationMenu,
-        onSelected: _applyPreviousPlanLocationToDestination,
+        tooltip: menuLabel,
+        onSelected: onApply,
         itemBuilder: (context) => hotels
             .map(
               (h) => PopupMenuItem(
@@ -1196,7 +1274,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   size: 16, color: AppColorScheme.color2),
               const SizedBox(width: 6),
               Text(
-                loc.useAccommodationAsDestinationMenu,
+                menuLabel,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -1313,17 +1391,49 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         controller: _urlController,
         readOnly: !_canEditGeneral,
         style: _valueStyle,
+        onChanged: (_) => setState(() {}),
         decoration: _standardFieldDecoration(
           labelText: loc.eventUrlLabel,
           hintText: loc.eventUrlHint,
           prefixIcon: Icons.link,
           counterText: '',
+        ).copyWith(
+          suffixIcon: _canOpenEventWebLink
+              ? IconButton(
+                  tooltip: loc.openWebLink,
+                  onPressed: _openEventWebLink,
+                  icon: Icon(
+                    Icons.open_in_new,
+                    size: _fieldIconSize,
+                    color: AppColorScheme.color2,
+                  ),
+                )
+              : null,
         ),
         keyboardType: TextInputType.url,
         maxLength: 500,
         maxLines: 1,
       ),
     );
+  }
+
+  bool get _canOpenEventWebLink {
+    final raw = _urlController.text.trim();
+    if (raw.isEmpty) return false;
+    final withScheme = raw.contains('://') ? raw : 'https://$raw';
+    final uri = Uri.tryParse(withScheme);
+    return uri != null && uri.hasScheme && uri.host.isNotEmpty;
+  }
+
+  Future<void> _openEventWebLink() async {
+    final raw = _urlController.text.trim();
+    if (raw.isEmpty) return;
+    final withScheme = raw.contains('://') ? raw : 'https://$raw';
+    final uri = Uri.tryParse(withScheme);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<void> _openLongNotesEditor() async {
@@ -1993,8 +2103,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
     // Otro desplazamiento (taxi, tren, etc.): solo subtipo y opcionalmente origen → destino
     if (family == 'Desplazamiento' && subtype.isNotEmpty) {
-      final origin = _taxiOriginController.text.trim();
-      final dest = _taxiDestinationController.text.trim();
+      final origin = _twoLinePlaceDisplayName(_taxiOriginController.text);
+      final dest = _twoLinePlaceDisplayName(_taxiDestinationController.text);
       if (origin.isNotEmpty && dest.isNotEmpty) {
         return '$subtype · ${short(origin)} → ${short(dest)}';
       }
@@ -2022,8 +2132,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return subtype;
     }
 
-    // Evento con localización única
-    final location = _locationController.text.trim();
+    // Evento con localización (prioriza nombre del lugar)
+    final location = _eventLocationDisplayText;
     if (location.isNotEmpty) {
       if (subtype.isNotEmpty) return '$subtype · ${short(location)}';
       return short(location);
@@ -2034,62 +2144,66 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return 'Evento';
   }
 
-  /// Bloque Origen + Destino (+ opcionalmente Plazas) para Desplazamiento (Taxi, Tren, Autobús, Coche, Caminar).
-  /// Origen y Destino con el mismo formato (título sobre el borde) que Descripción y Timezone.
-  /// [showPlazas] true solo para Taxi.
+  /// Bloque Origen + Destino (+ opcionalmente Plazas) para Desplazamiento.
+  /// Un campo por extremo: nombre en 1ª línea, dirección en 2ª. [showPlazas] solo Taxi.
   Widget _buildTransportOriginDestinationBlock({required bool showPlazas}) {
     final loc = AppLocalizations.of(context)!;
     final previous = _lookupPreviousPlanLocation();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Origen
         _buildLabelOnBorderField(
           label: loc.taxiOriginLabel,
           contentPadding:
               const EdgeInsets.only(top: 14, left: 8, right: 0, bottom: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: PlaceAutocompleteField(
-                  controller: _taxiOriginController,
-                  initialAddress: null,
-                  lodgingOnly: false,
-                  labelText: '',
-                  hintText: loc.taxiOriginHint,
-                  fontSize: 12,
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                  onPlaceSelected: (PlaceDetails details) {
-                    setState(() {
-                      _taxiOriginDetails = details;
-                      final addr = details.formattedAddress;
-                      _taxiOriginController.text = (addr != null &&
-                              addr.isNotEmpty &&
-                              addr != details.displayName)
-                          ? '${details.displayName}, $addr'
-                          : details.displayName;
-                    });
-                  },
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.map_outlined,
-                  color: (_taxiOriginDetails != null ||
-                          _taxiOriginController.text.trim().isNotEmpty)
-                      ? AppColorScheme.color2
-                      : Colors.white60,
-                ),
-                tooltip: loc.openInGoogleMaps,
-                onPressed: () => _openTaxiAddressInMaps(
-                  _taxiOriginController.text.trim(),
-                  _taxiOriginDetails?.lat ?? _taxiOriginStoredLat,
-                  _taxiOriginDetails?.lng ?? _taxiOriginStoredLng,
-                ),
-              ),
-            ],
+          child: PlaceAutocompleteField(
+            controller: _taxiOriginController,
+            initialAddress: _taxiOriginController.text.isNotEmpty
+                ? _taxiOriginController.text
+                : null,
+            lodgingOnly: false,
+            preferNameAndAddressTwoLines: true,
+            maxLines: 2,
+            labelText: '',
+            hintText: loc.taxiOriginHint,
+            fontSize: 13,
+            fillColor: Colors.transparent,
+            border: InputBorder.none,
+            suffixIcon: ListenableBuilder(
+              listenable: _taxiOriginController,
+              builder: (context, _) {
+                final canOpen =
+                    _taxiOriginController.text.trim().isNotEmpty ||
+                        _taxiOriginDetails != null ||
+                        _taxiOriginStoredLat != null;
+                return IconButton(
+                  tooltip: loc.openInGoogleMaps,
+                  onPressed: canOpen
+                      ? () => _openTaxiAddressInMaps(
+                            _twoLinePlaceMapsQuery(
+                                _taxiOriginController.text),
+                            _taxiOriginDetails?.lat ?? _taxiOriginStoredLat,
+                            _taxiOriginDetails?.lng ?? _taxiOriginStoredLng,
+                          )
+                      : null,
+                  icon: Icon(
+                    Icons.map_outlined,
+                    color: canOpen ? AppColorScheme.color2 : Colors.white60,
+                  ),
+                );
+              },
+            ),
+            onPlaceSelected: (PlaceDetails details) {
+              setState(() {
+                _taxiOriginDetails = details;
+                _taxiOriginController.text = formatPlaceNameAndAddress(
+                  details.displayName,
+                  details.formattedAddress,
+                );
+                _taxiOriginStoredLat = details.lat;
+                _taxiOriginStoredLng = details.lng;
+              });
+            },
           ),
         ),
         if (previous != null &&
@@ -2100,59 +2214,86 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             onApply: _applyPreviousPlanLocationToOrigin,
           ),
         ],
+        Builder(
+          builder: (context) {
+            final hotelAction = _buildAccommodationEndpointActions(
+              hotels: _lookupPreviousDayAccommodations(),
+              onApply: _applyPreviousPlanLocationToOrigin,
+              singleLabel: loc.useAccommodationAsOrigin,
+              menuLabel: loc.useAccommodationAsOriginMenu,
+            );
+            if (hotelAction == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: hotelAction,
+            );
+          },
+        ),
         const SizedBox(height: 12),
-        // Destino
         _buildLabelOnBorderField(
           label: loc.taxiDestinationLabel,
           contentPadding:
               const EdgeInsets.only(top: 14, left: 8, right: 0, bottom: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: PlaceAutocompleteField(
-                  controller: _taxiDestinationController,
-                  initialAddress: null,
-                  lodgingOnly: false,
-                  labelText: '',
-                  hintText: loc.taxiDestinationHint,
-                  fontSize: 12,
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                  onPlaceSelected: (PlaceDetails details) {
-                    setState(() {
-                      _taxiDestinationDetails = details;
-                      final addr = details.formattedAddress;
-                      _taxiDestinationController.text = (addr != null &&
-                              addr.isNotEmpty &&
-                              addr != details.displayName)
-                          ? '${details.displayName}, $addr'
-                          : details.displayName;
-                    });
-                  },
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.map_outlined,
-                  color: (_taxiDestinationDetails != null ||
-                          _taxiDestinationController.text.trim().isNotEmpty)
-                      ? AppColorScheme.color2
-                      : Colors.white60,
-                ),
-                tooltip: loc.openInGoogleMaps,
-                onPressed: () => _openTaxiAddressInMaps(
-                  _taxiDestinationController.text.trim(),
-                  _taxiDestinationDetails?.lat ?? _taxiDestinationStoredLat,
-                  _taxiDestinationDetails?.lng ?? _taxiDestinationStoredLng,
-                ),
-              ),
-            ],
+          child: PlaceAutocompleteField(
+            controller: _taxiDestinationController,
+            initialAddress: _taxiDestinationController.text.isNotEmpty
+                ? _taxiDestinationController.text
+                : null,
+            lodgingOnly: false,
+            preferNameAndAddressTwoLines: true,
+            maxLines: 2,
+            labelText: '',
+            hintText: loc.taxiDestinationHint,
+            fontSize: 13,
+            fillColor: Colors.transparent,
+            border: InputBorder.none,
+            suffixIcon: ListenableBuilder(
+              listenable: _taxiDestinationController,
+              builder: (context, _) {
+                final canOpen =
+                    _taxiDestinationController.text.trim().isNotEmpty ||
+                        _taxiDestinationDetails != null ||
+                        _taxiDestinationStoredLat != null;
+                return IconButton(
+                  tooltip: loc.openInGoogleMaps,
+                  onPressed: canOpen
+                      ? () => _openTaxiAddressInMaps(
+                            _twoLinePlaceMapsQuery(
+                                _taxiDestinationController.text),
+                            _taxiDestinationDetails?.lat ??
+                                _taxiDestinationStoredLat,
+                            _taxiDestinationDetails?.lng ??
+                                _taxiDestinationStoredLng,
+                          )
+                      : null,
+                  icon: Icon(
+                    Icons.map_outlined,
+                    color: canOpen ? AppColorScheme.color2 : Colors.white60,
+                  ),
+                );
+              },
+            ),
+            onPlaceSelected: (PlaceDetails details) {
+              setState(() {
+                _taxiDestinationDetails = details;
+                _taxiDestinationController.text = formatPlaceNameAndAddress(
+                  details.displayName,
+                  details.formattedAddress,
+                );
+                _taxiDestinationStoredLat = details.lat;
+                _taxiDestinationStoredLng = details.lng;
+              });
+            },
           ),
         ),
         Builder(
           builder: (context) {
-            final hotelAction = _buildAccommodationDestinationActions();
+            final hotelAction = _buildAccommodationEndpointActions(
+              hotels: _lookupSameDayAccommodations(),
+              onApply: _applyPreviousPlanLocationToDestination,
+              singleLabel: loc.useAccommodationAsDestination,
+              menuLabel: loc.useAccommodationAsDestinationMenu,
+            );
             if (hotelAction == null) return const SizedBox.shrink();
             return Padding(
               padding: const EdgeInsets.only(top: 6),
@@ -2611,12 +2752,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   /// Abre Google Maps con ruta origen → destino (muestra duración en Maps).
   Future<void> _openTransportRouteInGoogleMaps() async {
     final origin = _mapsDirPoint(
-      address: _taxiOriginController.text.trim(),
+      address: _twoLinePlaceMapsQuery(_taxiOriginController.text),
       lat: _taxiOriginDetails?.lat ?? _taxiOriginStoredLat,
       lng: _taxiOriginDetails?.lng ?? _taxiOriginStoredLng,
     );
     final destination = _mapsDirPoint(
-      address: _taxiDestinationController.text.trim(),
+      address: _twoLinePlaceMapsQuery(_taxiDestinationController.text),
       lat: _taxiDestinationDetails?.lat ?? _taxiDestinationStoredLat,
       lng: _taxiDestinationDetails?.lng ?? _taxiDestinationStoredLng,
     );
@@ -3216,12 +3357,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         (widget.event?.commonPart?.extraData?['placeLat'] as num?)?.toDouble();
     final lng = _lastPlaceDetails?.lng ??
         (widget.event?.commonPart?.extraData?['placeLng'] as num?)?.toDouble();
-    final locationText = _locationController.text.trim();
+    final fromField = _twoLinePlaceMapsQuery(_locationController.text);
     final address = _lastPlaceDetails?.formattedAddress ??
+        (fromField.isNotEmpty ? fromField : null) ??
         widget.event?.commonPart?.extraData?['placeAddress'] as String? ??
-        (locationText.isNotEmpty
-            ? locationText
-            : widget.event?.commonPart?.location);
+        widget.event?.commonPart?.location;
     final String url;
     if (lat != null && lng != null) {
       url = 'https://www.google.com/maps?q=$lat,$lng';
@@ -5714,13 +5854,30 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       final currentUser = ref.read(currentUserProvider);
       final userId = currentUser?.id ?? '';
 
-      // Construir EventCommonPart (T47). T225: location y opcional extraData con coordenadas
-      final locationText = _locationController.text.trim();
-      final locationSanitized = locationText.isEmpty
+      // Construir EventCommonPart (T47). T225: location (nombre) + extraData dirección/coords
+      final parsedLocation =
+          parsePlaceNameAndAddress(_locationController.text);
+      final locationForCommon = parsedLocation.name.isNotEmpty
+          ? parsedLocation.name
+          : parsedLocation.address;
+      final locationSanitized = locationForCommon.isEmpty
           ? null
-          : Sanitizer.sanitizePlainText(locationText, maxLength: 500);
+          : Sanitizer.sanitizePlainText(locationForCommon, maxLength: 500);
       final baseExtra =
           Map<String, dynamic>.from(widget.event?.commonPart?.extraData ?? {});
+      if (parsedLocation.name.isNotEmpty) {
+        baseExtra['placeName'] =
+            Sanitizer.sanitizePlainText(parsedLocation.name, maxLength: 200);
+      } else {
+        baseExtra.remove('placeName');
+      }
+      if (parsedLocation.address.isNotEmpty) {
+        baseExtra['placeAddress'] = Sanitizer.sanitizePlainText(
+            parsedLocation.address,
+            maxLength: 500);
+      } else {
+        baseExtra.remove('placeAddress');
+      }
       if (_lastPlaceDetails != null) {
         if (_lastPlaceDetails!.lat != null) {
           baseExtra['placeLat'] = _lastPlaceDetails!.lat;
@@ -5728,10 +5885,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         if (_lastPlaceDetails!.lng != null) {
           baseExtra['placeLng'] = _lastPlaceDetails!.lng;
         }
-        if (_lastPlaceDetails!.formattedAddress != null) {
-          baseExtra['placeAddress'] = _lastPlaceDetails!.formattedAddress;
-        }
-        baseExtra['placeName'] = _lastPlaceDetails!.displayName;
+      } else if (locationForCommon.isEmpty) {
+        baseExtra.remove('placeLat');
+        baseExtra.remove('placeLng');
       }
       if (_lastFlightStatus != null) {
         baseExtra['flightNumber'] = _lastFlightStatus!.flightNumber;
@@ -5812,27 +5968,61 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       if (_typeFamilyController.text == 'Desplazamiento' &&
           _typeSubtypeController.text != 'Avión' &&
           _typeSubtypeController.text.isNotEmpty) {
-        final originAddr = _taxiOriginController.text.trim();
-        final destAddr = _taxiDestinationController.text.trim();
-        if (originAddr.isNotEmpty) {
-          baseExtra['taxiOriginAddress'] =
-              Sanitizer.sanitizePlainText(originAddr, maxLength: 500);
+        final parsedOrigin =
+            parsePlaceNameAndAddress(_taxiOriginController.text);
+        final parsedDest =
+            parsePlaceNameAndAddress(_taxiDestinationController.text);
+        if (parsedOrigin.name.isNotEmpty || parsedOrigin.address.isNotEmpty) {
+          if (parsedOrigin.name.isNotEmpty) {
+            baseExtra['taxiOriginName'] = Sanitizer.sanitizePlainText(
+                parsedOrigin.name,
+                maxLength: 200);
+          } else {
+            baseExtra.remove('taxiOriginName');
+          }
+          baseExtra['taxiOriginAddress'] = Sanitizer.sanitizePlainText(
+            parsedOrigin.address.isNotEmpty
+                ? parsedOrigin.address
+                : parsedOrigin.name,
+            maxLength: 500,
+          );
           if (_taxiOriginDetails?.lat != null) {
             baseExtra['taxiOriginLat'] = _taxiOriginDetails!.lat;
           }
           if (_taxiOriginDetails?.lng != null) {
             baseExtra['taxiOriginLng'] = _taxiOriginDetails!.lng;
           }
+        } else {
+          baseExtra.remove('taxiOriginName');
+          baseExtra.remove('taxiOriginAddress');
+          baseExtra.remove('taxiOriginLat');
+          baseExtra.remove('taxiOriginLng');
         }
-        if (destAddr.isNotEmpty) {
-          baseExtra['taxiDestinationAddress'] =
-              Sanitizer.sanitizePlainText(destAddr, maxLength: 500);
+        if (parsedDest.name.isNotEmpty || parsedDest.address.isNotEmpty) {
+          if (parsedDest.name.isNotEmpty) {
+            baseExtra['taxiDestinationName'] = Sanitizer.sanitizePlainText(
+                parsedDest.name,
+                maxLength: 200);
+          } else {
+            baseExtra.remove('taxiDestinationName');
+          }
+          baseExtra['taxiDestinationAddress'] = Sanitizer.sanitizePlainText(
+            parsedDest.address.isNotEmpty
+                ? parsedDest.address
+                : parsedDest.name,
+            maxLength: 500,
+          );
           if (_taxiDestinationDetails?.lat != null) {
             baseExtra['taxiDestinationLat'] = _taxiDestinationDetails!.lat;
           }
           if (_taxiDestinationDetails?.lng != null) {
             baseExtra['taxiDestinationLng'] = _taxiDestinationDetails!.lng;
           }
+        } else {
+          baseExtra.remove('taxiDestinationName');
+          baseExtra.remove('taxiDestinationAddress');
+          baseExtra.remove('taxiDestinationLat');
+          baseExtra.remove('taxiDestinationLng');
         }
         if (_typeSubtypeController.text == 'Taxi') {
           baseExtra['taxiSeats'] = _taxiSeats;
