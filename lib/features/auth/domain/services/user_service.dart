@@ -36,8 +36,9 @@ class UserService {
           .get();
 
       if (doc.exists) {
-        await ensureUserLookups(user);
-        return user.id; // Usuario ya existe
+        // No tocar lookups ni sobrescribir username con un modelo incompleto
+        // (p. ej. fallback Auth sin username → cristianclaraso6).
+        return user.id;
       }
 
       // Crear usuario con su ID específico
@@ -218,11 +219,20 @@ class UserService {
   // Actualizar usuario
   Future<void> updateUser(UserModel user) async {
     try {
-      await _firestore
-          .collection(_collection)
-          .doc(user.id)
-          .update(user.toFirestore());
-      await ensureUserLookups(user);
+      final data = user.toFirestore();
+      // No borrar username existente escribiendo null (login fallback / Auth sin username).
+      if (user.username == null || user.username!.trim().isEmpty) {
+        data.remove('username');
+        data.remove('usernameLower');
+      }
+      // No reenviar createdAt (igualdad exacta en rules / precisión Timestamp).
+      data.remove('createdAt');
+      await _firestore.collection(_collection).doc(user.id).update(data);
+      if (user.username != null && user.username!.trim().isNotEmpty) {
+        await ensureUserLookups(user);
+      } else {
+        await ensureEmailLookup(user);
+      }
     } catch (e) {
       throw Exception('Error al actualizar usuario: $e');
     }

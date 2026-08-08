@@ -59,7 +59,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         try {
           final userModel = await _userService
               .getUser(firebaseUser.uid)
-              .timeout(const Duration(seconds: 3), onTimeout: () => null);
+              .timeout(const Duration(seconds: 8), onTimeout: () => null);
           
           if (userModel != null) {
             UserModel updatedUser = userModel.copyWith(lastLoginAt: DateTime.now());
@@ -69,9 +69,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
               updatedUser = updatedUser.copyWith(defaultTimezone: inferredTimezone);
             }
             
-            // Generar username automático si no tiene uno
-            if (updatedUser.username == null || updatedUser.username!.isEmpty) {
-              final generatedUsername = await _generateAutomaticUsername(updatedUser);
+            // Solo asignar username automático si el perfil aún no tiene uno.
+            // Importante: excluir al propio userId al buscar disponibilidad.
+            if (updatedUser.username == null || updatedUser.username!.trim().isEmpty) {
+              final generatedUsername =
+                  await _generateAutomaticUsername(updatedUser);
               if (generatedUsername != null) {
                 updatedUser = updatedUser.copyWith(username: generatedUsername);
                 await _userService
@@ -146,6 +148,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
               Future<void>(() async {
                 try {
+                  // Releer perfil real: no inventar username si el doc ya existe.
+                  final existing = await _userService.getUser(firebaseUser.uid);
+                  if (existing != null) {
+                    final merged = existing.copyWith(lastLoginAt: DateTime.now());
+                    await _userService
+                        .updateUser(merged)
+                        .timeout(const Duration(seconds: 2), onTimeout: () {});
+                    await _userLocalService.saveCurrentUser(merged);
+                    return;
+                  }
                   final generatedUsername =
                       await _generateAutomaticUsername(fallbackUser);
                   final userModelWithUsername = generatedUsername != null
@@ -226,8 +238,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       String email = emailOrUsername.trim();
 
-      // Detectar si es email o username
-      final isEmail = email.contains('@');
+      // Email real (con dominio) vs username (@handle o handle sin @).
+      // Importante: "@cristianclaraso".contains('@') es true pero NO es un email.
+      final isEmail = Validator.isValidEmail(email);
 
       if (!isEmail) {
         // Username → email vía índice público (sin listar `users` sin sesión)
@@ -460,7 +473,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (user.displayName != null && user.displayName!.isNotEmpty) {
       final fromDisplayName = _extractUsernameFromDisplayName(user.displayName!);
       if (fromDisplayName != null) {
-        final available = await _findAvailableUsername(fromDisplayName);
+        final available =
+            await _findAvailableUsername(fromDisplayName, excludeUserId: user.id);
         if (available != null) return available;
       }
     }
@@ -469,13 +483,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (user.email.isNotEmpty) {
       final fromEmail = _extractUsernameFromEmail(user.email);
       if (fromEmail != null) {
-        final available = await _findAvailableUsername(fromEmail);
+        final available =
+            await _findAvailableUsername(fromEmail, excludeUserId: user.id);
         if (available != null) return available;
       }
     }
     
     // Si todo falla, generar uno aleatorio
-    return await _findAvailableUsername('user${DateTime.now().millisecondsSinceEpoch % 10000}');
+    return await _findAvailableUsername(
+      'user${DateTime.now().millisecondsSinceEpoch % 10000}',
+      excludeUserId: user.id,
+    );
   }
 
   // Extraer username válido desde displayName
@@ -522,9 +540,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   // Encontrar un username disponible, probando variaciones
-  Future<String?> _findAvailableUsername(String base) async {
+  Future<String?> _findAvailableUsername(
+    String base, {
+    String? excludeUserId,
+  }) async {
     // Probar el base primero
-    if (await _userService.isUsernameAvailable(base)) {
+    if (await _userService.isUsernameAvailable(base, excludeUserId: excludeUserId)) {
       return base;
     }
     
@@ -532,7 +553,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     for (int i = 1; i <= 999; i++) {
       final candidate = '$base$i';
       if (candidate.length > 30) break; // No exceder límite
-      if (await _userService.isUsernameAvailable(candidate)) {
+      if (await _userService.isUsernameAvailable(
+        candidate,
+        excludeUserId: excludeUserId,
+      )) {
         return candidate;
       }
     }
@@ -540,7 +564,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // Intentar con timestamp corto
     final timestamp = DateTime.now().millisecondsSinceEpoch % 10000;
     final candidate = '${base}_$timestamp';
-    if (candidate.length <= 30 && await _userService.isUsernameAvailable(candidate)) {
+    if (candidate.length <= 30 &&
+        await _userService.isUsernameAvailable(
+          candidate,
+          excludeUserId: excludeUserId,
+        )) {
       return candidate;
     }
     

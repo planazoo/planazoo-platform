@@ -306,7 +306,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Widget _buildEmailField() {
-    final isEmail = _emailController.text.contains('@');
+    final trimmed = _emailController.text.trim();
+    final isEmail = Validator.isValidEmail(trimmed);
 
     return Container(
       decoration: BoxDecoration(

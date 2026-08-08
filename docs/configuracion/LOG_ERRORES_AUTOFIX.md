@@ -16,6 +16,13 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-08-08] Login — username mutaba a cristianclaraso6, 7, …
+
+- **Contexto:** Login web; usuario con `@cristianclaraso` veía en Firestore `@cristianclarasoN` que subía con las pruebas.
+- **Causa raíz:** Si `getUser` fallaba/timeout (3s), el fallback Auth (`username: null`) generaba un username nuevo. `_findAvailableUsername` no excluía al propio `userId`, así el lookup propio hacía “ocupado” el base y añadía 1…N. Luego `createUser` (doc existente) + `updateUser` sobrescribían el perfil. Login por email o lookup viejo de `cristianclaraso` seguía funcionando.
+- **Solución:** timeout 8s; fallback releer perfil antes de generar; `createUser` no toca lookups si el doc existe; `updateUser` no escribe `username` null ni `createdAt`; `_findAvailableUsername` con `excludeUserId`.
+- **Notas:** En Firestore, restaurar a mano `username`/`usernameLower` a `cristianclaraso` y limpiar lookups basura `cristianclarasoN` si hace falta.
+
 ### [2026-08-08] T272 — guardar colores del plan fallaba sin detalle en terminal
 
 - **Contexto:** Info del plan → Colores del calendario; snackbar «No se pudieron guardar los cambios».
