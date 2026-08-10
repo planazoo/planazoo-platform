@@ -38,7 +38,6 @@ Algunas tareas tienen un `.md` propio con especificación, plan de fases o crite
 | T262 | `T262_NOTAS_PLAN_COMUNES_PERSONALES.md` | Notas, plantillas, lista preparación (mini-tareas con checkbox). |
 | T266 | `T266_ASISTENTE_POR_REGLAS.md` | Catálogo de reglas de sugerencias inteligentes (MVP + backlog). |
 | T272 | `T272_COLORES_TIPOS_EVENTO_PLAN.md` | Color base + colores por familia; propagación a eventos; carril/borde. |
-| T273 | `T273_RESERVA_CANCELACION_DEPOSITO.md` | Garantía, tramos cancelación, fijo, pagos y avisos org. |
 
 En `TASKS.md`, las filas de estas tareas **deben** indicar que existe el documento (ej. «Especificación en `docs/tareas/Txxx_*.md`»).
 
@@ -50,7 +49,7 @@ En `TASKS.md`, las filas de estas tareas **deben** indicar que existe el documen
 
 Los documentos de especificación de tareas **completadas** se mueven a `docs/tareas/archivo/` al cerrar la tarea. Se mantiene el nombre del archivo para trazabilidad. Ver reglas en `TASKS.md` § Documentos de especificación / plan.
 
-**Actualmente en archivo:** `T255_EVALUACION_FASTLANE.md` (T255 completada).
+**Actualmente en archivo:** `T255_EVALUACION_FASTLANE.md`, `T273_RESERVA_CANCELACION_DEPOSITO.md` (T273 completada Ago 2026).
 
 ---
 

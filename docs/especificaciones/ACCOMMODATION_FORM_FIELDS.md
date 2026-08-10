@@ -7,7 +7,17 @@
 
 > **Nota:** Los alojamientos son una entidad independiente de los eventos. Ver `docs/flujos/FLUJO_CRUD_ALOJAMIENTOS.md` para el flujo completo.
 
-**Implementación actual (Feb 2026):** Modelo `Accommodation` en `lib/features/calendar/domain/models/accommodation.dart`. Campos presentes: checkIn, checkOut, hotelName, description, color, typeFamily, typeSubtype, participantTrackIds, commonPart, personalParts, cost (T101). Diálogo: `wd_accommodation_dialog.dart`. Muchos campos del doc (contacto, reserva, servicios, etc.) son propuesta de enriquecimiento (T121).
+**Implementación actual (Feb 2026):** Modelo `Accommodation` en `lib/features/calendar/domain/models/accommodation.dart`. Campos presentes: checkIn, checkOut, hotelName, description, color, typeFamily, typeSubtype, participantTrackIds, commonPart, personalParts, cost (T101), **`reservationCancellation` (T273)**. Diálogo: `wd_accommodation_dialog.dart`. Muchos campos del doc (contacto, reserva, servicios, etc.) son propuesta de enriquecimiento (T121).
+
+### Anexo T273 — Reserva / cancelación (Ago 2026)
+
+Sustituye la propuesta suelta «depósito / día límite cancelación» del bloque financiero:
+
+- Mismo bloque UI que en eventos (`ReservationCancellationFormSection`).
+- Modelo: `reservationCancellation` (garantía + hasta 2 tramos + fijo + preset de aviso).
+- Visible en Pagos (`paymentKind: guarantee`) y en Info («Próximas cancelaciones»).
+
+Detalle: `docs/tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md`.
 
 ---
 

@@ -16,7 +16,7 @@
 - **Permisos:** T64, T66, T67
 - **Timezones:** T40-T45
 - **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), **T267 (app Android + push FCM)**, **T268 (recordatorios diarios invitaciones pendientes)**, T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña), T263-T266 (items 63/64/65/98 de lista QA)**, etc.
-- **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md), **T273 (garantía / política cancelación en evento y alojamiento)**.
+- **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
 
 **Total aproximado: ~100 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
 
@@ -254,7 +254,6 @@
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
 | **T222** | Pagos MVP: ejecutar y validar. Ejecutar fase 11.5 Pagos del plan E2E (tres usuarios) y casos PAY-001 a PAY-007 del TESTING_CHECKLIST; marcar resultados. | Media |
-| **T273** | **Reserva / cancelación (garantía + política) en evento y alojamiento:** Bloque para depósito/garantía (importe, un pagador, estado), hasta **2 tramos** de cancelación (fecha+hora en TZ del ítem + % que se **recupera**), cargo fijo opcional al cancelar (p. ej. 5 €), integración en **Pagos/balances**, avisos solo al **organizador** (selector de antelación en formulario + CF cron). Mismo UI en eventos y alojamientos. Contrato y criterios en `docs/tareas/T273_RESERVA_CANCELACION_DEPOSITO.md`. Relacionado: T101/T102, T121, T110. **Estado:** v1 + UI + selector aviso + cron desplegado (2026-08-10); **QA cron pendiente**; falta anexo docs ACCOMMODATION/PAGOS. | **Alta** |
 
 ---
 

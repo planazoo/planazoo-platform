@@ -19,7 +19,7 @@ Antes de proponer o implementar nada:
 7. UI: Estilo Base oscuro, AppColorScheme, GUIA_UI / ESTILO_SOFISTICADO.
 8. iOS / TestFlight: FASTLANE_IOS_APPSTORE.md y CONTEXT §10.1.
 9. Notas del plan (T262): T262_*.md + FLUJO_NOTAS_PLAN.md.
-10. Reserva/cancelación (T273): docs/tareas/T273_RESERVA_CANCELACION_DEPOSITO.md.
+10. Reserva/cancelación (T273 ✅): docs/tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md.
 
 Convenciones: páginas pg_*, widgets wd_*, comunicación en castellano. No hagas git push sin mi confirmación explícita.
 ```

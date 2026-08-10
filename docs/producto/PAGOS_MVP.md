@@ -2,7 +2,7 @@
 
 > Tema abierto: incluir pagos en el primer MVP. Este documento resume el estado actual y lo que queda por decidir/cerrar. **Sin implementación por ahora.**
 
-**Última actualización:** Febrero 2026
+**Última actualización:** Agosto 2026 (anexo T273 garantía)
 
 ---
 
@@ -40,6 +40,11 @@ Tanto presupuesto (T101) como sistema de pagos (T102) tienen base implementada; 
   - Cálculo de balances por participante (deuda/crédito), sugerencias de transferencias.  
   - **Web:** pestaña "Pagos" (W18) en el dashboard → `PaymentSummaryPage` (resumen de balances, listado de pagos).  
   - Diálogo para registrar pago: `PaymentDialog` (montos, moneda, conversión).
+
+- **T273 (completada, Ago 2026):** Garantía de reserva  
+  - Al marcar garantía **pagada** en evento/alojamiento se sincroniza un `PersonalPayment` con `paymentKind: 'guarantee'` (y `eventId` o `accommodationId`).  
+  - Moneda = moneda del plan. No confundir con el `cost` del ítem (T101).  
+  - Contrato: `docs/tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md`.
 
 - **T153 (completada):** Multi-moneda  
   - Moneda del plan (EUR, USD, GBP, JPY), conversión en eventos/alojamientos/pagos, formateo en UI.

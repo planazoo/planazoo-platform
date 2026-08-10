@@ -53,9 +53,9 @@ flowchart LR
 | **Participantes / altas-bajas / invitaciones** | **[DIAGRAMA_ALTAS_BAJAS_PLAN.md](./DIAGRAMA_ALTAS_BAJAS_PLAN.md)** | Stub [FLUJO_GESTION_PARTICIPANTES.md](./FLUJO_GESTION_PARTICIPANTES.md) | T268, T269, T259… en TASKS |
 | Notificaciones (producto) | (mismo diagrama §1.1 + campana) | [NOTIFICACIONES_ESPECIFICACION.md](../producto/NOTIFICACIONES_ESPECIFICACION.md) | |
 | Planes | Stub [FLUJO_CRUD_PLANES.md](./FLUJO_CRUD_PLANES.md) · estados: stub [FLUJO_ESTADOS_PLAN.md](./FLUJO_ESTADOS_PLAN.md) | [PLAN_FORM_FIELDS.md](../especificaciones/PLAN_FORM_FIELDS.md) | |
-| Eventos | Stub [FLUJO_CRUD_EVENTOS.md](./FLUJO_CRUD_EVENTOS.md) | [EVENT_FORM_FIELDS.md](../especificaciones/EVENT_FORM_FIELDS.md) · **[T273](../tareas/T273_RESERVA_CANCELACION_DEPOSITO.md)** | T273 |
-| Alojamientos | Stub [FLUJO_CRUD_ALOJAMIENTOS.md](./FLUJO_CRUD_ALOJAMIENTOS.md) | [ACCOMMODATION_FORM_FIELDS.md](../especificaciones/ACCOMMODATION_FORM_FIELDS.md) · **T273** | T273 |
-| Pagos | Stub [FLUJO_PRESUPUESTO_PAGOS.md](./FLUJO_PRESUPUESTO_PAGOS.md) | [PAGOS_MVP.md](../producto/PAGOS_MVP.md) · T273 garantía | |
+| Eventos | Stub [FLUJO_CRUD_EVENTOS.md](./FLUJO_CRUD_EVENTOS.md) | [EVENT_FORM_FIELDS.md](../especificaciones/EVENT_FORM_FIELDS.md) · [T273 ✅](../tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md) | |
+| Alojamientos | Stub [FLUJO_CRUD_ALOJAMIENTOS.md](./FLUJO_CRUD_ALOJAMIENTOS.md) | [ACCOMMODATION_FORM_FIELDS.md](../especificaciones/ACCOMMODATION_FORM_FIELDS.md) · T273 ✅ | |
+| Pagos | Stub [FLUJO_PRESUPUESTO_PAGOS.md](./FLUJO_PRESUPUESTO_PAGOS.md) | [PAGOS_MVP.md](../producto/PAGOS_MVP.md) · T273 garantía ✅ | |
 | Notas del plan | [FLUJO_NOTAS_PLAN.md](./FLUJO_NOTAS_PLAN.md) | [T262](../tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md) | T262 |
 | Usuarios / auth | Stub [FLUJO_CRUD_USUARIOS.md](./FLUJO_CRUD_USUARIOS.md) | | |
 | Config app | Stub [FLUJO_CONFIGURACION_APP.md](./FLUJO_CONFIGURACION_APP.md) | | |
@@ -65,8 +65,8 @@ flowchart LR
 
 ## 3. Dominios piloto (plantilla)
 
-1. **Altas / bajas** — contrato: `DIAGRAMA_ALTAS_BAJAS_PLAN.md` (ya en uso).
-2. **Reserva / cancelación** — contrato de producto: `docs/tareas/T273_RESERVA_CANCELACION_DEPOSITO.md` (enlazado desde eventos, alojamientos y pagos). Cuando cierre QA, valorar diagrama Mermaid propio o sección en eventos+alojamientos.
+1. **Altas / bajas** — contrato: `DIAGRAMA_ALTAS_BAJAS_PLAN.md` (**WIP siguiente** recomendado: §1.3 / T269).
+2. **Reserva / cancelación** — **cerrado** (T273 ✅ Ago 2026). Spec: `docs/tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md`.
 
 ---
 

@@ -7,7 +7,18 @@
 
 > **Nota:** Los alojamientos se gestionan por separado. Ver `ACCOMMODATION_FORM_FIELDS.md` para detalles.
 
-**Implementación actual (Feb 2026):** Modelo `Event` y `EventCommonPart`/`EventPersonalPart` en `lib/features/calendar/domain/models/event.dart`. Campos: description, date, hour, startMinute, durationMinutes, color, typeFamily, typeSubtype, details, participantTrackIds, isDraft, commonPart, personalParts, timezone, arrivalTimezone, maxParticipants (T117), requiresConfirmation (T120), cost (T101). Formulario: `lib/widgets/wd_event_dialog.dart` con validaciones. Descripción opcional: si está vacía al guardar, se auto-genera a partir de subtipo y ubicación (vuelo, taxi, etc.). UI unificada con formato "título sobre el borde" (`_buildLabelOnBorderField`).
+**Implementación actual (Feb 2026):** Modelo `Event` y `EventCommonPart`/`EventPersonalPart` en `lib/features/calendar/domain/models/event.dart`. Campos: description, date, hour, startMinute, durationMinutes, color, typeFamily, typeSubtype, details, participantTrackIds, isDraft, commonPart, personalParts, timezone, arrivalTimezone, maxParticipants (T117), requiresConfirmation (T120), cost (T101), **`reservationCancellation` (T273)**. Formulario: `lib/widgets/wd_event_dialog.dart` con validaciones. Descripción opcional: si está vacía al guardar, se auto-genera a partir de subtipo y ubicación (vuelo, taxi, etc.). UI unificada con formato "título sobre el borde" (`_buildLabelOnBorderField`).
+
+### Anexo T273 — Reserva / cancelación (Ago 2026)
+
+Bloque opcional en el formulario de evento (mismo UI que alojamiento):
+
+- Garantía: importe (moneda del plan), un pagador, estado, nota.
+- Hasta 2 tramos: `deadlineAt` + `%` que se **recupera**; cargo fijo opcional.
+- Aviso al organizador: preset (`reminderLeadHours` / `reminderAlsoOnDay`); cron CF + refuerzo al abrir plan.
+- En Pagos: `PersonalPayment` con `paymentKind: 'guarantee'`.
+
+Contrato: `docs/tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md` (tras cierre) o historial en COMPLETED_TASKS.
 
 ---
 
