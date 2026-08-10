@@ -12,6 +12,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - **Documentación viva:** La documentación es parte del producto y evoluciona con él; cualquier cambio relevante debe reflejarse en los documentos correspondientes; la documentación obsoleta es deuda.
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
+- `docs/flujos/MAPA_FLUJOS.md` - **Sistema de procesos** (jerarquía + mapa de dominios; puerta de entrada)
 - `docs/guias/PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
 - `docs/guias/PROMPT_INICIO_CHAT.md` - Texto para pegar al iniciar un chat nuevo (cargar contexto y normas)
 - `docs/guias/PROMPT_TRABAJO_AUTONOMO.md` - Prompt para sesiones autónomas (revisión doc/código, limpieza)
@@ -28,7 +29,8 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)
 - `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice y visión general del sistema de planes
 - `docs/configuracion/TESTING_CHECKLIST.md` - Checklist exhaustivo de pruebas (actualizar tras cada tarea)
-- `docs/flujos/` - Flujos específicos de procesos (estados, participantes, eventos, etc.)
+- `docs/testing/LISTA_PUNTOS_CORREGIR_APP.md` - Hallazgos de prueba vivos
+- `docs/flujos/` - Contratos e índices por dominio (histórico largo en `docs/flujos/archivo/`)
 
 ---
 
@@ -93,26 +95,14 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - **UI/UX:** Consultar `docs/guias/GUIA_UI.md` antes de crear componentes visuales. Es el documento principal y único para reglas UI y tokenización.
 - **Seguridad:** Consultar `docs/guias/GUIA_SEGURIDAD.md` antes de implementar funcionalidades y verificar: validación de inputs, permisos, Firestore Rules, logging sin datos sensibles. Nunca hardcodear secrets, API keys o passwords en código.
 - **Patrón Común/Personal:** Consultar `docs/guias/GUIA_PATRON_COMUN_PERSONAL.md` para implementar eventos y alojamientos con información compartida e individual por participante. Usar EventCommonPart/EventPersonalPart y AccommodationCommonPart/AccommodationPersonalPart.
-- **Flujos de Proceso:** Consular flujos en `docs/flujos/` antes de tomar decisiones o implementar funcionalidades:
-  - `FLUJO_CRUD_PLANES.md` - 🆕 Ciclo de vida completo CRUD de planes
-  - `FLUJO_ESTADOS_PLAN.md` - Estados y transiciones
-  - `FLUJO_GESTION_PARTICIPANTES.md` - Invitaciones y gestión de participantes
-  - `FLUJO_CRUD_EVENTOS.md` - Ciclo de vida completo de eventos
-  - `FLUJO_CRUD_ALOJAMIENTOS.md` - 🆕 Ciclo de vida completo de alojamientos
-  - `FLUJO_PRESUPUESTO_PAGOS.md` - Sistema financiero
-  - `FLUJO_INVITACIONES_NOTIFICACIONES.md` - Comunicación
-  - `FLUJO_VALIDACION.md` - Validación y verificación
-  - `FLUJO_CRUD_USUARIOS.md` - Registro, login y gestión de usuarios (incluye Hive `current_user` en móvil)
-  - `FLUJO_CONFIGURACION_APP.md` - Configuración de usuario, app y planes
+- **Sistema de procesos (obligatorio):** Antes de analizar, acordar o implementar un dominio, abrir `docs/flujos/MAPA_FLUJOS.md`. Jerarquía: **1 proceso (contrato)** → **2 trabajo (TASKS/Txxx)** → **3 prueba (LISTA)** → **4 referencia (specs)**. No usar `docs/flujos/archivo/` como verdad viva.
+- **Flujos de Proceso:** Índices/stubs en `docs/flujos/` (nombres `FLUJO_*` conservados por enlaces). Contrato fuerte actual: `DIAGRAMA_ALTAS_BAJAS_PLAN.md`. Reserva/cancelación: `docs/tareas/T273_RESERVA_CANCELACION_DEPOSITO.md`.
 - **Guías de Referencia:**
   - `GUIA_SEGURIDAD.md` - Seguridad, autenticación y protección de datos
   - `GUIA_ASPECTOS_LEGALES.md` - Términos, privacidad, cookies y cumplimiento legal
-- Al implementar una funcionalidad completa: revisar si debe actualizarse el flujo correspondiente en `docs/flujos/`.
+- Al implementar una funcionalidad completa: actualizar el **contrato de proceso** del dominio (capa 1) y la fila en TASKS; no rellenar de nuevo prosa larga.
 - **Desplegar reglas Firestore:** Desde la raíz del proyecto: `npx firebase deploy --only firestore:rules` (o `npx firebase-tools deploy --only firestore:rules`). Ver `docs/configuracion/DESPLEGAR_REGLAS_FIRESTORE.md`. Recuérdese: en este proyecto se usa **npx** para Firebase (ver sección 10).
-- **Testing Checklist:** Actualizar `docs/configuracion/TESTING_CHECKLIST.md` después de completar cada tarea:
-  - Marcar como probadas las funcionalidades nuevas
-  - Añadir nuevos casos de prueba si aplica
-  - Actualizar casos relacionados que puedan afectarse
+- **Testing:** Hallazgos nuevos → `docs/testing/LISTA_PUNTOS_CORREGIR_APP.md`. El checklist largo `TESTING_CHECKLIST.md` es referencia; no duplicar bugs ahí.
 - **Pruebas lógicas (JSON):** Al implementar o cambiar lógica probable por datos (validaciones, auth, reglas de eventos, etc.), actualizar el sistema de pruebas lógicas: ver `docs/testing/SISTEMA_PRUEBAS_LOGICAS.md` (casos en `tests/*_cases.json`, evaluadores en `lib/testing/*_logic.dart`, tests en `test/features/...`).
   - Ver sección "INSTRUCCIONES DE MANTENIMIENTO" del checklist para detalles
 

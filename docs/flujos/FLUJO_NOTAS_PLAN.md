@@ -1,10 +1,9 @@
 # 📝 Flujo de Notas del Plan (T262)
 
-> Define el flujo funcional de notas comunes/personales y lista de preparación del plan.
+> Flujo funcional vivo (capa 1 ligera). Sistema: [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md).
 
-**Relacionado con:** T262 (en progreso), `lib/features/plan_notes/`, `FLUJO_CRUD_PLANES.md`  
-**Versión:** 1.0  
-**Fecha:** Abril 2026 (basado en implementación actual)
+**Relacionado con:** T262 · spec [`T262_NOTAS_PLAN_COMUNES_PERSONALES.md`](../tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md) · `lib/features/plan_notes/`  
+**Versión:** 1.1 · **Fecha:** Ago 2026
 
 ---
 

@@ -2,7 +2,8 @@
 
 **Estado:** En progreso (v1 + pulidos UI 2026-08-10)  
 **Prioridad:** Alta  
-**Ámbito:** Eventos y alojamientos (mismo bloque) · Pagos/balances · Avisos al organizador
+**Ámbito:** Eventos y alojamientos (mismo bloque) · Pagos/balances · Avisos al organizador  
+**Sistema de procesos:** contrato de producto (capa 1) para este dominio piloto → ver [`MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md). Índices: eventos / alojamientos / pagos.
 
 ---
 

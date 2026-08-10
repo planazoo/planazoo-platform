@@ -1,10 +1,9 @@
 ## Lista de puntos a corregir en la app (solo abiertos)
 
-**Objetivo:** mantener aquí solo los puntos **pendientes / en progreso** de QA.
+**Objetivo:** mantener aquí solo los puntos **pendientes / en progreso** de QA.  
+**Proceso:** capa 3 del sistema → [`docs/flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md).
 
-**Histórico de cerrados:**
-- `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md` (bloque histórico 1-33 y P3-P20).
-- `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_04.md` (cierres de 34-109; **109** push iOS cerrado 2026-04-19).
+**Histórico de cerrados:** [`archivo/`](./archivo/) (`ARCHIVO_LISTA_*`, ACCIONES_PENDIENTES).
 
 ---
 
@@ -196,7 +195,7 @@
 - Normas: `docs/configuracion/CONTEXT.md`
 - Tareas Txxx relacionadas: `docs/tareas/TASKS.md`
 - Offline móvil (58 cerrado): `docs/testing/TESTING_OFFLINE_FIRST.md`
-- Push iOS: `docs/testing/ACCIONES_PENDIENTES_APP.md`, `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md`
+- Push iOS: `docs/testing/ACCIONES_PENDIENTES_APP.md` (redirige a archivo) · `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md`
 - Testing formal / regresiones: `docs/configuracion/TESTING_CHECKLIST.md`
 
 ---

@@ -64,14 +64,10 @@
 - **`docs/arquitectura/PLATFORM_STRATEGY.md`** - Estrategia multi-plataforma (iOS, Android, Web)
 - **`docs/especificaciones/CALENDAR_CAPABILITIES.md`** - Capacidades y reglas del calendario
 
-### 3. Documentos de Flujos
-- **`docs/flujos/FLUJO_CRUD_PLANES.md`** - CRUD completo de planes
-- **`docs/flujos/FLUJO_CRUD_EVENTOS.md`** - CRUD completo de eventos
-- **`docs/flujos/FLUJO_CRUD_ALOJAMIENTOS.md`** - CRUD completo de alojamientos
-- **`docs/flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md`** - Sistema de invitaciones
-- **`docs/flujos/FLUJO_GESTION_PARTICIPANTES.md`** - Gestión de participantes
-- **`docs/flujos/FLUJO_PRESUPUESTO_PAGOS.md`** - Sistema financiero
-- **`docs/flujos/FLUJO_CRUD_USUARIOS.md`** - Registro y gestión de usuarios; perfil cacheado en Hive (`current_user`) solo móvil
+### 3. Documentos de Flujos / procesos
+- **`docs/flujos/MAPA_FLUJOS.md`** ⭐ **Puerta de entrada** (jerarquía + dominios)
+- **`docs/flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md`** - Contrato altas/bajas
+- Stubs `FLUJO_*.md` · histórico en `docs/flujos/archivo/`
 
 ### 4. Documentos de Tareas
 - **`docs/tareas/TASKS.md`** ⭐ **OBLIGATORIO** - Lista de tareas pendientes y completadas

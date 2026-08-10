@@ -10,13 +10,16 @@ Copia y pega el texto de la sección **"Texto para pegar"** al **inicio** de un 
 Proyecto: unp_calendario (Planazoo) – app Flutter de calendario de planes (eventos, alojamientos, desplazamientos). Riverpod, Firebase, multi-plataforma (Web, iOS, Android).
 
 Antes de proponer o implementar nada:
-1. Lee y aplica las normas de docs/configuracion/CONTEXT.md.
-2. Consulta docs/guias/PROMPT_BASE.md para metodología (reutilizar antes que crear, doc viva, no push sin confirmación, multi-idioma con AppLocalizations, GUIA_UI para componentes).
-3. Revisa docs/tareas/TASKS.md por si hay tareas relacionadas.
-4. Para UI: Estilo Base oscuro, AppColorScheme, docs/ux/estilos/ESTILO_SOFISTICADO.md y docs/guias/GUIA_UI.md.
-5. Para flujos y decisiones: docs/flujos/, docs/especificaciones/, docs/arquitectura/ARCHITECTURE_DECISIONS.md según lo que vayamos a tocar.
-6. Para **publicar iOS / TestFlight / IPA**: docs/configuracion/FASTLANE_IOS_APPSTORE.md y CONTEXT.md §10.1 (contraseña específica de apps: FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD si hay 2FA).
-7. **Notas del plan (T262):** spec `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md`; implementación parcial en `lib/features/plan_notes/` (plantillas y cierre de tarea pendientes).
+1. Lee y aplica docs/configuracion/CONTEXT.md.
+2. Abre docs/flujos/MAPA_FLUJOS.md (sistema de procesos): proceso → trabajo → prueba → referencia. Elige dominio y su contrato vivo.
+3. Consulta docs/guias/PROMPT_BASE.md (reutilizar, doc viva, multi-idioma, GUIA_UI).
+4. Revisa docs/tareas/TASKS.md solo para el dominio activo (WIP: 1 dominio).
+5. Hallazgos de prueba: docs/testing/LISTA_PUNTOS_CORREGIR_APP.md.
+6. No uses docs/flujos/archivo/ como verdad viva (solo histórico).
+7. UI: Estilo Base oscuro, AppColorScheme, GUIA_UI / ESTILO_SOFISTICADO.
+8. iOS / TestFlight: FASTLANE_IOS_APPSTORE.md y CONTEXT §10.1.
+9. Notas del plan (T262): T262_*.md + FLUJO_NOTAS_PLAN.md.
+10. Reserva/cancelación (T273): docs/tareas/T273_RESERVA_CANCELACION_DEPOSITO.md.
 
 Convenciones: páginas pg_*, widgets wd_*, comunicación en castellano. No hagas git push sin mi confirmación explícita.
 ```
@@ -25,11 +28,12 @@ Convenciones: páginas pg_*, widgets wd_*, comunicación en castellano. No hagas
 
 ## Uso
 
-- **Chat nuevo:** Pega el bloque anterior como primer mensaje (o justo después de abrir el chat). Luego escribe tu petición concreta (ej. “Añade un campo X al formulario de eventos”).
-- **Recordatorio:** Si en medio del chat la IA no sigue las normas, escribe: **"Aplica el PROMPT_BASE"** (según PROMPT_BASE.md).
+- **Chat nuevo:** Pega el bloque anterior como primer mensaje. Luego la petición concreta (ideal: «dominio X según MAPA_FLUJOS»).
+- **Recordatorio:** Si la IA no sigue las normas: **"Aplica el PROMPT_BASE"** o **"Sigue MAPA_FLUJOS"**.
 
 ## Documentos relacionados
 
-- **CONTEXT.md** – Normas del proyecto (idioma, git, UI, documentación, flujos).
-- **PROMPT_BASE.md** – Metodología de trabajo y patrones de comunicación.
-- **PROMPT_TRABAJO_AUTONOMO.md** – Prompt largo para sesiones de varias horas (revisión doc/código, limpieza, etc.).
+- **MAPA_FLUJOS.md** – Jerarquía y mapa de dominios.
+- **CONTEXT.md** – Normas del proyecto.
+- **PROMPT_BASE.md** – Metodología.
+- **PROMPT_TRABAJO_AUTONOMO.md** – Sesiones largas.

@@ -1,7 +1,7 @@
 # Diagrama: altas y bajas en un plan
 
 > Visión de **proceso** (qué hace cada persona), sin detalles técnicos.  
-> Prosa: [`FLUJO_GESTION_PARTICIPANTES.md`](./FLUJO_GESTION_PARTICIPANTES.md) · Mapa: [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md)  
+> **Sistema:** [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md) · Histórico prosa: [`archivo/FLUJO_GESTION_PARTICIPANTES.md`](./archivo/FLUJO_GESTION_PARTICIPANTES.md)  
 > **Estado:** borrador vivo — núcleo altas/bajas **probado** (Ago 2026); quedan POR HACER (§1.2 resto, §1.3, T268, Universal Links nativos).
 
 **Leyenda del diagrama**

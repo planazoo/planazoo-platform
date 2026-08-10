@@ -1,7 +1,8 @@
 # Registro de observaciones durante las pruebas
 
-> Documento para ir anotando lo que vas viendo mientras pruebas. Los huecos/errores que den lugar a tareas se pueden llevar también a la sección 19 y 20 del [Plan E2E tres usuarios](./PLAN_PRUEBAS_E2E_TRES_USUARIOS.md).  
-> **La sección "MIS NOTAS" debe quedar siempre al final.** Ahí vas **tus cosas** (opiniones, ideas, observaciones personales), no el resultado formal de las pruebas (✅/❌ por paso va en el Plan E2E, sección 19 y 20).
+> **Secundario** a [`LISTA_PUNTOS_CORREGIR_APP.md`](./LISTA_PUNTOS_CORREGIR_APP.md): diario narrativo / notas personales.  
+> Los bugs accionables van a la LISTA (o a TASKS si son producto).  
+> Huecos E2E: [Plan E2E tres usuarios](./PLAN_PRUEBAS_E2E_TRES_USUARIOS.md). **«MIS NOTAS» siempre al final.**
 
 ---
 

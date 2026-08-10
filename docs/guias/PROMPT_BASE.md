@@ -3,11 +3,13 @@
 **⚠️ RECORDATORIO OBLIGATORIO: Si no estás aplicando este PROMPT_BASE correctamente, el usuario te recordará escribiendo: "Aplica el PROMPT_BASE"**
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
+- `docs/flujos/MAPA_FLUJOS.md` - **Sistema de procesos** (proceso → trabajo → prueba → referencia)
 - `docs/configuracion/CONTEXT.md` - Normas específicas del proyecto (Plan Frankenstein, Firestore, tests manuales)
 - `docs/guias/GUIA_UI.md` - Sistema de diseño, componentes y patrones de UI
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones
-- `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Índice del sistema de planes
-- `docs/configuracion/TESTING_CHECKLIST.md` - Checklist exhaustivo de pruebas (actualizar tras cada tarea)
+- `docs/configuracion/INDICE_SISTEMA_PLANES.md` - Redirige al mapa de flujos
+- `docs/testing/LISTA_PUNTOS_CORREGIR_APP.md` - Hallazgos de prueba vivos
+- `docs/configuracion/TESTING_CHECKLIST.md` - Checklist largo (referencia)
 
 ## 📋 Metodología de Trabajo
 
@@ -21,7 +23,7 @@
   1. Buscar si ya existe funcionalidad similar en el código
   2. Revisar TASKS.md para ver si hay tareas relacionadas o pendientes
   3. Verificar si existe en la base de datos (Firestore) o modelos
-  4. Consultar documentación (flujos, CONTEXT.md, guías) para asegurarse de no duplicar
+  4. Consultar `docs/flujos/MAPA_FLUJOS.md` y el contrato del dominio (no la prosa de `flujos/archivo/`)
   5. Proponer reutilizar/adaptar/extender antes de crear de cero
 - **Idioma del código**: Todo el código, variables, métodos, comentarios técnicos en inglés
 - **Comunicación**: Documentación y comunicación entre nosotros en castellano

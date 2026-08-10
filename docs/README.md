@@ -15,21 +15,11 @@ Guías transversales que aplican a todo el proyecto:
 - [Prompt inicio de chat](./guias/PROMPT_INICIO_CHAT.md) - Texto para pegar al abrir un chat nuevo (cargar contexto)
 - [Prompt trabajo autónomo](./guias/PROMPT_TRABAJO_AUTONOMO.md) - Sesión de varias horas (sincronizar docs/código, limpieza)
 
-### 🔄 [Flujos de Proceso](./flujos/)
-Flujos específicos del ciclo de vida de la aplicación:
-- [CRUD Planes](./flujos/FLUJO_CRUD_PLANES.md) - Crear, leer, actualizar y eliminar planes
-- [CRUD Usuarios](./flujos/FLUJO_CRUD_USUARIOS.md) - Registro, login y gestión de usuarios (móvil: snapshot Hive `current_user`; detalle en el flujo y en [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md))
-- [CRUD Eventos](./flujos/FLUJO_CRUD_EVENTOS.md) - Gestión completa de eventos
-- [CRUD Alojamientos](./flujos/FLUJO_CRUD_ALOJAMIENTOS.md) - Gestión completa de alojamientos
-- [Estados del Plan](./flujos/FLUJO_ESTADOS_PLAN.md) - Transiciones entre estados
-- [Gestión de Participantes](./flujos/FLUJO_GESTION_PARTICIPANTES.md) - Invitaciones y gestión
-- [**Diagrama altas/bajas (Mermaid)**](./flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md) - Contrato visual para acordar e implementar
-- [Mapa de flujos](./flujos/MAPA_FLUJOS.md) - Índice de dominios
-- [Presupuesto y Pagos](./flujos/FLUJO_PRESUPUESTO_PAGOS.md) - Sistema financiero
-- [Invitaciones y Notificaciones](./flujos/FLUJO_INVITACIONES_NOTIFICACIONES.md) - Comunicación
-- [Notas del Plan](./flujos/FLUJO_NOTAS_PLAN.md) - Notas comunes/personales y preparación
-- [Validación](./flujos/FLUJO_VALIDACION.md) - Verificación y validación
-- [Configuración App](./flujos/FLUJO_CONFIGURACION_APP.md) - Configuración de usuario y app
+### 🔄 [Flujos / sistema de procesos](./flujos/)
+- **[MAPA_FLUJOS.md](./flujos/MAPA_FLUJOS.md)** – **Puerta de entrada:** jerarquía proceso → trabajo → prueba → referencia + mapa de dominios
+- [Diagrama altas/bajas](./flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md) – Contrato Mermaid (piloto)
+- Índices por dominio (`FLUJO_*.md` stubs) · histórico largo en [`flujos/archivo/`](./flujos/archivo/)
+- [Notas del plan](./flujos/FLUJO_NOTAS_PLAN.md) – Flujo vivo T262
 
 ### 📦 [Producto](./producto/)
 Decisiones de producto y especificaciones funcionales:
@@ -71,13 +61,11 @@ Gestión de tareas del proyecto:
 - [Paleta de colores de eventos](./design/EVENT_COLOR_PALETTE.md)
 
 ### 🧪 [Testing](./testing/)
-- **[Lista de puntos a corregir (app)](./testing/LISTA_PUNTOS_CORREGIR_APP.md)** – Tabla viva de nuevos hallazgos en pruebas
-- **[Acciones pendientes (app)](./testing/ACCIONES_PENDIENTES_APP.md)** – Seguimiento de infra iOS (push / deep links) fuera de la lista viva
-- [Archivo lista puntos cerrados (2026-03)](./testing/ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_03.md) – histórico P3–P20; se puede borrar cuando no haga falta
-- **[Inicio pruebas – Día 1](./testing/INICIO_PRUEBAS_DIA1.md)** – Por dónde empezar: arrancar app, usuarios, smoke manual, luego ciclo E2E
-- [Sistema de pruebas lógicas (JSON + reportes)](./testing/SISTEMA_PRUEBAS_LOGICAS.md) - Casos por datos, evaluadores, reportes para IA
-- [Sistema Nocturno de QA Distribuido](./testing/SISTEMA_QA_NOCTURNO_DISTRIBUIDO.md) - E2E automatizado nocturno (Playwright, multiusuario, RPi/Mac), capas A/B/C, alertas y fases de implementación
-- [Plan E2E tres usuarios (manual)](./testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md) - Flujo completo UA/UB/UC para pruebas manuales
+- **[Lista de puntos a corregir (app)](./testing/LISTA_PUNTOS_CORREGIR_APP.md)** – Tabla viva de hallazgos en pruebas
+- [Registro de observaciones](./testing/REGISTRO_OBSERVACIONES_PRUEBAS.md) – Diario narrativo (secundario a la LISTA)
+- [Inicio pruebas – Día 1](./testing/INICIO_PRUEBAS_DIA1.md)
+- [Plan E2E tres usuarios](./testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md)
+- Archivo: [`testing/archivo/`](./testing/archivo/) (listas cerradas, ACCIONES_PENDIENTES histórico)
 - [Registro de observaciones de pruebas](./testing/REGISTRO_OBSERVACIONES_PRUEBAS.md) - Notas y observaciones durante pruebas manuales
 - [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md) — Móvil: Firestore offline (SDK) + réplica Hive + `current_user`; guía alineada con **ítem 58** cerrado; regresión **REG-2026-022** en [Testing Checklist](./configuracion/TESTING_CHECKLIST.md)
 
@@ -102,7 +90,7 @@ Configuración y contexto del proyecto:
 - [Nomenclatura UI](./configuracion/NOMENCLATURA_UI.md) - Páginas, menús y modales
 - [Auditoría colecciones Firestore](./configuracion/FIRESTORE_COLLECTIONS_AUDIT.md) - Colecciones en uso y reglas
 - [Auditoría de docs](./configuracion/DOCS_AUDIT.md) - Revisión mantener/actualizar/eliminar y referencias
-- [Propuesta optimización y sincronización](./PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md) - Código y documentación (ítems a implementar)
+- [Archivo / propuesta optimización](./archivo/PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md) - Histórico Feb 2026
 - [Configurar Google Sign-In](./configuracion/CONFIGURAR_GOOGLE_SIGNIN.md) - Login con Google
 - [Migración Mac / iOS](./configuracion/MIGRACION_MAC_PLAYBOOK.md) - Playbook para desarrollo en Mac
 - [Evaluación primeras pruebas con familia](./configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md) - Checklist y estado (listo para invitar a familia)
