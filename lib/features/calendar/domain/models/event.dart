@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart' show PlanAttachment;
+import 'package:unp_calendario/features/calendar/domain/models/reservation_cancellation.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 
 class Event {
@@ -36,6 +37,8 @@ class Event {
   final bool requiresConfirmation; // Si requiere confirmación explícita de participantes
   // T101: sistema de presupuesto
   final double? cost; // Coste total del evento (opcional)
+  // T273: garantía de reserva + política de cancelación
+  final ReservationCancellation? reservationCancellation;
 
   const Event({
     this.id,
@@ -65,6 +68,7 @@ class Event {
     this.maxParticipants, // null por defecto (sin límite)
     this.requiresConfirmation = false, // por defecto no requiere confirmación
     this.cost, // null por defecto (sin coste definido)
+    this.reservationCancellation,
   });
 
   factory Event.fromFirestore(DocumentSnapshot doc) {
@@ -135,6 +139,11 @@ class Event {
       maxParticipants: data['maxParticipants'] != null ? data['maxParticipants'] as int : null, // null por defecto
       requiresConfirmation: data['requiresConfirmation'] ?? false, // por defecto false para compatibilidad
       cost: data['cost'] != null ? (data['cost'] as num).toDouble() : null, // T101
+      reservationCancellation: data['reservationCancellation'] != null
+          ? ReservationCancellation.fromMap(
+              Map<String, dynamic>.from(data['reservationCancellation'] as Map),
+            )
+          : null,
     );
   }
 
@@ -164,6 +173,15 @@ class Event {
       'requiresConfirmation': requiresConfirmation, // Siempre incluir para claridad
       if (cost != null) 'cost': cost, // T101
     };
+    final reservationMap = reservationCancellation?.toMap();
+    if (reservationMap != null) {
+      map['reservationCancellation'] = reservationMap;
+    }
+    // Índice para cron T273 (CF checkCancellationDeadlines)
+    final nextDeadline = reservationCancellation?.nextDeadline;
+    if (nextDeadline != null) {
+      map['nextCancellationDeadline'] = Timestamp.fromDate(nextDeadline);
+    }
     // Escribir estructura nueva si está presente
     if (commonPart != null) {
       map['commonPart'] = commonPart!.toMap();
@@ -205,6 +223,7 @@ class Event {
     int? maxParticipants,
     bool? requiresConfirmation,
     double? cost,
+    ReservationCancellation? reservationCancellation,
   }) {
     return Event(
       id: id ?? this.id,
@@ -234,6 +253,8 @@ class Event {
       maxParticipants: maxParticipants ?? this.maxParticipants,
       requiresConfirmation: requiresConfirmation ?? this.requiresConfirmation,
       cost: cost ?? this.cost,
+      reservationCancellation:
+          reservationCancellation ?? this.reservationCancellation,
     );
   }
 

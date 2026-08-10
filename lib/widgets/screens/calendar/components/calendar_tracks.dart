@@ -14,6 +14,7 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/features/auth/domain/services/user_service.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
+import 'package:unp_calendario/widgets/plan/cancellation_deadline_badge.dart';
 
 /// Componente que representa los headers y estructura de tracks (participantes)
 /// 
@@ -648,16 +649,26 @@ class CalendarTracks extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
-              child: Text(
-                _getAccommodationDayText(accommodation, dayDate),
-                style: TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
-                  fontStyle: isDraft ? FontStyle.italic : FontStyle.normal,
-                  color: Colors.white.withValues(alpha: isDraft ? 0.9 : 1),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _getAccommodationDayText(accommodation, dayDate),
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        fontStyle: isDraft ? FontStyle.italic : FontStyle.normal,
+                        color: Colors.white.withValues(alpha: isDraft ? 0.9 : 1),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  CancellationDeadlineBadge(
+                    reservation: accommodation.reservationCancellation,
+                    size: 9,
+                  ),
+                ],
               ),
             ),
           ],

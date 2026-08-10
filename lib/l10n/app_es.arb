@@ -1344,6 +1344,22 @@
   "@planCardChipInvitationQuestion": { "description": "Diálogo al pulsar chip pending en card" },
   "planCardLeavePlanConfirmBody": "Si sales de \"{planName}\", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\nPara volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.",
   "@planCardLeavePlanConfirmBody": { "placeholders": { "planName": { "type": "String" } } },
+  "membershipSoloItemsLeaveWarning": "Además se eliminarán estos eventos/alojamientos futuros donde eres el único participante:\n{list}",
+  "@membershipSoloItemsLeaveWarning": {
+    "description": "LISTA 121 B3 — aviso al salir del plan",
+    "placeholders": { "list": { "type": "String" } }
+  },
+  "membershipSoloItemsRemoveWarning": "Además se eliminarán estos eventos/alojamientos futuros donde esta persona es el único participante:\n{list}",
+  "@membershipSoloItemsRemoveWarning": {
+    "description": "LISTA 121 B3 — aviso al expulsar participante",
+    "placeholders": { "list": { "type": "String" } }
+  },
+  "membershipSoloItemEventBullet": "• Evento: {title}",
+  "@membershipSoloItemEventBullet": { "placeholders": { "title": { "type": "String" } } },
+  "membershipSoloItemAccommodationBullet": "• Alojamiento: {title}",
+  "@membershipSoloItemAccommodationBullet": { "placeholders": { "title": { "type": "String" } } },
+  "membershipSoloItemsAndMore": "• … y {count} más",
+  "@membershipSoloItemsAndMore": { "placeholders": { "count": { "type": "int" } } },
   "planMyStatusHelpTitle": "Mi estado en el plan",
   "@planMyStatusHelpTitle": { "description": "Título ayuda chip in/out/pend. en barra del plan" },
   "planMyStatusHelpDefault": "El chip resume tu relación con este plan:\n\n• pend. — Tienes una invitación o una participación pendiente de aceptar. Pulsa el chip para aceptar o rechazar.\n\n• dentro — Ya participas (o eres organizador). Si no eres organizador, pulsa para salir del plan.\n\n• fuera — Declinaste la invitación. Si el organizador te invita de nuevo, lo verás en Notificaciones.\n\nLas invitaciones por correo también se gestionan desde Notificaciones.",
@@ -2451,12 +2467,22 @@
   "kittyExpenseNotAllowedTitle": "No permitido",
   "kittyExpenseOrganizerOnlyBody": "Solo el organizador del plan puede registrar gastos del bote.",
   "participantRemoveConfirmMessage": "¿Estás seguro de que quieres eliminar a este participante del plan?",
+  "membershipRemoveConfirmWithSoloItems": "{base}\n\n{soloWarning}",
+  "@membershipRemoveConfirmWithSoloItems": {
+    "placeholders": {
+      "base": { "type": "String" },
+      "soloWarning": { "type": "String" }
+    }
+  },
   "participantsInviteResending": "Re-enviando invitación a {email}",
   "@participantsInviteResending": { "placeholders": { "email": { "type": "String" } } },
   "participantsInviteResendButton": "Re-enviar invitación",
   "snackPreviousInvitationCancelled": "Invitación anterior cancelada",
   "snackInvitationCancelledShort": "Invitación cancelada",
   "snackInvitationCancelFailed": "No se pudo cancelar",
+  "cancelInvitationConfirmTitle": "Cancelar invitación",
+  "cancelInvitationConfirmMessage": "¿Cancelar la invitación pendiente? La persona ya no podrá aceptarla.",
+  "cancelInvitationMenuLabel": "Cancelar invitación",
   "tooltipCancelPreviousInvitation": "Cancelar invitación anterior",
   "snackLinkCopiedShort": "Enlace copiado",
   "invitationCreatedTitle": "Invitación creada",
@@ -2511,5 +2537,60 @@
   "@entityAttachmentsUploadError": { "placeholders": { "error": { "type": "String" } } },
   "entityAttachmentsDeleteError": "No se pudo eliminar el archivo.",
   "entityAttachmentsSnackbarAdded": "Archivo adjuntado. Pulsa Guardar para confirmar cambios.",
-  "entityAttachmentsSnackbarRemoved": "Archivo eliminado. Pulsa Guardar para confirmar cambios."
+  "entityAttachmentsSnackbarRemoved": "Archivo eliminado. Pulsa Guardar para confirmar cambios.",
+  "reservationCancellationSectionTitle": "Reserva / cancelación",
+  "reservationCancellationSectionSubtitle": "Garantía y política",
+  "reservationGuaranteeLabel": "Garantía de la reserva",
+  "reservationGuaranteeAmount": "Garantía ({currency})",
+  "@reservationGuaranteeAmount": { "placeholders": { "currency": { "type": "String" } } },
+  "reservationGuaranteePayer": "Quién ha adelantado",
+  "reservationPayerNone": "Sin asignar",
+  "reservationGuaranteeStatus": "Estado de la garantía",
+  "reservationStatusPending": "Pendiente",
+  "reservationStatusPaid": "Pagada",
+  "reservationStatusRefunded": "Reembolsada",
+  "reservationStatusRetained": "Retenida",
+  "reservationGuaranteeNote": "Nota (opcional)",
+  "reservationCancellationPolicyLabel": "Política de cancelación",
+  "reservationRefundPercentHint": "El % es lo que recuperas del depósito si cancelas antes del límite.",
+  "reservationItemTimezone": "Zona horaria del ítem",
+  "reservationTier1": "Tramo 1",
+  "reservationTier2": "Tramo 2",
+  "reservationTierDeadlineShort": "Límite",
+  "reservationRefundPercentShort": "% recup.",
+  "reservationReminderSchedule": "Aviso al organizador",
+  "reservationReminderScheduleHint": "Cuándo avisar antes de cada límite de cancelación.",
+  "reservationReminderNone": "Sin aviso programado",
+  "reservationReminderDayOf": "El día del límite",
+  "reservationReminder24h": "24 horas antes",
+  "reservationReminder24hAndDay": "24 horas antes y el día",
+  "reservationReminder48h": "48 horas antes",
+  "reservationReminder48hAndDay": "48 horas antes y el día",
+  "reservationReminder7d": "1 semana antes",
+  "reservationReminder7dAndDay": "1 semana antes y el día",
+  "reservationFixedFee": "Cargo fijo ({currency})",
+  "@reservationFixedFee": { "placeholders": { "currency": { "type": "String" } } },
+  "reservationFixedFeeHint": "Ej.: 5 € de gestión aunque canceles a tiempo.",
+  "cancellationDeadlineNotificationTitle": "Límite de cancelación",
+  "cancellationDeadlineNotificationBody": "{item}: recuperas {percent}% hasta {deadline}",
+  "@cancellationDeadlineNotificationBody": {
+    "placeholders": {
+      "item": { "type": "String" },
+      "percent": { "type": "String" },
+      "deadline": { "type": "String" }
+    }
+  },
+  "upcomingCancellationsTitle": "Próximas cancelaciones",
+  "upcomingCancellationsSubtitle": "Límites de cancelación de eventos y alojamientos",
+  "upcomingCancellationRow": "Hasta {deadline} · recuperas {percent}%",
+  "@upcomingCancellationRow": {
+    "placeholders": {
+      "deadline": { "type": "String" },
+      "percent": { "type": "String" }
+    }
+  },
+  "upcomingCancellationFixedFee": "Cargo fijo al cancelar: {amount}",
+  "@upcomingCancellationFixedFee": {
+    "placeholders": { "amount": { "type": "String" } }
+  }
 }

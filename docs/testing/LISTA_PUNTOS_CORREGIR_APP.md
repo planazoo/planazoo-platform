@@ -19,7 +19,7 @@
 
 ### 2. Cómo anotar cada punto nuevo
 
-- **ID**: siguiente libre **113**.
+- **ID**: siguiente libre **124**.
 - **Plataforma**: iOS / Web / Ambas / …
 - **Pantalla / flujo**.
 - **Tipo**: bug / mejora / copy / producto / discusión.
@@ -33,14 +33,134 @@
 
 ### 3. Resumen actual
 
-- **Pendientes:** 3
+- **Pendientes:** 1 (**123** deep link web — validar / cerrar)
 - **En progreso:** 0
-- **Movidos a TASKS.md como tareas nuevas:** `63`→`T263`, `64`→`T264`, `65`→`T265`, `98`→`T266`; **Android push/app:** `T267`
-- **Hechos/cerrados en histórico:** 72 (incluye cierre **109** push iOS, 2026-04-19 — ver `ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_04.md`)
+- **Siguiente ID libre:** **124**
+- **Hechos/cerrados en histórico:** 72+ (incluye **111–122**; **122** email registrado validado 2026-08-10)
 
 ---
 
 ### 4. Puntos abiertos
+
+#### 123. Deep link `/invitation/{token}` (web §2)
+- **Plataforma:** web (nativo = T259 aparte)
+- **Pantalla / flujo:** Abrir enlace del email de invitación
+- **Tipo:** gap diagrama §2 + §1.2 J/K
+- **Gravedad:** alta (botón Aceptar del mail)
+- **Descripción breve:** La ruta no se procesaba; `InvitationPage` eliminada.
+- **Fix:** ruta pública + `InvitationPage`; doc ID = token; accept/reject by token con check email; login/registro en página; `?action=accept|reject`.
+- **Estado:** **pendiente** (2026-08-10) — código listo (ruta + `InvitationPage` + J/K); **aplazamos validación/cierre**. Nativo Universal Links = T259.
+- **Cómo probar:** nueva invitación → id del doc en `plan_invitations` = token → `http://localhost:<puerto>/invitation/<token>`. El mail CF usa `APP_BASE_URL` (prod).
+
+#### 122. Email al invitar / reenviar a usuario ya registrado
+- **Plataforma:** todas
+- **Pantalla / flujo:** Participantes → invitar por email (registrado) · reenviar pending · re-invitar tras rechazo
+- **Tipo:** gap diagrama §1.1 decisión 1
+- **Gravedad:** media
+- **Descripción breve:** Solo campana+push; el correo solo salía al crear `plan_invitations` (usuarios sin cuenta). Invitación directa no creaba doc → no email.
+- **Fix:** al invitar registrado se cancela `plan_invitations` pending previos, se crea uno nuevo (CF `sendInvitationEmail`) y campana/push con token real.
+- **Estado:** implementado y **validado** (2026-08-10) — correo al invitar/reenviar registrado; enlace → deep link §2 (web).
+- **Referencias:** `DIAGRAMA_ALTAS_BAJAS_PLAN.md` §1.1; `InvitationService.createInvitation`; `functions` `sendInvitationEmail`.
+
+#### 121. Alta/baja de participante: ¿qué pasa con eventos, alojamientos y tracks?
+- **Plataforma:** todas
+- **Pantalla / flujo:** Aceptar invitación · salir del plan · expulsar
+- **Tipo:** producto / gap (contrato vs código)
+- **Gravedad:** alta (afecta calendario, cupos, presupuesto)
+- **Descripción breve:** El diagrama de altas/bajas no lo cubre. `FLUJO_GESTION_PARTICIPANTES.md` sí prevé side effects (track, asignar a eventos futuros, limpieza al expulsar). Hoy la app **no** auto-asigna al aceptar; al salir/expulsar borra `plan_participations` + `event_participants` + permisos, pero **no** limpia `participantTrackIds`/`participantIds` en eventos/alojamientos ni el track.
+- **Hoy (código):**
+  - Aceptar → solo `accepted` (+ aviso org).
+  - Salir/expulsar → `removeParticipation` (event_participants + permissions + doc participación).
+- **Opciones a acordar (alta / aceptar):**
+  - **A1** — No auto-asignar: el nuevo miembro entra al plan vacío de asignaciones; el org (o él) le apunta a eventos/alojamientos.
+  - **A2** — Auto en eventos/alojamientos marcados «para todos» (`isForAllParticipants`); el resto no.
+  - **A3** — Preguntar al aceptar («¿Apuntarte a los eventos comunes?»).
+  - **A4** — Crear track siempre; asignación a eventos = A1 o A2.
+- **Opciones a acordar (baja / salir o expulsar):**
+  - **B1** — Solo lo de hoy (event_participants + participación); dejar IDs huérfanos en eventos/alojamientos (filtro UI por membresía).
+  - **B2** — Además quitar `userId` de `participantIds` / `participantTrackIds` en eventos y alojamientos futuros; borrar track; no borrar eventos compartidos.
+  - **B3** — Como B2 + borrar eventos futuros **solo suyos** (como dice §3 del flujo participantes).
+- **Acuerdo (2026-08-10):** **A2 + B2 + B3**.
+  - **Alta:** auto en eventos/alojamientos futuros con `isForAllParticipants` (arrays + confirmaciones T120 si aplica).
+  - **Baja:** quitar de arrays futuros (B2); **borrar** ítems futuros donde era el único participante selectivo (B3); aviso en diálogo de salir/expulsar.
+- **Estado:** acordado, implementado y **validado** (2026-08-10) — A2+B2+B3; diálogo previo; notificación al org con ítems borrados.
+- **Referencias:** `FLUJO_GESTION_PARTICIPANTES.md` §2/§3; `DIAGRAMA_ALTAS_BAJAS_PLAN.md` §1.4; `PlanMembershipSideEffects`.
+
+#### 120. Expulsar participante: ¿debe notificar al expulsado?
+- **Plataforma:** Android (UB) / todas
+- **Pantalla / flujo:** UA elimina a UB del plan
+- **Tipo:** producto / gap diagrama §3
+- **Gravedad:** media
+- **Descripción breve:** Tras eliminar, UB deja de ver el plan correctamente, pero **no** recibía campana ni push.
+- **Decisión:** sí avisar (campana + push).
+- **Estado:** corregido y **validado** (2026-08-09) — banner/campana al expulsar; plan desaparece para el expulsado.
+- **Origen:** guion `altas-bajas agosto 2026` paso 3.4 (2026-08-09).
+
+#### 119. Menú / UX pestaña Participantes a revisar
+- **Plataforma:** todas
+- **Pantalla / flujo:** Participantes (acciones por fila, pendientes, salir)
+- **Tipo:** mejora / revisión UX
+- **Gravedad:** media
+- **Descripción breve:** Tras probar altas-bajas: menú Editar/Eliminar no coherente con pendientes; salida desde Info borra del todo (no estado «fuera» como rechazo). Revisar menú y alineación con diagrama §1/§3.
+- **Acuerdo (2026-08-10):** salir = **borrar** participación (opción A); **sí** avisar al organizador (campana + push). Distinto de rechazo («fuera»).
+- **Estado:** corregido y **validado** (2026-08-10) — menús por estado OK; aviso `participantLeft` al salir (campana + push).
+- **Origen:** guion `altas-bajas agosto 2026`.
+
+#### 118. Cancelar invitación pendiente: sin menú en UI (Participantes)
+- **Plataforma:** iOS (UA) / probablemente todas
+- **Pantalla / flujo:** Participantes — fila con estado pendiente
+- **Tipo:** bug / gap diagrama §3
+- **Gravedad:** alta (bloquea cancelar desde app)
+- **Descripción breve:** El pendiente aparece en la lista, pero no muestra el menú «Editar» / «Eliminar» (sí visible en otros participantes). No se puede cancelar la invitación desde la UI.
+- **Estado:** corregido y **validado** (2026-08-09) — menú «Cancelar invitación» elimina el pendiente.
+- **Origen:** guion `altas-bajas agosto 2026` paso 3.1 (2026-08-09).
+
+#### 117. Push fuera de app al invitar (Android UB) no llega
+- **Plataforma:** Android
+- **Pantalla / flujo:** UA invita a UB registrado → UB debería recibir FCM en background/cerrada
+- **Tipo:** bug / gap (T267 / diagrama §1.1)
+- **Gravedad:** media
+- **Descripción breve:** En guion `altas-bajas agosto 2026`, UB vio la invitación en campana in-app y pudo aceptar, pero **no** recibió notificación del sistema fuera de la app.
+- **Causa raíz (2026-08-09):** sin `POST_NOTIFICATIONS` en manifest; FCM solo pedía permiso en iOS; canal `planazoo_default` (CF) no se creaba en el dispositivo.
+- **Estado:** corregido y **validado** (2026-08-09) — banner Android + tap abre modal aceptar/rechazar.
+- **Origen:** 2026-08-09 sesión multiplataforma.
+
+#### 116. Re-invitar tras rechazo: no disponible desde lista de participantes
+- **Plataforma:** iOS (UA) / todas
+- **Pantalla / flujo:** Participantes — usuario en estado «fuera» / rejected
+- **Tipo:** mejora / gap UX (diagrama §1 caso 3)
+- **Gravedad:** media
+- **Descripción breve:** Tras rechazo, solo se puede re-invitar por email; debería poder hacerse desde la lista de participantes (o acción explícita sobre el usuario «fuera»).
+- **Estado:** corregido y **validado** (2026-08-10) — tras rechazo UC en lista «fuera»; re-enviar desde ⋮ / lista invitar OK.
+- **Origen:** guion `altas-bajas agosto 2026` (2026-08-09).
+
+#### 115. Reinvitar por email con pending: duplica ítem en campana del invitado
+- **Plataforma:** Web (UC) / todas
+- **Pantalla / flujo:** Participantes → invitar por email a usuario ya pendiente
+- **Tipo:** bug / gap diagrama §1 caso 2
+- **Gravedad:** media
+- **Descripción breve:** La app permite reenviar por mail; UA sigue con 1 pendiente; UC ve **2** invitaciones en notificaciones. Esperado: reenviar sin duplicar ítem de campana.
+- **Causa raíz (2026-08-10):** campana mezclaba `plan_invitations` + `users/.../notifications` del mismo plan.
+- **Estado:** corregido y **validado** (2026-08-10) — dedupe por planId + cancelar docs legacy al reinvitar directo; 1 ítem en campana.
+- **Origen:** guion altas-bajas `altas-bajas agosto 2026` (2026-08-09).
+
+#### 114. Organizador recibe N avisos idénticos al aceptar invitación
+- **Plataforma:** iOS (UA) / todas
+- **Pantalla / flujo:** Campana UA tras aceptar UB en Android
+- **Tipo:** bug
+- **Gravedad:** media
+- **Descripción breve:** 6× «Invitación aceptada» iguales. Aceptar era lento; sin bloqueo de botón ni dedupe → varias llamadas a `notifyInvitationResponded` (posible también múltiples tokens FCM).
+- **Estado:** corregido (2026-08-09) — dedupe por `planId`+tipo; early-return si participación ya `accepted`; botón Accept/Reject busy. Las 6 ya creadas en Firestore se pueden marcar leídas/borrar a mano.
+- **Origen:** sesión multiplataforma Ago 2026.
+
+#### 113. Notificación de invitación — muestra `planId` en lugar del nombre del plan
+- **Plataforma:** Android (reproducido) / iOS / Web (misma UI)
+- **Pantalla / flujo:** Campana / notificaciones unificadas → tarjeta de invitación pendiente
+- **Tipo:** bug
+- **Gravedad:** media
+- **Descripción breve:** `invitationPlanLabel(invitation.planId)` en `wd_unified_notification_item.dart` y `wd_unified_notifications_screen.dart`.
+- **Estado:** corregido (2026-08-09) — resuelve nombre vía `planByIdStreamProvider`.
+- **Origen:** sesión multiplataforma Ago 2026 (UB acepta invitación en Android).
 
 #### 110. Calendario — opción "Todos los días del plan" no aplicada en selector
 - **Plataforma:** Web (menú calendario)
@@ -57,7 +177,7 @@
 - **Tipo:** bug / revisión técnica
 - **Gravedad:** baja
 - **Descripción breve:** Hay constantes específicas de separador vertical (`calendarVerticalSeparator*`), pero la creación de bordes sigue en utilidades genéricas (`createGridBorder`). Visualmente puede estar correcto, pero falta trazabilidad clara al criterio técnico definido para el ítem.
-- **Estado:** pendiente
+- **Estado:** corregido (2026-08-10) — API única `CalendarStyles.createVerticalDaySeparator` (width + opacidades web/móvil); usada en `wd_calendar_screen` y `pg_calendar_mobile_page`. `CalendarUtils.createGridBorder` queda solo para bordes genéricos.
 - **Referencia histórica:** ítem 100 / `REG-2026-018`
 
 #### 112. Calendario — alinear rejilla interna real con la demo v1 aprobada
@@ -66,8 +186,8 @@
 - **Tipo:** mejora UI / refactor visual
 - **Gravedad:** media
 - **Descripción breve:** La versión real ya adopta el marco externo de la demo (`barra unificada`, `chips 1/2/3`, `zona horaria`, contenedor). Falta trasladar los ajustes visuales de la rejilla interna aprobada en `demo/calendar-v1` (estética de celdas/pastillas y consistencia visual) a los componentes reales (`CalendarGrid`/tracks/eventos/alojamientos), sin romper lógica productiva.
-- **Estado:** pendiente
-- **Referencia:** acuerdo de revisión UI en chat (2026-04-22)
+- **Estado:** **cerrado** (2026-08-10) — decisión producto: el calendario actual se considera bien; no se portan más estilos de la demo v1.
+- **Referencia:** acuerdo de revisión UI en chat (2026-04-22); cierre explícito en sesión QA Ago 2026.
 
 ---
 

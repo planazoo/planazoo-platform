@@ -488,7 +488,7 @@ class PlanService {
       final isEmail = userIdOrEmail.contains('@');
       
       if (isEmail) {
-        // Es un email: usar InvitationService (T104)
+        // Es un email: usar InvitationService (T104) → campana + push + email (onCreate CF)
         final invitationId = await _invitationService.createInvitation(
           planId: planId,
           email: userIdOrEmail,
@@ -499,12 +499,33 @@ class PlanService {
         
         if (invitationId != null) {
           LoggerService.database('Invitation created for email $userIdOrEmail to plan $planId', operation: 'CREATE');
-          // TODO: Enviar email con link (T104)
           return true;
         }
         return false;
       } else {
-        // Es un ID de usuario: crear participación directamente
+        // ID de usuario: preferir InvitationService con email (mismo flujo + correo).
+        final userService = UserService();
+        final invitedUser = await userService.getUser(userIdOrEmail);
+        final email = invitedUser?.email.trim();
+        if (email != null && email.contains('@')) {
+          final invitationId = await _invitationService.createInvitation(
+            planId: planId,
+            email: email,
+            invitedBy: invitedBy,
+            role: role,
+            customMessage: customMessage,
+          );
+          if (invitationId != null) {
+            LoggerService.database(
+              'Invitation created for userId $userIdOrEmail ($email) to plan $planId',
+              operation: 'CREATE',
+            );
+            return true;
+          }
+          return false;
+        }
+
+        // Fallback sin email: participación + campana/push (sin correo).
         final participationId = await _participationService.createParticipation(
           planId: planId,
           userId: userIdOrEmail,
@@ -515,8 +536,6 @@ class PlanService {
         if (participationId != null) {
           LoggerService.database('User $userIdOrEmail invited to plan $planId', operation: 'CREATE');
           try {
-            final userService = UserService();
-            final invitedUser = await userService.getUser(userIdOrEmail);
             final inviter =
                 invitedBy != null ? await userService.getUser(invitedBy) : null;
             final plan = await getPlanById(planId);

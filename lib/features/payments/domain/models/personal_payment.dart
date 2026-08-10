@@ -6,6 +6,10 @@ class PersonalPayment {
   final String planId;
   final String participantId; // Usuario que hizo el pago
   final String? eventId; // Evento asociado (opcional, null si es pago general del plan)
+  /// T273: alojamiento asociado (garantía de reserva).
+  final String? accommodationId;
+  /// T273: `guarantee` | null (pago genérico).
+  final String? paymentKind;
   final double amount; // Monto pagado
   final DateTime paymentDate; // Fecha del pago
   final String? paymentMethod; // Efectivo, Transferencia, Tarjeta, etc.
@@ -22,6 +26,8 @@ class PersonalPayment {
     required this.planId,
     required this.participantId,
     this.eventId,
+    this.accommodationId,
+    this.paymentKind,
     required this.amount,
     required this.paymentDate,
     this.paymentMethod,
@@ -42,6 +48,8 @@ class PersonalPayment {
       planId: data['planId'] ?? '',
       participantId: data['participantId'] ?? '',
       eventId: data['eventId'],
+      accommodationId: data['accommodationId'],
+      paymentKind: data['paymentKind'],
       amount: (data['amount'] as num).toDouble(),
       paymentDate: (data['paymentDate'] as Timestamp).toDate(),
       paymentMethod: data['paymentMethod'],
@@ -61,6 +69,8 @@ class PersonalPayment {
       'planId': planId,
       'participantId': participantId,
       if (eventId != null) 'eventId': eventId,
+      if (accommodationId != null) 'accommodationId': accommodationId,
+      if (paymentKind != null) 'paymentKind': paymentKind,
       'amount': amount,
       'paymentDate': Timestamp.fromDate(paymentDate),
       if (paymentMethod != null) 'paymentMethod': paymentMethod,
@@ -79,6 +89,8 @@ class PersonalPayment {
     String? planId,
     String? participantId,
     String? eventId,
+    String? accommodationId,
+    String? paymentKind,
     double? amount,
     DateTime? paymentDate,
     String? paymentMethod,
@@ -95,6 +107,8 @@ class PersonalPayment {
       planId: planId ?? this.planId,
       participantId: participantId ?? this.participantId,
       eventId: eventId ?? this.eventId,
+      accommodationId: accommodationId ?? this.accommodationId,
+      paymentKind: paymentKind ?? this.paymentKind,
       amount: amount ?? this.amount,
       paymentDate: paymentDate ?? this.paymentDate,
       paymentMethod: paymentMethod ?? this.paymentMethod,
@@ -113,7 +127,10 @@ class PersonalPayment {
   bool get isPaid => status == 'paid';
   bool get isRefunded => status == 'refunded';
   bool get isForEvent => eventId != null && eventId!.isNotEmpty;
-  bool get isGeneralPayment => eventId == null || eventId!.isEmpty;
+  bool get isForAccommodation =>
+      accommodationId != null && accommodationId!.isNotEmpty;
+  bool get isGuarantee => paymentKind == 'guarantee';
+  bool get isGeneralPayment =>
+      (eventId == null || eventId!.isEmpty) &&
+      (accommodationId == null || accommodationId!.isEmpty);
 }
-
-

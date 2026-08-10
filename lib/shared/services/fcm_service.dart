@@ -114,9 +114,12 @@ class FCMService {
         return false;
       }
       
-      // Solicitar permisos (iOS)
-      if (Platform.isIOS) {
-        LoggerService.info('iOS requestPermission(start)', context: 'FCM_SERVICE');
+      // Solicitar permisos (iOS y Android 13+)
+      if (Platform.isIOS || Platform.isAndroid) {
+        LoggerService.info(
+          '${Platform.isIOS ? "iOS" : "Android"} requestPermission(start)',
+          context: 'FCM_SERVICE',
+        );
         final settings = await _messaging.requestPermission(
           alert: true,
           announcement: false,
@@ -130,25 +133,30 @@ class FCMService {
         if (settings.authorizationStatus != AuthorizationStatus.authorized &&
             settings.authorizationStatus != AuthorizationStatus.provisional) {
           LoggerService.warning(
-            'Permisos de notificaciones denegados',
+            'Permisos de notificaciones denegados (${settings.authorizationStatus.name})',
             context: 'FCM_SERVICE',
           );
-          return false;
+          // En Android seguimos intentando obtener token; sin permiso el SO no muestra banners.
+          if (Platform.isIOS) {
+            return false;
+          }
         }
         LoggerService.info(
-          'iOS requestPermission(done) status=${settings.authorizationStatus.name}',
+          '${Platform.isIOS ? "iOS" : "Android"} requestPermission(done) status=${settings.authorizationStatus.name}',
           context: 'FCM_SERVICE',
         );
 
-        await _messaging.setForegroundNotificationPresentationOptions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+        if (Platform.isIOS) {
+          await _messaging.setForegroundNotificationPresentationOptions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
 
-        // iOS: APNs puede tardar unos segundos tras conceder permisos.
-        // Esperamos un poco para evitar errores "apns-token-not-set" al pedir el token FCM.
-        await _waitForApnsToken();
+          // iOS: APNs puede tardar unos segundos tras conceder permisos.
+          // Esperamos un poco para evitar errores "apns-token-not-set" al pedir el token FCM.
+          await _waitForApnsToken();
+        }
       }
       
       // Obtener token inicial

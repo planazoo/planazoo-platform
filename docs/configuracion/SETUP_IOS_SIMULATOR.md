@@ -128,25 +128,55 @@ xcrun simctl status_bar booted override --dataNetwork wifi
 - Abrir Simulator: `open -a Simulator`
 - Esperar a que el simulador termine de iniciar
 - Verificar: `flutter devices`
+- Si usas **iPhone físico**, ver sección [Dispositivo físico iPhone](#dispositivo-físico-iphone) (emparejamiento / Confiar).
 
 ### Errores de compilación en iOS
 - Limpiar build: `flutter clean`
 - Reinstalar pods: `cd ios && pod install && cd ..`
 - Rebuild: `flutter run -d ios`
 
+---
+
+## Dispositivo físico iPhone
+
+Hace falta **Apple Developer** (cuenta de pago) y signing en Xcode (Team del proyecto).
+
+1. Conectar el iPhone por USB y **desbloquearlo**.
+2. En el iPhone: aceptar **«¿Confiar en este ordenador?»** si aparece.
+3. Si Flutter / Xcode dicen *unpaired* / *not available because it is unpaired*:
+   - Mac: **Xcode → Window → Devices and Simulators**
+   - Seleccionar el iPhone y completar el emparejamiento; responder prompts en el teléfono.
+4. Verificar:
+
+```bash
+flutter devices
+```
+
+Ejemplo del repo: `iPhone de Andorra` → id `00008030-001869E83699402E`.
+
+5. Ejecutar:
+
+```bash
+flutter run -d 00008030-001869E83699402E
+# o el id que muestre flutter devices
+```
+
+Push / deep links: validar siempre en físico — [`CHECKLIST_IOS_PUSH_DEEPLINKS.md`](./CHECKLIST_IOS_PUSH_DEEPLINKS.md).  
+Matriz 3 dispositivos: [`USUARIOS_PRUEBA.md`](./USUARIOS_PRUEBA.md#matriz-mínima-multiplataforma-3-usuarios--3-dispositivos).  
+Android físico: [`SETUP_ANDROID_LOCAL.md`](./SETUP_ANDROID_LOCAL.md).
+
 ## 📝 Notas Importantes
 
-- **✅ No se requiere cuenta de desarrollador** - El iOS Simulator funciona sin cuenta de Apple Developer
-- **⏱️ Primera ejecución:** Puede tardar 5-10 minutos (compilación inicial)
-- **📱 Dispositivo físico:** Para probar en un iPhone real necesitarías cuenta de desarrollador ($99/año)
-- **🔄 Cambios de dispositivo:** Si cambias el modelo de iPhone en el simulador, puede que necesites recompilar
-- **🌐 Conexión:** El simulador usa la conexión de red de tu Mac automáticamente
+- **✅ Simulador:** no requiere cuenta de desarrollador de pago.
+- **⏱️ Primera ejecución:** puede tardar varios minutos (compilación inicial).
+- **📱 Dispositivo físico:** requiere cuenta Apple Developer + Trust / emparejamiento (sección anterior).
+- **🔄 Cambios de dispositivo:** si cambias el modelo en el simulador, puede hacer falta recompilar.
+- **🌐 Conexión:** el simulador usa la red del Mac.
 
-## 🚫 Limitaciones del Simulador (sin cuenta de desarrollador)
+## 🚫 Limitaciones del Simulador
 
-- ✅ Puedes probar toda la funcionalidad de la app
-- ✅ Puedes probar login, eventos, calendario, etc.
-- ❌ No puedes instalar en un iPhone físico
-- ❌ No puedes publicar en App Store
-- ❌ Algunas funciones del dispositivo (cámara, GPS real) son simuladas
+- ✅ Login, eventos, calendario, etc. en UI.
+- ❌ Push reales APNs / FCM end-to-end → dispositivo físico.
+- ❌ Algunas APIs (cámara, GPS real) son simuladas o limitadas.
+- ❌ Publicar en App Store → ver [`FASTLANE_IOS_APPSTORE.md`](./FASTLANE_IOS_APPSTORE.md).
 

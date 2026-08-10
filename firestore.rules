@@ -187,6 +187,11 @@ service cloud.firestore {
              request.resource.data.updatedAt is timestamp &&
              (!('eventId' in request.resource.data) || 
               request.resource.data.eventId is string) &&
+             (!('accommodationId' in request.resource.data) ||
+              request.resource.data.accommodationId is string) &&
+             (!('paymentKind' in request.resource.data) ||
+              (request.resource.data.paymentKind is string &&
+               request.resource.data.paymentKind in ['guarantee'])) &&
              (!('paymentMethod' in request.resource.data) || 
               request.resource.data.paymentMethod is string) &&
              (!('concept' in request.resource.data) || 
@@ -716,6 +721,7 @@ service cloud.firestore {
                           'announcement',
                           'participantAdded',
                           'participantRemoved',
+                          'participantLeft',
                           'eventCreated',
                           'eventUpdated',
                           'eventDeleted',

@@ -1362,4 +1362,318 @@ exports.processInboundGmail = functions.https.onRequest(async (req, res) => {
   res.status(200).json({ success: true, processed: totalProcessed, errors: totalErrors, byMailbox });
 });
 
+// ============================================
+// T273 — Avisos programados de límites de cancelación
+// Cron (pubsub schedule) + HTTP opcional para Cloud Scheduler / prueba manual.
+// ============================================
+
+const CANCELLATION_DEFAULT_LEAD_HOURS = 48;
+
+function parseCancellationDeadline(raw) {
+  if (!raw) return null;
+  if (raw.toDate && typeof raw.toDate === 'function') return raw.toDate();
+  if (raw instanceof Date) return raw;
+  if (typeof raw === 'string' || typeof raw === 'number') {
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof raw.seconds === 'number') return new Date(raw.seconds * 1000);
+  return null;
+}
+
+function sameCivilDay(a, b) {
+  return a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+}
+
+/**
+ * Fases según reminderLeadHours / reminderAlsoOnDay del ítem.
+ * Docs antiguos sin campos → 48h + día.
+ */
+function cancellationPhases(now, deadline, reservation) {
+  const phases = [];
+  if (!(deadline instanceof Date) || Number.isNaN(deadline.getTime()) || deadline <= now) {
+    return phases;
+  }
+
+  const hasLeadField = reservation &&
+    Object.prototype.hasOwnProperty.call(reservation, 'reminderLeadHours');
+  const hasDayField = reservation &&
+    Object.prototype.hasOwnProperty.call(reservation, 'reminderAlsoOnDay');
+
+  let leadHours;
+  if (!hasLeadField) {
+    leadHours = CANCELLATION_DEFAULT_LEAD_HOURS;
+  } else if (reservation.reminderLeadHours == null) {
+    leadHours = null;
+  } else {
+    leadHours = Number(reservation.reminderLeadHours);
+    if (Number.isNaN(leadHours) || leadHours <= 0) leadHours = null;
+  }
+  const alsoOnDay = hasDayField
+    ? Boolean(reservation.reminderAlsoOnDay)
+    : true;
+
+  if (leadHours != null) {
+    const untilMs = now.getTime() + leadHours * 60 * 60 * 1000;
+    if (deadline.getTime() <= untilMs) {
+      phases.push(`h${leadHours}`);
+    }
+  }
+  if (alsoOnDay && sameCivilDay(now, deadline)) {
+    phases.push('day');
+  }
+  return phases;
+}
+
+function cancellationDedupeKey(itemId, deadline, refundPercent, phase) {
+  return `${itemId}|${deadline.toISOString()}|${refundPercent}|${phase}`;
+}
+
+function formatDeadlineEs(deadline) {
+  const dd = String(deadline.getDate()).padStart(2, '0');
+  const mm = String(deadline.getMonth() + 1).padStart(2, '0');
+  const yyyy = deadline.getFullYear();
+  const hh = String(deadline.getHours()).padStart(2, '0');
+  const mi = String(deadline.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+}
+
+function formatPercent(n) {
+  const num = Number(n);
+  if (Number.isNaN(num)) return '0';
+  return Number.isInteger(num) ? String(num) : num.toFixed(1);
+}
+
+async function loadExistingCancellationKeys(db, userId, planId) {
+  const snap = await db.collection('users').doc(userId)
+    .collection('notifications')
+    .where('planId', '==', planId)
+    .where('type', '==', 'alarm')
+    .get();
+  const keys = new Set();
+  snap.docs.forEach((doc) => {
+    const payload = doc.data().data;
+    if (!payload || payload.kind !== 'cancellationDeadline') return;
+    const k = payload.dedupeKey ? String(payload.dedupeKey) : '';
+    if (k) keys.add(k);
+    const phase = payload.phase ? String(payload.phase) : '';
+    if (!phase && k && !k.endsWith('|48h') && !k.endsWith('|day') && !k.includes('|h')) {
+      keys.add(`${k}|h48`);
+      keys.add(`${k}|48h`);
+    }
+    if (k && k.endsWith('|48h')) {
+      keys.add(`${k.slice(0, -4)}h48`);
+    }
+  });
+  return keys;
+}
+
+async function sendFcmToUser(userId, title, body, data) {
+  const tokensSnapshot = await admin.firestore()
+    .collection('users')
+    .doc(userId)
+    .collection('fcmTokens')
+    .get();
+  if (tokensSnapshot.empty) {
+    return { success: false, sent: 0 };
+  }
+  const tokens = tokensSnapshot.docs.map((d) => d.data().token).filter(Boolean);
+  if (tokens.length === 0) return { success: false, sent: 0 };
+
+  const stringData = {};
+  Object.keys(data || {}).forEach((k) => {
+    stringData[k] = data[k] == null ? '' : String(data[k]);
+  });
+
+  const response = await admin.messaging().sendEachForMulticast({
+    notification: { title, body },
+    data: stringData,
+    tokens,
+  });
+
+  if (response.failureCount > 0) {
+    const batch = admin.firestore().batch();
+    let deleted = 0;
+    response.responses.forEach((resp, idx) => {
+      if (!resp.success) {
+        const token = tokens[idx];
+        batch.delete(
+          admin.firestore().collection('users').doc(userId).collection('fcmTokens').doc(token),
+        );
+        deleted++;
+      }
+    });
+    if (deleted > 0) await batch.commit();
+  }
+  return { success: response.successCount > 0, sent: response.successCount };
+}
+
+/**
+ * Escanea eventos/alojamientos con política de cancelación y avisa al organizador.
+ * Query: docs con `reservationCancellation` (incluye alojamientos en `events`).
+ * El campo `nextCancellationDeadline` se escribe en cliente para futuras queries indexadas.
+ */
+async function runCancellationDeadlineCheck() {
+  const db = admin.firestore();
+  const now = new Date();
+
+  let eventDocs = [];
+  try {
+    const snap = await db.collection('events')
+      .where('reservationCancellation', '!=', null)
+      .get();
+    eventDocs = snap.docs;
+    console.log(`checkCancellationDeadlines: scanned ${eventDocs.length} doc(s) with reservationCancellation`);
+  } catch (err) {
+    console.error('checkCancellationDeadlines: query failed', err);
+    throw err;
+  }
+
+  const planCache = new Map();
+  const keysCache = new Map();
+  let notified = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const doc of eventDocs) {
+    try {
+      const data = doc.data() || {};
+      const planId = data.planId;
+      if (!planId) {
+        skipped++;
+        continue;
+      }
+
+      const reservation = data.reservationCancellation;
+      const tiers = (reservation && Array.isArray(reservation.tiers)) ? reservation.tiers : [];
+      if (tiers.length === 0) {
+        skipped++;
+        continue;
+      }
+
+      let organizerUserId = planCache.get(planId);
+      if (organizerUserId === undefined) {
+        const planDoc = await db.collection('plans').doc(planId).get();
+        organizerUserId = planDoc.exists ? (planDoc.data().userId || null) : null;
+        planCache.set(planId, organizerUserId);
+      }
+      if (!organizerUserId) {
+        skipped++;
+        continue;
+      }
+
+      const cacheKey = `${organizerUserId}|${planId}`;
+      let existing = keysCache.get(cacheKey);
+      if (!existing) {
+        existing = await loadExistingCancellationKeys(db, organizerUserId, planId);
+        keysCache.set(cacheKey, existing);
+      }
+
+      const isAcc = data.typeFamily === 'alojamiento';
+      const label = isAcc
+        ? (data.hotelName || 'Alojamiento')
+        : ((data.description && String(data.description).trim()) || 'Evento');
+
+      for (const tier of tiers.slice(0, 2)) {
+        const deadline = parseCancellationDeadline(tier.deadlineAt);
+        if (!deadline) continue;
+        const refundPercent = tier.refundPercent != null ? Number(tier.refundPercent) : 0;
+        const phases = cancellationPhases(now, deadline, reservation);
+        if (phases.length === 0) {
+          skipped++;
+          continue;
+        }
+        for (const phase of phases) {
+          const key = cancellationDedupeKey(doc.id, deadline, refundPercent, phase);
+          if (existing.has(key)) {
+            skipped++;
+            continue;
+          }
+
+          const title = phase === 'day'
+            ? 'Cancelación: hoy es el límite'
+            : 'Límite de cancelación próximo';
+          const body = `${label}: recuperas ${formatPercent(refundPercent)}% hasta ${formatDeadlineEs(deadline)}`;
+
+          const notifRef = db.collection('users').doc(organizerUserId)
+            .collection('notifications').doc();
+          await notifRef.set({
+            userId: organizerUserId,
+            type: 'alarm',
+            title,
+            body,
+            planId,
+            isRead: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            data: {
+              kind: 'cancellationDeadline',
+              itemId: doc.id,
+              isAccommodation: isAcc,
+              deadlineAt: deadline.toISOString(),
+              refundPercent,
+              phase,
+              dedupeKey: key,
+              source: 'scheduled',
+            },
+          });
+          existing.add(key);
+          notified++;
+
+          try {
+            await sendFcmToUser(organizerUserId, title, body, {
+              type: 'alarm',
+              planId,
+              kind: 'cancellationDeadline',
+              phase,
+            });
+          } catch (pushErr) {
+            console.warn(`checkCancellationDeadlines: push failed for ${organizerUserId}`, pushErr.message);
+          }
+        }
+      }
+    } catch (itemErr) {
+      errors++;
+      console.error(`checkCancellationDeadlines: error on event ${doc.id}`, itemErr);
+    }
+  }
+
+  return { notified, skipped, errors, scanned: eventDocs.length };
+}
+
+exports.checkCancellationDeadlines = functions.pubsub
+  .schedule('every 60 minutes')
+  .timeZone('Europe/Madrid')
+  .onRun(async () => {
+    const result = await runCancellationDeadlineCheck();
+    console.log('checkCancellationDeadlines result', result);
+    return null;
+  });
+
+/**
+ * HTTP para prueba manual o Cloud Scheduler.
+ * Cabecera opcional: X-Cancellation-Reminders-Secret (si CANCELATION_REMINDERS_SECRET / config está definida).
+ */
+exports.triggerCancellationDeadlineCheck = functions.https.onRequest(async (req, res) => {
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.status(405).json({ error: 'method_not_allowed' });
+    return;
+  }
+  const secret = process.env.CANCELATION_REMINDERS_SECRET ||
+    process.env.CANCELLATION_REMINDERS_SECRET ||
+    functions.config().cancellation_reminders?.secret;
+  if (secret && req.get('X-Cancellation-Reminders-Secret') !== secret) {
+    res.status(403).json({ error: 'forbidden', message: 'Invalid or missing secret' });
+    return;
+  }
+  try {
+    const result = await runCancellationDeadlineCheck();
+    res.status(200).json({ success: true, ...result });
+  } catch (err) {
+    console.error('triggerCancellationDeadlineCheck failed', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 

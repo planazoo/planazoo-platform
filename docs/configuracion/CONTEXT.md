@@ -21,6 +21,8 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - `docs/configuracion/ACCESOS_Y_CUENTAS.md` - **Inventario de accesos** (consolas Google/Apple, remoto, secretos en gestor; sin contraseñas en el repo)
 - `docs/configuracion/CONFIGURACIONES_PROYECTO.md` - Índice técnico de integraciones en el repo
 - `docs/configuracion/SETUP_ANDROID_LOCAL.md` - **Arranque Android local (SDK, dispositivo/emulador, `flutter run`)** y smoke test inicial
+- `docs/configuracion/SETUP_IOS_SIMULATOR.md` - Simulador iOS + **iPhone físico** (Confiar / emparejar Xcode, `flutter devices`)
+- `docs/configuracion/USUARIOS_PRUEBA.md` - Usuarios semilla y **matriz mínima multiplataforma** (UA iPhone / UB Android / UC web)
 - `docs/flujos/FLUJO_NOTAS_PLAN.md` - **Flujo implementado** de Notas del plan (común/personal, preparación, permisos)
 - `docs/tareas/T262_NOTAS_PLAN_COMUNES_PERSONALES.md` - **Especificación de producto** de Notas del plan (T262 en progreso; roadmap de plantillas y cierre)
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones (T40)

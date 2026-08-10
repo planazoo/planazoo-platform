@@ -4,6 +4,7 @@ import 'package:unp_calendario/features/calendar/domain/models/pending_email_eve
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
 import 'package:unp_calendario/features/calendar/domain/services/pending_email_event_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
@@ -168,11 +169,11 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _InvitationCard extends StatelessWidget {
+class _InvitationCard extends ConsumerStatefulWidget {
   final PlanInvitation invitation;
   final String userId;
-  final VoidCallback onAccept;
-  final VoidCallback onReject;
+  final Future<void> Function() onAccept;
+  final Future<void> Function() onReject;
 
   const _InvitationCard({
     required this.invitation,
@@ -182,8 +183,22 @@ class _InvitationCard extends StatelessWidget {
   });
 
   @override
+  ConsumerState<_InvitationCard> createState() => _InvitationCardState();
+}
+
+class _InvitationCardState extends ConsumerState<_InvitationCard> {
+  bool _busy = false;
+
+  @override
   Widget build(BuildContext context) {
+    final invitation = widget.invitation;
     final loc = AppLocalizations.of(context)!;
+    final planAsync = ref.watch(planByIdStreamProvider(invitation.planId));
+    final planLabel = planAsync.when(
+      data: (plan) => loc.invitationPlanLabel(plan?.name ?? invitation.planId),
+      loading: () => loc.invitationPlanLabel('…'),
+      error: (_, __) => loc.invitationPlanLabel(invitation.planId),
+    );
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: Colors.orange.shade50,
@@ -193,7 +208,7 @@ class _InvitationCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              loc.invitationPlanLabel(invitation.planId),
+              planLabel,
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.orange.shade900),
             ),
             if (invitation.role != null)
@@ -209,7 +224,16 @@ class _InvitationCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 OutlinedButton.icon(
-                  onPressed: onReject,
+                  onPressed: _busy
+                      ? null
+                      : () async {
+                          setState(() => _busy = true);
+                          try {
+                            await widget.onReject();
+                          } finally {
+                            if (mounted) setState(() => _busy = false);
+                          }
+                        },
                   icon: const Icon(Icons.cancel_outlined, size: 18),
                   label: Text(loc.reject),
                   style: OutlinedButton.styleFrom(
@@ -219,8 +243,23 @@ class _InvitationCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
-                  onPressed: onAccept,
-                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  onPressed: _busy
+                      ? null
+                      : () async {
+                          setState(() => _busy = true);
+                          try {
+                            await widget.onAccept();
+                          } finally {
+                            if (mounted) setState(() => _busy = false);
+                          }
+                        },
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.check_circle_outline, size: 18),
                   label: Text(loc.accept),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColorScheme.color2,

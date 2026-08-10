@@ -2359,10 +2359,10 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Tres opciones por fila (donde aplique el layout) y orden alfabético estable.
   - Estado: 🔄
 
-- [ ] **REG-2026-018:** Calendario — separadores verticales entre días (ítem 100)
+- [x] **REG-2026-018:** Calendario — separadores verticales entre días (ítem 100 / LISTA **111**)
   - Pasos: Vista multi-día web y móvil con varias columnas.
-  - Esperado: Línea entre columnas claramente visible (constantes `calendarVerticalSeparator*`).
-  - Estado: 🔄
+  - Esperado: Línea entre columnas claramente visible (`CalendarStyles.createVerticalDaySeparator` + constantes).
+  - Estado: ✅ 2026-08-10
 
 - [ ] **REG-2026-019:** Info del plan — nombre encima de foto (ítem 68)
   - Pasos: Abrir edición de información del plan.

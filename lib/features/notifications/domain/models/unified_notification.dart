@@ -21,6 +21,7 @@ enum UnifiedNotificationType {
   planStateChanged,
   participantAdded,
   participantRemoved,
+  participantLeft,
   alarm,
   other,
 }

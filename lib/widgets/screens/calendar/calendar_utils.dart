@@ -98,7 +98,8 @@ class CalendarUtils {
     return AppColorScheme.gridLineColor;
   }
 
-  /// Crea un borde para la cuadrícula
+  /// Borde genérico (todas las caras). Para separadores entre días usar
+  /// [CalendarStyles.createVerticalDaySeparator] (LISTA 111).
   static Border createGridBorder({Color? color}) {
     return Border.all(color: color ?? getGridLineColor());
   }

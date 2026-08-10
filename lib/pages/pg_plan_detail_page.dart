@@ -26,6 +26,7 @@ import 'package:unp_calendario/widgets/help/help_icon_button.dart';
 import 'package:unp_calendario/shared/constants/help_context_ids.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
+import 'package:unp_calendario/features/calendar/domain/services/cancellation_deadline_reminder.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_plans_list_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
@@ -66,6 +67,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   bool _summaryDraftOnly = false;
   bool _summaryShowDraftFilter = false;
   bool _hasSetInitialTabForParticipant = false;
+  bool _didScanCancellationDeadlines = false;
   /// Estado del calendario embebido: días visibles (1/2/3) y grupo actual (barra unificada).
   /// iOS: 3 días por defecto (lista §3.1 / ID 51).
   int _calendarVisibleDays =
@@ -122,6 +124,18 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     final currentUser = ref.watch(currentUserProvider);
     final planId = plan.id;
     final isOrganizer = currentUser?.id == plan.userId;
+    if (isOrganizer &&
+        !_didScanCancellationDeadlines &&
+        planId != null &&
+        currentUser != null) {
+      _didScanCancellationDeadlines = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        CancellationDeadlineReminder().scanPlanForOrganizer(
+          planId: planId,
+          organizerUserId: currentUser.id,
+        );
+      });
+    }
     // Si no es organizador y está en Estadísticas, redirigir a Info
     if (!isOrganizer && _selectedOption == 'stats') {
       WidgetsBinding.instance.addPostFrameCallback((_) {

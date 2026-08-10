@@ -5,6 +5,7 @@ import '../../app/theme/color_scheme.dart';
 import '../../features/calendar/domain/models/plan_invitation.dart';
 import '../../features/calendar/domain/models/pending_email_event.dart';
 import '../../features/calendar/domain/services/plan_service.dart';
+import '../../features/calendar/presentation/providers/calendar_providers.dart';
 import '../../features/notifications/domain/models/unified_notification.dart';
 import '../../features/notifications/presentation/providers/notification_providers.dart';
 import '../../features/calendar/presentation/providers/invitation_providers.dart';
@@ -100,7 +101,7 @@ class UnifiedNotificationItem extends ConsumerWidget {
   }
 }
 
-class InvitationNotificationTile extends ConsumerWidget {
+class InvitationNotificationTile extends ConsumerStatefulWidget {
   final PlanInvitation invitation;
   final String userId;
   final VoidCallback onResponded;
@@ -115,12 +116,28 @@ class InvitationNotificationTile extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InvitationNotificationTile> createState() =>
+      _InvitationNotificationTileState();
+}
+
+class _InvitationNotificationTileState extends ConsumerState<InvitationNotificationTile> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final invitation = widget.invitation;
+    final userId = widget.userId;
     final loc = AppLocalizations.of(context)!;
+    final planAsync = ref.watch(planByIdStreamProvider(invitation.planId));
+    final planLabel = planAsync.when(
+      data: (plan) => loc.invitationPlanLabel(plan?.name ?? invitation.planId),
+      loading: () => loc.invitationPlanLabel('…'),
+      error: (_, __) => loc.invitationPlanLabel(invitation.planId),
+    );
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onOpenDialog,
+        onTap: _busy ? null : widget.onOpenDialog,
         borderRadius: BorderRadius.circular(6),
         child: Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -135,7 +152,7 @@ class InvitationNotificationTile extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            loc.invitationPlanLabel(invitation.planId),
+            planLabel,
             style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -152,20 +169,29 @@ class InvitationNotificationTile extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               OutlinedButton.icon(
-                onPressed: () async {
-                  final result = await ref.read(invitationServiceProvider).rejectInvitationByPlanId(invitation.planId, userId);
-                  if (context.mounted) {
-                    if (result.success) {
-                      onResponded();
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(result.success ? loc.invitationRejected : result.message),
-                        backgroundColor: result.success ? AppColorScheme.color4 : Colors.red,
-                      ),
-                    );
-                  }
-                },
+                onPressed: _busy
+                    ? null
+                    : () async {
+                        setState(() => _busy = true);
+                        try {
+                          final result = await ref
+                              .read(invitationServiceProvider)
+                              .rejectInvitationByPlanId(invitation.planId, userId);
+                          if (context.mounted) {
+                            if (result.success) {
+                              widget.onResponded();
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result.success ? loc.invitationRejected : result.message),
+                                backgroundColor: result.success ? AppColorScheme.color4 : Colors.red,
+                              ),
+                            );
+                          }
+                        } finally {
+                          if (mounted) setState(() => _busy = false);
+                        }
+                      },
                 icon: const Icon(Icons.close, size: 14),
                 label: Text(loc.reject, style: GoogleFonts.poppins(fontSize: 11)),
                 style: OutlinedButton.styleFrom(
@@ -178,21 +204,38 @@ class InvitationNotificationTile extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               FilledButton.icon(
-                onPressed: () async {
-                  final result = await ref.read(invitationServiceProvider).acceptInvitationByPlanId(invitation.planId, userId);
-                  if (context.mounted) {
-                    if (result.success) {
-                      onResponded();
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(result.success ? loc.invitationAcceptedParticipant : result.message),
-                        backgroundColor: result.success ? AppColorScheme.color3 : Colors.red,
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.check, size: 14),
+                onPressed: _busy
+                    ? null
+                    : () async {
+                        setState(() => _busy = true);
+                        try {
+                          final result = await ref
+                              .read(invitationServiceProvider)
+                              .acceptInvitationByPlanId(invitation.planId, userId);
+                          if (context.mounted) {
+                            if (result.success) {
+                              widget.onResponded();
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  result.success ? loc.invitationAcceptedParticipant : result.message,
+                                ),
+                                backgroundColor: result.success ? AppColorScheme.color3 : Colors.red,
+                              ),
+                            );
+                          }
+                        } finally {
+                          if (mounted) setState(() => _busy = false);
+                        }
+                      },
+                icon: _busy
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.check, size: 14),
                 label: Text(loc.accept, style: GoogleFonts.poppins(fontSize: 11)),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColorScheme.color3,

@@ -21,6 +21,7 @@ import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
 import 'package:unp_calendario/widgets/dialogs/wd_plans_with_unread_chat_modal.dart';
+import 'package:unp_calendario/widgets/plan/pending_invitation_on_launch.dart';
 
 /// Página de lista de planes para móviles (iOS/Android)
 /// Incluye: barra superior con botón crear plan, búsqueda, filtros, lista y navegación inferior
@@ -48,6 +49,15 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
   final bool _isCreating = false;
   /// Vista lista vs calendario mensual (paridad con web / lista puntos P8).
   bool _useCalendarView = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      maybeShowPendingInvitationModalOnLaunch(context, ref);
+    });
+  }
 
   @override
   void dispose() {

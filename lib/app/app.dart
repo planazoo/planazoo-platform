@@ -25,6 +25,7 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_service.da
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/pages/pg_invitation_page.dart';
 import 'package:unp_calendario/widgets/dialogs/invitation_response_dialog.dart';
 
 class App extends ConsumerStatefulWidget {
@@ -262,8 +263,25 @@ class _AppState extends ConsumerState<App> {
           );
         }
 
+        // Deep link invitación: /invitation/{token}[?action=accept|reject] (§2).
+        final routeName = settings.name ?? '';
+        if (routeName.startsWith('/invitation/')) {
+          final uri = Uri.parse(routeName);
+          if (uri.pathSegments.length >= 2 && uri.pathSegments.first == 'invitation') {
+            final token = uri.pathSegments[1];
+            if (token.isNotEmpty) {
+              return MaterialPageRoute(
+                builder: (context) => InvitationPage(
+                  token: token,
+                  initialAction: uri.queryParameters['action'],
+                ),
+                settings: settings,
+              );
+            }
+          }
+        }
+
         // Ruta por defecto (requiere autenticación).
-        // Invitaciones: solo por email (notificación) o directa a usuario registrado; no hay página por token.
         return MaterialPageRoute(
           builder: (context) => AuthGuard(
             child: Builder(

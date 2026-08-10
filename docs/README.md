@@ -96,7 +96,9 @@ Configuración y contexto del proyecto:
 - [Checklist push iOS + deep links](./configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md) - Fuente operativa A1/A2 (pruebas y cierre)
 - [FCM Fase 1](./configuracion/FCM_FASE1_IMPLEMENTACION.md) - Arquitectura técnica FCM (referencia)
 - [Onboarding IA](./configuracion/ONBOARDING_IA.md) - Contexto para asistentes IA
-- [Usuarios de prueba](./configuracion/USUARIOS_PRUEBA.md) - Datos semilla y pruebas
+- [Usuarios de prueba](./configuracion/USUARIOS_PRUEBA.md) - Datos semilla, matriz 3 usuarios × 3 dispositivos (`flutter devices` / arranque)
+- [Setup Android local](./configuracion/SETUP_ANDROID_LOCAL.md) - SDK, físico/emulador, `adb`, `flutter run`
+- [Setup iOS (simulador + físico)](./configuracion/SETUP_IOS_SIMULATOR.md) - Simulador, iPhone USB (Confiar / emparejar)
 - [Nomenclatura UI](./configuracion/NOMENCLATURA_UI.md) - Páginas, menús y modales
 - [Auditoría colecciones Firestore](./configuracion/FIRESTORE_COLLECTIONS_AUDIT.md) - Colecciones en uso y reglas
 - [Auditoría de docs](./configuracion/DOCS_AUDIT.md) - Revisión mantener/actualizar/eliminar y referencias

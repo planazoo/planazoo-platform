@@ -59,6 +59,7 @@ import 'package:unp_calendario/widgets/dashboard/wd_dashboard_header_placeholder
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_my_status_cell.dart';
 import 'package:unp_calendario/widgets/dialogs/wd_create_plan_modal.dart';
 import 'package:unp_calendario/widgets/notifications/wd_notification_list_dialog.dart';
+import 'package:unp_calendario/widgets/plan/pending_invitation_on_launch.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -106,6 +107,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      maybeShowPendingInvitationModalOnLaunch(context, ref);
+    });
   }
 
   @override

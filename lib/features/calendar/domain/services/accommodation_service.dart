@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/accommodation.dart';
 import '../../../../shared/services/logger_service.dart';
+import 'guarantee_payment_sync.dart';
 
 class AccommodationService {
   static const String _collectionName = 'events'; // Los alojamientos están en events
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GuaranteePaymentSync _guaranteePaymentSync = GuaranteePaymentSync();
 
   /// Obtener todos los alojamientos de un plan
   Stream<List<Accommodation>> getAccommodations(String planId) {
@@ -65,6 +67,12 @@ class AccommodationService {
       LoggerService.database('Creando alojamiento: ${accommodation.hotelName} para plan ${accommodation.planId}', operation: 'CREATE');
       final docRef = await _firestore.collection(_collectionName).add(data);
       LoggerService.database('Alojamiento creado con ID: ${docRef.id}', operation: 'CREATE');
+      await _guaranteePaymentSync.sync(
+        planId: accommodation.planId,
+        accommodationId: docRef.id,
+        reservation: accommodation.reservationCancellation,
+        itemLabel: accommodation.hotelName,
+      );
       return docRef.id;
     } catch (e) {
       LoggerService.error('Error creando alojamiento', context: 'ACCOMMODATION_SERVICE', error: e);
@@ -78,10 +86,20 @@ class AccommodationService {
     
     try {
       final updatedAccommodation = accommodation.copyWith(updatedAt: DateTime.now());
+      final data = updatedAccommodation.toFirestore();
+      if (updatedAccommodation.reservationCancellation?.nextDeadline == null) {
+        data['nextCancellationDeadline'] = FieldValue.delete();
+      }
       await _firestore
           .collection(_collectionName)
           .doc(accommodation.id)
-          .update(updatedAccommodation.toFirestore());
+          .update(data);
+      await _guaranteePaymentSync.sync(
+        planId: accommodation.planId,
+        accommodationId: accommodation.id,
+        reservation: updatedAccommodation.reservationCancellation,
+        itemLabel: updatedAccommodation.hotelName,
+      );
       return true;
     } catch (e, st) {
       LoggerService.error(

@@ -78,7 +78,49 @@ class GlobalNotificationsService {
   ) {
     final merged = [...a, ...b, ...c];
     merged.sort((x, y) => y.createdAt.compareTo(x.createdAt));
-    return merged;
+    return _dedupeActionableInvitations(merged);
+  }
+
+  /// Una sola invitación accionable por plan (LISTA 115: plan_invitations + users/notifications).
+  static List<UnifiedNotification> _dedupeActionableInvitations(
+    List<UnifiedNotification> sorted,
+  ) {
+    final others = <UnifiedNotification>[];
+    final invitationByPlan = <String, UnifiedNotification>{};
+
+    for (final n in sorted) {
+      final planId = n.planId;
+      if (n.type == UnifiedNotificationType.invitation &&
+          n.requiresAction &&
+          planId != null &&
+          planId.isNotEmpty) {
+        final prev = invitationByPlan[planId];
+        invitationByPlan[planId] =
+            prev == null ? n : _preferInvitationNotification(prev, n);
+      } else {
+        others.add(n);
+      }
+    }
+
+    final out = [...others, ...invitationByPlan.values];
+    out.sort((x, y) => y.createdAt.compareTo(x.createdAt));
+    return out;
+  }
+
+  static UnifiedNotification _preferInvitationNotification(
+    UnifiedNotification a,
+    UnifiedNotification b,
+  ) {
+    // Firestore users/.../notifications suele tener título con nombre del plan.
+    if (a.source == UnifiedNotificationSource.usersNotifications &&
+        b.source != UnifiedNotificationSource.usersNotifications) {
+      return a;
+    }
+    if (b.source == UnifiedNotificationSource.usersNotifications &&
+        a.source != UnifiedNotificationSource.usersNotifications) {
+      return b;
+    }
+    return a.createdAt.isAfter(b.createdAt) ? a : b;
   }
 
   static UnifiedNotification _invitationToUnified(PlanInvitation inv) {
@@ -167,6 +209,8 @@ class GlobalNotificationsService {
         return UnifiedNotificationType.participantAdded;
       case NotificationType.participantRemoved:
         return UnifiedNotificationType.participantRemoved;
+      case NotificationType.participantLeft:
+        return UnifiedNotificationType.participantLeft;
       case NotificationType.alarm:
         return UnifiedNotificationType.alarm;
     }

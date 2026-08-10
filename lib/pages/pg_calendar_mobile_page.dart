@@ -22,6 +22,7 @@ import 'package:unp_calendario/widgets/screens/calendar/components/calendar_trac
 import 'package:unp_calendario/widgets/screens/calendar/calendar_event_logic.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_accommodation_logic.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_styles.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
@@ -247,13 +248,9 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   }
 
   Border _createGridBorder({bool includeRight = true}) {
-    return Border(
-      right: includeRight
-          ? BorderSide(
-              color: Colors.white.withValues(alpha: CalendarConstants.calendarSeparatorOpacityMobile),
-              width: CalendarConstants.calendarVerticalSeparatorWidth,
-            )
-          : BorderSide.none,
+    return CalendarStyles.createVerticalDaySeparator(
+      forMobile: true,
+      includeRight: includeRight,
     );
   }
 

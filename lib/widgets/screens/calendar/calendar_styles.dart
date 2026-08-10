@@ -32,6 +32,23 @@ class CalendarStyles {
         alpha: CalendarConstants.calendarSeparatorOpacityWeb,
       );
 
+  /// Borde derecho entre columnas de día/track (LISTA 111 / REG-2026-018).
+  /// Usa [calendarVerticalSeparatorWidth] + opacidades web/móvil de [CalendarConstants].
+  static Border createVerticalDaySeparator({
+    required bool forMobile,
+    bool includeRight = true,
+  }) {
+    if (!includeRight) {
+      return const Border(right: BorderSide.none);
+    }
+    return Border(
+      right: BorderSide(
+        color: forMobile ? calendarDaySeparatorMobile : calendarDaySeparatorWeb,
+        width: CalendarConstants.calendarVerticalSeparatorWidth,
+      ),
+    );
+  }
+
   /// Obtiene el estilo del header de días
   static TextStyle getDayHeaderStyle({bool isToday = false}) {
     return GoogleFonts.poppins(

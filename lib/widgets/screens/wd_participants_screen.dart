@@ -16,6 +16,7 @@ import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.d
 import 'package:unp_calendario/features/security/utils/validator.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
+import 'package:unp_calendario/widgets/plan/membership_solo_items_warning.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
 import 'package:unp_calendario/widgets/plan/plan_status_chip_actions.dart';
 
@@ -685,9 +686,42 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                         ),
                         ElevatedButton(
                           onPressed: () async {
-                            _showSnackBarSuccess(dialogContext, loc.participantsInviteResending(emailController.text.trim()));
+                            final email = emailController.text.trim();
+                            final currentUser = ref.read(currentUserProvider);
+                            final customMessage = messageController.text.trim().isEmpty
+                                ? null
+                                : messageController.text.trim();
+                            _showSnackBarSuccess(
+                              dialogContext,
+                              loc.participantsInviteResending(email),
+                            );
                             Navigator.of(dialogContext).pop(true);
-                            await _showInvitationLink(pendingInvitation!.id!);
+                            // createInvitation cancela el pending previo y crea uno nuevo
+                            // → campana/push + email (CF onCreate).
+                            final invitationId = await ref.read(invitationServiceProvider).createInvitation(
+                              planId: widget.plan.id!,
+                              email: email,
+                              invitedBy: currentUser?.id,
+                              role: role,
+                              customMessage: customMessage,
+                            );
+                            if (!mounted) return;
+                            if (invitationId == null) {
+                              _showSnackBarWarning(context, loc.snackCouldNotCreateInvitation);
+                              return;
+                            }
+                            ref.invalidate(planParticipantsProvider(widget.plan.id!));
+                            ref.invalidate(planRealParticipantsProvider(widget.plan.id!));
+                            ref.invalidate(pendingInvitationsProvider(widget.plan.id!));
+                            ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
+                            if (invitationId.startsWith('direct:')) {
+                              _showSnackBarSuccess(
+                                context,
+                                loc.snackInviteSentWillAppearPending(email),
+                              );
+                            } else {
+                              await _showInvitationLink(invitationId);
+                            }
                             if (mounted) setState(() {});
                           },
                           style: ElevatedButton.styleFrom(
@@ -875,12 +909,176 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     if (result == true && mounted) setState(() {});
   }
 
+  Future<void> _cancelPendingEmailInvitation(PlanInvitation invitation) async {
+    final loc = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final dLoc = AppLocalizations.of(dialogContext)!;
+        return Theme(
+          data: AppTheme.darkTheme,
+          child: AlertDialog(
+            backgroundColor: const Color(0xFF1F2937),
+            title: Text(
+              dLoc.cancelInvitationConfirmTitle,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: _webOnSurface,
+              ),
+            ),
+            content: Text(
+              dLoc.cancelInvitationConfirmMessage,
+              style: GoogleFonts.poppins(fontSize: 14, color: _webMuted),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(dLoc.cancel, style: GoogleFonts.poppins(color: _webMuted)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(
+                  dLoc.cancelInvitationMenuLabel,
+                  style: GoogleFonts.poppins(color: Colors.red.shade400, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (confirmed != true || !mounted) return;
+    final planId = widget.plan.id;
+    if (planId == null || invitation.id == null) return;
+
+    final ok = await ref.read(invitationServiceProvider).cancelInvitation(invitation.id!);
+    if (!mounted) return;
+    if (ok) {
+      ref
+        ..invalidate(pendingInvitationsProvider(planId))
+        ..invalidate(invitationsForPlanProvider(planId))
+        ..invalidate(planParticipantsProvider(planId))
+        ..invalidate(planRealParticipantsProvider(planId));
+      await ref.read(planParticipationNotifierProvider(planId).notifier).reload();
+      if (!mounted) return;
+      setState(() {});
+      _showSnackBarSuccess(context, loc.snackInvitationCancelledShort);
+    } else {
+      if (!mounted) return;
+      _showSnackBarError(context, loc.snackInvitationCancelFailed);
+    }
+  }
+
+  Future<void> _cancelPendingParticipationInvite(PlanParticipation participation) async {
+    final loc = AppLocalizations.of(context)!;
+    final planId = widget.plan.id;
+    if (planId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final dLoc = AppLocalizations.of(dialogContext)!;
+        return Theme(
+          data: AppTheme.darkTheme,
+          child: AlertDialog(
+            backgroundColor: const Color(0xFF1F2937),
+            title: Text(
+              dLoc.cancelInvitationConfirmTitle,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: _webOnSurface,
+              ),
+            ),
+            content: Text(
+              dLoc.cancelInvitationConfirmMessage,
+              style: GoogleFonts.poppins(fontSize: 14, color: _webMuted),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(dLoc.cancel, style: GoogleFonts.poppins(color: _webMuted)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text(
+                  dLoc.cancelInvitationMenuLabel,
+                  style: GoogleFonts.poppins(color: Colors.red.shade400, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (confirmed != true || !mounted) return;
+
+    final ok = await ref.read(invitationServiceProvider).cancelPendingForParticipation(
+          planId: planId,
+          userId: participation.userId,
+        );
+    if (!mounted) return;
+    if (ok) {
+      ref
+        ..invalidate(pendingInvitationsProvider(planId))
+        ..invalidate(invitationsForPlanProvider(planId))
+        ..invalidate(planParticipantsProvider(planId))
+        ..invalidate(planRealParticipantsProvider(planId));
+      await ref.read(planParticipationNotifierProvider(planId).notifier).reload();
+      if (!mounted) return;
+      setState(() {});
+      _showSnackBarSuccess(context, loc.snackInvitationCancelledShort);
+    } else {
+      if (!mounted) return;
+      _showSnackBarError(context, loc.snackInvitationCancelFailed);
+    }
+  }
+
+  /// Re-invitar tras rechazo desde la fila de participantes (LISTA 116).
+  Future<void> _reinviteRejectedParticipant(PlanParticipation participation) async {
+    final user = _findUser(participation.userId);
+    if (user != null) {
+      await _inviteUser(user);
+      return;
+    }
+    // Sin UserModel en caché: invitar por email si lo conocemos.
+    try {
+      final fetched = await ref.read(userServiceProvider).getUser(participation.userId);
+      if (fetched != null) {
+        await _inviteUser(fetched);
+        return;
+      }
+    } catch (_) {}
+    if (mounted) {
+      final loc = AppLocalizations.of(context)!;
+      _showSnackBarError(context, loc.snackInviteSendError('Usuario no encontrado'));
+    }
+  }
+
   Future<void> _removeParticipant(PlanParticipation participation) async {
     try {
+      final planId = widget.plan.id!;
+      final loc = AppLocalizations.of(context)!;
+      final soloItems = await ref
+          .read(planParticipationServiceProvider)
+          .previewSoloOwnedItemsOnLeave(
+            planId: planId,
+            userId: participation.userId,
+          );
+      if (!mounted) return;
+      final soloWarn = formatMembershipSoloItemsWarning(
+        loc,
+        soloItems,
+        leavingSelf: false,
+      );
+      final message = soloWarn.isEmpty
+          ? loc.participantRemoveConfirmMessage
+          : '${loc.participantRemoveConfirmMessage}\n\n$soloWarn';
+
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) {
-          final loc = AppLocalizations.of(dialogContext)!;
           return Theme(
             data: AppTheme.darkTheme,
             child: AlertDialog(
@@ -893,11 +1091,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                   color: _webOnSurface,
                 ),
               ),
-              content: Text(
-                loc.participantRemoveConfirmMessage,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: _webMuted,
+              content: SingleChildScrollView(
+                child: Text(
+                  message,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: _webMuted,
+                  ),
                 ),
               ),
               actions: [
@@ -959,17 +1159,29 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     );
 
       if (confirmed == true) {
-        final participationService = ref.read(planParticipationServiceProvider);
-        await participationService.removeParticipation(widget.plan.id!, participation.userId);
+        final currentUser = ref.read(currentUserProvider);
+        final removerName = currentUser?.displayName?.trim().isNotEmpty == true
+            ? currentUser!.displayName!.trim()
+            : (currentUser?.email ?? 'El organizador');
+        // Aviso al expulsado antes de borrar la participación (LISTA 120 / diagrama §3).
+        await NotificationHelper().notifyParticipantRemoved(
+          removedUserId: participation.userId,
+          planId: planId,
+          planName: widget.plan.name,
+          removerDisplayName: removerName,
+        );
 
-        await ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
+        final participationService = ref.read(planParticipationServiceProvider);
+        await participationService.removeParticipation(planId, participation.userId);
+
+        await ref.read(planParticipationNotifierProvider(planId).notifier).reload();
         ref
-          ..invalidate(planParticipantsProvider(widget.plan.id!))
-          ..invalidate(planRealParticipantsProvider(widget.plan.id!));
+          ..invalidate(planParticipantsProvider(planId))
+          ..invalidate(planRealParticipantsProvider(planId));
 
         if (mounted) {
-          final loc = AppLocalizations.of(context)!;
-          _showSnackBarSuccess(context, loc.snackParticipantRemovedFromPlan);
+          final locOk = AppLocalizations.of(context)!;
+          _showSnackBarSuccess(context, locOk.snackParticipantRemovedFromPlan);
         }
       }
     } catch (e) {
@@ -1154,6 +1366,8 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     final statusBg = PlanUserStatusColors.pendingBg;
     final statusBorder = PlanUserStatusColors.pendingBorder;
     final statusText = PlanUserStatusColors.pendingText;
+    final currentUser = ref.watch(currentUserProvider);
+    final isOwner = currentUser?.id == widget.plan.userId;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: _participantCardDecoration(),
@@ -1213,6 +1427,31 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 ),
               ),
             ),
+            if (isOwner) ...[
+              const SizedBox(width: 4),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'cancel') {
+                    _cancelPendingEmailInvitation(invitation);
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'cancel',
+                    child: Row(
+                      children: [
+                        Icon(Icons.cancel_outlined, color: Colors.red.shade400, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          loc.cancelInvitationMenuLabel,
+                          style: TextStyle(color: Colors.red.shade400),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -1421,41 +1660,92 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                       statusChipWidget,
                     ],
                   ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'change_role':
-                          _showRoleChangeDialog(participation);
-                          break;
-                        case 'remove':
-                          _removeParticipant(participation);
-                          break;
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'change_role',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.edit),
-                            const SizedBox(width: 8),
-                            Text(AppLocalizations.of(context)!.edit),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'remove',
-                        child: Row(
-                          children: [
-                            Icon(Icons.remove_circle, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text(AppLocalizations.of(context)!.delete,
-                                style: const TextStyle(color: Colors.red)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  if (currentUser?.id == widget.plan.userId &&
+                      participation.userId != widget.plan.userId)
+                    PopupMenuButton<String>(
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'change_role':
+                            _showRoleChangeDialog(participation);
+                            break;
+                          case 'remove':
+                            _removeParticipant(participation);
+                            break;
+                          case 'cancel_invite':
+                            _cancelPendingParticipationInvite(participation);
+                            break;
+                          case 'reinvite':
+                            _reinviteRejectedParticipant(participation);
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) {
+                        if (participation.isPending) {
+                          return [
+                            PopupMenuItem(
+                              value: 'cancel_invite',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.cancel_outlined, color: Colors.red.shade400),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    loc.cancelInvitationMenuLabel,
+                                    style: TextStyle(color: Colors.red.shade400),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ];
+                        }
+                        if (participation.isRejected) {
+                          return [
+                            PopupMenuItem(
+                              value: 'reinvite',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.mail_outline),
+                                  const SizedBox(width: 8),
+                                  Text(loc.participantsInviteResendButton),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: 'remove',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.remove_circle, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Text(loc.delete, style: const TextStyle(color: Colors.red)),
+                                ],
+                              ),
+                            ),
+                          ];
+                        }
+                        return [
+                          PopupMenuItem(
+                            value: 'change_role',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.edit),
+                                const SizedBox(width: 8),
+                                Text(loc.edit),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'remove',
+                            child: Row(
+                              children: [
+                                Icon(Icons.remove_circle, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text(loc.delete,
+                                    style: const TextStyle(color: Colors.red)),
+                              ],
+                            ),
+                          ),
+                        ];
+                      },
+                    ),
                 ],
               ),
           ],
@@ -1618,10 +1908,26 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
   Future<void> _showLeavePlanConfirmation() async {
     final currentUser = ref.read(currentUserProvider);
     if (currentUser == null || widget.plan.id == null) return;
+    final loc = AppLocalizations.of(context)!;
+    final soloItems = await ref
+        .read(planParticipationServiceProvider)
+        .previewSoloOwnedItemsOnLeave(
+          planId: widget.plan.id!,
+          userId: currentUser.id,
+        );
+    if (!mounted) return;
+    final soloWarn = formatMembershipSoloItemsWarning(
+      loc,
+      soloItems,
+      leavingSelf: true,
+    );
+    final body = soloWarn.isEmpty
+        ? loc.planCardLeavePlanConfirmBody(widget.plan.name)
+        : '${loc.planCardLeavePlanConfirmBody(widget.plan.name)}\n\n$soloWarn';
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        final loc = AppLocalizations.of(dialogContext)!;
         return Theme(
           data: AppTheme.darkTheme,
           child: AlertDialog(
@@ -1633,11 +1939,13 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            content: Text(
-              loc.planCardLeavePlanConfirmBody(widget.plan.name),
-              style: GoogleFonts.poppins(
-                color: _webMuted,
-                fontSize: 14,
+            content: SingleChildScrollView(
+              child: Text(
+                body,
+                style: GoogleFonts.poppins(
+                  color: _webMuted,
+                  fontSize: 14,
+                ),
               ),
             ),
             actions: [
@@ -1667,9 +1975,23 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
     if (confirmed != true || !mounted) return;
     try {
       final participationService = ref.read(planParticipationServiceProvider);
+      final leftDisplay = currentUser.displayName?.trim().isNotEmpty == true
+          ? currentUser.displayName!.trim()
+          : currentUser.email;
+      final organizerId = widget.plan.userId;
       final success = await participationService.removeParticipation(widget.plan.id!, currentUser.id);
       if (!mounted) return;
       if (success) {
+        if (organizerId.isNotEmpty && organizerId != currentUser.id) {
+          await NotificationHelper().notifyParticipantLeft(
+            organizerUserId: organizerId,
+            planId: widget.plan.id!,
+            leftUserDisplay: leftDisplay,
+            planName: widget.plan.name,
+            deletedSoloItemLabels: soloOwnedItemLabelsForNotification(soloItems),
+          );
+        }
+        if (!mounted) return;
         ref.read(planParticipationNotifierProvider(widget.plan.id!).notifier).reload();
         ref.invalidate(planParticipantsProvider(widget.plan.id!));
         ref.invalidate(planRealParticipantsProvider(widget.plan.id!));
@@ -1796,9 +2118,15 @@ class _ParticipantsScreenState extends ConsumerState<ParticipantsScreen> {
               const SizedBox(height: 16),
               participantsAsync.when(
                 data: (participations) {
-                  final existingIds = participations.map((p) => p.userId).toSet();
+                  final idsBlockingInvite = participations
+                      .where((p) => p.isAccepted || p.isPending)
+                      .map((p) => p.userId)
+                      .toSet();
+                  // Tras rechazo (out) sí se puede re-invitar desde la lista (LISTA 116).
                   final availableUsers = _filteredUsers
-                      .where((user) => !existingIds.contains(user.id))
+                      .where((user) =>
+                          !idsBlockingInvite.contains(user.id) &&
+                          user.id != widget.plan.userId)
                       .toList();
 
                   if (_isLoadingUsers) {

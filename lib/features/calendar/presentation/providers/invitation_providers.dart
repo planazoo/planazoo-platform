@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../domain/models/plan.dart';
 import '../../domain/models/plan_invitation.dart';
 import '../../domain/services/invitation_service.dart';
+import '../../domain/services/plan_service.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
 /// Provider para InvitationService
@@ -67,4 +69,32 @@ final userPendingInvitationsProvider = FutureProvider<List<PlanInvitation>>((ref
   }
 });
 
+/// Invitación por token (página pública `/invitation/{token}`).
+final invitationByTokenProvider =
+    FutureProvider.family<PlanInvitation?, String>((ref, token) async {
+  final invitationService = ref.read(invitationServiceProvider);
+  try {
+    return await invitationService.getInvitationByToken(token);
+  } catch (e) {
+    LoggerService.error(
+      'Error getting invitation by token: $token',
+      context: 'INVITATION_PROVIDERS',
+      error: e,
+    );
+    return null;
+  }
+});
 
+/// Plan por ID (detalle en página de invitación; lectura pública en rules).
+final planByIdProvider = FutureProvider.family<Plan?, String>((ref, planId) async {
+  try {
+    return await PlanService().getPlanById(planId);
+  } catch (e) {
+    LoggerService.error(
+      'Error getting plan by ID: $planId',
+      context: 'INVITATION_PROVIDERS',
+      error: e,
+    );
+    return null;
+  }
+});

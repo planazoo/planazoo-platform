@@ -12,7 +12,8 @@ enum NotificationType {
   invitationRejected, // Invitación rechazada
   planStateChanged, // Estado del plan cambió
   participantAdded, // Nuevo participante añadido
-  participantRemoved, // Participante eliminado
+  participantRemoved, // Participante eliminado (expulsado)
+  participantLeft, // Participante salió voluntariamente (aviso al organizador)
   alarm, // Alarma/recordatorio de evento
 }
 

@@ -23,6 +23,9 @@ import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 import 'package:unp_calendario/shared/utils/plan_validation_utils.dart';
 import 'package:unp_calendario/widgets/dialogs/plan_validation_dialog.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
+import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
+import 'package:unp_calendario/widgets/plan/membership_solo_items_warning.dart';
+import 'package:unp_calendario/widgets/plan/upcoming_cancellations_section.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
@@ -892,6 +895,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                             isCompact: isCompact,
                             canManagePlanAttachments: canManagePlanAttachments,
                           ),
+                          if (currentPlan.id != null) ...[
+                            const SizedBox(height: cardSpacing),
+                            UpcomingCancellationsSection(
+                              planId: currentPlan.id!,
+                              isCompact: isCompact,
+                            ),
+                          ],
                           const SizedBox(height: cardSpacing),
                           _buildParticipantsSection(loc, participantsAsync,
                               isCompact: isCompact),
@@ -1783,34 +1793,52 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   Future<void> _showLeavePlanConfirmation(BuildContext context) async {
     final currentUser = ref.read(currentUserProvider);
     if (currentUser == null || currentPlan.id == null) return;
+    final loc = AppLocalizations.of(context)!;
+    final soloItems = await ref
+        .read(planParticipationServiceProvider)
+        .previewSoloOwnedItemsOnLeave(
+          planId: currentPlan.id!,
+          userId: currentUser.id,
+        );
+    if (!context.mounted) return;
+    final soloWarn = formatMembershipSoloItemsWarning(
+      loc,
+      soloItems,
+      leavingSelf: true,
+    );
+    final body = soloWarn.isEmpty
+        ? loc.planCardLeavePlanConfirmBody(currentPlan.name)
+        : '${loc.planCardLeavePlanConfirmBody(currentPlan.name)}\n\n$soloWarn';
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => Theme(
+      builder: (dialogContext) => Theme(
         data: AppTheme.darkTheme,
         child: AlertDialog(
           backgroundColor: _cSurfaceBg,
           title: Text(
-            'Salir del plan',
+            loc.planCardLeavePlanTitle,
             style: GoogleFonts.poppins(
                 color: _cTextPrimary,
                 fontWeight: FontWeight.w600),
           ),
-          content: Text(
-            'Si sales de "${currentPlan.name}", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\n'
-            'Para volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.',
-            style: GoogleFonts.poppins(
-                color: _cTextSecondary,
-                fontSize: 14),
+          content: SingleChildScrollView(
+            child: Text(
+              body,
+              style: GoogleFonts.poppins(
+                  color: _cTextSecondary,
+                  fontSize: 14),
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text('Cancelar',
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(loc.cancel,
                   style: GoogleFonts.poppins(color: _cTextSecondary)),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text('Salir',
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(loc.planCardLeavePlanButton,
                   style: GoogleFonts.poppins(
                       color: Colors.orange.shade300)),
             ),
@@ -1821,10 +1849,24 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     if (confirmed != true || !context.mounted) return;
     try {
       final participationService = ref.read(planParticipationServiceProvider);
+      final leftDisplay = currentUser.displayName?.trim().isNotEmpty == true
+          ? currentUser.displayName!.trim()
+          : currentUser.email;
+      final organizerId = currentPlan.userId;
       final success = await participationService.removeParticipation(
           currentPlan.id!, currentUser.id);
       if (!context.mounted) return;
       if (success) {
+        if (organizerId.isNotEmpty && organizerId != currentUser.id) {
+          await NotificationHelper().notifyParticipantLeft(
+            organizerUserId: organizerId,
+            planId: currentPlan.id!,
+            leftUserDisplay: leftDisplay,
+            planName: currentPlan.name,
+            deletedSoloItemLabels: soloOwnedItemLabelsForNotification(soloItems),
+          );
+        }
+        if (!context.mounted) return;
         ref
             .read(planParticipationNotifierProvider(currentPlan.id!).notifier)
             .reload();

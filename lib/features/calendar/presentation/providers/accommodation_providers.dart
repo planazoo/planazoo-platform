@@ -184,6 +184,12 @@ final accommodationsProvider = Provider.family<List<Accommodation>, Accommodatio
   return state.accommodations;
 });
 
+/// Stream de alojamientos del plan (T273 lista de cancelaciones en Info).
+final planAccommodationsStreamProvider =
+    StreamProvider.family<List<Accommodation>, String>((ref, planId) {
+  return ref.watch(accommodationServiceProvider).getAccommodations(planId);
+});
+
 // Provider para obtener alojamientos por fecha
 final accommodationsByDateProvider = Provider.family<Map<DateTime, List<Accommodation>>, AccommodationNotifierParams>((ref, params) {
   final accommodations = ref.watch(accommodationsProvider(params));

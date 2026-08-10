@@ -9,6 +9,7 @@ import 'event_participant_service.dart';
 import 'event_sync_service.dart';
 import 'timezone_service.dart';
 import 'plan_event_accent_colors.dart';
+import 'guarantee_payment_sync.dart';
 
 class EventService {
   static const String _collectionName = 'events';
@@ -16,6 +17,7 @@ class EventService {
   final PlanParticipationService _participationService = PlanParticipationService();
   final EventParticipantService _eventParticipantService = EventParticipantService();
   final EventSyncService _eventSyncService = EventSyncService();
+  final GuaranteePaymentSync _guaranteePaymentSync = GuaranteePaymentSync();
 
   /// Excluye documentos de la colección 'events' que son alojamientos (typeFamily == 'alojamiento').
   static bool _isEventDoc(DocumentSnapshot doc) {
@@ -199,6 +201,13 @@ class EventService {
       await rateLimiter.recordEventCreation(event.planId);
 
       LoggerService.database('Event created: ${docRef.id}', operation: 'CREATE');
+      await _guaranteePaymentSync.sync(
+        planId: event.planId,
+        eventId: docRef.id,
+        reservation: event.reservationCancellation,
+        itemLabel: event.description,
+        registeredBy: event.userId,
+      );
       return docRef.id;
     } catch (e, st) {
       LoggerService.error(
@@ -229,7 +238,19 @@ class EventService {
       // Guardar evento tal como está (sin conversión a UTC por ahora)
       Event eventToSave = event;
 
-      await _firestore.collection(_collectionName).doc(event.id).update(eventToSave.toFirestore());
+      final data = eventToSave.toFirestore();
+      if (eventToSave.reservationCancellation?.nextDeadline == null) {
+        data['nextCancellationDeadline'] = FieldValue.delete();
+      }
+
+      await _firestore.collection(_collectionName).doc(event.id).update(data);
+      await _guaranteePaymentSync.sync(
+        planId: event.planId,
+        eventId: event.id,
+        reservation: event.reservationCancellation,
+        itemLabel: event.description,
+        registeredBy: event.userId,
+      );
       return true;
     } catch (e) {
       LoggerService.error('Error updating event', context: 'EVENT_SERVICE', error: e);

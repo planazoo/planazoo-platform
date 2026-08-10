@@ -31,6 +31,7 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_state_perm
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
 import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
+import 'package:unp_calendario/widgets/plan/reservation_cancellation_form_section.dart';
 import 'package:unp_calendario/features/places/data/places_api_service.dart';
 import 'package:unp_calendario/features/places/presentation/widgets/place_autocomplete_field.dart';
 import 'package:unp_calendario/features/flights/data/flight_status_service.dart';
@@ -109,6 +110,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   PlanPermissions? _userPermissions;
   bool _isInitializing = true;
   Plan? _plan; // T109: Plan para verificar estado
+  final _reservationSectionKey =
+      GlobalKey<ReservationCancellationFormSectionState>();
 
   // Inicializar _canEditGeneral como true si se está creando un evento nuevo
   // para que el campo de descripción esté habilitado desde el inicio
@@ -1500,7 +1503,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ),
       ),
     );
-    tempController.dispose();
+    // No disponer el controller hasta que el route del diálogo haya
+    // desmontado el TextField (si no → Assertion _dependents.isEmpty).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      tempController.dispose();
+    });
     if (!mounted || result == null) return;
     setState(() {
       _longNotesController.text = result;
@@ -4280,6 +4287,40 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
               SizedBox(height: spacing),
             ],
+            // 10b. T273 Reserva / cancelación (siempre moneda del plan)
+            if (widget.planId != null && _planCurrency != null) ...[
+              _wrapReadOnlyIfNeeded(
+                child: Builder(builder: (context) {
+                  final parts = ref
+                          .watch(planRealParticipantsProvider(widget.planId!))
+                          .valueOrNull ??
+                      [];
+                  final names = ref
+                          .watch(planParticipantDisplayNamesProvider(widget.planId!))
+                          .valueOrNull ??
+                      {};
+                  final payers = parts
+                      .map(
+                        (p) => ReservationPayerOption(
+                          userId: p.userId,
+                          label: names[p.userId] ?? p.userId,
+                        ),
+                      )
+                      .toList();
+                  return ReservationCancellationFormSection(
+                    key: _reservationSectionKey,
+                    initial: widget.event?.reservationCancellation,
+                    payers: payers,
+                    defaultTimezone: _selectedTimezone.isNotEmpty
+                        ? _selectedTimezone
+                        : _plan?.timezone,
+                    currencyCode: _planCurrency!,
+                    readOnly: !_canEditGeneral,
+                  );
+                }),
+              ),
+              SizedBox(height: spacing),
+            ],
             // 11. Color compacto (fila + picker)
             _wrapReadOnlyIfNeeded(child: _buildColorSelectorRow()),
             SizedBox(height: spacing),
@@ -5385,6 +5426,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
+
   /// T153: Construir campo de coste con selector de moneda y conversión automática.
   /// Moneda del coste y Coste del evento con formato título sobre el borde.
   Widget _buildCostFieldWithCurrency() {
@@ -6299,6 +6341,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         documents: _eventDocuments.isEmpty
             ? null
             : List<EventDocument>.from(_eventDocuments),
+        reservationCancellation: _reservationSectionKey.currentState?.toModel(),
       );
 
       // T107: Detectar si el evento se extiende fuera del rango del plan

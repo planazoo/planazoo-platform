@@ -1344,6 +1344,22 @@
   "@planCardChipInvitationQuestion": { "description": "Dialog when tapping pending chip on plan card" },
   "planCardLeavePlanConfirmBody": "If you leave \"{planName}\", you will no longer see this plan in your list or receive notifications.\n\nTo rejoin later, the organizer must invite you again.",
   "@planCardLeavePlanConfirmBody": { "placeholders": { "planName": { "type": "String" } } },
+  "membershipSoloItemsLeaveWarning": "These future events/accommodations where you are the only participant will also be deleted:\n{list}",
+  "@membershipSoloItemsLeaveWarning": {
+    "description": "LISTA 121 B3 — warning when leaving a plan",
+    "placeholders": { "list": { "type": "String" } }
+  },
+  "membershipSoloItemsRemoveWarning": "These future events/accommodations where this person is the only participant will also be deleted:\n{list}",
+  "@membershipSoloItemsRemoveWarning": {
+    "description": "LISTA 121 B3 — warning when removing a participant",
+    "placeholders": { "list": { "type": "String" } }
+  },
+  "membershipSoloItemEventBullet": "• Event: {title}",
+  "@membershipSoloItemEventBullet": { "placeholders": { "title": { "type": "String" } } },
+  "membershipSoloItemAccommodationBullet": "• Stay: {title}",
+  "@membershipSoloItemAccommodationBullet": { "placeholders": { "title": { "type": "String" } } },
+  "membershipSoloItemsAndMore": "• … and {count} more",
+  "@membershipSoloItemsAndMore": { "placeholders": { "count": { "type": "int" } } },
   "planMyStatusHelpTitle": "My status in the plan",
   "@planMyStatusHelpTitle": { "description": "Help title for in/out/pending chip on plan bar" },
   "planMyStatusHelpDefault": "The chip summarizes your relationship with this plan:\n\n• pending — You have an invitation or participation awaiting a response. Tap the chip to accept or decline.\n\n• in — You already participate (or you are the organizer). If you are not the organizer, tap to leave the plan.\n\n• out — You declined the invitation. If the organizer invites you again, you will see it in Notifications.\n\nEmail invitations are also handled from Notifications.",
@@ -2447,12 +2463,22 @@
   "kittyExpenseNotAllowedTitle": "Not allowed",
   "kittyExpenseOrganizerOnlyBody": "Only the plan organizer can register kitty expenses.",
   "participantRemoveConfirmMessage": "Remove this participant from the plan?",
+  "membershipRemoveConfirmWithSoloItems": "{base}\n\n{soloWarning}",
+  "@membershipRemoveConfirmWithSoloItems": {
+    "placeholders": {
+      "base": { "type": "String" },
+      "soloWarning": { "type": "String" }
+    }
+  },
   "participantsInviteResending": "Re-sending invitation to {email}",
   "@participantsInviteResending": { "placeholders": { "email": { "type": "String" } } },
   "participantsInviteResendButton": "Re-send invitation",
   "snackPreviousInvitationCancelled": "Previous invitation cancelled",
   "snackInvitationCancelledShort": "Invitation cancelled",
   "snackInvitationCancelFailed": "Could not cancel",
+  "cancelInvitationConfirmTitle": "Cancel invitation",
+  "cancelInvitationConfirmMessage": "Cancel this pending invitation? The person will no longer be able to accept it.",
+  "cancelInvitationMenuLabel": "Cancel invitation",
   "tooltipCancelPreviousInvitation": "Cancel previous invitation",
   "snackLinkCopiedShort": "Link copied",
   "invitationCreatedTitle": "Invitation created",
@@ -2509,5 +2535,60 @@
   "entityAttachmentsSnackbarAdded": "File attached. Tap Save to confirm changes.",
   "@entityAttachmentsSnackbarAdded": { "description": "After uploading attachment before saving plan/event" },
   "entityAttachmentsSnackbarRemoved": "File removed. Tap Save to confirm changes.",
-  "@entityAttachmentsSnackbarRemoved": { "description": "After deleting attachment before saving" }
+  "@entityAttachmentsSnackbarRemoved": { "description": "After deleting attachment before saving" },
+  "reservationCancellationSectionTitle": "Reservation / cancellation",
+  "reservationCancellationSectionSubtitle": "Deposit and policy",
+  "reservationGuaranteeLabel": "Reservation guarantee",
+  "reservationGuaranteeAmount": "Guarantee ({currency})",
+  "@reservationGuaranteeAmount": { "placeholders": { "currency": { "type": "String" } } },
+  "reservationGuaranteePayer": "Who paid in advance",
+  "reservationPayerNone": "Unassigned",
+  "reservationGuaranteeStatus": "Guarantee status",
+  "reservationStatusPending": "Pending",
+  "reservationStatusPaid": "Paid",
+  "reservationStatusRefunded": "Refunded",
+  "reservationStatusRetained": "Retained",
+  "reservationGuaranteeNote": "Note (optional)",
+  "reservationCancellationPolicyLabel": "Cancellation policy",
+  "reservationRefundPercentHint": "The % is what you recover of the deposit if you cancel before the deadline.",
+  "reservationItemTimezone": "Item timezone",
+  "reservationTier1": "Tier 1",
+  "reservationTier2": "Tier 2",
+  "reservationTierDeadlineShort": "Deadline",
+  "reservationRefundPercentShort": "% recov.",
+  "reservationReminderSchedule": "Organizer reminder",
+  "reservationReminderScheduleHint": "When to notify before each cancellation deadline.",
+  "reservationReminderNone": "No scheduled reminder",
+  "reservationReminderDayOf": "On the deadline day",
+  "reservationReminder24h": "24 hours before",
+  "reservationReminder24hAndDay": "24 hours before and on the day",
+  "reservationReminder48h": "48 hours before",
+  "reservationReminder48hAndDay": "48 hours before and on the day",
+  "reservationReminder7d": "1 week before",
+  "reservationReminder7dAndDay": "1 week before and on the day",
+  "reservationFixedFee": "Fixed fee ({currency})",
+  "@reservationFixedFee": { "placeholders": { "currency": { "type": "String" } } },
+  "reservationFixedFeeHint": "E.g. €5 admin fee even if you cancel on time.",
+  "cancellationDeadlineNotificationTitle": "Cancellation deadline",
+  "cancellationDeadlineNotificationBody": "{item}: recover {percent}% until {deadline}",
+  "@cancellationDeadlineNotificationBody": {
+    "placeholders": {
+      "item": { "type": "String" },
+      "percent": { "type": "String" },
+      "deadline": { "type": "String" }
+    }
+  },
+  "upcomingCancellationsTitle": "Upcoming cancellations",
+  "upcomingCancellationsSubtitle": "Cancellation deadlines for events and stays",
+  "upcomingCancellationRow": "Until {deadline} · recover {percent}%",
+  "@upcomingCancellationRow": {
+    "placeholders": {
+      "deadline": { "type": "String" },
+      "percent": { "type": "String" }
+    }
+  },
+  "upcomingCancellationFixedFee": "Fixed fee on cancel: {amount}",
+  "@upcomingCancellationFixedFee": {
+    "placeholders": { "amount": { "type": "String" } }
+  }
 }

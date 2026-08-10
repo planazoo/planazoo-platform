@@ -1522,6 +1522,31 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String membershipSoloItemsLeaveWarning(String list) {
+    return 'These future events/accommodations where you are the only participant will also be deleted:\n$list';
+  }
+
+  @override
+  String membershipSoloItemsRemoveWarning(String list) {
+    return 'These future events/accommodations where this person is the only participant will also be deleted:\n$list';
+  }
+
+  @override
+  String membershipSoloItemEventBullet(String title) {
+    return '• Event: $title';
+  }
+
+  @override
+  String membershipSoloItemAccommodationBullet(String title) {
+    return '• Stay: $title';
+  }
+
+  @override
+  String membershipSoloItemsAndMore(int count) {
+    return '• … and $count more';
+  }
+
+  @override
   String get planMyStatusHelpTitle => 'My status in the plan';
 
   @override
@@ -3097,6 +3122,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Remove this participant from the plan?';
 
   @override
+  String membershipRemoveConfirmWithSoloItems(String base, String soloWarning) {
+    return '$base\n\n$soloWarning';
+  }
+
+  @override
   String participantsInviteResending(String email) {
     return 'Re-sending invitation to $email';
   }
@@ -3113,6 +3143,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get snackInvitationCancelFailed => 'Could not cancel';
+
+  @override
+  String get cancelInvitationConfirmTitle => 'Cancel invitation';
+
+  @override
+  String get cancelInvitationConfirmMessage =>
+      'Cancel this pending invitation? The person will no longer be able to accept it.';
+
+  @override
+  String get cancelInvitationMenuLabel => 'Cancel invitation';
 
   @override
   String get tooltipCancelPreviousInvitation => 'Cancel previous invitation';
@@ -3255,4 +3295,131 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get entityAttachmentsSnackbarRemoved =>
       'File removed. Tap Save to confirm changes.';
+
+  @override
+  String get reservationCancellationSectionTitle =>
+      'Reservation / cancellation';
+
+  @override
+  String get reservationCancellationSectionSubtitle => 'Deposit and policy';
+
+  @override
+  String get reservationGuaranteeLabel => 'Reservation guarantee';
+
+  @override
+  String reservationGuaranteeAmount(String currency) {
+    return 'Guarantee ($currency)';
+  }
+
+  @override
+  String get reservationGuaranteePayer => 'Who paid in advance';
+
+  @override
+  String get reservationPayerNone => 'Unassigned';
+
+  @override
+  String get reservationGuaranteeStatus => 'Guarantee status';
+
+  @override
+  String get reservationStatusPending => 'Pending';
+
+  @override
+  String get reservationStatusPaid => 'Paid';
+
+  @override
+  String get reservationStatusRefunded => 'Refunded';
+
+  @override
+  String get reservationStatusRetained => 'Retained';
+
+  @override
+  String get reservationGuaranteeNote => 'Note (optional)';
+
+  @override
+  String get reservationCancellationPolicyLabel => 'Cancellation policy';
+
+  @override
+  String get reservationRefundPercentHint =>
+      'The % is what you recover of the deposit if you cancel before the deadline.';
+
+  @override
+  String get reservationItemTimezone => 'Item timezone';
+
+  @override
+  String get reservationTier1 => 'Tier 1';
+
+  @override
+  String get reservationTier2 => 'Tier 2';
+
+  @override
+  String get reservationTierDeadlineShort => 'Deadline';
+
+  @override
+  String get reservationRefundPercentShort => '% recov.';
+
+  @override
+  String get reservationReminderSchedule => 'Organizer reminder';
+
+  @override
+  String get reservationReminderScheduleHint =>
+      'When to notify before each cancellation deadline.';
+
+  @override
+  String get reservationReminderNone => 'No scheduled reminder';
+
+  @override
+  String get reservationReminderDayOf => 'On the deadline day';
+
+  @override
+  String get reservationReminder24h => '24 hours before';
+
+  @override
+  String get reservationReminder24hAndDay => '24 hours before and on the day';
+
+  @override
+  String get reservationReminder48h => '48 hours before';
+
+  @override
+  String get reservationReminder48hAndDay => '48 hours before and on the day';
+
+  @override
+  String get reservationReminder7d => '1 week before';
+
+  @override
+  String get reservationReminder7dAndDay => '1 week before and on the day';
+
+  @override
+  String reservationFixedFee(String currency) {
+    return 'Fixed fee ($currency)';
+  }
+
+  @override
+  String get reservationFixedFeeHint =>
+      'E.g. €5 admin fee even if you cancel on time.';
+
+  @override
+  String get cancellationDeadlineNotificationTitle => 'Cancellation deadline';
+
+  @override
+  String cancellationDeadlineNotificationBody(
+      String item, String percent, String deadline) {
+    return '$item: recover $percent% until $deadline';
+  }
+
+  @override
+  String get upcomingCancellationsTitle => 'Upcoming cancellations';
+
+  @override
+  String get upcomingCancellationsSubtitle =>
+      'Cancellation deadlines for events and stays';
+
+  @override
+  String upcomingCancellationRow(String deadline, String percent) {
+    return 'Until $deadline · recover $percent%';
+  }
+
+  @override
+  String upcomingCancellationFixedFee(String amount) {
+    return 'Fixed fee on cancel: $amount';
+  }
 }

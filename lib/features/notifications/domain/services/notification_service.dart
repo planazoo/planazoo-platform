@@ -162,6 +162,34 @@ class NotificationService {
     }
   }
 
+  /// True si ya existe una notificación de respuesta a invitación para este plan
+  /// (evita duplicados por taps repetidos / carreras al aceptar).
+  Future<bool> hasInvitationResponseForPlan({
+    required String userId,
+    required String planId,
+    required bool accepted,
+  }) async {
+    try {
+      final type = accepted ? 'invitationAccepted' : 'invitationRejected';
+      final snapshot = await _firestore
+          .collection(_collectionName)
+          .doc(userId)
+          .collection(_subCollectionName)
+          .where('planId', isEqualTo: planId)
+          .where('type', isEqualTo: type)
+          .limit(1)
+          .get();
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      LoggerService.error(
+        'Error checking invitation response notification: $userId/$planId',
+        context: 'NOTIFICATION_SERVICE',
+        error: e,
+      );
+      return false;
+    }
+  }
+
   /// Marcar todas las notificaciones como leídas
   Future<bool> markAllAsRead(String userId) async {
     try {

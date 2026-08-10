@@ -176,6 +176,12 @@ class NotificationHelper {
         },
       );
 
+      // Un solo ítem accionable por plan (reenviar no debe duplicar campana — LISTA 115).
+      await _notificationService.deleteInvitationNotificationsForPlan(
+        userId: invitedUserId,
+        planId: planId,
+      );
+
       final notificationId = await _notificationService.createNotification(
         invitedUserId,
         notification,
@@ -227,6 +233,19 @@ class NotificationHelper {
   }) async {
     if (inviterUserId == null || inviterUserId.isEmpty) return false;
     try {
+      final alreadyNotified = await _notificationService.hasInvitationResponseForPlan(
+        userId: inviterUserId,
+        planId: planId,
+        accepted: accepted,
+      );
+      if (alreadyNotified) {
+        LoggerService.info(
+          'Skip duplicate invitation response notification for inviter: $inviterUserId, plan: $planId',
+          context: 'NOTIFICATION_HELPER',
+        );
+        return true;
+      }
+
       String finalPlanName = 'Un plan';
       final plan = await _planService.getPlanById(planId);
       if (plan != null) finalPlanName = plan.name;
@@ -322,6 +341,143 @@ class NotificationHelper {
       return false;
     } catch (e) {
       LoggerService.error('Error creating event proposal notification', context: 'NOTIFICATION_HELPER', error: e);
+      return false;
+    }
+  }
+
+  /// Notificar al organizador cuando un participante sale del plan por sí mismo (LISTA 119 / §3).
+  /// [deletedSoloItemLabels] — títulos de eventos/alojamientos borrados (LISTA 121 B3).
+  Future<bool> notifyParticipantLeft({
+    required String organizerUserId,
+    required String planId,
+    required String leftUserDisplay,
+    String? planName,
+    List<String> deletedSoloItemLabels = const [],
+  }) async {
+    if (organizerUserId.isEmpty) return false;
+    try {
+      String finalPlanName = planName ?? 'Un plan';
+      if (planName == null) {
+        final plan = await _planService.getPlanById(planId);
+        if (plan != null) finalPlanName = plan.name;
+      }
+
+      var body =
+          '$leftUserDisplay ha salido del plan "$finalPlanName"';
+      if (deletedSoloItemLabels.isNotEmpty) {
+        final shown = deletedSoloItemLabels.take(8).toList();
+        final lines = shown.map((t) => '• $t').join('\n');
+        final more = deletedSoloItemLabels.length - shown.length;
+        body = '$body\n\n'
+            'Se eliminaron ${deletedSoloItemLabels.length} evento(s)/alojamiento(s) '
+            'donde era el único participante:\n$lines';
+        if (more > 0) {
+          body = '$body\n• … y $more más';
+        }
+      }
+
+      final pushBody = deletedSoloItemLabels.isEmpty
+          ? body
+          : '$leftUserDisplay ha salido del plan "$finalPlanName". '
+              'Se eliminaron ${deletedSoloItemLabels.length} ítem(s) solo suyos.';
+
+      final notification = NotificationModel(
+        userId: organizerUserId,
+        type: NotificationType.participantLeft,
+        title: 'Participante ha salido',
+        body: body,
+        planId: planId,
+        createdAt: DateTime.now(),
+        data: {
+          'reason': 'left_voluntarily',
+          'leftUserDisplay': leftUserDisplay,
+          if (deletedSoloItemLabels.isNotEmpty)
+            'deletedSoloItems': deletedSoloItemLabels,
+        },
+      );
+
+      final id =
+          await _notificationService.createNotification(organizerUserId, notification);
+      if (id == null) return false;
+
+      await PushNotificationSender.trySendPushNotification(
+        userId: organizerUserId,
+        title: 'Participante ha salido',
+        body: pushBody,
+        data: {
+          'type': NotificationType.participantLeft.name,
+          'planId': planId,
+          'plan_id': planId,
+        },
+      );
+      LoggerService.info(
+        'Participant left notification for organizer $organizerUserId plan $planId '
+        '(deletedSolo=${deletedSoloItemLabels.length})',
+        context: 'NOTIFICATION_HELPER',
+      );
+      return true;
+    } catch (e) {
+      LoggerService.error(
+        'Error notifying participant left: $planId',
+        context: 'NOTIFICATION_HELPER',
+        error: e,
+      );
+      return false;
+    }
+  }
+
+  /// Notificar al participante cuando el organizador lo quita del plan (diagrama §3 / LISTA 120).
+  Future<bool> notifyParticipantRemoved({
+    required String removedUserId,
+    required String planId,
+    String? planName,
+    String? removerDisplayName,
+  }) async {
+    try {
+      String finalPlanName = planName ?? 'Un plan';
+      if (planName == null) {
+        final plan = await _planService.getPlanById(planId);
+        if (plan != null) finalPlanName = plan.name;
+      }
+      final byWhom = (removerDisplayName != null && removerDisplayName.trim().isNotEmpty)
+          ? removerDisplayName.trim()
+          : 'El organizador';
+
+      final body = '$byWhom te ha quitado del plan "$finalPlanName"';
+      final notification = NotificationModel(
+        userId: removedUserId,
+        type: NotificationType.participantRemoved,
+        title: 'Has salido del plan',
+        body: body,
+        planId: planId,
+        createdAt: DateTime.now(),
+        data: {'reason': 'removed_by_organizer'},
+      );
+
+      final id = await _notificationService.createNotification(removedUserId, notification);
+      if (id == null) return false;
+
+      await PushNotificationSender.trySendPushNotification(
+        userId: removedUserId,
+        title: 'Has salido del plan',
+        body: body,
+        data: {
+          'type': NotificationType.participantRemoved.name,
+          'planId': planId,
+          'plan_id': planId,
+        },
+      );
+      LoggerService.info(
+        'Participant removed notification for $removedUserId plan $planId',
+        context: 'NOTIFICATION_HELPER',
+      );
+      return true;
+    } catch (e) {
+      LoggerService.error(
+        'Error notifying participant removed: $planId',
+        context: 'NOTIFICATION_HELPER',
+        error: e,
+      );
       return false;
     }
   }

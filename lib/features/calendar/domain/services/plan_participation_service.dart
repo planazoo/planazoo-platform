@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../models/plan_participation.dart';
+import 'plan_membership_side_effects.dart';
 
 class PlanParticipationService {
   static const String _collectionName = 'plan_participations';
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PlanMembershipSideEffects _membershipSideEffects = PlanMembershipSideEffects();
 
   // Obtener todas las participaciones de un plan
   Stream<List<PlanParticipation>> getPlanParticipations(String planId) {
@@ -305,6 +307,9 @@ class PlanParticipationService {
 
       // 1. Eliminar todos los event_participants de este usuario en este plan
       await _deleteEventParticipantsByUser(planId, userId);
+
+      // 1b. LISTA 121 B2: quitar de participantIds / participantTrackIds futuros
+      await _membershipSideEffects.onParticipantLeft(planId: planId, userId: userId);
 
       // 2. Eliminar todos los permisos de este usuario en este plan
       await _deletePlanPermissionsByUser(planId, userId);
@@ -785,6 +790,17 @@ class PlanParticipationService {
     }
   }
 
+  /// LISTA 121 B3: ítems futuros que se borrarán al salir/expulsar (único participante).
+  Future<List<SoloOwnedPlanItem>> previewSoloOwnedItemsOnLeave({
+    required String planId,
+    required String userId,
+  }) {
+    return _membershipSideEffects.previewSoloOwnedFutureItems(
+      planId: planId,
+      userId: userId,
+    );
+  }
+
   // Aceptar invitación a un plan
   Future<bool> acceptInvitation(String planId, String userId) async {
     try {
@@ -811,6 +827,8 @@ class PlanParticipationService {
           .update(updatedParticipation.toFirestore());
       
       LoggerService.database('Invitation accepted: $planId, $userId', operation: 'UPDATE');
+      // LISTA 121 A2: eventos/alojamientos «para todos» + confirmaciones
+      await _membershipSideEffects.onParticipantJoined(planId: planId, userId: userId);
       return true;
     } catch (e) {
       LoggerService.error('Error accepting invitation: $planId, $userId', 

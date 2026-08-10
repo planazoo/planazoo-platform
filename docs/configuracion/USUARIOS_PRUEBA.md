@@ -62,9 +62,11 @@ unplanazoo@gmail.com
 
 | Dispositivo | Id | Email sugerido | Rol en el plan | Qué cubre |
 |-------------|----|----------------|----------------|-----------|
-| **iPhone** (simulador/físico) | **UA** | `unplanazoo+cricla@gmail.com` (o tu cuenta diaria organizadora) | Organizador / dueño | Crear plan, invitar, push iOS, calendario móvil |
-| **Android** (emulador/físico) | **UB** | `unplanazoo+part1@gmail.com` (o `+marbat`) | Participante | Aceptar/rechazar, push Android, paridad móvil |
-| **Chrome (web)** | **UC** | `unplanazoo+obs@gmail.com` *o* `+part2` | Observador *o* 2.º participante | Layout web, campana, permisos lectura vs edición |
+| **iPhone** (simulador/físico) | **UA** | `unplanazoo+ua@gmail.com` (sesión Ago 2026: username `uaua`, nombre `ua`) | Organizador / dueño | Crear plan, invitar, push iOS, calendario móvil |
+| **Android** (emulador/físico) | **UB** | `unplanazoo+ub@gmail.com` (sesión Ago 2026: username `ubub`, nombre `u b`) | Participante | Aceptar/rechazar, push Android, paridad móvil |
+| **Chrome (web)** | **UC** | `unplanazoo+uc@gmail.com` (sesión Ago 2026: username `ucuc`, nombre `u c`) | Observador *o* 2.º participante | Layout web, campana, permisos lectura vs edición |
+
+> Inventario vivo de la sesión: [`REGISTRO_OBSERVACIONES_PRUEBAS.md`](../testing/REGISTRO_OBSERVACIONES_PRUEBAS.md#sesión-actual--matriz-multiplataforma-ago-2026) (contraseña: la habitual de prueba; **no** en el repo).
 
 **Admin de plataforma** (`power_admin`: `adminp` / `cricla_pa`): **no** hace falta en el ciclo diario. Smoke de 5 min aparte en **web** (directorio, tools). Ver [`ADMINS_WHITELIST.md`](../admin/ADMINS_WHITELIST.md) y [`ROLES_Y_TIPOS_USUARIO.md`](./ROLES_Y_TIPOS_USUARIO.md).
 
@@ -87,18 +89,33 @@ unplanazoo@gmail.com
 
 ### Arranque de dispositivos
 
+1. Conectar **iPhone** y **Android** por USB (cables de datos). Desbloquear ambos.
+2. Detectar IDs:
+
 ```bash
-# iOS (ya en marcha o):
-flutter run -d <id_iphone>
+flutter devices
+adb devices -l   # solo Android; debe salir "device"
+```
 
-# Android (AVD ejemplo Pixel_8):
-flutter emulators --launch Pixel_8
-# o: ~/Library/Android/sdk/emulator/emulator -avd Pixel_8 &
-flutter run -d <id_android>
+3. Tres terminales en la raíz del repo (ejemplo de IDs reales usados en QA):
 
-# Web:
+```bash
+# UA — iPhone físico
+flutter run -d 00008030-001869E83699402E
+
+# UB — Android físico (ej. SM A715F)
+flutter run -d RZ8NC11FRPJ
+
+# UC — web
 flutter run -d chrome
 ```
+
+Sustituye los IDs por los que muestre `flutter devices` si cambian.
+
+**Si no aparecen:**
+
+- iPhone *unpaired* / no listado → [`SETUP_IOS_SIMULATOR.md`](./SETUP_IOS_SIMULATOR.md#dispositivo-físico-iphone) (Confiar + Xcode Devices).
+- Android ausente en `adb` → [`SETUP_ANDROID_LOCAL.md`](./SETUP_ANDROID_LOCAL.md) (Depuración USB, MTP, `adb kill-server`).
 
 Cada plataforma en **su terminal** (tres `flutter run` en paralelo).
 

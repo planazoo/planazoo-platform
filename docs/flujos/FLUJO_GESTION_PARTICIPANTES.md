@@ -134,7 +134,7 @@ Ve modal "¿Asistes al plan [nombre]?"
 Opción 1: "Sí, asistiré"
   ↓
 Crear track del participante
-Asignar a eventos futuros (opcional)
+Asignar a eventos futuros (opcional)   ← **LISTA 121:** hoy NO implementado; acordar A1–A4
 Actualizar contador participantes
   ↓
 Opción 2: "No puedo asistir"
@@ -162,6 +162,8 @@ Recordatorio automático en 2 días
 
 1. **Info del plan (PlanDataScreen):** Botón "Salir del plan" en la zona de acciones.
 2. **Pestaña Participantes (ParticipantsScreen):** Sección "Salir del plan" con botón y confirmación.
+
+> **LISTA 121 (Ago 2026):** acuerdo **A2 + B2 + B3** — al aceptar, asignación a «para todos»; al salir/expulsar, limpieza de arrays + borrado de ítems futuros solo-suyos, con aviso en el diálogo de confirmación.
 
 **Flujo:**
 ```

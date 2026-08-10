@@ -16,6 +16,14 @@ Cada entrada nueva debe seguir esta estructura:
 
 ## Entradas
 
+### [2026-08-10] Evento — ampliar notas + Cancelar → Assertion `_dependents.isEmpty`
+
+- **Contexto:** Formulario de evento → Notas → Ampliar → Cancelar.
+- **Error:** `Assertion failed: ... framework.dart ... _dependents.isEmpty is not true`.
+- **Causa raíz:** En `_openLongNotesEditor` se hacía `tempController.dispose()` justo al cerrar el diálogo, mientras el `TextFormField` del route aún se desmontaba y seguía escuchando el controller.
+- **Solución aplicada:** disponer el controller en `addPostFrameCallback` tras el `showDialog`; mismo patrón en notas de reserva/cancelación.
+- **Notas:** Nunca disponer un `TextEditingController` temporal de un diálogo en el mismo tick en que hace pop; esperar al menos un frame.
+
 ### [2026-08-08] Login — username mutaba a cristianclaraso6, 7, …
 
 - **Contexto:** Login web; usuario con `@cristianclaraso` veía en Firestore `@cristianclarasoN` que subía con las pruebas.

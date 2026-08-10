@@ -164,7 +164,11 @@ class NotificationListDialog extends ConsumerWidget {
                         notification: n,
                         userId: currentUser?.id,
                         authUid: ref.read(authServiceProvider).currentUser?.uid,
-                        onInvitationResponded: () => ref.invalidate(userPendingInvitationsProvider),
+                        onInvitationResponded: () {
+                          ref.invalidate(userPendingInvitationsProvider);
+                          ref.invalidate(globalNotificationsListProvider);
+                          ref.invalidate(globalUnreadCountProvider);
+                        },
                         onPendingEventAction: () {
                           ref.invalidate(globalNotificationsListProvider);
                           ref.invalidate(globalUnreadCountProvider);

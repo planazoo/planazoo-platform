@@ -11,8 +11,7 @@ Guía rápida para poder ejecutar la app en Android físico/emulador desde este 
 - JDK disponible (normalmente el embebido en Android Studio).
 - `flutter doctor -v` sin error en **Android toolchain**.
 
-> Estado actual detectado en este entorno: `flutter doctor` indica "Unable to locate Android SDK".  
-> Hasta resolver eso no se podrá ejecutar `flutter run` en Android.
+> Si `flutter doctor -v` muestra **Android toolchain** en verde, el SDK ya está bien. Si no, sigue la sección 2.
 
 ---
 
@@ -54,13 +53,27 @@ Para push FCM en Android, confirmar:
 
 ### Opción A — Móvil físico
 
-1. Activar **Opciones de desarrollador** y **Depuración USB**.
-2. Conectar por USB y aceptar huella RSA.
-3. Verificar:
+1. En el teléfono: **Ajustes → Acerca del teléfono** → tocar **Número de compilación** 7 veces (activa opciones de desarrollador).
+2. **Ajustes → Opciones de desarrollador** → activar **Depuración USB**.
+3. Conectar por USB con un cable de **datos** (no solo carga). Desbloquear el teléfono.
+4. Aceptar el diálogo «¿Permitir depuración USB?» (marcar «Siempre» / confiar en esta huella RSA).
+5. Si aparece «USB usado para» / modo USB, elegir **Transferencia de archivos (MTP)** (no solo cargar).
+6. Verificar en el Mac:
 
 ```bash
+adb devices -l
 flutter devices
 ```
+
+Debe aparecer una línea con estado `device` (no `unauthorized` ni lista vacía). Ejemplo real del repo: Samsung `SM A715F` → id `RZ8NC11FRPJ`.
+
+Si `adb devices` está vacío:
+
+```bash
+adb kill-server && adb start-server && adb devices
+```
+
+Probar otro cable/puerto si sigue vacío.
 
 ### Opción B — Emulador
 
@@ -76,6 +89,7 @@ Desde raíz del proyecto:
 
 ```bash
 flutter pub get
+flutter devices
 flutter run -d <ANDROID_DEVICE_ID>
 ```
 
@@ -85,24 +99,28 @@ Opcional (release local):
 flutter run --release -d <ANDROID_DEVICE_ID>
 ```
 
+Para la matriz 3 usuarios (iPhone + Android + web): ver [`USUARIOS_PRUEBA.md`](./USUARIOS_PRUEBA.md#matriz-mínima-multiplataforma-3-usuarios--3-dispositivos).
+
 ---
 
 ## 6) Smoke test mínimo Android (primer pase)
 
 1. Login con usuario de prueba.
-2. Navegación base (lista planes, detalle de plan, calendario).
-3. Crear/editar un evento.
-4. Verificar token FCM guardado en `users/{uid}/fcmTokens/{token}` (`platform=android`).
-5. Probar push de invitación desde otro usuario/dispositivo (flujo T267).
+2. Conceder **permiso de notificaciones** si Android lo pide (API 33+).
+3. Navegación base (lista planes, detalle de plan, calendario).
+4. Crear/editar un evento.
+5. Verificar token FCM guardado en `users/{uid}/fcmTokens/{token}` (`platform=android`).
+6. Con la app en **segundo plano**, recibir push de invitación desde otro usuario (canal `planazoo_default`).
 
 ---
 
 ## 7) Troubleshooting rápido
 
 - `No Android SDK found`: revisar variables y SDK Manager.
-- `No devices found`: revisar USB debugging / emulador encendido.
+- `adb devices` vacío / Flutter no lista el móvil: Depuración USB, cable de datos, MTP, aceptar RSA, `adb kill-server && adb start-server`.
+- `unauthorized` en adb: desbloquear teléfono y aceptar depuración de nuevo; si hace falta, revocar autorizaciones USB en Opciones de desarrollador y reconectar.
 - `INSTALL_FAILED_*`: desinstalar app previa del dispositivo y relanzar.
-- Push no llega: comprobar token en Firestore, permisos de notificación (Android 13+), y Cloud Functions desplegadas.
+- Push no llega: permiso notificaciones (Android 13+), token en Firestore, canal `planazoo_default` (se crea al abrir la app), Cloud Functions desplegadas, app en background al probar.
 
 ---
 
@@ -110,4 +128,6 @@ flutter run --release -d <ANDROID_DEVICE_ID>
 
 - `docs/tareas/TASKS.md` (T267 — app Android + push FCM).
 - `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` (contrato de payload push; adaptar casos a Android).
+- `docs/configuracion/SETUP_IOS_SIMULATOR.md` (iPhone físico / simulador).
+- `docs/configuracion/USUARIOS_PRUEBA.md` (matriz UA/UB/UC).
 - `docs/testing/TESTING_CHECKLIST.md` (matriz de pruebas funcionales).

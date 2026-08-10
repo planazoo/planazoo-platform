@@ -38,6 +38,7 @@ Algunas tareas tienen un `.md` propio con especificación, plan de fases o crite
 | T262 | `T262_NOTAS_PLAN_COMUNES_PERSONALES.md` | Notas, plantillas, lista preparación (mini-tareas con checkbox). |
 | T266 | `T266_ASISTENTE_POR_REGLAS.md` | Catálogo de reglas de sugerencias inteligentes (MVP + backlog). |
 | T272 | `T272_COLORES_TIPOS_EVENTO_PLAN.md` | Color base + colores por familia; propagación a eventos; carril/borde. |
+| T273 | `T273_RESERVA_CANCELACION_DEPOSITO.md` | Garantía, tramos cancelación, fijo, pagos y avisos org. |
 
 En `TASKS.md`, las filas de estas tareas **deben** indicar que existe el documento (ej. «Especificación en `docs/tareas/Txxx_*.md`»).
 

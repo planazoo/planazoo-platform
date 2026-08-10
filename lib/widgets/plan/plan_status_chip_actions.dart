@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
+import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/widgets/plan/membership_solo_items_warning.dart';
 
 /// Diálogo aceptar/rechazar desde chip pending (card, lista iOS, header).
 Future<void> planStatusChipShowPendingActions(
@@ -120,6 +123,21 @@ Future<void> planStatusChipShowLeavePlan(
   final planId = plan.id;
   if (planId == null) return;
 
+  final partSvc = ref.read(planParticipationServiceProvider);
+  final soloItems = await partSvc.previewSoloOwnedItemsOnLeave(
+    planId: planId,
+    userId: userId,
+  );
+  if (!context.mounted) return;
+  final soloWarn = formatMembershipSoloItemsWarning(
+    loc,
+    soloItems,
+    leavingSelf: true,
+  );
+  final body = soloWarn.isEmpty
+      ? loc.planCardLeavePlanConfirmBody(plan.name)
+      : '${loc.planCardLeavePlanConfirmBody(plan.name)}\n\n$soloWarn';
+
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => Theme(
@@ -130,9 +148,11 @@ Future<void> planStatusChipShowLeavePlan(
           loc.planCardLeavePlanTitle,
           style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
         ),
-        content: Text(
-          loc.planCardLeavePlanConfirmBody(plan.name),
-          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+        content: SingleChildScrollView(
+          child: Text(
+            body,
+            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+          ),
         ),
         actions: [
           TextButton(
@@ -150,10 +170,24 @@ Future<void> planStatusChipShowLeavePlan(
   if (confirmed != true || !context.mounted) return;
 
   try {
-    final partSvc = ref.read(planParticipationServiceProvider);
+    final currentUser = ref.read(currentUserProvider);
+    final leftDisplay = currentUser?.displayName?.trim().isNotEmpty == true
+        ? currentUser!.displayName!.trim()
+        : (currentUser?.email ?? 'Un participante');
+    final organizerId = plan.userId;
     final success = await partSvc.removeParticipation(planId, userId);
     if (!context.mounted) return;
     if (success) {
+      if (organizerId.isNotEmpty && organizerId != userId) {
+        await NotificationHelper().notifyParticipantLeft(
+          organizerUserId: organizerId,
+          planId: planId,
+          leftUserDisplay: leftDisplay,
+          planName: plan.name,
+          deletedSoloItemLabels: soloOwnedItemLabelsForNotification(soloItems),
+        );
+      }
+      if (!context.mounted) return;
       ref.invalidate(plansStreamProvider);
       ref.invalidate(userPendingInvitationsProvider);
       ref.invalidate(planParticipantsProvider(planId));

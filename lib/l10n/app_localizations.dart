@@ -2834,6 +2834,36 @@ abstract class AppLocalizations {
   /// **'Si sales de \"{planName}\", dejarás de ver este plan en tu lista y dejarás de recibir avisos.\n\nPara volver a entrar más adelante, el organizador tendrá que invitarte de nuevo.'**
   String planCardLeavePlanConfirmBody(String planName);
 
+  /// LISTA 121 B3 — aviso al salir del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Además se eliminarán estos eventos/alojamientos futuros donde eres el único participante:\n{list}'**
+  String membershipSoloItemsLeaveWarning(String list);
+
+  /// LISTA 121 B3 — aviso al expulsar participante
+  ///
+  /// In es, this message translates to:
+  /// **'Además se eliminarán estos eventos/alojamientos futuros donde esta persona es el único participante:\n{list}'**
+  String membershipSoloItemsRemoveWarning(String list);
+
+  /// No description provided for @membershipSoloItemEventBullet.
+  ///
+  /// In es, this message translates to:
+  /// **'• Evento: {title}'**
+  String membershipSoloItemEventBullet(String title);
+
+  /// No description provided for @membershipSoloItemAccommodationBullet.
+  ///
+  /// In es, this message translates to:
+  /// **'• Alojamiento: {title}'**
+  String membershipSoloItemAccommodationBullet(String title);
+
+  /// No description provided for @membershipSoloItemsAndMore.
+  ///
+  /// In es, this message translates to:
+  /// **'• … y {count} más'**
+  String membershipSoloItemsAndMore(int count);
+
   /// Título ayuda chip in/out/pend. en barra del plan
   ///
   /// In es, this message translates to:
@@ -5702,6 +5732,12 @@ abstract class AppLocalizations {
   /// **'¿Estás seguro de que quieres eliminar a este participante del plan?'**
   String get participantRemoveConfirmMessage;
 
+  /// No description provided for @membershipRemoveConfirmWithSoloItems.
+  ///
+  /// In es, this message translates to:
+  /// **'{base}\n\n{soloWarning}'**
+  String membershipRemoveConfirmWithSoloItems(String base, String soloWarning);
+
   /// No description provided for @participantsInviteResending.
   ///
   /// In es, this message translates to:
@@ -5731,6 +5767,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No se pudo cancelar'**
   String get snackInvitationCancelFailed;
+
+  /// No description provided for @cancelInvitationConfirmTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar invitación'**
+  String get cancelInvitationConfirmTitle;
+
+  /// No description provided for @cancelInvitationConfirmMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cancelar la invitación pendiente? La persona ya no podrá aceptarla.'**
+  String get cancelInvitationConfirmMessage;
+
+  /// No description provided for @cancelInvitationMenuLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar invitación'**
+  String get cancelInvitationMenuLabel;
 
   /// No description provided for @tooltipCancelPreviousInvitation.
   ///
@@ -5959,6 +6013,229 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Archivo eliminado. Pulsa Guardar para confirmar cambios.'**
   String get entityAttachmentsSnackbarRemoved;
+
+  /// No description provided for @reservationCancellationSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Reserva / cancelación'**
+  String get reservationCancellationSectionTitle;
+
+  /// No description provided for @reservationCancellationSectionSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Garantía y política'**
+  String get reservationCancellationSectionSubtitle;
+
+  /// No description provided for @reservationGuaranteeLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Garantía de la reserva'**
+  String get reservationGuaranteeLabel;
+
+  /// No description provided for @reservationGuaranteeAmount.
+  ///
+  /// In es, this message translates to:
+  /// **'Garantía ({currency})'**
+  String reservationGuaranteeAmount(String currency);
+
+  /// No description provided for @reservationGuaranteePayer.
+  ///
+  /// In es, this message translates to:
+  /// **'Quién ha adelantado'**
+  String get reservationGuaranteePayer;
+
+  /// No description provided for @reservationPayerNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin asignar'**
+  String get reservationPayerNone;
+
+  /// No description provided for @reservationGuaranteeStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Estado de la garantía'**
+  String get reservationGuaranteeStatus;
+
+  /// No description provided for @reservationStatusPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente'**
+  String get reservationStatusPending;
+
+  /// No description provided for @reservationStatusPaid.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagada'**
+  String get reservationStatusPaid;
+
+  /// No description provided for @reservationStatusRefunded.
+  ///
+  /// In es, this message translates to:
+  /// **'Reembolsada'**
+  String get reservationStatusRefunded;
+
+  /// No description provided for @reservationStatusRetained.
+  ///
+  /// In es, this message translates to:
+  /// **'Retenida'**
+  String get reservationStatusRetained;
+
+  /// No description provided for @reservationGuaranteeNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Nota (opcional)'**
+  String get reservationGuaranteeNote;
+
+  /// No description provided for @reservationCancellationPolicyLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Política de cancelación'**
+  String get reservationCancellationPolicyLabel;
+
+  /// No description provided for @reservationRefundPercentHint.
+  ///
+  /// In es, this message translates to:
+  /// **'El % es lo que recuperas del depósito si cancelas antes del límite.'**
+  String get reservationRefundPercentHint;
+
+  /// No description provided for @reservationItemTimezone.
+  ///
+  /// In es, this message translates to:
+  /// **'Zona horaria del ítem'**
+  String get reservationItemTimezone;
+
+  /// No description provided for @reservationTier1.
+  ///
+  /// In es, this message translates to:
+  /// **'Tramo 1'**
+  String get reservationTier1;
+
+  /// No description provided for @reservationTier2.
+  ///
+  /// In es, this message translates to:
+  /// **'Tramo 2'**
+  String get reservationTier2;
+
+  /// No description provided for @reservationTierDeadlineShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite'**
+  String get reservationTierDeadlineShort;
+
+  /// No description provided for @reservationRefundPercentShort.
+  ///
+  /// In es, this message translates to:
+  /// **'% recup.'**
+  String get reservationRefundPercentShort;
+
+  /// No description provided for @reservationReminderSchedule.
+  ///
+  /// In es, this message translates to:
+  /// **'Aviso al organizador'**
+  String get reservationReminderSchedule;
+
+  /// No description provided for @reservationReminderScheduleHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuándo avisar antes de cada límite de cancelación.'**
+  String get reservationReminderScheduleHint;
+
+  /// No description provided for @reservationReminderNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin aviso programado'**
+  String get reservationReminderNone;
+
+  /// No description provided for @reservationReminderDayOf.
+  ///
+  /// In es, this message translates to:
+  /// **'El día del límite'**
+  String get reservationReminderDayOf;
+
+  /// No description provided for @reservationReminder24h.
+  ///
+  /// In es, this message translates to:
+  /// **'24 horas antes'**
+  String get reservationReminder24h;
+
+  /// No description provided for @reservationReminder24hAndDay.
+  ///
+  /// In es, this message translates to:
+  /// **'24 horas antes y el día'**
+  String get reservationReminder24hAndDay;
+
+  /// No description provided for @reservationReminder48h.
+  ///
+  /// In es, this message translates to:
+  /// **'48 horas antes'**
+  String get reservationReminder48h;
+
+  /// No description provided for @reservationReminder48hAndDay.
+  ///
+  /// In es, this message translates to:
+  /// **'48 horas antes y el día'**
+  String get reservationReminder48hAndDay;
+
+  /// No description provided for @reservationReminder7d.
+  ///
+  /// In es, this message translates to:
+  /// **'1 semana antes'**
+  String get reservationReminder7d;
+
+  /// No description provided for @reservationReminder7dAndDay.
+  ///
+  /// In es, this message translates to:
+  /// **'1 semana antes y el día'**
+  String get reservationReminder7dAndDay;
+
+  /// No description provided for @reservationFixedFee.
+  ///
+  /// In es, this message translates to:
+  /// **'Cargo fijo ({currency})'**
+  String reservationFixedFee(String currency);
+
+  /// No description provided for @reservationFixedFeeHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej.: 5 € de gestión aunque canceles a tiempo.'**
+  String get reservationFixedFeeHint;
+
+  /// No description provided for @cancellationDeadlineNotificationTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de cancelación'**
+  String get cancellationDeadlineNotificationTitle;
+
+  /// No description provided for @cancellationDeadlineNotificationBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{item}: recuperas {percent}% hasta {deadline}'**
+  String cancellationDeadlineNotificationBody(
+      String item, String percent, String deadline);
+
+  /// No description provided for @upcomingCancellationsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Próximas cancelaciones'**
+  String get upcomingCancellationsTitle;
+
+  /// No description provided for @upcomingCancellationsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Límites de cancelación de eventos y alojamientos'**
+  String get upcomingCancellationsSubtitle;
+
+  /// No description provided for @upcomingCancellationRow.
+  ///
+  /// In es, this message translates to:
+  /// **'Hasta {deadline} · recuperas {percent}%'**
+  String upcomingCancellationRow(String deadline, String percent);
+
+  /// No description provided for @upcomingCancellationFixedFee.
+  ///
+  /// In es, this message translates to:
+  /// **'Cargo fijo al cancelar: {amount}'**
+  String upcomingCancellationFixedFee(String amount);
 }
 
 class _AppLocalizationsDelegate

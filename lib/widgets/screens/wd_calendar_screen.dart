@@ -38,6 +38,7 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_styles.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_event_logic.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_accommodation_logic.dart';
 import 'package:unp_calendario/widgets/screens/fullscreen_calendar_page.dart';
+import 'package:unp_calendario/widgets/plan/cancellation_deadline_badge.dart';
 import 'package:unp_calendario/widgets/screens/calendar/components/calendar_grid.dart';
 import 'package:unp_calendario/widgets/screens/calendar/components/calendar_tracks.dart';
 import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
@@ -457,15 +458,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // NOTA: Los métodos _buildFixedHoursColumn() y _buildDataColumns() 
   // han sido movidos al componente CalendarGrid
 
-  /// Crea un borde común para elementos de la grilla
+  /// Crea el borde vertical entre columnas de día/track (LISTA 111).
   Border _createGridBorder({bool includeRight = true}) {
-    return Border(
-      right: includeRight
-          ? BorderSide(
-              color: CalendarStyles.calendarDaySeparatorWeb,
-              width: CalendarConstants.calendarVerticalSeparatorWidth,
-            )
-          : BorderSide.none,
+    return CalendarStyles.createVerticalDaySeparator(
+      forMobile: false,
+      includeRight: includeRight,
     );
   }
 
@@ -1933,17 +1930,28 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Flexible(
-                    child: Text(
-                      _eventTitleWithTransportCode(segment.originalEvent),
-                      style: TextStyle(
-                        color: _eventOutlineTitleColor(segment.isDraft),
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: segment.durationMinutes < CalendarConstants.shortEventTitleOnlyMaxMinutes
-                          ? 1
-                          : 2,
-                      overflow: TextOverflow.ellipsis,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _eventTitleWithTransportCode(segment.originalEvent),
+                            style: TextStyle(
+                              color: _eventOutlineTitleColor(segment.isDraft),
+                              fontSize: fontSize,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: segment.durationMinutes < CalendarConstants.shortEventTitleOnlyMaxMinutes
+                                ? 1
+                                : 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        CancellationDeadlineBadge(
+                          reservation:
+                              segment.originalEvent.reservationCancellation,
+                          size: (fontSize + 1).clamp(10, 14),
+                        ),
+                      ],
                     ),
                   ),
                   if (segment.isDraft &&

@@ -5,6 +5,7 @@ import 'package:unp_calendario/features/calendar/domain/models/accommodation.dar
 import 'package:unp_calendario/features/calendar/domain/models/event.dart' show EventDocument;
 import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
 import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
+import 'package:unp_calendario/widgets/plan/reservation_cancellation_form_section.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/places/data/places_api_service.dart';
 import 'package:unp_calendario/features/places/presentation/widgets/place_autocomplete_field.dart';
@@ -48,6 +49,8 @@ class AccommodationDialog extends ConsumerStatefulWidget {
 }
 
 class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
+  final _reservationSectionKey =
+      GlobalKey<ReservationCancellationFormSectionState>();
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _hotelNameController;
   late TextEditingController _addressController; // T225: dirección desde Places o a mano
@@ -147,6 +150,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
 
     _accommodationDocuments = List<EventDocument>.from(widget.accommodation?.documents ?? const []);
   }
+
   
   /// Cargar moneda del plan (T153) y plan completo (T109)
   Future<void> _loadPlanCurrency() async {
@@ -729,6 +733,35 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                       // Coste
                       if (_planCurrency != null) ...[
                         _buildCostFieldWithCurrency(),
+                        const SizedBox(height: _fieldGap),
+                      ],
+                      // T273: Reserva / cancelación (siempre moneda del plan)
+                      if (_planCurrency != null) ...[
+                        Builder(builder: (context) {
+                          final parts = ref
+                                  .watch(planRealParticipantsProvider(widget.planId))
+                                  .valueOrNull ??
+                              [];
+                          final names = ref
+                                  .watch(planParticipantDisplayNamesProvider(widget.planId))
+                                  .valueOrNull ??
+                              {};
+                          final payers = parts
+                              .map(
+                                (p) => ReservationPayerOption(
+                                  userId: p.userId,
+                                  label: names[p.userId] ?? p.userId,
+                                ),
+                              )
+                              .toList();
+                          return ReservationCancellationFormSection(
+                            key: _reservationSectionKey,
+                            initial: widget.accommodation?.reservationCancellation,
+                            payers: payers,
+                            defaultTimezone: _plan?.timezone,
+                            currencyCode: _planCurrency!,
+                          );
+                        }),
                         const SizedBox(height: _fieldGap),
                       ],
                       // Extras: enlace → descripción → adjuntos
@@ -1795,6 +1828,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       commonPart: commonPart,
       documents: _accommodationDocuments.isEmpty ? null : List<EventDocument>.from(_accommodationDocuments),
       isDraft: _isDraft,
+      reservationCancellation: _reservationSectionKey.currentState?.toModel(),
     );
 
     if (widget.onSaved != null) {

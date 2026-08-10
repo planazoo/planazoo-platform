@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart' show EventDocument;
+import 'package:unp_calendario/features/calendar/domain/models/reservation_cancellation.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 
 class Accommodation {
@@ -25,6 +26,8 @@ class Accommodation {
   final List<EventDocument>? documents;
   /// Igual que eventos: true = borrador, false = confirmado.
   final bool isDraft;
+  // T273: garantía + política cancelación (incluye timezone del ítem)
+  final ReservationCancellation? reservationCancellation;
 
   const Accommodation({
     this.id,
@@ -44,6 +47,7 @@ class Accommodation {
     this.cost, // null por defecto (sin coste definido)
     this.documents,
     this.isDraft = false,
+    this.reservationCancellation,
   });
 
   /// Crear desde un documento de Firestore
@@ -75,6 +79,11 @@ class Accommodation {
           ?.map((e) => EventDocument.fromMap(Map<String, dynamic>.from(e as Map)))
           .toList(),
       isDraft: data['isDraft'] ?? commonPart?.isDraft ?? false,
+      reservationCancellation: data['reservationCancellation'] != null
+          ? ReservationCancellation.fromMap(
+              Map<String, dynamic>.from(data['reservationCancellation'] as Map),
+            )
+          : null,
     );
   }
 
@@ -95,6 +104,15 @@ class Accommodation {
       'isDraft': isDraft,
       if (cost != null) 'cost': cost, // T101
     };
+    final reservationMap = reservationCancellation?.toMap();
+    if (reservationMap != null) {
+      map['reservationCancellation'] = reservationMap;
+    }
+    // Índice para cron T273 (CF checkCancellationDeadlines)
+    final nextDeadline = reservationCancellation?.nextDeadline;
+    if (nextDeadline != null) {
+      map['nextCancellationDeadline'] = Timestamp.fromDate(nextDeadline);
+    }
     // Escribir estructura nueva si está presente
     if (commonPart != null) {
       map['commonPart'] = commonPart!.toMap();
@@ -127,6 +145,7 @@ class Accommodation {
     double? cost,
     List<EventDocument>? documents,
     bool? isDraft,
+    ReservationCancellation? reservationCancellation,
   }) {
     return Accommodation(
       id: id ?? this.id,
@@ -146,6 +165,8 @@ class Accommodation {
       cost: cost ?? this.cost,
       documents: documents ?? this.documents,
       isDraft: isDraft ?? this.isDraft,
+      reservationCancellation:
+          reservationCancellation ?? this.reservationCancellation,
     );
   }
 
