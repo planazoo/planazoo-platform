@@ -9,6 +9,7 @@ import '../../features/calendar/presentation/providers/calendar_providers.dart';
 import '../../features/notifications/domain/models/unified_notification.dart';
 import '../../features/notifications/presentation/providers/notification_providers.dart';
 import '../../features/calendar/presentation/providers/invitation_providers.dart';
+import '../../features/calendar/presentation/providers/plan_participation_providers.dart';
 import '../../widgets/screens/wd_pending_event_card.dart';
 import '../../widgets/dialogs/invitation_response_dialog.dart';
 import '../../shared/utils/date_formatter.dart';
@@ -179,6 +180,16 @@ class _InvitationNotificationTileState extends ConsumerState<InvitationNotificat
                               .rejectInvitationByPlanId(invitation.planId, userId);
                           if (context.mounted) {
                             if (result.success) {
+                              ref.invalidate(userPendingInvitationsProvider);
+                              ref.invalidate(planParticipantsProvider(invitation.planId));
+                              ref.invalidate(plansStreamProvider);
+                              ref.invalidate(globalNotificationsListProvider);
+                              ref.invalidate(globalUnreadCountProvider);
+                              try {
+                                ref
+                                    .read(planParticipationNotifierProvider(invitation.planId).notifier)
+                                    .reload();
+                              } catch (_) {}
                               widget.onResponded();
                             }
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -214,6 +225,16 @@ class _InvitationNotificationTileState extends ConsumerState<InvitationNotificat
                               .acceptInvitationByPlanId(invitation.planId, userId);
                           if (context.mounted) {
                             if (result.success) {
+                              ref.invalidate(userPendingInvitationsProvider);
+                              ref.invalidate(planParticipantsProvider(invitation.planId));
+                              ref.invalidate(plansStreamProvider);
+                              ref.invalidate(globalNotificationsListProvider);
+                              ref.invalidate(globalUnreadCountProvider);
+                              try {
+                                ref
+                                    .read(planParticipationNotifierProvider(invitation.planId).notifier)
+                                    .reload();
+                              } catch (_) {}
                               widget.onResponded();
                             }
                             ScaffoldMessenger.of(context).showSnackBar(

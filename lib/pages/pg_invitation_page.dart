@@ -31,6 +31,7 @@ class InvitationPage extends ConsumerStatefulWidget {
 class _InvitationPageState extends ConsumerState<InvitationPage> {
   bool _isProcessing = false;
   bool _didHandleInitialAction = false;
+  bool _didNavigateToPlan = false;
 
   @override
   Widget build(BuildContext context) {
@@ -63,9 +64,21 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
             return _buildError(context, loc.invitationExpired);
           }
           if (invitation.isAccepted) {
+            final autoAccept =
+                widget.initialAction?.toLowerCase().trim() == 'accept';
+            if (autoAccept) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _openPlanAfterAccept(invitation.planId);
+              });
+              return _buildAutoActionProgress(context, loc, 'accept');
+            }
             return _buildSuccess(context, loc.invitationAlreadyAccepted);
           }
           if (invitation.isRejected) {
+            final autoReject = widget.initialAction?.toLowerCase().trim() == 'reject';
+            if (_isProcessing || (_didHandleInitialAction && autoReject)) {
+              return _buildAutoActionProgress(context, loc, 'reject');
+            }
             return _buildError(context, loc.invitationAlreadyRejected);
           }
           if (invitation.status == 'cancelled') {
@@ -75,9 +88,20 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
             );
           }
 
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _maybeRunInitialAction(invitation, currentUser?.id);
-          });
+          final action = widget.initialAction?.toLowerCase().trim();
+          final hasAutoAction = action == 'accept' || action == 'reject';
+          final emailMatches = currentUser != null &&
+              currentUser.email.toLowerCase().trim() ==
+                  invitation.email.toLowerCase().trim();
+
+          // Mail con ?action=accept|reject: no mostrar «¡Has sido invitado!»
+          // (ya eligió en el correo); solo progreso y luego el plan.
+          if (hasAutoAction && emailMatches) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _maybeRunInitialAction(invitation, currentUser.id);
+            });
+            return _buildAutoActionProgress(context, loc, action!);
+          }
 
           return _buildInvitationDetails(context, invitation);
         },
@@ -112,10 +136,42 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
 
     _didHandleInitialAction = true;
     if (action == 'accept') {
-      await _acceptInvitation(invitation, userId);
+      await _acceptInvitation(invitation, userId, fromDeepLinkAction: true);
     } else {
-      await _rejectInvitation(invitation, userId, skipConfirm: true);
+      await _rejectInvitation(
+        invitation,
+        userId,
+        skipConfirm: true,
+        fromDeepLinkAction: true,
+      );
     }
+  }
+
+  Widget _buildAutoActionProgress(
+    BuildContext context,
+    AppLocalizations loc,
+    String action,
+  ) {
+    final message = action == 'reject'
+        ? loc.invitationRejecting
+        : loc.invitationAccepting;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 24),
+            Text(
+              message,
+              style: AppTypography.titleStyle,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildInvitationDetails(BuildContext context, PlanInvitation invitation) {
@@ -469,7 +525,28 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
     );
   }
 
-  Future<void> _acceptInvitation(PlanInvitation invitation, String userId) async {
+  Future<void> _openPlanAfterAccept(String planId) async {
+    if (_didNavigateToPlan || !mounted) return;
+    _didNavigateToPlan = true;
+    final plan = await ref.read(planByIdProvider(planId).future);
+    if (!mounted) return;
+    if (plan != null && PlatformUtils.shouldShowMobileUI(context)) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (context) => PlanDetailPage(plan: plan),
+        ),
+        (route) => route.isFirst,
+      );
+    } else {
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    }
+  }
+
+  Future<void> _acceptInvitation(
+    PlanInvitation invitation,
+    String userId, {
+    bool fromDeepLinkAction = false,
+  }) async {
     setState(() => _isProcessing = true);
     try {
       final result = await ref.read(invitationServiceProvider).acceptInvitationByToken(
@@ -478,33 +555,28 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
           );
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result.success
-                ? AppLocalizations.of(context)!.invitationAcceptSuccess
-                : result.message,
+      if (!fromDeepLinkAction || !result.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.success
+                  ? AppLocalizations.of(context)!.invitationAcceptSuccess
+                  : result.message,
+            ),
+            backgroundColor: result.success ? Colors.green : Colors.red,
           ),
-          backgroundColor: result.success ? Colors.green : Colors.red,
-        ),
-      );
+        );
+      }
 
       if (!result.success) return;
 
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return;
-
-      final plan = await ref.read(planByIdProvider(invitation.planId).future);
-      if (!mounted) return;
-      if (plan != null && PlatformUtils.shouldShowMobileUI(context)) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (context) => PlanDetailPage(plan: plan),
-          ),
-        );
-      } else {
-        Navigator.of(context).pushReplacementNamed('/');
+      if (!fromDeepLinkAction) {
+        await Future.delayed(const Duration(milliseconds: 600));
+        if (!mounted) return;
       }
+
+      final planId = result.planId ?? invitation.planId;
+      await _openPlanAfterAccept(planId);
     } catch (e) {
       LoggerService.error('Error accepting invitation', context: 'INVITATION_PAGE', error: e);
       if (mounted) {
@@ -526,6 +598,7 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
     PlanInvitation invitation,
     String userId, {
     bool skipConfirm = false,
+    bool fromDeepLinkAction = false,
   }) async {
     final loc = AppLocalizations.of(context)!;
     if (!skipConfirm) {
@@ -558,19 +631,23 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
           );
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result.success ? loc.invitationRejectedSuccess : result.message,
+      if (!fromDeepLinkAction || !result.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.success ? loc.invitationRejectedSuccess : result.message,
+            ),
+            backgroundColor: result.success ? Colors.orange : Colors.red,
           ),
-          backgroundColor: result.success ? Colors.orange : Colors.red,
-        ),
-      );
+        );
+      }
 
       if (result.success) {
-        await Future.delayed(const Duration(seconds: 1));
-        if (!mounted) return;
-        Navigator.of(context).pushReplacementNamed('/');
+        if (!fromDeepLinkAction) {
+          await Future.delayed(const Duration(milliseconds: 600));
+          if (!mounted) return;
+        }
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     } catch (e) {
       LoggerService.error('Error rejecting invitation', context: 'INVITATION_PAGE', error: e);

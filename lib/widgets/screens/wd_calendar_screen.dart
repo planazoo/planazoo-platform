@@ -24,6 +24,7 @@ import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
+import 'package:unp_calendario/widgets/dialogs/summary_preview_modals.dart';
 import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mode.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
@@ -50,12 +51,15 @@ class CalendarScreen extends ConsumerStatefulWidget {
   final int? initialVisibleDays;
   /// Si se proporciona, se muestra un botón "Ver resumen" en la barra que abre el resumen del plan (p. ej. en dashboard).
   final VoidCallback? onShowSummary;
+  /// T276: preview pending — sin crear/editar.
+  final bool readOnly;
 
   const CalendarScreen({
     super.key,
     required this.plan,
     this.initialVisibleDays,
     this.onShowSummary,
+    this.readOnly = false,
   });
 
   @override
@@ -85,6 +89,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   late final CalendarFilters _calendarFilters;
   late final CalendarTrackReorder _calendarTrackReorder;
   CalendarAppBar? _calendarAppBar;
+
+  bool get _canAddEvents =>
+      !widget.readOnly && PlanStatePermissions.canAddEvents(widget.plan);
+  bool get _canModifyEvents =>
+      !widget.readOnly && PlanStatePermissions.canModifyEvents(widget.plan);
+  bool get _canDeleteEvents =>
+      !widget.readOnly && PlanStatePermissions.canDeleteEvents(widget.plan);
   
   // Número de días visibles simultáneamente (1-7)
   int _visibleDays = 7;
@@ -330,7 +341,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFF111827),
         appBar: _buildAppBar(),
-        floatingActionButton: PlanStatePermissions.canAddEvents(widget.plan)
+        floatingActionButton: _canAddEvents
             ? FloatingActionButton(
                 onPressed: () {
                   final d = NewEventFromButtonDefaults.forPlan(widget.plan);
@@ -2303,7 +2314,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Inicia el drag de un evento
   void _startDrag(Event event, DragStartDetails details) {
     // T109: Verificar si se puede modificar eventos según el estado del plan
-    if (!PlanStatePermissions.canModifyEvents(widget.plan)) {
+    if (!_canModifyEvents) {
       final blockedReason = PlanStatePermissions.getBlockedReason('modify_event', widget.plan);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2553,6 +2564,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Muestra el diálogo para editar un evento existente.
   /// Obtiene el evento desde el servidor para mostrar datos actualizados (evita caché en iOS/web).
   void _showEventDialog(Event event) async {
+    if (widget.readOnly) {
+      showEventSummaryPreviewModal(context: context, event: event);
+      return;
+    }
     Event eventToShow = event;
     if (event.id != null) {
       final fresh = await ref.read(eventServiceProvider).getEventByIdFromServer(event.id!);
@@ -2616,8 +2631,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     double right = 0,
   }) {
     if (eventHeight < 22) return const SizedBox.shrink();
-    final canCopy = PlanStatePermissions.canAddEvents(widget.plan);
-    final canDelete = PlanStatePermissions.canDeleteEvents(widget.plan);
+    final canCopy = _canAddEvents;
+    final canDelete = _canDeleteEvents;
     if (!canCopy && !canDelete) return const SizedBox.shrink();
     final itemSize = eventHeight < 34 ? 12.0 : 13.0;
 
@@ -2754,7 +2769,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Future<void> _copyEventWithinPlan(Event event) async {
-    if (!PlanStatePermissions.canAddEvents(widget.plan)) return;
+    if (!_canAddEvents) return;
     final copied = _buildCopiedEvent(event);
     final id = await ref.read(eventServiceProvider).createEvent(copied);
     if (!mounted) return;
@@ -2780,7 +2795,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Future<void> _deleteEventFromContextMenu(Event event) async {
     final eventId = event.id;
-    if (eventId == null || !PlanStatePermissions.canDeleteEvents(widget.plan)) {
+    if (eventId == null || !_canDeleteEvents) {
       return;
     }
 
@@ -2834,7 +2849,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     int? initialStartMinute,
   }) {
     // T109: Verificar si se puede crear eventos según el estado del plan
-    if (!PlanStatePermissions.canAddEvents(widget.plan)) {
+    if (!_canAddEvents) {
       final blockedReason = PlanStatePermissions.getBlockedReason('create_event', widget.plan);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -2960,8 +2975,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   /// Muestra el diálogo para editar un alojamiento existente
   void _showAccommodationDialog(Accommodation accommodation) {
+    if (widget.readOnly) {
+      showAccommodationSummaryPreviewModal(
+        context: context,
+        accommodation: accommodation,
+      );
+      return;
+    }
     // T109: Verificar si se puede modificar alojamientos según el estado del plan
-    if (!PlanStatePermissions.canModifyEvents(widget.plan)) {
+    if (!_canModifyEvents) {
       final blockedReason = PlanStatePermissions.getBlockedReason('modify_event', widget.plan);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -3043,7 +3065,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   /// Muestra el diálogo para crear un nuevo alojamiento
   void _showNewAccommodationDialog(DateTime checkInDate) {
     // T109: Verificar si se puede crear alojamientos según el estado del plan
-    if (!PlanStatePermissions.canAddEvents(widget.plan)) {
+    if (!_canAddEvents) {
       final blockedReason = PlanStatePermissions.getBlockedReason('create_event', widget.plan);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

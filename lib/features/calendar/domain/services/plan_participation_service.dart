@@ -4,9 +4,16 @@ import '../models/plan_participation.dart';
 import 'plan_membership_side_effects.dart';
 
 class PlanParticipationService {
+  PlanParticipationService({
+    FirebaseFirestore? firestore,
+    PlanMembershipSideEffects? membershipSideEffects,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _membershipSideEffects = membershipSideEffects ??
+            PlanMembershipSideEffects(firestore: firestore);
+
   static const String _collectionName = 'plan_participations';
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final PlanMembershipSideEffects _membershipSideEffects = PlanMembershipSideEffects();
+  final FirebaseFirestore _firestore;
+  final PlanMembershipSideEffects _membershipSideEffects;
 
   // Obtener todas las participaciones de un plan
   Stream<List<PlanParticipation>> getPlanParticipations(String planId) {
@@ -174,6 +181,22 @@ class PlanParticipationService {
               operation: 'UPDATE',
             );
             return doc.id;
+          }
+          // Aceptar invitación con participación ya pending → pasar a accepted.
+          if (autoAccept && data.status == 'pending') {
+            await doc.reference.update({
+              'status': 'accepted',
+              'lastActiveAt': Timestamp.fromDate(DateTime.now()),
+              if (invitedBy != null) 'invitedBy': invitedBy,
+            });
+            LoggerService.database(
+              'Participation pending→accepted: ${doc.id}',
+              operation: 'UPDATE',
+            );
+            return doc.id;
+          }
+          if (autoAccept && data.status == 'accepted') {
+            return data.id;
           }
           LoggerService.warning('User $userId already participates in plan $planId');
           return data.id;
@@ -811,6 +834,9 @@ class PlanParticipationService {
       }
 
       // Verificar que la invitación esté pendiente
+      if (participation.status == 'accepted') {
+        return true;
+      }
       if (participation.status != null && participation.status != 'pending') {
         LoggerService.warning('Invitation is not pending (status: ${participation.status})');
         return false;
@@ -821,14 +847,22 @@ class PlanParticipationService {
         lastActiveAt: DateTime.now(),
       );
 
-      await _firestore
-          .collection(_collectionName)
-          .doc(participation.id!)
-          .update(updatedParticipation.toFirestore());
+      // Solo status/lastActiveAt: update completo con toFirestore() puede chocar con rules (diff).
+      await _firestore.collection(_collectionName).doc(participation.id!).update({
+        'status': 'accepted',
+        'lastActiveAt': Timestamp.fromDate(updatedParticipation.lastActiveAt!),
+      });
       
       LoggerService.database('Invitation accepted: $planId, $userId', operation: 'UPDATE');
-      // LISTA 121 A2: eventos/alojamientos «para todos» + confirmaciones
-      await _membershipSideEffects.onParticipantJoined(planId: planId, userId: userId);
+      // LISTA 121 A2: no tumbar el accept si fallan side effects (p. ej. rules en events).
+      try {
+        await _membershipSideEffects.onParticipantJoined(planId: planId, userId: userId);
+      } catch (e) {
+        LoggerService.warning(
+          'onParticipantJoined after accept (non-fatal): $planId / $userId — $e',
+          context: 'PLAN_PARTICIPATION_SERVICE',
+        );
+      }
       return true;
     } catch (e) {
       LoggerService.error('Error accepting invitation: $planId, $userId', 
@@ -879,15 +913,11 @@ class PlanParticipationService {
         return false;
       }
 
-      final updatedParticipation = participation.copyWith(
-        status: 'rejected',
-        lastActiveAt: DateTime.now(),
-      );
-
-      await _firestore
-          .collection(_collectionName)
-          .doc(participation.id!)
-          .update(updatedParticipation.toFirestore());
+      // Solo status/lastActiveAt: evita permission-denied por update completo (toFirestore).
+      await _firestore.collection(_collectionName).doc(participation.id!).update({
+        'status': 'rejected',
+        'lastActiveAt': Timestamp.fromDate(DateTime.now()),
+      });
       
       LoggerService.database('Invitation rejected: $planId, $userId', operation: 'UPDATE');
       return true;

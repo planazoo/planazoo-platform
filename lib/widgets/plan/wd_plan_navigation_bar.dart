@@ -9,12 +9,15 @@ class PlanNavigationBar extends StatelessWidget {
   final ValueChanged<String> onOptionSelected;
   /// Si false, la pestaña Estadísticas no se muestra (solo visible para organizador).
   final bool showStatsTab;
+  /// T276: si no es null, solo se muestran estas pestañas (p. ej. preview pending).
+  final Set<String>? allowedOptionIds;
 
   const PlanNavigationBar({
     super.key,
     required this.selectedOption,
     required this.onOptionSelected,
     this.showStatsTab = true,
+    this.allowedOptionIds,
   });
 
   static const Color _surface = Color(0xFF1F2937);
@@ -74,9 +77,12 @@ class PlanNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final options = _allOptions(context)
-        .where((o) => o.id != 'stats' || showStatsTab)
-        .toList();
+    final options = _allOptions(context).where((o) {
+      if (allowedOptionIds != null) {
+        return allowedOptionIds!.contains(o.id);
+      }
+      return o.id != 'stats' || showStatsTab;
+    }).toList();
     // P3: pantallas muy estrechas (p. ej. iPhone SE) — menos padding e iconos algo más pequeños
     final w = MediaQuery.sizeOf(context).width;
     final compact = w < 360;

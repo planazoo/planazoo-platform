@@ -1,9 +1,21 @@
 ## Lista de puntos a corregir en la app (solo abiertos)
 
 **Objetivo:** mantener aquí solo los puntos **pendientes / en progreso** de QA.  
-**Proceso:** capa 3 del sistema → [`docs/flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md).
+**Proceso:** capa 3 del sistema → [`docs/flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md).  
+**Dominio (opcional al anotar):** citá el dominio del MAPA (ej. participantes, eventos, pagos) para cruzar con `TASKS.md` § Índice por dominio.
 
 **Histórico de cerrados:** [`archivo/`](./archivo/) (`ARCHIVO_LISTA_*`, ACCIONES_PENDIENTES).
+
+### Cruce rápido dominio ↔ hallazgos
+
+| Dominio | Notas / IDs frecuentes |
+|---------|------------------------|
+| Participantes / invitaciones | Deep links, aceptar/rechazar, campana — T259 / ítem **123**, checklist push |
+| Planes | Cascada borrar **126**/**127** cerrados (T277 P16, 2026-08-18) |
+| Eventos / calendario | Ítems de formularios y FAB (ver nota al final de TASKS sobre «ítem N» ≠ «TN») |
+| Pagos | PAY-* / ítems 101–107 · T222 |
+| Offline | Ítem 58 cerrado documentalmente; roadmap T56–T62 / T265 |
+| UI / navegación | Ítems 63–65 → T263–T265 |
 
 ---
 
@@ -18,7 +30,7 @@
 
 ### 2. Cómo anotar cada punto nuevo
 
-- **ID**: siguiente libre **124**.
+- **ID**: siguiente libre **128**.
 - **Plataforma**: iOS / Web / Ambas / …
 - **Pantalla / flujo**.
 - **Tipo**: bug / mejora / copy / producto / discusión.
@@ -32,14 +44,34 @@
 
 ### 3. Resumen actual
 
-- **Pendientes:** 1 (**123** deep link web — validar / cerrar)
+- **Pendientes:** 2 (**123** deep link web; **125** create plan iOS overflow — validar)
 - **En progreso:** 0
-- **Siguiente ID libre:** **124**
-- **Hechos/cerrados en histórico:** 72+ (incluye **111–122**; **122** email registrado validado 2026-08-10)
+- **Siguiente ID libre:** **128**
+- **Hechos/cerrados en histórico:** 74+ (incluye **111–122**; **126–127** cascada borrar plan, 2026-08-18)
 
 ---
 
 ### 4. Puntos abiertos
+
+#### 125. Crear plan iOS: overflow amarillo/negro al validar nombre (<3 chars) + texto UNP ID
+- **Plataforma:** iOS
+- **Pantalla / flujo:** Lista planes → Crear plan
+- **Tipo:** bug UI
+- **Gravedad:** media
+- **Descripción breve:** El error «mínimo 3 caracteres» desbordaba el `AlertDialog`; además se mostraba «Generando UNP ID…» / ID innecesario.
+- **Fix:** `SingleChildScrollView` + `errorMaxLines`; ocultar línea UNP ID en modal móvil (el ID se sigue generando en background).
+- **Estado:** implementado — pendiente hot restart / validar
+- **Referencias:** `pg_plans_list_page.dart` `_CreatePlanModal`
+
+#### 124. Aceptar invitación por deep link: errores permission-denied / “already participates”
+- **Plataforma:** iOS (log 2026-08-16)
+- **Pantalla / flujo:** Mail → `app.planoon.com/invitation/{token}?action=accept`
+- **Tipo:** bug / ruido de reintento
+- **Gravedad:** media (el flujo a veces termina; log ruidoso; side effects pueden fallar)
+- **Descripción breve:** Tras deep link: `already participates`, `acceptInvitation` / `onParticipantJoined` → `permission-denied`, CF `markInvitationAccepted` → «no encontrada o ya procesada», luego relectura del token → `permission-denied`. Encaja con **re-aceptar** una invitación ya procesada o participación ya `accepted`; conviene reproducir con **invitación nueva** y endurecer idempotencia (si ya está dentro → ir al plan sin error).
+- **Fix (2026-08-16):** accept idempotente (`alreadyMember` + `planId`); `createParticipation` pending→accepted con `autoAccept`; side effects A2 no tumba el accept; CF `resolveInvitationByToken` + `markInvitationAccepted` idempotente; re-tap del mail → plan.
+- **Estado:** implementado — **pendiente validar** en dispositivo (re-abrir mismo link + invitación nueva)
+- **Referencias:** T259; `PlanParticipationService.acceptInvitation`; `InvitationService.acceptInvitationBy*`; rules `plan_invitations`
 
 #### 123. Deep link `/invitation/{token}` (web §2)
 - **Plataforma:** web (nativo = T259 aparte)

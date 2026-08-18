@@ -10,7 +10,7 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 void showEventSummaryPreviewModal({
   required BuildContext context,
   required Event event,
-  required VoidCallback onOpenFull,
+  VoidCallback? onOpenFull,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -93,19 +93,20 @@ void showEventSummaryPreviewModal({
             ),
           ],
           const SizedBox(height: 20),
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.of(context).pop();
-              onOpenFull();
-            },
-            icon: const Icon(Icons.open_in_new, size: 18),
-            label: const Text('Abrir evento'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColorScheme.color2,
-              side: const BorderSide(color: AppColorScheme.color2),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+          if (onOpenFull != null)
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onOpenFull();
+              },
+              icon: const Icon(Icons.open_in_new, size: 18),
+              label: const Text('Abrir evento'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColorScheme.color2,
+                side: const BorderSide(color: AppColorScheme.color2),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
             ),
-          ),
         ],
       ),
     ),
@@ -116,7 +117,7 @@ void showEventSummaryPreviewModal({
 void showAccommodationSummaryPreviewModal({
   required BuildContext context,
   required Accommodation accommodation,
-  required VoidCallback onOpenFull,
+  VoidCallback? onOpenFull,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -199,19 +200,20 @@ void showAccommodationSummaryPreviewModal({
             ),
           ],
           const SizedBox(height: 20),
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.of(context).pop();
-              onOpenFull();
-            },
-            icon: const Icon(Icons.open_in_new, size: 18),
-            label: const Text('Abrir alojamiento'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColorScheme.color2,
-              side: const BorderSide(color: AppColorScheme.color2),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+          if (onOpenFull != null)
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onOpenFull();
+              },
+              icon: const Icon(Icons.open_in_new, size: 18),
+              label: const Text('Abrir alojamiento'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColorScheme.color2,
+                side: const BorderSide(color: AppColorScheme.color2),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
             ),
-          ),
         ],
       ),
     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/plan_name_validation.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
@@ -190,16 +191,16 @@ class _WdCreatePlanModalState extends ConsumerState<WdCreatePlanModal> {
                   ),
                 ),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return loc.createPlanNameRequiredError;
+                  switch (validatePlanName(value)) {
+                    case PlanNameValidationError.empty:
+                      return loc.createPlanNameRequiredError;
+                    case PlanNameValidationError.tooShort:
+                      return loc.createPlanNameTooShortError;
+                    case PlanNameValidationError.tooLong:
+                      return loc.createPlanNameTooLongError;
+                    case null:
+                      return null;
                   }
-                  if (value.trim().length < 3) {
-                    return loc.createPlanNameTooShortError;
-                  }
-                  if (value.trim().length > 100) {
-                    return loc.createPlanNameTooLongError;
-                  }
-                  return null;
                 },
               ),
               const SizedBox(height: 16),

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +11,7 @@ import 'package:unp_calendario/features/offline/presentation/providers/realtime_
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/shared/providers/fcm_providers.dart';
 import 'package:unp_calendario/shared/services/fcm_service.dart';
+import 'package:unp_calendario/shared/utils/invitation_deep_link.dart';
 import 'package:unp_calendario/pages/pg_dashboard_page.dart';
 import 'package:unp_calendario/pages/pg_plans_list_page.dart';
 import 'package:unp_calendario/shared/utils/platform_utils.dart';
@@ -38,6 +42,9 @@ class App extends ConsumerStatefulWidget {
 class _AppState extends ConsumerState<App> {
   final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
   final PlanService _planService = PlanService();
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSubscription;
+  String? _lastHandledInvitationRoute;
   static const Set<String> _allowedPlanTabs = {
     'planData',
     'planNotes',
@@ -129,6 +136,59 @@ class _AppState extends ConsumerState<App> {
     );
   }
 
+  Future<void> _navigateToInvitationRoute(String route) async {
+    final nav = _rootNavigatorKey.currentState;
+    if (nav == null) {
+      // Navigator aún no listo (arranque en frío): reintentar en el siguiente frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _navigateToInvitationRoute(route);
+      });
+      return;
+    }
+    // Evitar apilar varias InvitationPage (stream + getInitialLink / doble open).
+    if (_lastHandledInvitationRoute == route) {
+      return;
+    }
+    _lastHandledInvitationRoute = route;
+    LoggerService.info(
+      'Deep link invitation → $route',
+      context: 'DEEP_LINK',
+    );
+    nav.pushNamedAndRemoveUntil(route, (r) => r.isFirst);
+  }
+
+  void _handleIncomingUri(Uri uri) {
+    final route = invitationRouteFromUri(uri);
+    if (route == null) return;
+    _navigateToInvitationRoute(route);
+  }
+
+  Future<void> _initDeepLinks() async {
+    if (!shouldListenNativeDeepLinks) return;
+    try {
+      final initial = await _appLinks.getInitialLink();
+      if (initial != null) {
+        _handleIncomingUri(initial);
+      }
+      _linkSubscription = _appLinks.uriLinkStream.listen(
+        _handleIncomingUri,
+        onError: (Object e) {
+          LoggerService.error(
+            'Deep link stream error',
+            context: 'DEEP_LINK',
+            error: e,
+          );
+        },
+      );
+    } catch (e) {
+      LoggerService.error(
+        'Deep link init failed',
+        context: 'DEEP_LINK',
+        error: e,
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -141,6 +201,9 @@ class _AppState extends ConsumerState<App> {
 
       // Registrar navegación desde push (A1 / ítem 109).
       FCMService.setNotificationTapHandler(_handlePushTap);
+
+      // T259: deep links nativos (custom scheme + Universal Links cuando AASA esté live).
+      _initDeepLinks();
 
       // Segundo frame: el [navigatorKey] ya tiene contexto (SnackBar en foreground).
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -169,6 +232,12 @@ class _AppState extends ConsumerState<App> {
       FCMService.getInitialMessage();
       LoggerService.info('App.postFrame(done)', context: 'APP_BOOT');
     });
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
   }
 
   @override

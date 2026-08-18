@@ -37,6 +37,8 @@ import 'package:unp_calendario/features/notifications/presentation/providers/not
 import 'package:unp_calendario/features/stats/presentation/providers/plan_stats_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
+import 'package:unp_calendario/widgets/plan/pending_invite_preview_banner.dart';
 import 'package:unp_calendario/features/plan_notes/presentation/pages/plan_notes_screen.dart';
 
 /// Página de detalle del plan para mobile
@@ -61,6 +63,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   static const Color _cTextPrimary = Colors.white;
   static const Color _cTextSecondary = Colors.white70;
   static const double _aBorderStrong = 0.12;
+
+  /// T276 §1.5: pestañas permitidas en preview pending.
+  static const Set<String> _pendingPreviewTabs = {
+    'planData',
+    'mySummary',
+    'calendar',
+  };
 
   late String _selectedOption;
   String _summaryViewMode = 'mine';
@@ -118,12 +127,38 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         Plan.initialVisiblePlanDayIndex(widget.plan, _calendarVisibleDays);
   }
 
+  /// ¿El usuario actual está pending en este plan? (invitación o participación).
+  bool _isPendingPreview(Plan plan, {bool watch = true}) {
+    final currentUser = watch
+        ? ref.watch(currentUserProvider)
+        : ref.read(currentUserProvider);
+    final planId = plan.id;
+    if (currentUser == null || planId == null) return false;
+
+    final pendingInvs = watch
+        ? (ref.watch(userPendingInvitationsProvider).valueOrNull ?? const [])
+        : (ref.read(userPendingInvitationsProvider).valueOrNull ?? const []);
+    final hasPendingInvitation =
+        pendingInvs.any((inv) => inv.planId == planId);
+
+    final participantsAsync = watch
+        ? ref.watch(planParticipantsProvider(planId))
+        : ref.read(planParticipantsProvider(planId));
+    final participants = participantsAsync.valueOrNull ?? const [];
+    final hasPendingPart = participants.any(
+      (p) => p.userId == currentUser.id && p.isPending,
+    );
+    return hasPendingInvitation || hasPendingPart;
+  }
+
   @override
   Widget build(BuildContext context) {
     final plan = _planFromStreamWatch();
     final currentUser = ref.watch(currentUserProvider);
     final planId = plan.id;
     final isOrganizer = currentUser?.id == plan.userId;
+    final isPendingPreview = _isPendingPreview(plan);
+
     if (isOrganizer &&
         !_didScanCancellationDeadlines &&
         planId != null &&
@@ -142,12 +177,29 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         if (mounted) setState(() => _selectedOption = 'planData');
       });
     }
-    // T252: Si el usuario es participante (no organizador), abrir por defecto en "Mi resumen"
-    if (widget.initialTab == null && planId != null && currentUser != null && plan.userId != currentUser.id && !_hasSetInitialTabForParticipant) {
+    // T276: si pending y pestaña no permitida → Info
+    if (isPendingPreview && !_pendingPreviewTabs.contains(_selectedOption)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _selectedOption = 'planData');
+      });
+    }
+    // T252: participante aceptado (no organizador) → "Mi resumen" por defecto
+    if (widget.initialTab == null &&
+        planId != null &&
+        currentUser != null &&
+        plan.userId != currentUser.id &&
+        !_hasSetInitialTabForParticipant &&
+        !isPendingPreview) {
       final participantsAsync = ref.watch(planParticipantsProvider(planId));
       participantsAsync.whenData((participants) {
-        final isParticipant = participants.any((p) => p.userId == currentUser.id);
-        if (isParticipant && _selectedOption == 'planData') {
+        final isAccepted = participants.any(
+          (p) =>
+              p.userId == currentUser.id &&
+              p.isActive &&
+              p.isAccepted &&
+              !p.isPending,
+        );
+        if (isAccepted && _selectedOption == 'planData') {
           _hasSetInitialTabForParticipant = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _selectedOption = 'mySummary');
@@ -160,11 +212,11 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       child: Scaffold(
         backgroundColor: _cPageBg,
         appBar: _buildAppBar(plan),
-        bottomNavigationBar: _buildQuickActionsBar(plan),
+        bottomNavigationBar:
+            isPendingPreview ? null : _buildQuickActionsBar(plan),
         body: SafeArea(
           child: Column(
             children: [
-              // Barra de navegación horizontal (Estadísticas solo para organizador)
               PlanNavigationBar(
                 selectedOption: _selectedOption,
                 onOptionSelected: (option) {
@@ -172,12 +224,29 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                     _selectedOption = option;
                   });
                 },
-                showStatsTab: isOrganizer,
+                showStatsTab: isOrganizer && !isPendingPreview,
+                allowedOptionIds:
+                    isPendingPreview ? _pendingPreviewTabs : null,
               ),
-              _buildSectionTitleBar(),
-              // Contenido según la opción seleccionada
+              if (isPendingPreview)
+                PendingInvitePreviewBanner(
+                  plan: plan,
+                  onLeftPlan: () {
+                    if (!mounted) return;
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => const PlansListPage(),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              _buildSectionTitleBar(isPendingPreview: isPendingPreview),
               Expanded(
-                child: _buildContent(plan),
+                child: _buildContent(plan, isPendingPreview: isPendingPreview),
               ),
             ],
           ),
@@ -246,7 +315,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  Widget _buildSectionTitleBar() {
+  Widget _buildSectionTitleBar({bool isPendingPreview = false}) {
     final loc = AppLocalizations.of(context)!;
     return Container(
       height: 48,
@@ -310,7 +379,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
               ),
             ),
           ],
-          if (_selectedOption == 'payments') ...[
+          if (_selectedOption == 'payments' && !isPendingPreview) ...[
             const SizedBox(width: 8),
             Tooltip(
               message: loc.paymentsAddExpense,
@@ -574,12 +643,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  Widget _buildContent(Plan plan) {
+  Widget _buildContent(Plan plan, {bool isPendingPreview = false}) {
     switch (_selectedOption) {
       case 'planData':
         return PlanDataScreen(
           plan: plan,
           showAppBar: false,
+          forceReadOnly: isPendingPreview,
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
           onPlanDeleted: () {
             Navigator.of(context).pop();
@@ -595,11 +665,19 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       case 'mySummary':
         return MyPlanSummaryScreen(
           plan: plan,
-          onOpenEvent: _openEventFromSummary,
-          onOpenAccommodation: _openAccommodationFromSummary,
+          onOpenEvent: (event) =>
+              _openEventFromSummary(event, isPendingPreview: isPendingPreview),
+          onOpenAccommodation: (acc) => _openAccommodationFromSummary(
+            acc,
+            isPendingPreview: isPendingPreview,
+          ),
           onGoToCalendar: () => setState(() => _selectedOption = 'calendar'),
-          onRequestCreateEvent: () => _openCreateEventDialog(switchToCalendar: false),
-          onRequestCreateAccommodation: () => _openCreateAccommodationDialog(switchToCalendar: false),
+          onRequestCreateEvent: isPendingPreview
+              ? null
+              : () => _openCreateEventDialog(switchToCalendar: false),
+          onRequestCreateAccommodation: isPendingPreview
+              ? null
+              : () => _openCreateAccommodationDialog(switchToCalendar: false),
           showTopSummaryBar: false,
           viewMode: _summaryViewMode,
           onViewModeChanged: (mode) => setState(() => _summaryViewMode = mode),
@@ -613,7 +691,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         );
       
       case 'calendar':
-        return _buildCalendarTabContent(plan);
+        return _buildCalendarTabContent(plan, isPendingPreview: isPendingPreview);
       
       case 'participants':
         return ParticipantsScreen(
@@ -648,6 +726,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         return PlanDataScreen(
           plan: plan,
           showAppBar: false,
+          forceReadOnly: isPendingPreview,
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
           onPlanDeleted: () {
             Navigator.of(context).pop();
@@ -656,13 +735,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     }
   }
 
-  void _openEventFromSummary(Event event) {
+  void _openEventFromSummary(Event event, {bool isPendingPreview = false}) {
     final p = _planFromStreamRead();
     if (p.id == null) return;
     showEventSummaryPreviewModal(
       context: context,
       event: event,
-      onOpenFull: () => _showEventDialog(event),
+      onOpenFull: isPendingPreview ? null : () => _showEventDialog(event),
     );
   }
 
@@ -752,12 +831,16 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  void _openAccommodationFromSummary(Accommodation accommodation) {
+  void _openAccommodationFromSummary(
+    Accommodation accommodation, {
+    bool isPendingPreview = false,
+  }) {
     if (_planFromStreamRead().id == null) return;
     showAccommodationSummaryPreviewModal(
       context: context,
       accommodation: accommodation,
-      onOpenFull: () => _showAccommodationDialog(accommodation),
+      onOpenFull:
+          isPendingPreview ? null : () => _showAccommodationDialog(accommodation),
     );
   }
 
@@ -814,11 +897,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   void _quickCreateEvent() {
+    if (_isPendingPreview(_planFromStreamRead(), watch: false)) return;
     final stayOnSummary = _selectedOption == 'mySummary';
     _openCreateEventDialog(switchToCalendar: !stayOnSummary);
   }
 
   void _openCreateEventDialog({required bool switchToCalendar}) {
+    if (_isPendingPreview(_planFromStreamRead(), watch: false)) return;
     final p = _planFromStreamRead();
     if (p.id == null) return;
     if (switchToCalendar) {
@@ -851,11 +936,13 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   void _quickCreateAccommodation() {
+    if (_isPendingPreview(_planFromStreamRead(), watch: false)) return;
     final stayOnSummary = _selectedOption == 'mySummary';
     _openCreateAccommodationDialog(switchToCalendar: !stayOnSummary);
   }
 
   void _openCreateAccommodationDialog({required bool switchToCalendar}) {
+    if (_isPendingPreview(_planFromStreamRead(), watch: false)) return;
     final p = _planFromStreamRead();
     if (p.id == null) return;
     if (switchToCalendar) {
@@ -889,10 +976,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   void _quickOpenChat() {
+    if (_isPendingPreview(_planFromStreamRead(), watch: false)) return;
     setState(() => _selectedOption = 'chat');
   }
 
   void _quickCreatePayment() {
+    if (_isPendingPreview(_planFromStreamRead(), watch: false)) return;
     final p = _planFromStreamRead();
     if (p.id == null) return;
     setState(() => _selectedOption = 'payments');
@@ -916,7 +1005,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   }
 
   /// Pestaña Calendario: mismo marco visual que [CalendarDemoV1Page] (demo/calendar-v1).
-  Widget _buildCalendarTabContent(Plan plan) {
+  Widget _buildCalendarTabContent(Plan plan, {bool isPendingPreview = false}) {
     final totalDays = plan.durationInDays;
     if (totalDays > 0 && _calendarFirstPlanDay > totalDays) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -984,6 +1073,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                 ),
                 plan: plan,
                 hideAppBar: true,
+                readOnly: isPendingPreview,
                 visibleDays: _calendarVisibleDays,
                 firstVisiblePlanDayIndex: _calendarFirstPlanDay,
                 onVisibleDaysChanged: (days) {

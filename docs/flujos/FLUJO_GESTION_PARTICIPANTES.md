@@ -12,6 +12,7 @@ Invitaciones y avisos de alta/baja se acuerdan en el **mismo diagrama** (no en u
 | Invitaciones (histórico) | [`archivo/FLUJO_INVITACIONES_NOTIFICACIONES.md`](./archivo/FLUJO_INVITACIONES_NOTIFICACIONES.md) |
 | Stub invitaciones | [`FLUJO_INVITACIONES_NOTIFICACIONES.md`](./FLUJO_INVITACIONES_NOTIFICACIONES.md) |
 | Roles en el plan | [`ROLES_Y_TIPOS_USUARIO.md`](../configuracion/ROLES_Y_TIPOS_USUARIO.md) |
+| Trabajo WIP | **T259**, T224, T233, T234 · `TASKS.md` § Índice |
 | Mapa | [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md) |
 
 ## Código de entrada

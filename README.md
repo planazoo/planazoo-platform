@@ -1,8 +1,20 @@
-# Planazoo - Plataforma de Planificación de Viajes
+# Planoon (Planazoo) — monorepo
+
+App Flutter (iOS / Android / web) + **web comercial** + documentación compartida.
+
+| Pieza | Dónde | URL |
+|-------|--------|-----|
+| Documentación | [`docs/`](docs/) | — |
+| App | raíz Flutter (`lib/`, `ios/`, …) | [app.planoon.com](https://app.planoon.com) |
+| Landing | [`marketing/`](marketing/) | `planoon.com` (deploy pendiente) |
+
+Detalle: [`docs/configuracion/MONOREPO.md`](docs/configuracion/MONOREPO.md) · Dominio: [`docs/configuracion/DOMINIO_PLANOON.md`](docs/configuracion/DOMINIO_PLANOON.md).
+
+---
 
 ## 🚀 Descripción
 
-Planazoo es una aplicación Flutter para la planificación de viajes y eventos, diseñada con arquitectura **Offline First** para ofrecer una experiencia intuitiva y completa en la organización de itinerarios colaborativos.
+Planoon es una aplicación Flutter para la planificación de viajes y eventos, diseñada con arquitectura **Offline First** para ofrecer una experiencia intuitiva y completa en la organización de itinerarios colaborativos.
 
 ## ✨ Características Principales
 

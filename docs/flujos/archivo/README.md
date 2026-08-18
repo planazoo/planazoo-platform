@@ -1,5 +1,10 @@
-# Archivo de flujos (histórico)
+# 🚫 ARCHIVO — Flujos históricos (NO fuente viva)
 
-Prosa larga anterior al sistema de procesos (Ago 2026). **No es contrato vivo.**
+Este directorio contiene documentación **histórica**.  
+No usar estos `.md` como contrato actual de comportamiento.
 
-Entrada actual: [`../MAPA_FLUJOS.md`](../MAPA_FLUJOS.md).
+## Regla de uso
+
+- Fuente viva de procesos: [`../MAPA_FLUJOS.md`](../MAPA_FLUJOS.md)
+- Contrato vivo del dominio WIP: `../DIAGRAMA_ALTAS_BAJAS_PLAN.md`
+- Estos archivos se consultan solo para contexto histórico/trazabilidad.

@@ -4,23 +4,38 @@
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
 > **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T274**
+**Siguiente código de tarea: T278**
 
-**📊 Resumen (solo pendientes):**
-- **Mejoras UI/UX:** T194-T214, T226, T231, T237, T251 (widgets, info plan, calendario, cards, modales, estética forms)
-- **Administración:** T183-T191, T223 (vista admin, export CSV, seed, espacio admin RUD toda la BD, T188 en progreso), **T270 (catálogo admin tipos/subtipos de evento)**
-- **Auth / Perfil:** T159-T162, T173, T174, T226-T228, T232 (permisos Firestore, verificación, perfil, registro, modales)
-- **Seguridad avanzada:** T166-T172 (2FA, token refresh, legal, etc.)
-- **Calendario:** T35, T37, T38, T88, T96-T99, T182, T199, T210-T212, T225, T246, T238, T242, T243, T250 (campos tipo/subtipo), **T271 (fotos Places/cache)**, **T272 (colores tipos evento por plan)**
-- **Offline:** T56-T62
-- **Permisos:** T64, T66, T67
-- **Timezones:** T40-T45
-- **Funcionalidades / Producto:** T20, T120-T122, T131-T136, T157-T158, T165, T190, T192, T181, T150, T224, T233, T234, T252, T254 (pantalla bienvenida), T256 (implementar Fastlane), T257 (revisión web vs iOS), T258 (icono app), T259 (deep link invitación iOS), **T267 (app Android + push FCM)**, **T268 (recordatorios diarios invitaciones pendientes)**, T260 (sistema multi-moneda), **T262 (notas, plantillas, lista preparación/mini-tareas, nueva pestaña), T263-T266 (items 63/64/65/98 de lista QA)**, etc.
-- **Pagos MVP:** T217-T222 (ver docs/producto/PAGOS_MVP.md).
+**Sistema de procesos:** [`docs/flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md) · **orden definitivo:** [`ORDEN_POR_DOMINIOS.md`](../flujos/ORDEN_POR_DOMINIOS.md) (#1→#9).
 
-**Total aproximado: ~100 tareas pendientes** (las completadas están en COMPLETED_TASKS.md; los códigos no se reutilizan).
+**WIP dominio (1 a la vez):** **#1 Participantes / altas-bajas / invitaciones** → contrato [`DIAGRAMA_ALTAS_BAJAS_PLAN.md`](../flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md) · trabajo activo **T259** (deep link nativo; slice `app_links` + scheme en repo). T268 auto aplazada. Al cerrar/aparcar dominio → **#2 Planes**.
 
-**Preparación pruebas con familia:** Ver `docs/configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md`. Ítems de prioridad alta (l10n lista planes/invitación, navegación al plan en móvil, Safe area, timezones Egipto+Londres) implementados; checklist §4 pendiente de ejecutar antes de invitar.
+### Índice por dominio
+
+> Las secciones numeradas abajo (§0–§13) se mantienen por área histórica. **Para priorizar, usa este índice** (y el MAPA). Códigos con `*` = compartidos.
+
+| Dominio / área | Códigos pendientes (aprox.) |
+|----------------|----------------------------|
+| **Participantes / invitaciones (WIP)** | T20, T120, T224, **T259**, T233, T234, **T275**, T261*, T252* |
+| Planes / estados | T122, T204, T205, T237, T243*, T261*, **T277** |
+| Eventos + calendario | T35, T37, T38, T88, T96–T99, T182, T208, T210–T212, T215, T225, T238, T242, T246, T247, T250, T251, T270, T271, T272 |
+| Alojamientos | T121, T225*, T251*, T271* |
+| Pagos | T222, T260 |
+| Notas | **T262** |
+| Auth / perfil / seguridad | T159–T162, T166–T174, T227, T228, T232, **T274** |
+| Admin | T183–T188, T191, T223, T270*, T165 |
+| Offline (transversal) | T56–T62, T265 |
+| Permisos plan (transversal) | T64, T66, T67 |
+| Timezones (transversal) | T40–T45 |
+| Chat (transversal) | T190, T253 |
+| Plataforma / release | T256–T258, T267 |
+| UI transversal | T194–T214, T226, T231, T237*, T244, T249, T251* |
+| Producto / ayuda / legal | T135, T136, T150, T157, T158, T192, T254, T263–T266 |
+| Import / export / IA | T131, T133, T134, T181, T266* |
+
+**📊 Resumen compacto (solo pendientes):** ~100 códigos; detalle en §§0–13. Completadas → `COMPLETED_TASKS.md`.
+
+**Preparación pruebas con familia:** `docs/configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md` (checklist §4 pendiente).
 
 ---
 
@@ -194,17 +209,20 @@
 
 ### 9. Participantes, invitaciones y formularios
 
+> **Dominio WIP:** contrato [`DIAGRAMA_ALTAS_BAJAS_PLAN.md`](../flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md). Índice: [`MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md).
+
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
 | **T20** | Página de miembros del plan: listar, añadir, editar, eliminar; integración con participaciones. | Alta |
 | **T120** | Sistema de invitaciones y confirmación de eventos (base implementada; faltan notificaciones push, etc.). | Alta |
 | **T121** | Revisión y enriquecimiento de formularios EventDialog y AccommodationDialog por tipo. | Media |
 | **T122** | Guardar plan como plantilla (local, editar, usar plantilla). | Baja |
-| **T224** | **Reenviar invitación:** Permitir al organizador reenviar una invitación pendiente (por email o desde lista) por si el usuario no la ha recibido (email no llegó, notificación perdida, etc.). UI en Participantes → sección Invitaciones: acción "Reenviar" por invitación pendiente; regenerar/enviar de nuevo notificación y, si aplica, email con link. Relacionado con T104, T105; ver FLUJO_INVITACIONES_NOTIFICACIONES. | Media |
-| **T268** | **Recordatorios diarios de invitaciones pendientes:** Enviar recordatorio al **invitado** cada **24 h** mientras la invitación/participación siga `pending` (hasta aceptar, rechazar o caducar). Canales: **in-app + push FCM + email**. Cubrir invitaciones por email (`plan_invitations`) y directas (`plan_participations` pending). Implementación típica: Cloud Function scheduled (cron diario) + dedupe (no spam el mismo día). Relacionado: T104, T105, T224, `FLUJO_INVITACIONES_NOTIFICACIONES.md`. | Media |
-| **T269** | **Buzón “Mis invitaciones” + validación robusta al entrar por avisos (casos raros):** Crear espacio claro para el invitado (lista de invitaciones pendientes accionables) y unificar la lógica de entrada desde campana/push/email/apertura app con validación previa de estado (invitación, participación, plan, identidad/sesión). Incluir mensajes específicos para casos inválidos (caducada, ya respondida, plan en curso/finalizado/cancelado, aviso huérfano, cuenta equivocada), limpieza de avisos al resolver o invalidar, revalidación al confirmar (evitar carreras), y alineación con `docs/flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md` (§1.1, §1.2, §1.3). Relacionado con T224, T233, T234, T259, T268. | Alta |
+| **T277** | **Pruebas ejecutables por agente (CRUD plan):** `createPlan` + releer en Firestore falso; validación de nombre alineada con el modal. No sustituye E2E de dispositivos. **En progreso (fase 1).** Especificación en `docs/tareas/T277_PRUEBAS_AGENTE_CRUD_PLAN.md`. Checklist: `docs/testing/CHECKLIST_CRUD_PLANES.md`. | Media |
+| **T224** | **Reenviar invitación (recordatorio manual):** El organizador recuerda a pendientes con «Reenviar» (campana + push + email; sin duplicar ítem de campana). **Acordado** Ago 2026 como sustituto del recordatorio automático. Relacionado: T104, T105, LISTA 115/122. Ver `DIAGRAMA_ALTAS_BAJAS_PLAN.md`. | Media |
+| **T268** | ~~Recordatorios diarios automáticos de invitaciones pendientes~~ — **Aplazada / no ahora** (Ago 2026): agobia al invitado. Sustituido por **reenviar manual** (T224 / caso 2). Posible reabrir en el futuro como sistema opt-in. | — |
 | **T233** | Página Participantes: (1) La lista de participantes ha de ser lo primero; hacerla más compacta para ver el máximo posible. (2) La parte de invitar va a continuación de la lista. (3) Revisar si la parte de aceptar invitaciones es necesaria — *aclarar al abordar la tarea*: ¿se refiere a la vista del organizador (gestionar invitaciones) o a la del invitado (aceptar/rechazar)? (4) Eliminar el botón «Aceptar/Rechazar por token» y todo el código y documentación relacionada (opción ya no activa). (5) Eliminar el icono «X» para cerrar si ya no es necesario. (6) En la barra superior solo ha de aparecer el nombre de la página, sin el nombre del plan. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T234** | Invitaciones: (1) Cuando la invitación está enviada, el usuario invitado (ej. UB) ha de aparecer en la lista de participantes con estado «pendiente de aceptar invitación» (verificar si ya está implementado). (2) Cuando el invitado acepta o rechaza, el organizador (ej. UA) ha de recibir notificación. (3) En el recuadro de enviar por mail, añadir icono «?» para explicar cada tipo de usuario (participante, observador). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
+| **T275** | **Audiencias configurables de avisos por fase del plan (planificación vs ejecución):** Permitir al organizador definir **quién recibe avisos** en cada fase (p. ej. solo organizador/coorganizers, participantes activos, observadores o selección manual). Aplicar la configuración en campana, push FCM y email para avisos de cambios relevantes. Incluir: (1) modelo de configuración por plan; (2) matriz de tipos de aviso × fase × audiencia; (3) fallback seguro para planes sin configuración; (4) permisos de edición (solo organizador/rol autorizado); (5) pruebas E2E web+iOS+Android y documentación en contrato de participantes/notificaciones (`DIAGRAMA_ALTAS_BAJAS_PLAN.md` + spec de notificaciones). Relacionado: T105, T224, T268, T267, T261. **Especificación en `docs/tareas/T275_AUDIENCIAS_AVISOS_POR_FASE.md`.** | Alta |
 | **T261** | **Cancelar plan (flujo completo y comunicación):** Evaluar e implementar todo el flujo cuando un plan se cancela, con foco en avisar correctamente a participantes. Incluir: (1) estado/acción de cancelación y permisos; (2) impacto en visibilidad del plan y eventos; (3) notificaciones in-app y push/email a organizador e invitados/participantes; (4) texto legal/UX del mensaje de cancelación; (5) comportamiento offline/sincronización; (6) pruebas E2E web+iOS. Actualizar flujos y documentación relacionados (`FLUJO_CRUD_PLANES.md`, `FLUJO_INVITACIONES_NOTIFICACIONES.md`, checklist de testing). | Alta |
 ---
 
@@ -213,7 +231,7 @@
 | Código | Descripción | Prioridad |
 |--------|-------------|-----------|
 | **T131** | Sincronización con calendarios externos (.ics, etc.). | Media |
-| **T133** | Exportación profesional de planes (PDF/Email). | Media |
+| **T133** | Exportación profesional de planes (PDF/Email). **Contrato web C4** ([`WEB_COMERCIAL.md`](../producto/WEB_COMERCIAL.md)): exportar/imprimir/compartir itinerario propio y del plan; el destinatario no necesita la app. | **Alta** (contrato comercial) |
 | **T134** | Eventos desde correo reenviado a dirección plataforma: usuario reenvía confirmación a una dirección nuestra; parseo y creación de evento (buzón + asignación a plan). **Solo From = usuario registrado.** Anti-spam: rate limiting por usuario, lista blanca opcional (beta). Decisiones y esquema en `docs/producto/CORREO_EVENTOS_SISTEMA_PARSEO.md`. | Alta |
 | **T181** | Definir guía de layout modular para pantallas (grid, secciones, espaciados). | Media |
 
@@ -225,7 +243,7 @@
 |--------|-------------|-----------|
 | **T135** | Gestión de cookies (web). | Alta (MVP web) |
 | **T136** | App Tracking Transparency (iOS). | Alta (MVP iOS) |
-| **T150** | Definición de MVP y roadmap de lanzamiento. | Alta |
+| **T150** | Definición de MVP y roadmap de lanzamiento. **Timeline viva:** [`docs/producto/TIMELINE_LANZAMIENTO.md`](../producto/TIMELINE_LANZAMIENTO.md) (pre / día L / post). | Alta |
 | **T157** | **Sistema de ayuda contextual multi-idioma:** Textos de ayuda en base de datos (Firestore); icono «?» en los lugares que lo necesiten; al pulsar, modal con explicación y enlace a web con contenido ampliado; soporte para personas invidentes (accesibilidad, lectores de pantalla). Especificación en `docs/tareas/T157_AYUDA_MULTIIDIOMA.md`. Relacionado: T158 (multi-idioma app), T192 (accesibilidad). | Baja |
 | **T158** | Completar sistema multi-idioma. | Media |
 | **T165** | Definir y crear usuarios de administración (modelo, Firestore, documentación). | Media |
@@ -235,8 +253,9 @@
 | **T256** | **Implementar Fastlane** para publicar apps iOS y Android. Tras evaluación T255: `fastlane init` en `ios/` y `android/`, Appfile y credenciales, lanes beta (TestFlight + Play interna) y opcionalmente release; Gemfile en ambas carpetas; opcional CI (GitHub Actions). Ver `docs/tareas/T256_IMPLEMENTAR_FASTLANE.md`. | Media |
 | **T257** | **Revisión web vs iOS (prioridad iOS):** Identificar y cerrar diferencias entre versión web (más desarrollada) e iOS. La plataforma prioritaria es iOS. Checklist y hallazgos en `docs/configuracion/REVISION_IOS_VS_WEB.md`; tarea en `docs/tareas/T257_REVISION_WEB_VS_IOS.md`. | Alta |
 | **T258** | **Icono de la app Planazoo:** Configuración y mantenimiento del icono propio en iOS y Android (sin borde blanco, full bleed si aplica). Detalle en `docs/tareas/T258_ICONO_APP.md`. | Baja |
-| **T259** | **Deep link invitación en iOS:** Implementar Universal Links o custom URL scheme para que el link de invitación (p. ej. desde email) abra la app iOS directamente en la pantalla de invitación, en paridad con la experiencia web. Incluye: configuración Associated Domains (Universal Links) o URL scheme en Xcode, archivo apple-app-site-association en el servidor si aplica, y manejo de la URL en la app (WidgetsBinding / getInitialUri). Referencia: `docs/configuracion/REVISION_IOS_VS_WEB.md` §2.3 y §3 ítem 7. Detalle en `docs/tareas/T259_DEEP_LINK_INVITACION_IOS.md`. | Media |
+| **T259** | **Deep link invitación nativo (iOS/Android):** Abrir `InvitationPage` desde email. **En curso:** `app_links` + scheme `planazoo://` + entitlements Associated Domains + AASA draft. Pendiente: deploy AASA + QA Mail/Safari. Detalle: `docs/tareas/T259_DEEP_LINK_INVITACION_IOS.md`. Relacionado: §2 diagrama, REVISION_IOS_VS_WEB ítem 7. | Media |
 | **T267** | **App Android y push FCM (paridad con iOS):** Tener la app compilable y usable en Android y validar el flujo de notificaciones push con la misma lógica que en iOS (`FCMService`, tokens en Firestore, foreground/background, tap). Incluye: proyecto `android/` (Firebase `google-services.json`, manifest, canales de notificación si aplica), pruebas en dispositivo/emulador, y documentar checklist Android equivalente a `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` cuando se cierre. **Contexto:** push iOS cerrado en 2026-04 (AppDelegate clásico, sin UIScene). | Alta |
+| **T274** | **Sistema métrico/imperial por usuario (soporte UK/USA):** Añadir preferencia de unidades en perfil (`metric`/`imperial`) y aplicarla en toda la UI relevante (distancias, alturas, pesos, temperatura u otras magnitudes visibles), manteniendo un formato consistente por plataforma. Definir: (1) dónde se guarda la preferencia (Firestore + snapshot local si aplica); (2) estrategia de conversión/rounding y etiquetas (`km/mi`, `C/F`, etc.); (3) fallback para usuarios sin preferencia (default métrico); (4) impacto en formularios y visualización (sin romper datos existentes); (5) pruebas web+iOS+Android y l10n ES/EN. Relacionado: T158, T232, T257, T267. **Especificación en `docs/tareas/T274_UNIDADES_METRICO_IMPERIAL.md`.** | Media |
 | **T260** | **Sistema multi-moneda:** Soporte de múltiples monedas por plan (EUR, USD, GBP, etc.), formateo automático en UI según moneda del plan y, opcionalmente, conversión de tipos de cambio al visualizar o registrar. Relacionado con T101 (presupuesto) y T102 (pagos). Especificación en `docs/tareas/CURRENCY_SYSTEM_PROPOSAL.md`. | Media |
 | **T263** | **Brief y decisión de icono app (traslado de ítem 63):** Definir brief final de marca para icono Planazoo (concepto visual de las dos “oo”, variantes, criterios de legibilidad en tamaños pequeños, versión iOS/Android, exportables necesarios) y dejar decisión cerrada para implementación en T258. | Baja |
 | **T264** | **Navegación inferior + patrón de creación (traslado de ítem 64):** Decidir diseño de producto para barras inferiores/FAB y menú de creación contextual (“Otros…” incluido), con criterio de paridad web/iOS y plan de implementación por fases (sin codificar hasta cierre de diseño). | Media |

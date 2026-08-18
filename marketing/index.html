@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>planoon — Haz planes. Juntos.</title>
+  <meta name="description" content="Un plan compartido, personal para cada uno. Planifica, organiza y vive cualquier cosa en grupo — de un fin de semana al viaje de vuestra vida." />
+  <meta property="og:title" content="planoon" />
+  <meta property="og:description" content="Un plan compartido. Personal para cada uno." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+
+  <header class="site">
+    <a class="wordmark" href="/">planoon</a>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav" aria-label="Abrir menú">Menú</button>
+    <nav id="nav" class="nav">
+      <a href="#como">Cómo funciona</a>
+      <a href="#funciones">Funciones</a>
+      <a href="#empresas">Para empresas</a>
+      <a href="#acerca">Acerca de</a>
+      <a class="nav-login" href="https://app.planoon.com">Entrar</a>
+      <a class="btn primary sm" href="https://app.planoon.com">Empezar a planificar</a>
+    </nav>
+  </header>
+
+  <main id="contenido">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Mallorca 2027 · 5 personas · un solo plan</p>
+        <h1 id="hero-title">Haz planes.<br />Juntos.</h1>
+        <p class="lede">Un plan compartido. Personal para cada uno.</p>
+        <p class="lead">
+          Planifica, organiza y vive cualquier cosa en grupo — de un fin de semana
+          al viaje de vuestra vida.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="https://app.planoon.com">Crea un Planoon — es gratis</a>
+          <a class="btn ghost" href="#como">Mira cómo funciona</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="device" aria-hidden="true">
+          <div class="device-bar">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <strong>Mallorca 2027</strong>
+            <em>12–18 jul</em>
+          </div>
+          <div class="cal">
+            <div class="cal-hours">
+              <span></span><span>09</span><span>11</span><span>13</span><span>16</span><span>20</span>
+            </div>
+            <div class="cal-days">
+              <div class="day">
+                <header>Vie 12</header>
+                <div class="block flight" style="top:12%;height:18%">Vuelo LHR → PMI<br /><small>Laura</small></div>
+                <div class="block flight alt" style="top:12%;left:52%;width:44%;height:18%">Vuelo BCN<br /><small>Cristian, Pedro</small></div>
+                <div class="block stay" style="top:62%;height:22%">Check-in hotel</div>
+              </div>
+              <div class="day">
+                <header>Sáb 13</header>
+                <div class="block beach" style="top:18%;height:28%">Es Trenc</div>
+                <div class="block boat" style="top:52%;height:24%">Paseo en barco</div>
+              </div>
+              <div class="day">
+                <header>Dom 14</header>
+                <div class="block wine" style="top:22%;height:26%">Bodega</div>
+                <div class="block dinner" style="top:68%;height:20%">Cena · todos</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="problem" id="como" aria-labelledby="problem-title">
+      <p class="kicker">El problema</p>
+      <h2 id="problem-title">Hoy un plan vive en siete sitios a la vez.</h2>
+      <p class="section-lead">WhatsApp, el mail, el calendario, notas, PDFs, una hoja y la app de pagos. Nadie tiene la misma versión.</p>
+      <div class="scatter" aria-hidden="true">
+        <span class="pill">WhatsApp</span>
+        <span class="pill">Mail</span>
+        <span class="pill">Calendario</span>
+        <span class="pill">Notas</span>
+        <span class="pill">PDF</span>
+        <span class="pill">Hoja de cálculo</span>
+        <span class="pill">Pagos</span>
+      </div>
+      <p class="bridge">Planoon junta todo alrededor de <strong>un plan</strong>.</p>
+    </section>
+
+    <section class="story visual" id="funciones" aria-labelledby="visual-title">
+      <div class="story-copy">
+        <p class="kicker">Planificación visual</p>
+        <h2 id="visual-title">El plan se ve. Se mueve. No se rellena a ciegas.</h2>
+        <p>Varios días a la vista. Actividades en su hora. Arrastra un evento a otro día; una idea puede pasar a formar parte del itinerario.</p>
+      </div>
+      <div class="board" aria-hidden="true">
+        <div class="ideas">
+          <p class="ideas-label">Propuestas</p>
+          <div class="idea">Paseo en barco <small>Laura</small></div>
+          <div class="idea">Bodega <small>Pedro</small></div>
+          <div class="idea in">Es Trenc <small>Ana · al plan</small></div>
+        </div>
+        <div class="ideas-arrow" aria-hidden="true">→</div>
+        <div class="device compact">
+          <div class="device-bar"><strong>Sáb 13</strong><em>el plan</em></div>
+          <div class="stack">
+            <div class="block beach">10:00 Es Trenc</div>
+            <div class="block boat ghost">16:00 Paseo en barco</div>
+            <div class="block wine ghost">Dom · Bodega</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="story together" aria-labelledby="together-title">
+      <div class="story-copy">
+        <p class="kicker">Planificar juntos</p>
+        <h2 id="together-title">No planifiques para todos. Planifica con todos.</h2>
+        <p>Laura, Pedro y Ana proponen. El grupo construye Mallorca 2027. Invitas por mail o desde la app; cada uno acepta o rechaza con la ficha del plan.</p>
+      </div>
+      <ul class="people" aria-label="Quién propone qué">
+        <li>
+          <span class="avatar" style="--c:#c45c4a">L</span>
+          <div><strong>Laura</strong> vuela desde Londres · propone <em>paseo en barco</em></div>
+        </li>
+        <li>
+          <span class="avatar" style="--c:#3d6b7a">C</span>
+          <div><strong>Cristian</strong> vuela desde Barcelona</div>
+        </li>
+        <li>
+          <span class="avatar" style="--c:#6a8f4e">P</span>
+          <div><strong>Pedro</strong> propone <em>bodega</em></div>
+        </li>
+        <li>
+          <span class="avatar" style="--c:#d4a017">A</span>
+          <div><strong>Ana</strong> propone <em>Es Trenc</em></div>
+        </li>
+        <li>
+          <span class="avatar" style="--c:#7a5c8f">S</span>
+          <div><strong>Sofía</strong> se apunta a la cena</div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="story personal" aria-labelledby="personal-title">
+      <div class="story-copy">
+        <p class="kicker">Planes personales</p>
+        <h2 id="personal-title">Un plan. El de cada uno.</h2>
+        <p>Juntos no significa hacer todo juntos. Cinco amigos, un Mallorca 2027 — y el itinerario de Laura no es el de Cristian.</p>
+      </div>
+      <div class="switcher">
+        <div class="tabs" role="tablist" aria-label="Vista del plan">
+          <button type="button" class="tab is-on" data-view="plan" role="tab" aria-selected="true">El plan</button>
+          <button type="button" class="tab" data-view="laura" role="tab" aria-selected="false">Plan de Laura</button>
+          <button type="button" class="tab" data-view="cristian" role="tab" aria-selected="false">Plan de Cristian</button>
+        </div>
+        <div class="itinerary" id="itinerary">
+          <article data-who="laura"><span>Vie</span><strong>Vuelo LHR → PMI</strong><small>solo Laura · Londres</small></article>
+          <article data-who="cristian"><span>Vie</span><strong>Vuelo BCN → PMI</strong><small>Cristian, Pedro · Barcelona</small></article>
+          <article data-who="laura ana sofia"><span>Sáb</span><strong>Es Trenc</strong><small>Laura, Ana, Sofía</small></article>
+          <article data-who="laura ana sofia pedro"><span>Sáb</span><strong>Paseo en barco</strong><small>4 de 5</small></article>
+          <article data-who="cristian pedro"><span>Dom</span><strong>Bodega</strong><small>Cristian, Pedro</small></article>
+          <article data-who="all"><span>Dom</span><strong>Cena</strong><small>todos</small></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="story coord" aria-labelledby="coord-title">
+      <div class="story-copy">
+        <p class="kicker">Coordinación</p>
+        <h2 id="coord-title">La información correcta, a quien toca.</h2>
+        <p>El barco pasa de las 16:00 a las 17:30. Lo ven quienes van. No hace falta avisar a todo el grupo.</p>
+      </div>
+      <div class="notice-demo" aria-hidden="true">
+        <div class="block boat changed">Paseo en barco<br /><s>16:00</s> 17:30</div>
+        <div class="toast">
+          <strong>Cambio en tu plan</strong>
+          <span>Barco · sáb 13 · 17:30 · Laura, Ana, Pedro, Sofía</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="story context" aria-labelledby="context-title">
+      <div class="story-copy">
+        <p class="kicker">Todo en contexto</p>
+        <h2 id="context-title">Cada cosa tiene su sitio.</h2>
+        <p>Un evento no es un bloque en el calendario. Es el contenedor: cuándo, dónde, quién, reserva, coste, notas.</p>
+      </div>
+      <aside class="event-sheet" aria-label="Ficha de ejemplo">
+        <header>
+          <p>Sáb 13 · 17:30</p>
+          <h3>Paseo en barco</h3>
+        </header>
+        <dl>
+          <div><dt>Dónde</dt><dd>Port de Sóller</dd></div>
+          <div><dt>Quién</dt><dd>Laura, Ana, Pedro, Sofía</dd></div>
+          <div><dt>Reserva</dt><dd>Confirmada · 4 plazas</dd></div>
+          <div><dt>Coste</dt><dd>45 € por persona</dd></div>
+          <div><dt>Notas</dt><dd>Llevar bañador. Punto a las 17:00.</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="story money" aria-labelledby="money-title">
+      <div class="story-copy">
+        <p class="kicker">Dinero</p>
+        <h2 id="money-title">Planifícalo. Gástalo. Repártelo.</h2>
+        <p>Presupuesto del grupo, quién ha puesto qué y quién debe a quién. Planoon <strong>no cobra ni mueve dinero</strong>: anota y cuadra, para que el grupo sepa cómo quedar.</p>
+      </div>
+      <div class="money-card" aria-hidden="true">
+        <p class="money-plan">Mallorca 2027</p>
+        <div class="money-row"><span>Presupuesto</span><strong>4.800 €</strong></div>
+        <div class="money-row"><span>Gastado</span><strong>3.742 €</strong></div>
+        <div class="money-row remain"><span>Queda</span><strong>1.058 €</strong></div>
+        <p class="money-note">Balances entre participantes · sin pasarela de pago</p>
+      </div>
+    </section>
+
+    <section class="story reliability" aria-labelledby="withyou-title">
+      <div class="story-copy">
+        <p class="kicker">Siempre contigo</p>
+        <h2 id="withyou-title">Tu plan va contigo. Las horas son las de cada sitio.</h2>
+        <p>
+          En el aeropuerto o en la cala, Mallorca 2027 sigue a mano: itinerario, horas y sitios, también sin red. Al volver la cobertura, se sincroniza.
+          El vuelo de Laura sale a las <strong>09:35 en Londres</strong>; el de Cristian a las <strong>09:35 en Barcelona</strong>. En Palma, cada llegada es en hora local — no en la del teléfono de quien mira el plan.
+        </p>
+      </div>
+      <div class="reli-visual" aria-hidden="true">
+        <div class="device compact">
+          <div class="device-bar"><strong>Mallorca 2027</strong><em class="off">Sin conexión</em></div>
+          <div class="stack">
+            <div class="block flight">09:35 LHR → PMI · Laura</div>
+            <div class="block beach">Es Trenc</div>
+            <div class="block boat">Paseo en barco · 17:30</div>
+          </div>
+        </div>
+        <div class="tz-pair">
+          <article>
+            <p>Laura · Londres</p>
+            <strong>09:35</strong>
+            <span>sale · hora de Londres</span>
+            <span class="arrives">Palma 13:05</span>
+          </article>
+          <article>
+            <p>Cristian · Barcelona</p>
+            <strong>09:35</strong>
+            <span>sale · hora de Barcelona</span>
+            <span class="arrives">Palma 10:25</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="story share" aria-labelledby="share-title">
+      <div class="story-copy">
+        <p class="kicker">Compartir</p>
+        <h2 id="share-title">Invita. O manda el itinerario.</h2>
+        <p>
+          Los padres de Sofía entran como <strong>invitados</strong> desde la app o el mail: ven Mallorca 2027 sin tener que organizarlo. Eso no comparte la ubicación en tiempo real.
+          Si alguien no usa Planoon, exportas el itinerario (el de Laura, o el del grupo) y lo envías.
+        </p>
+      </div>
+      <div class="share-visual" aria-hidden="true">
+        <div class="share-card">
+          <p class="share-label">En la app</p>
+          <p class="share-title">Invitar a Mallorca 2027</p>
+          <p>Padres de Sofía · observadores</p>
+          <span class="chip">Mail + enlace</span>
+        </div>
+        <div class="share-card">
+          <p class="share-label">Exportar</p>
+          <p class="share-title">Itinerario de Laura</p>
+          <p>Vie vuelo LHR · Sáb Es Trenc y barco · Dom cena</p>
+          <span class="chip">PDF · WhatsApp · imprimir</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="final" aria-labelledby="final-title">
+      <h2 id="final-title">¿Cuál es el plan?</h2>
+      <p>Crea tu primer Planoon. Es gratis.</p>
+      <a class="btn primary lg" href="https://app.planoon.com">Crea un Planoon — es gratis</a>
+    </section>
+
+    <section class="aside-block" id="empresas" aria-labelledby="biz-title">
+      <h2 id="biz-title">Para empresas</h2>
+      <p>
+        Agencias, operadores u hoteles pueden, más adelante, entregar un Planoon
+        en lugar de un paquete de PDFs y mails. Si te encaja, escríbenos.
+        La home sigue siendo para quien organiza con amigos.
+      </p>
+      <a href="mailto:unplanazoo@gmail.com">unplanazoo@gmail.com</a>
+    </section>
+
+    <section class="aside-block" id="acerca" aria-labelledby="about-title">
+      <h2 id="about-title">Acerca de</h2>
+      <p>
+        Planoon es una plataforma para organizar cosas que la gente hace junta.
+        El viaje es un caso natural; el objeto es siempre el mismo: el plan.
+      </p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <a class="wordmark" href="/">planoon</a>
+    <span>© Planoon</span>
+    <a href="https://app.planoon.com">Entrar a la app</a>
+    <span class="muted">Términos y privacidad — próximamente</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

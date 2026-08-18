@@ -14,9 +14,49 @@ Cada entrada nueva debe seguir esta estructura:
 - **Solución aplicada**: qué cambio concreto se hizo.
 - **Notas para el futuro** (opcional): patrón a recordar o “gotcha” a evitar.
 
-## Entradas
+### [2026-08-18] Tests widget — firma de testWidgets perdida al editar
 
-### [2026-08-10] Evento — ampliar notas + Cancelar → Assertion `_dependents.isEmpty`
+- **Contexto:** T277 P18 `plan_state_ui_test.dart`.
+- **Error:** `Expected a declaration, but got ')'` / `Undefined name 'tester'` / `await can only be used in async`.
+- **Causa raíz:** Un StrReplace recortó `testWidgets('…', (tester) async {` y dejó el cuerpo del test suelto en el `group`.
+- **Solución aplicada:** Reescribir el archivo; extraer `_pumpConfirmDialog` para no duplicar el pump.
+- **Notas:** Al editar tests widget, comprobar que cada bloque sigue dentro de `testWidgets(..., (tester) async {`.
+
+### [2026-08-18] Tests widget — const UserModel + DateTime
+
+- **Contexto:** T277 `wd_create_plan_modal_test`.
+- **Error:** `Cannot invoke a non-'const' constructor where a const expression is expected` en `DateTime(2026, 1, 1)`.
+- **Causa raíz:** `const UserModel(...)` exige que todos los argumentos sean const; `DateTime(...)` no lo es.
+- **Solución aplicada:** quitar `const` del `UserModel` de prueba.
+- **Notas:** Fixtures de usuario/plan en tests: no marcar `const` si llevan `DateTime`.
+
+### [2026-08-18] Tests createPlan — No Firebase App DEFAULT
+
+- **Contexto:** T277 `plan_service_create_test` con `FakeFirebaseFirestore`.
+- **Error:** `[core/no-app] No Firebase App '[DEFAULT]' has been created` al construir `PlanService`.
+- **Causa raíz:** Campos que instancian `EventParticipantService` / `InvitationService` / `PermissionService` en el constructor, y esos servicios llaman `FirebaseFirestore.instance`.
+- **Solución aplicada:** Inyección de `firestore` + getters perezosos para servicios que `createPlan` no usa.
+- **Notas:** En tests de servicio, no construir colaboradores que toquen `FirebaseFirestore.instance` hasta que el método bajo prueba los necesite.
+
+### [2026-08-11] iPhone — rechazar invitación permission-denied
+
+- **Contexto:** UA rechaza pending en dispositivo; log `rejectInvitationByPlanId` + `cloud_firestore/permission-denied`.
+- **Causa raíz:** Reject actualizaba `plan_invitations` solo en cliente (rules email/token); accept ya usaba CF Admin SDK. Además `rejectInvitation` hacía `update(toFirestore())` completo en participación.
+- **Solución:** CF `markInvitationRejected` (token o planId); cliente la llama al rechazar; fallback cliente; participación solo `status`+`lastActiveAt`.
+- **Notas:** Tras cambiar CF: `firebase deploy --only functions:markInvitationRejected` (o functions).
+
+### [2026-08-11] iPhone — aceptar invitación no refresca UI (UA)
+
+- **Contexto:** UA acepta en iPhone; UC (web) ve a UA dentro; UA sigue viendo pending aunque mate la app.
+- **Causa raíz:** (1) Si `markInvitationAccepted` CF falla, el doc `plan_invitations` queda `pending` y `getPendingInvitationsByUserId` lo volvía a listar al no haber participaciones pending. (2) El modal no invalidaba `plansStream` / participaciones / campana.
+- **Solución:** excluir planes ya `accepted` al listar invitaciones; fallback cliente a marcar invitation accepted; invalidar providers tras aceptar/rechazar.
+- **Notas:** Pending UI debe basarse en participación aceptada, no solo en invitation doc.
+
+- **Contexto:** `flutter run -d chrome`; lista de planes; paint exception.
+- **Error:** `A borderRadius can only be given on borders with uniform colors` en `wd_plan_card_widget.dart`.
+- **Causa raíz:** `BoxDecoration` con `borderRadius` y `Border` con `top` (naranja) y `bottom` (blanco alpha) de colores distintos.
+- **Solución aplicada:** borde uniforme (`Border.all`) + franja superior de 2px dentro del `Column` cuando hay pending; `clipBehavior: Clip.antiAlias`.
+- **Notas:** En Flutter, `borderRadius` exige lados del `Border` con el mismo color; para acentos por lado usar stack/franja, no Border asimétrico.
 
 - **Contexto:** Formulario de evento → Notas → Ampliar → Cancelar.
 - **Error:** `Assertion failed: ... framework.dart ... _dependents.isEmpty is not true`.
@@ -657,4 +697,20 @@ Cada entrada nueva debe seguir esta estructura:
 - **Causa raíz**: al regenerar `_buildGeneralTabScroll`, el campo real es `_selectedStartMinute`.
 - **Solución aplicada**: corregir el identificador en el `DateTime` de la fila Hora.
 - **Notas**: revisar nombres de estado (`_selectedStartMinute` / `_selectedDurationMinutes`) antes de pegar bloques grandes del formulario.
+
+### [2026-08-16] Flutter web — `web_entrypoint.dart` File not found en hot restart
+
+- **Contexto**: `flutter run -d chrome`; hot restart tras sesión larga / app en background.
+- **Error**: `org-dartlang-app:/web_entrypoint.dart: Error when reading ... File not found`.
+- **Causa raíz**: sesión de debug web corrupta/stale; no es un archivo del repo.
+- **Solución aplicada**: no tocar código; parar el `flutter run` (q) y volver a lanzar `flutter run -d chrome` (cold start). Si persiste: `flutter clean` y de nuevo.
+- **Notas**: en Chrome preferir restart limpio cuando hot restart falla con rutas `org-dartlang-app:`.
+
+### [2026-08-16] iOS Xcode — `GTMAppAuth_GTMAppAuth.bundle: No such file or directory`
+
+- **Contexto**: build/run iPhone tras `flutter clean` / pods incompletos; Flutter había pasado plugins a **Swift Package Manager** dejando CocoaPods solo con el pod `Flutter`.
+- **Error**: `.../build/ios/iphoneos/GTMAppAuth_GTMAppAuth.bundle: No such file or directory`
+- **Causa raíz**: mezcla SPM + CocoaPods; carpeta `ios/Pods` sin dependencias reales (Google Sign-In / GTMAppAuth).
+- **Solución aplicada**: `flutter config --no-enable-swift-package-manager`; `pod deintegrate`; borrar `Pods`/`Podfile.lock`; `flutter pub get` + `pod install` → 52 pods incl. GTMAppAuth. Luego `flutter run` desde terminal (no confiar en Xcode con DerivedData vieja).
+- **Notas**: si vuelve el error, no mezclar SPM y Pods; preferir CocoaPods en este repo hasta migrar SPM del todo. Limpiar DerivedData si Xcode insiste.
 

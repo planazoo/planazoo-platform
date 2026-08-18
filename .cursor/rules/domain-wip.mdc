@@ -1,0 +1,15 @@
+---
+description: Orden definitivo por dominio — 1 WIP
+alwaysApply: true
+---
+
+# Dominios / procesos
+
+- Puerta de entrada: `docs/flujos/MAPA_FLUJOS.md` (proceso → trabajo → prueba → referencia).
+- **Orden definitivo:** `docs/flujos/ORDEN_POR_DOMINIOS.md` (#1→#9). Seguirlo siempre.
+- **WIP:** como mucho **un dominio de proceso** a la vez. Dominio actual: **#1** participantes / altas-bajas (`DIAGRAMA_ALTAS_BAJAS_PLAN.md`, T259) hasta cerrar o aparcar.
+- Al cerrar/aparcar el WIP → pasar al **siguiente número** del orden.
+- Excepción: solo bug crítico o acuerdo explícito de saltar.
+- Tareas: usar `TASKS.md` § **Índice por dominio**; citá el contrato en la fila.
+- Hallazgos: `LISTA_PUNTOS_CORREGIR_APP.md`. No usar `docs/flujos/archivo/` como verdad viva.
+- No inventar Mermaid «Acordado» sin evidencia; no marcar tareas completadas sin confirmación del usuario.

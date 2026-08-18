@@ -12,12 +12,34 @@ import 'plan_event_accent_colors.dart';
 import 'guarantee_payment_sync.dart';
 
 class EventService {
+  EventService({
+    FirebaseFirestore? firestore,
+    EventParticipantService? eventParticipantService,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _eventParticipantServiceOverride = eventParticipantService;
+
   static const String _collectionName = 'events';
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final PlanParticipationService _participationService = PlanParticipationService();
-  final EventParticipantService _eventParticipantService = EventParticipantService();
-  final EventSyncService _eventSyncService = EventSyncService();
-  final GuaranteePaymentSync _guaranteePaymentSync = GuaranteePaymentSync();
+  final FirebaseFirestore _firestore;
+  final EventParticipantService? _eventParticipantServiceOverride;
+  PlanParticipationService? _lazyParticipationService;
+  EventParticipantService? _lazyEventParticipantService;
+  EventSyncService? _lazyEventSyncService;
+  GuaranteePaymentSync? _lazyGuaranteePaymentSync;
+
+  PlanParticipationService get _participationService =>
+      _lazyParticipationService ??=
+          PlanParticipationService(firestore: _firestore);
+
+  EventParticipantService get _eventParticipantService =>
+      _eventParticipantServiceOverride ??
+      (_lazyEventParticipantService ??=
+          EventParticipantService(firestore: _firestore));
+
+  EventSyncService get _eventSyncService =>
+      _lazyEventSyncService ??= EventSyncService();
+
+  GuaranteePaymentSync get _guaranteePaymentSync =>
+      _lazyGuaranteePaymentSync ??= GuaranteePaymentSync();
 
   /// Excluye documentos de la colección 'events' que son alojamientos (typeFamily == 'alojamiento').
   static bool _isEventDoc(DocumentSnapshot doc) {
@@ -514,17 +536,14 @@ class EventService {
         .toList();
   }
 
-  // Eliminar todos los eventos de un plan
-  /// 
-  /// Elimina todos los eventos de un plan y sus datos relacionados.
-  /// 
-  /// NOTA: Los event_participants se eliminan antes desde PlanService.deletePlan(),
-  /// pero este método también los elimina por si se llama directamente.
-  /// 
-  /// Orden de eliminación:
-  /// 1. event_participants de cada evento
-  /// 2. Copias de eventos base
-  /// 3. Eventos del plan
+  static bool _isAccommodationDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>?;
+    return data != null && data['typeFamily'] == 'alojamiento';
+  }
+
+  /// Eliminar todos los documentos de `events` del plan (eventos y alojamientos).
+  ///
+  /// También borra event_participants y copias de eventos base.
   Future<bool> deleteEventsByPlanId(String planId) async {
     try {
       final querySnapshot = await _firestore
@@ -532,34 +551,44 @@ class EventService {
           .where('planId', isEqualTo: planId)
           .get();
 
-      final eventDocs = querySnapshot.docs.where(_isEventDoc).toList();
-      if (eventDocs.isEmpty) {
-        return true; // No hay eventos (solo alojamientos u otros), no hay nada que eliminar
+      if (querySnapshot.docs.isEmpty) {
+        return true;
       }
 
-      // Eliminar datos relacionados de cada evento antes de eliminar los eventos
+      final eventDocs = querySnapshot.docs.where(_isEventDoc).toList();
+      final accommodationDocs =
+          querySnapshot.docs.where(_isAccommodationDoc).toList();
+
+      if (eventDocs.isEmpty && accommodationDocs.isEmpty) {
+        return true;
+      }
+
       for (final doc in eventDocs) {
         final eventId = doc.id;
         final eventData = doc.data();
         final isBaseEvent = eventData['isBaseEvent'] as bool? ?? false;
-        
-        // 1. Eliminar event_participants del evento
+
         await _eventParticipantService.deleteAllParticipants(eventId);
-        
-        // 2. Si es un evento base, eliminar sus copias
+
         if (isBaseEvent) {
           await _eventSyncService.deleteEventCopies(eventId);
         }
       }
 
-      // 3. Eliminar todos los eventos en batch (no alojamientos)
       final batch = _firestore.batch();
       for (final doc in eventDocs) {
         batch.delete(doc.reference);
       }
+      for (final doc in accommodationDocs) {
+        batch.delete(doc.reference);
+      }
       await batch.commit();
-      
-      LoggerService.database('All events deleted for plan: $planId (${eventDocs.length} events)', operation: 'DELETE');
+
+      LoggerService.database(
+        'All events/accommodations deleted for plan: $planId '
+        '(${eventDocs.length} events, ${accommodationDocs.length} accommodations)',
+        operation: 'DELETE',
+      );
       return true;
     } catch (e) {
       LoggerService.error('Error deleting events by planId', context: 'EVENT_SERVICE', error: e);

@@ -5,11 +5,14 @@ import '../models/plan_permissions.dart';
 
 /// Servicio para gestionar permisos de usuarios en planes
 class PermissionService {
-  static final PermissionService _instance = PermissionService._internal();
+  static final PermissionService _instance =
+      PermissionService._internal(FirebaseFirestore.instance);
   factory PermissionService() => _instance;
-  PermissionService._internal();
+  factory PermissionService.forFirestore(FirebaseFirestore firestore) =>
+      PermissionService._internal(firestore);
+  PermissionService._internal(this._firestore);
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
   
   // Cache de permisos para optimización
   final Map<String, PlanPermissions> _permissionsCache = {};

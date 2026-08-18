@@ -26,6 +26,7 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_styles.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
+import 'package:unp_calendario/widgets/dialogs/summary_preview_modals.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/utils/constants.dart';
@@ -56,6 +57,9 @@ class CalendarMobilePage extends ConsumerStatefulWidget {
   final VoidCallback? onPreviousDayGroup;
   final VoidCallback? onNextDayGroup;
 
+  /// T276: preview pending — sin crear/editar (FAB, doble tap, header alojamiento).
+  final bool readOnly;
+
   const CalendarMobilePage({
     super.key,
     required this.plan,
@@ -65,6 +69,7 @@ class CalendarMobilePage extends ConsumerStatefulWidget {
     this.onVisibleDaysChanged,
     this.onPreviousDayGroup,
     this.onNextDayGroup,
+    this.readOnly = false,
   });
 
   @override
@@ -283,7 +288,9 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
       columns: columns,
       plan: widget.plan,
       activeUserId: _selectedPerspectiveUserId ?? _currentUserId,
-      onShowNewAccommodationDialog: _showNewAccommodationDialog,
+      onShowNewAccommodationDialog: widget.readOnly
+          ? (_) {}
+          : _showNewAccommodationDialog,
       onShowAccommodationDialog: _showAccommodationDialog,
       onShowParticipantManagementDialog: _showParticipantManagementDialog,
       shouldShowAccommodationInTrack: _shouldShowAccommodationInTrack,
@@ -320,10 +327,12 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         return Expanded(
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onDoubleTap: () {
-              final date = widget.plan.dateForPlanDayIndex(actualDayIndex);
-              _showNewEventDialogForParticipant(date, hourIndex, participant);
-            },
+            onDoubleTap: widget.readOnly
+                ? null
+                : () {
+                    final date = widget.plan.dateForPlanDayIndex(actualDayIndex);
+                    _showNewEventDialogForParticipant(date, hourIndex, participant);
+                  },
             child: Stack(
               children: [
                 AnimatedContainer(
@@ -647,6 +656,13 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   }
 
   void _showEventDialog(Event event) async {
+    if (widget.readOnly) {
+      showEventSummaryPreviewModal(
+        context: context,
+        event: event,
+      );
+      return;
+    }
     Event eventToShow = event;
     if (event.id != null) {
       final fresh = await ref.read(eventServiceProvider).getEventByIdFromServer(event.id!);
@@ -822,6 +838,13 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   }
 
   void _showAccommodationDialog(Accommodation accommodation) {
+    if (widget.readOnly) {
+      showAccommodationSummaryPreviewModal(
+        context: context,
+        accommodation: accommodation,
+      );
+      return;
+    }
     if (widget.plan.id == null) return;
     showDialog(
       context: context,
@@ -1003,34 +1026,38 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
           buildDataRows: _buildDataRows,
           buildEventsLayer: _buildEventsLayer,
           onHorizontalSwipeEnd: _handleHorizontalSwipe,
-          onAccommodationHeaderTap: () {
-            // Usar el mismo flujo móvil de creación de alojamientos.
-            final visibleDays = _getColumnsToShow();
-            if (visibleDays.isNotEmpty) {
-              final firstDay = visibleDays.first as Map<String, dynamic>;
-              final dayIndex = firstDay['index'] as int;
-              final date = widget.plan.dateForPlanDayIndex(dayIndex);
-              _showNewAccommodationDialog(date);
-            } else {
-              _showNewAccommodationDialog(widget.plan.startDate);
-            }
-          },
+          onAccommodationHeaderTap: widget.readOnly
+              ? () {}
+              : () {
+                  // Usar el mismo flujo móvil de creación de alojamientos.
+                  final visibleDays = _getColumnsToShow();
+                  if (visibleDays.isNotEmpty) {
+                    final firstDay = visibleDays.first as Map<String, dynamic>;
+                    final dayIndex = firstDay['index'] as int;
+                    final date = widget.plan.dateForPlanDayIndex(dayIndex);
+                    _showNewAccommodationDialog(date);
+                  } else {
+                    _showNewAccommodationDialog(widget.plan.startDate);
+                  }
+                },
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            final tracks = _getFilteredTracks();
-            if (tracks.isEmpty) return;
-            final d = NewEventFromButtonDefaults.forPlan(widget.plan);
-            _showNewEventDialogForParticipant(
-              d.date,
-              d.hour,
-              tracks.first,
-              initialStartMinute: d.startMinute,
-            );
-          },
-          backgroundColor: AppColorScheme.color2,
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
+        floatingActionButton: widget.readOnly
+            ? null
+            : FloatingActionButton(
+                onPressed: () {
+                  final tracks = _getFilteredTracks();
+                  if (tracks.isEmpty) return;
+                  final d = NewEventFromButtonDefaults.forPlan(widget.plan);
+                  _showNewEventDialogForParticipant(
+                    d.date,
+                    d.hour,
+                    tracks.first,
+                    initialStartMinute: d.startMinute,
+                  );
+                },
+                backgroundColor: AppColorScheme.color2,
+                child: const Icon(Icons.add, color: Colors.white),
+              ),
       ),
     );
   }

@@ -2,7 +2,7 @@
 
 > Visión de **proceso** (qué hace cada persona), sin detalles técnicos.  
 > **Sistema:** [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md) · Histórico prosa: [`archivo/FLUJO_GESTION_PARTICIPANTES.md`](./archivo/FLUJO_GESTION_PARTICIPANTES.md)  
-> **Estado:** borrador vivo — núcleo altas/bajas **probado** (Ago 2026); quedan POR HACER (§1.2 resto, §1.3, T268, Universal Links nativos).
+> **Estado:** borrador vivo — núcleo altas/bajas **probado** (Ago 2026); T269 ✅ T276 ✅; T268 automática **aplazada**; quedan POR HACER (§1.2 resto, Universal Links nativos).
 
 **Leyenda del diagrama**
 - Cajas normales = **ya implementado**
@@ -42,22 +42,20 @@ flowchart TD
   validar -->|No| avisoMuerto[Mensaje claro + borrar avisos<br/>de esa invitación]
   modal -->|Acepta| dentro[Entra en el plan<br/>Se borran avisos de esa invitación]
   modal -->|Rechaza| fuera[Sigue como rechazado / fuera<br/>Se borran avisos de esa invitación]
-  modal -->|Cierra sin decidir| aviso
+  modal -->|Decidir más tarde / cierra| aviso
   dentro --> avisaOrg[Aviso al organizador:<br/>campana + push]
   fuera --> avisaOrg
 
-  aviso -.->|Más de 24 h sin contestar| recordatorio[POR HACER: recordatorio diario<br/>al invitado T268]
-  recordatorio --> canalesRec[POR HACER: actualizar campana<br/>+ push + email]
-  canalesRec --> yaDecidio{¿Ya ha decidido?}
-  yaDecidio -->|No| recordatorio
-  yaDecidio -->|Sí| validar
+  aviso -.->|Organizador recuerda a mano| reenviarManual[Reenviar invitación<br/>campana + push + email]
+  reenviarManual --> aviso
 
   classDef todo fill:#5b3a1a,stroke:#e6a23c,stroke-width:2px,color:#fff
-  class aviso,decideComo,validar,avisoMuerto,modal,avisaOrg,recordatorio,canalesRec,yaDecidio todo
+  class aviso,decideComo,validar,avisoMuerto,modal,avisaOrg todo
 ```
 
-> **Nota de leyenda:** recordatorio T268 / validación §1.2 completa / deep link §2 = POR HACER.  
-> Participación `pending`, aceptar/rechazar, campana+push+email (registrado), modal al abrir, reenviar sin duplicar campana, salir/expulsar con avisos: **implementado** (Ago 2026). Al aceptar se comprueba si el plan admite altas.
+> **Nota de leyenda:** validación §1.2 completa / deep link nativo §2 = POR HACER.  
+> **Acordado (Ago 2026):** **no** recordatorios automáticos diarios (T268 aplazada — agobia al invitado). El organizador **recuerda a mano** con «Reenviar» (caso 2 / T224). Un sistema automático queda como idea futura, fuera de WIP.  
+> Participación `pending`, aceptar/rechazar, campana+push+email (registrado), modal al abrir, reenviar sin duplicar campana, salir/expulsar con avisos, preview pending (T276): **implementado** (Ago 2026). Al aceptar se comprueba si el plan admite altas.
 
 **Casos al lanzar la invitación**
 
@@ -73,11 +71,13 @@ flowchart TD
 **Después de responder**
 - Acepta → dentro del plan · se **borran** avisos de esa invitación · organizador: campana + push.  
 - Rechaza → visible como «fuera» · se **borran** avisos de esa invitación · organizador: campana + push · se puede volver a invitar (caso 3).  
-- Cierra sin decidir → avisos siguen · al reabrir la app (o tocar aviso) vuelve el modal.
+- Cierra / **«Decidir más tarde»** → avisos siguen · al reabrir la app (otra sesión) o tocar aviso vuelve el modal / buzón.
 
 **Mientras no responde**
-- Cada 24 h: recordatorio (actualizar campana + push + email) hasta decidir → **T268 (por hacer)**.
-- Al abrir la app con pendientes → modal automático → ✅ (§1.1 decisión 2).
+- **No** hay recordatorio automático periódico (**Acordado** Ago 2026 — evita agobiar).  
+- El **organizador** puede **reenviar** la invitación cuando quiera (campana + push + email; sin duplicar ítem de campana) → ✅ caso 2 / T224.  
+- Al abrir la app con pendientes → modal / buzón → ✅ (§1.1 decisión 2).  
+- *(Futuro, fuera de WIP:)* posibles recordatorios automáticos opcionales — no ahora.
 
 **Efectos en datos (borrador — para ver el formato)**
 
@@ -91,7 +91,7 @@ flowchart TD
 | 6. Es el organizador | Sin escritura |
 | Acepta | `plan_participations.status` → `accepted` · **borra** avisos de esa invitación · campana + push al organizador |
 | Rechaza | `plan_participations.status` → `rejected` (sigue visible) · **borra** avisos de esa invitación · campana + push al organizador |
-| Recordatorio 24 h (T268) | Sin cambio de `status` · push + email (+ actualizar campana) *(por hacer)* |
+| Recordatorio 24 h automático (T268) | **No implementar ahora** · aplazada |
 | Al abrir la app con pendientes | Muestra modal de decisión *(por hacer)* · antes valida §1.2 |
 | Participante sale (§3) | **Borra** participación · campana + push al organizador (`participantLeft`) — ✅ LISTA 119 |
 | Organizador expulsa (§3) | **Borra** participación · campana + push al expulsado (`participantRemoved`) — ✅ LISTA 120 |
@@ -101,7 +101,7 @@ flowchart TD
 Contrato de **cómo avisamos** y **qué pasa con esos avisos**.  
 El §1 dice *cuándo* se invita; aquí, *cómo se entera* y *cómo decide*.  
 **Antes de abrir el modal de decisión** → validar §1.2 (aviso / plan / invitación aún válidos).  
-**Decisiones 1–5: acordadas** (ver tabla abajo). Email registrado ✅; quedan T268 y deep link §2.
+**Decisiones 1–5: acordadas** (ver tabla abajo). Email registrado ✅; deep link nativo §2 = T259. Recordatorio auto T268 **aplazada**.
 
 ```mermaid
 flowchart TD
@@ -249,7 +249,7 @@ flowchart TD
 | U | Plan **inaccesible** por permisos tras el aviso | «No tienes acceso a este plan» · borrar avisos · no crash | Gap |
 | V | Caducidad 7 días: reloj cliente vs servidor | Decidir **siempre por reloj de servidor** (`expiresAt` / CF) | A reforzar |
 | W | App reinstalada: push viejo perdido, queda **email** | Abrir email → misma validación §1.2; campana se reconstruye desde datos | Parcial (email ✅; deep link §2) |
-| X | Varios recordatorios T268 y responde a uno viejo | Revalidar; si ya decidió → B/C; si sigue pending → A; limpiar avisos de esa invitación | POR HACER con T268 |
+| X | Varios reenvíos y responde a uno viejo | Revalidar; si ya decidió → B/C; si sigue pending → A; limpiar avisos de esa invitación | Parcial con reenviar; reforzar con §1.2 |
 | Y | Notificaciones del SO desactivadas | Sigue email + campana + **modal al abrir app** (§1.1); no depender solo del push | Parcial |
 | Z | Ítem de campana “leído” pero sigue `pending` (o al revés) | La acción depende del **estado** participación/invitación, no de `isRead`; al decidir o invalidar → borrar | Gap |
 | AA | Correo **viejo** tras rechazo + **re-invitación** nueva | Aviso/enlace viejo → C o E; solo el de la invitación **actual** pending → A | Gap |
@@ -262,7 +262,7 @@ flowchart TD
 - Tras mensaje de caso inválido (B–I y J–AC según aplique): **borrar** avisos de esa invitación.
 - Antes de confirmar aceptar/rechazar en el modal: **revalidar** (cubre P, Q, O, N).
 - Si ya era `accepted` (B/N): no re-aceptar; ideal navegar al plan.
-- Recordatorios T268 **solo** si sigue siendo caso A; si pasa a inválido, dejar de recordar y limpiar.
+- Recordatorios **automáticos** aplazados; reenvíos manuales **solo** si sigue siendo caso A; si pasa a inválido, no reenviar y limpiar.
 - Identidad (J, K, M): **nunca** aplicar una invitación a la sesión equivocada.
 
 **Efectos en datos (casos inválidos / carrera)**
@@ -274,36 +274,39 @@ flowchart TD
 | O, P, Q | Operación idempotente + revalidación al confirmar |
 | A (válido) | Flujo normal §1 / §1.1 |
 
-### 1.3 Espacio para gestionar invitaciones (propuesta)
+### 1.3 Espacio para gestionar invitaciones
 
-Las invitaciones son la puerta de entrada al producto: no pueden vivir solo en un push fugaz o un ítem perdido en la campana general.
+Las invitaciones son la puerta de entrada al producto: no pueden vivir solo en un push fugaz.
 
-**Cómo lo veo**
-- **Sí hace falta un sitio claro** «Mis invitaciones» (sección fija en Inicio/Dashboard o entrada desde campana): lista de pendientes accionables, con aceptar / rechazar / ver detalle del plan.
-- La **campana** sigue siendo el canal de aviso (y de historial corto); el **buzón de invitaciones** es la bandeja de trabajo.
-- El **modal al abrir la app** (§1.1) no sustituye ese espacio: es un atajo cuando hay pendientes; si hay varias, mejor ir a la lista.
-- En Participantes (lado organizador) ya se gestionan las enviadas; el hueco fuerte es el **lado invitado**.
+**Acuerdos UX (Ago 2026 — T269)**
+
+| # | Tema | Acuerdo |
+|---|------|---------|
+| 1 | Dónde | Entrada desde la **campana** (filtro / atajo «Mis invitaciones»), no sección fija en Dashboard |
+| 2 | Contenido v1 | Solo **pendientes accionables** (caso A §1.2). Sin historial de resueltas |
+| 3 | Varias pendientes | Si hay **1** accionable al abrir app → modal (§1.1). Si hay **varias** → abrir campana en «Mis invitaciones» (sin encadenar modales) |
 
 ```mermaid
 flowchart LR
   avisos[Push / email / campana] --> validar[Validar §1.2]
-  validar -->|Accionable| buzon[Mis invitaciones]
+  validar -->|Accionable| buzon[Mis invitaciones<br/>filtro campana]
   validar -->|Inválido| msg[Mensaje + limpiar]
-  abrirApp[Abrir app] --> buzon
-  buzon --> modal[Aceptar / rechazar]
+  abrirApp[Abrir app] --> count{¿Cuántas accionables?}
+  count -->|1| modal[Modal aceptar / rechazar]
+  count -->|varias| buzon
+  buzon --> modal
   modal --> planes[Mis planes]
 ```
 
-**Contenido mínimo del buzón (invitado)**
+**Contenido del buzón (invitado)**
 
 | Elemento | Notas |
 |----------|--------|
-| Lista de pendientes (caso A) | Plan, quién invita, fecha, caducidad |
-| Acciones | Aceptar / Rechazar (con revalidación §1.2) |
+| Lista pendientes accionables | Plan, acciones aceptar / rechazar (revalidación §1.2) |
 | Vacío | Copy claro |
-| Opcional: recientes resueltas | Aceptada / Rechazada / Caducada (solo lectura, pocos días) |
+| Fuera de v1 | Recientes resueltas |
 
-**Hoy:** hay piezas (campana unificada, badges, `userPendingInvitationsProvider` incompleto para invites directas). **No** hay un buzón de primera clase para el invitado → **POR HACER** (acordar UX e implementar).
+**Hoy:** campana unificada + modal una vez por sesión. T269 añade filtro «Mis invitaciones» y la regla 1 vs varias al abrir.
 
 ---
 
@@ -324,7 +327,7 @@ flowchart TD
 - El enlace caduca a los 7 días (caso E del §1.2).
 - Si el email ya tenía una invitación pendiente a ese plan: se **reenvía** (cancela la anterior + nuevo token/email).
 - Plan en marcha / finalizado / cancelado: mismos mensajes F/G/H del §1.2.
-- **Hoy (web):** ruta `/invitation/{token}` → `InvitationPage` (pública). Sin sesión → login/registro (K); email de sesión ≠ invitado → aviso (J); `?action=accept|reject` ejecuta tras login correcto.
+- **Hoy (web):** ruta `/invitation/{token}` → `InvitationPage` (pública). Sin sesión → login/registro (K); email de sesión ≠ invitado → aviso (J); `?action=accept|reject` → progreso («Aceptando…») y entra al plan **sin** pantalla «¡Has sido invitado!» (esa ficha queda para enlace sin action / decidir en app). Mail CF incluye ficha del plan (nombre, descripción, fechas).
 - **Hoy (nativo iOS/Android):** Universal Links / App Links **aún no** (T259); el mail abre el navegador → flujo web.
 - Nuevas invitaciones: doc ID = token (lectura pública si `pending`).
 
@@ -362,16 +365,38 @@ flowchart TD
 
 Validación: A2+B2+B3 + aviso diálogo + lista en notificación al organizador ✅ 2026-08-10.
 
+### 1.5 Qué ve un invitado **pending** (antes de aceptar)
+
+**Acordado (Ago 2026)**
+
+Un pending **puede ver un preview en solo lectura** del plan para decidir con información.  
+**No** es miembro pleno ni observador hasta aceptar.
+
+| Área | Pending | Tras aceptar |
+|------|---------|--------------|
+| Info plan (nombre, fechas, descripción, imagen) | ✅ lectura | ✅ |
+| Calendario / resumen | ✅ lectura | ✅ (+ edición según rol) |
+| Chat | ❌ | Según rol |
+| Pagos | ❌ | Según rol |
+| Editar eventos / alojamientos | ❌ | Según rol |
+| Notas personales / preparación editable | ❌ | Según rol |
+| Invitar a otros | ❌ | Según rol |
+
+**UX:** banner fijo tipo *«Estás invitado. Acepta para participar.»* + acciones aceptar / rechazar / decidir más tarde (mismo criterio que el modal §1.3).
+
+**Implementación:** T276 ✅ (móvil + web, Ago 2026).
+
 ---
 
 ## 4. Checklist de acuerdo
 
-- [x] §1 invitar registrado (casos 1–6) — **probado** Ago 2026; falta T268  
-- [x] §1.1 avisos — decisiones 1–5 **acordadas e implementadas** (email registrado ✅; queda T268)  
+- [x] §1 invitar registrado (casos 1–6) — **probado** Ago 2026; recordatorio auto T268 **aplazada** (manual = reenviar ✅)  
+- [x] §1.1 avisos — decisiones 1–5 **acordadas e implementadas** (email registrado ✅; sin cron diario)  
 - [ ] §1.2 acceso por aviso inválido / carrera / identidad (casos A–AC) — parcial (A–I ✅; J/K en deep link web ✅)  
-- [ ] §1.3 buzón «Mis invitaciones» (lado invitado)  
+- [x] §1.3 buzón «Mis invitaciones» — **T269 ✅** (campana + solo accionables + 1→modal / N→lista; QA Ago 2026)  
 - [x] §1.4 efectos en eventos/alojamientos/tracks al alta/baja — **LISTA 121** A2+B2+B3 ✅  
+- [x] §1.5 preview pending (solo lectura) — **T276 ✅** (móvil + web desktop)  
 - [x] §2 invitar por email sin cuenta — deep link **web** ✅ (`InvitationPage`); nativo Universal Links = T259  
 - [x] §3 bajas básicas — salir / expulsar / cancelar pendiente + avisos 119/120 ✅; aviso al cancelar pendiente a acordar; limpieza profunda eventos = 121  
 
-**Estado:** `Borrador vivo` — núcleo altas/bajas + email + deep link web; quedan §1.2 resto, §1.3, T268, Universal Links nativos.
+**Estado:** `Borrador vivo` — T269 ✅ T276 ✅; T268 auto **aplazada**; quedan §1.2 resto, Universal Links nativos (T259).

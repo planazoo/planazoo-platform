@@ -29,18 +29,18 @@ Solo después de esta comprobación (y de actualizar este prompt si hace falta) 
 - `lib/shared/` – servicios, utils, permisos, FCM, providers de ayuda.
 - `lib/l10n/` – `app_es.arb`, `app_en.arb` + generados. **Textos visibles: AppLocalizations** (CONTEXT.md §6).
 
-**Estado reciente (marzo 2026, referencia):** **`docs/testing/LISTA_PUNTOS_CORREGIR_APP.md`** es la tabla viva de nuevos hallazgos; **infra iOS** (push / deep links) se sigue en **`docs/testing/ACCIONES_PENDIENTES_APP.md`** y `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` (A1/A2). Estado personal en plan: `docs/ux/ESTADO_USUARIO_EN_EL_PLAN.md`.
+**Estado reciente (ago 2026):** trabajo por **dominios** → [`docs/flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md) + [`ORDEN_POR_DOMINIOS.md`](../flujos/ORDEN_POR_DOMINIOS.md). **`docs/testing/LISTA_PUNTOS_CORREGIR_APP.md`** = hallazgos vivos. Infra iOS push/deep links: `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` (A1/A2). Histórico ACCIONES: `docs/testing/archivo/`. Estado personal en plan: `docs/ux/ESTADO_USUARIO_EN_EL_PLAN.md`.
 
 **Documentación (`docs/`):**
 - **README.md** – Índice: Guías, Flujos, Producto, Especificaciones, Arquitectura, UX, Configuración, Tareas, Testing, Admin.
 - **configuracion/CONTEXT.md** – Normas de colaboración (doc viva, l10n, Estilo Base, referencias GUIA_UI / GUIA_SEGURIDAD).
-- **configuracion/** – Además de los ya citados: **CHECKLIST_IOS_PUSH_DEEPLINKS.md**, **LOG_ERRORES_AUTOFIX.md** (bucle errores IA), TESTING_CHECKLIST, EVALUACION_PRIMERAS_PRUEBAS_FAMILIA, REVISION_IOS_VS_WEB, DOCS_AUDIT, NOMENCLATURA_UI, ONBOARDING_IA, etc.
+- **configuracion/** – Además: **CHECKLIST_IOS_PUSH_DEEPLINKS.md**, **LOG_ERRORES_AUTOFIX.md**, **TERMINALES_DEV.md**, TESTING_CHECKLIST, EVALUACION_PRIMERAS_PRUEBAS_FAMILIA, REVISION_IOS_VS_WEB, DOCS_AUDIT, NOMENCLATURA_UI, ONBOARDING_IA, etc.
 - **guias/** – GUIA_UI, GUIA_SEGURIDAD, GESTION_TIMEZONES, PROMPT_BASE, PROMPT_INICIO_CHAT, **PROMPT_TRABAJO_AUTONOMO** (este archivo).
-- **flujos/** – CRUD planes/eventos/alojamientos, FLUJO_ESTADOS_PLAN, participantes, pagos, invitaciones.
+- **flujos/** – **MAPA_FLUJOS**, **ORDEN_POR_DOMINIOS**, contrato `DIAGRAMA_ALTAS_BAJAS_PLAN`, stubs `FLUJO_*`, histórico en `flujos/archivo/`.
 - **especificaciones/** – CALENDAR_CAPABILITIES, PLAN_FORM_FIELDS, EVENT_FORM_FIELDS, etc.
-- **tareas/** – TASKS.md, COMPLETED_TASKS.md, README_TAREAS, especificaciones Txxx.
-- **testing/** – INICIO_PRUEBAS_DIA1, **LISTA_PUNTOS_CORREGIR_APP** (nuevos hallazgos), **ACCIONES_PENDIENTES_APP** (infra iOS), PLAN_PRUEBAS_E2E_TRES_USUARIOS, REGISTRO_OBSERVACIONES, TESTING_OFFLINE_FIRST, SISTEMA_PRUEBAS_LOGICAS.
-- **Raíz docs/** – `PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md` (sincronización código/docs).
+- **tareas/** – TASKS.md (**índice por dominio**), COMPLETED_TASKS.md, README_TAREAS, especificaciones Txxx.
+- **testing/** – LISTA_PUNTOS_CORREGIR_APP, archivo/, INICIO_PRUEBAS_DIA1, PLAN_PRUEBAS_E2E, REGISTRO_OBSERVACIONES, TESTING_OFFLINE_FIRST, SISTEMA_PRUEBAS_LOGICAS.
+- **archivo/** (docs) – propuestas históricas (p. ej. optimización/sincronización).
 - **arquitectura/**, **ux/**, **producto/**, **admin/**, **design/** – según índice en docs/README.md.
 
 **Tests:** `test/` (unit/widget); datos `tests/*.json`; scripts lógicos opcionales. Sin `integration_test/` en repo. `analysis_options.yaml` → flutter_lints.

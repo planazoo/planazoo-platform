@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "5X78V2WTNZ.com.mycompany.myplanazoo",
+        "paths": [
+          "/invitation/*"
+        ]
+      }
+    ]
+  }
+}

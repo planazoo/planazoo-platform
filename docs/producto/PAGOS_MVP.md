@@ -8,7 +8,8 @@
 
 ## 1. Objetivo
 
-Retomar el tema de **pagos** con la intención de que formen parte del **primer MVP**. Aquí se recoge qué hay ya hecho, qué falta por decidir y qué pasos dar antes de codificar.
+Retomar el tema de **pagos** (= **reparto / cuadre de gastos entre participantes**: quién ha puesto qué, balances, quién debe a quién) con la intención de que formen parte del **primer MVP**.  
+**No** se trata de cobros con tarjeta, pasarela ni movimiento de dinero a través de la app. Aquí se recoge qué hay ya hecho, qué falta por decidir y qué pasos dar antes de codificar.
 
 ---
 
@@ -82,7 +83,7 @@ Tanto presupuesto (T101) como sistema de pagos (T102) tienen base implementada; 
 
 ### 3.5 Prioridad frente a otras tareas MVP
 
-- T150 (Definición de MVP y roadmap) es donde encajar “pagos en el primer MVP” de forma explícita.
+- T150 (Definición de MVP y roadmap) es donde encajar “pagos en el primer MVP” de forma explícita → ver [`TIMELINE_LANZAMIENTO.md`](./TIMELINE_LANZAMIENTO.md) fase 2.
 - Decidir orden respecto a otras funcionalidades MVP (legal, cookies, notificaciones, etc.) para no bloquear lanzamiento.
 
 ---

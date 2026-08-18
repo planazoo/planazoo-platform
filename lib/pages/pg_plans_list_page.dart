@@ -21,6 +21,8 @@ import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/features/chat/presentation/providers/chat_providers.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
 import 'package:unp_calendario/widgets/dialogs/wd_plans_with_unread_chat_modal.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/widgets/plan/pending_invitation_on_launch.dart';
 
 /// Página de lista de planes para móviles (iOS/Android)
@@ -41,7 +43,6 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
   static const double _aBorderStrong = 0.12;
 
   List<Plan> _allPlans = [];
-  List<Plan> _filteredPlans = [];
   String _searchQuery = '';
   String _selectedFilter = 'todos'; // 'todos', 'estoy_in', 'pendientes', 'cerrados'
   final TextEditingController _nameController = TextEditingController();
@@ -69,42 +70,69 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
   void _filterPlans(String query) {
     setState(() {
       _searchQuery = query;
-      _applyFilters();
     });
   }
 
-  void _applyFilters() {
-    List<Plan> filtered = List.from(_allPlans);
+  /// Misma lógica que el dashboard web: todos / estoy_in / pendientes / cerrados + búsqueda.
+  List<Plan> _computeDisplayedPlans() {
+    final user = ref.watch(currentUserProvider);
+    final pendingInvs =
+        ref.watch(userPendingInvitationsProvider).valueOrNull ?? const [];
+    final List<Plan> byTab = [];
 
-    // Aplicar búsqueda
-    if (_searchQuery.isNotEmpty) {
-      final searchQuery = _searchQuery.toLowerCase();
-      filtered = filtered.where((plan) {
-        final nameMatch = plan.name.toLowerCase().contains(searchQuery);
-        final stateMatch = (plan.state ?? '').toLowerCase().contains(searchQuery);
-        final startMatch = DateFormatter.formatDate(plan.startDate).toLowerCase().contains(searchQuery);
-        final endMatch = DateFormatter.formatDate(plan.endDate).toLowerCase().contains(searchQuery);
-        return nameMatch || stateMatch || startMatch || endMatch;
-      }).toList();
+    for (final plan in _allPlans) {
+      if (plan.id == null) {
+        if (_selectedFilter == 'todos') byTab.add(plan);
+        continue;
+      }
+      final participants =
+          ref.watch(planParticipantsProvider(plan.id!)).valueOrNull ??
+              const [];
+      final hasPendingInv = pendingInvs.any((inv) => inv.planId == plan.id);
+      final hasPendingPart = user != null &&
+          participants.any((p) => p.userId == user.id && p.isPending);
+      final isIn = user != null &&
+          (plan.userId == user.id ||
+              participants.any((p) => p.userId == user.id && p.isAccepted));
+      final isClosed =
+          plan.state == 'finalizado' || plan.state == 'cancelado';
+
+      bool keep;
+      switch (_selectedFilter) {
+        case 'estoy_in':
+          keep = isIn;
+          break;
+        case 'pendientes':
+          keep = hasPendingInv || hasPendingPart;
+          break;
+        case 'cerrados':
+          keep = isClosed;
+          break;
+        case 'todos':
+        default:
+          keep = true;
+          break;
+      }
+      if (keep) byTab.add(plan);
     }
 
-    // Aplicar filtro de estado (por ahora solo 'todos', los demás se implementarán después)
-    if (_selectedFilter != 'todos') {
-      // TODO: Implementar filtros específicos cuando tengamos la lógica de participación
-      // filtered = filtered.where((plan) => ...).toList();
-    }
-
-    setState(() {
-      _filteredPlans = filtered;
-    });
+    if (_searchQuery.isEmpty) return byTab;
+    final q = _searchQuery.toLowerCase();
+    return byTab.where((plan) {
+      final nameMatch = plan.name.toLowerCase().contains(q);
+      final stateMatch = (plan.state ?? '').toLowerCase().contains(q);
+      final startMatch =
+          DateFormatter.formatDate(plan.startDate).toLowerCase().contains(q);
+      final endMatch =
+          DateFormatter.formatDate(plan.endDate).toLowerCase().contains(q);
+      return nameMatch || stateMatch || startMatch || endMatch;
+    }).toList();
   }
 
   void _onPlansLoaded(List<Plan> plans) {
     setState(() {
       _allPlans = plans;
-      _filteredPlans = List.from(plans);
     });
-    _applyFilters();
   }
 
   void _showCreatePlanDialog() {
@@ -272,7 +300,6 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                       ),
                       onSelected: (value) {
                         setState(() => _selectedFilter = value);
-                        _applyFilters();
                       },
                       itemBuilder: (context) => [
                         PopupMenuItem<String>(
@@ -373,7 +400,8 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
             Expanded(
               child: plansAsync.when(
                 data: (plans) {
-                  if (_filteredPlans.isEmpty && _allPlans.isEmpty) {
+                  final displayed = _computeDisplayedPlans();
+                  if (displayed.isEmpty && _allPlans.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -405,13 +433,15 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                     );
                   }
 
-                  if (_filteredPlans.isEmpty && _searchQuery.isNotEmpty) {
+                  if (displayed.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.search_off,
+                            _searchQuery.isNotEmpty
+                                ? Icons.search_off
+                                : Icons.filter_list_off,
                             size: 64,
                             color: _cTextTertiary,
                           ),
@@ -431,7 +461,7 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
 
                   if (_useCalendarView) {
                     return PlanCalendarView(
-                      plans: _filteredPlans,
+                      plans: displayed,
                       baseDate: DateTime.now(),
                       onPlanSelected: (plan) {
                         Navigator.of(context).push(
@@ -444,9 +474,9 @@ class _PlansListPageState extends ConsumerState<PlansListPage> {
                   }
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    itemCount: _filteredPlans.length,
+                    itemCount: displayed.length,
                     itemBuilder: (context, index) {
-                      final plan = _filteredPlans[index];
+                      final plan = displayed[index];
                       return _buildPlanCard(context, ref, plan, isDarkMode);
                     },
                   );
@@ -870,115 +900,127 @@ class _CreatePlanModalState extends ConsumerState<_CreatePlanModal> {
             letterSpacing: 0.1,
           ),
         ),
-        content: SizedBox(
-          width: 420,
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1F2937), // Color sólido, sin gradiente
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                        spreadRadius: 0,
+        content: SingleChildScrollView(
+          child: SizedBox(
+            width: 420,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1F2937), // Color sólido, sin gradiente
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
+                        width: 1,
                       ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 6,
-                        offset: const Offset(0, 1),
-                        spreadRadius: -2,
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: widget.nameController,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 3),
+                          spreadRadius: 0,
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 1),
+                          spreadRadius: -2,
+                        ),
+                      ],
                     ),
-                    decoration: InputDecoration(
-                      labelText: loc.createPlanNameLabel,
-                      labelStyle: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.white70,
+                    child: TextFormField(
+                      controller: widget.nameController,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.white,
                         fontWeight: FontWeight.w500,
                       ),
-                      hintText: loc.createPlanNameHint,
-                      hintStyle: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.white60,
-                      ),
-                      prefixIcon: Icon(Icons.edit, color: Colors.white70),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(
-                          color: AppColorScheme.color2,
-                          width: 2.5,
+                      decoration: InputDecoration(
+                        labelText: loc.createPlanNameLabel,
+                        labelStyle: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        hintText: loc.createPlanNameHint,
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: Colors.white60,
+                        ),
+                        prefixIcon: Icon(Icons.edit, color: Colors.white70),
+                        errorMaxLines: 3,
+                        errorStyle: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.redAccent.shade100,
+                          height: 1.25,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: AppColorScheme.color2,
+                            width: 2.5,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: Colors.redAccent.shade200,
+                            width: 1.5,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: Colors.redAccent.shade200,
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 18,
+                          horizontal: 18,
                         ),
                       ),
-                      filled: true,
-                      fillColor: Colors.transparent,
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 18,
-                        horizontal: 18,
-                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return loc.createPlanNameRequiredError;
+                        }
+                        if (value.trim().length < 3) {
+                          return loc.createPlanNameTooShortError;
+                        }
+                        if (value.trim().length > 100) {
+                          return loc.createPlanNameTooLongError;
+                        }
+                        return null;
+                      },
                     ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return loc.createPlanNameRequiredError;
-                  }
-                  if (value.trim().length < 3) {
-                    return loc.createPlanNameTooShortError;
-                  }
-                  if (value.trim().length > 100) {
-                    return loc.createPlanNameTooLongError;
-                  }
-                  return null;
-                },
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  widget.unpIdController.text.isEmpty
-                      ? loc.createPlanUnpIdLoading
-                      : loc.createPlanUnpIdHeader(widget.unpIdController.text),
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.white70,
+                  const SizedBox(height: 16),
+                  Text(
+                    loc.createPlanQuickIntro,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white60,
+                        ),
                   ),
-                ),
-              const SizedBox(height: 16),
-              Text(
-                loc.createPlanQuickIntro,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white60,
-                    ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
         actions: [
           TextButton(
             onPressed: _isCreating ? null : () => Navigator.of(context).pop(),

@@ -1,8 +1,9 @@
-# Archivo de especificaciones (tareas completadas)
+# 🚫 ARCHIVO — Especificaciones de tareas completadas (NO fuente viva)
 
-Esta carpeta contiene los **documentos de especificación o plan** de tareas ya **completadas**.
+Esta carpeta contiene especificaciones/planes de tareas **ya completadas**.
 
-**Regla:** Al completar una tarea que tenía un `Txxx_*.md` (o similar) en `docs/tareas/`, ese documento se mueve aquí con el mismo nombre para mantener la trazabilidad.
+## Regla de uso
 
-- **Especificaciones de tareas pendientes o en curso** → están en `docs/tareas/` (raíz).
-- **Índice y reglas** → `docs/tareas/README_TAREAS.md` y `docs/tareas/TASKS.md` § Reglas del Sistema de Tareas.
+- Cuando una tarea se completa, su `Txxx_*.md` se mueve aquí para trazabilidad.
+- Especificaciones de tareas activas/en curso: `docs/tareas/` (raíz).
+- Índice y reglas: `docs/tareas/README_TAREAS.md` y `docs/tareas/TASKS.md`.

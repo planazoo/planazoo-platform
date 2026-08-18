@@ -23,6 +23,7 @@ import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/dialogs/delete_plan_dialogs.dart';
 
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_calendar_screen.dart';
@@ -60,6 +61,7 @@ import 'package:unp_calendario/widgets/dashboard/wd_dashboard_my_status_cell.dar
 import 'package:unp_calendario/widgets/dialogs/wd_create_plan_modal.dart';
 import 'package:unp_calendario/widgets/notifications/wd_notification_list_dialog.dart';
 import 'package:unp_calendario/widgets/plan/pending_invitation_on_launch.dart';
+import 'package:unp_calendario/widgets/plan/pending_invite_preview_banner.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -71,6 +73,13 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
+  /// T276 §1.5: pantallas permitidas en preview pending (paridad móvil).
+  static const Set<String> _pendingPreviewScreens = {
+    'planData',
+    'mySummary',
+    'calendar',
+  };
+
   bool get _isWeb => false;
   ThemeData get _dashboardTheme => _isWeb ? AppTheme.lightTheme : AppTheme.darkTheme;
   Color get _surfacePrimary => _isWeb ? const Color(0xFFF5F7FA) : const Color(0xFF1F2937);
@@ -140,6 +149,34 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       error: (_, __) => selectedPlan,
     );
   }
+
+  /// T276: ¿pending en el plan indicado? (invitación o participación).
+  bool _isPendingPreview(Plan? plan, {bool watch = true}) {
+    if (plan?.id == null) return false;
+    final currentUser = watch
+        ? ref.watch(currentUserProvider)
+        : ref.read(currentUserProvider);
+    if (currentUser == null) return false;
+    final planId = plan!.id!;
+
+    final pendingInvs = watch
+        ? (ref.watch(userPendingInvitationsProvider).valueOrNull ?? const [])
+        : (ref.read(userPendingInvitationsProvider).valueOrNull ?? const []);
+    final hasPendingInvitation =
+        pendingInvs.any((inv) => inv.planId == planId);
+
+    final participantsAsync = watch
+        ? ref.watch(planParticipantsProvider(planId))
+        : ref.read(planParticipantsProvider(planId));
+    final participants = participantsAsync.valueOrNull ?? const [];
+    final hasPendingPart = participants.any(
+      (p) => p.userId == currentUser.id && p.isPending,
+    );
+    return hasPendingInvitation || hasPendingPart;
+  }
+
+  String _fallbackPendingScreen() => 'planData';
+  String _fallbackPendingWidgetId() => 'W14';
 
   // Método helper para procesar cambios en la lista de planes
   void _processPlansUpdate(List<Plan> plans, {bool forceUpdate = false}) {
@@ -407,16 +444,28 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   // NUEVO: Método para cambiar la pantalla mostrada en W31
   void _changeScreen(String screen) {
+    final plan = selectedPlan;
+    final pending = _isPendingPreview(plan, watch: false);
+    final target = (pending &&
+            !_pendingPreviewScreens.contains(screen) &&
+            screen != 'profile' &&
+            screen != 'admin' &&
+            screen != 'usersDirectory')
+        ? _fallbackPendingScreen()
+        : screen;
     setState(() {
-      if (screen == 'profile' || screen == 'admin' || screen == 'usersDirectory') {
-        if (currentScreen != screen) {
+      if (target == 'profile' || target == 'admin' || target == 'usersDirectory') {
+        if (currentScreen != target) {
           _previousScreen = currentScreen;
         }
       } else {
-        _previousScreen = screen;
+        _previousScreen = target;
       }
-      currentScreen = screen;
-      if (screen == 'calendar') _calendarPanelView = 'calendar';
+      currentScreen = target;
+      if (target == 'calendar') _calendarPanelView = 'calendar';
+      if (pending && target == _fallbackPendingScreen()) {
+        selectedWidgetId = _fallbackPendingWidgetId();
+      }
     });
   }
 
@@ -451,12 +500,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   List<DashboardNavTabItem> _dashboardTabItemsWithBadge(BuildContext context) {
     final baseTabs = WdDashboardNavTabs.tabItems(context);
+    final plan = _selectedPlanResolvedFromStream() ?? selectedPlan;
+    final pending = _isPendingPreview(plan);
     final planNotifUnread = ref.watch(planUnreadCountProvider(selectedPlanId));
     final notifCount = planNotifUnread.valueOrNull ?? 0;
     final chatUnread = selectedPlanId != null
         ? ref.watch(unreadMessagesCountProvider(selectedPlanId!)).valueOrNull ?? 0
         : 0;
     return baseTabs
+        .where((t) =>
+            !pending || _pendingPreviewScreens.contains(t.screen))
         .map((t) {
           if (t.id == 'W20') return t.copyWith(badgeCount: notifCount);
           if (t.id == 'W19') return t.copyWith(badgeCount: chatUnread);
@@ -500,9 +553,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       } catch (e) {
         selectedPlan = null;
       }
-      // NUEVO: Activar calendario por defecto al seleccionar plan
-      selectedWidgetId = 'W15';
-      currentScreen = 'calendar';
+      // Pending: Info; resto: calendario por defecto
+      final pending = _isPendingPreview(selectedPlan, watch: false);
+      if (pending) {
+        selectedWidgetId = _fallbackPendingWidgetId();
+        currentScreen = _fallbackPendingScreen();
+      } else {
+        selectedWidgetId = 'W15';
+        currentScreen = 'calendar';
+      }
       _calendarPanelView = 'calendar';
     });
   }
@@ -514,6 +573,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   /// Selecciona el plan y cambia a la pestaña indicada (resumen, notificaciones o chat).
   void _openPlanTab(Plan plan, String screen, String widgetId) {
     if (plan.id == null) return;
+    final pending = _isPendingPreview(plan, watch: false);
+    final targetScreen = (pending && !_pendingPreviewScreens.contains(screen))
+        ? _fallbackPendingScreen()
+        : screen;
+    final targetWidget = (pending && !_pendingPreviewScreens.contains(screen))
+        ? _fallbackPendingWidgetId()
+        : widgetId;
     setState(() {
       selectedPlanId = plan.id;
       try {
@@ -521,32 +587,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       } catch (_) {
         selectedPlan = plan;
       }
-      currentScreen = screen;
-      selectedWidgetId = widgetId;
+      currentScreen = targetScreen;
+      selectedWidgetId = targetWidget;
     });
   }
 
   Future<void> _deletePlanazoo(String planId) async {
     try {
       // Mostrar confirmación
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(AppLocalizations.of(context)!.confirmDeleteTitle),
-          content: Text(AppLocalizations.of(context)!.confirmDeleteMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(AppLocalizations.of(context)!.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: Text(AppLocalizations.of(context)!.delete),
-            ),
-          ],
-        ),
-      );
+      final confirmed = await showDeletePlanConfirmDialog(context);
       
       if (confirmed == true) {
         // Eliminar de Firebase
@@ -1478,7 +1527,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 onHelpTap: () => Navigator.of(context).pushNamed('/help'),
                 plans: displayedPlans,
                 onOpenChatForPlan: (plan) {
-                  if (plan.id != null) _openPlanTab(plan, 'chat', 'W19');
+                  if (plan.id == null) return;
+                  if (_isPendingPreview(plan, watch: false)) {
+                    _openPlanTab(plan, 'planData', 'W14');
+                    return;
+                  }
+                  _openPlanTab(plan, 'chat', 'W19');
                 },
               ),
               // W2–W6: Logo, +, showcase, imagen e info del plan (C2–C11, R1)
@@ -1751,8 +1805,48 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             ? _buildNoPlansYet()
             : (needsPlanSelection && !hasSelectedPlan)
                 ? _buildNoPlanSelected()
-                : _buildScreenContent(),
+                : _buildW31Body(),
       ),
+    );
+  }
+
+  /// Contenido W31 con banner T276 si el plan seleccionado es pending.
+  Widget _buildW31Body() {
+    final plan = _selectedPlanResolvedFromStream() ?? selectedPlan;
+    final pending = _isPendingPreview(plan);
+    if (pending &&
+        plan != null &&
+        !_pendingPreviewScreens.contains(currentScreen)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_isPendingPreview(plan, watch: false) &&
+            !_pendingPreviewScreens.contains(currentScreen)) {
+          setState(() {
+            currentScreen = _fallbackPendingScreen();
+            selectedWidgetId = _fallbackPendingWidgetId();
+          });
+        }
+      });
+    }
+    final content = _buildScreenContent(isPendingPreview: pending);
+    if (!pending || plan == null) return content;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PendingInvitePreviewBanner(
+          plan: plan,
+          onLeftPlan: () {
+            if (!mounted) return;
+            setState(() {
+              selectedPlan = null;
+              selectedPlanId = null;
+              currentScreen = 'calendar';
+              selectedWidgetId = null;
+            });
+          },
+        ),
+        Expanded(child: content),
+      ],
     );
   }
 
@@ -1795,11 +1889,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   // NUEVO: Método para mostrar contenido según la pantalla seleccionada
-  Widget _buildScreenContent() {
+  Widget _buildScreenContent({bool isPendingPreview = false}) {
     Widget content;
     switch (currentScreen) {
       case 'planData':
-        content = _buildPlanDataScreen();
+        content = _buildPlanDataScreen(forceReadOnly: isPendingPreview);
         break;
       case 'planNotes':
         content = selectedPlan != null
@@ -1813,8 +1907,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         content = selectedPlan != null
             ? MyPlanSummaryScreen(
                 plan: _selectedPlanResolvedFromStream() ?? selectedPlan!,
-                onOpenEvent: _openEventFromSummary,
-                onOpenAccommodation: _openAccommodationFromSummary,
+                onOpenEvent: (event) => _openEventFromSummary(
+                  event,
+                  isPendingPreview: isPendingPreview,
+                ),
+                onOpenAccommodation: (acc) => _openAccommodationFromSummary(
+                  acc,
+                  isPendingPreview: isPendingPreview,
+                ),
                 onGoToCalendar: () => setState(() {
                   currentScreen = 'calendar';
                   selectedWidgetId = 'W15';
@@ -1862,7 +1962,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         break;
       case 'calendar':
       default:
-        content = _buildCalendarWidget();
+        content = _buildCalendarWidget(readOnly: isPendingPreview);
         break;
     }
     
@@ -1870,11 +1970,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   // NUEVO: Pantalla de datos principales del plan
-  Widget _buildPlanDataScreen() {
+  Widget _buildPlanDataScreen({bool forceReadOnly = false}) {
     if (selectedPlan == null) return const SizedBox.shrink();
     final plan = _selectedPlanResolvedFromStream() ?? selectedPlan!;
     return PlanDataScreen(
       plan: plan,
+      forceReadOnly: forceReadOnly,
       onPlanUpdated: (Plan updated) {
         if (!mounted) return;
         setState(() {
@@ -1896,22 +1997,24 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           currentScreen = 'calendar';
         });
       },
-      onManageParticipants: () {
-        setState(() {
-          currentScreen = 'participants';
-          selectedWidgetId = 'W16';
-        });
-      },
+      onManageParticipants: forceReadOnly
+          ? null
+          : () {
+              setState(() {
+                currentScreen = 'participants';
+                selectedWidgetId = 'W16';
+              });
+            },
     );
   }
 
   /// Abrir evento desde Mi resumen (paridad con iOS): modal resumen → diálogo completo.
-  void _openEventFromSummary(Event event) {
+  void _openEventFromSummary(Event event, {bool isPendingPreview = false}) {
     if (selectedPlan == null || selectedPlan!.id == null) return;
     showEventSummaryPreviewModal(
       context: context,
       event: event,
-      onOpenFull: () => _showEventDialog(event),
+      onOpenFull: isPendingPreview ? null : () => _showEventDialog(event),
     );
   }
 
@@ -1967,12 +2070,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   /// Abrir alojamiento desde Mi resumen (paridad con iOS).
-  void _openAccommodationFromSummary(Accommodation accommodation) {
+  void _openAccommodationFromSummary(
+    Accommodation accommodation, {
+    bool isPendingPreview = false,
+  }) {
     if (selectedPlan == null || selectedPlan!.id == null) return;
     showAccommodationSummaryPreviewModal(
       context: context,
       accommodation: accommodation,
-      onOpenFull: () => _showAccommodationDialog(accommodation),
+      onOpenFull:
+          isPendingPreview ? null : () => _showAccommodationDialog(accommodation),
     );
   }
 
@@ -2127,7 +2234,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
 
   // Nuevo método para mostrar el calendario (o resumen, solo en W31 desde esta pestaña)
-  Widget _buildCalendarWidget() {
+  Widget _buildCalendarWidget({bool readOnly = false}) {
     if (selectedPlan == null) {
       return _buildNoPlanSelected();
     }
@@ -2140,6 +2247,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         return CalendarScreen(
           key: ValueKey(calendarKey),
           plan: plan,
+          readOnly: readOnly,
           onShowSummary: _showSummaryInPanel,
         );
       }
@@ -2153,6 +2261,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     return CalendarScreen(
       key: ValueKey(calendarKey),
       plan: plan,
+      readOnly: readOnly,
       onShowSummary: _showSummaryInPanel,
     );
   }

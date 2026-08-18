@@ -18,19 +18,32 @@ class ValidationResult {
 /// Valida transiciones según FLUJO_ESTADOS_PLAN.md y gestiona
 /// los cambios de estado con sus validaciones correspondientes.
 class PlanStateService {
-  final PlanService _planService;
-  // ignore: unused_field
-  final EventService _eventService;
-  // ignore: unused_field
-  final PlanParticipationService _participationService;
-
   PlanStateService({
     PlanService? planService,
     EventService? eventService,
     PlanParticipationService? participationService,
-  })  : _planService = planService ?? PlanService(),
-        _eventService = eventService ?? EventService(),
-        _participationService = participationService ?? PlanParticipationService();
+  })  : _planServiceOverride = planService,
+        _eventServiceOverride = eventService,
+        _participationServiceOverride = participationService;
+
+  final PlanService? _planServiceOverride;
+  final EventService? _eventServiceOverride;
+  final PlanParticipationService? _participationServiceOverride;
+  PlanService? _lazyPlanService;
+  EventService? _lazyEventService;
+  PlanParticipationService? _lazyParticipationService;
+
+  PlanService get _planService =>
+      _planServiceOverride ?? (_lazyPlanService ??= PlanService());
+
+  // ignore: unused_element
+  EventService get _eventService =>
+      _eventServiceOverride ?? (_lazyEventService ??= EventService());
+
+  // ignore: unused_element
+  PlanParticipationService get _participationService =>
+      _participationServiceOverride ??
+      (_lazyParticipationService ??= PlanParticipationService());
 
   /// Estados válidos según FLUJO_ESTADOS_PLAN.md (borrador unificado con planificando)
   static const List<String> validStates = [
@@ -53,7 +66,6 @@ class PlanStateService {
     // Mismo estado (permitido)
     if (current == newState) return true;
 
-    // Transiciones válidas según FLUJO_ESTADOS_PLAN.md
     switch (current) {
       case 'planificando':
         // Planificando → Confirmado (manual)
@@ -83,6 +95,24 @@ class PlanStateService {
 
       default:
         return false;
+    }
+  }
+
+  /// Siguientes estados que el organizador puede elegir en Info (orden del menú).
+  ///
+  /// No incluye el estado actual ni terminales (`finalizado`, `cancelado`).
+  static List<String> availableManualTransitions(String? currentState) {
+    final current =
+        (currentState == null || currentState.isEmpty) ? 'planificando' : currentState;
+    switch (current) {
+      case 'planificando':
+        return ['confirmado', 'cancelado'];
+      case 'confirmado':
+        return ['en_curso', 'planificando', 'cancelado'];
+      case 'en_curso':
+        return ['finalizado'];
+      default:
+        return [];
     }
   }
 

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/plan_date_range_validation.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
@@ -22,6 +23,7 @@ import 'package:unp_calendario/shared/utils/days_remaining_utils.dart';
 import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 import 'package:unp_calendario/shared/utils/plan_validation_utils.dart';
 import 'package:unp_calendario/widgets/dialogs/plan_validation_dialog.dart';
+import 'package:unp_calendario/widgets/dialogs/delete_plan_dialogs.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
 import 'package:unp_calendario/widgets/plan/membership_solo_items_warning.dart';
@@ -52,6 +54,9 @@ class PlanDataScreen extends ConsumerStatefulWidget {
   /// Tras guardar datos del plan (sin invalidar el stream global: evita ciclos de dispose en web).
   final ValueChanged<Plan>? onPlanUpdated;
 
+  /// T276: preview pending — sin salir/editar como miembro.
+  final bool forceReadOnly;
+
   const PlanDataScreen({
     super.key,
     required this.plan,
@@ -60,6 +65,7 @@ class PlanDataScreen extends ConsumerStatefulWidget {
     this.onOpenSummary,
     this.showAppBar = true,
     this.onPlanUpdated,
+    this.forceReadOnly = false,
   });
 
   @override
@@ -366,9 +372,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                               DateTime(picked.year, picked.month, picked.day);
                           setInnerState(() {
                             tempStart = normalized;
-                            if (tempEnd.isBefore(tempStart)) {
-                              tempEnd = tempStart;
-                            }
+                            tempEnd = clampPlanEndToStart(tempStart, tempEnd);
                           });
                         }
                       },
@@ -752,6 +756,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           const SizedBox(width: 6),
           FilledButton(
             onPressed: _isSavingPlan ||
+                    widget.forceReadOnly ||
                     PlanStatePermissions.isReadOnly(currentPlan)
                 ? null
                 : _savePlanDetails,
@@ -877,7 +882,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (PlanStatePermissions.isReadOnly(currentPlan)) ...[
+                          if (widget.forceReadOnly ||
+                              PlanStatePermissions.isReadOnly(currentPlan)) ...[
                             _buildReadOnlyWarning(),
                             const SizedBox(height: cardSpacing),
                           ],
@@ -906,7 +912,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                           _buildParticipantsSection(loc, participantsAsync,
                               isCompact: isCompact),
                           const SizedBox(height: cardSpacing),
-                          if (isOrganizer) ...[
+                          if (isOrganizer && !widget.forceReadOnly) ...[
                             _buildEventColorsSection(loc, isCompact: isCompact),
                             const SizedBox(height: cardSpacing),
                             _buildAnnouncementsSection(isCompact: isCompact),
@@ -915,9 +921,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                                 showBaseInfo: false, isCompact: isCompact),
                             const SizedBox(height: cardSpacing),
                           ],
-                          _buildLeavePlanButton(),
-                          const SizedBox(height: cardSpacing),
-                          _buildDeleteButton(),
+                          if (!widget.forceReadOnly) ...[
+                            _buildLeavePlanButton(),
+                            const SizedBox(height: cardSpacing),
+                            _buildDeleteButton(),
+                          ],
                         ],
                       );
                     },
@@ -1585,48 +1593,29 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
   /// Transiciones de estado permitidas para el plan actual (solo para organizador).
   List<Map<String, dynamic>> _getAvailableStateTransitions() {
-    final currentState = currentPlan.state ?? 'planificando';
-    if (currentState == 'finalizado' || currentState == 'cancelado') return [];
-    final List<Map<String, dynamic>> list = [];
-    switch (currentState) {
-      case 'planificando':
-        list.add({
-          'state': 'confirmado',
-          'label': 'Confirmar Plan',
-          'icon': Icons.check_circle_outline
-        });
-        list.add({
-          'state': 'cancelado',
-          'label': 'Cancelar Plan',
-          'icon': Icons.cancel_outlined
-        });
-        break;
-      case 'confirmado':
-        list.add({
-          'state': 'en_curso',
-          'label': 'Marcar como En Curso',
-          'icon': Icons.play_circle_outline
-        });
-        list.add({
-          'state': 'planificando',
-          'label': 'Volver a Planificación',
-          'icon': Icons.undo
-        });
-        list.add({
-          'state': 'cancelado',
-          'label': 'Cancelar Plan',
-          'icon': Icons.cancel_outlined
-        });
-        break;
-      case 'en_curso':
-        list.add({
-          'state': 'finalizado',
-          'label': 'Finalizar Plan',
-          'icon': Icons.check_circle
-        });
-        break;
-    }
-    return list;
+    const labels = {
+      'confirmado': 'Confirmar Plan',
+      'en_curso': 'Marcar como En Curso',
+      'planificando': 'Volver a Planificación',
+      'cancelado': 'Cancelar Plan',
+      'finalizado': 'Finalizar Plan',
+    };
+    const icons = {
+      'confirmado': Icons.check_circle_outline,
+      'en_curso': Icons.play_circle_outline,
+      'planificando': Icons.undo,
+      'cancelado': Icons.cancel_outlined,
+      'finalizado': Icons.check_circle,
+    };
+    return PlanStateService.availableManualTransitions(currentPlan.state)
+        .map(
+          (state) => {
+            'state': state,
+            'label': labels[state]!,
+            'icon': icons[state]!,
+          },
+        )
+        .toList();
   }
 
   Future<void> _changePlanState(String newState) async {
@@ -2016,7 +2005,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       barrierDismissible: false,
       builder: (context) => Theme(
         data: AppTheme.darkTheme,
-        child: _DeletePlanDialog(
+        child: DeletePlanPasswordDialog(
           loc: loc,
           onDelete: _deletePlan,
         ),
@@ -2078,133 +2067,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   void _setScreenState(VoidCallback fn) {
     if (!mounted) return;
     setState(fn);
-  }
-}
-
-// Widget separado para el diálogo de eliminación que maneja su propio controlador
-class _DeletePlanDialog extends StatefulWidget {
-  final AppLocalizations loc;
-  final Future<bool> Function(String password) onDelete;
-
-  const _DeletePlanDialog({
-    required this.loc,
-    required this.onDelete,
-  });
-
-  @override
-  State<_DeletePlanDialog> createState() => _DeletePlanDialogState();
-}
-
-class _DeletePlanDialogState extends State<_DeletePlanDialog> {
-  late TextEditingController _passwordController;
-  bool _isDeleting = false;
-  String? _errorText;
-
-  @override
-  void initState() {
-    super.initState();
-    _passwordController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return AlertDialog(
-      backgroundColor: cs.surface,
-      surfaceTintColor: cs.surfaceTint,
-      title: Text(
-        widget.loc.planDeleteDialogTitle,
-        style: theme.textTheme.titleLarge?.copyWith(color: cs.onSurface),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.loc.planDeleteDialogMessage,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: cs.onSurfaceVariant,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _passwordController,
-            obscureText: true,
-            enabled: !_isDeleting,
-            style: TextStyle(color: cs.onSurface),
-            decoration: InputDecoration(
-              labelText: widget.loc.planDeleteDialogPasswordLabel,
-              errorText: _errorText,
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: cs.outline),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: cs.outline),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: cs.primary, width: 2),
-              ),
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed:
-              _isDeleting ? null : () => Navigator.of(context).pop(false),
-          child: Text(widget.loc.cancelChanges),
-        ),
-        FilledButton(
-          onPressed: _isDeleting
-              ? null
-              : () async {
-                  final password = _passwordController.text.trim();
-                  if (password.isEmpty) {
-                    setState(() {
-                      _errorText = widget.loc.planDeleteDialogPasswordRequired;
-                    });
-                    return;
-                  }
-                  setState(() {
-                    _isDeleting = true;
-                    _errorText = null;
-                  });
-                  final success = await widget.onDelete(password);
-                  if (!context.mounted) return;
-                  if (success) {
-                    Navigator.of(context).pop(true);
-                  } else {
-                    setState(() {
-                      _isDeleting = false;
-                      _errorText = widget.loc.planDeleteDialogAuthError;
-                    });
-                  }
-                },
-          style: FilledButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-          ),
-          child: _isDeleting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Text(widget.loc.planDeleteDialogConfirm),
-        ),
-      ],
-    );
   }
 }
 
@@ -2328,8 +2190,9 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
   Widget _buildPlanImageSection(
       {required AppLocalizations loc, bool isCompact = false}) {
     final currentUser = ref.watch(currentUserProvider);
-    final showLeaveButton =
-        currentUser != null && currentPlan.userId != currentUser.id;
+    final showLeaveButton = !widget.forceReadOnly &&
+        currentUser != null &&
+        currentPlan.userId != currentUser.id;
     final isOwner = currentUser?.id == currentPlan.userId;
     final stateTransitions = _getAvailableStateTransitions();
     final showStateMenu = isOwner && stateTransitions.isNotEmpty;

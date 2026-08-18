@@ -10,6 +10,7 @@
 | Reserva / cancelación | [`docs/tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md`](../tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md) |
 | Capacidades calendario | [`docs/especificaciones/CALENDAR_CAPABILITIES.md`](../especificaciones/CALENDAR_CAPABILITIES.md) |
 | Patrón común/personal | [`docs/guias/GUIA_PATRON_COMUN_PERSONAL.md`](../guias/GUIA_PATRON_COMUN_PERSONAL.md) |
+| Trabajo (TASKS) | Índice dominio Eventos en `TASKS.md` |
 | Mapa de procesos | [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md) |
 
 ## Código de entrada

@@ -1,7 +1,9 @@
-# Archivo docs (raíz)
+# 🚫 ARCHIVO — Documentos raíz históricos (NO fuente viva)
 
-Documentos de propuesta / one-shots ya consumidos. No son entrada de trabajo diario.
+Documentos de propuesta / one-shot ya consumidos.
 
-- `PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md` (Feb 2026)
+## Regla de uso
 
-Sistema vivo: [`../flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md).
+- No usar esta carpeta como entrada de trabajo diario.
+- Sistema vivo: [`../flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md)
+- Ejemplo archivado: `PROPUESTA_OPTIMIZACION_Y_SINCRONIZACION.md` (Feb 2026)

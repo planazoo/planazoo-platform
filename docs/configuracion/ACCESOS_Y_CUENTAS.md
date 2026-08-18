@@ -12,7 +12,7 @@ Complementa el índice técnico [`CONFIGURACIONES_PROYECTO.md`](./CONFIGURACIONE
 **Responsable habitual de accesos:** Cristian (único por defecto en todas las filas salvo que se indique lo contrario).  
 **Cuenta operativa principal:** `unplanazoo@gmail.com`
 
-**Última revisión:** Julio 2026
+**Última revisión:** Agosto 2026 (dominio `planoon.com` en Cloudflare)
 
 ---
 
@@ -122,9 +122,11 @@ Con 2FA, Apple **no** acepta la contraseña normal del Apple ID al subir el IPA.
 
 | Servicio / URL | Cuenta | Quién | Uso | Secretos | Notas |
 |----------------|--------|-------|-----|----------|-------|
-| Firebase Hosting / `planazoo.web.app` | `unplanazoo@gmail.com` | Cristian | Web producción | Ver §1 (Firebase Hosting) | Detalle completo en tabla Google |
-| Dominio personalizado (si aplica) | — | Cristian | DNS / certificado | Recordatorio pendiente Bitwarden | **No configurado** por ahora |
-| Google Sites / landing | — | — | Marketing | — | **No usado** · ver §1 |
+| Firebase Hosting / `planazoo.web.app` + `app.planoon.com` | `unplanazoo@gmail.com` | Cristian | Web app producción | Ver §1 | [DEPLOY_WEB_FIREBASE_HOSTING.md](./DEPLOY_WEB_FIREBASE_HOSTING.md) · AASA |
+| **Dominio `planoon.com`** | Cloudflare · login **`unplanazoo@gmail.com`** (Google) | Cristian | Marca + DNS | Login = Google (§1) | Apex/www = comercial ([`marketing/`](../../marketing/)) · **app** = `app.planoon.com` · [DOMINIO_PLANOON.md](./DOMINIO_PLANOON.md) · [MONOREPO.md](./MONOREPO.md) |
+| [dash.cloudflare.com](https://dash.cloudflare.com) | `unplanazoo@gmail.com` (SSO Google) | Cristian | DNS, registrar, SSL | Cuenta Google / Bitwarden pendiente | Zona `planoon.com` |
+
+**Estado dominio (Ago 2026):** `app.planoon.com` en Firebase Hosting (DNS OK; SSL puede seguir provisionándose). Repo actualizado a `https://app.planoon.com`. Pendiente: config CF `app.base_url`, redeploy functions/hosting, rebuild iOS, QA Universal Links.
 
 ---
 

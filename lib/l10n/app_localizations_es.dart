@@ -1308,6 +1308,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get notificationsFilterAction => 'Pendientes de acción';
 
   @override
+  String get notificationsFilterInvitations => 'Mis invitaciones';
+
+  @override
+  String get notificationsEmptyInvitations =>
+      'No tienes invitaciones pendientes';
+
+  @override
   String get notificationsFilterInfo => 'Solo informativas';
 
   @override
@@ -2777,6 +2784,36 @@ class AppLocalizationsEs extends AppLocalizations {
   String get invitationTitle => 'Invitación a Plan';
 
   @override
+  String get invitationAttendQuestion =>
+      'Te han invitado a unirte a este plan. ¿Qué quieres hacer?';
+
+  @override
+  String invitationInviteMessage(
+      String inviter, String planName, String startDate, String endDate) {
+    return '$inviter te ha invitado al plan $planName, desde el $startDate al $endDate. ¿Qué quieres hacer?';
+  }
+
+  @override
+  String get invitationSomeone => 'Alguien';
+
+  @override
+  String get invitationDecideLater => 'Decidir más tarde';
+
+  @override
+  String get pendingInvitePreviewBannerMessage =>
+      'Estás invitado. Acepta para participar. Mientras, puedes ver el plan en solo lectura.';
+
+  @override
+  String get pendingInvitePreviewDecideLaterHint =>
+      'Puedes aceptar o rechazar cuando quieras desde este banner.';
+
+  @override
+  String get invitationUnavailableTitle => 'Invitación no disponible';
+
+  @override
+  String get invitationNotAuthenticated => 'Error: usuario no autenticado';
+
+  @override
   String get invitationNotFound => 'Invitación no encontrada o inválida';
 
   @override
@@ -2812,6 +2849,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get invitationProcessing => 'Procesando...';
+
+  @override
+  String get invitationAccepting => 'Aceptando invitación...';
+
+  @override
+  String get invitationRejecting => 'Rechazando invitación...';
 
   @override
   String get invitationRejectButton => 'Rechazar invitación';

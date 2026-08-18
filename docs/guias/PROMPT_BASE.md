@@ -4,6 +4,7 @@
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
 - `docs/flujos/MAPA_FLUJOS.md` - **Sistema de procesos** (proceso → trabajo → prueba → referencia)
+- `docs/flujos/ORDEN_POR_DOMINIOS.md` - Ordenación del proyecto por dominios
 - `docs/configuracion/CONTEXT.md` - Normas específicas del proyecto (Plan Frankenstein, Firestore, tests manuales)
 - `docs/guias/GUIA_UI.md` - Sistema de diseño, componentes y patrones de UI
 - `docs/guias/GESTION_TIMEZONES.md` - Sistema de gestión de timezones

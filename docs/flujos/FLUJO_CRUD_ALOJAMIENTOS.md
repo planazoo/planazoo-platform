@@ -9,6 +9,7 @@
 | Campos del formulario | [`docs/especificaciones/ACCOMMODATION_FORM_FIELDS.md`](../especificaciones/ACCOMMODATION_FORM_FIELDS.md) |
 | Reserva / cancelación | [`docs/tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md`](../tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md) |
 | Patrón común/personal | [`docs/guias/GUIA_PATRON_COMUN_PERSONAL.md`](../guias/GUIA_PATRON_COMUN_PERSONAL.md) |
+| Trabajo (TASKS) | Índice dominio Alojamientos en `TASKS.md` |
 | Mapa de procesos | [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md) |
 
 ## Código de entrada

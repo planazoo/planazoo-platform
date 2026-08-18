@@ -26,7 +26,7 @@
 |-----|-------------------|----------------------------------|
 | Proyecto Firebase | ID: **planazoo** | [Firebase Console](https://console.firebase.google.com/) → proyecto planazoo. |
 | Opciones cliente (web) | `lib/firebase_options.dart` | Generado por FlutterFire CLI; contiene `apiKey`, `projectId`, `authDomain`, `storageBucket`, `messagingSenderId`, `appId`, `measurementId`. **No subir claves secretas**; este archivo suele estar en el repo para web; restringir por dominio en Google Cloud. |
-| Hosting (web) | `firebase.json` → `hosting` | `public: build/web`; rewrites a `index.html`. Ver [DEPLOY_WEB_FIREBASE_HOSTING.md](./DEPLOY_WEB_FIREBASE_HOSTING.md). URL producción: `https://planazoo.web.app`. |
+| Hosting (web) | `firebase.json` → `hosting` | `public: build/web`; rewrites a `index.html`. Ver [DEPLOY_WEB_FIREBASE_HOSTING.md](./DEPLOY_WEB_FIREBASE_HOSTING.md). URL Firebase: `https://planazoo.web.app`. **App canónica:** `https://app.planoon.com` — ver [DOMINIO_PLANOON.md](./DOMINIO_PLANOON.md). |
 | Firestore | `firestore.rules`, `firestore.indexes.json` | Reglas e índices. Despliegue: `npx firebase deploy --only firestore:rules`. Ver [DESPLEGAR_REGLAS_FIRESTORE.md](./DESPLEGAR_REGLAS_FIRESTORE.md), [FIRESTORE_COLLECTIONS_AUDIT.md](./FIRESTORE_COLLECTIONS_AUDIT.md), [FIRESTORE_INDEXES_AUDIT.md](./FIRESTORE_INDEXES_AUDIT.md). |
 | Storage | `storage.rules` | Reglas de Cloud Storage. Despliegue: `npx firebase deploy --only storage`. Ver [STORAGE_CORS.md](./STORAGE_CORS.md), [IMAGENES_PLAN_FIREBASE.md](./IMAGENES_PLAN_FIREBASE.md). |
 | Functions | `functions/` | Node.js; ver `functions/package.json`. Despliegue: `npx firebase deploy --only functions`. |

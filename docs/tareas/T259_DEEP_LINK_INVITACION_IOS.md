@@ -1,32 +1,49 @@
-# T259 – Deep link invitación en iOS
+# T259 – Deep link invitación en iOS (y Android)
 
-**Objetivo:** Que el link de invitación a un plan (p. ej. el que se envía por email) abra la app iOS directamente en la pantalla de invitación, en paridad con la experiencia web.
+**Objetivo:** Que el link de invitación a un plan (p. ej. el que se envía por email) abra la app nativa en la pantalla de invitación, en paridad con la experiencia web.
 
-**Referencia:** `docs/configuracion/REVISION_IOS_VS_WEB.md` §2.3 y §3 ítem 7; decisión de igualar (opción B) en revisión iOS vs Web diferencia 7.
+**Referencia:** `docs/configuracion/REVISION_IOS_VS_WEB.md` §2.3 y §3 ítem 7; contrato `DIAGRAMA_ALTAS_BAJAS_PLAN.md` §2 / §1.2 K.
 
 ---
 
 ## Contexto
 
-- **Web:** La ruta `/invitation/{token}` abre la web y muestra `InvitationPage`. Funciona bien.
-- **iOS (actual):** La misma URL suele abrir el navegador; no está configurado Universal Links ni URL scheme, por lo que “abrir en la app” desde el link no está garantizado.
+- **Web:** `/invitation/{token}` → `InvitationPage` ✅
+- **Nativo (en curso):** mismo HTTPS + scheme `planazoo://` → `InvitationPage` vía `app_links`
 
-## Opciones de implementación
+## Decisión (Ago 2026)
 
-1. **Universal Links:** El dominio (ej. planazoo.web.app o el dominio de la web) declara en `apple-app-site-association` que las rutas `/invitation/*` se abren en la app. Requiere:
-   - Associated Domains en Xcode (ej. `applinks:planazoo.web.app`)
-   - Archivo `apple-app-site-association` en el servidor (Firebase Hosting puede servirlo en `/.well-known/`)
-   - En la app: manejar la URL de arranque y en segundo plano (e.g. `getInitialUri` / `uriLinkStream` con `app_links` o equivalente)
+1. **Un solo link de email** HTTPS (no cambiar emails a `planazoo://` como único canal).
+2. **Dominio canónico de la app:** `app.planoon.com` (Cloudflare + Firebase). Raíz `planoon.com` reservada para web comercial. Ver [`DOMINIO_PLANOON.md`](../configuracion/DOMINIO_PLANOON.md).
+3. **Universal Links / App Links** cuando AASA esté en `app.planoon.com` + Associated Domains.
+4. **Custom scheme** `planazoo://invitation/{token}` para pruebas en simulador / debug.
 
-2. **Custom URL scheme:** Ej. `planazoo://invitation/{token}`. Los emails/enlaces tendrían que usar esta URL (requiere que el backend o el frontend generen links con este esquema para clientes conocidos o una landing que redirija). Más simple de configurar; menos “nativo” que Universal Links.
+## Hecho en repo (slice 1)
 
-Recomendación: priorizar **Universal Links** si el dominio de la web puede servirse el archivo de asociación; así un solo link sirve para web y para abrir la app en iOS.
+- [x] `app_links` + listener en `lib/app/app.dart` (cold + warm start; no en web)
+- [x] Parser `lib/shared/utils/invitation_deep_link.dart` + test
+- [x] iOS `CFBundleURLTypes` scheme `planazoo` (probado en dispositivo)
+- [x] iOS Associated Domains: `applinks:app.planoon.com`
+- [x] Android intent-filters (scheme + https `app.planoon.com`)
+- [x] AASA en hosting (se sirve en el custom domain al estar Connected)
+- [x] Dominio `app.planoon.com` conectado (DNS); SSL puede seguir provisionándose
+- [x] Defaults repo → `https://app.planoon.com` (client + CF fallback)
 
-## Entregables
+## Pendiente ops / QA
 
-- [ ] Decisión: Universal Links vs URL scheme (y si se mantiene un solo link o dos variantes).
-- [ ] Configuración en Xcode (Associated Domains o URL scheme).
-- [ ] Archivo `apple-app-site-association` en el servidor (si Universal Links).
-- [ ] Código en la app para obtener la URL inicial y en foreground/background y navegar a `InvitationPage` con el token.
-- [ ] Prueba: abrir link desde Mail/Safari y verificar que abre la app en la pantalla de invitación.
-- [ ] Actualizar `REVISION_IOS_VS_WEB.md` ítem 7 como resuelto.
+- [x] Cert SSL Connected (`CN=app.planoon.com`)
+- [x] `firebase functions:config:set app.base_url="https://app.planoon.com"` + deploy functions
+- [x] AASA en `https://app.planoon.com/.well-known/apple-app-site-association` → JSON 200
+- [ ] Rebuild app iOS (Associated Domains)
+- [ ] (Android) `assetlinks.json` si se quiere App Link verificado
+- [ ] Prueba dispositivo: Mail → HTTPS `app.planoon.com/invitation/...` abre la app
+- [ ] Marcar `REVISION_IOS_VS_WEB.md` ítem 7 como resuelto cuando pase QA
+## Archivos clave
+
+| Pieza | Path |
+|-------|------|
+| Listener | `lib/app/app.dart` |
+| Parser | `lib/shared/utils/invitation_deep_link.dart` |
+| Página | `lib/pages/pg_invitation_page.dart` |
+| AASA | `web/.well-known/apple-app-site-association` |
+| Hosting | `firebase.json` |

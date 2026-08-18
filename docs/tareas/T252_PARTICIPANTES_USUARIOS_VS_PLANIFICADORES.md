@@ -66,6 +66,7 @@ Las tres formas acordadas (todas):
 
 - El participante debe poder **exportar o imprimir** su itinerario ("Mi itinerario") y, si aplica, el **plan completo** (para el organizador o quien tenga permiso).
 - **Estrategia offline-first:** Diseñar la funcionalidad para que encaje con la estrategia ya en marcha (p. ej. generar desde datos locales cuando no haya red). La implementación puede enlazar con el grupo Offline (T56–T62) cuando corresponda.
+- **Contrato comercial C4** (ago 2026): esto **bloquea el lanzamiento público**. Ver [`WEB_COMERCIAL.md`](../producto/WEB_COMERCIAL.md) § contrato. Tarea de implementación: **T133**.
 
 ---
 

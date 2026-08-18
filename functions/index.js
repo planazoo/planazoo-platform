@@ -23,7 +23,7 @@ const SENDGRID_FROM = functions.config().sendgrid?.from || process.env.SENDGRID_
 
 // Email remitente (prioridad: Gmail > SendGrid > default)
 const FROM_EMAIL = GMAIL_FROM || SENDGRID_FROM || 'noreply@planazoo.app';
-const APP_BASE_URL = functions.config().app?.base_url || process.env.APP_BASE_URL || 'https://planazoo.app';
+const APP_BASE_URL = functions.config().app?.base_url || process.env.APP_BASE_URL || 'https://app.planoon.com';
 
 // Configurar SendGrid (si está disponible)
 if (SENDGRID_API_KEY) {
@@ -43,15 +43,76 @@ if (GMAIL_USER && GMAIL_PASSWORD) {
   console.log('Gmail SMTP configurado correctamente');
 }
 
-// Template HTML para email de invitación (T104)
+// Template HTML para email de invitación (T104 + ficha de plan tipo InvitationPage)
+function escapeHtml(value) {
+  if (value == null || value === '') return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatInviteDate(value) {
+  try {
+    const d = value && value.toDate ? value.toDate() : new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch (_) {
+    return '';
+  }
+}
+
 function getInvitationEmailTemplate(invitationData) {
-  const { planName, inviterName, email, token, customMessage, expiresAt } = invitationData;
+  const {
+    planName,
+    planDescription,
+    planStartDate,
+    planEndDate,
+    inviterName,
+    email,
+    token,
+    customMessage,
+    expiresAt,
+  } = invitationData;
   const invitationLink = `${APP_BASE_URL}/invitation/${token}`;
-  const expiresDate = new Date(expiresAt).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  const expiresDate = formatInviteDate(expiresAt) || formatInviteDate(new Date(expiresAt));
+  const startLabel = formatInviteDate(planStartDate);
+  const endLabel = formatInviteDate(planEndDate);
+  const safeName = escapeHtml(planName || 'Un plan');
+  const safeInviter = escapeHtml(inviterName || 'Un usuario');
+  const safeEmail = escapeHtml(email || '');
+  const safeDescription = escapeHtml(planDescription || '');
+  const safeMessage = escapeHtml(customMessage || '');
+
+  const detailsRows = [
+    `<tr><td style="padding:8px 0;color:#5f6368;font-size:13px;">Plan</td><td style="padding:8px 0;font-weight:600;color:#202124;">${safeName}</td></tr>`,
+  ];
+  if (safeDescription) {
+    detailsRows.push(
+      `<tr><td style="padding:8px 0;color:#5f6368;font-size:13px;vertical-align:top;">Descripción</td><td style="padding:8px 0;color:#202124;">${safeDescription}</td></tr>`
+    );
+  }
+  if (startLabel) {
+    detailsRows.push(
+      `<tr><td style="padding:8px 0;color:#5f6368;font-size:13px;">Inicio</td><td style="padding:8px 0;color:#202124;">${escapeHtml(startLabel)}</td></tr>`
+    );
+  }
+  if (endLabel) {
+    detailsRows.push(
+      `<tr><td style="padding:8px 0;color:#5f6368;font-size:13px;">Fin</td><td style="padding:8px 0;color:#202124;">${escapeHtml(endLabel)}</td></tr>`
+    );
+  }
+  if (safeEmail) {
+    detailsRows.push(
+      `<tr><td style="padding:8px 0;color:#5f6368;font-size:13px;">Invitado</td><td style="padding:8px 0;color:#202124;">${safeEmail}</td></tr>`
+    );
+  }
 
   return `
 <!DOCTYPE html>
@@ -59,148 +120,69 @@ function getInvitationEmailTemplate(invitationData) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitación a Plan</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    .container {
-      background-color: #ffffff;
-      border-radius: 8px;
-      padding: 40px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .header h1 {
-      color: #4285f4;
-      margin: 0;
-      font-size: 28px;
-    }
-    .content {
-      margin-bottom: 30px;
-    }
-    .plan-name {
-      font-size: 20px;
-      font-weight: bold;
-      color: #202124;
-      margin: 20px 0;
-    }
-    .message-box {
-      background-color: #f8f9fa;
-      border-left: 4px solid #4285f4;
-      padding: 15px;
-      margin: 20px 0;
-      border-radius: 4px;
-    }
-    .button-container {
-      text-align: center;
-      margin: 30px 0;
-    }
-    .button {
-      display: inline-block;
-      padding: 14px 28px;
-      margin: 8px;
-      text-decoration: none;
-      border-radius: 4px;
-      font-weight: 500;
-      font-size: 16px;
-      transition: background-color 0.3s;
-    }
-    .button-primary {
-      background-color: #34a853;
-      color: #ffffff;
-    }
-    .button-primary:hover {
-      background-color: #2d8e47;
-    }
-    .button-secondary {
-      background-color: #ea4335;
-      color: #ffffff;
-    }
-    .button-secondary:hover {
-      background-color: #d33b2c;
-    }
-    .link-text {
-      word-break: break-all;
-      color: #4285f4;
-      font-size: 12px;
-      margin-top: 10px;
-    }
-    .footer {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid #e0e0e0;
-      font-size: 12px;
-      color: #666;
-      text-align: center;
-    }
-    .expiry-notice {
-      background-color: #fff3cd;
-      border: 1px solid #ffc107;
-      border-radius: 4px;
-      padding: 12px;
-      margin-top: 20px;
-      font-size: 13px;
-      color: #856404;
-    }
-  </style>
+  <title>Invitación a ${safeName}</title>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>📅 Planazoo</h1>
-    </div>
-    
-    <div class="content">
-      <p>Hola,</p>
-      
-      <p><strong>${inviterName || 'Un usuario'}</strong> te ha invitado a unirte al plan:</p>
-      
-      <div class="plan-name">${planName}</div>
-      
-      ${customMessage ? `
-      <div class="message-box">
-        <strong>Mensaje personalizado:</strong><br>
-        ${customMessage}
-      </div>
-      ` : ''}
-      
-      <p>Haz clic en uno de los botones para responder a la invitación:</p>
-      
-      <div class="button-container">
-        <a href="${invitationLink}?action=accept" class="button button-primary">
-          ✓ Aceptar Invitación
-        </a>
-        <a href="${invitationLink}?action=reject" class="button button-secondary">
-          ✗ Rechazar
-        </a>
-      </div>
-      
-      <p class="link-text">
-        Si los botones no funcionan, copia y pega este enlace en tu navegador:<br>
-        <a href="${invitationLink}">${invitationLink}</a>
-      </p>
-      
-      <div class="expiry-notice">
-        ⚠️ <strong>Importante:</strong> Esta invitación expira el ${expiresDate}. 
-        Asegúrate de responder antes de esa fecha.
-      </div>
-    </div>
-    
-    <div class="footer">
-      <p>Este es un email automático de Planazoo. Por favor, no respondas a este mensaje.</p>
-      <p>Si no esperabas esta invitación, puedes ignorar este email.</p>
-    </div>
-  </div>
+<body style="margin:0;padding:0;background-color:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.5;color:#202124;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f0f2f5;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:#1a5f4a;padding:28px 32px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:0.02em;">Planoon</div>
+              <div style="margin-top:8px;font-size:14px;color:rgba(255,255,255,0.85);">Te han invitado a un plan</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <p style="margin:0 0 16px;font-size:16px;">Hola,</p>
+              <p style="margin:0 0 20px;font-size:16px;"><strong>${safeInviter}</strong> te invita a unirte a este plan:</p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8faf9;border:1px solid #dce8e3;border-radius:10px;padding:4px 16px;margin:0 0 24px;">
+                ${detailsRows.join('')}
+              </table>
+
+              ${safeMessage ? `
+              <div style="background:#eef6ff;border-left:4px solid #1a73e8;padding:14px 16px;margin:0 0 24px;border-radius:4px;">
+                <div style="font-size:13px;font-weight:600;color:#174ea6;margin-bottom:6px;">Mensaje</div>
+                <div style="font-size:15px;color:#174ea6;">${safeMessage}</div>
+              </div>
+              ` : ''}
+
+              <p style="margin:0 0 16px;font-size:15px;color:#5f6368;">Responde con un clic:</p>
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 24px;">
+                <tr>
+                  <td style="padding:6px;">
+                    <a href="${invitationLink}?action=accept" style="display:inline-block;padding:14px 22px;background:#1a5f4a;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;">Aceptar invitación</a>
+                  </td>
+                  <td style="padding:6px;">
+                    <a href="${invitationLink}?action=reject" style="display:inline-block;padding:14px 22px;background:#ffffff;color:#c5221f;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;border:1px solid #f5c2c0;">Rechazar</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:12px;color:#80868b;word-break:break-all;">
+                Si los botones no funcionan, usa este enlace:<br>
+                <a href="${invitationLink}" style="color:#1a5f4a;">${invitationLink}</a>
+              </p>
+
+              ${expiresDate ? `
+              <div style="margin-top:20px;padding:12px 14px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;font-size:13px;color:#6d4c00;">
+                Esta invitación caduca el <strong>${escapeHtml(expiresDate)}</strong>.
+              </div>
+              ` : ''}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 32px 28px;border-top:1px solid #e8eaed;text-align:center;font-size:12px;color:#80868b;">
+              <p style="margin:0 0 6px;">Email automático de Planoon. No respondas a este mensaje.</p>
+              <p style="margin:0;">Si no esperabas esta invitación, puedes ignorarla.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `;
@@ -252,27 +234,34 @@ exports.sendInvitationEmail = functions.firestore
         }
       }
 
-      // Preparar datos del email
+      // Preparar datos del email (ficha alineada con InvitationPage)
       const emailData = {
         planName,
+        planDescription: plan.description || null,
+        planStartDate: plan.startDate || null,
+        planEndDate: plan.endDate || null,
         inviterName,
         email: invitation.email,
         token: invitation.token,
         customMessage: invitation.customMessage || null,
-        expiresAt: invitation.expiresAt.toDate ? invitation.expiresAt.toDate().toISOString() : invitation.expiresAt,
+        expiresAt: invitation.expiresAt,
       };
 
       // Generar HTML del email
       const htmlContent = getInvitationEmailTemplate(emailData);
 
       // Preparar contenido del email
-      const emailSubject = `Invitación a "${planName}" en Planazoo`;
-      const emailText = `${inviterName} te ha invitado a unirte al plan "${planName}" en Planazoo. 
-        
-Haz clic en este enlace para aceptar o rechazar la invitación:
-${APP_BASE_URL}/invitation/${invitation.token}
+      const emailSubject = `Invitación a "${planName}" en Planoon`;
+      const startTxt = formatInviteDate(plan.startDate);
+      const endTxt = formatInviteDate(plan.endDate);
+      const datesTxt = startTxt && endTxt ? `\nFechas: ${startTxt} – ${endTxt}` : '';
+      const descTxt = plan.description ? `\n${plan.description}` : '';
+      const emailText = `${inviterName} te ha invitado a unirte al plan "${planName}" en Planoon.${datesTxt}${descTxt}
 
-Esta invitación expira el ${emailData.expiresAt}.
+Aceptar: ${APP_BASE_URL}/invitation/${invitation.token}?action=accept
+Rechazar: ${APP_BASE_URL}/invitation/${invitation.token}?action=reject
+
+Enlace: ${APP_BASE_URL}/invitation/${invitation.token}
 
 Este es un email automático. Por favor, no respondas a este mensaje.`;
 
@@ -314,6 +303,69 @@ Este es un email automático. Por favor, no respondas a este mensaje.`;
     }
   });
 
+// Resolver invitación por token (Admin SDK) — lectura tras accept cuando rules niegan el doc.
+exports.resolveInvitationByToken = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+  const token = data?.token;
+  if (!token || typeof token !== 'string' || token.length < 10) {
+    throw new functions.https.HttpsError('invalid-argument', 'Se requiere token de invitación.');
+  }
+
+  const db = admin.firestore();
+  const uid = context.auth.uid;
+  const authEmail = (context.auth.token.email || '').toLowerCase().trim();
+
+  let invDoc = await db.collection('plan_invitations').doc(token).get();
+  if (!invDoc.exists) {
+    const snap = await db.collection('plan_invitations')
+      .where('token', '==', token)
+      .limit(1)
+      .get();
+    if (snap.empty) {
+      return { found: false };
+    }
+    invDoc = snap.docs[0];
+  }
+
+  const inv = invDoc.data() || {};
+  const invEmail = (inv.email || '').toLowerCase().trim();
+  let emailMatches = authEmail === invEmail;
+  if (!emailMatches) {
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      emailMatches = (userDoc.data().email || '').toLowerCase().trim() === invEmail;
+    }
+  }
+  const planDoc = await db.collection('plans').doc(inv.planId).get();
+  const isOwner = planDoc.exists && planDoc.data().userId === uid;
+  if (!emailMatches && !isOwner) {
+    throw new functions.https.HttpsError('permission-denied', 'No autorizado para esta invitación.');
+  }
+
+  const toIso = (v) => {
+    if (!v) return null;
+    if (v.toDate) return v.toDate().toISOString();
+    try { return new Date(v).toISOString(); } catch (_) { return null; }
+  };
+
+  return {
+    found: true,
+    id: invDoc.id,
+    planId: inv.planId || '',
+    email: inv.email || '',
+    token: inv.token || token,
+    invitedBy: inv.invitedBy || null,
+    role: inv.role || 'participant',
+    customMessage: inv.customMessage || null,
+    status: inv.status || 'pending',
+    createdAt: toIso(inv.createdAt),
+    expiresAt: toIso(inv.expiresAt),
+    respondedAt: toIso(inv.respondedAt),
+  };
+});
+
 // Cloud Function: Marcar invitación como aceptada (Admin SDK, evita reglas de cliente)
 // El cliente crea la participación y luego llama a esta función para actualizar plan_invitations.
 exports.markInvitationAccepted = functions.https.onCall(async (data, context) => {
@@ -329,17 +381,19 @@ exports.markInvitationAccepted = functions.https.onCall(async (data, context) =>
   const uid = context.auth.uid;
   const authEmail = (context.auth.token.email || '').toLowerCase().trim();
 
-  const invitationsSnap = await db.collection('plan_invitations')
-    .where('token', '==', token)
-    .where('status', '==', 'pending')
-    .limit(1)
-    .get();
-
-  if (invitationsSnap.empty) {
-    throw new functions.https.HttpsError('not-found', 'Invitación no encontrada o ya procesada.');
+  // Preferir doc ID = token (modelo actual)
+  let invDoc = await db.collection('plan_invitations').doc(token).get();
+  if (!invDoc.exists) {
+    const invitationsSnap = await db.collection('plan_invitations')
+      .where('token', '==', token)
+      .limit(1)
+      .get();
+    if (invitationsSnap.empty) {
+      throw new functions.https.HttpsError('not-found', 'Invitación no encontrada.');
+    }
+    invDoc = invitationsSnap.docs[0];
   }
 
-  const invDoc = invitationsSnap.docs[0];
   const inv = invDoc.data();
   const invEmail = (inv.email || '').toLowerCase().trim();
 
@@ -358,11 +412,127 @@ exports.markInvitationAccepted = functions.https.onCall(async (data, context) =>
     );
   }
 
+  // Idempotente: ya aceptada → éxito (re-tap del link del mail).
+  if (inv.status === 'accepted') {
+    return {
+      success: true,
+      alreadyProcessed: true,
+      invitationId: invDoc.id,
+      planId: inv.planId || null,
+    };
+  }
+
+  if (inv.status !== 'pending') {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'Invitación no está pendiente.'
+    );
+  }
+
   await invDoc.ref.update({
     status: 'accepted',
     respondedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
   console.log(`Invitation ${invDoc.id} marked accepted by ${uid}`);
+  return { success: true, invitationId: invDoc.id, planId: inv.planId || null };
+});
+
+// Cloud Function: Marcar invitación como rechazada (Admin SDK, evita reglas de cliente)
+exports.markInvitationRejected = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+  const token = data?.token;
+  const planId = data?.planId;
+  const db = admin.firestore();
+  const uid = context.auth.uid;
+  const authEmail = (context.auth.token.email || '').toLowerCase().trim();
+
+  let invDoc = null;
+  let inv = null;
+
+  if (token && typeof token === 'string' && token.length >= 10) {
+    // Preferir doc ID = token (modelo actual)
+    const byId = await db.collection('plan_invitations').doc(token).get();
+    if (byId.exists && byId.data().status === 'pending') {
+      invDoc = byId;
+      inv = byId.data();
+    } else {
+      const invitationsSnap = await db.collection('plan_invitations')
+        .where('token', '==', token)
+        .where('status', '==', 'pending')
+        .limit(1)
+        .get();
+      if (!invitationsSnap.empty) {
+        invDoc = invitationsSnap.docs[0];
+        inv = invDoc.data();
+      }
+    }
+  } else if (planId && typeof planId === 'string') {
+    let userEmail = authEmail;
+    if (!userEmail) {
+      const userDoc = await db.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        userEmail = (userDoc.data().email || '').toLowerCase().trim();
+      }
+    }
+    if (!userEmail) {
+      throw new functions.https.HttpsError('failed-precondition', 'No se pudo resolver el email del usuario.');
+    }
+    const invitationsSnap = await db.collection('plan_invitations')
+      .where('planId', '==', planId)
+      .where('email', '==', userEmail)
+      .where('status', '==', 'pending')
+      .limit(1)
+      .get();
+    if (!invitationsSnap.empty) {
+      invDoc = invitationsSnap.docs[0];
+      inv = invDoc.data();
+    }
+  } else {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Se requiere token o planId de invitación.'
+    );
+  }
+
+  if (!invDoc || !inv) {
+    // Sin doc de invitación: puede ser solo participación pending (invitación directa).
+    return { success: true, invitationId: null, skipped: true };
+  }
+
+  const invEmail = (inv.email || '').toLowerCase().trim();
+  let emailMatches = authEmail === invEmail;
+  if (!emailMatches) {
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      const userEmail = (userDoc.data().email || '').toLowerCase().trim();
+      emailMatches = userEmail === invEmail;
+    }
+  }
+  // También permitir si el uid tiene participación pending en ese plan
+  let participationMatches = false;
+  if (!emailMatches && inv.planId) {
+    const partSnap = await db.collection('plan_participations')
+      .where('planId', '==', inv.planId)
+      .where('userId', '==', uid)
+      .where('status', '==', 'pending')
+      .limit(1)
+      .get();
+    participationMatches = !partSnap.empty;
+  }
+  if (!emailMatches && !participationMatches) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'El email del usuario no coincide con el de la invitación.'
+    );
+  }
+
+  await invDoc.ref.update({
+    status: 'rejected',
+    respondedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  console.log(`Invitation ${invDoc.id} marked rejected by ${uid}`);
   return { success: true, invitationId: invDoc.id };
 });
 

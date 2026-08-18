@@ -1,0 +1,59 @@
+[
+  {
+    "id": "PLAN-C-001_basic_plan",
+    "description": "Crear plan con nombre válido; estado inicial planificando",
+    "target": { "module": "calendar", "scenario": "planCreation" },
+    "input": { "name": "Londres 2026" },
+    "expected": { "created": true, "errorCode": null, "state": "planificando" }
+  },
+  {
+    "id": "PLAN-C-002_no_name",
+    "description": "Crear plan sin nombre",
+    "target": { "module": "calendar", "scenario": "planCreation" },
+    "input": { "name": "" },
+    "expected": { "created": false, "errorCode": "missingName" }
+  },
+  {
+    "id": "PLAN-C-002b_whitespace_name",
+    "description": "Crear plan con nombre solo espacios",
+    "target": { "module": "calendar", "scenario": "planCreation" },
+    "input": { "name": "   " },
+    "expected": { "created": false, "errorCode": "missingName" }
+  },
+  {
+    "id": "PLAN-C-002c_name_too_short",
+    "description": "Crear plan con nombre de 2 caracteres",
+    "target": { "module": "calendar", "scenario": "planCreation" },
+    "input": { "name": "AB" },
+    "expected": { "created": false, "errorCode": "nameTooShort" }
+  },
+  {
+    "id": "PLAN-C-002d_name_too_long",
+    "description": "Crear plan con nombre de más de 100 caracteres",
+    "target": { "module": "calendar", "scenario": "planCreation" },
+    "input": { "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+    "expected": { "created": false, "errorCode": "nameTooLong" }
+  },
+  {
+    "id": "PLAN-C-003_end_before_start",
+    "description": "Fecha fin anterior a inicio",
+    "target": { "module": "calendar", "scenario": "planCreation" },
+    "input": {
+      "name": "Londres 2026",
+      "startDate": "2026-08-18",
+      "endDate": "2026-08-17"
+    },
+    "expected": { "created": false, "errorCode": "endBeforeStart" }
+  },
+  {
+    "id": "PLAN-C-003b_same_day",
+    "description": "Inicio y fin el mismo día civil son válidos",
+    "target": { "module": "calendar", "scenario": "planCreation" },
+    "input": {
+      "name": "Londres 2026",
+      "startDate": "2026-08-18T15:00:00",
+      "endDate": "2026-08-18T08:00:00"
+    },
+    "expected": { "created": true, "errorCode": null, "state": "planificando" }
+  }
+]

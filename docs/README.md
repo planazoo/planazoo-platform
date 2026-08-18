@@ -1,8 +1,14 @@
-# 📚 Documentación - Planazoo Platform
+# 📚 Documentación - Planoon / Planazoo
 
-Bienvenido a la documentación completa de Planazoo, la plataforma de planificación de viajes y eventos.
+Bienvenido a la documentación del **monorepo** (app Flutter + web comercial + docs).  
+Estructura: [`configuracion/MONOREPO.md`](./configuracion/MONOREPO.md) · Landing: [`../marketing/`](../marketing/).
 
 ## 📋 Índice de Documentación
+
+> 🚦 **Regla rápida:**  
+> Si una ruta incluye `/archivo/`, su contenido es **histórico** (**NO fuente viva**).  
+> Para trabajo actual: `flujos/MAPA_FLUJOS.md` → dominio → `tareas/TASKS.md` → `testing/LISTA_PUNTOS_CORREGIR_APP.md`.
+> Lanzamiento: [`producto/TIMELINE_LANZAMIENTO.md`](./producto/TIMELINE_LANZAMIENTO.md).
 
 ### 🎯 [Guías](./guias/)
 Guías transversales que aplican a todo el proyecto:
@@ -17,12 +23,15 @@ Guías transversales que aplican a todo el proyecto:
 
 ### 🔄 [Flujos / sistema de procesos](./flujos/)
 - **[MAPA_FLUJOS.md](./flujos/MAPA_FLUJOS.md)** – **Puerta de entrada:** jerarquía proceso → trabajo → prueba → referencia + mapa de dominios
-- [Diagrama altas/bajas](./flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md) – Contrato Mermaid (piloto)
+- **[ORDEN_POR_DOMINIOS.md](./flujos/ORDEN_POR_DOMINIOS.md)** – **Orden definitivo** de trabajo (#1→#9; 1 WIP)
+- **[DIAGRAMA_ALTAS_BAJAS_PLAN.md](./flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md)** – Contrato vivo del dominio WIP (participantes / invitaciones)
 - Índices por dominio (`FLUJO_*.md` stubs) · histórico largo en [`flujos/archivo/`](./flujos/archivo/)
 - [Notas del plan](./flujos/FLUJO_NOTAS_PLAN.md) – Flujo vivo T262
 
 ### 📦 [Producto](./producto/)
 Decisiones de producto y especificaciones funcionales:
+- [Timeline de lanzamiento](./producto/TIMELINE_LANZAMIENTO.md) – Pre/post lanzamiento + alcance congelado
+- [Web comercial — brief](./producto/WEB_COMERCIAL.md) – Qué debe comunicar `planoon.com` (relato, pilares, capa de verdad vs app)
 - [Sistema de notificaciones – Especificación](./producto/NOTIFICACIONES_ESPECIFICACION.md) – Lista global (campana), W20 por plan, filtros, badge
 - [Plan de codificación – Notificaciones](./producto/NOTIFICACIONES_PLAN_CODIFICACION.md) – Fases e implementación
 - [Paridad pagos con Tricount](./producto/PAGOS_PARIDAD_TRICOUNT.md) – Objetivo funcional y fases de implementación de gastos
@@ -62,11 +71,11 @@ Gestión de tareas del proyecto:
 
 ### 🧪 [Testing](./testing/)
 - **[Lista de puntos a corregir (app)](./testing/LISTA_PUNTOS_CORREGIR_APP.md)** – Tabla viva de hallazgos en pruebas
+- [Checklist CRUD planes (agente)](./testing/CHECKLIST_CRUD_PLANES.md) – Casos P1–P4 ejecutables por agente (T277)
 - [Registro de observaciones](./testing/REGISTRO_OBSERVACIONES_PRUEBAS.md) – Diario narrativo (secundario a la LISTA)
 - [Inicio pruebas – Día 1](./testing/INICIO_PRUEBAS_DIA1.md)
 - [Plan E2E tres usuarios](./testing/PLAN_PRUEBAS_E2E_TRES_USUARIOS.md)
 - Archivo: [`testing/archivo/`](./testing/archivo/) (listas cerradas, ACCIONES_PENDIENTES histórico)
-- [Registro de observaciones de pruebas](./testing/REGISTRO_OBSERVACIONES_PRUEBAS.md) - Notas y observaciones durante pruebas manuales
 - [Testing Offline First](./testing/TESTING_OFFLINE_FIRST.md) — Móvil: Firestore offline (SDK) + réplica Hive + `current_user`; guía alineada con **ítem 58** cerrado; regresión **REG-2026-022** en [Testing Checklist](./configuracion/TESTING_CHECKLIST.md)
 
 ### ⚙️ [Configuración](./configuracion/)
@@ -85,6 +94,7 @@ Configuración y contexto del proyecto:
 - [FCM Fase 1](./configuracion/FCM_FASE1_IMPLEMENTACION.md) - Arquitectura técnica FCM (referencia)
 - [Onboarding IA](./configuracion/ONBOARDING_IA.md) - Contexto para asistentes IA
 - [Usuarios de prueba](./configuracion/USUARIOS_PRUEBA.md) - Datos semilla, matriz 3 usuarios × 3 dispositivos (`flutter devices` / arranque)
+- [Terminales de desarrollo](./configuracion/TERMINALES_DEV.md) - Recrear web / iOS / Android (`flutter run` en paralelo)
 - [Setup Android local](./configuracion/SETUP_ANDROID_LOCAL.md) - SDK, físico/emulador, `adb`, `flutter run`
 - [Setup iOS (simulador + físico)](./configuracion/SETUP_IOS_SIMULATOR.md) - Simulador, iPhone USB (Confiar / emparejar)
 - [Nomenclatura UI](./configuracion/NOMENCLATURA_UI.md) - Páginas, menús y modales

@@ -8,10 +8,36 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 Para navegar más rápido en este archivo (Ctrl+F):
 
-- **Recientes (2026):** `T273`, `T255`, `T238`, `T242`, `T229`, `T235`, `T240`, `T241`, `T230`, `T236`, `T239`, `T217–T221`.
+- **Recientes (2026):** `T276`, `T269`, `T273`, `T255`, `T238`, `T242`, `T229`, `T235`, `T240`, `T241`, `T230`, `T236`, `T239`, `T217–T221`.
 - **Bloque 2026 (UI/flujos):** `T203`, `T198`, `T161`, `T207`, `T206`, `T216`, `T189`, `T200`, `T201`, `T209`, `T213`, `T202`, `T194–T197`, `T199`, `T193`.
 - **Bloque funcional 2025 (sistemas core):** `T101`, `T113`, `T107`, `T123`, `T112`, `T100`, `T105`, `T109`, `T120`, `T117`, `T153`, `T152`, `T164`, `T177`, `T178`.
 - **Bloque histórico inicial (fundaciones UI/calendario):** `T1–T99` (widgets base, calendario, tracks, validaciones, reglas y seguridad).
+
+---
+
+## T276 - Preview pending (solo lectura) + banner (Agosto 2026)
+
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Agosto 2026  
+
+**Descripción:** Invitado `pending` puede previsualizar el plan (Info, Mi resumen, Calendario) en solo lectura; sin chat, pagos, notas, participantes ni crear/editar. Banner fijo aceptar / rechazar / decidir más tarde. Paridad móvil (`PlanDetailPage`) y web desktop (`DashboardPage` + `CalendarScreen.readOnly`).
+
+**Criterios / QA:** Dispositivo ✅; web desktop ✅ (Ago 2026).
+
+**Archivos clave:** `pending_invite_preview_banner.dart`, `pg_plan_detail_page.dart`, `pg_dashboard_page.dart`, `pg_calendar_mobile_page.dart`, `wd_calendar_screen.dart`, `wd_plan_navigation_bar.dart`, `wd_plan_data_screen.dart`. Contrato: `DIAGRAMA_ALTAS_BAJAS_PLAN.md` §1.5.
+
+---
+
+## T269 - Buzón «Mis invitaciones» + modal 1 vs N (Agosto 2026)
+
+**Estado:** ✅ Completada  
+**Fecha de finalización:** Agosto 2026  
+
+**Descripción:** Entrada desde campana (filtro «Mis invitaciones»); solo pendientes accionables; al abrir app: 1 → modal aceptar/rechazar/decidir más tarde, varias → campana en ese filtro. Modal alineado a UI (barra verde, invitador + fechas del plan). Refresh tras aceptar en iOS (invalidación providers + no re-listar invitation fantasma).
+
+**Criterios / QA:** Web UC 1 pendiente → modal ✅; iPhone UA varias → campana ✅; aceptar refresca estado en UA ✅.
+
+**Archivos clave:** `pending_invitation_on_launch.dart`, `invitation_response_dialog.dart`, `wd_notification_list_dialog.dart`, `invitation_service.dart`, `notification_providers.dart`. Contrato: `DIAGRAMA_ALTAS_BAJAS_PLAN.md` §1.3.
 
 ---
 

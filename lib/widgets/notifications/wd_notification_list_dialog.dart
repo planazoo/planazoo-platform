@@ -96,30 +96,37 @@ class NotificationListDialog extends ConsumerWidget {
             // Filtros
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Row(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Expanded(
-                    child: _FilterChip(
-                      label: loc.notificationsFilterAll,
-                      selected: filterIndex == 0,
-                      onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 0,
-                    ),
+                  _FilterChip(
+                    label: loc.notificationsFilterAll,
+                    selected: filterIndex == 0,
+                    onTap: () => ref
+                        .read(globalNotificationsFilterProvider.notifier)
+                        .state = 0,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _FilterChip(
-                      label: loc.notificationsFilterAction,
-                      selected: filterIndex == 1,
-                      onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 1,
-                    ),
+                  _FilterChip(
+                    label: loc.notificationsFilterAction,
+                    selected: filterIndex == 1,
+                    onTap: () => ref
+                        .read(globalNotificationsFilterProvider.notifier)
+                        .state = 1,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _FilterChip(
-                      label: loc.notificationsFilterInfo,
-                      selected: filterIndex == 2,
-                      onTap: () => ref.read(globalNotificationsFilterProvider.notifier).state = 2,
-                    ),
+                  _FilterChip(
+                    label: loc.notificationsFilterInvitations,
+                    selected: filterIndex == 3,
+                    onTap: () => ref
+                        .read(globalNotificationsFilterProvider.notifier)
+                        .state = 3,
+                  ),
+                  _FilterChip(
+                    label: loc.notificationsFilterInfo,
+                    selected: filterIndex == 2,
+                    onTap: () => ref
+                        .read(globalNotificationsFilterProvider.notifier)
+                        .state = 2,
                   ),
                 ],
               ),
@@ -137,17 +144,22 @@ class NotificationListDialog extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.notifications_none,
+                              filterIndex == 3
+                                  ? Icons.mail_outline
+                                  : Icons.notifications_none,
                               size: 64,
                               color: Colors.white60,
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              loc.notificationsEmpty,
+                              filterIndex == 3
+                                  ? loc.notificationsEmptyInvitations
+                                  : loc.notificationsEmpty,
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 color: Colors.white60,
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           ],
                         ),
@@ -218,6 +230,12 @@ class NotificationListDialog extends ConsumerWidget {
   static List<UnifiedNotification> _filterList(List<UnifiedNotification> list, int filterIndex) {
     if (filterIndex == 1) return list.where((n) => n.requiresAction).toList();
     if (filterIndex == 2) return list.where((n) => !n.requiresAction).toList();
+    if (filterIndex == 3) {
+      return list
+          .where((n) =>
+              n.type == UnifiedNotificationType.invitation && n.requiresAction)
+          .toList();
+    }
     return list;
   }
 

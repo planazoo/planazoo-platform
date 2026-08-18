@@ -7,9 +7,16 @@ import 'plan_participation_service.dart';
 /// 
 /// Permite que los participantes del plan se apunten a eventos individuales
 class EventParticipantService {
+  EventParticipantService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
   static const String _collectionName = 'event_participants';
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final PlanParticipationService _participationService = PlanParticipationService();
+  final FirebaseFirestore _firestore;
+  PlanParticipationService? _lazyParticipationService;
+
+  PlanParticipationService get _participationService =>
+      _lazyParticipationService ??=
+          PlanParticipationService(firestore: _firestore);
 
   /// Apuntarse a un evento
   /// 

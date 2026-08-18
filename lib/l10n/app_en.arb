@@ -1245,6 +1245,10 @@
   "@notificationsFilterAll": { "description": "Notifications filter: all" },
   "notificationsFilterAction": "Pending action",
   "@notificationsFilterAction": { "description": "Notifications filter: requires action" },
+  "notificationsFilterInvitations": "My invitations",
+  "@notificationsFilterInvitations": { "description": "T269 campana filter actionable invitations only" },
+  "notificationsEmptyInvitations": "You have no pending invitations",
+  "@notificationsEmptyInvitations": { "description": "Empty My invitations filter" },
   "notificationsFilterInfo": "Informational only",
   "@notificationsFilterInfo": { "description": "Notifications filter: informational only" },
   "notificationsMarkAllAsRead": "Mark all as read",
@@ -2339,6 +2343,22 @@
   "plansListProfileTooltip": "Profile",
 
   "invitationTitle": "Plan Invitation",
+  "invitationAttendQuestion": "You have been invited to join this plan. What would you like to do?",
+  "invitationInviteMessage": "{inviter} invited you to the plan {planName}, from {startDate} to {endDate}. What would you like to do?",
+  "@invitationInviteMessage": {
+    "placeholders": {
+      "inviter": { "type": "String" },
+      "planName": { "type": "String" },
+      "startDate": { "type": "String" },
+      "endDate": { "type": "String" }
+    }
+  },
+  "invitationSomeone": "Someone",
+  "invitationDecideLater": "Decide later",
+  "pendingInvitePreviewBannerMessage": "You're invited. Accept to join. Meanwhile you can preview the plan read-only.",
+  "pendingInvitePreviewDecideLaterHint": "You can accept or decline anytime from this banner.",
+  "invitationUnavailableTitle": "Invitation unavailable",
+  "invitationNotAuthenticated": "Error: user not signed in",
   "invitationNotFound": "Invitation not found or invalid",
   "invitationExpired": "This invitation has expired",
   "invitationAlreadyAccepted": "You have already accepted this invitation",
@@ -2350,6 +2370,8 @@
   "invitationCreateAccount": "Create account",
   "invitationAcceptButton": "Accept invitation",
   "invitationProcessing": "Processing...",
+  "invitationAccepting": "Accepting invitation...",
+  "invitationRejecting": "Rejecting invitation...",
   "invitationRejectButton": "Reject invitation",
   "invitationAcceptSuccess": "Invitation accepted. Redirecting to the plan...",
   "invitationAcceptError": "Error accepting invitation",

@@ -1245,6 +1245,10 @@
   "@notificationsFilterAll": { "description": "Filtro lista notificaciones: todas" },
   "notificationsFilterAction": "Pendientes de acción",
   "@notificationsFilterAction": { "description": "Filtro lista notificaciones: requieren acción" },
+  "notificationsFilterInvitations": "Mis invitaciones",
+  "@notificationsFilterInvitations": { "description": "T269 filtro campana solo invitaciones accionables" },
+  "notificationsEmptyInvitations": "No tienes invitaciones pendientes",
+  "@notificationsEmptyInvitations": { "description": "Vacío del filtro Mis invitaciones" },
   "notificationsFilterInfo": "Solo informativas",
   "@notificationsFilterInfo": { "description": "Filtro lista notificaciones: solo informativas" },
   "notificationsMarkAllAsRead": "Marcar todas como leídas",
@@ -2342,6 +2346,22 @@
   "plansListProfileTooltip": "Perfil",
 
   "invitationTitle": "Invitación a Plan",
+  "invitationAttendQuestion": "Te han invitado a unirte a este plan. ¿Qué quieres hacer?",
+  "invitationInviteMessage": "{inviter} te ha invitado al plan {planName}, desde el {startDate} al {endDate}. ¿Qué quieres hacer?",
+  "@invitationInviteMessage": {
+    "placeholders": {
+      "inviter": { "type": "String" },
+      "planName": { "type": "String" },
+      "startDate": { "type": "String" },
+      "endDate": { "type": "String" }
+    }
+  },
+  "invitationSomeone": "Alguien",
+  "invitationDecideLater": "Decidir más tarde",
+  "pendingInvitePreviewBannerMessage": "Estás invitado. Acepta para participar. Mientras, puedes ver el plan en solo lectura.",
+  "pendingInvitePreviewDecideLaterHint": "Puedes aceptar o rechazar cuando quieras desde este banner.",
+  "invitationUnavailableTitle": "Invitación no disponible",
+  "invitationNotAuthenticated": "Error: usuario no autenticado",
   "invitationNotFound": "Invitación no encontrada o inválida",
   "invitationExpired": "Esta invitación ha expirado",
   "invitationAlreadyAccepted": "Ya has aceptado esta invitación",
@@ -2353,6 +2373,8 @@
   "invitationCreateAccount": "Crear cuenta",
   "invitationAcceptButton": "Aceptar invitación",
   "invitationProcessing": "Procesando...",
+  "invitationAccepting": "Aceptando invitación...",
+  "invitationRejecting": "Rechazando invitación...",
   "invitationRejectButton": "Rechazar invitación",
   "invitationAcceptSuccess": "Invitación aceptada. Redirigiendo al plan...",
   "invitationAcceptError": "Error al aceptar la invitación",

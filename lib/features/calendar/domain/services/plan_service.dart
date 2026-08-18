@@ -5,23 +5,59 @@ import '../../../../shared/services/permission_service.dart';
 import '../../../../features/security/services/rate_limiter_service.dart';
 import '../models/plan.dart';
 import '../models/plan_participation.dart';
+import '../plan_date_range_validation.dart';
 import 'plan_participation_service.dart';
 import 'invitation_service.dart';
 import 'event_participant_service.dart';
+import 'event_service.dart';
 import '../../../auth/domain/services/user_service.dart';
 import '../../../notifications/domain/services/notification_helper.dart';
 import '../../../plan_notes/domain/services/plan_notes_service.dart';
 
 class PlanService {
-  PlanService({InvitationService? invitationService})
-      : _invitationService = invitationService ?? InvitationService();
+  PlanService({
+    InvitationService? invitationService,
+    FirebaseFirestore? firestore,
+    PlanParticipationService? participationService,
+    EventParticipantService? eventParticipantService,
+    PermissionService? permissionService,
+    EventService? eventService,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _invitationServiceOverride = invitationService,
+        _eventParticipantServiceOverride = eventParticipantService,
+        _permissionServiceOverride = permissionService,
+        _eventServiceOverride = eventService,
+        _participationService = participationService ??
+            PlanParticipationService(firestore: firestore);
 
   static const String _collectionName = 'plans';
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final PlanParticipationService _participationService = PlanParticipationService();
-  final InvitationService _invitationService;
-  final EventParticipantService _eventParticipantService = EventParticipantService();
-  final PermissionService _permissionService = PermissionService();
+  final FirebaseFirestore _firestore;
+  final PlanParticipationService _participationService;
+  final InvitationService? _invitationServiceOverride;
+  final EventParticipantService? _eventParticipantServiceOverride;
+  final PermissionService? _permissionServiceOverride;
+  final EventService? _eventServiceOverride;
+  InvitationService? _lazyInvitationService;
+  EventParticipantService? _lazyEventParticipantService;
+  PermissionService? _lazyPermissionService;
+  EventService? _lazyEventService;
+
+  InvitationService get _invitationService =>
+      _invitationServiceOverride ??
+      (_lazyInvitationService ??= InvitationService(firestore: _firestore));
+
+  EventParticipantService get _eventParticipantService =>
+      _eventParticipantServiceOverride ??
+      (_lazyEventParticipantService ??=
+          EventParticipantService(firestore: _firestore));
+
+  PermissionService get _permissionService =>
+      _permissionServiceOverride ??
+      (_lazyPermissionService ??= PermissionService.forFirestore(_firestore));
+
+  EventService get _eventService =>
+      _eventServiceOverride ??
+      (_lazyEventService ??= EventService(firestore: _firestore));
 
   /// Obtener todos los planes (sin filtrar por usuario)
   /// 
@@ -204,6 +240,13 @@ class PlanService {
   // Crear un nuevo plan
   Future<String?> createPlan(Plan plan) async {
     try {
+      if (validatePlanDateRange(plan.startDate, plan.endDate) != null) {
+        LoggerService.warning(
+          'Rejected createPlan: end before start',
+        );
+        return null;
+      }
+
       // Verificar rate limiting para creación de planes
       final rateLimiter = RateLimiterService();
       final planLimitCheck = await rateLimiter.checkPlanCreation(plan.userId);
@@ -243,6 +286,12 @@ class PlanService {
   // Actualizar un plan existente
   Future<bool> updatePlan(Plan plan) async {
     if (plan.id == null) return false;
+    if (validatePlanDateRange(plan.startDate, plan.endDate) != null) {
+      LoggerService.warning(
+        'Rejected updatePlan: end before start for ${plan.id}',
+      );
+      return false;
+    }
     
     try {
       final updatedPlan = plan.copyWith(updatedAt: DateTime.now());
@@ -341,17 +390,16 @@ class PlanService {
   }
 
   // Eliminar un plan
-  /// 
-  /// Elimina un plan y todos sus datos relacionados en el siguiente orden:
-  /// 1. event_participants (participantes de eventos del plan)
-  /// 2. plan_invitations (todas las invitaciones del plan)
-  /// 3. events (eventos del plan - se eliminan desde event_service)
-  /// 4. plan_permissions (permisos del plan)
-  /// 5. plan_participations (participaciones - eliminación física)
-  /// 6. plan (el plan mismo)
-  /// 
-  /// NOTA: La eliminación de eventos e imagen del plan se hace desde wd_plan_data_screen.dart
-  /// antes de llamar a este método.
+  /// Elimina un plan y datos relacionados, en este orden:
+  /// 1. event_participants
+  /// 2. plan_invitations
+  /// 3. plan_permissions
+  /// 4. plan_participations
+  /// 5. notas (workspace + personales)
+  /// 6. events del plan (eventos **y** alojamientos; LISTA 126/127)
+  /// 7. documento del plan
+  ///
+  /// La imagen en Storage sigue siendo responsabilidad del caller (Info).
   Future<bool> deletePlan(String id) async {
     try {
       // 1. Eliminar todos los event_participants del plan
@@ -366,10 +414,12 @@ class PlanService {
       // 4. Eliminar físicamente todas las participaciones del plan
       await _participationService.deleteAllPlanParticipations(id);
 
-      // T262: notas del plan (workspace + personales por usuario)
+      // T262: notas del plan (workspace + personales por usuario).
       final planNotes = PlanNotesService(firestore: _firestore);
       await planNotes.deleteWorkspaceForPlan(id);
       await planNotes.deleteAllPersonalNotesForPlan(id);
+
+      await _eventService.deleteEventsByPlanId(id);
       
       // 5. Eliminar el plan
       await _firestore.collection(_collectionName).doc(id).delete();

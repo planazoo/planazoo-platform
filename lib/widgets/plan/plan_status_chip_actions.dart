@@ -8,6 +8,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/calendar
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
+import 'package:unp_calendario/features/notifications/presentation/providers/notification_providers.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/widgets/plan/membership_solo_items_warning.dart';
@@ -107,6 +108,9 @@ Future<void> planStatusChipShowPendingActions(
 
   ref.invalidate(userPendingInvitationsProvider);
   ref.invalidate(planParticipantsProvider(planId));
+  ref.invalidate(plansStreamProvider);
+  ref.invalidate(globalNotificationsListProvider);
+  ref.invalidate(globalUnreadCountProvider);
   try {
     ref.read(planParticipationNotifierProvider(planId).notifier).reload();
   } catch (_) {}

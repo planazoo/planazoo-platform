@@ -22,7 +22,7 @@ Obtén una API key de SendGrid desde [https://sendgrid.com](https://sendgrid.com
 ```bash
 firebase functions:config:set sendgrid.key="YOUR_SENDGRID_API_KEY"
 firebase functions:config:set sendgrid.from="noreply@planazoo.app"
-firebase functions:config:set app.base_url="https://planazoo.app"
+firebase functions:config:set app.base_url="https://app.planoon.com"
 ```
 
 #### Opción B: Variables de entorno locales (para testing)
@@ -32,7 +32,7 @@ Crea un archivo `.env` en el directorio `functions/`:
 ```
 SENDGRID_API_KEY=your_api_key_here
 FROM_EMAIL=noreply@planazoo.app
-APP_BASE_URL=https://planazoo.app
+APP_BASE_URL=https://app.planoon.com
 ```
 
 ### 3. Desplegar Functions

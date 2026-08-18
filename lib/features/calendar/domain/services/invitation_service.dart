@@ -18,10 +18,16 @@ import '../../../notifications/domain/services/notification_service.dart';
 class InvitationRespondResult {
   final bool success;
   final String message;
+  /// Plan al que navegar tras aceptar (también si ya era miembro).
+  final String? planId;
+  /// Ya estaba accepted / dentro del plan (re-tap del link).
+  final bool alreadyMember;
 
   const InvitationRespondResult({
     required this.success,
     required this.message,
+    this.planId,
+    this.alreadyMember = false,
   });
 }
 
@@ -44,11 +50,23 @@ class InvitationActionabilityResult {
 /// Permite invitar usuarios por email aunque no conozcamos su ID.
 /// Genera links únicos con token que expiran en 7 días.
 class InvitationService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  InvitationService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
   static const String _collectionName = 'plan_invitations';
-  final PlanParticipationService _participationService = PlanParticipationService();
-  final UserService _userService = UserService();
-  final NotificationService _notificationService = NotificationService();
+  PlanParticipationService? _lazyParticipationService;
+  UserService? _lazyUserService;
+  NotificationService? _lazyNotificationService;
+
+  PlanParticipationService get _participationService =>
+      _lazyParticipationService ??=
+          PlanParticipationService(firestore: _firestore);
+
+  UserService get _userService => _lazyUserService ??= UserService();
+
+  NotificationService get _notificationService =>
+      _lazyNotificationService ??= NotificationService();
 
   /// Genera un token único para una invitación
   String _generateToken() {
@@ -239,11 +257,48 @@ class InvitationService {
           .where('token', isEqualTo: trimmed)
           .limit(1)
           .get();
-      if (querySnapshot.docs.isEmpty) return null;
+      if (querySnapshot.docs.isEmpty) {
+        return _getInvitationByTokenViaCloudFunction(trimmed);
+      }
       return _invitationFromDocConsideringExpiry(querySnapshot.docs.first);
     } catch (e) {
+      LoggerService.warning(
+        'Client getInvitationByToken failed, trying CF: $token',
+        context: 'INVITATION_SERVICE',
+      );
+      return _getInvitationByTokenViaCloudFunction(token.trim());
+    }
+  }
+
+  /// Lectura Admin SDK cuando las rules niegan el doc (p. ej. ya no `pending`).
+  Future<PlanInvitation?> _getInvitationByTokenViaCloudFunction(String token) async {
+    if (token.isEmpty) return null;
+    try {
+      final result = await FirebaseFunctions.instance
+          .httpsCallable('resolveInvitationByToken')
+          .call({'token': token});
+      final data = Map<String, dynamic>.from(result.data as Map);
+      if (data['found'] != true) return null;
+      return PlanInvitation(
+        id: data['id'] as String?,
+        planId: data['planId'] as String? ?? '',
+        email: data['email'] as String? ?? '',
+        token: data['token'] as String? ?? token,
+        invitedBy: data['invitedBy'] as String?,
+        role: data['role'] as String? ?? 'participant',
+        customMessage: data['customMessage'] as String?,
+        createdAt: DateTime.tryParse(data['createdAt'] as String? ?? '') ??
+            DateTime.now(),
+        expiresAt: DateTime.tryParse(data['expiresAt'] as String? ?? '') ??
+            DateTime.now().add(const Duration(days: 7)),
+        status: data['status'] as String? ?? 'pending',
+        respondedAt: data['respondedAt'] != null
+            ? DateTime.tryParse(data['respondedAt'] as String)
+            : null,
+      );
+    } catch (e) {
       LoggerService.error(
-        'Error getting invitation by token: $token',
+        'Error getting invitation by token (CF): $token',
         context: 'INVITATION_SERVICE',
         error: e,
       );
@@ -283,9 +338,11 @@ class InvitationService {
         );
       }
       if (invitation.isAccepted) {
-        return const InvitationRespondResult(
+        return InvitationRespondResult(
           success: true,
           message: 'Ya formas parte de este plan',
+          planId: invitation.planId,
+          alreadyMember: true,
         );
       }
       if (invitation.isRejected) {
@@ -449,29 +506,30 @@ class InvitationService {
   /// a través de participaciones, no por email.
   Future<List<PlanInvitation>> getPendingInvitationsByUserId(String userId, String? email) async {
     try {
-      // 1. PRIMERO: Verificar si hay participaciones pendientes (userId)
-      // Si hay, significa que la invitación ya fue procesada y tenemos una participación pendiente
-      // En este caso, NO necesitamos buscar invitaciones - el sistema de participaciones
-      // ya maneja el estado pendiente
       final participations = await _participationService.getUserParticipations(userId).first;
       final pendingParticipations = participations.where((p) => p.status == 'pending').toList();
       
       if (pendingParticipations.isNotEmpty) {
-        // Hay participaciones pendientes - esto significa que ya pasamos la fase de invitación
-        // El sistema ahora funciona por userId a través de participaciones
-        // No necesitamos buscar invitaciones, retornar lista vacía
-        // (el sistema de participaciones ya maneja el estado pendiente)
+        // Hay participaciones pendientes - el estado lo marcan las participaciones.
         return [];
       }
+
+      // Planes donde ya está aceptado o rechazado: no deben reaparecer como invitación pendiente
+      // (p. ej. si markInvitationAccepted/Rejected CF falló y el doc invitation sigue pending).
+      final settledPlanIds = participations
+          .where((p) =>
+              p.isActive && (p.isAccepted || p.isRejected))
+          .map((p) => p.planId)
+          .toSet();
       
-      // 2. SEGUNDO: Si NO hay participaciones pendientes, buscar invitaciones por email (primera vez)
-      // Esto solo ocurre cuando el usuario se acaba de registrar y aún no tiene participaciones
-      // Después de aceptar la primera invitación, se creará una participación y este código
-      // no se ejecutará más (se usará el sistema de participaciones)
       if (email == null) return [];
       final list = await getPendingInvitationsByEmail(email!);
-      // Solo mostrar invitaciones realmente pendientes y no expiradas
-      return list.where((inv) => inv.isPending && !inv.isExpired).toList();
+      return list
+          .where((inv) =>
+              inv.isPending &&
+              !inv.isExpired &&
+              !settledPlanIds.contains(inv.planId))
+          .toList();
     } catch (e) {
       LoggerService.error(
         'Error getting pending invitations by userId: $userId',
@@ -717,9 +775,11 @@ class InvitationService {
           existingPart.isActive &&
           existingPart.status == 'accepted') {
         await _cleanupInviteeInvitationNotifications(userId, planId);
-        return const InvitationRespondResult(
+        return InvitationRespondResult(
           success: true,
-          message: 'Has aceptado la invitación',
+          message: 'Ya formas parte de este plan',
+          planId: planId,
+          alreadyMember: true,
         );
       }
 
@@ -788,8 +848,16 @@ class InvitationService {
         );
       }
 
-      // Si ya había pending, createParticipation puede no haber pasado a accepted.
-      await _participationService.acceptInvitation(planId, userId);
+      // Tras createParticipation: si ya accepted, no re-notificar ni fallar por side effects.
+      final afterCreate =
+          await _participationService.getParticipation(planId, userId);
+      final wasAlreadyAccepted = afterCreate != null &&
+          afterCreate.isActive &&
+          afterCreate.status == 'accepted';
+
+      if (!wasAlreadyAccepted) {
+        await _participationService.acceptInvitation(planId, userId);
+      }
 
       final token = invitation.token;
       if (token.isNotEmpty) {
@@ -808,25 +876,47 @@ class InvitationService {
             );
           }
         } catch (cfError) {
-          LoggerService.error(
-            'Cloud Function markInvitationAccepted failed (planId flow): $planId. Invitation may stay pending.',
+          // Idempotente: CF puede devolver not-found si ya estaba accepted.
+          LoggerService.warning(
+            'markInvitationAccepted CF (planId flow): $planId — $cfError',
             context: 'INVITATION_SERVICE',
-            error: cfError,
           );
+          try {
+            await invitationDoc.reference.update({
+              'status': 'accepted',
+              'respondedAt': Timestamp.fromDate(DateTime.now()),
+            });
+          } catch (_) {
+            // Rules pueden negar update si ya no está pending; OK.
+          }
         }
+      } else {
+        try {
+          await invitationDoc.reference.update({
+            'status': 'accepted',
+            'respondedAt': Timestamp.fromDate(DateTime.now()),
+          });
+        } catch (_) {}
       }
 
-      final respondedDisplay = user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
-      await NotificationHelper().notifyInvitationResponded(
-        inviterUserId: invitation.invitedBy,
-        planId: planId,
-        respondedUserDisplay: respondedDisplay,
-        accepted: true,
-      );
+      if (!wasAlreadyAccepted) {
+        final respondedDisplay =
+            user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
+        await NotificationHelper().notifyInvitationResponded(
+          inviterUserId: invitation.invitedBy,
+          planId: planId,
+          respondedUserDisplay: respondedDisplay,
+          accepted: true,
+        );
+      }
       await _cleanupInviteeInvitationNotifications(userId, planId);
-      return const InvitationRespondResult(
+      return InvitationRespondResult(
         success: true,
-        message: 'Has aceptado la invitación',
+        message: wasAlreadyAccepted
+            ? 'Ya formas parte de este plan'
+            : 'Has aceptado la invitación',
+        planId: planId,
+        alreadyMember: wasAlreadyAccepted,
       );
     } catch (e) {
       LoggerService.error(
@@ -862,6 +952,7 @@ class InvitationService {
           .get();
 
       String? inviterUserId;
+      String? invitationToken;
 
       if (querySnapshot.docs.isEmpty) {
         final ok = await _participationService.rejectInvitation(planId, userId);
@@ -892,12 +983,46 @@ class InvitationService {
       final doc = querySnapshot.docs.first;
       final inv = PlanInvitation.fromFirestore(doc);
       inviterUserId = inv.invitedBy;
-      await doc.reference.update({
-        'status': 'rejected',
-        'respondedAt': Timestamp.fromDate(DateTime.now()),
-      });
-      // Mantener participación alineada si existía pending.
-      await _participationService.rejectInvitation(planId, userId);
+      invitationToken = inv.token.isNotEmpty ? inv.token : doc.id;
+
+      // Igual que accept: marcar invitation vía CF (Admin SDK) para evitar permission-denied.
+      try {
+        await FirebaseFunctions.instance
+            .httpsCallable('markInvitationRejected')
+            .call({
+          if (invitationToken != null && invitationToken.isNotEmpty)
+            'token': invitationToken,
+          'planId': planId,
+        });
+      } catch (cfError) {
+        LoggerService.error(
+          'Cloud Function markInvitationRejected failed (planId flow): $planId. Falling back to client update.',
+          context: 'INVITATION_SERVICE',
+          error: cfError,
+        );
+        try {
+          await doc.reference.update({
+            'status': 'rejected',
+            'respondedAt': Timestamp.fromDate(DateTime.now()),
+          });
+        } catch (e) {
+          LoggerService.error(
+            'Client fallback mark invitation rejected failed: $planId',
+            context: 'INVITATION_SERVICE',
+            error: e,
+          );
+          // Seguir: al menos rechazar participación.
+        }
+      }
+
+      final partOk = await _participationService.rejectInvitation(planId, userId);
+      if (!partOk) {
+        // La invitation pudo quedar rejected; UI debe reflejar fuera igual.
+        LoggerService.warning(
+          'Participation reject returned false after invitation reject: $planId / $userId',
+          context: 'INVITATION_SERVICE',
+        );
+      }
       LoggerService.database('Invitation rejected by planId: ${doc.id}', operation: 'UPDATE');
 
       final respondedDisplay = user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
@@ -1058,15 +1183,15 @@ class InvitationService {
   /// En desarrollo web, usa localhost. En producción, usa la URL de producción.
   /// La URL base se puede configurar desde Firebase Functions config (app.base_url).
   String generateInvitationLink(String token) {
-    // Web en debug: origen actual (localhost:puerto). Producción / móvil: planazoo.app.
-    // Los emails de la CF usan APP_BASE_URL (suele ser planazoo.app).
+    // Web en debug: origen actual (localhost:puerto). Producción / móvil: app.planoon.com.
+    // Los emails de la CF usan APP_BASE_URL (https://app.planoon.com).
     final String baseUrl;
     if (kIsWeb && kDebugMode) {
       baseUrl = Uri.base.origin;
     } else if (kDebugMode) {
       baseUrl = 'http://localhost:8080';
     } else {
-      baseUrl = 'https://planazoo.app';
+      baseUrl = 'https://app.planoon.com';
     }
     return '$baseUrl/invitation/$token';
   }

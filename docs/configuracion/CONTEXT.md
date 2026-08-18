@@ -13,6 +13,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 
 **📋 DOCUMENTOS COMPLEMENTARIOS:**
 - `docs/flujos/MAPA_FLUJOS.md` - **Sistema de procesos** (jerarquía + mapa de dominios; puerta de entrada)
+- `docs/flujos/ORDEN_POR_DOMINIOS.md` - Plan de ordenación por dominios (WIP / log autónomo)
 - `docs/guias/PROMPT_BASE.md` - Metodología de trabajo general y patrones de comunicación
 - `docs/guias/PROMPT_INICIO_CHAT.md` - Texto para pegar al iniciar un chat nuevo (cargar contexto y normas)
 - `docs/guias/PROMPT_TRABAJO_AUTONOMO.md` - Prompt para sesiones autónomas (revisión doc/código, limpieza)
@@ -20,6 +21,10 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - `docs/configuracion/FASTLANE_IOS_APPSTORE.md` - **Publicación iOS (TestFlight / App Store):** `flutter build ipa`, `fastlane beta`, contraseña específica de apps (`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`), errores típicos de firma y subida
 - `docs/configuracion/FASTLANE_IOS_CHECKLIST.md` - Checklist paso a paso para la primera publicación iOS
 - `docs/configuracion/ACCESOS_Y_CUENTAS.md` - **Inventario de accesos** (consolas Google/Apple, remoto, secretos en gestor; sin contraseñas en el repo)
+- `docs/configuracion/DOMINIO_PLANOON.md` - Dominio canónico `planoon.com` (Cloudflare) + pasos para conectar a Firebase Hosting
+- `docs/configuracion/MONOREPO.md` - **Monorepo:** app Flutter + `marketing/` + `docs/` compartidos
+- `docs/producto/WEB_COMERCIAL.md` - **Brief de la landing** (`planoon.com`): relato, pilares, qué se puede afirmar vs visión
+- `docs/producto/TIMELINE_LANZAMIENTO.md` - **Timeline + alcance congelado pre-lanzamiento** (triage: ¿gate o para luego?)
 - `docs/configuracion/CONFIGURACIONES_PROYECTO.md` - Índice técnico de integraciones en el repo
 - `docs/configuracion/SETUP_ANDROID_LOCAL.md` - **Arranque Android local (SDK, dispositivo/emulador, `flutter run`)** y smoke test inicial
 - `docs/configuracion/SETUP_IOS_SIMULATOR.md` - Simulador iOS + **iPhone físico** (Confiar / emparejar Xcode, `flutter devices`)
@@ -43,12 +48,14 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
 - **⚠️ REVISAR ANTES DE PROPUESTA/IMPLEMENTACIÓN**: Siempre buscar si ya existe funcionalidad similar antes de proponer o implementar (código, TASKS.md, Firestore, documentación).
 
 ### 2) Flujo de Trabajo de Tareas
-- Las tareas activas se gestionan en `docs/tareas/TASKS.md`.
+- Las tareas activas se gestionan en `docs/tareas/TASKS.md` (**índice por dominio** al inicio + secciones históricas).
+- **WIP:** como mucho **1 dominio de proceso** a la vez (`MAPA_FLUJOS.md`).
 - **Confirmación del usuario antes de marcar tareas como completadas.**
 - Al completar una tarea:
   - Actualizar estado en `docs/tareas/TASKS.md`.
   - Mover la tarea a `docs/tareas/COMPLETED_TASKS.md` con fecha, criterios y archivos modificados.
   - Ajustar contadores/resúmenes si aplica.
+  - Si cambió el comportamiento: actualizar el **contrato** del dominio.
 
 ### 3) Control de Código y Commits
 - No realizar `git push` sin confirmación explícita del usuario.

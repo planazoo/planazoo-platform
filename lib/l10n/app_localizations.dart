@@ -2456,6 +2456,18 @@ abstract class AppLocalizations {
   /// **'Pendientes de acción'**
   String get notificationsFilterAction;
 
+  /// T269 filtro campana solo invitaciones accionables
+  ///
+  /// In es, this message translates to:
+  /// **'Mis invitaciones'**
+  String get notificationsFilterInvitations;
+
+  /// Vacío del filtro Mis invitaciones
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes invitaciones pendientes'**
+  String get notificationsEmptyInvitations;
+
   /// Filtro lista notificaciones: solo informativas
   ///
   /// In es, this message translates to:
@@ -5090,6 +5102,55 @@ abstract class AppLocalizations {
   /// **'Invitación a Plan'**
   String get invitationTitle;
 
+  /// No description provided for @invitationAttendQuestion.
+  ///
+  /// In es, this message translates to:
+  /// **'Te han invitado a unirte a este plan. ¿Qué quieres hacer?'**
+  String get invitationAttendQuestion;
+
+  /// No description provided for @invitationInviteMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'{inviter} te ha invitado al plan {planName}, desde el {startDate} al {endDate}. ¿Qué quieres hacer?'**
+  String invitationInviteMessage(
+      String inviter, String planName, String startDate, String endDate);
+
+  /// No description provided for @invitationSomeone.
+  ///
+  /// In es, this message translates to:
+  /// **'Alguien'**
+  String get invitationSomeone;
+
+  /// No description provided for @invitationDecideLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Decidir más tarde'**
+  String get invitationDecideLater;
+
+  /// No description provided for @pendingInvitePreviewBannerMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Estás invitado. Acepta para participar. Mientras, puedes ver el plan en solo lectura.'**
+  String get pendingInvitePreviewBannerMessage;
+
+  /// No description provided for @pendingInvitePreviewDecideLaterHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes aceptar o rechazar cuando quieras desde este banner.'**
+  String get pendingInvitePreviewDecideLaterHint;
+
+  /// No description provided for @invitationUnavailableTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Invitación no disponible'**
+  String get invitationUnavailableTitle;
+
+  /// No description provided for @invitationNotAuthenticated.
+  ///
+  /// In es, this message translates to:
+  /// **'Error: usuario no autenticado'**
+  String get invitationNotAuthenticated;
+
   /// No description provided for @invitationNotFound.
   ///
   /// In es, this message translates to:
@@ -5155,6 +5216,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Procesando...'**
   String get invitationProcessing;
+
+  /// No description provided for @invitationAccepting.
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptando invitación...'**
+  String get invitationAccepting;
+
+  /// No description provided for @invitationRejecting.
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazando invitación...'**
+  String get invitationRejecting;
 
   /// No description provided for @invitationRejectButton.
   ///

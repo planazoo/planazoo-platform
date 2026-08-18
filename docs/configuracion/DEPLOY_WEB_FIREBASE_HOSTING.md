@@ -276,7 +276,7 @@ Después del proceso completo, estos archivos estarán en la raíz del proyecto:
    - Alternativa: `https://planazoo.firebaseapp.com`
    - Ambas apuntan a la misma aplicación
 
-4. **Dominio personalizado:** Se puede configurar un dominio personalizado desde Firebase Console > Hosting > Agregar dominio personalizado.
+4. **Dominio personalizado:** **`app.planoon.com`** (app). Guía: [DOMINIO_PLANOON.md](./DOMINIO_PLANOON.md). Apex `planoon.com` reservado para comercial.
 
 ---
 

@@ -81,7 +81,8 @@ final globalUnreadCountProvider = StreamProvider<int>((ref) {
   );
 });
 
-/// Filtro de la lista global: 0 = Todas, 1 = Pendientes de acción, 2 = Solo informativas.
+/// Filtro de la lista global: 0 = Todas, 1 = Pendientes de acción, 2 = Solo informativas,
+/// 3 = Mis invitaciones (solo invitaciones accionables — T269 / §1.3).
 final globalNotificationsFilterProvider = StateProvider<int>((ref) => 0);
 
 /// Número de notificaciones no leídas para un plan (para badge en W20).

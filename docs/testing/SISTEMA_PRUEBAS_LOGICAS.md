@@ -49,6 +49,7 @@ Así el sistema de pruebas lógicas crece con la app y los reportes siguen siend
 | Login (LOGIN-001…009) | `tests/login_cases.json` | `lib/testing/login_logic.dart` → `evaluateAuthLogin()` | `test/features/auth/login_logic_test.dart` | `bin/run_tests.dart` → `reports/login_report.json` |
 | Contraseñas (REG-005) | `tests/password_cases.json` | `lib/testing/password_logic.dart` → `evaluatePassword()` | `test/features/auth/password_logic_test.dart` | — |
 | Eventos (EVENT-C-*) | `tests/event_cases.json` | `lib/testing/event_logic.dart` → `evaluateEventCreation()` | `test/features/calendar/event_logic_test.dart` | — |
+| Planes (PLAN-C-*) | `tests/plan_cases.json` | `lib/testing/plan_logic.dart` → `evaluatePlanCreation()` | `test/features/calendar/plan_logic_test.dart` | — (create+read: `plan_service_create_test.dart`) |
 
 Los casos están alineados con los IDs del [TESTING_CHECKLIST.md](../configuracion/TESTING_CHECKLIST.md) (LOGIN-*, REG-005, EVENT-C-001, C-002, etc.).
 
@@ -63,6 +64,8 @@ Los casos están alineados con los IDs del [TESTING_CHECKLIST.md](../configuraci
 flutter test test/features/auth/login_logic_test.dart
 flutter test test/features/auth/password_logic_test.dart
 flutter test test/features/calendar/event_logic_test.dart
+flutter test test/features/calendar/plan_logic_test.dart
+flutter test test/features/calendar/plan_service_create_test.dart
 
 # Todas las pruebas del proyecto (incluyen las lógicas)
 flutter test

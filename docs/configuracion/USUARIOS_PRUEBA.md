@@ -97,7 +97,8 @@ flutter devices
 adb devices -l   # solo Android; debe salir "device"
 ```
 
-3. Tres terminales en la raíz del repo (ejemplo de IDs reales usados en QA):
+3. Tres terminales en la raíz del repo — **fuente canónica y recreación por agente:**  
+   [`TERMINALES_DEV.md`](./TERMINALES_DEV.md) (frase: «recrea las terminales»).
 
 ```bash
 # UA — iPhone físico
@@ -110,7 +111,7 @@ flutter run -d RZ8NC11FRPJ
 flutter run -d chrome
 ```
 
-Sustituye los IDs por los que muestre `flutter devices` si cambian.
+Sustituye los IDs por los que muestre `flutter devices` si cambian (y actualiza `TERMINALES_DEV.md`).
 
 **Si no aparecen:**
 

@@ -105,6 +105,12 @@ class PlanCardWidget extends ConsumerWidget {
     final subtitleFs = isIos ? 12.0 : 11.0;
     final metaFs = isIos ? 11.0 : 10.0;
 
+    // borderRadius + Border con colores distintos por lado → assert en paint (web).
+    // Franja superior para pending; borde uniforme en el contenedor.
+    final borderColor = isSelected
+        ? Colors.white.withValues(alpha: 0.25)
+        : cTextPrimary.withValues(alpha: aBorderStrong);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -112,22 +118,15 @@ class PlanCardWidget extends ConsumerWidget {
             ? AppColorScheme.color2
             : cSurfaceBg,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: null,
-        border: hasAnyPending
-            ? Border(
-                top: BorderSide(color: Colors.orange.shade400, width: 2),
-                bottom: BorderSide(color: cTextPrimary.withValues(alpha: aBorderStrong), width: 1),
-              )
-            : Border(
-                bottom: BorderSide(
-                  color: isSelected
-                      ? Colors.white.withValues(alpha: 0.25)
-                      : cTextPrimary.withValues(alpha: aBorderStrong),
-                  width: 1,
-                ),
-              ),
+        border: Border.all(color: borderColor, width: 1),
       ),
-      child: Padding(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (hasAnyPending)
+            Container(height: 2, width: double.infinity, color: Colors.orange.shade400),
+          Padding(
         padding: EdgeInsets.symmetric(horizontal: cardPadH, vertical: cardPadV),
         child: InkWell(
           onTap: onTap,
@@ -211,6 +210,8 @@ class PlanCardWidget extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+        ],
       ),
     );
   }
