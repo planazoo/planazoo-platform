@@ -1,16 +1,16 @@
 {
   "metadata": {
     "language": "dart",
-    "execution_time": "2026-02-10T09:56:34.367671Z",
-    "commit": "e57a41a2c0b4e143a0b229752e420c9764288bd5",
-    "environment": "local"
+    "execution_time": "2026-08-19T14:46:45.162815Z",
+    "commit": "e4f819714d6a87bf5743a6f2c2fbc55f876ada2e",
+    "environment": "cloud-agent"
   },
   "summary": {
     "total": 9,
     "passed": 8,
     "failed": 1,
     "errors": 0,
-    "duration_ms": 56
+    "duration_ms": 43
   },
   "cases": [
     {
@@ -20,7 +20,7 @@
         "scenario": "login"
       },
       "status": "passed",
-      "duration_ms": 2
+      "duration_ms": 1
     },
     {
       "id": "LOGIN-002_username_with_at_ok",
