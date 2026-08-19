@@ -35,6 +35,11 @@ Map<String, dynamic> evaluateAuthLogin(Map<String, dynamic> input) {
         'status': 'error',
         'messageKey': 'invalid-email-or-username',
       };
+    case 'inactive_user':
+      return {
+        'status': 'error',
+        'messageKey': 'user-inactive',
+      };
     default:
       return {
         'status': 'error',
