@@ -102,6 +102,8 @@ Configuración y contexto del proyecto:
 - **[Publicar iOS (TestFlight / App Store) con Fastlane](./configuracion/FASTLANE_IOS_APPSTORE.md)** - `flutter build ipa`, `fastlane beta`, 2FA y errores habituales
 - [Checklist primera publicación iOS](./configuracion/FASTLANE_IOS_CHECKLIST.md) - Pasos marcables
 
+> **Prueba Cloud Agent (2026-08-19).** Este párrafo lo añadió un agente en la nube para demostrar el flujo: rama → commit → PR. Si lo ves en GitHub y no en tu copia local del Mac, el flujo funciona. Se puede borrar al cerrar o fusionar el PR.
+
 ---
 
 ## 🚀 Inicio Rápido
