@@ -411,6 +411,14 @@
   "paymentsExpenseNoEventOption": "Ninguno",
   "paymentsExpenseEventFallbackTitle": "Evento",
   "paymentsExpenseUnknownLinkedEvent": "Evento (referencia)",
+  "paymentsExpenseUnknownLinkedAccommodation": "Alojamiento (referencia)",
+  "@paymentsExpenseUnknownLinkedAccommodation": {
+    "description": "Etiqueta fallback gasto ligado a alojamiento borrado"
+  },
+  "paymentsExpenseAccommodationFallbackTitle": "Alojamiento",
+  "@paymentsExpenseAccommodationFallbackTitle": {
+    "description": "Título fallback alojamiento sin nombre en gastos"
+  },
   "paymentsExpenseSplitBetween": "Repartir entre",
   "paymentsActivityTitle": "Actividad",
   "paymentsExpenseSaved": "Gasto registrado",
@@ -1980,6 +1988,38 @@
   "eventTabMyInfo": "Mi info",
   "eventTabPayments": "Pagos",
   "eventTabOthersInfo": "Info de Otros",
+  "expandEditorTooltip": "Ampliar",
+  "@expandEditorTooltip": {
+    "description": "Tooltip botón expandir editor de texto largo"
+  },
+  "eventMyInfoSubtitle": "Solo visible para ti en este evento",
+  "@eventMyInfoSubtitle": {
+    "description": "Intro pestaña Mi info evento"
+  },
+  "eventMyInfoPrivacyFooter": "Otros participantes no verán estos datos.",
+  "@eventMyInfoPrivacyFooter": {
+    "description": "Aviso privacidad Mi info evento"
+  },
+  "eventMyInfoEntryCodeLabel": "Código de entrada",
+  "@eventMyInfoEntryCodeLabel": {
+    "description": "Campo código ticket actividad"
+  },
+  "eventMyInfoEntryCodeHint": "Ej: ABC123 o el código del ticket",
+  "@eventMyInfoEntryCodeHint": {
+    "description": "Hint código ticket actividad"
+  },
+  "eventMyInfoTicketUrlLabel": "URL del ticket/archivo (opcional)",
+  "@eventMyInfoTicketUrlLabel": {
+    "description": "Campo URL ticket actividad"
+  },
+  "eventMyInfoTicketUrlHint": "Ej: https://… (opcional)",
+  "@eventMyInfoTicketUrlHint": {
+    "description": "Hint URL ticket actividad"
+  },
+  "eventMyInfoPersonalNotesHint": "Información adicional solo para ti",
+  "@eventMyInfoPersonalNotesHint": {
+    "description": "Hint notas personales Mi info evento"
+  },
   "eventPaymentsSaveFirst": "Guarda el evento para registrar gastos vinculados.",
   "eventPaymentsBudgetLabel": "Coste previsto (General)",
   "eventPaymentsBudgetFooter": "Referencia del presupuesto; no sustituye un gasto repartido.",

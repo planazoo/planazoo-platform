@@ -186,7 +186,11 @@ Cuando una card se expande (`IosCollapsibleHeader`) o un control despliega hijos
 1. ~~URL, notas, coste, color, “para todos”~~
 2. ~~Localización / adjuntos~~
 3. ~~Transporte / vuelo / transfer / alquiler~~ (`_buildLabelOnBorderField` retirado del General)
-4. Pendiente: pestaña “Mi info”. ~~Participantes~~ / ~~Reserva·cancelación~~ → Settings + `nestLevel`.
+4. ~~Pestaña “Mi info” (evento y alojamiento)~~ → Settings (`IosGroupedCard` + `IosEditField` / `IosSwitchRow`). ~~Participantes~~ / ~~Reserva·cancelación~~ → Settings + `nestLevel`.
+
+**Alojamiento (2026-08-27):** tres pestañas General · Mi info · Pagos; `PlanExpense.accommodationId` para gastos Tricount ligados.
+
+**Evento · Pagos:** pestaña con coste previsto + gastos por `eventId` (`EventPaymentsTab`).
 
 **Aparcado (futuro): Opciones avanzadas del evento**
 

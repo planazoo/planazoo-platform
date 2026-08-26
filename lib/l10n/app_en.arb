@@ -411,6 +411,14 @@
   "paymentsExpenseNoEventOption": "None",
   "paymentsExpenseEventFallbackTitle": "Event",
   "paymentsExpenseUnknownLinkedEvent": "Event (reference)",
+  "paymentsExpenseUnknownLinkedAccommodation": "Stay (reference)",
+  "@paymentsExpenseUnknownLinkedAccommodation": {
+    "description": "Fallback label for expense linked to deleted accommodation"
+  },
+  "paymentsExpenseAccommodationFallbackTitle": "Stay",
+  "@paymentsExpenseAccommodationFallbackTitle": {
+    "description": "Fallback accommodation title in expense list"
+  },
   "paymentsExpenseSplitBetween": "Split between",
   "paymentsActivityTitle": "Activity",
   "paymentsExpenseSaved": "Expense recorded",
@@ -1980,6 +1988,38 @@
   "eventTabMyInfo": "My info",
   "eventTabPayments": "Payments",
   "eventTabOthersInfo": "Others' info",
+  "expandEditorTooltip": "Expand",
+  "@expandEditorTooltip": {
+    "description": "Tooltip for expand long text editor button"
+  },
+  "eventMyInfoSubtitle": "Only visible to you for this event",
+  "@eventMyInfoSubtitle": {
+    "description": "My info tab intro for events"
+  },
+  "eventMyInfoPrivacyFooter": "Other participants won't see this information.",
+  "@eventMyInfoPrivacyFooter": {
+    "description": "Privacy notice on event My info tab"
+  },
+  "eventMyInfoEntryCodeLabel": "Entry code",
+  "@eventMyInfoEntryCodeLabel": {
+    "description": "Activity ticket code field"
+  },
+  "eventMyInfoEntryCodeHint": "E.g. ABC123 or your ticket code",
+  "@eventMyInfoEntryCodeHint": {
+    "description": "Activity ticket code hint"
+  },
+  "eventMyInfoTicketUrlLabel": "Ticket/file URL (optional)",
+  "@eventMyInfoTicketUrlLabel": {
+    "description": "Activity ticket URL field"
+  },
+  "eventMyInfoTicketUrlHint": "E.g. https://… (optional)",
+  "@eventMyInfoTicketUrlHint": {
+    "description": "Activity ticket URL hint"
+  },
+  "eventMyInfoPersonalNotesHint": "Additional information just for you",
+  "@eventMyInfoPersonalNotesHint": {
+    "description": "Personal notes hint on event My info tab"
+  },
   "eventPaymentsSaveFirst": "Save the event to record linked expenses.",
   "eventPaymentsBudgetLabel": "Planned cost (General)",
   "eventPaymentsBudgetFooter": "Budget reference only; does not replace a split expense.",

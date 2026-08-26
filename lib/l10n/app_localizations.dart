@@ -740,6 +740,18 @@ abstract class AppLocalizations {
   /// **'Evento (referencia)'**
   String get paymentsExpenseUnknownLinkedEvent;
 
+  /// Etiqueta fallback gasto ligado a alojamiento borrado
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamiento (referencia)'**
+  String get paymentsExpenseUnknownLinkedAccommodation;
+
+  /// Título fallback alojamiento sin nombre en gastos
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamiento'**
+  String get paymentsExpenseAccommodationFallbackTitle;
+
   /// No description provided for @paymentsExpenseSplitBetween.
   ///
   /// In es, this message translates to:
@@ -4291,6 +4303,54 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Info de Otros'**
   String get eventTabOthersInfo;
+
+  /// Tooltip botón expandir editor de texto largo
+  ///
+  /// In es, this message translates to:
+  /// **'Ampliar'**
+  String get expandEditorTooltip;
+
+  /// Intro pestaña Mi info evento
+  ///
+  /// In es, this message translates to:
+  /// **'Solo visible para ti en este evento'**
+  String get eventMyInfoSubtitle;
+
+  /// Aviso privacidad Mi info evento
+  ///
+  /// In es, this message translates to:
+  /// **'Otros participantes no verán estos datos.'**
+  String get eventMyInfoPrivacyFooter;
+
+  /// Campo código ticket actividad
+  ///
+  /// In es, this message translates to:
+  /// **'Código de entrada'**
+  String get eventMyInfoEntryCodeLabel;
+
+  /// Hint código ticket actividad
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: ABC123 o el código del ticket'**
+  String get eventMyInfoEntryCodeHint;
+
+  /// Campo URL ticket actividad
+  ///
+  /// In es, this message translates to:
+  /// **'URL del ticket/archivo (opcional)'**
+  String get eventMyInfoTicketUrlLabel;
+
+  /// Hint URL ticket actividad
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: https://… (opcional)'**
+  String get eventMyInfoTicketUrlHint;
+
+  /// Hint notas personales Mi info evento
+  ///
+  /// In es, this message translates to:
+  /// **'Información adicional solo para ti'**
+  String get eventMyInfoPersonalNotesHint;
 
   /// No description provided for @eventPaymentsSaveFirst.
   ///

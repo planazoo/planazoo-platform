@@ -5,8 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
+import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import '../../domain/models/payment_summary.dart';
 import '../../domain/models/plan_expense.dart';
 import '../../domain/services/balance_service.dart';
@@ -341,52 +343,88 @@ class PaymentSummaryPage extends ConsumerWidget {
     final planCurrency = plan.currency;
     final expensesAsync = ref.watch(planExpensesProvider(plan.id!));
     final eventsAsync = ref.watch(planEventsStreamProvider(plan.id!));
+    final accommodationsAsync =
+        ref.watch(planAccommodationsStreamProvider(plan.id!));
 
     return expensesAsync.when(
       data: (expenses) {
         return eventsAsync.when(
           data: (planEvents) {
-            final eventTitles = <String, String>{};
-            for (final ev in planEvents) {
-              final id = ev.id;
-              if (id == null || id.isEmpty) continue;
-              final t = ev.description.trim();
-              eventTitles[id] =
-                  t.isNotEmpty ? t : loc.paymentsExpenseEventFallbackTitle;
-            }
-            return _buildActivityExpenseCard(
-              context,
-              ref,
-              summary,
-              expenses,
-              planCurrency,
-              eventTitles,
-              loc,
+            return accommodationsAsync.when(
+              data: (accommodations) {
+                final eventTitles = <String, String>{};
+                for (final ev in planEvents) {
+                  final id = ev.id;
+                  if (id == null || id.isEmpty) continue;
+                  final t = ev.description.trim();
+                  eventTitles[id] = t.isNotEmpty
+                      ? t
+                      : loc.paymentsExpenseEventFallbackTitle;
+                }
+                final accommodationTitles = <String, String>{};
+                for (final acc in accommodations) {
+                  final id = acc.id;
+                  if (id == null || id.isEmpty) continue;
+                  final t = acc.hotelName.trim();
+                  accommodationTitles[id] = t.isNotEmpty
+                      ? t
+                      : loc.paymentsExpenseAccommodationFallbackTitle;
+                }
+                return _buildActivityExpenseCard(
+                  context,
+                  ref,
+                  summary,
+                  expenses,
+                  planCurrency,
+                  eventTitles,
+                  accommodationTitles,
+                  loc,
+                );
+              },
+              loading: () => _buildActivityExpenseCard(
+                context,
+                ref,
+                summary,
+                expenses,
+                planCurrency,
+                _eventTitlesFromEvents(planEvents, loc),
+                const {},
+                loc,
+              ),
+              error: (_, __) => _buildActivityExpenseCard(
+                context,
+                ref,
+                summary,
+                expenses,
+                planCurrency,
+                _eventTitlesFromEvents(planEvents, loc),
+                const {},
+                loc,
+              ),
             );
           },
-          loading: () => _buildActivityExpenseCard(
-            context,
-            ref,
-            summary,
-            expenses,
-            planCurrency,
-            const {},
-            loc,
-          ),
-          error: (_, __) => _buildActivityExpenseCard(
-            context,
-            ref,
-            summary,
-            expenses,
-            planCurrency,
-            const {},
-            loc,
-          ),
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
         );
       },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
     );
+  }
+
+  Map<String, String> _eventTitlesFromEvents(
+    List<Event> planEvents,
+    AppLocalizations loc,
+  ) {
+    final eventTitles = <String, String>{};
+    for (final ev in planEvents) {
+      final id = ev.id;
+      if (id == null || id.isEmpty) continue;
+      final t = ev.description.trim();
+      eventTitles[id] =
+          t.isNotEmpty ? t : loc.paymentsExpenseEventFallbackTitle;
+    }
+    return eventTitles;
   }
 
   Widget _buildActivityExpenseCard(
@@ -396,6 +434,7 @@ class PaymentSummaryPage extends ConsumerWidget {
     List<PlanExpense> expenses,
     String planCurrency,
     Map<String, String> eventTitles,
+    Map<String, String> accommodationTitles,
     AppLocalizations loc,
   ) {
     final userIdToName = {
@@ -459,6 +498,7 @@ class PaymentSummaryPage extends ConsumerWidget {
                   summary,
                   planCurrency,
                   eventTitles,
+                  accommodationTitles,
                   loc,
                   userIdToName,
                 )),
@@ -475,6 +515,7 @@ class PaymentSummaryPage extends ConsumerWidget {
     PaymentSummary summary,
     String planCurrency,
     Map<String, String> eventTitles,
+    Map<String, String> accommodationTitles,
     AppLocalizations loc,
     Map<String, String> userIdToName,
   ) {
@@ -519,6 +560,18 @@ class PaymentSummaryPage extends ConsumerWidget {
                   const SizedBox(height: 2),
                   Text(
                     '· ${eventTitles[expense.eventId!] ?? loc.paymentsExpenseUnknownLinkedEvent}',
+                    style: AppTypography.bodyStyle.copyWith(
+                      fontSize: _fsSectionSubtitle,
+                      color: AppColorScheme.color3,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                ] else if (expense.accommodationId != null &&
+                    expense.accommodationId!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '· ${accommodationTitles[expense.accommodationId!] ?? loc.paymentsExpenseUnknownLinkedAccommodation}',
                     style: AppTypography.bodyStyle.copyWith(
                       fontSize: _fsSectionSubtitle,
                       color: AppColorScheme.color3,

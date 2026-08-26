@@ -360,6 +360,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get paymentsExpenseUnknownLinkedEvent => 'Evento (referencia)';
 
   @override
+  String get paymentsExpenseUnknownLinkedAccommodation =>
+      'Alojamiento (referencia)';
+
+  @override
+  String get paymentsExpenseAccommodationFallbackTitle => 'Alojamiento';
+
+  @override
   String get paymentsExpenseSplitBetween => 'Repartir entre';
 
   @override
@@ -2367,6 +2374,32 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eventTabOthersInfo => 'Info de Otros';
+
+  @override
+  String get expandEditorTooltip => 'Ampliar';
+
+  @override
+  String get eventMyInfoSubtitle => 'Solo visible para ti en este evento';
+
+  @override
+  String get eventMyInfoPrivacyFooter =>
+      'Otros participantes no verán estos datos.';
+
+  @override
+  String get eventMyInfoEntryCodeLabel => 'Código de entrada';
+
+  @override
+  String get eventMyInfoEntryCodeHint => 'Ej: ABC123 o el código del ticket';
+
+  @override
+  String get eventMyInfoTicketUrlLabel => 'URL del ticket/archivo (opcional)';
+
+  @override
+  String get eventMyInfoTicketUrlHint => 'Ej: https://… (opcional)';
+
+  @override
+  String get eventMyInfoPersonalNotesHint =>
+      'Información adicional solo para ti';
 
   @override
   String get eventPaymentsSaveFirst =>

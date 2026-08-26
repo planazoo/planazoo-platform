@@ -3678,7 +3678,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               top: 4,
               right: 4,
               child: IconButton(
-                tooltip: 'Ampliar',
+                tooltip: loc.expandEditorTooltip,
                 onPressed: _openLongNotesEditor,
                 icon: const Icon(
                   Icons.open_in_full,
@@ -3696,6 +3696,96 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Widget _buildMyInfoTabScroll(bool isMobile) {
     final pad = isMobile ? 4.0 : 8.0;
     final gap = isMobile ? _fieldGap : 16.0;
+    final loc = AppLocalizations.of(context)!;
+    final isActivity = _typeFamilyController.text == 'Actividad';
+
+    String? maxLenValidator(String? value, int max) {
+      final v = value?.trim() ?? '';
+      if (v.isEmpty) return null;
+      if (v.length > max) return loc.maxCharacters(max);
+      return null;
+    }
+
+    final cardChildren = <Widget>[
+      IosEditField(
+        label: loc.seat,
+        controller: _asientoController,
+        hint: loc.seatHint,
+        validator: (v) => maxLenValidator(v, 50),
+      ),
+    ];
+
+    if (isActivity) {
+      cardChildren.addAll([
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.eventMyInfoEntryCodeLabel,
+          controller: _activityEntryCodeController,
+          hint: loc.eventMyInfoEntryCodeHint,
+          validator: (v) => maxLenValidator(v, 50),
+        ),
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.eventMyInfoTicketUrlLabel,
+          controller: _activityEntryDocUrlController,
+          hint: loc.eventMyInfoTicketUrlHint,
+          keyboardType: TextInputType.url,
+          validator: (v) => maxLenValidator(v, 500),
+        ),
+      ]);
+    } else {
+      cardChildren.addAll([
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.menu,
+          controller: _menuController,
+          hint: loc.menuHint,
+          validator: (v) => maxLenValidator(v, 100),
+        ),
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.preferences,
+          controller: _preferenciasController,
+          hint: loc.preferencesHint,
+          maxLines: 2,
+          minLines: 1,
+          validator: (v) => maxLenValidator(v, 200),
+        ),
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.reservationNumber,
+          controller: _numeroReservaController,
+          hint: loc.reservationNumberHint,
+          validator: (v) => maxLenValidator(v, 50),
+        ),
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.gate,
+          controller: _gateController,
+          hint: loc.gateHint,
+          validator: (v) => maxLenValidator(v, 50),
+        ),
+      ]);
+    }
+
+    cardChildren.addAll([
+      const IosRowSeparator(),
+      IosSwitchRow(
+        label: loc.cardObtained,
+        value: _tarjetaObtenida,
+        onChanged: (value) => setState(() => _tarjetaObtenida = value),
+      ),
+      const IosRowSeparator(),
+      IosEditField(
+        label: loc.personalNotes,
+        controller: _notasPersonalesController,
+        hint: loc.eventMyInfoPersonalNotesHint,
+        maxLines: 4,
+        minLines: 2,
+        validator: (v) => maxLenValidator(v, 1000),
+      ),
+    ]);
+
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(pad, pad, pad, isMobile ? 16 : 12),
       child: Column(
@@ -3703,190 +3793,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Solo visible para ti en este evento',
-            style: GoogleFonts.poppins(
+            loc.eventMyInfoSubtitle,
+            style: const TextStyle(
               fontSize: 12,
-              color: Colors.white60,
+              color: IosFormColors.textSecondary,
               fontWeight: FontWeight.w400,
             ),
           ),
           SizedBox(height: gap),
-          _buildPersonalTextField(
-            controller: _asientoController,
-            labelText: AppLocalizations.of(context)!.seat,
-            hintText: AppLocalizations.of(context)!.seatHint,
-            icon: Icons.chair,
-            validator: (value) {
-              final v = value?.trim() ?? '';
-              if (v.isEmpty) return null;
-              if (v.length > 50) return 'Máximo 50 caracteres';
-              return null;
-            },
-          ),
+          IosGroupedCard(children: cardChildren),
           SizedBox(height: gap),
-          if (_typeFamilyController.text == 'Actividad') ...[
-            _buildPersonalTextField(
-              controller: _activityEntryCodeController,
-              labelText: 'Código de entrada',
-              hintText: 'Ej: ABC123 o el código del ticket',
-              icon: Icons.confirmation_number,
-              validator: (value) {
-                final v = value?.trim() ?? '';
-                if (v.isEmpty) return null;
-                if (v.length > 50) return 'Máximo 50 caracteres';
-                return null;
-              },
-            ),
-            SizedBox(height: gap),
-            _buildPersonalTextField(
-              controller: _activityEntryDocUrlController,
-              labelText: 'URL del ticket/archivo (opcional)',
-              hintText: 'Ej: https://... (opcional)',
-              icon: Icons.insert_drive_file,
-              keyboardType: TextInputType.url,
-              validator: (value) {
-                final v = value?.trim() ?? '';
-                if (v.isEmpty) return null;
-                if (v.length > 500) return 'Máximo 500 caracteres';
-                return null;
-              },
-            ),
-            SizedBox(height: gap),
-          ] else ...[
-            _buildPersonalTextField(
-              controller: _menuController,
-              labelText: AppLocalizations.of(context)!.menu,
-              hintText: AppLocalizations.of(context)!.menuHint,
-              icon: Icons.restaurant,
-              validator: (value) {
-                final v = value?.trim() ?? '';
-                if (v.isEmpty) return null;
-                if (v.length > 100) return 'Máximo 100 caracteres';
-                return null;
-              },
-            ),
-            SizedBox(height: gap),
-            _buildPersonalTextField(
-              controller: _preferenciasController,
-              labelText: AppLocalizations.of(context)!.preferences,
-              hintText: AppLocalizations.of(context)!.preferencesHint,
-              icon: Icons.favorite,
-              maxLines: 2,
-              validator: (value) {
-                final v = value?.trim() ?? '';
-                if (v.isEmpty) return null;
-                if (v.length > 200) return 'Máximo 200 caracteres';
-                return null;
-              },
-            ),
-            SizedBox(height: gap),
-            _buildPersonalTextField(
-              controller: _numeroReservaController,
-              labelText: AppLocalizations.of(context)!.reservationNumber,
-              hintText: AppLocalizations.of(context)!.reservationNumberHint,
-              icon: Icons.confirmation_number,
-              validator: (value) {
-                final v = value?.trim() ?? '';
-                if (v.isEmpty) return null;
-                if (v.length > 50) return 'Máximo 50 caracteres';
-                return null;
-              },
-            ),
-            SizedBox(height: gap),
-            _buildPersonalTextField(
-              controller: _gateController,
-              labelText: AppLocalizations.of(context)!.gate,
-              hintText: AppLocalizations.of(context)!.gateHint,
-              icon: Icons.door_front_door,
-              validator: (value) {
-                final v = value?.trim() ?? '';
-                if (v.isEmpty) return null;
-                if (v.length > 50) return 'Máximo 50 caracteres';
-                return null;
-              },
-            ),
-            SizedBox(height: gap),
-          ],
-          Material(
-            color: _fieldSurface,
-            elevation: 1,
-            shadowColor: Colors.black.withValues(alpha: 0.18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_fieldRadius),
-              side: BorderSide(
-                color: Colors.white.withValues(alpha: 0.12),
-                width: 1,
-              ),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: SwitchListTile.adaptive(
-              title: Text(
-                AppLocalizations.of(context)!.cardObtained,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              subtitle: Text(
-                AppLocalizations.of(context)!.cardObtainedSubtitle,
-                style: GoogleFonts.poppins(
-                  color: Colors.white70,
-                  fontSize: 12,
-                ),
-              ),
-              value: _tarjetaObtenida,
-              activeThumbColor: AppColorScheme.color2,
-              activeTrackColor: AppColorScheme.color2.withValues(alpha: 0.5),
-              onChanged: (value) {
-                setState(() {
-                  _tarjetaObtenida = value;
-                });
-              },
-            ),
-          ),
-          SizedBox(height: gap),
-          _buildPersonalTextField(
-            controller: _notasPersonalesController,
-            labelText: AppLocalizations.of(context)!.personalNotes,
-            hintText: 'Información adicional solo para ti',
-            icon: Icons.note,
-            maxLines: 3,
-            validator: (value) {
-              final v = value?.trim() ?? '';
-              if (v.isEmpty) return null;
-              if (v.length > 1000) return 'Máximo 1000 caracteres';
-              return null;
-            },
-          ),
-          SizedBox(height: gap),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColorScheme.color2.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(_fieldRadius),
-              border: Border.all(
-                color: AppColorScheme.color2.withValues(alpha: 0.45),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.lock_outline,
-                    color: AppColorScheme.color2, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Otros participantes no verán estos datos.',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          IosFormFooter(loc.eventMyInfoPrivacyFooter),
         ],
       ),
     );
@@ -4115,33 +4032,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  /// Campo de texto personal con tokens de formulario (login-style).
-  Widget _buildPersonalTextField({
-    required TextEditingController controller,
-    required String labelText,
-    required String hintText,
-    required IconData icon,
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
-  }) {
-    return Container(
-      decoration: _buildLoginStyleDecoration(),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        style: _valueStyle,
-        decoration: _standardFieldDecoration(
-          labelText: labelText,
-          hintText: hintText,
-          prefixIcon: icon,
-        ),
-        validator: validator,
       ),
     );
   }

@@ -356,6 +356,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentsExpenseUnknownLinkedEvent => 'Event (reference)';
 
   @override
+  String get paymentsExpenseUnknownLinkedAccommodation => 'Stay (reference)';
+
+  @override
+  String get paymentsExpenseAccommodationFallbackTitle => 'Stay';
+
+  @override
   String get paymentsExpenseSplitBetween => 'Split between';
 
   @override
@@ -2346,6 +2352,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventTabOthersInfo => 'Others\' info';
+
+  @override
+  String get expandEditorTooltip => 'Expand';
+
+  @override
+  String get eventMyInfoSubtitle => 'Only visible to you for this event';
+
+  @override
+  String get eventMyInfoPrivacyFooter =>
+      'Other participants won\'t see this information.';
+
+  @override
+  String get eventMyInfoEntryCodeLabel => 'Entry code';
+
+  @override
+  String get eventMyInfoEntryCodeHint => 'E.g. ABC123 or your ticket code';
+
+  @override
+  String get eventMyInfoTicketUrlLabel => 'Ticket/file URL (optional)';
+
+  @override
+  String get eventMyInfoTicketUrlHint => 'E.g. https://… (optional)';
+
+  @override
+  String get eventMyInfoPersonalNotesHint =>
+      'Additional information just for you';
 
   @override
   String get eventPaymentsSaveFirst =>

@@ -710,7 +710,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
               top: 4,
               right: 4,
               child: IconButton(
-                tooltip: 'Ampliar',
+                tooltip: loc.expandEditorTooltip,
                 onPressed: _openLongNotesEditor,
                 icon: const Icon(
                   Icons.open_in_full,
