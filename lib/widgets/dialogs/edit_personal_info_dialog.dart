@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
-import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/shared/models/permission.dart';
 import 'package:unp_calendario/shared/models/plan_permissions.dart';
-import 'package:unp_calendario/shared/models/user_role.dart';
 import 'package:unp_calendario/shared/services/permission_service.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
-/// Diálogo para editar información personal de otros participantes
+/// Diálogo para editar información personal de otros participantes (admin).
 class EditPersonalInfoDialog extends ConsumerStatefulWidget {
-  final Event event;
-  final String participantId;
-  final String participantName;
-  final String planId;
-  final Function(Event)? onSaved;
-
   const EditPersonalInfoDialog({
     super.key,
     required this.event,
@@ -25,26 +20,36 @@ class EditPersonalInfoDialog extends ConsumerStatefulWidget {
     this.onSaved,
   });
 
+  final Event event;
+  final String participantId;
+  final String participantName;
+  final String planId;
+  final void Function(Event)? onSaved;
+
   @override
-  ConsumerState<EditPersonalInfoDialog> createState() => _EditPersonalInfoDialogState();
+  ConsumerState<EditPersonalInfoDialog> createState() =>
+      _EditPersonalInfoDialogState();
 }
 
-class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog> {
+class _EditPersonalInfoDialogState
+    extends ConsumerState<EditPersonalInfoDialog> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _asientoController;
   late TextEditingController _menuController;
   late TextEditingController _preferenciasController;
   late TextEditingController _numeroReservaController;
   late TextEditingController _gateController;
   late TextEditingController _notasPersonalesController;
-  // T49: información para eventos tipo "Actividad" (código / documento).
   late TextEditingController _ticketCodeController;
   late TextEditingController _ticketDocUrlController;
   late bool _tarjetaObtenida;
-  
+
   PlanPermissions? _userPermissions;
   bool _isLoading = true;
   bool _hasPermission = false;
-  final PermissionService _permissionService = PermissionService();
+  bool _isSaving = false;
+
+  bool get _isActivity => widget.event.commonPart?.family == 'Actividad';
 
   @override
   void initState() {
@@ -56,35 +61,55 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
   void _initializeFields() {
     final personalPart = widget.event.personalParts?[widget.participantId];
     final personalFields = personalPart?.fields ?? {};
-    
-    _asientoController = TextEditingController(text: personalFields['asiento'] ?? '');
-    _menuController = TextEditingController(text: personalFields['menu'] ?? '');
-    _preferenciasController = TextEditingController(text: personalFields['preferencias'] ?? '');
-    _numeroReservaController = TextEditingController(text: personalFields['numeroReserva'] ?? '');
-    _gateController = TextEditingController(text: personalFields['gate'] ?? '');
-    _notasPersonalesController = TextEditingController(text: personalFields['notasPersonales'] ?? '');
-    _ticketCodeController = TextEditingController(text: personalFields['ticketCode'] ?? '');
-    _ticketDocUrlController = TextEditingController(text: personalFields['ticketDocUrl'] ?? '');
-    _tarjetaObtenida = personalFields['tarjetaObtenida'] ?? false;
+
+    _asientoController =
+        TextEditingController(text: personalFields['asiento']?.toString() ?? '');
+    _menuController =
+        TextEditingController(text: personalFields['menu']?.toString() ?? '');
+    _preferenciasController = TextEditingController(
+      text: personalFields['preferencias']?.toString() ?? '',
+    );
+    _numeroReservaController = TextEditingController(
+      text: personalFields['numeroReserva']?.toString() ?? '',
+    );
+    _gateController =
+        TextEditingController(text: personalFields['gate']?.toString() ?? '');
+    _notasPersonalesController = TextEditingController(
+      text: personalFields['notasPersonales']?.toString() ?? '',
+    );
+    _ticketCodeController = TextEditingController(
+      text: personalFields['ticketCode']?.toString() ?? '',
+    );
+    _ticketDocUrlController = TextEditingController(
+      text: personalFields['ticketDocUrl']?.toString() ?? '',
+    );
+    _tarjetaObtenida = personalFields['tarjetaObtenida'] == true;
   }
 
   Future<void> _checkPermissions() async {
-    // Obtener permisos del usuario actual (simulado por ahora)
-    // En una implementación real, obtendríamos el userId del contexto de autenticación
-    final currentUserId = 'cristian_claraso'; // TODO: Obtener del contexto de auth
-    
+    final currentUserId = ref.read(currentUserProvider)?.id;
+    if (currentUserId == null) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasPermission = false;
+        });
+      }
+      return;
+    }
+
     final permissionService = PermissionService();
     _userPermissions = await permissionService.getUserPermissions(
       widget.planId,
       currentUserId,
     );
 
-    _hasPermission = _userPermissions?.hasPermission(Permission.eventEditOthersPersonal) ?? false;
-    
+    _hasPermission =
+        _userPermissions?.hasPermission(Permission.eventEditOthersPersonal) ??
+            false;
+
     if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
@@ -101,181 +126,21 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('Verificando permisos...'),
-          ],
-        ),
-      );
-    }
-
-    if (!_hasPermission) {
-      final loc = AppLocalizations.of(context)!;
-      return AlertDialog(
-        title: Text(loc.noPermissionTitle),
-        content: Text(loc.noPermissionEditPersonalInfoOthers),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(loc.close),
-          ),
-        ],
-      );
-    }
-
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1F2937),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Colors.white12),
-      ),
-      title: Row(
-        children: [
-          const Icon(Icons.edit, color: Colors.blue),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Editar información de ${widget.participantName}',
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-        ],
-      ),
-      content: SizedBox(
-        width: 400,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Información del evento
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Evento: ${widget.event.commonPart?.description ?? "Sin descripción"}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Fecha: ${widget.event.commonPart?.date.day}/${widget.event.commonPart?.date.month}/${widget.event.commonPart?.date.year}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Botón temporal para hacer admin (solo para testing)
-              if (_userPermissions?.isAdmin ?? false)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        '🔧 ADMINISTRACIÓN (TEMPORAL)',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        onPressed: () => _makeAdmin(),
-                        icon: const Icon(Icons.admin_panel_settings),
-                        label: const Text('Hacer Administrador'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.withValues(alpha: 0.2),
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              
-              const SizedBox(height: 16),
-              
-              // Campos de información personal
-              _buildField('Asiento', _asientoController, Icons.chair),
-              _buildField('Código de entrada (Actividad)', _ticketCodeController, Icons.confirmation_number),
-              _buildField('URL ticket/archivo (opcional)', _ticketDocUrlController, Icons.insert_drive_file),
-              _buildField('Menú', _menuController, Icons.restaurant_menu),
-              _buildField('Preferencias', _preferenciasController, Icons.favorite),
-              _buildField('Número de reserva', _numeroReservaController, Icons.confirmation_number),
-              _buildField('Gate', _gateController, Icons.flight_takeoff),
-              _buildField('Notas personales', _notasPersonalesController, Icons.note),
-              
-              const SizedBox(height: 16),
-              
-              // Tarjeta obtenida
-              SwitchListTile(
-                title: const Text('Tarjeta obtenida'),
-                subtitle: const Text('¿Ya tienes la tarjeta de embarque/reserva?'),
-                value: _tarjetaObtenida,
-                onChanged: (value) {
-                  setState(() {
-                    _tarjetaObtenida = value;
-                  });
-                },
-                secondary: const Icon(Icons.credit_card),
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: _savePersonalInfo,
-          child: const Text('Guardar'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildField(String label, TextEditingController controller, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          border: const OutlineInputBorder(),
-          filled: true,
-          fillColor: Colors.white10,
-        ),
-        maxLines: label == 'Notas personales' ? 3 : 1,
-      ),
-    );
+  String? _maxLenValidator(String? value, int max, AppLocalizations loc) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return null;
+    if (v.length > max) return loc.maxCharacters(max);
+    return null;
   }
 
   Future<void> _savePersonalInfo() async {
+    if (_isSaving) return;
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+    final loc = AppLocalizations.of(context)!;
+
     try {
-      // Crear nueva información personal
       final personalFields = {
         'asiento': _asientoController.text.trim(),
         'menu': _menuController.text.trim(),
@@ -288,92 +153,204 @@ class _EditPersonalInfoDialogState extends ConsumerState<EditPersonalInfoDialog>
         'tarjetaObtenida': _tarjetaObtenida,
       };
 
-      // Crear EventPersonalPart actualizada
       final updatedPersonalPart = EventPersonalPart(
         participantId: widget.participantId,
         fields: personalFields,
       );
 
-      // Actualizar el evento
-      final updatedPersonalParts = Map<String, EventPersonalPart>.from(widget.event.personalParts ?? {});
+      final updatedPersonalParts =
+          Map<String, EventPersonalPart>.from(widget.event.personalParts ?? {});
       updatedPersonalParts[widget.participantId] = updatedPersonalPart;
 
-      final updatedEvent = widget.event.copyWith(
-        personalParts: updatedPersonalParts,
+      final updatedEvent =
+          widget.event.copyWith(personalParts: updatedPersonalParts);
+
+      await EventService().updateEvent(updatedEvent);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.personalInfoUpdated(widget.participantName)),
+          backgroundColor: Colors.green,
+        ),
       );
-
-      // Guardar en Firestore
-      final eventService = EventService();
-      await eventService.updateEvent(updatedEvent);
-
-      // Mostrar confirmación
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Información de ${widget.participantName} actualizada'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        
-        // Llamar callback si existe
-        widget.onSaved?.call(updatedEvent);
-        
-        Navigator.of(context).pop();
-      }
+      widget.onSaved?.call(updatedEvent);
+      Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(loc.personalInfoSaveError('$e')),
             backgroundColor: Colors.red,
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  /// Método temporal para hacer admin a un usuario (solo para testing)
-  Future<void> _makeAdmin() async {
-    try {
-      final currentUserId = 'cristian_claraso'; // TODO: Obtener del contexto de auth
-      
-      final success = await _permissionService.updateUserRole(
-        planId: widget.planId,
-        userId: widget.participantId,
-        newRole: UserRole.admin,
-        updatedBy: currentUserId,
-      );
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
 
-      if (success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${widget.participantName} ahora es administrador'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          
-          Navigator.of(context).pop();
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al asignar rol de administrador'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: IosFormColors.pageBg,
+        body: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      );
     }
+
+    if (!_hasPermission) {
+      return Scaffold(
+        backgroundColor: IosFormColors.pageBg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              IosFormEditBar(
+                editing: true,
+                canEdit: false,
+                title: loc.noPermissionTitle,
+                editLabel: loc.edit,
+                cancelLabel: loc.close,
+                saveLabel: loc.save,
+                onEdit: () {},
+                onCancel: () => Navigator.of(context).pop(),
+                onSave: () {},
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    loc.noPermissionEditPersonalInfoOthers,
+                    style: const TextStyle(
+                      color: IosFormColors.textSecondary,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final cardChildren = <Widget>[
+      IosEditField(
+        label: loc.seat,
+        controller: _asientoController,
+        hint: loc.seatHint,
+        validator: (v) => _maxLenValidator(v, 50, loc),
+      ),
+    ];
+
+    if (_isActivity) {
+      cardChildren.addAll([
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.eventMyInfoEntryCodeLabel,
+          controller: _ticketCodeController,
+          hint: loc.eventMyInfoEntryCodeHint,
+          validator: (v) => _maxLenValidator(v, 50, loc),
+        ),
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.eventMyInfoTicketUrlLabel,
+          controller: _ticketDocUrlController,
+          hint: loc.eventMyInfoTicketUrlHint,
+          keyboardType: TextInputType.url,
+          validator: (v) => _maxLenValidator(v, 500, loc),
+        ),
+      ]);
+    } else {
+      cardChildren.addAll([
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.menu,
+          controller: _menuController,
+          hint: loc.menuHint,
+          validator: (v) => _maxLenValidator(v, 100, loc),
+        ),
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.preferences,
+          controller: _preferenciasController,
+          hint: loc.preferencesHint,
+          maxLines: 2,
+          minLines: 1,
+          validator: (v) => _maxLenValidator(v, 200, loc),
+        ),
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.reservationNumber,
+          controller: _numeroReservaController,
+          hint: loc.reservationNumberHint,
+          validator: (v) => _maxLenValidator(v, 50, loc),
+        ),
+        const IosRowSeparator(),
+        IosEditField(
+          label: loc.gate,
+          controller: _gateController,
+          hint: loc.gateHint,
+          validator: (v) => _maxLenValidator(v, 50, loc),
+        ),
+      ]);
+    }
+
+    cardChildren.addAll([
+      const IosRowSeparator(),
+      IosSwitchRow(
+        label: loc.cardObtained,
+        value: _tarjetaObtenida,
+        onChanged: (v) => setState(() => _tarjetaObtenida = v),
+      ),
+      const IosRowSeparator(),
+      IosEditField(
+        label: loc.personalNotes,
+        controller: _notasPersonalesController,
+        hint: loc.eventMyInfoPersonalNotesHint,
+        maxLines: 4,
+        minLines: 2,
+        validator: (v) => _maxLenValidator(v, 1000, loc),
+      ),
+    ]);
+
+    return Scaffold(
+      backgroundColor: IosFormColors.pageBg,
+      body: SafeArea(
+        child: Material(
+          color: IosFormColors.pageBg,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                IosFormEditBar(
+                  editing: true,
+                  canEdit: true,
+                  saving: _isSaving,
+                  centeredTitle: true,
+                  modalIconActions: true,
+                  title: loc.editPersonalInfoTitle(widget.participantName),
+                  editLabel: loc.edit,
+                  cancelLabel: loc.cancel,
+                  saveLabel: loc.save,
+                  onEdit: () {},
+                  onCancel: () => Navigator.of(context).pop(),
+                  onSave: _savePersonalInfo,
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                    child: IosGroupedCard(children: cardChildren),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

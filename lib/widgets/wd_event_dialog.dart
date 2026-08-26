@@ -741,18 +741,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   // Surfaces iOS D (GUIA_UI formularios tipo ficha).
   static const Color _formSurface = IosFormColors.pageBg;
-  static const Color _fieldSurface = IosFormColors.groupedBg;
-  static const double _fieldRadius = 12;
   static const double _fieldGap = 14;
-  static const double _fieldIconSize = 20;
-  static const EdgeInsets _fieldContentPadding =
-      EdgeInsets.symmetric(horizontal: 16, vertical: 14);
-
-  TextStyle get _labelStyle => const TextStyle(
-        fontSize: 13,
-        color: IosFormColors.textSecondary,
-        fontWeight: FontWeight.w400,
-      );
 
   TextStyle get _valueStyle => const TextStyle(
         fontSize: 17,
@@ -767,53 +756,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         fontWeight: FontWeight.w400,
         height: 1.2,
       );
-
-  Icon _fieldIcon(IconData icon) =>
-      Icon(icon, size: _fieldIconSize, color: IosFormColors.textSecondary);
-
-  /// Decoración tipo login: fondo sólido, sin borde duro (patrón D).
-  BoxDecoration _buildLoginStyleDecoration() {
-    return BoxDecoration(
-      color: _fieldSurface,
-      borderRadius: BorderRadius.circular(_fieldRadius),
-    );
-  }
-
-  InputDecoration _standardFieldDecoration({
-    required String labelText,
-    String? hintText,
-    IconData? prefixIcon,
-    bool showErrorBorder = false,
-    String? counterText,
-  }) {
-    return InputDecoration(
-      labelText: labelText,
-      hintText: hintText,
-      counterText: counterText,
-      labelStyle: _labelStyle,
-      hintStyle: _hintStyle,
-      prefixIcon: prefixIcon != null ? _fieldIcon(prefixIcon) : null,
-      border: InputBorder.none,
-      enabledBorder: InputBorder.none,
-      focusedBorder: InputBorder.none,
-      errorBorder: showErrorBorder
-          ? OutlineInputBorder(
-              borderRadius: BorderRadius.circular(_fieldRadius),
-              borderSide: BorderSide(color: Colors.red.shade400, width: 1),
-            )
-          : InputBorder.none,
-      focusedErrorBorder: showErrorBorder
-          ? OutlineInputBorder(
-              borderRadius: BorderRadius.circular(_fieldRadius),
-              borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
-            )
-          : InputBorder.none,
-      filled: true,
-      fillColor: Colors.transparent,
-      isDense: true,
-      contentPadding: _fieldContentPadding,
-    );
-  }
 
   Widget _wrapReadOnlyIfNeeded({required Widget child}) {
     if (_canEditGeneral) return child;
@@ -3122,9 +3064,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             Expanded(
               child: Text(
                 loc.eventProposalParticipantHint,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: isMobile ? 12 : 13,
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: IosFormColors.textPrimary,
                   height: 1.35,
                 ),
               ),
@@ -3455,9 +3397,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                             if (!_canEditGeneral) return null;
                             final v = value?.trim() ?? '';
                             if (v.isNotEmpty && v.length < 3) {
-                              return 'Mínimo 3 caracteres';
+                              return loc.minCharacters(3);
                             }
-                            if (v.length > 1000) return 'Máximo 1000 caracteres';
+                            if (v.length > 1000) {
+                              return loc.maxCharacters(1000);
+                            }
                             return null;
                           },
                           onChanged: (_) => setState(() {}),
@@ -3503,8 +3447,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               padding: EdgeInsets.only(top: 8, bottom: spacing),
               child: Text(
                 AppLocalizations.of(context)!.eventSelectTypeFirstHint,
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: Colors.white70),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: IosFormColors.textSecondary,
+                ),
               ),
             ),
           if (widget.event != null || _hasGeneralEventTypeSelected()) ...[
@@ -3840,23 +3786,24 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   /// Construye el tab de información de otros participantes (solo para admins)
   Widget _buildOthersInfoTab() {
+    final loc = AppLocalizations.of(context)!;
     final currentUser = ref.read(currentUserProvider);
     final currentUserId = currentUser?.id ?? '';
 
-    // Filtrar participantes excluyendo al usuario actual
     final otherParticipants =
         _selectedParticipantIds.where((id) => id != currentUserId).toList();
 
     if (otherParticipants.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.all(32),
           child: Text(
-            'No hay otros participantes en este evento',
-            style: GoogleFonts.poppins(
-              color: Colors.white70,
-              fontSize: 14,
+            loc.eventOthersInfoEmpty,
+            style: const TextStyle(
+              color: IosFormColors.textSecondary,
+              fontSize: 15,
             ),
+            textAlign: TextAlign.center,
           ),
         ),
       );
@@ -3865,206 +3812,149 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.orange.shade400.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(_fieldRadius),
-              border: Border.all(
-                color: Colors.orange.shade400.withValues(alpha: 0.5),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.admin_panel_settings,
-                    color: Colors.orange.shade300, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Como administrador puedes ver la información personal de otros participantes.',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          ...otherParticipants
-              .map((participantId) => _buildParticipantCard(participantId)),
+          IosFormFooter(loc.eventOthersInfoAdminBanner),
+          const SizedBox(height: 12),
+          ...otherParticipants.map(_buildParticipantCard),
         ],
       ),
     );
   }
 
-  /// Construye una tarjeta para mostrar/editar la información de un participante
+  String _readOnlyPersonalValue(String? raw, AppLocalizations loc) {
+    final v = raw?.trim();
+    if (v == null || v.isEmpty) return loc.notSpecified;
+    return v;
+  }
+
+  /// Tarjeta Settings con info personal de un participante (solo lectura + editar).
   Widget _buildParticipantCard(String participantId) {
+    final loc = AppLocalizations.of(context)!;
     final personalPart = widget.event?.personalParts?[participantId];
     final personalFields = personalPart?.fields ?? {};
+    final isActivity = widget.event?.commonPart?.family == 'Actividad';
+    final canEditOthers = _userPermissions
+            ?.hasPermission(Permission.eventEditOthersPersonal) ??
+        false;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: _buildLoginStyleDecoration(),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.person, color: AppColorScheme.color2, size: 20),
-                const SizedBox(width: 8),
-                FutureBuilder<String>(
-                  future: _getUserDisplayName(participantId),
-                  builder: (context, snapshot) {
-                    final displayName = snapshot.data ?? participantId;
-                    return Flexible(
-                      child: Text(
-                        displayName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Campos de información personal del participante
-            _buildReadOnlyField('Asiento', personalFields['asiento']),
-            if (widget.event?.commonPart?.family == 'Actividad') ...[
-              _buildReadOnlyField(
-                  'Código de entrada', personalFields['ticketCode']),
-              _buildReadOnlyField(
-                  'URL del ticket/archivo', personalFields['ticketDocUrl']),
-            ] else ...[
-              _buildReadOnlyField('Menú', personalFields['menu']),
-              _buildReadOnlyField(
-                  'Preferencias', personalFields['preferencias']),
-              _buildReadOnlyField(
-                  'Número de reserva', personalFields['numeroReserva']),
-              _buildReadOnlyField('Gate', personalFields['gate']),
-            ],
-            _buildReadOnlyField('Tarjeta obtenida',
-                personalFields['tarjetaObtenida'] == true ? 'Sí' : 'No'),
-            _buildReadOnlyField(
-                'Notas personales', personalFields['notasPersonales']),
-
-            const SizedBox(height: 16),
-            // Solo mostrar botón de editar si el usuario tiene permisos
-            if (_userPermissions
-                    ?.hasPermission(Permission.eventEditOthersPersonal) ??
-                false)
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColorScheme.color2, // Color sólido, sin gradiente
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColorScheme.color2.withValues(alpha: 0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: ElevatedButton.icon(
-                  onPressed: () => _editParticipantInfo(participantId),
-                  icon: const Icon(Icons.edit, size: 16),
-                  label: Text(
-                    AppLocalizations.of(context)!.editInfo,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    shadowColor: Colors.transparent,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              )
-            else
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1F2937), // Color sólido, sin gradiente
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12).withValues(alpha: 0.5),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.lock, color: Colors.white70, size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Sin permisos para editar',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
+    final rows = <Widget>[
+      IosSettingsRow(
+        label: loc.seat,
+        value: _readOnlyPersonalValue(
+          personalFields['asiento']?.toString(),
+          loc,
         ),
       ),
-    );
-  }
+    ];
 
-  /// Construye un campo de solo lectura
-  Widget _buildReadOnlyField(String label, String? value) {
+    if (isActivity) {
+      rows.addAll([
+        const IosRowSeparator(),
+        IosSettingsRow(
+          label: loc.eventMyInfoEntryCodeLabel,
+          value: _readOnlyPersonalValue(
+            personalFields['ticketCode']?.toString(),
+            loc,
+          ),
+        ),
+        const IosRowSeparator(),
+        IosSettingsRow(
+          label: loc.eventMyInfoTicketUrlLabel,
+          value: _readOnlyPersonalValue(
+            personalFields['ticketDocUrl']?.toString(),
+            loc,
+          ),
+          multiline: true,
+        ),
+      ]);
+    } else {
+      rows.addAll([
+        const IosRowSeparator(),
+        IosSettingsRow(
+          label: loc.menu,
+          value: _readOnlyPersonalValue(
+            personalFields['menu']?.toString(),
+            loc,
+          ),
+        ),
+        const IosRowSeparator(),
+        IosSettingsRow(
+          label: loc.preferences,
+          value: _readOnlyPersonalValue(
+            personalFields['preferencias']?.toString(),
+            loc,
+          ),
+          multiline: true,
+        ),
+        const IosRowSeparator(),
+        IosSettingsRow(
+          label: loc.reservationNumber,
+          value: _readOnlyPersonalValue(
+            personalFields['numeroReserva']?.toString(),
+            loc,
+          ),
+        ),
+        const IosRowSeparator(),
+        IosSettingsRow(
+          label: loc.gate,
+          value: _readOnlyPersonalValue(
+            personalFields['gate']?.toString(),
+            loc,
+          ),
+        ),
+      ]);
+    }
+
+    rows.addAll([
+      const IosRowSeparator(),
+      IosSettingsRow(
+        label: loc.cardObtained,
+        value: personalFields['tarjetaObtenida'] == true
+            ? loc.yesShort
+            : loc.noShort,
+      ),
+      const IosRowSeparator(),
+      IosSettingsRow(
+        label: loc.personalNotes,
+        value: _readOnlyPersonalValue(
+          personalFields['notasPersonales']?.toString(),
+          loc,
+        ),
+        multiline: true,
+      ),
+    ]);
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w500,
-                color: Colors.white70,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value ?? 'No especificado',
-              style: GoogleFonts.poppins(
-                color: value != null ? Colors.white : Colors.white60,
-                fontStyle: value == null ? FontStyle.italic : FontStyle.normal,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(bottom: 14),
+      child: FutureBuilder<String>(
+        future: _getUserDisplayName(participantId),
+        builder: (context, snapshot) {
+          final displayName = snapshot.data ?? participantId;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              IosSectionLabel(displayName),
+              IosGroupedCard(children: rows),
+              if (canEditOthers) ...[
+                const SizedBox(height: 8),
+                IosGroupedCard(
+                  children: [
+                    IosSettingsRow(
+                      label: loc.editInfo,
+                      value: '',
+                      chevron: true,
+                      onTap: () => _editParticipantInfo(participantId),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                const SizedBox(height: 6),
+                IosFormFooter(loc.eventOthersInfoNoEditPermission),
+              ],
+            ],
+          );
+        },
       ),
     );
   }

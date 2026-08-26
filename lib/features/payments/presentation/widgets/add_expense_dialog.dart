@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/accommodation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
@@ -252,6 +253,68 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
     if (mounted) setState(() => _selectedEventId = picked);
   }
 
+  Future<void> _pickEventWithClear(Map<String, String> eventTitles) async {
+    await _pickEvent(eventTitles);
+    if (!mounted) return;
+    if (_selectedEventId != null && _selectedEventId!.isNotEmpty) {
+      setState(() => _selectedAccommodationId = null);
+    }
+  }
+
+  Future<void> _pickAccommodation(Map<String, String> accommodationTitles) async {
+    final loc = AppLocalizations.of(context)!;
+    final options = <IosFormPickerOption<String?>>[
+      IosFormPickerOption(
+        value: null,
+        title: loc.paymentsExpenseNoAccommodationOption,
+        selected:
+            _selectedAccommodationId == null || _selectedAccommodationId!.isEmpty,
+      ),
+      ...accommodationTitles.entries.map(
+        (e) => IosFormPickerOption(
+          value: e.key,
+          title: e.value,
+          selected: e.key == _selectedAccommodationId,
+        ),
+      ),
+    ];
+    if (_selectedAccommodationId != null &&
+        _selectedAccommodationId!.isNotEmpty &&
+        !accommodationTitles.containsKey(_selectedAccommodationId)) {
+      options.add(
+        IosFormPickerOption(
+          value: _selectedAccommodationId,
+          title: loc.paymentsExpenseUnknownLinkedAccommodation,
+          selected: true,
+        ),
+      );
+    }
+    final picked = await IosFormPickerSheet.show<String?>(
+      context: context,
+      title: loc.paymentsExpenseLinkedAccommodationLabel,
+      options: options,
+    );
+    if (!mounted) return;
+    setState(() {
+      _selectedAccommodationId = picked;
+      if (picked != null && picked.isNotEmpty) {
+        _selectedEventId = null;
+      }
+    });
+  }
+
+  String _accommodationDisplayValue(
+    Map<String, String> accommodationTitles,
+    AppLocalizations loc,
+  ) {
+    final id = _selectedAccommodationId;
+    if (id == null || id.isEmpty) {
+      return loc.paymentsExpenseNoAccommodationOption;
+    }
+    return accommodationTitles[id] ??
+        loc.paymentsExpenseUnknownLinkedAccommodation;
+  }
+
   String _eventDisplayValue(Map<String, String> eventTitles, AppLocalizations loc) {
     final id = _selectedEventId;
     if (id == null || id.isEmpty) return loc.paymentsExpenseNoEventOption;
@@ -390,6 +453,8 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
     final participationsAsync =
         ref.watch(planParticipantsProvider(widget.plan.id!));
     final eventsAsync = ref.watch(planEventsStreamProvider(widget.plan.id!));
+    final accommodationsAsync =
+        ref.watch(planAccommodationsStreamProvider(widget.plan.id!));
     final pad = MediaQuery.sizeOf(context).width < 600 ? 12.0 : 16.0;
     final gap = 16.0;
 
@@ -441,261 +506,58 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                                 real.map((p) => p.userId).toList();
                             return eventsAsync.when(
                               data: (eventList) {
-                                final eventTitles = <String, String>{};
-                                for (final e in eventList) {
-                                  final id = e.id;
-                                  if (id == null || id.isEmpty) continue;
-                                  final raw = e.description.trim();
-                                  eventTitles[id] = raw.isEmpty
-                                      ? loc.paymentsExpenseEventFallbackTitle
-                                      : raw;
-                                }
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    IosGroupedCard(
-                                      children: [
-                                        IosSettingsRow(
-                                          label: loc.paymentsExpensePayer,
-                                          value: _selectedPayerId != null
-                                              ? _userName(_selectedPayerId!)
-                                              : '—',
-                                          chevron: true,
-                                          onTap: () =>
-                                              _pickPayer(participantIds),
-                                        ),
-                                        const IosRowSeparator(),
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              child: IosEditField(
-                                                label:
-                                                    '${loc.paymentsExpenseAmount} (${_currency.symbol})',
-                                                controller: _amountController,
-                                                keyboardType: const TextInputType
-                                                    .numberWithOptions(
-                                                  decimal: true,
-                                                ),
-                                                onChanged: _onAmountChanged,
-                                                validator: (v) {
-                                                  if (v == null || v.isEmpty) {
-                                                    return loc
-                                                        .snackInvalidMonetaryAmount;
-                                                  }
-                                                  final n = double.tryParse(
-                                                    v.replaceAll(',', '.'),
-                                                  );
-                                                  if (n == null || n <= 0) {
-                                                    return loc
-                                                        .snackInvalidMonetaryAmount;
-                                                  }
-                                                  return null;
-                                                },
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 6,
-                                                right: 4,
-                                              ),
-                                              child: IconButton(
-                                                tooltip: loc.paymentsCalculator,
-                                                onPressed: _openCalculator,
-                                                icon: const Icon(
-                                                  Icons.calculate_outlined,
-                                                  color: IosFormColors
-                                                      .textSecondary,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const IosRowSeparator(),
-                                        IosEditField(
-                                          label: loc.paymentsExpenseConcept,
-                                          controller: _conceptController,
-                                        ),
-                                        const IosRowSeparator(),
-                                        IosSettingsRow(
-                                          label: loc.paymentsExpenseDate,
-                                          value: DateFormat('dd/MM/yyyy')
-                                              .format(_selectedDate),
-                                          chevron: true,
-                                          onTap: _selectDate,
-                                        ),
-                                        if (!_lockEventLink &&
-                                            !_lockAccommodationLink) ...[
-                                          const IosRowSeparator(),
-                                          IosSettingsRow(
-                                            label: loc
-                                                .paymentsExpenseLinkedEventLabel,
-                                            value: _eventDisplayValue(
-                                              eventTitles,
-                                              loc,
-                                            ),
-                                            chevron: true,
-                                            onTap: () =>
-                                                _pickEvent(eventTitles),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                    SizedBox(height: gap),
-                                    IosSectionLabel(
-                                      loc.paymentsExpenseSplitBetween,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    IosGroupedCard(
-                                      children: [
-                                        IosSwitchRow(
-                                          label: loc.paymentsExpenseSplitCustom,
-                                          value: !_equalSplit,
-                                          onChanged: (custom) {
-                                            setState(() {
-                                              _equalSplit = !custom;
-                                              if (_equalSplit) {
-                                                for (final c in _customAmountControllers
-                                                    .values) {
-                                                  c.dispose();
-                                                }
-                                                _customAmountControllers.clear();
-                                              } else {
-                                                final amount = double.tryParse(
-                                                      _amountController.text
-                                                          .replaceAll(',', '.'),
-                                                    ) ??
-                                                    0;
-                                                final n = _selectedParticipantIds
-                                                        .isEmpty
-                                                    ? 1
-                                                    : _selectedParticipantIds
-                                                        .length;
-                                                final per =
-                                                    n > 0 ? amount / n : 0.0;
-                                                _ensureCustomControllers(
-                                                  _selectedParticipantIds
-                                                      .toList(),
-                                                  per,
-                                                );
-                                              }
-                                            });
-                                          },
-                                        ),
-                                        if (!_equalSplit &&
-                                            _selectedParticipantIds
-                                                .isNotEmpty) ...[
-                                          const IosRowSeparator(),
-                                          ...() {
-                                            final amount = double.tryParse(
-                                                  _amountController.text
-                                                      .replaceAll(',', '.'),
-                                                ) ??
-                                                0;
-                                            final n =
-                                                _selectedParticipantIds.length;
-                                            final per =
-                                                n > 0 ? amount / n : 0.0;
-                                            _ensureCustomControllers(
-                                              _selectedParticipantIds.toList(),
-                                              per,
-                                            );
-                                            return _selectedParticipantIds
-                                                .map((uid) {
-                                              final controller =
-                                                  _customAmountControllers[
-                                                      uid]!;
-                                              return Column(
-                                                children: [
-                                                  Padding(
-                                                    padding: EdgeInsets.only(
-                                                      left: IosFormColors
-                                                          .nestPaddingLeft(1),
-                                                    ),
-                                                    child: IosEditField(
-                                                      label: _userName(uid),
-                                                      controller: controller,
-                                                      keyboardType:
-                                                          const TextInputType
-                                                              .numberWithOptions(
-                                                        decimal: true,
-                                                      ),
-                                                      onChanged: (_) =>
-                                                          setState(() {}),
-                                                    ),
-                                                  ),
-                                                  if (uid !=
-                                                      _selectedParticipantIds
-                                                          .last)
-                                                    IosRowSeparator(
-                                                      nestLevel: 1,
-                                                    ),
-                                                ],
-                                              );
-                                            });
-                                          }(),
-                                        ],
-                                        const IosRowSeparator(),
-                                        for (var i = 0; i < real.length; i++) ...[
-                                          if (i > 0) const IosRowSeparator(),
-                                          IosCheckRow(
-                                            label: _userName(real[i].userId),
-                                            selected: _selectedParticipantIds
-                                                .contains(real[i].userId),
-                                            onTap: () {
-                                              setState(() {
-                                                final uid = real[i].userId;
-                                                if (_selectedParticipantIds
-                                                    .contains(uid)) {
-                                                  _selectedParticipantIds
-                                                      .remove(uid);
-                                                  _customAmountControllers
-                                                      .remove(uid)
-                                                      ?.dispose();
-                                                } else {
-                                                  _selectedParticipantIds
-                                                      .add(uid);
-                                                }
-                                              });
-                                            },
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                    if (_equalSplit &&
-                                        _selectedParticipantIds.isNotEmpty)
-                                      Builder(
-                                        builder: (context) {
-                                          final amount = double.tryParse(
-                                            _amountController.text
-                                                .replaceAll(',', '.'),
-                                          );
-                                          if (amount == null || amount <= 0) {
-                                            return const SizedBox.shrink();
-                                          }
-                                          final per = amount /
-                                              _selectedParticipantIds.length;
-                                          return IosFormFooter(
-                                            '${loc.paymentsExpensePerPerson}: ${per.toStringAsFixed(2)} ${_currency.symbol}',
-                                          );
-                                        },
+                                return accommodationsAsync.when(
+                                  data: (accommodationList) {
+                                    final eventTitles = <String, String>{};
+                                    for (final e in eventList) {
+                                      final id = e.id;
+                                      if (id == null || id.isEmpty) continue;
+                                      final raw = e.description.trim();
+                                      eventTitles[id] = raw.isEmpty
+                                          ? loc.paymentsExpenseEventFallbackTitle
+                                          : raw;
+                                    }
+                                    final accommodationTitles =
+                                        <String, String>{};
+                                    for (final a in accommodationList) {
+                                      final id = a.id;
+                                      if (id == null || id.isEmpty) continue;
+                                      final raw = a.hotelName.trim();
+                                      accommodationTitles[id] = raw.isEmpty
+                                          ? loc.paymentsExpenseAccommodationFallbackTitle
+                                          : raw;
+                                    }
+                                    return _buildExpenseFormBody(
+                                      loc: loc,
+                                      gap: gap,
+                                      participantIds: participantIds,
+                                      eventTitles: eventTitles,
+                                      accommodationTitles: accommodationTitles,
+                                    );
+                                  },
+                                  loading: () => const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(24),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
                                       ),
-                                  ],
+                                    ),
+                                  ),
+                                  error: (_, __) => IosFormFooter(
+                                    loc.paymentsExpenseSaveError,
+                                  ),
                                 );
                               },
-                              loading: () => Padding(
-                                padding: const EdgeInsets.all(32),
-                                child: Center(
+                              loading: () => const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(24),
                                   child: CircularProgressIndicator(
-                                    color: IosFormColors.accent,
                                     strokeWidth: 2,
                                   ),
                                 ),
                               ),
-                              error: (_, __) => IosFormFooter(
-                                loc.paymentsExpenseSaveError,
-                              ),
+                              error: (_, __) =>
+                                  IosFormFooter(loc.paymentsExpenseSaveError),
                             );
                           },
                           loading: () => Padding(
@@ -722,6 +584,205 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       ),
     );
   }
+
+  Widget _buildExpenseFormBody({
+    required AppLocalizations loc,
+    required double gap,
+    required List<String> participantIds,
+    required Map<String, String> eventTitles,
+    required Map<String, String> accommodationTitles,
+  }) {
+    final realIds = participantIds;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IosGroupedCard(
+          children: [
+            IosSettingsRow(
+              label: loc.paymentsExpensePayer,
+              value: _selectedPayerId != null
+                  ? _userName(_selectedPayerId!)
+                  : '—',
+              chevron: true,
+              onTap: () => _pickPayer(realIds),
+            ),
+            const IosRowSeparator(),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: IosEditField(
+                    label: '${loc.paymentsExpenseAmount} (${_currency.symbol})',
+                    controller: _amountController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    onChanged: _onAmountChanged,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) {
+                        return loc.snackInvalidMonetaryAmount;
+                      }
+                      final n = double.tryParse(v.replaceAll(',', '.'));
+                      if (n == null || n <= 0) {
+                        return loc.snackInvalidMonetaryAmount;
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, right: 4),
+                  child: IconButton(
+                    tooltip: loc.paymentsCalculator,
+                    onPressed: _openCalculator,
+                    icon: const Icon(
+                      Icons.calculate_outlined,
+                      color: IosFormColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const IosRowSeparator(),
+            IosEditField(
+              label: loc.paymentsExpenseConcept,
+              controller: _conceptController,
+            ),
+            const IosRowSeparator(),
+            IosSettingsRow(
+              label: loc.paymentsExpenseDate,
+              value: DateFormat('dd/MM/yyyy').format(_selectedDate),
+              chevron: true,
+              onTap: _selectDate,
+            ),
+            if (!_lockEventLink && !_lockAccommodationLink) ...[
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.paymentsExpenseLinkedEventLabel,
+                value: _eventDisplayValue(eventTitles, loc),
+                chevron: true,
+                onTap: () => _pickEventWithClear(eventTitles),
+              ),
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.paymentsExpenseLinkedAccommodationLabel,
+                value: _accommodationDisplayValue(accommodationTitles, loc),
+                chevron: true,
+                onTap: () => _pickAccommodation(accommodationTitles),
+              ),
+            ],
+          ],
+        ),
+        SizedBox(height: gap),
+        IosSectionLabel(loc.paymentsExpenseSplitBetween),
+        const SizedBox(height: 6),
+        IosGroupedCard(
+          children: [
+            IosSwitchRow(
+              label: loc.paymentsExpenseSplitCustom,
+              value: !_equalSplit,
+              onChanged: (custom) {
+                setState(() {
+                  _equalSplit = !custom;
+                  if (_equalSplit) {
+                    for (final c in _customAmountControllers.values) {
+                      c.dispose();
+                    }
+                    _customAmountControllers.clear();
+                  } else {
+                    final amount = double.tryParse(
+                          _amountController.text.replaceAll(',', '.'),
+                        ) ??
+                        0;
+                    final n = _selectedParticipantIds.isEmpty
+                        ? 1
+                        : _selectedParticipantIds.length;
+                    final per = n > 0 ? amount / n : 0.0;
+                    _ensureCustomControllers(
+                      _selectedParticipantIds.toList(),
+                      per,
+                    );
+                  }
+                });
+              },
+            ),
+            if (!_equalSplit && _selectedParticipantIds.isNotEmpty) ...[
+              const IosRowSeparator(),
+              ...() {
+                final amount = double.tryParse(
+                      _amountController.text.replaceAll(',', '.'),
+                    ) ??
+                    0;
+                final n = _selectedParticipantIds.length;
+                final per = n > 0 ? amount / n : 0.0;
+                _ensureCustomControllers(
+                  _selectedParticipantIds.toList(),
+                  per,
+                );
+                return _selectedParticipantIds.map((uid) {
+                  final controller = _customAmountControllers[uid]!;
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: IosFormColors.nestPaddingLeft(1),
+                        ),
+                        child: IosEditField(
+                          label: _userName(uid),
+                          controller: controller,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ),
+                      if (uid != _selectedParticipantIds.last)
+                        IosRowSeparator(nestLevel: 1),
+                    ],
+                  );
+                });
+              }(),
+            ],
+            const IosRowSeparator(),
+            for (var i = 0; i < realIds.length; i++) ...[
+              if (i > 0) const IosRowSeparator(),
+              IosCheckRow(
+                label: _userName(realIds[i]),
+                selected: _selectedParticipantIds.contains(realIds[i]),
+                onTap: () {
+                  setState(() {
+                    final uid = realIds[i];
+                    if (_selectedParticipantIds.contains(uid)) {
+                      _selectedParticipantIds.remove(uid);
+                      _customAmountControllers.remove(uid)?.dispose();
+                    } else {
+                      _selectedParticipantIds.add(uid);
+                    }
+                  });
+                },
+              ),
+            ],
+          ],
+        ),
+        if (_equalSplit && _selectedParticipantIds.isNotEmpty)
+          Builder(
+            builder: (context) {
+              final amount = double.tryParse(
+                _amountController.text.replaceAll(',', '.'),
+              );
+              if (amount == null || amount <= 0) {
+                return const SizedBox.shrink();
+              }
+              final per = amount / _selectedParticipantIds.length;
+              return IosFormFooter(
+                '${loc.paymentsExpensePerPerson}: ${per.toStringAsFixed(2)} ${_currency.symbol}',
+              );
+            },
+          ),
+      ],
+    );
+  }
+
 }
 
 /// Calculadora simple para obtener un importe y aplicarlo al campo de gasto.

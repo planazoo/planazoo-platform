@@ -728,6 +728,72 @@ abstract class AppLocalizations {
   /// **'Ninguno'**
   String get paymentsExpenseNoEventOption;
 
+  /// Fila picker alojamiento en modal gasto
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamiento (opcional)'**
+  String get paymentsExpenseLinkedAccommodationLabel;
+
+  /// Opción sin alojamiento en picker gasto
+  ///
+  /// In es, this message translates to:
+  /// **'Ninguno'**
+  String get paymentsExpenseNoAccommodationOption;
+
+  /// Pestaña Info de Otros sin participantes
+  ///
+  /// In es, this message translates to:
+  /// **'No hay otros participantes en este evento'**
+  String get eventOthersInfoEmpty;
+
+  /// Aviso admin en pestaña Info de Otros
+  ///
+  /// In es, this message translates to:
+  /// **'Como administrador puedes ver la información personal de otros participantes.'**
+  String get eventOthersInfoAdminBanner;
+
+  /// Sin permiso editar info personal de otro
+  ///
+  /// In es, this message translates to:
+  /// **'Sin permisos para editar'**
+  String get eventOthersInfoNoEditPermission;
+
+  /// Título modal editar info personal ajena
+  ///
+  /// In es, this message translates to:
+  /// **'Editar información de {name}'**
+  String editPersonalInfoTitle(String name);
+
+  /// Confirmación guardado info personal ajena
+  ///
+  /// In es, this message translates to:
+  /// **'Información de {name} actualizada'**
+  String personalInfoUpdated(String name);
+
+  /// Error guardando info personal ajena
+  ///
+  /// In es, this message translates to:
+  /// **'Error al guardar: {error}'**
+  String personalInfoSaveError(String error);
+
+  /// Valor vacío en campos solo lectura
+  ///
+  /// In es, this message translates to:
+  /// **'No especificado'**
+  String get notSpecified;
+
+  /// Respuesta afirmativa corta
+  ///
+  /// In es, this message translates to:
+  /// **'Sí'**
+  String get yesShort;
+
+  /// Respuesta negativa corta
+  ///
+  /// In es, this message translates to:
+  /// **'No'**
+  String get noShort;
+
   /// No description provided for @paymentsExpenseEventFallbackTitle.
   ///
   /// In es, this message translates to:

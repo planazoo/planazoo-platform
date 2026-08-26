@@ -409,6 +409,65 @@
   "paymentsExpenseDate": "Fecha",
   "paymentsExpenseLinkedEventLabel": "Evento (opcional)",
   "paymentsExpenseNoEventOption": "Ninguno",
+  "paymentsExpenseLinkedAccommodationLabel": "Alojamiento (opcional)",
+  "@paymentsExpenseLinkedAccommodationLabel": {
+    "description": "Fila picker alojamiento en modal gasto"
+  },
+  "paymentsExpenseNoAccommodationOption": "Ninguno",
+  "@paymentsExpenseNoAccommodationOption": {
+    "description": "Opción sin alojamiento en picker gasto"
+  },
+  "eventOthersInfoEmpty": "No hay otros participantes en este evento",
+  "@eventOthersInfoEmpty": {
+    "description": "Pestaña Info de Otros sin participantes"
+  },
+  "eventOthersInfoAdminBanner": "Como administrador puedes ver la información personal de otros participantes.",
+  "@eventOthersInfoAdminBanner": {
+    "description": "Aviso admin en pestaña Info de Otros"
+  },
+  "eventOthersInfoNoEditPermission": "Sin permisos para editar",
+  "@eventOthersInfoNoEditPermission": {
+    "description": "Sin permiso editar info personal de otro"
+  },
+  "editPersonalInfoTitle": "Editar información de {name}",
+  "@editPersonalInfoTitle": {
+    "description": "Título modal editar info personal ajena",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoUpdated": "Información de {name} actualizada",
+  "@personalInfoUpdated": {
+    "description": "Confirmación guardado info personal ajena",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoSaveError": "Error al guardar: {error}",
+  "@personalInfoSaveError": {
+    "description": "Error guardando info personal ajena",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notSpecified": "No especificado",
+  "@notSpecified": {
+    "description": "Valor vacío en campos solo lectura"
+  },
+  "yesShort": "Sí",
+  "@yesShort": {
+    "description": "Respuesta afirmativa corta"
+  },
+  "noShort": "No",
+  "@noShort": {
+    "description": "Respuesta negativa corta"
+  },
   "paymentsExpenseEventFallbackTitle": "Evento",
   "paymentsExpenseUnknownLinkedEvent": "Evento (referencia)",
   "paymentsExpenseUnknownLinkedAccommodation": "Alojamiento (referencia)",

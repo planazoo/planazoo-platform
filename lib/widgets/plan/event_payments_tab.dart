@@ -11,6 +11,21 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
+/// Filtra gastos ligados a un evento o alojamiento (exportado para tests).
+bool planExpenseMatchesEntityLink(
+  PlanExpense expense, {
+  String? eventId,
+  String? accommodationId,
+}) {
+  if (accommodationId != null && accommodationId.isNotEmpty) {
+    return expense.accommodationId == accommodationId;
+  }
+  if (eventId != null && eventId.isNotEmpty) {
+    return expense.eventId == eventId;
+  }
+  return false;
+}
+
 /// Pestaña Pagos del formulario de evento o alojamiento: coste previsto + gastos Tricount ligados.
 class EventPaymentsTab extends ConsumerWidget {
   const EventPaymentsTab({
@@ -37,12 +52,12 @@ class EventPaymentsTab extends ConsumerWidget {
       (eventId != null && eventId!.isNotEmpty) ||
       (accommodationId != null && accommodationId!.isNotEmpty);
 
-  bool _expenseMatchesEntity(PlanExpense expense) {
-    if (_isAccommodation) {
-      return expense.accommodationId == accommodationId;
-    }
-    return expense.eventId == eventId;
-  }
+  bool _expenseMatchesEntity(PlanExpense expense) =>
+      planExpenseMatchesEntityLink(
+        expense,
+        eventId: eventId,
+        accommodationId: accommodationId,
+      );
 
   static bool canManageExpense(
     Plan plan,

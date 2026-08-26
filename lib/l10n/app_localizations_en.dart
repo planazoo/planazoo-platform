@@ -350,6 +350,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentsExpenseNoEventOption => 'None';
 
   @override
+  String get paymentsExpenseLinkedAccommodationLabel => 'Stay (optional)';
+
+  @override
+  String get paymentsExpenseNoAccommodationOption => 'None';
+
+  @override
+  String get eventOthersInfoEmpty => 'No other participants in this event';
+
+  @override
+  String get eventOthersInfoAdminBanner =>
+      'As an administrator you can view other participants\' personal information.';
+
+  @override
+  String get eventOthersInfoNoEditPermission => 'No permission to edit';
+
+  @override
+  String editPersonalInfoTitle(String name) {
+    return 'Edit information for $name';
+  }
+
+  @override
+  String personalInfoUpdated(String name) {
+    return 'Information for $name updated';
+  }
+
+  @override
+  String personalInfoSaveError(String error) {
+    return 'Could not save: $error';
+  }
+
+  @override
+  String get notSpecified => 'Not specified';
+
+  @override
+  String get yesShort => 'Yes';
+
+  @override
+  String get noShort => 'No';
+
+  @override
   String get paymentsExpenseEventFallbackTitle => 'Event';
 
   @override

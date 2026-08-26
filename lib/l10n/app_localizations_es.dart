@@ -354,6 +354,48 @@ class AppLocalizationsEs extends AppLocalizations {
   String get paymentsExpenseNoEventOption => 'Ninguno';
 
   @override
+  String get paymentsExpenseLinkedAccommodationLabel =>
+      'Alojamiento (opcional)';
+
+  @override
+  String get paymentsExpenseNoAccommodationOption => 'Ninguno';
+
+  @override
+  String get eventOthersInfoEmpty =>
+      'No hay otros participantes en este evento';
+
+  @override
+  String get eventOthersInfoAdminBanner =>
+      'Como administrador puedes ver la información personal de otros participantes.';
+
+  @override
+  String get eventOthersInfoNoEditPermission => 'Sin permisos para editar';
+
+  @override
+  String editPersonalInfoTitle(String name) {
+    return 'Editar información de $name';
+  }
+
+  @override
+  String personalInfoUpdated(String name) {
+    return 'Información de $name actualizada';
+  }
+
+  @override
+  String personalInfoSaveError(String error) {
+    return 'Error al guardar: $error';
+  }
+
+  @override
+  String get notSpecified => 'No especificado';
+
+  @override
+  String get yesShort => 'Sí';
+
+  @override
+  String get noShort => 'No';
+
+  @override
   String get paymentsExpenseEventFallbackTitle => 'Evento';
 
   @override

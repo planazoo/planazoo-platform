@@ -409,6 +409,65 @@
   "paymentsExpenseDate": "Date",
   "paymentsExpenseLinkedEventLabel": "Event (optional)",
   "paymentsExpenseNoEventOption": "None",
+  "paymentsExpenseLinkedAccommodationLabel": "Stay (optional)",
+  "@paymentsExpenseLinkedAccommodationLabel": {
+    "description": "Accommodation picker row in expense modal"
+  },
+  "paymentsExpenseNoAccommodationOption": "None",
+  "@paymentsExpenseNoAccommodationOption": {
+    "description": "No accommodation option in expense picker"
+  },
+  "eventOthersInfoEmpty": "No other participants in this event",
+  "@eventOthersInfoEmpty": {
+    "description": "Others info tab when empty"
+  },
+  "eventOthersInfoAdminBanner": "As an administrator you can view other participants' personal information.",
+  "@eventOthersInfoAdminBanner": {
+    "description": "Admin notice on Others info tab"
+  },
+  "eventOthersInfoNoEditPermission": "No permission to edit",
+  "@eventOthersInfoNoEditPermission": {
+    "description": "No permission to edit another user's personal info"
+  },
+  "editPersonalInfoTitle": "Edit information for {name}",
+  "@editPersonalInfoTitle": {
+    "description": "Title for edit others personal info modal",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoUpdated": "Information for {name} updated",
+  "@personalInfoUpdated": {
+    "description": "Others personal info saved confirmation",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoSaveError": "Could not save: {error}",
+  "@personalInfoSaveError": {
+    "description": "Others personal info save error",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notSpecified": "Not specified",
+  "@notSpecified": {
+    "description": "Empty read-only field value"
+  },
+  "yesShort": "Yes",
+  "@yesShort": {
+    "description": "Short yes answer"
+  },
+  "noShort": "No",
+  "@noShort": {
+    "description": "Short no answer"
+  },
   "paymentsExpenseEventFallbackTitle": "Event",
   "paymentsExpenseUnknownLinkedEvent": "Event (reference)",
   "paymentsExpenseUnknownLinkedAccommodation": "Stay (reference)",
