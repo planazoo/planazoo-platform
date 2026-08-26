@@ -7,6 +7,7 @@
 
 **Definición de “lanzamiento público”:** app en App Store y/o Play Store (o web abierta sin allowlist) + landing en `planoon.com` + términos/privacidad + flujo núcleo estable (registro → plan → invitar → usar) + cuadre de gastos usable.
 
+
 ### Criterio de calidad (prioridad de producto)
 
 Esta app se basa en que **los usuarios interactúan entre sí** y **quedan informados de los cambios**. Por tanto, antes que features nuevas o polish visual:
@@ -86,7 +87,7 @@ timeline
       Público : Stores + CTA landing
     section Post-lanzamiento
       Estabilidad v1.1 : Bugs, soporte, métricas
-      Producto v1.2+ : Notas, offline, import
+      Producto v1.2+ : Notas, offline, parseo rico
 ```
 
 | Fase | Nombre | Cuándo (relativo) | Criterio de salida |
@@ -117,9 +118,10 @@ timeline
 | 0.5 | Cancelar plan + avisar participantes | T261 | Pendiente |
 | 0.7 | **Contrato comercial C1–C3:** offline usable en iOS/Android; timezones en vuelos/perspectiva; invitar participante/observador | [`WEB_COMERCIAL.md`](./WEB_COMERCIAL.md) § contrato · T259 · T40–T45 · ítem 58 | Parcial |
 | 0.8 | **Contrato C4:** exportar itinerario (propio y del plan) sin que el destinatario tenga la app | T133, T252 §6 | Pendiente |
+| 0.9 | **Mail → plan (corte mínimo):** reenviar confirmación; buzón; colocar en evento existente o crear evento; copia personal. Parseo rico y filtro Gmail **no** son este ítem. | T134 · [`COMUNICACIONES_MAIL_PLAN.md`](./COMUNICACIONES_MAIL_PLAN.md) | Pendiente (acordado Ago 2026: gate **lanzamiento público**) |
 
-**No bloquea soft launch (familia):** 2FA, pasarela de pago, landing comercial completa, export PDF pulido (**C4**).  
-**Sí bloquea lanzamiento público:** el [contrato web → app](./WEB_COMERCIAL.md#contrato-web--app-sí-o-sí) (**C1** offline móvil, **C2** zonas horarias, **C3** invitar, **C4** exportar itinerario).
+**No bloquea soft launch (familia):** 2FA, pasarela de pago, landing comercial completa, export PDF pulido (**C4**), parseo rico de reservas ni filtro Gmail automático.  
+**Sí bloquea lanzamiento público:** el [contrato web → app](./WEB_COMERCIAL.md#contrato-web--app-sí-o-sí) (**C1** offline móvil, **C2** zonas horarias, **C3** invitar, **C4** exportar itinerario) y el **corte mínimo de mail** (0.9 / T134).
 
 ---
 
@@ -232,8 +234,23 @@ Seguir el **orden de dominios** cuando se retome desarrollo profundo ([ORDEN_POR
 | Media | Audiencias de avisos por fase | T275 |
 | Media | Unidades métrico/imperial | T274 |
 | Media | Ayuda contextual / accesibilidad | T157, T192 |
-| Media | Import eventos desde correo / vuelo por número | T134, T246 |
+| Media | Import eventos desde correo / vuelo por número — **el corte mínimo de mail pasó a launch (0.9 / T134)**; aquí queda parseo rico, filtro auto, más fuentes | T134 (fases post-mínimo), T246 |
+| Media | **Propuestas de eventos con votación** (tipo Doodle por evento y/o por plan) | — |
+| Media | **Chat: referencias a objetos** (`@evento`, `@alojamiento` o link desde el evento) | T253 |
+| Media | **Grupos de participantes** (ej. familia) para split gastos y asignación rápida | — |
+| Media | **Checklist / notas con formato** (checkboxes, viñetas, links en notas de viaje) | T262 |
+| Media | **Rutas entre eventos** (cómo llegar de uno a otro: Maps deeplink o integración) | — |
+| Media | **Almacenamiento de documentos del viaje** (pasaporte, seguros, reservas PDF; escaneo y vinculación al itinerario) | — |
+| Media | **Listas de equipaje inteligentes** (por destino, clima, tipo de viaje; inspirado en PackPoint) | — |
+| Media | **Escaneo de recibos** en gastos (foto de ticket → importe + moneda auto) | — |
+| Alta | **Vista agregada multi-plan** ("Mi agenda"): ver todos los eventos de todos los planes (o los seleccionados) en una sola vista calendario. Filtros por plan, por participante. Habilita: uso diario como planificador recurrente, detección de conflictos inter-plan (LISTA 139), "¿qué hago ahora?" global. Pieza estratégica. | — |
+| Alta | **Eventos compartidos entre planes** (un evento visible en más de un plan; enfoque abierto: compartir desde plan existente vs mini-plan intermedio). Diferencial competitivo. | — |
+| Media | **Plan rápido desde un evento** ("Crear plan a partir de este evento": genera plan con ese evento + participantes pre-cargados; útil para quedadas puntuales sin crear plan vacío) | — |
+| Media | **"Plan vivo":** sugerencias automáticas cuando algo cambia (vuelo retrasado → mover cena) | — |
 | Baja | Chat avanzado, UI calendario profunda | T190, T88… |
+| Baja | **Tu música del plan:** lista compartida (ej. Spotify/playlist) | — |
+| Baja | **Guías de destino personalizadas** (seguridad, transporte, comida, cultura por perfil viajero) | — |
+| Baja | **Timeline de recuerdos / diario post-viaje** (fotos + notas por día, compartible) | — |
 
 ---
 
@@ -244,7 +261,7 @@ Seguir el **orden de dominios** cuando se retome desarrollo profundo ([ORDEN_POR
 | P3.1 | Pasarela de cobros reales (**solo si** el modelo de negocio lo pide; no confundir con el apartado de reparto de gastos) |
 | P3.2 | Monetización / planes freemium / agencias | docs producto futuros |
 | P3.3 | Admin operativo completo (T183–T188) |
-| P3.4 | 2FA y seguridad “enterprise” |
+| P3.4 | 2FA: explorar modelo **código por correo** (passwordless); ¿hace falta password? (T166) |
 | P3.5 | Multi-idioma más allá de ES/EN |
 
 ---
@@ -254,7 +271,7 @@ Seguir el **orden de dominios** cuando se retome desarrollo profundo ([ORDEN_POR
 El orden #1→#9 **sigue** para el trabajo de producto diario.  
 Esta timeline **no sustituye** ese orden: indica qué capas (seguridad, legal, stores, landing) hay que intercalarse **antes del público**, aunque el dominio WIP sea otro.
 
-Excepción razonable pre-lanzamiento: saltar a **#5 Pagos** = **reparto/cuadre de gastos** (fase 2 de esta timeline; sin dinero real) y a **auth/legal** sin cerrar todos los dominios intermedios, si el núcleo #1–#3 ya es estable en soft launch.
+Excepción razonable pre-lanzamiento: saltar a **#5 Pagos** = **reparto/cuadre de gastos** (fase 2 de esta timeline; sin dinero real), a **auth/legal**, y a **mail T134** (corte mínimo, [`COMUNICACIONES_MAIL_PLAN.md`](./COMUNICACIONES_MAIL_PLAN.md)) sin cerrar todos los dominios intermedios, si el núcleo #1 ya es usable en soft launch.
 
 ---
 

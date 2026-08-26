@@ -9,6 +9,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/plan_par
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_navigation_bar.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_data_screen.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
@@ -77,6 +78,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   bool _summaryShowDraftFilter = false;
   bool _hasSetInitialTabForParticipant = false;
   bool _didScanCancellationDeadlines = false;
+  PlanInfoEditChrome? _planInfoEditChrome;
   /// Estado del calendario embebido: días visibles (1/2/3) y grupo actual (barra unificada).
   /// iOS: 3 días por defecto (lista §3.1 / ID 51).
   int _calendarVisibleDays =
@@ -222,6 +224,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                 onOptionSelected: (option) {
                   setState(() {
                     _selectedOption = option;
+                    if (option != 'planData') {
+                      _planInfoEditChrome = null;
+                    }
                   });
                 },
                 showStatsTab: isOrganizer && !isPendingPreview,
@@ -317,6 +322,22 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
 
   Widget _buildSectionTitleBar({bool isPendingPreview = false}) {
     final loc = AppLocalizations.of(context)!;
+    if (_selectedOption == 'planData') {
+      final chrome = _planInfoEditChrome;
+      return IosFormEditBar(
+        editing: chrome?.editing ?? false,
+        canEdit: (chrome?.canEdit ?? false) && !isPendingPreview,
+        saving: chrome?.saving ?? false,
+        centeredTitle: true,
+        editLabel: loc.edit,
+        cancelLabel: loc.planDetailsBarCancelShort,
+        saveLabel: loc.planDetailsBarSaveShort,
+        title: loc.planDetailsBarTitleShort,
+        onEdit: chrome?.onEdit ?? () {},
+        onCancel: chrome?.onCancel ?? () {},
+        onSave: chrome?.onSave ?? () {},
+      );
+    }
     return Container(
       height: 48,
       width: double.infinity,
@@ -370,7 +391,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                         _buildSummaryHeaderFilterButton(
                           tooltip: loc.myPlanSummaryDraftsOnlyTooltip,
                           active: _summaryDraftOnly,
-                          onTap: () => setState(() => _summaryDraftOnly = !_summaryDraftOnly),
+                          onTap: () => setState(
+                              () => _summaryDraftOnly = !_summaryDraftOnly),
                         ),
                       ],
                     ],
@@ -650,6 +672,19 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           plan: plan,
           showAppBar: false,
           forceReadOnly: isPendingPreview,
+          onEditChromeChanged: (chrome) {
+            if (!mounted) return;
+            final prev = _planInfoEditChrome;
+            final unchanged = prev?.editing == chrome?.editing &&
+                prev?.canEdit == chrome?.canEdit &&
+                prev?.saving == chrome?.saving &&
+                (prev == null) == (chrome == null);
+            if (unchanged) {
+              _planInfoEditChrome = chrome;
+              return;
+            }
+            setState(() => _planInfoEditChrome = chrome);
+          },
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
           onPlanDeleted: () {
             Navigator.of(context).pop();
@@ -727,6 +762,19 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           plan: plan,
           showAppBar: false,
           forceReadOnly: isPendingPreview,
+          onEditChromeChanged: (chrome) {
+            if (!mounted) return;
+            final prev = _planInfoEditChrome;
+            final unchanged = prev?.editing == chrome?.editing &&
+                prev?.canEdit == chrome?.canEdit &&
+                prev?.saving == chrome?.saving &&
+                (prev == null) == (chrome == null);
+            if (unchanged) {
+              _planInfoEditChrome = chrome;
+              return;
+            }
+            setState(() => _planInfoEditChrome = chrome);
+          },
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
           onPlanDeleted: () {
             Navigator.of(context).pop();
@@ -806,10 +854,10 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     if (!mounted) return;
     final p = _planFromStreamRead();
     if (p.id == null) return;
-    showDialog<void>(
+    showEventFormDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => EventDialog(
+      dialog: EventDialog(
         event: eventToShow,
         planId: p.id!,
         onSaved: (updatedEvent) async {
@@ -847,9 +895,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   void _showAccommodationDialog(Accommodation accommodation) {
     final p = _planFromStreamRead();
     if (p.id == null) return;
-    showDialog<void>(
+    showAccommodationFormDialog<void>(
       context: context,
-      builder: (context) => AccommodationDialog(
+      dialog: AccommodationDialog(
         accommodation: accommodation,
         planId: p.id!,
         planStartDate: p.startDate,
@@ -910,10 +958,10 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
       setState(() => _selectedOption = 'calendar');
     }
     final defaults = NewEventFromButtonDefaults.forPlan(p);
-    showDialog<void>(
+    showEventFormDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => EventDialog(
+      dialog: EventDialog(
         planId: p.id!,
         initialDate: defaults.date,
         initialHour: defaults.hour,
@@ -927,8 +975,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           } else {
             setState(() {});
           }
-          if (dialogContext.mounted) {
-            Navigator.of(dialogContext).pop();
+          if (mounted) {
+            Navigator.of(context).pop();
           }
         },
       ),
@@ -948,9 +996,9 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     if (switchToCalendar) {
       setState(() => _selectedOption = 'calendar');
     }
-    showDialog<void>(
+    showAccommodationFormDialog<void>(
       context: context,
-      builder: (dialogContext) => AccommodationDialog(
+      dialog: AccommodationDialog(
         planId: p.id!,
         planStartDate: p.startDate,
         planEndDate: p.endDate,
@@ -967,8 +1015,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           } else {
             setState(() {});
           }
-          if (dialogContext.mounted) {
-            Navigator.of(dialogContext).pop();
+          if (mounted) {
+            Navigator.of(context).pop();
           }
         },
       ),

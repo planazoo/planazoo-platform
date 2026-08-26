@@ -223,4 +223,24 @@ Cuando estén hechas las tareas anteriores, el bloque pagos MVP queda cerrado pa
 
 ---
 
+---
+
+## 7. Preguntas abiertas de producto (Ago 2026)
+
+Pendientes de decisión/diseño antes de cerrar la fase 2 del timeline.
+
+| # | Pregunta | Notas |
+|---|----------|-------|
+| 7.1 | **Origen del pago:** ¿Solo desde eventos (coste del evento → pago) o también pagos manuales sin evento? | Hoy: `PersonalPayment` puede tener o no `eventId`. Confirmar que ambos flujos existen en la UI. |
+| 7.2 | **Quién crea un pago:** ¿Cualquier participante puede crear un pago para sí mismo y/o para otro? | Decisión 5.2 = org cualquiera + participante "yo pagué X". Revisar si cubre todos los casos. |
+| 7.3 | **A pachas / por familia:** ¿Se puede dividir un gasto entre subconjuntos (ej. miembros de una familia)? | Relacionado con grupos de participantes (ver LISTA 133). Decidir si el split es libre (cada pago elige quiénes) o por grupo. |
+| 7.4 | **Cuándo se cierra un pago:** ¿Hay estado "pagado" / "pendiente" / "cerrado"? ¿Quién lo marca? | Hoy no hay cierre explícito; el balance se recalcula. |
+| 7.5 | **Tickets / justificantes (fotos):** ¿Se puede adjuntar foto de ticket a un pago? | Usar Storage; mostrar miniatura en el detalle del pago. |
+| 7.6 | **Reembolsos sugeridos:** ¿Cómo se calcula quién debe a quién? | Hoy: `BalanceService` hace el cálculo. Revisar algoritmo y que la UI lo muestre claro. |
+| 7.7 | **Solicitar reembolso + marcar cobrado:** ¿Un participante puede solicitar un reembolso y el otro darlo por cobrado? | Decidir flujo UX: botón "solicitar" → notificación → botón "confirmar cobro". |
+| 7.8 | **Conectar tarjeta a gastos:** ¿Qué significa? ¿Integrar con banca abierta (Plaid, etc.) o algo más sencillo? | Probablemente P3 (pasarela). Aclarar si es solo "vincular método" o import de movimientos. |
+| 7.9 | **¿Qué es bunq?** | [bunq](https://www.bunq.com/) = neobanco europeo con API abierta. ¿Interés en integrarlo como método de pago/lectura de gastos? Si sí → P3. |
+
+---
+
 *Documento de producto – Pagos en el primer MVP*

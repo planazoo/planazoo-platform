@@ -1586,6 +1586,12 @@ abstract class AppLocalizations {
   /// **'¿Estás seguro de que quieres eliminar este planazoo? Esta acción no se puede deshacer.'**
   String get confirmDeleteMessage;
 
+  /// Mensaje del diálogo de confirmar eliminación de un evento
+  ///
+  /// In es, this message translates to:
+  /// **'¿Estás seguro de que quieres eliminar el evento \"{description}\"?'**
+  String confirmDeleteEventMessage(String description);
+
   /// Botón de eliminar
   ///
   /// In es, this message translates to:
@@ -1958,6 +1964,18 @@ abstract class AppLocalizations {
   /// **'Tienes cambios sin guardar.'**
   String get planDetailsUnsavedChanges;
 
+  /// No description provided for @planDetailsUnsavedPrompt.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quieres guardar los cambios en la información del plan?'**
+  String get planDetailsUnsavedPrompt;
+
+  /// No description provided for @planDetailsUnsavedKeepEditing.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguir editando'**
+  String get planDetailsUnsavedKeepEditing;
+
   /// No description provided for @planDetailsBarUnsavedShort.
   ///
   /// In es, this message translates to:
@@ -1976,6 +1994,60 @@ abstract class AppLocalizations {
   /// **'Guardar'**
   String get planDetailsBarSaveShort;
 
+  /// Título corto centrado en la barra de Info del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Info'**
+  String get planDetailsBarTitleShort;
+
+  /// No description provided for @planDetailsSeeMore.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver más'**
+  String get planDetailsSeeMore;
+
+  /// No description provided for @planDetailsSeeLess.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver menos'**
+  String get planDetailsSeeLess;
+
+  /// No description provided for @planDetailsParticipantsChip.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} personas'**
+  String planDetailsParticipantsChip(int count);
+
+  /// No description provided for @planDetailsSectionGeneral.
+  ///
+  /// In es, this message translates to:
+  /// **'General'**
+  String get planDetailsSectionGeneral;
+
+  /// No description provided for @planDetailsSectionNotes.
+  ///
+  /// In es, this message translates to:
+  /// **'Notas'**
+  String get planDetailsSectionNotes;
+
+  /// No description provided for @planDetailsSectionDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción'**
+  String get planDetailsSectionDescription;
+
+  /// No description provided for @planDetailsDatesLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Fechas'**
+  String get planDetailsDatesLabel;
+
+  /// No description provided for @planDetailsStateLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Estado'**
+  String get planDetailsStateLabel;
+
   /// No description provided for @planDetailsNoAvailableParticipants.
   ///
   /// In es, this message translates to:
@@ -1993,6 +2065,492 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'No se pudieron guardar los cambios.'**
   String get planDetailsSaveError;
+
+  /// No description provided for @planDetailsMetaUnpIdLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'UNP ID'**
+  String get planDetailsMetaUnpIdLabel;
+
+  /// No description provided for @planDetailsMetaIdLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'ID'**
+  String get planDetailsMetaIdLabel;
+
+  /// No description provided for @planDetailsMetaCreatedLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Creado'**
+  String get planDetailsMetaCreatedLabel;
+
+  /// No description provided for @planDetailsParticipantsHelp.
+  ///
+  /// In es, this message translates to:
+  /// **'Lista de personas que forman parte del plan. El organizador puede invitar, asignar roles (organizador, participante, observador) y quitar participantes. Gestionar participantes abre la pantalla completa de administración.'**
+  String get planDetailsParticipantsHelp;
+
+  /// No description provided for @planDetailsAnnouncementsPublish.
+  ///
+  /// In es, this message translates to:
+  /// **'Publicar'**
+  String get planDetailsAnnouncementsPublish;
+
+  /// No description provided for @planDetailsReadOnlyFallback.
+  ///
+  /// In es, this message translates to:
+  /// **'Este plan tiene restricciones de edición según su estado.'**
+  String get planDetailsReadOnlyFallback;
+
+  /// No description provided for @planDetailsLeavePlanHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejarás de ser participante y no verás los eventos ni el chat de este plan.'**
+  String get planDetailsLeavePlanHint;
+
+  /// No description provided for @planDetailsLeavePlanSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Has salido del plan'**
+  String get planDetailsLeavePlanSuccess;
+
+  /// No description provided for @planDetailsLeavePlanFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo salir del plan'**
+  String get planDetailsLeavePlanFailed;
+
+  /// No description provided for @planDetailsLeavePlanError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al salir del plan: {error}'**
+  String planDetailsLeavePlanError(String error);
+
+  /// No description provided for @planDetailsStateUpdated.
+  ///
+  /// In es, this message translates to:
+  /// **'Estado del plan actualizado a: {state}'**
+  String planDetailsStateUpdated(String state);
+
+  /// No description provided for @planDetailsStateChangeFailed.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cambiar el estado del plan'**
+  String get planDetailsStateChangeFailed;
+
+  /// No description provided for @planDetailsStateChangeError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error: {error}'**
+  String planDetailsStateChangeError(String error);
+
+  /// No description provided for @planDetailsNotAuthenticated.
+  ///
+  /// In es, this message translates to:
+  /// **'Error: Usuario no autenticado'**
+  String get planDetailsNotAuthenticated;
+
+  /// No description provided for @planDetailsSaveErrorWithDetail.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al guardar el plan: {error}'**
+  String planDetailsSaveErrorWithDetail(String error);
+
+  /// No description provided for @planDetailsParticipantsLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar participantes: {error}'**
+  String planDetailsParticipantsLoadError(String error);
+
+  /// No description provided for @planDetailsEventColorsUpdateError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al actualizar colores de eventos: {error}'**
+  String planDetailsEventColorsUpdateError(String error);
+
+  /// No description provided for @planDetailsImageUpdateSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Imagen actualizada correctamente'**
+  String get planDetailsImageUpdateSuccess;
+
+  /// No description provided for @planDetailsImageSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al guardar la imagen: {error}'**
+  String planDetailsImageSaveError(String error);
+
+  /// No description provided for @planStateLabelPlanning.
+  ///
+  /// In es, this message translates to:
+  /// **'PLANIFICANDO'**
+  String get planStateLabelPlanning;
+
+  /// No description provided for @planStateLabelConfirmed.
+  ///
+  /// In es, this message translates to:
+  /// **'CONFIRMADO'**
+  String get planStateLabelConfirmed;
+
+  /// No description provided for @planStateLabelInProgress.
+  ///
+  /// In es, this message translates to:
+  /// **'EN CURSO'**
+  String get planStateLabelInProgress;
+
+  /// No description provided for @planStateLabelFinished.
+  ///
+  /// In es, this message translates to:
+  /// **'FINALIZADO'**
+  String get planStateLabelFinished;
+
+  /// No description provided for @planStateLabelCancelled.
+  ///
+  /// In es, this message translates to:
+  /// **'CANCELADO'**
+  String get planStateLabelCancelled;
+
+  /// No description provided for @planStateLabelUnknown.
+  ///
+  /// In es, this message translates to:
+  /// **'DESCONOCIDO'**
+  String get planStateLabelUnknown;
+
+  /// No description provided for @planStateActionConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar Plan'**
+  String get planStateActionConfirm;
+
+  /// No description provided for @planStateActionMarkInProgress.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar como En Curso'**
+  String get planStateActionMarkInProgress;
+
+  /// No description provided for @planStateActionBackToPlanning.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a Planificación'**
+  String get planStateActionBackToPlanning;
+
+  /// No description provided for @planStateActionCancelPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar Plan'**
+  String get planStateActionCancelPlan;
+
+  /// No description provided for @planStateActionFinish.
+  ///
+  /// In es, this message translates to:
+  /// **'Finalizar Plan'**
+  String get planStateActionFinish;
+
+  /// No description provided for @planStateTransitionConfirmTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar Plan'**
+  String get planStateTransitionConfirmTitle;
+
+  /// No description provided for @planStateTransitionConfirmMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Este plan quedará como confirmado. Los cambios importantes estarán bloqueados.\n\n¿Deseas continuar?'**
+  String get planStateTransitionConfirmMessage;
+
+  /// No description provided for @planStateTransitionInProgressTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar Plan como En Curso'**
+  String get planStateTransitionInProgressTitle;
+
+  /// No description provided for @planStateTransitionInProgressMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan pasará a estado \"En Curso\". Solo se permitirán cambios urgentes.\n\n¿Deseas continuar?'**
+  String get planStateTransitionInProgressMessage;
+
+  /// No description provided for @planStateTransitionFinishedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Finalizar Plan'**
+  String get planStateTransitionFinishedTitle;
+
+  /// No description provided for @planStateTransitionFinishedMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan pasará a estado \"Finalizado\". No se podrán realizar más cambios.\n\n¿Deseas continuar?'**
+  String get planStateTransitionFinishedMessage;
+
+  /// No description provided for @planStateTransitionCancelTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar Plan'**
+  String get planStateTransitionCancelTitle;
+
+  /// No description provided for @planStateTransitionCancelMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos los participantes serán notificados, el plan no se podrá reactivar y se cancelarán los eventos futuros.\n\n¿Estás seguro de que deseas cancelar este plan?'**
+  String get planStateTransitionCancelMessage;
+
+  /// No description provided for @planStateTransitionPlanningTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver a Planificación'**
+  String get planStateTransitionPlanningTitle;
+
+  /// No description provided for @planStateTransitionPlanningMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan volverá a estado \"Planificando\". Se desbloquearán todas las restricciones.\n\n¿Deseas continuar?'**
+  String get planStateTransitionPlanningMessage;
+
+  /// No description provided for @planStateTransitionGenericTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar Estado del Plan'**
+  String get planStateTransitionGenericTitle;
+
+  /// No description provided for @planStateTransitionGenericMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Deseas cambiar el estado del plan de \"{fromState}\" a \"{toState}\"?'**
+  String planStateTransitionGenericMessage(String fromState, String toState);
+
+  /// No description provided for @planStateTransitionCancelPlanButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar Plan'**
+  String get planStateTransitionCancelPlanButton;
+
+  /// No description provided for @planValidationErrorTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Error en la Validación'**
+  String get planValidationErrorTitle;
+
+  /// No description provided for @planValidationReviewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisar Plan'**
+  String get planValidationReviewTitle;
+
+  /// No description provided for @planValidationErrorsIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'No se puede confirmar el plan debido a los siguientes errores:'**
+  String get planValidationErrorsIntro;
+
+  /// No description provided for @planValidationWarningsIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Se han detectado las siguientes observaciones:'**
+  String get planValidationWarningsIntro;
+
+  /// No description provided for @planValidationWarningsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Aunque el plan puede confirmarse, te recomendamos revisar:'**
+  String get planValidationWarningsHint;
+
+  /// No description provided for @planValidationErrorsFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Corrige los errores antes de poder confirmar el plan.'**
+  String get planValidationErrorsFooter;
+
+  /// No description provided for @planValidationWarningsFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes continuar con la confirmación o volver a revisar el plan.'**
+  String get planValidationWarningsFooter;
+
+  /// No description provided for @planValidationConfirmAnyway.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar de todas formas'**
+  String get planValidationConfirmAnyway;
+
+  /// No description provided for @planValidationGoBack.
+  ///
+  /// In es, this message translates to:
+  /// **'Volver'**
+  String get planValidationGoBack;
+
+  /// No description provided for @eventAdvancedOptionsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Opciones avanzadas'**
+  String get eventAdvancedOptionsTitle;
+
+  /// No description provided for @eventAdvancedOptionsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de aforo y confirmación'**
+  String get eventAdvancedOptionsSubtitle;
+
+  /// No description provided for @eventMaxParticipantsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Límite de participantes (opcional)'**
+  String get eventMaxParticipantsLabel;
+
+  /// No description provided for @eventMaxParticipantsHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 10 (dejar vacío para sin límite)'**
+  String get eventMaxParticipantsHint;
+
+  /// No description provided for @eventMaxParticipantsInvalidNumber.
+  ///
+  /// In es, this message translates to:
+  /// **'Debe ser un número válido'**
+  String get eventMaxParticipantsInvalidNumber;
+
+  /// No description provided for @eventMaxParticipantsMin.
+  ///
+  /// In es, this message translates to:
+  /// **'Debe ser mayor que 0'**
+  String get eventMaxParticipantsMin;
+
+  /// No description provided for @eventMaxParticipantsMax.
+  ///
+  /// In es, this message translates to:
+  /// **'Máximo 1000 participantes'**
+  String get eventMaxParticipantsMax;
+
+  /// No description provided for @eventConnectedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Evento conectado'**
+  String get eventConnectedTitle;
+
+  /// No description provided for @eventConnectedMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'Este evento está conectado a Amadeus (datos de vuelo).\n\nSi continúas, se desconectará y dejará de actualizarse desde el proveedor.\n\n¿Quieres continuar y desconectar, o cancelar para mantener la conexión?'**
+  String get eventConnectedMessage;
+
+  /// No description provided for @eventConnectedDisconnect.
+  ///
+  /// In es, this message translates to:
+  /// **'Desconectar y continuar'**
+  String get eventConnectedDisconnect;
+
+  /// No description provided for @eventDeleteBlockedFallback.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pueden eliminar eventos en el estado actual del plan.'**
+  String get eventDeleteBlockedFallback;
+
+  /// No description provided for @accommodationDeleteBlockedFallback.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pueden eliminar alojamientos en el estado actual del plan.'**
+  String get accommodationDeleteBlockedFallback;
+
+  /// No description provided for @accommodationSaveBlockedCreate.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pueden crear alojamientos en el estado actual del plan.'**
+  String get accommodationSaveBlockedCreate;
+
+  /// No description provided for @accommodationSaveBlockedModify.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pueden modificar alojamientos en el estado actual del plan.'**
+  String get accommodationSaveBlockedModify;
+
+  /// No description provided for @confirmDeleteAccommodationMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Estás seguro de que quieres eliminar el alojamiento \"{name}\"?'**
+  String confirmDeleteAccommodationMessage(String name);
+
+  /// No description provided for @selectAtLeastOneParticipant.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige al menos un participante'**
+  String get selectAtLeastOneParticipant;
+
+  /// No description provided for @mustSelectAtLeastOneParticipant.
+  ///
+  /// In es, this message translates to:
+  /// **'Debes seleccionar al menos un participante'**
+  String get mustSelectAtLeastOneParticipant;
+
+  /// No description provided for @accommodationSectionLocation.
+  ///
+  /// In es, this message translates to:
+  /// **'Ubicación'**
+  String get accommodationSectionLocation;
+
+  /// No description provided for @accommodationSectionStay.
+  ///
+  /// In es, this message translates to:
+  /// **'Estancia'**
+  String get accommodationSectionStay;
+
+  /// No description provided for @accommodationSectionExtras.
+  ///
+  /// In es, this message translates to:
+  /// **'Extras'**
+  String get accommodationSectionExtras;
+
+  /// No description provided for @accommodationNightsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Noches'**
+  String get accommodationNightsLabel;
+
+  /// No description provided for @accommodationTypeHotel.
+  ///
+  /// In es, this message translates to:
+  /// **'Hotel'**
+  String get accommodationTypeHotel;
+
+  /// No description provided for @accommodationTypeApartment.
+  ///
+  /// In es, this message translates to:
+  /// **'Apartamento'**
+  String get accommodationTypeApartment;
+
+  /// No description provided for @accommodationTypeHostel.
+  ///
+  /// In es, this message translates to:
+  /// **'Hostal'**
+  String get accommodationTypeHostel;
+
+  /// No description provided for @accommodationTypeHouse.
+  ///
+  /// In es, this message translates to:
+  /// **'Casa'**
+  String get accommodationTypeHouse;
+
+  /// No description provided for @accommodationTypeResort.
+  ///
+  /// In es, this message translates to:
+  /// **'Resort'**
+  String get accommodationTypeResort;
+
+  /// No description provided for @accommodationTypeCamping.
+  ///
+  /// In es, this message translates to:
+  /// **'Camping'**
+  String get accommodationTypeCamping;
+
+  /// No description provided for @accommodationTypeCruise.
+  ///
+  /// In es, this message translates to:
+  /// **'Crucero'**
+  String get accommodationTypeCruise;
+
+  /// No description provided for @accommodationTypeOther.
+  ///
+  /// In es, this message translates to:
+  /// **'Otro'**
+  String get accommodationTypeOther;
 
   /// T272 sección colores por tipo en Info del plan
   ///
@@ -3713,14 +4271,56 @@ abstract class AppLocalizations {
   /// No description provided for @eventTabMyInfo.
   ///
   /// In es, this message translates to:
-  /// **'Mi información'**
+  /// **'Mi info'**
   String get eventTabMyInfo;
+
+  /// No description provided for @eventTabPayments.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagos'**
+  String get eventTabPayments;
 
   /// No description provided for @eventTabOthersInfo.
   ///
   /// In es, this message translates to:
   /// **'Info de Otros'**
   String get eventTabOthersInfo;
+
+  /// No description provided for @eventPaymentsSaveFirst.
+  ///
+  /// In es, this message translates to:
+  /// **'Guarda el evento para registrar gastos vinculados.'**
+  String get eventPaymentsSaveFirst;
+
+  /// No description provided for @eventPaymentsBudgetLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Coste previsto (General)'**
+  String get eventPaymentsBudgetLabel;
+
+  /// No description provided for @eventPaymentsBudgetFooter.
+  ///
+  /// In es, this message translates to:
+  /// **'Referencia del presupuesto; no sustituye un gasto repartido.'**
+  String get eventPaymentsBudgetFooter;
+
+  /// No description provided for @eventPaymentsSectionExpenses.
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos de este evento'**
+  String get eventPaymentsSectionExpenses;
+
+  /// No description provided for @eventPaymentsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay gastos vinculados a este evento.'**
+  String get eventPaymentsEmpty;
+
+  /// No description provided for @eventPaymentsRecordedTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'Total registrado: {amount}'**
+  String eventPaymentsRecordedTotal(String amount);
 
   /// No description provided for @eventReadOnlySnackBar.
   ///
@@ -3731,7 +4331,7 @@ abstract class AppLocalizations {
   /// Label de tipo de evento
   ///
   /// In es, this message translates to:
-  /// **'Tipo de evento'**
+  /// **'Tipo'**
   String get eventType;
 
   /// Hint del buscador en el selector de tipo de evento
@@ -3794,6 +4394,12 @@ abstract class AppLocalizations {
   /// **'Participantes del evento'**
   String get eventDialogParticipantsScopeLabel;
 
+  /// Label corto Settings del switch de alcance de participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Para todos'**
+  String get eventDialogForAllShort;
+
   /// No description provided for @eventDialogForAllParticipantsTitle.
   ///
   /// In es, this message translates to:
@@ -3809,8 +4415,38 @@ abstract class AppLocalizations {
   /// No description provided for @eventDialogForAllParticipantsSubtitleOff.
   ///
   /// In es, this message translates to:
-  /// **'Selecciona participantes específicos abajo'**
+  /// **'Elige quién participa en este evento'**
   String get eventDialogForAllParticipantsSubtitleOff;
+
+  /// Caption dentro de la card bajo el switch Para todos
+  ///
+  /// In es, this message translates to:
+  /// **'Incluidos en el evento'**
+  String get eventDialogParticipantsPickCaption;
+
+  /// Validación UI cuando el alcance no es «para todos» y la lista está vacía
+  ///
+  /// In es, this message translates to:
+  /// **'Selecciona al menos un participante'**
+  String get eventDialogSelectAtLeastOne;
+
+  /// No description provided for @eventDialogNoParticipantsInPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'No hay participantes en este plan'**
+  String get eventDialogNoParticipantsInPlan;
+
+  /// Valor secundario en fila Settings si el usuario creó el evento
+  ///
+  /// In es, this message translates to:
+  /// **'Creador'**
+  String get eventDialogEventCreator;
+
+  /// No description provided for @eventDialogParticipantsLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar los participantes'**
+  String get eventDialogParticipantsLoadError;
 
   /// No description provided for @eventDialogAddLinkedExpenseTooltip.
   ///
@@ -6027,6 +6663,12 @@ abstract class AppLocalizations {
   /// **'Archivos del alojamiento'**
   String get entityAttachmentsAccommodationTitle;
 
+  /// Etiqueta corta de fila Settings para adjuntos (evento/alojamiento)
+  ///
+  /// In es, this message translates to:
+  /// **'Archivos'**
+  String get entityAttachmentsLabel;
+
   /// No description provided for @entityAttachmentsUpload.
   ///
   /// In es, this message translates to:
@@ -6102,7 +6744,7 @@ abstract class AppLocalizations {
   /// No description provided for @reservationGuaranteeLabel.
   ///
   /// In es, this message translates to:
-  /// **'Garantía de la reserva'**
+  /// **'Garantía'**
   String get reservationGuaranteeLabel;
 
   /// No description provided for @reservationGuaranteeAmount.
@@ -6110,6 +6752,54 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Garantía ({currency})'**
   String reservationGuaranteeAmount(String currency);
+
+  /// Etiqueta corta fila Settings (importe depósito)
+  ///
+  /// In es, this message translates to:
+  /// **'Garantía'**
+  String get reservationFieldGuarantee;
+
+  /// No description provided for @reservationFieldStatus.
+  ///
+  /// In es, this message translates to:
+  /// **'Estado'**
+  String get reservationFieldStatus;
+
+  /// No description provided for @reservationFieldPayer.
+  ///
+  /// In es, this message translates to:
+  /// **'Pagador'**
+  String get reservationFieldPayer;
+
+  /// No description provided for @reservationFieldNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Nota'**
+  String get reservationFieldNote;
+
+  /// No description provided for @reservationFieldTimezone.
+  ///
+  /// In es, this message translates to:
+  /// **'Zona'**
+  String get reservationFieldTimezone;
+
+  /// No description provided for @reservationFieldReminder.
+  ///
+  /// In es, this message translates to:
+  /// **'Aviso'**
+  String get reservationFieldReminder;
+
+  /// No description provided for @reservationFieldFixedFee.
+  ///
+  /// In es, this message translates to:
+  /// **'Cargo'**
+  String get reservationFieldFixedFee;
+
+  /// No description provided for @reservationFieldPercent.
+  ///
+  /// In es, this message translates to:
+  /// **'Porcentaje'**
+  String get reservationFieldPercent;
 
   /// No description provided for @reservationGuaranteePayer.
   ///
@@ -6162,7 +6852,7 @@ abstract class AppLocalizations {
   /// No description provided for @reservationCancellationPolicyLabel.
   ///
   /// In es, this message translates to:
-  /// **'Política de cancelación'**
+  /// **'Política'**
   String get reservationCancellationPolicyLabel;
 
   /// No description provided for @reservationRefundPercentHint.

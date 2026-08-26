@@ -669,10 +669,10 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
       if (fresh != null) eventToShow = fresh;
     }
     if (!mounted) return;
-    showDialog(
+    showEventFormDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => EventDialog(
+      dialog: EventDialog(
         event: eventToShow,
         planId: widget.plan.id ?? '',
         onSaved: (updatedEvent) async {
@@ -716,10 +716,10 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     ParticipantTrack track, {
     int? initialStartMinute,
   }) {
-    showDialog(
+    showEventFormDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => EventDialog(
+      dialog: EventDialog(
         planId: widget.plan.id ?? '',
         initialDate: date,
         initialHour: hour,
@@ -796,9 +796,9 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
 
   void _showNewAccommodationDialog(DateTime dayDate) {
     if (widget.plan.id == null) return;
-    showDialog(
+    showAccommodationFormDialog(
       context: context,
-      builder: (context) => AccommodationDialog(
+      dialog: AccommodationDialog(
         planId: widget.plan.id!,
         planStartDate: widget.plan.startDate,
         planEndDate: DateTime(
@@ -846,9 +846,9 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
       return;
     }
     if (widget.plan.id == null) return;
-    showDialog(
+    showAccommodationFormDialog(
       context: context,
-      builder: (context) => AccommodationDialog(
+      dialog: AccommodationDialog(
         accommodation: accommodation,
         planId: widget.plan.id!,
         planStartDate: widget.plan.startDate,

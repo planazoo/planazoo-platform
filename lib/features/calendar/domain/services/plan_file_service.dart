@@ -5,12 +5,17 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_file_picke
     if (dart.library.html) 'package:unp_calendario/features/calendar/domain/services/plan_file_picker_web.dart'
     as plan_file_picker;
 
+export 'package:unp_calendario/features/calendar/domain/services/plan_file_picker_common.dart'
+    show PickedPlanFile, PlanFilePickReadException;
+
 class PlanFileService {
   static final FirebaseStorage _storage = FirebaseStorage.instance;
   static const String _plansFolder = 'plan_files';
   static const int _maxFileSize = 8 * 1024 * 1024; // 8MB
   static const List<String> _allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png'];
 
+  /// `null` = el usuario canceló el selector (no mostrar error de lectura).
+  /// Lanza [PlanFilePickReadException] si hubo selección pero no se pudo leer.
   static Future<PickedPlanFile?> pickAttachment() async {
     return plan_file_picker.pickPlanAttachment(_allowedExtensions);
   }

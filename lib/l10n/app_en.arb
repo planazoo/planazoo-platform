@@ -899,6 +899,15 @@
   "@confirmDeleteMessage": {
     "description": "Confirm deletion dialog message"
   },
+  "confirmDeleteEventMessage": "Are you sure you want to delete the event \"{description}\"?",
+  "@confirmDeleteEventMessage": {
+    "description": "Event delete confirmation dialog message",
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
   "delete": "Delete",
   "@delete": {
     "description": "Delete button"
@@ -1074,12 +1083,40 @@
   "@planDetailsSaveSuccess": {},
   "planDetailsUnsavedChanges": "You have unsaved changes.",
   "@planDetailsUnsavedChanges": {},
+  "planDetailsUnsavedPrompt": "Do you want to save changes to the plan information?",
+  "@planDetailsUnsavedPrompt": {},
+  "planDetailsUnsavedKeepEditing": "Keep editing",
+  "@planDetailsUnsavedKeepEditing": {},
   "planDetailsBarUnsavedShort": "Unsaved",
   "planDetailsBarCancelShort": "Cancel",
   "planDetailsBarSaveShort": "Save",
   "@planDetailsBarUnsavedShort": {},
   "@planDetailsBarCancelShort": {},
   "@planDetailsBarSaveShort": {},
+  "planDetailsBarTitleShort": "Info",
+  "@planDetailsBarTitleShort": {
+    "description": "Short centered title on plan info bar"
+  },
+  "planDetailsSeeMore": "See more",
+  "planDetailsSeeLess": "See less",
+  "@planDetailsSeeMore": {},
+  "@planDetailsSeeLess": {},
+  "planDetailsParticipantsChip": "{count} people",
+  "@planDetailsParticipantsChip": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "planDetailsSectionGeneral": "General",
+  "planDetailsSectionNotes": "Notes",
+  "planDetailsSectionDescription": "Description",
+  "planDetailsDatesLabel": "Dates",
+  "planDetailsStateLabel": "Status",
+  "@planDetailsSectionGeneral": {},
+  "@planDetailsSectionNotes": {},
+  "@planDetailsSectionDescription": {},
+  "@planDetailsDatesLabel": {},
+  "@planDetailsStateLabel": {},
   "planDetailsNoAvailableParticipants": "There are no users available to add.",
   "@planDetailsNoAvailableParticipants": {},
   "planDetailsParticipantsAdded": "{count} participants added.",
@@ -1092,6 +1129,205 @@
   },
   "planDetailsSaveError": "Could not save the changes.",
   "@planDetailsSaveError": {},
+  "planDetailsMetaUnpIdLabel": "UNP ID",
+  "@planDetailsMetaUnpIdLabel": {},
+  "planDetailsMetaIdLabel": "ID",
+  "@planDetailsMetaIdLabel": {},
+  "planDetailsMetaCreatedLabel": "Created",
+  "@planDetailsMetaCreatedLabel": {},
+  "planDetailsParticipantsHelp": "People who are part of the plan. The organizer can invite, assign roles (organizer, participant, observer) and remove participants. Manage participants opens the full administration screen.",
+  "@planDetailsParticipantsHelp": {},
+  "planDetailsAnnouncementsPublish": "Post",
+  "@planDetailsAnnouncementsPublish": {},
+  "planDetailsReadOnlyFallback": "This plan has editing restrictions based on its status.",
+  "@planDetailsReadOnlyFallback": {},
+  "planDetailsLeavePlanHint": "You will no longer be a participant and will not see events or chat for this plan.",
+  "@planDetailsLeavePlanHint": {},
+  "planDetailsLeavePlanSuccess": "You have left the plan",
+  "@planDetailsLeavePlanSuccess": {},
+  "planDetailsLeavePlanFailed": "Could not leave the plan",
+  "@planDetailsLeavePlanFailed": {},
+  "planDetailsLeavePlanError": "Error leaving the plan: {error}",
+  "@planDetailsLeavePlanError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsStateUpdated": "Plan status updated to: {state}",
+  "@planDetailsStateUpdated": {
+    "placeholders": {
+      "state": { "type": "String" }
+    }
+  },
+  "planDetailsStateChangeFailed": "Could not change the plan status",
+  "@planDetailsStateChangeFailed": {},
+  "planDetailsStateChangeError": "Error: {error}",
+  "@planDetailsStateChangeError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsNotAuthenticated": "Error: User not signed in",
+  "@planDetailsNotAuthenticated": {},
+  "planDetailsSaveErrorWithDetail": "Error saving the plan: {error}",
+  "@planDetailsSaveErrorWithDetail": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsParticipantsLoadError": "Error loading participants: {error}",
+  "@planDetailsParticipantsLoadError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsEventColorsUpdateError": "Error updating event colors: {error}",
+  "@planDetailsEventColorsUpdateError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsImageUpdateSuccess": "Image updated successfully",
+  "@planDetailsImageUpdateSuccess": {},
+  "planDetailsImageSaveError": "Error saving the image: {error}",
+  "@planDetailsImageSaveError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planStateLabelPlanning": "PLANNING",
+  "@planStateLabelPlanning": {},
+  "planStateLabelConfirmed": "CONFIRMED",
+  "@planStateLabelConfirmed": {},
+  "planStateLabelInProgress": "IN PROGRESS",
+  "@planStateLabelInProgress": {},
+  "planStateLabelFinished": "FINISHED",
+  "@planStateLabelFinished": {},
+  "planStateLabelCancelled": "CANCELLED",
+  "@planStateLabelCancelled": {},
+  "planStateLabelUnknown": "UNKNOWN",
+  "@planStateLabelUnknown": {},
+  "planStateActionConfirm": "Confirm Plan",
+  "@planStateActionConfirm": {},
+  "planStateActionMarkInProgress": "Mark as In Progress",
+  "@planStateActionMarkInProgress": {},
+  "planStateActionBackToPlanning": "Back to Planning",
+  "@planStateActionBackToPlanning": {},
+  "planStateActionCancelPlan": "Cancel Plan",
+  "@planStateActionCancelPlan": {},
+  "planStateActionFinish": "Finish Plan",
+  "@planStateActionFinish": {},
+  "planStateTransitionConfirmTitle": "Confirm Plan",
+  "@planStateTransitionConfirmTitle": {},
+  "planStateTransitionConfirmMessage": "This plan will be marked as confirmed. Important changes will be locked.\n\nDo you want to continue?",
+  "@planStateTransitionConfirmMessage": {},
+  "planStateTransitionInProgressTitle": "Mark Plan as In Progress",
+  "@planStateTransitionInProgressTitle": {},
+  "planStateTransitionInProgressMessage": "The plan will move to \"In Progress\". Only urgent changes will be allowed.\n\nDo you want to continue?",
+  "@planStateTransitionInProgressMessage": {},
+  "planStateTransitionFinishedTitle": "Finish Plan",
+  "@planStateTransitionFinishedTitle": {},
+  "planStateTransitionFinishedMessage": "The plan will move to \"Finished\". No further changes will be allowed.\n\nDo you want to continue?",
+  "@planStateTransitionFinishedMessage": {},
+  "planStateTransitionCancelTitle": "Cancel Plan",
+  "@planStateTransitionCancelTitle": {},
+  "planStateTransitionCancelMessage": "All participants will be notified, the plan cannot be reactivated and future events will be cancelled.\n\nAre you sure you want to cancel this plan?",
+  "@planStateTransitionCancelMessage": {},
+  "planStateTransitionPlanningTitle": "Back to Planning",
+  "@planStateTransitionPlanningTitle": {},
+  "planStateTransitionPlanningMessage": "The plan will return to \"Planning\" status. All restrictions will be unlocked.\n\nDo you want to continue?",
+  "@planStateTransitionPlanningMessage": {},
+  "planStateTransitionGenericTitle": "Change Plan Status",
+  "@planStateTransitionGenericTitle": {},
+  "planStateTransitionGenericMessage": "Do you want to change the plan status from \"{fromState}\" to \"{toState}\"?",
+  "@planStateTransitionGenericMessage": {
+    "placeholders": {
+      "fromState": { "type": "String" },
+      "toState": { "type": "String" }
+    }
+  },
+  "planStateTransitionCancelPlanButton": "Cancel Plan",
+  "@planStateTransitionCancelPlanButton": {},
+  "planValidationErrorTitle": "Validation Error",
+  "@planValidationErrorTitle": {},
+  "planValidationReviewTitle": "Review Plan",
+  "@planValidationReviewTitle": {},
+  "planValidationErrorsIntro": "The plan cannot be confirmed due to the following errors:",
+  "@planValidationErrorsIntro": {},
+  "planValidationWarningsIntro": "The following observations were detected:",
+  "@planValidationWarningsIntro": {},
+  "planValidationWarningsHint": "The plan can still be confirmed, but we recommend reviewing:",
+  "@planValidationWarningsHint": {},
+  "planValidationErrorsFooter": "Fix the errors before you can confirm the plan.",
+  "@planValidationErrorsFooter": {},
+  "planValidationWarningsFooter": "You can continue with confirmation or go back to review the plan.",
+  "@planValidationWarningsFooter": {},
+  "planValidationConfirmAnyway": "Confirm anyway",
+  "@planValidationConfirmAnyway": {},
+  "planValidationGoBack": "Go back",
+  "@planValidationGoBack": {},
+  "eventAdvancedOptionsTitle": "Advanced options",
+  "@eventAdvancedOptionsTitle": {},
+  "eventAdvancedOptionsSubtitle": "Capacity limit and confirmation",
+  "@eventAdvancedOptionsSubtitle": {},
+  "eventMaxParticipantsLabel": "Participant limit (optional)",
+  "@eventMaxParticipantsLabel": {},
+  "eventMaxParticipantsHint": "E.g. 10 (leave empty for no limit)",
+  "@eventMaxParticipantsHint": {},
+  "eventMaxParticipantsInvalidNumber": "Must be a valid number",
+  "@eventMaxParticipantsInvalidNumber": {},
+  "eventMaxParticipantsMin": "Must be greater than 0",
+  "@eventMaxParticipantsMin": {},
+  "eventMaxParticipantsMax": "Maximum 1000 participants",
+  "@eventMaxParticipantsMax": {},
+  "eventConnectedTitle": "Connected event",
+  "@eventConnectedTitle": {},
+  "eventConnectedMessage": "This event is connected to Amadeus (flight data).\n\nIf you continue, it will disconnect and stop updating from the provider.\n\nDo you want to disconnect and continue, or cancel to keep the connection?",
+  "@eventConnectedMessage": {},
+  "eventConnectedDisconnect": "Disconnect and continue",
+  "@eventConnectedDisconnect": {},
+  "eventDeleteBlockedFallback": "Events cannot be deleted in the plan's current status.",
+  "@eventDeleteBlockedFallback": {},
+  "accommodationDeleteBlockedFallback": "Accommodations cannot be deleted in the plan's current status.",
+  "@accommodationDeleteBlockedFallback": {},
+  "accommodationSaveBlockedCreate": "Accommodations cannot be created in the plan's current status.",
+  "@accommodationSaveBlockedCreate": {},
+  "accommodationSaveBlockedModify": "Accommodations cannot be modified in the plan's current status.",
+  "@accommodationSaveBlockedModify": {},
+  "confirmDeleteAccommodationMessage": "Are you sure you want to delete the accommodation \"{name}\"?",
+  "@confirmDeleteAccommodationMessage": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "selectAtLeastOneParticipant": "Select at least one participant",
+  "@selectAtLeastOneParticipant": {},
+  "mustSelectAtLeastOneParticipant": "You must select at least one participant",
+  "@mustSelectAtLeastOneParticipant": {},
+  "accommodationSectionLocation": "Location",
+  "@accommodationSectionLocation": {},
+  "accommodationSectionStay": "Stay",
+  "@accommodationSectionStay": {},
+  "accommodationSectionExtras": "Extras",
+  "@accommodationSectionExtras": {},
+  "accommodationNightsLabel": "Nights",
+  "@accommodationNightsLabel": {},
+  "accommodationTypeHotel": "Hotel",
+  "accommodationTypeApartment": "Apartment",
+  "accommodationTypeHostel": "Hostel",
+  "accommodationTypeHouse": "House",
+  "accommodationTypeResort": "Resort",
+  "accommodationTypeCamping": "Camping",
+  "accommodationTypeCruise": "Cruise",
+  "accommodationTypeOther": "Other",
+  "@accommodationTypeHotel": {},
+  "@accommodationTypeApartment": {},
+  "@accommodationTypeHostel": {},
+  "@accommodationTypeHouse": {},
+  "@accommodationTypeResort": {},
+  "@accommodationTypeCamping": {},
+  "@accommodationTypeCruise": {},
+  "@accommodationTypeOther": {},
   "planEventColorsTitle": "Calendar colors",
   "@planEventColorsTitle": { "description": "T272 plan event type accent colors section" },
   "planEventColorsSubtitle": "Event rail/border color. Changing a color updates all events of that type.",
@@ -1738,9 +1974,23 @@
   "flightDataLoaded": "Flight data loaded.",
   "eventTabGeneral": "General",
   "eventTabMyInfo": "My info",
+  "eventTabPayments": "Payments",
   "eventTabOthersInfo": "Others' info",
+  "eventPaymentsSaveFirst": "Save the event to record linked expenses.",
+  "eventPaymentsBudgetLabel": "Planned cost (General)",
+  "eventPaymentsBudgetFooter": "Budget reference only; does not replace a split expense.",
+  "eventPaymentsSectionExpenses": "Expenses for this event",
+  "eventPaymentsEmpty": "No expenses linked to this event.",
+  "eventPaymentsRecordedTotal": "Total recorded: {amount}",
+  "@eventPaymentsRecordedTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "eventReadOnlySnackBar": "This field is shared for the plan and can only be edited by the creator or an administrator.",
-  "eventType": "Event type",
+  "eventType": "Type",
   "@eventType": {
     "description": "Event type label"
   },
@@ -1772,9 +2022,27 @@
     "description": "SnackBar when event form validate() fails"
   },
   "eventDialogParticipantsScopeLabel": "Event participants",
+  "eventDialogForAllShort": "Everyone",
+  "@eventDialogForAllShort": {
+    "description": "Short Settings label for participants scope switch"
+  },
   "eventDialogForAllParticipantsTitle": "This event is for all participants in the plan",
   "eventDialogForAllParticipantsSubtitleOn": "All participants will be included automatically",
-  "eventDialogForAllParticipantsSubtitleOff": "Pick specific participants below",
+  "eventDialogForAllParticipantsSubtitleOff": "Choose who takes part in this event",
+  "eventDialogParticipantsPickCaption": "Included in the event",
+  "@eventDialogParticipantsPickCaption": {
+    "description": "In-card caption under the Everyone switch"
+  },
+  "eventDialogSelectAtLeastOne": "Select at least one participant",
+  "@eventDialogSelectAtLeastOne": {
+    "description": "UI validation when scope is not everyone and selection is empty"
+  },
+  "eventDialogNoParticipantsInPlan": "No participants in this plan",
+  "eventDialogEventCreator": "Creator",
+  "@eventDialogEventCreator": {
+    "description": "Secondary Settings value when the user created the event"
+  },
+  "eventDialogParticipantsLoadError": "Could not load participants",
   "eventDialogAddLinkedExpenseTooltip": "Add expense linked to this event",
   "calendarContextEditEvent": "Edit event",
   "calendarContextCopyEvent": "Copy event",
@@ -2541,6 +2809,8 @@
   "@entityAttachmentsEventTitle": { "description": "Title for file attachments block on event dialog" },
   "entityAttachmentsAccommodationTitle": "Accommodation files",
   "@entityAttachmentsAccommodationTitle": { "description": "Title for file attachments block on accommodation dialog" },
+  "entityAttachmentsLabel": "Files",
+  "@entityAttachmentsLabel": { "description": "Short Settings-row label for attachments (event/accommodation)" },
   "entityAttachmentsUpload": "Upload",
   "entityAttachmentsUploading": "Uploading...",
   "entityAttachmentsEmpty": "No attachments",
@@ -2560,9 +2830,18 @@
   "@entityAttachmentsSnackbarRemoved": { "description": "After deleting attachment before saving" },
   "reservationCancellationSectionTitle": "Reservation / cancellation",
   "reservationCancellationSectionSubtitle": "Deposit and policy",
-  "reservationGuaranteeLabel": "Reservation guarantee",
+  "reservationGuaranteeLabel": "Guarantee",
   "reservationGuaranteeAmount": "Guarantee ({currency})",
   "@reservationGuaranteeAmount": { "placeholders": { "currency": { "type": "String" } } },
+  "reservationFieldGuarantee": "Guarantee",
+  "@reservationFieldGuarantee": { "description": "Short Settings row label (deposit amount)" },
+  "reservationFieldStatus": "Status",
+  "reservationFieldPayer": "Payer",
+  "reservationFieldNote": "Note",
+  "reservationFieldTimezone": "Zone",
+  "reservationFieldReminder": "Reminder",
+  "reservationFieldFixedFee": "Fee",
+  "reservationFieldPercent": "Percent",
   "reservationGuaranteePayer": "Who paid in advance",
   "reservationPayerNone": "Unassigned",
   "reservationGuaranteeStatus": "Guarantee status",
@@ -2571,7 +2850,7 @@
   "reservationStatusRefunded": "Refunded",
   "reservationStatusRetained": "Retained",
   "reservationGuaranteeNote": "Note (optional)",
-  "reservationCancellationPolicyLabel": "Cancellation policy",
+  "reservationCancellationPolicyLabel": "Policy",
   "reservationRefundPercentHint": "The % is what you recover of the deposit if you cancel before the deadline.",
   "reservationItemTimezone": "Item timezone",
   "reservationTier1": "Tier 1",

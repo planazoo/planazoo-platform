@@ -1,48 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
 /// Confirmación simple (dashboard). No borra: el caller llama a `deletePlan`.
 Future<bool> showDeletePlanConfirmDialog(BuildContext context) async {
   final loc = AppLocalizations.of(context)!;
-  final result = await showDialog<bool>(
+  return IosFormConfirmSheet.show(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(loc.confirmDeleteTitle),
-      content: Text(loc.confirmDeleteMessage),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: Text(loc.cancel),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-          child: Text(loc.delete),
-        ),
-      ],
+    title: loc.confirmDeleteTitle,
+    message: loc.confirmDeleteMessage,
+    cancelLabel: loc.cancel,
+    confirmLabel: loc.delete,
+    destructive: true,
+  );
+}
+
+/// Confirmación con contraseña (Info del plan) — bottom sheet patrón D.
+Future<bool> showDeletePlanPasswordSheet(
+  BuildContext context, {
+  required AppLocalizations loc,
+  required Future<bool> Function(String password) onDelete,
+}) async {
+  final result = await showModalBottomSheet<bool>(
+    context: context,
+    isDismissible: false,
+    enableDrag: false,
+    backgroundColor: IosFormColors.groupedBg,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+    ),
+    builder: (ctx) => _DeletePlanPasswordSheet(
+      loc: loc,
+      onDelete: onDelete,
     ),
   );
   return result ?? false;
 }
 
-/// Confirmación con contraseña (Info del plan).
-class DeletePlanPasswordDialog extends StatefulWidget {
-  final AppLocalizations loc;
-  final Future<bool> Function(String password) onDelete;
-
-  const DeletePlanPasswordDialog({
-    super.key,
+class _DeletePlanPasswordSheet extends StatefulWidget {
+  const _DeletePlanPasswordSheet({
     required this.loc,
     required this.onDelete,
   });
 
+  final AppLocalizations loc;
+  final Future<bool> Function(String password) onDelete;
+
   @override
-  State<DeletePlanPasswordDialog> createState() =>
-      _DeletePlanPasswordDialogState();
+  State<_DeletePlanPasswordSheet> createState() =>
+      _DeletePlanPasswordSheetState();
 }
 
-class _DeletePlanPasswordDialogState extends State<DeletePlanPasswordDialog> {
-  late TextEditingController _passwordController;
+class _DeletePlanPasswordSheetState extends State<_DeletePlanPasswordSheet> {
+  late final TextEditingController _passwordController;
   bool _isDeleting = false;
   String? _errorText;
 
@@ -58,98 +69,115 @@ class _DeletePlanPasswordDialogState extends State<DeletePlanPasswordDialog> {
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    final password = _passwordController.text.trim();
+    if (password.isEmpty) {
+      setState(() {
+        _errorText = widget.loc.planDeleteDialogPasswordRequired;
+      });
+      return;
+    }
+    setState(() {
+      _isDeleting = true;
+      _errorText = null;
+    });
+    final success = await widget.onDelete(password);
+    if (!mounted) return;
+    if (success) {
+      Navigator.of(context).pop(true);
+    } else {
+      setState(() {
+        _isDeleting = false;
+        _errorText = widget.loc.planDeleteDialogAuthError;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    return AlertDialog(
-      backgroundColor: cs.surface,
-      surfaceTintColor: cs.surfaceTint,
-      title: Text(
-        widget.loc.planDeleteDialogTitle,
-        style: theme.textTheme.titleLarge?.copyWith(color: cs.onSurface),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.loc.planDeleteDialogMessage,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: cs.onSurfaceVariant,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _passwordController,
-            obscureText: true,
-            enabled: !_isDeleting,
-            style: TextStyle(color: cs.onSurface),
-            decoration: InputDecoration(
-              labelText: widget.loc.planDeleteDialogPasswordLabel,
-              errorText: _errorText,
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: cs.outline),
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottom),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: IosFormColors.separator,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: cs.outline),
+              const SizedBox(height: 12),
+              Text(
+                widget.loc.planDeleteDialogTitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: IosFormColors.textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: cs.primary, width: 2),
+              const SizedBox(height: 8),
+              Text(
+                widget.loc.planDeleteDialogMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: IosFormColors.textSecondary,
+                  fontSize: 15,
+                  height: 1.35,
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed:
-              _isDeleting ? null : () => Navigator.of(context).pop(false),
-          child: Text(widget.loc.cancelChanges),
-        ),
-        FilledButton(
-          onPressed: _isDeleting
-              ? null
-              : () async {
-                  final password = _passwordController.text.trim();
-                  if (password.isEmpty) {
-                    setState(() {
-                      _errorText = widget.loc.planDeleteDialogPasswordRequired;
-                    });
-                    return;
-                  }
-                  setState(() {
-                    _isDeleting = true;
-                    _errorText = null;
-                  });
-                  final success = await widget.onDelete(password);
-                  if (!context.mounted) return;
-                  if (success) {
-                    Navigator.of(context).pop(true);
-                  } else {
-                    setState(() {
-                      _isDeleting = false;
-                      _errorText = widget.loc.planDeleteDialogAuthError;
-                    });
-                  }
-                },
-          style: FilledButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-          ),
-          child: _isDeleting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+              const SizedBox(height: 16),
+              IosGroupedCard(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                    child: TextFormField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      enabled: !_isDeleting,
+                      style: const TextStyle(
+                        color: IosFormColors.textPrimary,
+                        fontSize: 17,
+                      ),
+                      cursorColor: IosFormColors.accent,
+                      decoration: InputDecoration(
+                        labelText: widget.loc.planDeleteDialogPasswordLabel,
+                        labelStyle: const TextStyle(
+                          color: IosFormColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                        errorText: _errorText,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                      ),
+                      onFieldSubmitted: (_) => _submit(),
+                    ),
                   ),
-                )
-              : Text(widget.loc.planDeleteDialogConfirm),
+                ],
+              ),
+              const SizedBox(height: 16),
+              IosFormSheetActions(
+                cancelLabel: widget.loc.cancelChanges,
+                confirmLabel: widget.loc.planDeleteDialogConfirm,
+                confirmDestructive: true,
+                onCancel: _isDeleting
+                    ? () {}
+                    : () => Navigator.of(context).pop(false),
+                onConfirm: _isDeleting ? () {} : _submit,
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 }

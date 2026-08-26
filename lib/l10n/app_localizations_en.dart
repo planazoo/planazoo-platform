@@ -833,6 +833,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you sure you want to delete this planazoo? This action cannot be undone.';
 
   @override
+  String confirmDeleteEventMessage(String description) {
+    return 'Are you sure you want to delete the event \"$description\"?';
+  }
+
+  @override
   String get delete => 'Delete';
 
   @override
@@ -1029,6 +1034,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planDetailsUnsavedChanges => 'You have unsaved changes.';
 
   @override
+  String get planDetailsUnsavedPrompt =>
+      'Do you want to save changes to the plan information?';
+
+  @override
+  String get planDetailsUnsavedKeepEditing => 'Keep editing';
+
+  @override
   String get planDetailsBarUnsavedShort => 'Unsaved';
 
   @override
@@ -1036,6 +1048,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planDetailsBarSaveShort => 'Save';
+
+  @override
+  String get planDetailsBarTitleShort => 'Info';
+
+  @override
+  String get planDetailsSeeMore => 'See more';
+
+  @override
+  String get planDetailsSeeLess => 'See less';
+
+  @override
+  String planDetailsParticipantsChip(int count) {
+    return '$count people';
+  }
+
+  @override
+  String get planDetailsSectionGeneral => 'General';
+
+  @override
+  String get planDetailsSectionNotes => 'Notes';
+
+  @override
+  String get planDetailsSectionDescription => 'Description';
+
+  @override
+  String get planDetailsDatesLabel => 'Dates';
+
+  @override
+  String get planDetailsStateLabel => 'Status';
 
   @override
   String get planDetailsNoAvailableParticipants =>
@@ -1048,6 +1089,286 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planDetailsSaveError => 'Could not save the changes.';
+
+  @override
+  String get planDetailsMetaUnpIdLabel => 'UNP ID';
+
+  @override
+  String get planDetailsMetaIdLabel => 'ID';
+
+  @override
+  String get planDetailsMetaCreatedLabel => 'Created';
+
+  @override
+  String get planDetailsParticipantsHelp =>
+      'People who are part of the plan. The organizer can invite, assign roles (organizer, participant, observer) and remove participants. Manage participants opens the full administration screen.';
+
+  @override
+  String get planDetailsAnnouncementsPublish => 'Post';
+
+  @override
+  String get planDetailsReadOnlyFallback =>
+      'This plan has editing restrictions based on its status.';
+
+  @override
+  String get planDetailsLeavePlanHint =>
+      'You will no longer be a participant and will not see events or chat for this plan.';
+
+  @override
+  String get planDetailsLeavePlanSuccess => 'You have left the plan';
+
+  @override
+  String get planDetailsLeavePlanFailed => 'Could not leave the plan';
+
+  @override
+  String planDetailsLeavePlanError(String error) {
+    return 'Error leaving the plan: $error';
+  }
+
+  @override
+  String planDetailsStateUpdated(String state) {
+    return 'Plan status updated to: $state';
+  }
+
+  @override
+  String get planDetailsStateChangeFailed => 'Could not change the plan status';
+
+  @override
+  String planDetailsStateChangeError(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get planDetailsNotAuthenticated => 'Error: User not signed in';
+
+  @override
+  String planDetailsSaveErrorWithDetail(String error) {
+    return 'Error saving the plan: $error';
+  }
+
+  @override
+  String planDetailsParticipantsLoadError(String error) {
+    return 'Error loading participants: $error';
+  }
+
+  @override
+  String planDetailsEventColorsUpdateError(String error) {
+    return 'Error updating event colors: $error';
+  }
+
+  @override
+  String get planDetailsImageUpdateSuccess => 'Image updated successfully';
+
+  @override
+  String planDetailsImageSaveError(String error) {
+    return 'Error saving the image: $error';
+  }
+
+  @override
+  String get planStateLabelPlanning => 'PLANNING';
+
+  @override
+  String get planStateLabelConfirmed => 'CONFIRMED';
+
+  @override
+  String get planStateLabelInProgress => 'IN PROGRESS';
+
+  @override
+  String get planStateLabelFinished => 'FINISHED';
+
+  @override
+  String get planStateLabelCancelled => 'CANCELLED';
+
+  @override
+  String get planStateLabelUnknown => 'UNKNOWN';
+
+  @override
+  String get planStateActionConfirm => 'Confirm Plan';
+
+  @override
+  String get planStateActionMarkInProgress => 'Mark as In Progress';
+
+  @override
+  String get planStateActionBackToPlanning => 'Back to Planning';
+
+  @override
+  String get planStateActionCancelPlan => 'Cancel Plan';
+
+  @override
+  String get planStateActionFinish => 'Finish Plan';
+
+  @override
+  String get planStateTransitionConfirmTitle => 'Confirm Plan';
+
+  @override
+  String get planStateTransitionConfirmMessage =>
+      'This plan will be marked as confirmed. Important changes will be locked.\n\nDo you want to continue?';
+
+  @override
+  String get planStateTransitionInProgressTitle => 'Mark Plan as In Progress';
+
+  @override
+  String get planStateTransitionInProgressMessage =>
+      'The plan will move to \"In Progress\". Only urgent changes will be allowed.\n\nDo you want to continue?';
+
+  @override
+  String get planStateTransitionFinishedTitle => 'Finish Plan';
+
+  @override
+  String get planStateTransitionFinishedMessage =>
+      'The plan will move to \"Finished\". No further changes will be allowed.\n\nDo you want to continue?';
+
+  @override
+  String get planStateTransitionCancelTitle => 'Cancel Plan';
+
+  @override
+  String get planStateTransitionCancelMessage =>
+      'All participants will be notified, the plan cannot be reactivated and future events will be cancelled.\n\nAre you sure you want to cancel this plan?';
+
+  @override
+  String get planStateTransitionPlanningTitle => 'Back to Planning';
+
+  @override
+  String get planStateTransitionPlanningMessage =>
+      'The plan will return to \"Planning\" status. All restrictions will be unlocked.\n\nDo you want to continue?';
+
+  @override
+  String get planStateTransitionGenericTitle => 'Change Plan Status';
+
+  @override
+  String planStateTransitionGenericMessage(String fromState, String toState) {
+    return 'Do you want to change the plan status from \"$fromState\" to \"$toState\"?';
+  }
+
+  @override
+  String get planStateTransitionCancelPlanButton => 'Cancel Plan';
+
+  @override
+  String get planValidationErrorTitle => 'Validation Error';
+
+  @override
+  String get planValidationReviewTitle => 'Review Plan';
+
+  @override
+  String get planValidationErrorsIntro =>
+      'The plan cannot be confirmed due to the following errors:';
+
+  @override
+  String get planValidationWarningsIntro =>
+      'The following observations were detected:';
+
+  @override
+  String get planValidationWarningsHint =>
+      'The plan can still be confirmed, but we recommend reviewing:';
+
+  @override
+  String get planValidationErrorsFooter =>
+      'Fix the errors before you can confirm the plan.';
+
+  @override
+  String get planValidationWarningsFooter =>
+      'You can continue with confirmation or go back to review the plan.';
+
+  @override
+  String get planValidationConfirmAnyway => 'Confirm anyway';
+
+  @override
+  String get planValidationGoBack => 'Go back';
+
+  @override
+  String get eventAdvancedOptionsTitle => 'Advanced options';
+
+  @override
+  String get eventAdvancedOptionsSubtitle => 'Capacity limit and confirmation';
+
+  @override
+  String get eventMaxParticipantsLabel => 'Participant limit (optional)';
+
+  @override
+  String get eventMaxParticipantsHint => 'E.g. 10 (leave empty for no limit)';
+
+  @override
+  String get eventMaxParticipantsInvalidNumber => 'Must be a valid number';
+
+  @override
+  String get eventMaxParticipantsMin => 'Must be greater than 0';
+
+  @override
+  String get eventMaxParticipantsMax => 'Maximum 1000 participants';
+
+  @override
+  String get eventConnectedTitle => 'Connected event';
+
+  @override
+  String get eventConnectedMessage =>
+      'This event is connected to Amadeus (flight data).\n\nIf you continue, it will disconnect and stop updating from the provider.\n\nDo you want to disconnect and continue, or cancel to keep the connection?';
+
+  @override
+  String get eventConnectedDisconnect => 'Disconnect and continue';
+
+  @override
+  String get eventDeleteBlockedFallback =>
+      'Events cannot be deleted in the plan\'s current status.';
+
+  @override
+  String get accommodationDeleteBlockedFallback =>
+      'Accommodations cannot be deleted in the plan\'s current status.';
+
+  @override
+  String get accommodationSaveBlockedCreate =>
+      'Accommodations cannot be created in the plan\'s current status.';
+
+  @override
+  String get accommodationSaveBlockedModify =>
+      'Accommodations cannot be modified in the plan\'s current status.';
+
+  @override
+  String confirmDeleteAccommodationMessage(String name) {
+    return 'Are you sure you want to delete the accommodation \"$name\"?';
+  }
+
+  @override
+  String get selectAtLeastOneParticipant => 'Select at least one participant';
+
+  @override
+  String get mustSelectAtLeastOneParticipant =>
+      'You must select at least one participant';
+
+  @override
+  String get accommodationSectionLocation => 'Location';
+
+  @override
+  String get accommodationSectionStay => 'Stay';
+
+  @override
+  String get accommodationSectionExtras => 'Extras';
+
+  @override
+  String get accommodationNightsLabel => 'Nights';
+
+  @override
+  String get accommodationTypeHotel => 'Hotel';
+
+  @override
+  String get accommodationTypeApartment => 'Apartment';
+
+  @override
+  String get accommodationTypeHostel => 'Hostel';
+
+  @override
+  String get accommodationTypeHouse => 'House';
+
+  @override
+  String get accommodationTypeResort => 'Resort';
+
+  @override
+  String get accommodationTypeCamping => 'Camping';
+
+  @override
+  String get accommodationTypeCruise => 'Cruise';
+
+  @override
+  String get accommodationTypeOther => 'Other';
 
   @override
   String get planEventColorsTitle => 'Calendar colors';
@@ -2017,14 +2338,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventTabMyInfo => 'My info';
 
   @override
+  String get eventTabPayments => 'Payments';
+
+  @override
   String get eventTabOthersInfo => 'Others\' info';
+
+  @override
+  String get eventPaymentsSaveFirst =>
+      'Save the event to record linked expenses.';
+
+  @override
+  String get eventPaymentsBudgetLabel => 'Planned cost (General)';
+
+  @override
+  String get eventPaymentsBudgetFooter =>
+      'Budget reference only; does not replace a split expense.';
+
+  @override
+  String get eventPaymentsSectionExpenses => 'Expenses for this event';
+
+  @override
+  String get eventPaymentsEmpty => 'No expenses linked to this event.';
+
+  @override
+  String eventPaymentsRecordedTotal(String amount) {
+    return 'Total recorded: $amount';
+  }
 
   @override
   String get eventReadOnlySnackBar =>
       'This field is shared for the plan and can only be edited by the creator or an administrator.';
 
   @override
-  String get eventType => 'Event type';
+  String get eventType => 'Type';
 
   @override
   String get eventTypeSearchHint => 'Search type or subtype';
@@ -2058,6 +2404,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get eventDialogParticipantsScopeLabel => 'Event participants';
 
   @override
+  String get eventDialogForAllShort => 'Everyone';
+
+  @override
   String get eventDialogForAllParticipantsTitle =>
       'This event is for all participants in the plan';
 
@@ -2067,7 +2416,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eventDialogForAllParticipantsSubtitleOff =>
-      'Pick specific participants below';
+      'Choose who takes part in this event';
+
+  @override
+  String get eventDialogParticipantsPickCaption => 'Included in the event';
+
+  @override
+  String get eventDialogSelectAtLeastOne => 'Select at least one participant';
+
+  @override
+  String get eventDialogNoParticipantsInPlan => 'No participants in this plan';
+
+  @override
+  String get eventDialogEventCreator => 'Creator';
+
+  @override
+  String get eventDialogParticipantsLoadError => 'Could not load participants';
 
   @override
   String get eventDialogAddLinkedExpenseTooltip =>
@@ -3303,6 +3667,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get entityAttachmentsAccommodationTitle => 'Accommodation files';
 
   @override
+  String get entityAttachmentsLabel => 'Files';
+
+  @override
   String get entityAttachmentsUpload => 'Upload';
 
   @override
@@ -3346,12 +3713,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reservationCancellationSectionSubtitle => 'Deposit and policy';
 
   @override
-  String get reservationGuaranteeLabel => 'Reservation guarantee';
+  String get reservationGuaranteeLabel => 'Guarantee';
 
   @override
   String reservationGuaranteeAmount(String currency) {
     return 'Guarantee ($currency)';
   }
+
+  @override
+  String get reservationFieldGuarantee => 'Guarantee';
+
+  @override
+  String get reservationFieldStatus => 'Status';
+
+  @override
+  String get reservationFieldPayer => 'Payer';
+
+  @override
+  String get reservationFieldNote => 'Note';
+
+  @override
+  String get reservationFieldTimezone => 'Zone';
+
+  @override
+  String get reservationFieldReminder => 'Reminder';
+
+  @override
+  String get reservationFieldFixedFee => 'Fee';
+
+  @override
+  String get reservationFieldPercent => 'Percent';
 
   @override
   String get reservationGuaranteePayer => 'Who paid in advance';
@@ -3378,7 +3769,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reservationGuaranteeNote => 'Note (optional)';
 
   @override
-  String get reservationCancellationPolicyLabel => 'Cancellation policy';
+  String get reservationCancellationPolicyLabel => 'Policy';
 
   @override
   String get reservationRefundPercentHint =>

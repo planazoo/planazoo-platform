@@ -2,15 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/state_transition_dialog.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 
 import 'plan_test_helpers.dart';
+
+Widget _app({required Widget home}) {
+  return MaterialApp(
+    locale: const Locale('es'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: home,
+  );
+}
 
 Future<void> _pumpConfirmDialog(
   WidgetTester tester, {
   required void Function(bool value) onResult,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
+    _app(
       home: Builder(
         builder: (context) => Scaffold(
           body: TextButton(

@@ -4,7 +4,7 @@
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
 > **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T278**
+**Siguiente código de tarea: T279**
 
 **Sistema de procesos:** [`docs/flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md) · **orden definitivo:** [`ORDEN_POR_DOMINIOS.md`](../flujos/ORDEN_POR_DOMINIOS.md) (#1→#9).
 
@@ -18,7 +18,7 @@
 |----------------|----------------------------|
 | **Participantes / invitaciones (WIP)** | T20, T120, T224, **T259**, T233, T234, **T275**, T261*, T252* |
 | Planes / estados | T122, T204, T205, T237, T243*, T261*, **T277** |
-| Eventos + calendario | T35, T37, T38, T88, T96–T99, T182, T208, T210–T212, T215, T225, T238, T242, T246, T247, T250, T251, T270, T271, T272 |
+| Eventos + calendario | T35, T37, T38, T88, T96–T99, T182, T208, T210–T212, T215, T225, T238, T242, T246, T247, T250, T251, T270, T271, T272, **T278** |
 | Alojamientos | T121, T225*, T251*, T271* |
 | Pagos | T222, T260 |
 | Notas | **T262** |
@@ -31,7 +31,7 @@
 | Plataforma / release | T256–T258, T267 |
 | UI transversal | T194–T214, T226, T231, T237*, T244, T249, T251* |
 | Producto / ayuda / legal | T135, T136, T150, T157, T158, T192, T254, T263–T266 |
-| Import / export / IA | T131, T133, T134, T181, T266* |
+| Import / export / IA | T131, T133, **T134**, T181, T266* |
 
 **📊 Resumen compacto (solo pendientes):** ~100 códigos; detalle en §§0–13. Completadas → `COMPLETED_TASKS.md`.
 
@@ -218,6 +218,7 @@
 | **T121** | Revisión y enriquecimiento de formularios EventDialog y AccommodationDialog por tipo. | Media |
 | **T122** | Guardar plan como plantilla (local, editar, usar plantilla). | Baja |
 | **T277** | **Pruebas ejecutables por agente (CRUD plan):** `createPlan` + releer en Firestore falso; validación de nombre alineada con el modal. No sustituye E2E de dispositivos. **En progreso (fase 1).** Especificación en `docs/tareas/T277_PRUEBAS_AGENTE_CRUD_PLAN.md`. Checklist: `docs/testing/CHECKLIST_CRUD_PLANES.md`. | Media |
+| **T278** | **Pruebas ejecutables por agente (CRUD evento):** `createEvent` + releer/listar/editar/borrar en Firestore falso; duración/cupo/rango/estado; diálogo borrar. No sustituye E2E de calendario. **En progreso (fase 2).** Especificación en `docs/tareas/T278_PRUEBAS_AGENTE_CRUD_EVENTO.md`. Checklist: `docs/testing/CHECKLIST_CRUD_EVENTOS.md`. | Media |
 | **T224** | **Reenviar invitación (recordatorio manual):** El organizador recuerda a pendientes con «Reenviar» (campana + push + email; sin duplicar ítem de campana). **Acordado** Ago 2026 como sustituto del recordatorio automático. Relacionado: T104, T105, LISTA 115/122. Ver `DIAGRAMA_ALTAS_BAJAS_PLAN.md`. | Media |
 | **T268** | ~~Recordatorios diarios automáticos de invitaciones pendientes~~ — **Aplazada / no ahora** (Ago 2026): agobia al invitado. Sustituido por **reenviar manual** (T224 / caso 2). Posible reabrir en el futuro como sistema opt-in. | — |
 | **T233** | Página Participantes: (1) La lista de participantes ha de ser lo primero; hacerla más compacta para ver el máximo posible. (2) La parte de invitar va a continuación de la lista. (3) Revisar si la parte de aceptar invitaciones es necesaria — *aclarar al abordar la tarea*: ¿se refiere a la vista del organizador (gestionar invitaciones) o a la del invitado (aceptar/rechazar)? (4) Eliminar el botón «Aceptar/Rechazar por token» y todo el código y documentación relacionada (opción ya no activa). (5) Eliminar el icono «X» para cerrar si ya no es necesario. (6) En la barra superior solo ha de aparecer el nombre de la página, sin el nombre del plan. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
@@ -232,7 +233,7 @@
 |--------|-------------|-----------|
 | **T131** | Sincronización con calendarios externos (.ics, etc.). | Media |
 | **T133** | Exportación profesional de planes (PDF/Email). **Contrato web C4** ([`WEB_COMERCIAL.md`](../producto/WEB_COMERCIAL.md)): exportar/imprimir/compartir itinerario propio y del plan; el destinatario no necesita la app. | **Alta** (contrato comercial) |
-| **T134** | Eventos desde correo reenviado a dirección plataforma: usuario reenvía confirmación a una dirección nuestra; parseo y creación de evento (buzón + asignación a plan). **Solo From = usuario registrado.** Anti-spam: rate limiting por usuario, lista blanca opcional (beta). Decisiones y esquema en `docs/producto/CORREO_EVENTOS_SISTEMA_PARSEO.md`. | Alta |
+| **T134** | **Mail → plan:** reenvío a dirección plataforma; buzón de comunicaciones; **colocar** en evento existente **o** crear evento; copia en cuenta del usuario. Parseo por plantillas = fase posterior. **Gate lanzamiento público** (corte mínimo). From = usuario registrado; anti-spam. Producto: [`COMUNICACIONES_MAIL_PLAN.md`](../producto/COMUNICACIONES_MAIL_PLAN.md). Técnico recepción: [`CORREO_EVENTOS_SISTEMA_PARSEO.md`](../producto/CORREO_EVENTOS_SISTEMA_PARSEO.md). | **Alta** (launch) |
 | **T181** | Definir guía de layout modular para pantallas (grid, secciones, espaciados). | Media |
 
 ---

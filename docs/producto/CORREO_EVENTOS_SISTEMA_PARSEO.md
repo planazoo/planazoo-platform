@@ -2,8 +2,9 @@
 
 > Cómo recibe la plataforma el correo reenviado, cómo lo valida y cómo extrae datos del evento.
 > **Documento canónico T134:** recepción, anti-spam, parseo y esquema Firestore.
+> **Producto (colocar en evento; archivo primero; gate launch):** [`COMUNICACIONES_MAIL_PLAN.md`](./COMUNICACIONES_MAIL_PLAN.md).
 
-**Alcance para usuarios vs administración:** Lo que ve el **usuario** en la app es solo: reenviar correos a la dirección de la plataforma, ver su buzón de eventos pendientes y asignarlos a un plan. El **catálogo de plantillas** (crear, actualizar, categorizar, generar con LLM a partir de un correo de ejemplo) es un **proceso interno de administración de la plataforma**: no está disponible en la app para usuarios finales. Solo los admins de la plataforma gestionan las plantillas.
+**Alcance para usuarios vs administración:** Lo que ve el **usuario** (objetivo de producto): reenviar a la dirección de la plataforma, ver comunicaciones **sin colocar**, **añadirlas a un evento existente o crear un evento**, y conservar la **copia** en su cuenta. El detalle de recepción y plantillas sigue en este archivo. El **catálogo de plantillas** es un **proceso interno de administración de la plataforma**: no está disponible en la app para usuarios finales. Solo los admins de la plataforma gestionan las plantillas.
 
 ---
 

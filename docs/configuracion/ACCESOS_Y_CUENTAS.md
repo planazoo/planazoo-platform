@@ -150,7 +150,16 @@ Con 2FA, Apple **no** acepta la contraseña normal del Apple ID al subir el IPA.
 
 ---
 
-## 6. Otros servicios (APIs de terceros)
+## 6. Marketing y redes sociales
+
+| Servicio / URL | Cuenta | Quién | Uso | Secretos | Notas |
+|----------------|--------|-------|-----|----------|-------|
+| [gmail.com](https://mail.google.com) | `myplanoon@gmail.com` | Cristian | Correo de marca Planoon (público / soporte) | Bitwarden pendiente | Separada de la cuenta operativa `unplanazoo@gmail.com` |
+| [instagram.com/@myplanoon](https://www.instagram.com/myplanoon/) | `@myplanoon` | Cristian | Presencia en Instagram | Bitwarden pendiente | Creada Ago 2026 |
+
+---
+
+## 7. Otros servicios (APIs de terceros)
 
 | Servicio / URL | Cuenta | Quién | Uso | Secretos | Notas |
 |----------------|--------|-------|-----|----------|-------|
@@ -159,7 +168,7 @@ Con 2FA, Apple **no** acepta la contraseña normal del Apple ID al subir el IPA.
 
 ---
 
-## 7. Cuentas de la app (referencia cruzada)
+## 8. Cuentas de la app (referencia cruzada)
 
 | Tema | Documento |
 |------|-----------|

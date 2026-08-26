@@ -25,6 +25,7 @@ import 'package:unp_calendario/features/auth/presentation/pages/event_form_demo_
 import 'package:unp_calendario/features/auth/presentation/pages/accommodation_form_demo_v1_page.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/ui_standard_page_demo_v1_page.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/ui_standard_form_demo_v1_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/ios_ux_proposals_page.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -328,6 +329,12 @@ class _AppState extends ConsumerState<App> {
         if (settings.name == '/demo/ui-standard-form-v1') {
           return MaterialPageRoute(
             builder: (context) => const UiStandardFormDemoV1Page(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/ios-ux-proposals') {
+          return MaterialPageRoute(
+            builder: (context) => const IosUxProposalsPage(),
             settings: settings,
           );
         }

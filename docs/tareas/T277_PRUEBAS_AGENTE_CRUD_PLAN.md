@@ -39,6 +39,12 @@ No sustituye Sesión A (iPhone / Android / web). Cubre la capa de servicio + val
 - **Cerrado (2026-08-18):** LISTA **126** (dashboard huérfanos) y **127** (alojamientos): `deleteEventsByPlanId` incluye `typeFamily: alojamiento`; `deletePlan` lo llama.
 - Pendiente: P5 dispositivo.
 
+## Pendiente humano (no agente)
+
+- **P5** crear plan en app y verlo en lista (web/iOS/Android).
+- LISTA **125** overflow iOS (validar).
+- T259 AASA + Mail/Safari; LISTA **123**/**124**.
+
 ## Fase 6
 
 - **Hecho:** P17 transiciones automáticas por fecha — confirmado→en_curso al pasar inicio; en_curso→finalizado al pasar fin; no salta dos estados en una llamada; planificando/cancelado no avanzan.

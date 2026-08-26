@@ -13,14 +13,11 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_file_servi
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
 import 'package:unp_calendario/features/calendar/presentation/widgets/state_transition_dialog.dart';
-import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
-import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/widgets/dialogs/announcement_dialog.dart';
 import 'package:unp_calendario/widgets/screens/announcement_timeline.dart';
 import 'package:unp_calendario/shared/utils/days_remaining_utils.dart';
-import 'package:unp_calendario/widgets/plan/days_remaining_indicator.dart';
 import 'package:unp_calendario/shared/utils/plan_validation_utils.dart';
 import 'package:unp_calendario/widgets/dialogs/plan_validation_dialog.dart';
 import 'package:unp_calendario/widgets/dialogs/delete_plan_dialogs.dart';
@@ -32,14 +29,15 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
-import 'package:unp_calendario/features/calendar/presentation/widgets/plan_state_badge.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
+import 'package:unp_calendario/shared/utils/plan_state_l10n.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/shared/constants/help_context_ids.dart';
 import 'package:unp_calendario/widgets/help/help_icon_button.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_event_accent_colors.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PlanDataScreen extends ConsumerStatefulWidget {
@@ -57,6 +55,9 @@ class PlanDataScreen extends ConsumerStatefulWidget {
   /// T276: preview pending — sin salir/editar como miembro.
   final bool forceReadOnly;
 
+  /// Si no es null, la barra Editar/Cancelar/Guardar se hostea fuera (p. ej. SectionTitleBar).
+  final ValueChanged<PlanInfoEditChrome?>? onEditChromeChanged;
+
   const PlanDataScreen({
     super.key,
     required this.plan,
@@ -66,10 +67,30 @@ class PlanDataScreen extends ConsumerStatefulWidget {
     this.showAppBar = true,
     this.onPlanUpdated,
     this.forceReadOnly = false,
+    this.onEditChromeChanged,
   });
 
   @override
   ConsumerState<PlanDataScreen> createState() => _PlanDataScreenState();
+}
+
+/// Chrome de edición para hostear Cancelar | Info | Editar/Guardar fuera del body.
+class PlanInfoEditChrome {
+  const PlanInfoEditChrome({
+    required this.editing,
+    required this.canEdit,
+    required this.saving,
+    required this.onEdit,
+    required this.onCancel,
+    required this.onSave,
+  });
+
+  final bool editing;
+  final bool canEdit;
+  final bool saving;
+  final VoidCallback onEdit;
+  final VoidCallback onCancel;
+  final VoidCallback onSave;
 }
 
 class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
@@ -92,76 +113,40 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   bool _isUpdatingEventColors = false;
   bool _isSavingPlan = false;
   List<PlanAttachment> _planAttachments = [];
-  // P12: secciones Info colapsables (Participantes / Avisos / Eliminar plan)
+  String? _formEventAccentBaseColor;
+  late Map<String, String> _formEventTypeAccentColors;
+  // P12: secciones Info colapsables (Participantes / Avisos / Meta / Eliminar plan)
   bool _infoSectionParticipantsExpanded = false;
   bool _infoSectionAnnouncementsExpanded = false;
+  bool _infoSectionMetaExpanded = false;
   bool _infoSectionDangerExpanded = false;
 
   /// Descripción del plan: bloque expandible (cerrado por defecto).
   bool _planDescriptionExpanded = false;
 
-  static const Color _cPageBg = Color(0xFF111827);
-  static const Color _cSurfaceBg = Color(0xFF1F2937);
-  static const Color _cTextPrimary = Colors.white;
-  static const Color _cTextSecondary = Colors.white70;
-  static const double _aBorderStrong = 0.12;
-  static const double _aSurfaceMuted = 0.04;
-  bool get _webLight => false;
+  /// UX D: ficha en lectura; formulario solo al pulsar Editar.
+  bool _isEditing = false;
+  bool _viewNotesExpanded = false;
 
-  static const Color _webHeaderBg = _cPageBg;
-  static const Color _webHeaderTitle = _cTextPrimary;
+  final GlobalKey _participantsSectionKey = GlobalKey();
+  final ScrollController _infoScrollController = ScrollController();
 
-  Color get _pageBackground =>
-      _cPageBg;
+  static const Color _cPageBg = IosFormColors.pageBg;
 
-  Color get _cardBackgroundStart =>
-      _cSurfaceBg;
+  Color get _pageBackground => _cPageBg;
 
-  Color get _cardBackgroundEnd =>
-      _cSurfaceBg;
-
-  Color get _cardBorder => _cTextPrimary.withValues(alpha: _aBorderStrong);
-
-  Color get _textPrimary =>
-      _cTextPrimary;
-
-  Color get _textSecondary =>
-      _cTextSecondary;
-
-  Color get _inputBackground =>
-      _cTextPrimary.withValues(alpha: _aSurfaceMuted);
-
-  Color get _labelMuted => _textSecondary;
-
-  List<BoxShadow> get _gradientCardShadows => [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.16),
-          blurRadius: 8,
-          offset: const Offset(0, 1),
-        ),
-      ];
-
-  List<BoxShadow> get _fieldCardShadows => [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.16),
-          blurRadius: 8,
-          offset: const Offset(0, 1),
-        ),
-      ];
-
-  /// Estilo del contenido de los campos (igual que nombre del plan)
-  TextStyle get _infoContentStyle => GoogleFonts.poppins(
-        fontSize: 15,
-        color: _textPrimary,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.1,
-      );
+  bool get _canEditPlanDetails =>
+      !widget.forceReadOnly &&
+      !PlanStatePermissions.isReadOnly(currentPlan);
 
   @override
   void initState() {
     super.initState();
     currentPlan = widget.plan;
     _initializeFormState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _notifyEditChrome();
+    });
   }
 
   void _initializeFormState() {
@@ -181,8 +166,20 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     _selectedTimezone =
         currentPlan.timezone ?? TimezoneService.getSystemTimezone();
     _planAttachments = List<PlanAttachment>.from(currentPlan.attachments);
+    _syncFormEventColorsFromPlan(currentPlan);
     _hasUnsavedChanges = false;
   }
+
+  void _syncFormEventColorsFromPlan(Plan plan) {
+    _formEventAccentBaseColor = plan.eventAccentBaseColor;
+    _formEventTypeAccentColors =
+        Map<String, String>.from(plan.eventTypeAccentColors);
+  }
+
+  Plan get _planForColorPreview => currentPlan.copyWith(
+        eventAccentBaseColor: _formEventAccentBaseColor,
+        eventTypeAccentColors: _formEventTypeAccentColors,
+      );
 
   /// Aplica al formulario el plan recibido (p. ej. desde el padre o tras refresco).
   void _applyPlanToFormFields(Plan plan) {
@@ -199,6 +196,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     _endDate = plan.endDate;
     _selectedTimezone = plan.timezone ?? TimezoneService.getSystemTimezone();
     _planAttachments = List<PlanAttachment>.from(plan.attachments);
+    _syncFormEventColorsFromPlan(plan);
     _hasUnsavedChanges = false;
   }
 
@@ -228,11 +226,70 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
 
   @override
   void dispose() {
+    final cb = widget.onEditChromeChanged;
+    if (cb != null) {
+      // No notificar al padre en sync durante unmount (árbol bloqueado → setState ilegal).
+      WidgetsBinding.instance.addPostFrameCallback((_) => cb(null));
+    }
+    _infoScrollController.dispose();
     _nameController.dispose();
     _descriptionController.dispose();
     _referenceNotesController.dispose();
     _budgetController.dispose();
     super.dispose();
+  }
+
+  void _notifyEditChrome() {
+    final cb = widget.onEditChromeChanged;
+    if (cb == null) return;
+    cb(
+      PlanInfoEditChrome(
+        editing: _isEditing,
+        canEdit: _canEditPlanDetails,
+        saving: _isSavingPlan,
+        onEdit: _enterEditing,
+        onCancel: _discardUnsavedChanges,
+        onSave: () {
+          _onSavePressed();
+        },
+      ),
+    );
+  }
+
+  void _enterEditing() {
+    setState(() => _isEditing = true);
+    _notifyEditChrome();
+  }
+
+  void _discardUnsavedChanges() {
+    _nameController.text = currentPlan.name;
+    _descriptionController.text = currentPlan.description ?? '';
+    _referenceNotesController.text = currentPlan.referenceNotes ?? '';
+    _budget = currentPlan.budget;
+    _budgetController.text =
+        _budget != null ? _formatBudgetForInput(_budget!) : '';
+    _selectedVisibility = currentPlan.visibility ?? 'private';
+    _selectedCurrency = currentPlan.currency;
+    _startDate = currentPlan.startDate;
+    _endDate = currentPlan.endDate;
+    _selectedTimezone =
+        currentPlan.timezone ?? TimezoneService.getSystemTimezone();
+    _planAttachments = List<PlanAttachment>.from(currentPlan.attachments);
+    _syncFormEventColorsFromPlan(currentPlan);
+    setState(() {
+      _hasUnsavedChanges = false;
+      _isEditing = false;
+    });
+    _notifyEditChrome();
+  }
+
+  Future<void> _onSavePressed() async {
+    if (_hasUnsavedChanges) {
+      await _savePlanDetails();
+    } else {
+      setState(() => _isEditing = false);
+      _notifyEditChrome();
+    }
   }
 
   void _markDirty() {
@@ -251,48 +308,28 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       }
       return;
     }
-    final choice = await showDialog<String>(
+    final loc = AppLocalizations.of(context)!;
+    final choice = await IosFormActionSheet.show<String>(
       context: context,
-      builder: (ctx) => Theme(
-        data: AppTheme.darkTheme,
-        child: AlertDialog(
-          backgroundColor: _cSurfaceBg,
-          title: Text(
-            'Cambios sin guardar',
-            style: GoogleFonts.poppins(
-                color: _cTextPrimary,
-                fontWeight: FontWeight.w600),
-          ),
-          content: Text(
-            '¿Quieres guardar los cambios en la información del plan?',
-            style: GoogleFonts.poppins(
-                color: _cTextSecondary,
-                fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, 'cancel'),
-              child: Text('Seguir editando',
-                  style: GoogleFonts.poppins(color: _cTextSecondary)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, 'discard'),
-              child: Text('Descartar',
-                  style: GoogleFonts.poppins(
-                      color: _webLight
-                          ? Colors.orange.shade800
-                          : Colors.orange.shade200)),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, 'save'),
-              style: FilledButton.styleFrom(
-                  backgroundColor: AppColorScheme.color3),
-              child: Text('Guardar',
-                  style: GoogleFonts.poppins(color: Colors.white)),
-            ),
-          ],
+      title: loc.planDetailsUnsavedChanges,
+      message: loc.planDetailsUnsavedPrompt,
+      options: [
+        IosFormActionSheetOption(
+          value: 'save',
+          label: loc.planDetailsBarSaveShort,
+          primary: true,
         ),
-      ),
+        IosFormActionSheetOption(
+          value: 'discard',
+          label: loc.cancelChanges,
+          destructive: true,
+        ),
+        IosFormActionSheetOption(
+          value: 'cancel',
+          label: loc.planDetailsUnsavedKeepEditing,
+          cancel: true,
+        ),
+      ],
     );
     if (!mounted) return;
     if (choice == 'save') {
@@ -301,8 +338,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         Navigator.of(context).pop();
       }
     } else if (choice == 'discard') {
-      _applyPlanToFormFields(widget.plan);
-      setState(() => _hasUnsavedChanges = false);
+      _discardUnsavedChanges();
       if (Navigator.of(context).canPop()) Navigator.of(context).pop();
     }
   }
@@ -334,96 +370,107 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   Future<void> _showDatesModal() async {
+    final loc = AppLocalizations.of(context)!;
     DateTime tempStart = _startDate;
     DateTime tempEnd = _endDate;
-    final applied = await showDialog<bool>(
+
+    Future<void> pickStart(StateSetter setInner) async {
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: tempStart,
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        final normalized = DateTime(picked.year, picked.month, picked.day);
+        setInner(() {
+          tempStart = normalized;
+          tempEnd = clampPlanEndToStart(tempStart, tempEnd);
+        });
+      }
+    }
+
+    Future<void> pickEnd(StateSetter setInner) async {
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: tempEnd,
+        firstDate: tempStart,
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        setInner(() {
+          tempEnd = DateTime(picked.year, picked.month, picked.day);
+        });
+      }
+    }
+
+    final applied = await showModalBottomSheet<bool>(
       context: context,
-      builder: (context) {
-        return Theme(
-          data: AppTheme.darkTheme,
-          child: StatefulBuilder(
-            builder: (context, setInnerState) {
-              return AlertDialog(
-                backgroundColor: _cSurfaceBg,
-                title: Text(
-                  'Fechas del plan',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: _textPrimary,
-                  ),
-                ),
-                content: Column(
+      backgroundColor: IosFormColors.groupedBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setInner) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildDateTile(
-                      label: 'Inicio',
-                      value: tempStart,
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: tempStart,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          final normalized =
-                              DateTime(picked.year, picked.month, picked.day);
-                          setInnerState(() {
-                            tempStart = normalized;
-                            tempEnd = clampPlanEndToStart(tempStart, tempEnd);
-                          });
-                        }
-                      },
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: IosFormColors.separator,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      loc.createPlanDatesSectionTitle,
+                      style: const TextStyle(
+                        color: IosFormColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    _buildDateTile(
-                      label: 'Fin',
-                      value: tempEnd,
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: tempEnd,
-                          firstDate: tempStart,
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          setInnerState(() {
-                            tempEnd =
-                                DateTime(picked.year, picked.month, picked.day);
-                          });
-                        }
-                      },
+                    IosGroupedCard(
+                      children: [
+                        IosSettingsRow(
+                          label: loc.invitationLabelStartDate,
+                          value: DateFormatter.formatDate(tempStart),
+                          chevron: true,
+                          onTap: () => pickStart(setInner),
+                        ),
+                        const IosRowSeparator(),
+                        IosSettingsRow(
+                          label: loc.invitationLabelEndDate,
+                          value: DateFormatter.formatDate(tempEnd),
+                          chevron: true,
+                          onTap: () => pickEnd(setInner),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    IosFormSheetActions(
+                      cancelLabel: loc.cancel,
+                      confirmLabel: loc.planNotesApplySelection,
+                      onCancel: () => Navigator.of(ctx).pop(false),
+                      onConfirm: () => Navigator.of(ctx).pop(true),
                     ),
                   ],
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: Text(
-                      'Cancelar',
-                      style: GoogleFonts.poppins(color: _textSecondary),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColorScheme.color2,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(
-                      'Aplicar',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
+              ),
+            );
+          },
         );
       },
     );
+
     if (applied == true) {
       setState(() {
         _startDate = tempStart;
@@ -442,8 +489,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     setState(() {
       _isSavingPlan = true;
     });
+    _notifyEditChrome();
 
     final loc = AppLocalizations.of(context)!;
+    final planBeforeSave = currentPlan;
     try {
       final sanitizedName = _nameController.text.trim();
       final sanitizedDescription = _descriptionController.text.trim();
@@ -468,6 +517,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         timezone: _selectedTimezone,
         budget: _budget,
         attachments: _planAttachments,
+        eventAccentBaseColor: _formEventAccentBaseColor,
+        eventTypeAccentColors: _formEventTypeAccentColors,
       );
 
       final planService = ref.read(planServiceProvider);
@@ -478,15 +529,21 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       if (success) {
         final refreshedPlan = await planService.getPlanById(updatedPlan.id!);
         if (!mounted) return;
+        final savedPlan = refreshedPlan ?? updatedPlan;
+        await _propagateEventColorsIfChanged(planBeforeSave, savedPlan);
+        if (!mounted) return;
         setState(() {
-          currentPlan = refreshedPlan ?? updatedPlan;
+          currentPlan = savedPlan;
           _budget = currentPlan.budget;
           _budgetController.text =
               _budget != null ? _formatBudgetForInput(_budget!) : '';
           _startDate = currentPlan.startDate;
           _endDate = currentPlan.endDate;
+          _syncFormEventColorsFromPlan(currentPlan);
           _hasUnsavedChanges = false;
+          _isEditing = false;
         });
+        _notifyEditChrome();
         // No usar ref.invalidate(plansStreamProvider): re-suscribe el StreamProvider y en Chrome puede
         // provocar "disposed EngineFlutterView" + errores en cascada del WidgetInspector al reportar.
         // El stream de Firestore (getPlansForUser) ya emite al actualizar el documento.
@@ -497,13 +554,14 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showSnackBarError('Error al guardar el plan: $e');
+        _showSnackBarError(loc.planDetailsSaveErrorWithDetail('$e'));
       }
     } finally {
       if (mounted) {
         setState(() {
           _isSavingPlan = false;
         });
+        _notifyEditChrome();
       }
     }
   }
@@ -511,166 +569,114 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   Widget _buildParticipantsSection(
     AppLocalizations loc,
     AsyncValue<List<PlanParticipation>> participantsAsync, {
+    required int participantsCount,
     bool isCompact = false,
   }) {
     if (currentPlan.id == null) {
       return const SizedBox.shrink();
     }
 
-    return participantsAsync.when(
-      data: (participants) {
-        return Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                _cardBackgroundStart,
-                _cardBackgroundEnd,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: _cardBorder,
-              width: 1,
-            ),
-            boxShadow: _gradientCardShadows,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // P11/P12: título dentro del recuadro + plegable
-              InkWell(
-                onTap: () => setState(() => _infoSectionParticipantsExpanded =
-                    !_infoSectionParticipantsExpanded),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(18)),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                      20, 18, 12, _infoSectionParticipantsExpanded ? 10 : 18),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.group_outlined,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          loc.planDetailsParticipantsTitle,
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            color: _textPrimary,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.1,
-                          ),
-                        ),
-                      ),
-                      HelpIconButton(
-                        helpId: HelpContextIds.planDetailsParticipants,
-                        contextLabel: loc.planDetailsParticipantsTitle,
-                        defaultBody:
-                            'Lista de personas que forman parte del plan. El organizador puede invitar, asignar roles (organizador, participante, observador) y quitar participantes. Gestionar participantes abre la pantalla completa de administración.',
-                      ),
-                      Icon(
-                        _infoSectionParticipantsExpanded
-                            ? Icons.expand_less
-                            : Icons.expand_more,
-                        color: _textSecondary,
-                      ),
-                    ],
+    final countLabel = participantsCount > 0 ? '$participantsCount' : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IosSectionLabel(loc.planDetailsParticipantsTitle),
+        participantsAsync.when(
+          data: (participants) {
+            return IosGroupedCard(
+              children: [
+                IosCollapsibleHeader(
+                  title: loc.planDetailsParticipantsTitle,
+                  subtitle: countLabel,
+                  expanded: _infoSectionParticipantsExpanded,
+                  onToggle: () => setState(() =>
+                      _infoSectionParticipantsExpanded =
+                          !_infoSectionParticipantsExpanded),
+                  trailing: HelpIconButton(
+                    helpId: HelpContextIds.planDetailsParticipants,
+                    contextLabel: loc.planDetailsParticipantsTitle,
+                    defaultBody: loc.planDetailsParticipantsHelp,
                   ),
                 ),
-              ),
-              if (_infoSectionParticipantsExpanded) ...[
-                Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: _cardBorder.withValues(alpha: 0.85)),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (widget.onManageParticipants != null) ...[
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: widget.onManageParticipants,
-                            icon: const Icon(Icons.open_in_new),
-                            label: Text(loc.planDetailsParticipantsManageLink),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColorScheme.color2,
-                              textStyle: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.3,
+                if (_infoSectionParticipantsExpanded) ...[
+                  const IosRowSeparator(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.onManageParticipants != null) ...[
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: widget.onManageParticipants,
+                              icon: const Icon(Icons.open_in_new, size: 18),
+                              label:
+                                  Text(loc.planDetailsParticipantsManageLink),
+                              style: TextButton.styleFrom(
+                                foregroundColor: IosFormColors.accent,
+                                padding: EdgeInsets.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                      if (participants.isEmpty)
-                        Text(
-                          loc.planDetailsNoParticipants,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: _textSecondary,
+                          const SizedBox(height: 8),
+                        ],
+                        if (participants.isEmpty)
+                          Text(
+                            loc.planDetailsNoParticipants,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: IosFormColors.textSecondary,
+                            ),
+                          )
+                        else
+                          ParticipantsListWidget(
+                            planId: currentPlan.id!,
+                            showActions: false,
+                            compact: isCompact,
                           ),
-                        )
-                      else
-                        ParticipantsListWidget(
-                          planId: currentPlan.id!,
-                          showActions: false,
-                          compact: isCompact,
-                        ),
-                    ],
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            );
+          },
+          loading: () => const IosGroupedCard(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 28),
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: IosFormColors.textSecondary,
+                    ),
                   ),
                 ),
-              ],
+              ),
             ],
           ),
-        );
-      },
-      loading: () => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _cardBackgroundStart,
-              _cardBackgroundEnd,
-            ],
+      error: (error, stackTrace) => IosGroupedCard(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Text(
+              loc.planDetailsParticipantsLoadError('$error'),
+              style: const TextStyle(
+                fontSize: 15,
+                color: IosFormColors.danger,
+              ),
+            ),
           ),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: _cardBorder,
-            width: 1,
-          ),
-          boxShadow: _gradientCardShadows,
-        ),
-        child: const Center(child: CircularProgressIndicator()),
+        ],
       ),
-      error: (error, stackTrace) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.red.shade200),
         ),
-        child: Text(
-          'Error al cargar participantes: $error',
-          style: AppTypography.bodyStyle.copyWith(
-            fontSize: 13,
-            color: Colors.red,
-          ),
-        ),
-      ),
+      ],
     );
   }
 
@@ -688,11 +694,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       data: (list) => list.length,
       orElse: () => 0,
     );
-    final currentRoleLabel = _resolveCurrentUserRoleLabel(
-      currentUser,
-      allParticipantsAsync,
-      loc,
-    );
     final canManagePlanAttachments = allParticipantsAsync.maybeWhen(
       data: (participants) {
         if (currentUser == null) return false;
@@ -705,236 +706,169 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       },
       orElse: () => currentUser?.id == currentPlan.userId,
     );
-    final currentUserHandle = _formatUserHandle(currentUser);
 
     final isCompact = MediaQuery.of(context).size.width < 900;
-
-    /// Barra superior W31: título "Info del plan", iconos resumen + in/out (salir plan), y Cancelar/Guardar si hay cambios.
     final isOrganizer = currentUser?.id == currentPlan.userId;
-    final headerBg = _webHeaderBg;
-    final headerTitleColor = _webHeaderTitle;
-    final headerShadow = [
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.24),
-        blurRadius: 12,
-        offset: const Offset(0, 3),
-      ),
-    ];
-    final cancelFg = Colors.orange.shade200;
+    final hostEditChrome = widget.onEditChromeChanged != null;
 
-    void discardUnsavedChanges() {
-      _nameController.text = currentPlan.name;
-      _descriptionController.text = currentPlan.description ?? '';
-      _referenceNotesController.text = currentPlan.referenceNotes ?? '';
-      _budget = currentPlan.budget;
-      _budgetController.text =
-          _budget != null ? _formatBudgetForInput(_budget!) : '';
-      _selectedVisibility = currentPlan.visibility ?? 'private';
-      _selectedCurrency = currentPlan.currency;
-      _startDate = currentPlan.startDate;
-      _endDate = currentPlan.endDate;
-      _selectedTimezone =
-          currentPlan.timezone ?? TimezoneService.getSystemTimezone();
-      _planAttachments = List<PlanAttachment>.from(currentPlan.attachments);
-      setState(() => _hasUnsavedChanges = false);
-    }
-
-    Widget buildSaveActions() {
-      if (!_hasUnsavedChanges) return const SizedBox.shrink();
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextButton(
-            onPressed: _isSavingPlan ? null : discardUnsavedChanges,
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              foregroundColor: cancelFg,
-            ),
-            child: Text(loc.planDetailsBarCancelShort,
-                style: GoogleFonts.poppins(fontSize: 12, color: cancelFg)),
-          ),
-          const SizedBox(width: 6),
-          FilledButton(
-            onPressed: _isSavingPlan ||
-                    widget.forceReadOnly ||
-                    PlanStatePermissions.isReadOnly(currentPlan)
-                ? null
-                : _savePlanDetails,
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColorScheme.color3,
-              foregroundColor: Colors.white,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              elevation: 2,
-            ),
-            child: _isSavingPlan
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
-                  )
-                : Text(loc.planDetailsBarSaveShort,
-                    style: GoogleFonts.poppins(
-                        fontSize: 12, color: Colors.white)),
-          ),
-        ],
+    Widget buildEditBar({String? title}) {
+      return IosFormEditBar(
+        editing: _isEditing,
+        canEdit: _canEditPlanDetails,
+        saving: _isSavingPlan,
+        centeredTitle: true,
+        editLabel: loc.edit,
+        cancelLabel: loc.planDetailsBarCancelShort,
+        saveLabel: loc.planDetailsBarSaveShort,
+        title: title ?? loc.planDetailsBarTitleShort,
+        onEdit: _enterEditing,
+        onCancel: _discardUnsavedChanges,
+        onSave: () {
+          _onSavePressed();
+        },
       );
     }
 
-    /// Cabecera completa W31 (web / showAppBar).
-    Widget buildHeader() {
-      return Container(
-        width: double.infinity,
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: headerBg,
-          boxShadow: headerShadow,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Info del plan',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: headerTitleColor,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.1,
-              ),
-            ),
-            Flexible(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: buildSaveActions(),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    /// Barra Cancelar/Guardar al embeber en PlanDetailPage (iOS): sin título duplicado.
-    Widget buildEmbeddedSaveBar() {
-      return Container(
-        width: double.infinity,
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: headerBg,
-          boxShadow: headerShadow,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                loc.planDetailsBarUnsavedShort,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: headerTitleColor,
-                  fontWeight: FontWeight.w600,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Flexible(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: buildSaveActions(),
-              ),
-            ),
-          ],
-        ),
-      );
+    void scrollToParticipants() {
+      setState(() => _infoSectionParticipantsExpanded = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _participantsSectionKey.currentContext;
+        if (ctx == null) return;
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          alignment: 0.08,
+        );
+      });
     }
 
     Widget buildBody() {
       final horizontalPadding = isCompact ? 16.0 : 20.0;
-      final verticalPadding = isCompact ? 16.0 : 20.0;
+      final verticalPadding = isCompact ? 8.0 : 16.0;
+      final dateRange =
+          '${DateFormatter.formatDate(_startDate)} – ${DateFormatter.formatDate(_endDate)}';
+      final heroChips = <IosHeroChipData>[
+        if (participantsCount > 0)
+          IosHeroChipData(
+            loc.planDetailsParticipantsChip(participantsCount),
+            onTap: scrollToParticipants,
+          ),
+      ];
+      if (DaysRemainingUtils.shouldShowDaysRemaining(currentPlan)) {
+        final days = DaysRemainingUtils.calculateDaysRemaining(currentPlan);
+        if (days != null) {
+          final soon = DaysRemainingUtils.shouldShowStartingSoon(currentPlan);
+          heroChips.add(
+            IosHeroChipData(
+              DaysRemainingUtils.getDaysRemainingText(days),
+              accent: soon || days <= 7,
+            ),
+          );
+        }
+      }
+
+      final scroll = SingleChildScrollView(
+        controller: _infoScrollController,
+        padding: EdgeInsets.fromLTRB(
+          horizontalPadding,
+          verticalPadding,
+          horizontalPadding,
+          verticalPadding + 16,
+        ),
+        child: Form(
+          key: _planFormKey,
+          child: Builder(
+            builder: (context) {
+              const double cardSpacing = 8;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.forceReadOnly ||
+                      PlanStatePermissions.isReadOnly(currentPlan)) ...[
+                    _buildReadOnlyWarning(),
+                    const SizedBox(height: 12),
+                  ],
+                  IosHeroHeader(
+                    title: (!_isEditing && widget.showAppBar)
+                        ? (_nameController.text.trim().isEmpty
+                            ? currentPlan.name
+                            : _nameController.text.trim())
+                        : null,
+                    subtitle: dateRange,
+                    chips: heroChips,
+                    leading: _buildCompactPlanAvatar(
+                      size: isCompact ? 56 : 64,
+                    ),
+                  ),
+                  const SizedBox(height: cardSpacing),
+                  _buildInfoSection(loc,
+                      showBaseInfo: true,
+                      isCompact: isCompact,
+                      isOrganizer: isOrganizer),
+                  const SizedBox(height: cardSpacing),
+                  _buildPlanSummarySection(
+                    loc,
+                    isCompact: isCompact,
+                    canManagePlanAttachments: canManagePlanAttachments,
+                  ),
+                  if (currentPlan.id != null && !_isEditing) ...[
+                    const SizedBox(height: cardSpacing),
+                    UpcomingCancellationsSection(
+                      planId: currentPlan.id!,
+                      isCompact: isCompact,
+                    ),
+                  ],
+                  const SizedBox(height: cardSpacing),
+                  KeyedSubtree(
+                    key: _participantsSectionKey,
+                    child: _buildParticipantsSection(
+                      loc,
+                      participantsAsync,
+                      participantsCount: participantsCount,
+                      isCompact: isCompact,
+                    ),
+                  ),
+                  const SizedBox(height: cardSpacing),
+                  if (isOrganizer && !widget.forceReadOnly) ...[
+                    _buildEventColorsSection(loc, isCompact: isCompact),
+                    const SizedBox(height: cardSpacing),
+                    _buildAnnouncementsSection(isCompact: isCompact),
+                    const SizedBox(height: cardSpacing),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        IosSectionLabel(loc.planDetailsMetaTitle),
+                        _buildInfoSection(loc,
+                            showBaseInfo: false,
+                            isCompact: isCompact,
+                            isOrganizer: isOrganizer),
+                      ],
+                    ),
+                    const SizedBox(height: cardSpacing),
+                  ],
+                  if (!widget.forceReadOnly && !_isEditing) ...[
+                    _buildLeavePlanButton(),
+                    const SizedBox(height: 12),
+                    _buildDeleteButton(),
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
+      );
 
       return Container(
         color: _pageBackground,
-        child: Column(
-          children: [
-            if (widget.showAppBar)
-              buildHeader()
-            else if (_hasUnsavedChanges)
-              buildEmbeddedSaveBar(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  verticalPadding,
-                  horizontalPadding,
-                  verticalPadding,
-                ),
-                child: Form(
-                  key: _planFormKey,
-                  child: Builder(
-                    builder: (context) {
-                      const double cardSpacing = 28;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (widget.forceReadOnly ||
-                              PlanStatePermissions.isReadOnly(currentPlan)) ...[
-                            _buildReadOnlyWarning(),
-                            const SizedBox(height: cardSpacing),
-                          ],
-                          _buildPlanImageSection(
-                              loc: loc, isCompact: isCompact),
-                          const SizedBox(height: cardSpacing),
-                          _buildInfoSection(loc,
-                              showBaseInfo: true, isCompact: isCompact),
-                          const SizedBox(height: cardSpacing),
-                          _buildPlanSummarySection(
-                            loc,
-                            participantsCount,
-                            currentRoleLabel,
-                            currentUserHandle,
-                            isCompact: isCompact,
-                            canManagePlanAttachments: canManagePlanAttachments,
-                          ),
-                          if (currentPlan.id != null) ...[
-                            const SizedBox(height: cardSpacing),
-                            UpcomingCancellationsSection(
-                              planId: currentPlan.id!,
-                              isCompact: isCompact,
-                            ),
-                          ],
-                          const SizedBox(height: cardSpacing),
-                          _buildParticipantsSection(loc, participantsAsync,
-                              isCompact: isCompact),
-                          const SizedBox(height: cardSpacing),
-                          if (isOrganizer && !widget.forceReadOnly) ...[
-                            _buildEventColorsSection(loc, isCompact: isCompact),
-                            const SizedBox(height: cardSpacing),
-                            _buildAnnouncementsSection(isCompact: isCompact),
-                            const SizedBox(height: cardSpacing),
-                            _buildInfoSection(loc,
-                                showBaseInfo: false, isCompact: isCompact),
-                            const SizedBox(height: cardSpacing),
-                          ],
-                          if (!widget.forceReadOnly) ...[
-                            _buildLeavePlanButton(),
-                            const SizedBox(height: cardSpacing),
-                            _buildDeleteButton(),
-                          ],
-                        ],
-                      );
-                    },
-                  ),
-                ),
+        child: hostEditChrome
+            ? scroll
+            : Column(
+                children: [
+                  buildEditBar(title: loc.planDetailsBarTitleShort),
+                  Expanded(child: scroll),
+                ],
               ),
-            ),
-          ],
-        ),
       );
     }
 
@@ -975,7 +909,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       );
     }
 
-    // Embebido en PlanDetailPage (iOS): barra Guardar + aviso al salir atrás.
+    // Embebido en PlanDetailPage (iOS): barra Editar/Guardar + aviso al salir atrás.
     return PopScope(
       canPop: !_hasUnsavedChanges,
       onPopInvokedWithResult: (didPop, result) async {
@@ -990,616 +924,306 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   Widget _buildInfoSection(AppLocalizations loc,
-      {required bool showBaseInfo, bool isCompact = false}) {
-    final showCountdown =
-        DaysRemainingUtils.shouldShowDaysRemaining(currentPlan);
-
-    final child = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (showBaseInfo) ...[
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final useTwoColumns = constraints.maxWidth >= 600;
-              final leftColumn = [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildDateTile(
-                        label: 'Inicio',
-                        value: _startDate,
-                        onTap: _showDatesModal,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildDateTile(
-                        label: 'Fin',
-                        value: _endDate,
-                        onTap: _showDatesModal,
-                      ),
-                    ),
-                  ],
-                ),
-              ];
-              final rightColumn = [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: _buildDropdownTile(
-                        label: loc.createPlanVisibilityLabel,
-                        value: _selectedVisibility,
-                        items: [
-                          DropdownMenuItem(
-                            value: 'private',
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  loc.createPlanVisibilityPrivateShort,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    color: _textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  loc.createPlanVisibilityPrivate,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: _textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'public',
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  loc.createPlanVisibilityPublicShort,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    color: _textPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  loc.createPlanVisibilityPublic,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: _textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        selectedItemBuilder: (context) => [
-                          loc.createPlanVisibilityPrivateShort,
-                          loc.createPlanVisibilityPublicShort,
-                        ]
-                            .map(
-                              (short) => Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  short,
-                                  style: _infoContentStyle,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedVisibility = value;
-                            _markDirty();
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 3,
-                      child: _buildTimezoneTile(loc),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: _buildDropdownTile(
-                        label: loc.createPlanCurrencyLabel,
-                        value: _selectedCurrency,
-                        items: Currency.supportedCurrencies
-                            .map(
-                              (currency) => DropdownMenuItem(
-                                value: currency.code,
-                                child: Text(
-                                  '${currency.code} - ${currency.symbol} ${currency.name}',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    color: _textPrimary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        selectedItemBuilder: (context) =>
-                            Currency.supportedCurrencies
-                                .map(
-                                  (currency) => Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      currency.code,
-                                      style: _infoContentStyle,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedCurrency = value;
-                            _markDirty();
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 3,
-                      child: _buildBudgetField(loc),
-                    ),
-                  ],
-                ),
-              ];
-              if (useTwoColumns) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: leftColumn,
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: rightColumn,
-                      ),
-                    ),
-                  ],
-                );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ...leftColumn,
-                  const SizedBox(height: 16),
-                  ...rightColumn,
-                ],
-              );
-            },
+      {required bool showBaseInfo,
+      bool isCompact = false,
+      bool isOrganizer = false}) {
+    if (!showBaseInfo) {
+      return IosGroupedCard(
+        children: [
+          IosCollapsibleHeader(
+            title: loc.planDetailsMetaTitle,
+            expanded: _infoSectionMetaExpanded,
+            onToggle: () => setState(
+                () => _infoSectionMetaExpanded = !_infoSectionMetaExpanded),
           ),
-        ] else ...[
-          Text(
-            loc.planDetailsMetaTitle,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: _textPrimary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.1,
+          if (_infoSectionMetaExpanded) ...[
+            const IosRowSeparator(),
+            IosSettingsRow(label: loc.planDetailsMetaUnpIdLabel, value: currentPlan.unpId),
+            if (currentPlan.id != null) ...[
+              const IosRowSeparator(),
+              IosSettingsRow(label: loc.planDetailsMetaIdLabel, value: currentPlan.id!),
+            ],
+            const IosRowSeparator(),
+            IosSettingsRow(
+              label: loc.planDetailsMetaCreatedLabel,
+              value: _formatDate(currentPlan.createdAt),
             ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
+          ],
+        ],
+      );
+    }
+
+    final visibilityShort = _selectedVisibility == 'public'
+        ? loc.createPlanVisibilityPublicShort
+        : loc.createPlanVisibilityPrivateShort;
+    final tz = _selectedTimezone ??
+        currentPlan.timezone ??
+        TimezoneService.getSystemTimezone();
+    final tzLabel = TimezoneService.getTimezoneDisplayName(tz);
+    final budgetText = _budget == null
+        ? '—'
+        : '${_formatBudgetForInput(_budget!)} $_selectedCurrency';
+    final datesText =
+        '${DateFormatter.formatDate(_startDate)} – ${DateFormatter.formatDate(_endDate)}';
+    final stateInfo = PlanStateService.getStateDisplayInfo(currentPlan.state);
+    final stateLabel = localizedPlanStateLabel(loc, currentPlan.state);
+    final stateColor = Color(stateInfo['color'] as int);
+    final stateTransitions = _getAvailableStateTransitions(loc);
+    final canChangeState = _isEditing &&
+        isOrganizer &&
+        stateTransitions.isNotEmpty &&
+        !widget.forceReadOnly;
+
+    Widget stateRow({required bool chevron}) {
+      return IosSettingsRow(
+        label: loc.planDetailsStateLabel,
+        value: stateLabel,
+        valueDotColor: stateColor,
+        valueColor: stateColor,
+        chevron: chevron && canChangeState,
+        onTap: canChangeState
+            ? () => _pickPlanState(loc, stateTransitions)
+            : null,
+      );
+    }
+
+    if (!_isEditing) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IosSectionLabel(loc.planDetailsSectionGeneral),
+          IosGroupedCard(
             children: [
-              _buildReadOnlyTile('UNP ID', currentPlan.unpId),
-              if (currentPlan.id != null)
-                _buildReadOnlyTile('ID interno', currentPlan.id!),
-              _buildReadOnlyTile('Creado', _formatDate(currentPlan.createdAt)),
+              stateRow(chevron: true),
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.createPlanVisibilityLabel,
+                value: visibilityShort,
+              ),
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.planTimezoneLabel,
+                value: tzLabel,
+              ),
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.createPlanCurrencyLabel,
+                value: _selectedCurrency,
+              ),
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.planDetailsBudgetLabel,
+                value: budgetText,
+              ),
             ],
           ),
         ],
-        if (showCountdown) ...[
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColorScheme.color2.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
+      );
+    }
+
+    // Modo edición: campos interactivos en card agrupada.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IosSectionLabel(loc.planDetailsSectionGeneral),
+        IosGroupedCard(
+          children: [
+            IosEditField(
+              label: loc.createPlanNameLabel,
+              controller: _nameController,
+              onChanged: (_) {
+                _markDirty();
+                setState(() {});
+              },
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return loc.createPlanNameRequiredError;
+                }
+                return null;
+              },
             ),
-            child: DaysRemainingIndicator(
-              plan: currentPlan,
-              fontSize: 14,
-              compact: false,
-              showIcon: true,
-              showStartingSoonBadge: true,
+            const IosRowSeparator(),
+            IosSettingsRow(
+              label: loc.planDetailsDatesLabel,
+              value: datesText,
+              chevron: true,
+              onTap: _showDatesModal,
             ),
-          ),
-        ],
+            const IosRowSeparator(),
+            stateRow(chevron: true),
+            const IosRowSeparator(),
+            IosSettingsRow(
+              label: loc.createPlanVisibilityLabel,
+              value: visibilityShort,
+              chevron: true,
+              onTap: () => _pickVisibility(loc),
+            ),
+            const IosRowSeparator(),
+            IosSettingsRow(
+              label: loc.planTimezoneLabel,
+              value: tzLabel,
+              chevron: true,
+              onTap: () => _pickTimezone(loc),
+            ),
+            const IosRowSeparator(),
+            IosSettingsRow(
+              label: loc.createPlanCurrencyLabel,
+              value: _selectedCurrency,
+              chevron: true,
+              onTap: () => _pickCurrency(loc),
+            ),
+            const IosRowSeparator(),
+            IosEditField(
+              label: '${loc.planDetailsBudgetLabel} ($_selectedCurrency)',
+              controller: _budgetController,
+              hint: loc.planBudgetLabelShort,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              validator: (value) {
+                final trimmed = value?.trim() ?? '';
+                if (trimmed.isEmpty) return null;
+                final sanitized = trimmed.replaceAll(',', '.');
+                final parsed = double.tryParse(sanitized);
+                if (parsed == null || parsed < 0) {
+                  return loc.planDetailsBudgetInvalid;
+                }
+                return null;
+              },
+              onChanged: (raw) {
+                final trimmed = raw.trim();
+                final sanitized = trimmed.replaceAll(',', '.');
+                setState(() {
+                  _budget =
+                      trimmed.isEmpty ? null : double.tryParse(sanitized);
+                });
+                _markDirty();
+              },
+            ),
+          ],
+        ),
       ],
     );
-    // Misma estructura en web y móvil: fechas, moneda, presupuesto, visibilidad, zona horaria sin card extra.
-    return child;
   }
 
-  Widget _buildReadOnlyTile(String label, String value) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 200, maxWidth: 260),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: AppTypography.bodyStyle.copyWith(
-              fontSize: 14,
-              color: Colors.white60,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          SelectableText(
-            value,
-            style: AppTypography.bodyStyle.copyWith(
-              fontSize: 13,
-              color: AppColorScheme.color4,
-            ),
-          ),
-        ],
-      ),
+  Future<void> _pickVisibility(AppLocalizations loc) async {
+    final picked = await IosFormPickerSheet.show<String>(
+      context: context,
+      title: loc.createPlanVisibilityLabel,
+      options: [
+        IosFormPickerOption(
+          value: 'private',
+          title: loc.createPlanVisibilityPrivateShort,
+          selected: _selectedVisibility == 'private',
+        ),
+        IosFormPickerOption(
+          value: 'public',
+          title: loc.createPlanVisibilityPublicShort,
+          selected: _selectedVisibility == 'public',
+        ),
+      ],
     );
+    if (!mounted || picked == null || picked == _selectedVisibility) return;
+    setState(() {
+      _selectedVisibility = picked;
+      _markDirty();
+    });
   }
 
-  Widget _buildTimezoneTile(AppLocalizations loc) {
+  Future<void> _pickTimezone(AppLocalizations loc) async {
     final commonTimezones = TimezoneService.getCommonTimezones().toList();
     final fallbackTimezone = TimezoneService.getSystemTimezone();
     final availableTimezones =
         commonTimezones.isNotEmpty ? commonTimezones : [fallbackTimezone];
     final selected =
         _selectedTimezone ?? currentPlan.timezone ?? fallbackTimezone;
-    final safeSelectedTimezone = availableTimezones.contains(selected)
-        ? selected
-        : availableTimezones.first;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: _cardBackgroundStart, // Color sólido, sin gradiente
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _cardBorder,
-          width: 1,
-        ),
-        boxShadow: _fieldCardShadows,
-      ),
-      child: DropdownButtonFormField<String>(
-        initialValue: safeSelectedTimezone,
-        isExpanded: true,
-        style: _infoContentStyle,
-        decoration: InputDecoration(
-          labelText: loc.planTimezoneLabel,
-          labelStyle: GoogleFonts.poppins(
-            fontSize: 14,
-            color: _labelMuted,
-            fontWeight: FontWeight.w500,
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: AppColorScheme.color2,
-              width: 2.5,
+    final picked = await IosFormPickerSheet.show<String>(
+      context: context,
+      title: loc.planTimezoneLabel,
+      maxHeightFactor: 0.55,
+      options: availableTimezones
+          .map(
+            (tz) => IosFormPickerOption(
+              value: tz,
+              title: TimezoneService.getTimezoneDisplayName(tz),
+              subtitle: TimezoneService.getUtcOffsetFormatted(tz),
+              selected: tz == selected,
             ),
-          ),
-          filled: true,
-          fillColor: Colors.transparent,
-        ),
-        dropdownColor: _cardBackgroundStart,
-        items: availableTimezones
-            .map(
-              (tz) => DropdownMenuItem<String>(
-                value: tz,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        TimezoneService.getTimezoneDisplayName(tz),
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          color: _textPrimary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      TimezoneService.getUtcOffsetFormatted(tz),
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: _textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-            .toList(),
-        selectedItemBuilder: (context) => availableTimezones
-            .map(
-              (tz) => Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  TimezoneService.getTimezoneDisplayName(tz),
-                  overflow: TextOverflow.ellipsis,
-                  style: _infoContentStyle,
-                ),
-              ),
-            )
-            .toList(),
-        onChanged: (value) {
-          if (value == null) return;
-          setState(() {
-            _selectedTimezone = value;
-            _markDirty();
-          });
-        },
-      ),
+          )
+          .toList(),
     );
+    if (!mounted || picked == null || picked == selected) return;
+    setState(() {
+      _selectedTimezone = picked;
+      _markDirty();
+    });
   }
 
-  Widget _buildDropdownTile({
-    required String label,
-    required String value,
-    required List<DropdownMenuItem<String>> items,
-    required ValueChanged<String> onChanged,
-    DropdownButtonBuilder? selectedItemBuilder,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _cardBackgroundStart, // Color sólido, sin gradiente
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _cardBorder,
-          width: 1,
-        ),
-        boxShadow: _fieldCardShadows,
-      ),
-      child: DropdownButtonFormField<String>(
-        initialValue: value,
-        isExpanded: true,
-        style: _infoContentStyle,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: GoogleFonts.poppins(
-            fontSize: 14,
-            color: _labelMuted,
-            fontWeight: FontWeight.w500,
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: AppColorScheme.color2,
-              width: 2.5,
+  Future<void> _pickCurrency(AppLocalizations loc) async {
+    final picked = await IosFormPickerSheet.show<String>(
+      context: context,
+      title: loc.createPlanCurrencyLabel,
+      maxHeightFactor: 0.45,
+      options: Currency.supportedCurrencies
+          .map(
+            (currency) => IosFormPickerOption(
+              value: currency.code,
+              title: '${currency.code} · ${currency.symbol}',
+              selected: currency.code == _selectedCurrency,
             ),
-          ),
-          filled: true,
-          fillColor: Colors.transparent,
-        ),
-        dropdownColor: _cardBackgroundStart,
-        items: items,
-        selectedItemBuilder: selectedItemBuilder,
-        onChanged: (selected) {
-          if (selected != null) {
-            onChanged(selected);
-          }
-        },
-      ),
+          )
+          .toList(),
     );
+    if (!mounted || picked == null || picked == _selectedCurrency) return;
+    setState(() {
+      _selectedCurrency = picked;
+      _markDirty();
+    });
   }
 
-  Widget _buildBudgetField(AppLocalizations loc) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _cardBackgroundStart, // Color sólido, sin gradiente
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _cardBorder,
-          width: 1,
-        ),
-        boxShadow: _fieldCardShadows,
-      ),
-      child: TextFormField(
-        controller: _budgetController,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: _infoContentStyle,
-        decoration: InputDecoration(
-          labelText: (_budget == null && _budgetController.text.trim().isEmpty)
-              ? loc.planBudgetLabelShort
-              : loc.planDetailsBudgetLabel,
-          labelStyle: GoogleFonts.poppins(
-            fontSize: 14,
-            color: _labelMuted,
-            fontWeight: FontWeight.w500,
+  Future<void> _pickPlanState(
+    AppLocalizations loc,
+    List<Map<String, dynamic>> stateTransitions,
+  ) async {
+    if (stateTransitions.isEmpty) return;
+    if (stateTransitions.length == 1) {
+      await _changePlanState(stateTransitions.first['state'] as String);
+      return;
+    }
+
+    final picked = await IosFormPickerSheet.show<String>(
+      context: context,
+      title: loc.planDetailsStateLabel,
+      options: stateTransitions.map((t) {
+        final state = t['state'] as String;
+        final info = PlanStateService.getStateDisplayInfo(state);
+        final color = Color(info['color'] as int);
+        return IosFormPickerOption(
+          value: state,
+          title: t['label'] as String,
+          leading: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: AppColorScheme.color2,
-              width: 2.5,
-            ),
-          ),
-          filled: true,
-          fillColor: Colors.transparent,
-          suffixText: _selectedCurrency,
-        ),
-        validator: (value) {
-          final trimmed = value?.trim() ?? '';
-          if (trimmed.isEmpty) return null;
-          final sanitized = trimmed.replaceAll(',', '.');
-          final parsed = double.tryParse(sanitized);
-          if (parsed == null || parsed < 0) {
-            return loc.planDetailsBudgetInvalid;
-          }
-          return null;
-        },
-        onChanged: (raw) {
-          final trimmed = raw.trim();
-          final sanitized = trimmed.replaceAll(',', '.');
-          setState(() {
-            _budget = trimmed.isEmpty ? null : double.tryParse(sanitized);
-          });
-          _markDirty();
-        },
-      ),
+        );
+      }).toList(),
     );
+    if (picked != null && mounted) {
+      await _changePlanState(picked);
+    }
   }
 
-  Widget _buildDateTile({
-    required String label,
-    required DateTime value,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _cardBackgroundStart, // Color sólido, sin gradiente
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _cardBorder,
-          width: 1,
-        ),
-        boxShadow: _fieldCardShadows,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: InputDecorator(
-          decoration: InputDecoration(
-            labelText: label,
-            labelStyle: GoogleFonts.poppins(
-              fontSize: 14,
-              color: _labelMuted,
-              fontWeight: FontWeight.w500,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color: AppColorScheme.color2,
-                width: 2.5,
-              ),
-            ),
-            filled: true,
-            fillColor: Colors.transparent,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            suffixIcon: Icon(Icons.edit_calendar, color: _labelMuted),
-          ),
-          child: Text(
-            _formatDate(value),
-            style: _infoContentStyle,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Aviso solo lectura: fondo y texto adaptados a web claro / tema oscuro.
+  /// Aviso solo lectura (patrón D).
   Widget _buildReadOnlyWarning() {
-    final borderColor = Colors.orange.shade700;
-    final bg = const Color(0xFF1F2937);
-    final iconColor = Colors.orange.shade300;
-    final textColor = Colors.orange.shade200;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.info_outline,
-            color: iconColor,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              PlanStatePermissions.getBlockedReason('view', currentPlan) ??
-                  'Este plan tiene restricciones de edición según su estado.',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: textColor,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return IosInfoBanner(
+      message: PlanStatePermissions.getBlockedReason('view', currentPlan) ??
+          AppLocalizations.of(context)!.planDetailsReadOnlyFallback,
     );
   }
 
   /// Transiciones de estado permitidas para el plan actual (solo para organizador).
-  List<Map<String, dynamic>> _getAvailableStateTransitions() {
-    const labels = {
-      'confirmado': 'Confirmar Plan',
-      'en_curso': 'Marcar como En Curso',
-      'planificando': 'Volver a Planificación',
-      'cancelado': 'Cancelar Plan',
-      'finalizado': 'Finalizar Plan',
-    };
+  List<Map<String, dynamic>> _getAvailableStateTransitions(AppLocalizations loc) {
     const icons = {
       'confirmado': Icons.check_circle_outline,
       'en_curso': Icons.play_circle_outline,
@@ -1611,7 +1235,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         .map(
           (state) => {
             'state': state,
-            'label': labels[state]!,
+            'label': localizedPlanStateActionLabel(loc, state),
             'icon': icons[state]!,
           },
         )
@@ -1619,6 +1243,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   Future<void> _changePlanState(String newState) async {
+    final loc = AppLocalizations.of(context)!;
     // VALID-1, VALID-2: Ejecutar validaciones adicionales antes de confirmar
     if (newState == 'confirmado' && currentPlan.id != null) {
       final currentUser = ref.read(currentUserProvider);
@@ -1675,7 +1300,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     try {
       final currentUser = ref.read(currentUserProvider);
       if (currentUser == null) {
-        _showSnackBarError('Error: Usuario no autenticado');
+        _showSnackBarError(loc.planDetailsNotAuthenticated);
         return;
       }
 
@@ -1694,21 +1319,23 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           setState(() {
             currentPlan = updatedPlan;
           });
-          _showSnackBarSuccess(
-              'Estado del plan actualizado a: ${PlanStateService.getStateDisplayInfo(newState)['label']}');
+          _showSnackBarSuccess(loc.planDetailsStateUpdated(
+            localizedPlanStateLabel(loc, newState),
+          ));
         }
       } else if (mounted) {
-        _showSnackBarError('Error al cambiar el estado del plan');
+        _showSnackBarError(loc.planDetailsStateChangeFailed);
       }
     } catch (e) {
       if (mounted) {
-        _showSnackBarError('Error: ${e.toString()}');
+        _showSnackBarError(loc.planDetailsStateChangeError(e.toString()));
       }
     }
   }
 
   /// Botón "Salir del plan" para participantes (no organizador). Elimina su participación.
   Widget _buildLeavePlanButton() {
+    final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
     if (currentPlan.id == null || currentUser == null) {
       return const SizedBox.shrink();
@@ -1724,58 +1351,23 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     );
     if (!isParticipant) return const SizedBox.shrink();
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _cardBackgroundStart,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Salir del plan',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: _textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IosDestructiveTile(
+          label: loc.planCardLeavePlanTitle,
+          onPressed: () => _showLeavePlanConfirmation(context),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          loc.planDetailsLeavePlanHint,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: IosFormColors.textTertiary,
+            fontSize: 12,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Dejarás de ser participante y no verás los eventos ni el chat de este plan.',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: _textSecondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _showLeavePlanConfirmation(context),
-              icon:
-                  Icon(Icons.exit_to_app, size: 18, color: Colors.red.shade700),
-              label: Text('Salir del plan',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.red.shade700)),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red.shade700,
-                side: BorderSide(color: Colors.red.shade400, width: 1.5),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1799,43 +1391,15 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         ? loc.planCardLeavePlanConfirmBody(currentPlan.name)
         : '${loc.planCardLeavePlanConfirmBody(currentPlan.name)}\n\n$soloWarn';
 
-    final confirmed = await showDialog<bool>(
+    final confirmed = await IosFormConfirmSheet.show(
       context: context,
-      builder: (dialogContext) => Theme(
-        data: AppTheme.darkTheme,
-        child: AlertDialog(
-          backgroundColor: _cSurfaceBg,
-          title: Text(
-            loc.planCardLeavePlanTitle,
-            style: GoogleFonts.poppins(
-                color: _cTextPrimary,
-                fontWeight: FontWeight.w600),
-          ),
-          content: SingleChildScrollView(
-            child: Text(
-              body,
-              style: GoogleFonts.poppins(
-                  color: _cTextSecondary,
-                  fontSize: 14),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(loc.cancel,
-                  style: GoogleFonts.poppins(color: _cTextSecondary)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(loc.planCardLeavePlanButton,
-                  style: GoogleFonts.poppins(
-                      color: Colors.orange.shade300)),
-            ),
-          ],
-        ),
-      ),
+      title: loc.planCardLeavePlanTitle,
+      message: body,
+      cancelLabel: loc.cancel,
+      confirmLabel: loc.planCardLeavePlanButton,
+      destructive: true,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     try {
       final participationService = ref.read(planParticipationServiceProvider);
       final leftDisplay = currentUser.displayName?.trim().isNotEmpty == true
@@ -1860,15 +1424,15 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
             .read(planParticipationNotifierProvider(currentPlan.id!).notifier)
             .reload();
         widget.onPlanDeleted?.call();
-        _showSnackBarSuccess('Has salido del plan');
+        _showSnackBarSuccess(loc.planDetailsLeavePlanSuccess);
       } else {
-        _showSnackBarError('No se pudo salir del plan');
+        _showSnackBarError(loc.planDetailsLeavePlanFailed);
       }
     } catch (e) {
       LoggerService.error('Error leaving plan',
           context: 'PlanDataScreen', error: e);
       if (context.mounted) {
-        _showSnackBarError('Error al salir del plan: $e');
+        _showSnackBarError(loc.planDetailsLeavePlanError('$e'));
       }
     }
   }
@@ -1881,111 +1445,71 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       return const SizedBox.shrink();
     }
 
-    final dangerFg = Colors.red.shade200;
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1F2937),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.shade700, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // P12: zona de peligro plegable
-          InkWell(
-            onTap: () => setState(
-                () => _infoSectionDangerExpanded = !_infoSectionDangerExpanded),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                  16, 14, 12, _infoSectionDangerExpanded ? 10 : 14),
-              child: Row(
-                children: [
-                  Icon(Icons.delete_outline, color: dangerFg, size: 22),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      loc.planInfoDangerZoneTitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: dangerFg,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    _infoSectionDangerExpanded
-                        ? Icons.expand_less
-                        : Icons.expand_more,
-                    color: dangerFg,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_infoSectionDangerExpanded) ...[
-            Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.red.shade900.withValues(alpha: 0.5)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    loc.planInfoDangerZoneSubtitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: dangerFg,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _showDeleteConfirmation(context),
-                      icon: const Icon(Icons.delete, size: 18),
-                      label: Text(loc.planDeleteDialogConfirm,
-                          style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Material(
+          color: IosFormColors.groupedBg,
+          borderRadius: BorderRadius.circular(12),
+          child: Column(
+            children: [
+              InkWell(
+                onTap: () => setState(() =>
+                    _infoSectionDangerExpanded = !_infoSectionDangerExpanded),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          loc.planInfoDangerZoneTitle,
+                          style: const TextStyle(
+                            color: IosFormColors.danger,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
-                    ),
+                      Icon(
+                        _infoSectionDangerExpanded
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                        color: IosFormColors.danger,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
-        ],
-      ),
+              if (_infoSectionDangerExpanded) ...[
+                const IosRowSeparator(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        loc.planInfoDangerZoneSubtitle,
+                        style: const TextStyle(
+                          color: IosFormColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      IosDestructiveTile(
+                        label: loc.planDeleteDialogConfirm,
+                        onPressed: () => _showDeleteConfirmation(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
-  }
-
-  String _formatUserHandle(UserModel? user) {
-    if (user == null) return '';
-    final username = user.username?.trim();
-    if (username != null && username.isNotEmpty) {
-      return '@$username';
-    }
-    final email = user.email.trim();
-    if (email.isNotEmpty) {
-      return email;
-    }
-    final displayName = user.displayName?.trim();
-    if (displayName != null && displayName.isNotEmpty) {
-      return displayName;
-    }
-    return '';
   }
 
   String _formatDate(DateTime date) => DateFormatter.formatDate(date);
@@ -2000,19 +1524,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   Future<void> _showDeleteConfirmation(BuildContext context) async {
     final loc = AppLocalizations.of(context)!;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Theme(
-        data: AppTheme.darkTheme,
-        child: DeletePlanPasswordDialog(
-          loc: loc,
-          onDelete: _deletePlan,
-        ),
-      ),
+    final confirmed = await showDeletePlanPasswordSheet(
+      context,
+      loc: loc,
+      onDelete: _deletePlan,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       widget.onPlanDeleted?.call();
     }
   }
@@ -2091,334 +1609,10 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     }
   }
 
-  String? _resolveCurrentUserRoleLabel(
-    UserModel? currentUser,
-    AsyncValue<List<PlanParticipation>> participantsAsync,
-    AppLocalizations loc,
-  ) {
-    if (currentUser == null) return null;
-    if (currentPlan.userId == currentUser.id) {
-      return loc.planRoleOrganizer;
-    }
 
-    final role = participantsAsync.maybeWhen<String?>(
-      data: (participants) {
-        for (final participation in participants) {
-          if (participation.userId == currentUser.id) {
-            return participation.role;
-          }
-        }
-        return null;
-      },
-      orElse: () => null,
-    );
-
-    return _mapRoleToText(role, loc);
-  }
-
-  String _mapRoleToText(String? role, AppLocalizations loc) {
-    switch (role) {
-      case 'organizer':
-        return loc.planRoleOrganizer;
-      case 'participant':
-        return loc.planRoleParticipant;
-      case 'observer':
-        return loc.planRoleObserver;
-      default:
-        return loc.planRoleUnknown;
-    }
-  }
-
-  /// P6: posición correcta del menú respecto al badge (showMenu con RelativeRect fijo rompía el tap en móvil).
-  Future<void> _openPlanStateTransitionMenu(
-    BuildContext anchorContext,
-    List<Map<String, dynamic>> stateTransitions,
-  ) async {
-    if (stateTransitions.isEmpty) return;
-    if (stateTransitions.length == 1) {
-      await _changePlanState(stateTransitions.first['state'] as String);
-      return;
-    }
-    final RenderBox? button = anchorContext.findRenderObject() as RenderBox?;
-    final overlayState = Overlay.of(anchorContext);
-    final RenderBox overlay =
-        overlayState.context.findRenderObject() as RenderBox;
-    if (button == null || !button.hasSize) return;
-    final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero),
-            ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-    final selected = await showMenu<String>(
-      context: anchorContext,
-      position: position,
-      color: _cardBackgroundStart,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      items: stateTransitions
-          .map(
-            (t) => PopupMenuItem<String>(
-              value: t['state'] as String,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(t['icon'] as IconData,
-                      size: 20, color: AppColorScheme.color2),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Text(
-                      t['label'] as String,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: _textPrimary,
-                          fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-          .toList(),
-    );
-    if (selected != null && mounted) {
-      await _changePlanState(selected);
-    }
-  }
-
-  Widget _buildPlanImageSection(
-      {required AppLocalizations loc, bool isCompact = false}) {
-    final currentUser = ref.watch(currentUserProvider);
-    final showLeaveButton = !widget.forceReadOnly &&
-        currentUser != null &&
-        currentPlan.userId != currentUser.id;
-    final isOwner = currentUser?.id == currentPlan.userId;
-    final stateTransitions = _getAvailableStateTransitions();
-    final showStateMenu = isOwner && stateTransitions.isNotEmpty;
-
-    Widget buildRightColumn() {
-      final column = Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Builder(
-            builder: (badgeContext) {
-              final badge = Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: showStateMenu
-                      ? () => _openPlanStateTransitionMenu(
-                          badgeContext, stateTransitions)
-                      : null,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: PlanStateBadge(
-                      plan: currentPlan,
-                      onColoredBackground: true,
-                    ),
-                  ),
-                ),
-              );
-              if (showStateMenu) {
-                return Tooltip(
-                  message: loc.tooltipChangePlanState,
-                  child: badge,
-                );
-              }
-              return badge;
-            },
-          ),
-          if (showLeaveButton) ...[
-            const SizedBox(height: 12),
-            TextButton.icon(
-              onPressed: () => _showLeavePlanConfirmation(context),
-              icon: Icon(Icons.exit_to_app,
-                  size: 18, color: Colors.orange.shade300),
-              label: Text(
-                'Salir del plan',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.orange.shade300,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              ),
-            ),
-          ],
-        ],
-      );
-      // En compact (iOS/móvil) dar ancho mínimo a la columna derecha para que el menú de estado no se pise
-      if (isCompact) {
-        return ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 80),
-          child: column,
-        );
-      }
-      return column;
-    }
-
-    // Nombre encima de la card foto/estado (lista §3.2 ítem 68).
-    final double avatarSize = isCompact ? 88.0 : 140.0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildPlanNameField(loc, isCompact),
-        SizedBox(height: isCompact ? 14 : 18),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [_cardBackgroundStart, _cardBackgroundEnd],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: _cardBorder, width: 1),
-            boxShadow: _gradientCardShadows,
-          ),
-          child: Row(
-            children: [
-              _buildPlanAvatar(avatarSize),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: buildRightColumn(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  InputDecoration _planInfoInputDecoration(String label, bool isCompact,
-      {bool showLabel = true}) {
-    return InputDecoration(
-      labelText: showLabel ? label : null,
-      labelStyle: GoogleFonts.poppins(
-          fontSize: 14,
-          color: _labelMuted,
-          fontWeight: FontWeight.w500),
-      contentPadding: EdgeInsets.symmetric(
-          horizontal: isCompact ? 12 : 18, vertical: isCompact ? 12 : 18),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _cardBorder),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _cardBorder.withValues(alpha: 0.9)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColorScheme.color2, width: 2),
-      ),
-      filled: true,
-      fillColor: _inputBackground,
-    );
-  }
-
-  Widget _buildPlanNameField(AppLocalizations loc, bool isCompact) {
-    return TextFormField(
-      controller: _nameController,
-      style: GoogleFonts.poppins(
-          fontSize: isCompact ? 14 : 15,
-          color: _textPrimary,
-          letterSpacing: 0.1),
-      decoration: _planInfoInputDecoration(loc.createPlanNameLabel, isCompact),
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      onChanged: (_) => _markDirty(),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return loc.createPlanNameRequiredError;
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildPlanDescriptionExpandable(AppLocalizations loc, bool isCompact) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _inputBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _cardBorder.withValues(alpha: 0.9)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _setScreenState(
-                  () => _planDescriptionExpanded = !_planDescriptionExpanded),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: isCompact ? 12 : 16, vertical: 14),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        loc.createPlanDescriptionLabel,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: _labelMuted,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Icon(
-                      _planDescriptionExpanded
-                          ? Icons.expand_less
-                          : Icons.expand_more,
-                      color: AppColorScheme.color2,
-                      size: 24,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
-            secondChild: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
-              child: TextFormField(
-                controller: _descriptionController,
-                style: GoogleFonts.poppins(
-                    fontSize: isCompact ? 14 : 15,
-                    color: _textPrimary,
-                    letterSpacing: 0.1),
-                decoration: _planInfoInputDecoration(
-                        loc.createPlanDescriptionLabel, isCompact,
-                        showLabel: false)
-                    .copyWith(
-                  hintText: loc.createPlanDescriptionHint,
-                  floatingLabelBehavior: FloatingLabelBehavior.never,
-                ),
-                minLines: isCompact ? 10 : 14,
-                maxLines: isCompact ? 22 : 28,
-                onChanged: (_) => _markDirty(),
-              ),
-            ),
-            crossFadeState: _planDescriptionExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 220),
-            sizeCurve: Curves.easeInOut,
-          ),
-        ],
-      ),
-    );
+  /// Avatar compacto del hero; cámara solo en modo edición (vía [_buildPlanAvatar]).
+  Widget _buildCompactPlanAvatar({required double size}) {
+    return _buildPlanAvatar(size);
   }
 
   String _familyLabel(AppLocalizations loc, String family) {
@@ -2438,326 +1632,262 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     }
   }
 
-  IconData _familyIcon(String family) {
-    switch (family) {
-      case 'Desplazamiento':
-        return Icons.directions_car;
-      case 'Restauración':
-        return Icons.restaurant;
-      case 'Actividad':
-        return Icons.local_activity;
-      case 'Acción':
-        return Icons.touch_app;
-      default:
-        return Icons.more_horiz;
-    }
-  }
-
   Widget _buildEventColorsSection(AppLocalizations loc, {bool isCompact = false}) {
-    final base = PlanEventAccentColors.baseColor(currentPlan);
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: isCompact ? 12 : 14,
-        vertical: isCompact ? 12 : 14,
-      ),
-      decoration: BoxDecoration(
-        color: _cardBackgroundStart,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _cardBorder.withValues(alpha: 0.9)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.palette_outlined, size: 18, color: AppColorScheme.color2),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  loc.planEventColorsTitle,
-                  style: GoogleFonts.poppins(
-                    fontSize: isCompact ? 14 : 15,
-                    fontWeight: FontWeight.w600,
-                    color: _textPrimary,
-                  ),
+    final previewPlan = _planForColorPreview;
+    final base = PlanEventAccentColors.baseColor(previewPlan);
+    final canEditColors = _isEditing;
+
+    Widget colorRow(String label, String colorName, VoidCallback? onPick) {
+      return IosColorSettingRow(
+        label: label,
+        color: ColorUtils.colorFromName(colorName),
+        chevron: canEditColors,
+        onTap: canEditColors && !_isSavingPlan ? onPick : null,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IosSectionLabel(loc.planEventColorsTitle),
+        IosGroupedCard(
+          children: [
+            colorRow(
+              loc.planEventColorsBase,
+              base,
+              () => _pickBaseColor(loc),
+            ),
+            const IosRowSeparator(),
+            IosGroupedCardCaption(loc.planEventColorsSubtitle),
+            for (var i = 0; i < PlanEventAccentColors.typeFamilies.length; i++) ...[
+              if (i > 0) const IosRowSeparator(),
+              colorRow(
+                _familyLabel(loc, PlanEventAccentColors.typeFamilies[i]),
+                PlanEventAccentColors.effectiveFamilyColor(
+                  previewPlan,
+                  PlanEventAccentColors.typeFamilies[i],
                 ),
-              ),
-              TextButton(
-                onPressed: _isUpdatingEventColors ? null : _restoreEventColorDefaults,
-                child: Text(
-                  loc.planEventColorsRestore,
-                  style: GoogleFonts.poppins(fontSize: 12),
+                () => _pickFamilyColor(
+                  loc,
+                  PlanEventAccentColors.typeFamilies[i],
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            loc.planEventColorsSubtitle,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: _textSecondary,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildEventColorRow(
-            loc,
-            label: loc.planEventColorsBase,
-            icon: Icons.circle,
-            colorName: base,
-            onPick: () => _pickAndApplyBaseColor(loc),
-          ),
-          const Divider(height: 20),
-          for (final family in PlanEventAccentColors.typeFamilies)
-            _buildEventColorRow(
-              loc,
-              label: _familyLabel(loc, family),
-              icon: _familyIcon(family),
-              colorName:
-                  PlanEventAccentColors.effectiveFamilyColor(currentPlan, family),
-              onPick: () => _pickAndApplyFamilyColor(loc, family),
-            ),
-          if (_isUpdatingEventColors) ...[
-            const SizedBox(height: 8),
-            const LinearProgressIndicator(minHeight: 2),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEventColorRow(
-    AppLocalizations loc, {
-    required String label,
-    required IconData icon,
-    required String colorName,
-    required VoidCallback onPick,
-  }) {
-    final color = ColorUtils.colorFromName(colorName);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: _textSecondary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(fontSize: 13, color: _textPrimary),
-            ),
-          ),
-          InkWell(
-            onTap: _isUpdatingEventColors ? null : onPick,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white54, width: 2),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<String?> _showColorPickerSheet(AppLocalizations loc, String current) async {
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1F2937),
-          title: Text(
-            loc.planEventColorsPickTitle,
-            style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
-          ),
-          content: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: PlanEventAccentColors.palette.map((name) {
-              final selected = name == current;
-              return GestureDetector(
-                onTap: () => Navigator.of(ctx).pop(name),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: ColorUtils.colorFromName(name),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: selected ? Colors.white : Colors.white38,
-                      width: selected ? 2.5 : 1,
+            if (canEditColors) ...[
+              const IosRowSeparator(),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _isSavingPlan ? null : _restoreDraftEventColorDefaults,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    child: Text(
+                      loc.planEventColorsRestore,
+                      style: TextStyle(
+                        color: IosFormColors.accent,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
-                  child: selected
-                      ? const Icon(Icons.check, color: Colors.white, size: 18)
-                      : null,
                 ),
-              );
-            }).toList(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(loc.cancel, style: GoogleFonts.poppins(color: Colors.white70)),
-            ),
+              ),
+            ],
+            if (_isSavingPlan && _isUpdatingEventColors) ...[
+              const IosRowSeparator(),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: LinearProgressIndicator(minHeight: 2),
+              ),
+            ],
           ],
-        );
-      },
+        ),
+      ],
     );
   }
 
-  Future<void> _pickAndApplyBaseColor(AppLocalizations loc) async {
-    final current = PlanEventAccentColors.baseColor(currentPlan);
+  Future<String?> _showColorPickerSheet(AppLocalizations loc, String current) {
+    return IosFormColorPickerSheet.show(
+      context: context,
+      title: loc.planEventColorsPickTitle,
+      selectedId: current,
+      options: PlanEventAccentColors.palette
+          .map(
+            (name) => IosFormColorPickerOption(
+              id: name,
+              color: ColorUtils.colorFromName(name),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  void _applyDraftEventColors(Plan nextPlan) {
+    _setScreenState(() {
+      _formEventAccentBaseColor = nextPlan.eventAccentBaseColor;
+      _formEventTypeAccentColors =
+          Map<String, String>.from(nextPlan.eventTypeAccentColors);
+      _markDirty();
+    });
+  }
+
+  Future<void> _pickBaseColor(AppLocalizations loc) async {
+    final current = PlanEventAccentColors.baseColor(_planForColorPreview);
     final picked = await _showColorPickerSheet(loc, current);
     if (picked == null || picked == current || !mounted) return;
-    await _applyAccentConfig(
-      loc,
-      nextPlan: PlanEventAccentColors.applyBaseColorChange(currentPlan, picked),
-      familiesToPropagate:
-          PlanEventAccentColors.familiesAffectedByBaseChange(currentPlan, picked),
-      colorForFamilies: picked,
+    _applyDraftEventColors(
+      PlanEventAccentColors.applyBaseColorChange(_planForColorPreview, picked),
     );
   }
 
-  Future<void> _pickAndApplyFamilyColor(
-    AppLocalizations loc,
-    String family,
-  ) async {
+  Future<void> _pickFamilyColor(AppLocalizations loc, String family) async {
     final current =
-        PlanEventAccentColors.effectiveFamilyColor(currentPlan, family);
+        PlanEventAccentColors.effectiveFamilyColor(_planForColorPreview, family);
     final picked = await _showColorPickerSheet(loc, current);
     if (picked == null || picked == current || !mounted) return;
-    await _applyAccentConfig(
-      loc,
-      nextPlan:
-          PlanEventAccentColors.applyFamilyColorChange(currentPlan, family, picked),
-      familiesToPropagate: [family],
-      colorForFamilies: picked,
+    _applyDraftEventColors(
+      PlanEventAccentColors.applyFamilyColorChange(
+        _planForColorPreview,
+        family,
+        picked,
+      ),
     );
   }
 
-  Future<void> _restoreEventColorDefaults() async {
-    final loc = AppLocalizations.of(context)!;
-    final next = PlanEventAccentColors.restoreDefaults(currentPlan);
-    final base = PlanEventAccentColors.baseColor(next);
-    await _applyAccentConfig(
-      loc,
-      nextPlan: next,
-      familiesToPropagate: PlanEventAccentColors.typeFamilies,
-      colorForFamilies: base,
+  void _restoreDraftEventColorDefaults() {
+    _applyDraftEventColors(
+      PlanEventAccentColors.restoreDefaults(_planForColorPreview),
     );
   }
 
-  Future<void> _applyAccentConfig(
-    AppLocalizations loc, {
-    required Plan nextPlan,
-    required List<String> familiesToPropagate,
-    required String colorForFamilies,
-  }) async {
-    if (currentPlan.id == null) return;
+  Future<void> _propagateEventColorsIfChanged(Plan before, Plan after) async {
+    if (before.id == null) return;
+    final changedFamilies = <String>[];
+    for (final fam in PlanEventAccentColors.typeFamilies) {
+      if (PlanEventAccentColors.effectiveFamilyColor(before, fam) !=
+          PlanEventAccentColors.effectiveFamilyColor(after, fam)) {
+        changedFamilies.add(fam);
+      }
+    }
+    if (changedFamilies.isEmpty) return;
+
     _setScreenState(() => _isUpdatingEventColors = true);
     try {
-      final planService = ref.read(planServiceProvider);
       final eventService = ref.read(eventServiceProvider);
-      final planId = currentPlan.id!;
-      final ok = await planService.updateEventAccentColors(
-        planId: planId,
-        baseColor: PlanEventAccentColors.baseColor(nextPlan),
-        typeColors: nextPlan.eventTypeAccentColors,
-      );
-      if (!ok) {
-        if (mounted) {
-          _setScreenState(() => _isUpdatingEventColors = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(loc.planDetailsSaveError)),
-          );
-        }
-        return;
-      }
-      var updated = 0;
-      // Restaurar defaults / base: cada familia puede requerir su color; aquí
-      // colorForFamilies sirve para un solo color. Si restore, todas usan base.
-      if (familiesToPropagate.length == 1) {
-        updated = await eventService.updateAccentColorForTypeFamilies(
+      final planId = before.id!;
+      for (final fam in changedFamilies) {
+        await eventService.updateAccentColorForTypeFamilies(
           planId: planId,
-          typeFamilies: familiesToPropagate,
-          colorName: colorForFamilies,
+          typeFamilies: [fam],
+          colorName: PlanEventAccentColors.effectiveFamilyColor(after, fam),
         );
-      } else {
-        // Propagar por familia con el color efectivo del nextPlan.
-        for (final fam in familiesToPropagate) {
-          final color =
-              PlanEventAccentColors.effectiveFamilyColor(nextPlan, fam);
-          updated += await eventService.updateAccentColorForTypeFamilies(
-            planId: planId,
-            typeFamilies: [fam],
-            colorName: color,
-          );
-        }
       }
-      if (!mounted) return;
-      final savedPlan = nextPlan.copyWith(id: planId);
-      _setScreenState(() {
-        currentPlan = savedPlan;
-        _isUpdatingEventColors = false;
-      });
-      widget.onPlanUpdated?.call(savedPlan);
       ref.invalidate(planEventsStreamProvider(planId));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.planEventColorsUpdated(updated))),
-      );
     } catch (e, st) {
       LoggerService.error(
-        'T272 accent colors update failed',
+        'Event accent propagation after save failed',
         context: 'PLAN_DATA',
         error: e,
         stackTrace: st,
       );
       if (mounted) {
+        final loc = AppLocalizations.of(context)!;
+        _showSnackBarError(loc.planDetailsEventColorsUpdateError('$e'));
+      }
+    } finally {
+      if (mounted) {
         _setScreenState(() => _isUpdatingEventColors = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${loc.planDetailsSaveError} (${e.toString()})'),
-          ),
-        );
       }
     }
   }
 
   Widget _buildPlanSummarySection(
-    AppLocalizations loc,
-    int participantsCount,
-    String? roleLabel,
-    String userHandle, {
+    AppLocalizations loc, {
     bool isCompact = false,
     bool canManagePlanAttachments = false,
   }) {
-    final content = Column(
+    if (!_isEditing) {
+      final hasDescription = _descriptionController.text.trim().isNotEmpty;
+      final hasNotes = _referenceNotesController.text.trim().isNotEmpty;
+      if (!hasDescription && !hasNotes) {
+        return _buildPlanAttachmentsBar(
+          loc,
+          canManage: false,
+          isCompact: isCompact,
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IosSectionLabel(loc.planDetailsSectionDescription),
+          IosGroupedCard(
+            children: [
+              if (hasDescription)
+                IosExpandableText(
+                  text: _descriptionController.text,
+                  expanded: _planDescriptionExpanded,
+                  onToggle: () => _setScreenState(
+                    () =>
+                        _planDescriptionExpanded = !_planDescriptionExpanded,
+                  ),
+                  seeMoreLabel: loc.planDetailsSeeMore,
+                  seeLessLabel: loc.planDetailsSeeLess,
+                ),
+              if (hasDescription && hasNotes) const IosRowSeparator(),
+              if (hasNotes) ...[
+                if (hasDescription)
+                  IosGroupedCardCaption(loc.planDetailsSectionNotes),
+                IosExpandableText(
+                  text: _referenceNotesController.text,
+                  expanded: _viewNotesExpanded,
+                  onToggle: () => _setScreenState(
+                    () => _viewNotesExpanded = !_viewNotesExpanded,
+                  ),
+                  seeMoreLabel: loc.planDetailsSeeMore,
+                  seeLessLabel: loc.planDetailsSeeLess,
+                ),
+              ],
+            ],
+          ),
+          _buildPlanAttachmentsBar(
+            loc,
+            canManage: false,
+            isCompact: isCompact,
+          ),
+        ],
+      );
+    }
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildPlanDescriptionExpandable(loc, isCompact),
-        SizedBox(height: isCompact ? 14 : 18),
-        TextFormField(
-          controller: _referenceNotesController,
-          style: GoogleFonts.poppins(
-              fontSize: isCompact ? 13 : 14, color: _textPrimary),
-          decoration:
-              _planInfoInputDecoration(loc.planReferenceNotesTitle, isCompact)
-                  .copyWith(
-            hintText: loc.planReferenceNotesHint,
-            alignLabelWithHint: true,
-          ),
-          minLines: 3,
-          maxLines: 8,
-          onChanged: (_) => _markDirty(),
+        IosSectionLabel(loc.planDetailsSectionDescription),
+        IosGroupedCard(
+          children: [
+            IosEditField(
+              label: loc.createPlanDescriptionLabel,
+              controller: _descriptionController,
+              hint: loc.createPlanDescriptionHint,
+              minLines: 3,
+              maxLines: 8,
+              onChanged: (_) => _markDirty(),
+            ),
+          ],
         ),
-        SizedBox(height: isCompact ? 14 : 18),
+        IosSectionLabel(loc.planDetailsSectionNotes),
+        IosGroupedCard(
+          children: [
+            IosEditField(
+              label: loc.planReferenceNotesTitle,
+              controller: _referenceNotesController,
+              hint: loc.planReferenceNotesHint,
+              minLines: 3,
+              maxLines: 8,
+              onChanged: (_) => _markDirty(),
+            ),
+          ],
+        ),
         _buildPlanAttachmentsBar(
           loc,
           canManage: canManagePlanAttachments,
@@ -2765,125 +1895,145 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
         ),
       ],
     );
-
-    return content;
   }
 
   Widget _buildPlanAttachmentsBar(AppLocalizations loc,
       {required bool canManage, required bool isCompact}) {
     final files = _planAttachments;
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-          horizontal: isCompact ? 10 : 12, vertical: isCompact ? 10 : 12),
-      decoration: BoxDecoration(
-        color: _inputBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _cardBorder.withValues(alpha: 0.9)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.attach_file, size: 16, color: _textSecondary),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  loc.entityAttachmentsPlanTitle,
-                  style: GoogleFonts.poppins(
-                    fontSize: isCompact ? 12 : 13,
-                    fontWeight: FontWeight.w600,
-                    color: _textPrimary,
+    final showInEdit = _isEditing && canManage;
+    if (files.isEmpty && !showInEdit) {
+      return const SizedBox.shrink();
+    }
+
+    final children = <Widget>[];
+    if (showInEdit) {
+      children.add(
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: (_isUploadingAttachment || currentPlan.id == null)
+                ? null
+                : _pickAndUploadPlanAttachment,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  if (_isUploadingAttachment)
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(Icons.upload_file,
+                        size: 20, color: IosFormColors.accent),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _isUploadingAttachment
+                          ? loc.entityAttachmentsUploading
+                          : loc.entityAttachmentsUpload,
+                      style: TextStyle(
+                        color: IosFormColors.accent,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-              if (canManage)
-                TextButton.icon(
-                  onPressed: (_isUploadingAttachment || currentPlan.id == null)
-                      ? null
-                      : _pickAndUploadPlanAttachment,
-                  icon: _isUploadingAttachment
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.upload_file, size: 16),
-                  label: Text(
-                    _isUploadingAttachment
-                        ? loc.entityAttachmentsUploading
-                        : loc.entityAttachmentsUpload,
-                    style: GoogleFonts.poppins(fontSize: isCompact ? 11 : 12),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (files.isEmpty) {
+      if (children.isNotEmpty) children.add(const IosRowSeparator());
+      children.add(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Text(
+            loc.entityAttachmentsEmpty,
+            style: const TextStyle(
+              fontSize: 15,
+              color: IosFormColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    } else {
+      for (var i = 0; i < files.length; i++) {
+        final file = files[i];
+        if (children.isNotEmpty) children.add(const IosRowSeparator());
+        children.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _openPlanAttachment(file.url),
+                    child: Text(
+                      file.name,
+                      style: TextStyle(
+                        color: IosFormColors.accent,
+                        fontSize: 17,
+                        decoration: TextDecoration.underline,
+                        decorationColor: IosFormColors.accent,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (files.isEmpty)
-            Text(
-              loc.entityAttachmentsEmpty,
-              style: GoogleFonts.poppins(
-                  fontSize: 12, color: _textSecondary),
-            )
-          else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: files.map((file) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => _openPlanAttachment(file.url),
-                          child: Text(
-                            file.name,
-                            style: GoogleFonts.poppins(
-                              color: AppColorScheme.color2,
-                              fontSize: isCompact ? 12 : 13,
-                              decoration: TextDecoration.underline,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _formatFileSize(file.size),
-                        style: GoogleFonts.poppins(
-                            fontSize: 11, color: _textSecondary),
-                      ),
-                      if (canManage) ...[
-                        const SizedBox(width: 4),
-                        IconButton(
-                          tooltip: loc.entityAttachmentsDeleteTitle,
-                          onPressed: _isUploadingAttachment
-                              ? null
-                              : () => _deletePlanAttachment(file),
-                          icon: const Icon(Icons.delete_outline, size: 18),
-                          color: Colors.red.shade300,
-                          constraints:
-                              const BoxConstraints(minWidth: 28, minHeight: 28),
-                          padding: EdgeInsets.zero,
-                        ),
-                      ],
-                    ],
+                const SizedBox(width: 8),
+                Text(
+                  _formatFileSize(file.size),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: IosFormColors.textSecondary,
                   ),
-                );
-              }).toList(),
+                ),
+                if (canManage) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: loc.entityAttachmentsDeleteTitle,
+                    onPressed: _isUploadingAttachment
+                        ? null
+                        : () => _deletePlanAttachment(file),
+                    icon: const Icon(Icons.delete_outline, size: 20),
+                    color: IosFormColors.danger,
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
+              ],
             ),
-        ],
-      ),
+          ),
+        );
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IosSectionLabel(loc.entityAttachmentsPlanTitle),
+        IosGroupedCard(children: children),
+      ],
     );
   }
 
   Future<void> _pickAndUploadPlanAttachment() async {
     final planId = currentPlan.id;
     if (planId == null) return;
-    final picked = await PlanFileService.pickAttachment();
-    if (picked == null) {
+    final PickedPlanFile picked;
+    try {
+      final result = await PlanFileService.pickAttachment();
+      if (result == null) return;
+      picked = result;
+    } catch (_) {
       if (!mounted) return;
       _showSnackBarError(
           AppLocalizations.of(context)!.entityAttachmentsReadError);
@@ -2924,35 +2074,15 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
   }
 
   Future<void> _deletePlanAttachment(PlanAttachment attachment) async {
-    final confirm = await showDialog<bool>(
-          context: context,
-          builder: (ctx) {
-            final loc = AppLocalizations.of(ctx)!;
-            return Theme(
-              data: AppTheme.darkTheme,
-              child: AlertDialog(
-                backgroundColor: _PlanDataScreenState._cSurfaceBg,
-                title: Text(loc.entityAttachmentsDeleteTitle,
-                    style: GoogleFonts.poppins(
-                        color: _PlanDataScreenState._cTextPrimary)),
-                content: Text(
-                  loc.entityAttachmentsDeleteConfirm(attachment.name),
-                  style: GoogleFonts.poppins(
-                      color: _PlanDataScreenState._cTextSecondary),
-                ),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(loc.cancel)),
-                  TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      child: Text(loc.delete)),
-                ],
-              ),
-            );
-          },
-        ) ??
-        false;
+    final loc = AppLocalizations.of(context)!;
+    final confirm = await IosFormConfirmSheet.show(
+      context: context,
+      title: loc.entityAttachmentsDeleteTitle,
+      message: loc.entityAttachmentsDeleteConfirm(attachment.name),
+      cancelLabel: loc.cancel,
+      confirmLabel: loc.delete,
+      destructive: true,
+    );
     if (!confirm) return;
 
     _setScreenState(() {
@@ -3043,34 +2173,36 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
         Positioned(
           bottom: -4,
           right: -4,
-          child: GestureDetector(
-            onTap: _isUploadingImage ? null : _pickImage,
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColorScheme.color2,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
+          child: (!_isEditing || !_canEditPlanDetails)
+              ? const SizedBox.shrink()
+              : GestureDetector(
+                  onTap: _isUploadingImage ? null : _pickImage,
+                  child: Container(
+                    padding: EdgeInsets.all(size < 72 ? 6 : 10),
+                    decoration: BoxDecoration(
+                      color: AppColorScheme.color2,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: _isUploadingImage
+                        ? SizedBox(
+                            width: size < 72 ? 12 : 16,
+                            height: size < 72 ? 12 : 16,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(Icons.photo_camera,
+                            color: Colors.white, size: size < 72 ? 14 : 18),
                   ),
-                ],
-              ),
-              child: _isUploadingImage
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.photo_camera,
-                      color: Colors.white, size: 18),
-            ),
-          ),
+                ),
         ),
       ],
     );
@@ -3098,151 +2230,65 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     }
 
     final loc = AppLocalizations.of(context)!;
-    return Container(
-      width: double.infinity,
-      constraints: _infoSectionAnnouncementsExpanded
-          ? const BoxConstraints(minHeight: 400)
-          : const BoxConstraints(),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _cardBackgroundStart,
-            _cardBackgroundEnd,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: _cardBorder,
-          width: 1,
-        ),
-        boxShadow: _gradientCardShadows,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // P12: cabecera plegable (T231: docs/ux/plan_info_aviso_t231.md)
-          InkWell(
-            onTap: () => _setScreenState(() => _infoSectionAnnouncementsExpanded =
-                !_infoSectionAnnouncementsExpanded),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 12, 16),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.campaign_outlined,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      loc.planDetailsAnnouncementsTitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        color: _textPrimary,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.1,
-                      ),
-                    ),
-                  ),
-                  HelpIconButton(
-                    helpId: HelpContextIds.planDetailsAviso,
-                    contextLabel: loc.planDetailsAnnouncementsTitle,
-                    defaultBody: loc.planDetailsAnnouncementsHelp,
-                  ),
-                  Icon(
-                    _infoSectionAnnouncementsExpanded
-                        ? Icons.expand_less
-                        : Icons.expand_more,
-                    color: _textSecondary,
-                  ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IosSectionLabel(loc.planDetailsAnnouncementsTitle),
+        IosGroupedCard(
+          children: [
+            IosCollapsibleHeader(
+              title: loc.planDetailsAnnouncementsTitle,
+              expanded: _infoSectionAnnouncementsExpanded,
+              onToggle: () => _setScreenState(() =>
+                  _infoSectionAnnouncementsExpanded =
+                      !_infoSectionAnnouncementsExpanded),
+              trailing: HelpIconButton(
+                helpId: HelpContextIds.planDetailsAviso,
+                contextLabel: loc.planDetailsAnnouncementsTitle,
+                defaultBody: loc.planDetailsAnnouncementsHelp,
               ),
             ),
-          ),
-          if (_infoSectionAnnouncementsExpanded) ...[
-            Divider(
-                height: 1,
-                thickness: 1,
-                color: _cardBorder.withValues(alpha: 0.85)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColorScheme.color3,
-                        AppColorScheme.color3.withValues(alpha: 0.85),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColorScheme.color3.withValues(alpha: 0.4),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                        spreadRadius: 0,
+            if (_infoSectionAnnouncementsExpanded) ...[
+              const IosRowSeparator(),
+              if (_isEditing) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) =>
+                              AnnouncementDialog(planId: currentPlan.id!),
+                        );
+                      },
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(loc.planDetailsAnnouncementsPublish),
+                      style: TextButton.styleFrom(
+                        foregroundColor: IosFormColors.accent,
                       ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                        spreadRadius: -2,
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) =>
-                            AnnouncementDialog(planId: currentPlan.id!),
-                      );
-                    },
-                    icon: const Icon(Icons.add, size: 18),
-                    label: Text(
-                      'Publicar',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: Colors.white,
-                      shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
                     ),
                   ),
                 ),
+              ],
+              ConstrainedBox(
+                constraints:
+                    const BoxConstraints(minHeight: 160, maxHeight: 420),
+                child: AnnouncementTimeline(
+                  planId: currentPlan.id!,
+                  compact: isCompact,
+                ),
               ),
-            ),
-            ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 200, maxHeight: 420),
-              child: AnnouncementTimeline(
-                planId: currentPlan.id!,
-                compact: isCompact,
-              ),
-            ),
+            ],
           ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Future<void> _pickImage() async {
+    final loc = AppLocalizations.of(context)!;
     final XFile? image = await ImageService.pickImageFromGallery();
     if (image == null) return;
 
@@ -3269,7 +2315,7 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       final success = await planService.updatePlan(updatedPlan);
 
       if (!success) {
-        throw Exception('Error al actualizar el plan en la base de datos');
+        throw Exception(loc.planDetailsSaveError);
       }
 
       if (mounted) {
@@ -3277,13 +2323,13 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
           currentPlan = updatedPlan;
           _selectedImageBytes = null;
         });
-        _showSnackBarSuccess('Imagen actualizada correctamente');
+        _showSnackBarSuccess(loc.planDetailsImageUpdateSuccess);
       }
     } catch (e) {
       final message =
           e is Exception ? e.toString().replaceFirst('Exception: ', '') : '$e';
       if (mounted) {
-        _showSnackBarError('Error al guardar la imagen: $message');
+        _showSnackBarError(loc.planDetailsImageSaveError(message));
       }
     } finally {
       _setScreenState(() {

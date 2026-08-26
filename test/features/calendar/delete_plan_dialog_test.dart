@@ -68,7 +68,7 @@ void main() {
     });
   });
 
-  group('P19 PLAN-D-003 DeletePlanPasswordDialog (Info)', () {
+  group('P19 PLAN-D-003 showDeletePlanPasswordSheet (Info)', () {
     Future<void> open(
       WidgetTester tester, {
       required Future<bool> Function(String password) onDelete,
@@ -82,12 +82,10 @@ void main() {
                 onPressed: () async {
                   final loc = AppLocalizations.of(context)!;
                   onClosed(
-                    await showDialog<bool>(
-                      context: context,
-                      builder: (_) => DeletePlanPasswordDialog(
-                        loc: loc,
-                        onDelete: onDelete,
-                      ),
+                    await showDeletePlanPasswordSheet(
+                      context,
+                      loc: loc,
+                      onDelete: onDelete,
                     ),
                   );
                 },
@@ -132,12 +130,11 @@ void main() {
         onClosed: (_) {},
       );
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Eliminar plan'));
+      await tester.tap(find.text('Eliminar plan').last);
       await tester.pumpAndSettle();
 
       expect(find.text('Introduce tu contraseña para confirmar.'), findsOneWidget);
       expect(deleted, isFalse);
-      expect(find.byType(DeletePlanPasswordDialog), findsOneWidget);
     });
 
     testWidgets('password + onDelete true closes confirmed', (tester) async {
@@ -152,13 +149,12 @@ void main() {
         onClosed: (value) => closed = value,
       );
 
-      await tester.enterText(find.byType(TextField), 'secret');
-      await tester.tap(find.widgetWithText(FilledButton, 'Eliminar plan'));
+      await tester.enterText(find.byType(TextFormField), 'secret');
+      await tester.tap(find.text('Eliminar plan').last);
       await tester.pumpAndSettle();
 
       expect(received, 'secret');
       expect(closed, isTrue);
-      expect(find.byType(DeletePlanPasswordDialog), findsNothing);
     });
 
     testWidgets('password + onDelete false stays open with auth error',
@@ -169,8 +165,8 @@ void main() {
         onClosed: (_) {},
       );
 
-      await tester.enterText(find.byType(TextField), 'wrong');
-      await tester.tap(find.widgetWithText(FilledButton, 'Eliminar plan'));
+      await tester.enterText(find.byType(TextFormField), 'wrong');
+      await tester.tap(find.text('Eliminar plan').last);
       await tester.pumpAndSettle();
 
       expect(
@@ -179,7 +175,6 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byType(DeletePlanPasswordDialog), findsOneWidget);
     });
   });
 }

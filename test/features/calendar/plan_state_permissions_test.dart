@@ -34,5 +34,32 @@ void main() {
       expect(PlanStatePermissions.canEditBasicInfo(cancelled), isFalse);
       expect(PlanStatePermissions.canEditBasicInfo(drafting), isTrue);
     });
+
+    test('EVENT-D-004 events: add/modify/delete blocked when finished or cancelled',
+        () {
+      final drafting = samplePlan(userId: 'ua', name: 'A');
+      final confirmed =
+          samplePlan(userId: 'ua', name: 'A', state: 'confirmado');
+      final inProgress =
+          samplePlan(userId: 'ua', name: 'A', state: 'en_curso');
+      final done = samplePlan(userId: 'ua', name: 'A', state: 'finalizado');
+      final cancelled =
+          samplePlan(userId: 'ua', name: 'A', state: 'cancelado');
+
+      expect(PlanStatePermissions.canAddEvents(drafting), isTrue);
+      expect(PlanStatePermissions.canAddEvents(confirmed), isTrue);
+      expect(PlanStatePermissions.canAddEvents(inProgress), isTrue);
+      expect(PlanStatePermissions.canAddEvents(done), isFalse);
+      expect(PlanStatePermissions.canAddEvents(cancelled), isFalse);
+
+      expect(PlanStatePermissions.canModifyEvents(drafting), isTrue);
+      expect(PlanStatePermissions.canModifyEvents(done), isFalse);
+      expect(PlanStatePermissions.canModifyEvents(cancelled), isFalse);
+
+      expect(PlanStatePermissions.canDeleteEvents(drafting), isTrue);
+      expect(PlanStatePermissions.canDeleteEvents(inProgress), isTrue);
+      expect(PlanStatePermissions.canDeleteEvents(done), isFalse);
+      expect(PlanStatePermissions.canDeleteEvents(cancelled), isFalse);
+    });
   });
 }

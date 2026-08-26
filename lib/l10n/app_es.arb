@@ -899,6 +899,15 @@
   "@confirmDeleteMessage": {
     "description": "Mensaje del diálogo de confirmar eliminación"
   },
+  "confirmDeleteEventMessage": "¿Estás seguro de que quieres eliminar el evento \"{description}\"?",
+  "@confirmDeleteEventMessage": {
+    "description": "Mensaje del diálogo de confirmar eliminación de un evento",
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
   "delete": "Eliminar",
   "@delete": {
     "description": "Botón de eliminar"
@@ -1074,12 +1083,40 @@
   "@planDetailsSaveSuccess": {},
   "planDetailsUnsavedChanges": "Tienes cambios sin guardar.",
   "@planDetailsUnsavedChanges": {},
+  "planDetailsUnsavedPrompt": "¿Quieres guardar los cambios en la información del plan?",
+  "@planDetailsUnsavedPrompt": {},
+  "planDetailsUnsavedKeepEditing": "Seguir editando",
+  "@planDetailsUnsavedKeepEditing": {},
   "planDetailsBarUnsavedShort": "Sin guardar",
   "planDetailsBarCancelShort": "Cancelar",
   "planDetailsBarSaveShort": "Guardar",
   "@planDetailsBarUnsavedShort": {},
   "@planDetailsBarCancelShort": {},
   "@planDetailsBarSaveShort": {},
+  "planDetailsBarTitleShort": "Info",
+  "@planDetailsBarTitleShort": {
+    "description": "Título corto centrado en la barra de Info del plan"
+  },
+  "planDetailsSeeMore": "Ver más",
+  "planDetailsSeeLess": "Ver menos",
+  "@planDetailsSeeMore": {},
+  "@planDetailsSeeLess": {},
+  "planDetailsParticipantsChip": "{count} personas",
+  "@planDetailsParticipantsChip": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "planDetailsSectionGeneral": "General",
+  "planDetailsSectionNotes": "Notas",
+  "planDetailsSectionDescription": "Descripción",
+  "planDetailsDatesLabel": "Fechas",
+  "planDetailsStateLabel": "Estado",
+  "@planDetailsSectionGeneral": {},
+  "@planDetailsSectionNotes": {},
+  "@planDetailsSectionDescription": {},
+  "@planDetailsDatesLabel": {},
+  "@planDetailsStateLabel": {},
   "planDetailsNoAvailableParticipants": "No hay usuarios disponibles para añadir.",
   "@planDetailsNoAvailableParticipants": {},
   "planDetailsParticipantsAdded": "Se añadieron {count} participantes.",
@@ -1092,6 +1129,205 @@
   },
   "planDetailsSaveError": "No se pudieron guardar los cambios.",
   "@planDetailsSaveError": {},
+  "planDetailsMetaUnpIdLabel": "UNP ID",
+  "@planDetailsMetaUnpIdLabel": {},
+  "planDetailsMetaIdLabel": "ID",
+  "@planDetailsMetaIdLabel": {},
+  "planDetailsMetaCreatedLabel": "Creado",
+  "@planDetailsMetaCreatedLabel": {},
+  "planDetailsParticipantsHelp": "Lista de personas que forman parte del plan. El organizador puede invitar, asignar roles (organizador, participante, observador) y quitar participantes. Gestionar participantes abre la pantalla completa de administración.",
+  "@planDetailsParticipantsHelp": {},
+  "planDetailsAnnouncementsPublish": "Publicar",
+  "@planDetailsAnnouncementsPublish": {},
+  "planDetailsReadOnlyFallback": "Este plan tiene restricciones de edición según su estado.",
+  "@planDetailsReadOnlyFallback": {},
+  "planDetailsLeavePlanHint": "Dejarás de ser participante y no verás los eventos ni el chat de este plan.",
+  "@planDetailsLeavePlanHint": {},
+  "planDetailsLeavePlanSuccess": "Has salido del plan",
+  "@planDetailsLeavePlanSuccess": {},
+  "planDetailsLeavePlanFailed": "No se pudo salir del plan",
+  "@planDetailsLeavePlanFailed": {},
+  "planDetailsLeavePlanError": "Error al salir del plan: {error}",
+  "@planDetailsLeavePlanError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsStateUpdated": "Estado del plan actualizado a: {state}",
+  "@planDetailsStateUpdated": {
+    "placeholders": {
+      "state": { "type": "String" }
+    }
+  },
+  "planDetailsStateChangeFailed": "Error al cambiar el estado del plan",
+  "@planDetailsStateChangeFailed": {},
+  "planDetailsStateChangeError": "Error: {error}",
+  "@planDetailsStateChangeError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsNotAuthenticated": "Error: Usuario no autenticado",
+  "@planDetailsNotAuthenticated": {},
+  "planDetailsSaveErrorWithDetail": "Error al guardar el plan: {error}",
+  "@planDetailsSaveErrorWithDetail": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsParticipantsLoadError": "Error al cargar participantes: {error}",
+  "@planDetailsParticipantsLoadError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsEventColorsUpdateError": "Error al actualizar colores de eventos: {error}",
+  "@planDetailsEventColorsUpdateError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planDetailsImageUpdateSuccess": "Imagen actualizada correctamente",
+  "@planDetailsImageUpdateSuccess": {},
+  "planDetailsImageSaveError": "Error al guardar la imagen: {error}",
+  "@planDetailsImageSaveError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "planStateLabelPlanning": "PLANIFICANDO",
+  "@planStateLabelPlanning": {},
+  "planStateLabelConfirmed": "CONFIRMADO",
+  "@planStateLabelConfirmed": {},
+  "planStateLabelInProgress": "EN CURSO",
+  "@planStateLabelInProgress": {},
+  "planStateLabelFinished": "FINALIZADO",
+  "@planStateLabelFinished": {},
+  "planStateLabelCancelled": "CANCELADO",
+  "@planStateLabelCancelled": {},
+  "planStateLabelUnknown": "DESCONOCIDO",
+  "@planStateLabelUnknown": {},
+  "planStateActionConfirm": "Confirmar Plan",
+  "@planStateActionConfirm": {},
+  "planStateActionMarkInProgress": "Marcar como En Curso",
+  "@planStateActionMarkInProgress": {},
+  "planStateActionBackToPlanning": "Volver a Planificación",
+  "@planStateActionBackToPlanning": {},
+  "planStateActionCancelPlan": "Cancelar Plan",
+  "@planStateActionCancelPlan": {},
+  "planStateActionFinish": "Finalizar Plan",
+  "@planStateActionFinish": {},
+  "planStateTransitionConfirmTitle": "Confirmar Plan",
+  "@planStateTransitionConfirmTitle": {},
+  "planStateTransitionConfirmMessage": "Este plan quedará como confirmado. Los cambios importantes estarán bloqueados.\n\n¿Deseas continuar?",
+  "@planStateTransitionConfirmMessage": {},
+  "planStateTransitionInProgressTitle": "Marcar Plan como En Curso",
+  "@planStateTransitionInProgressTitle": {},
+  "planStateTransitionInProgressMessage": "El plan pasará a estado \"En Curso\". Solo se permitirán cambios urgentes.\n\n¿Deseas continuar?",
+  "@planStateTransitionInProgressMessage": {},
+  "planStateTransitionFinishedTitle": "Finalizar Plan",
+  "@planStateTransitionFinishedTitle": {},
+  "planStateTransitionFinishedMessage": "El plan pasará a estado \"Finalizado\". No se podrán realizar más cambios.\n\n¿Deseas continuar?",
+  "@planStateTransitionFinishedMessage": {},
+  "planStateTransitionCancelTitle": "Cancelar Plan",
+  "@planStateTransitionCancelTitle": {},
+  "planStateTransitionCancelMessage": "Todos los participantes serán notificados, el plan no se podrá reactivar y se cancelarán los eventos futuros.\n\n¿Estás seguro de que deseas cancelar este plan?",
+  "@planStateTransitionCancelMessage": {},
+  "planStateTransitionPlanningTitle": "Volver a Planificación",
+  "@planStateTransitionPlanningTitle": {},
+  "planStateTransitionPlanningMessage": "El plan volverá a estado \"Planificando\". Se desbloquearán todas las restricciones.\n\n¿Deseas continuar?",
+  "@planStateTransitionPlanningMessage": {},
+  "planStateTransitionGenericTitle": "Cambiar Estado del Plan",
+  "@planStateTransitionGenericTitle": {},
+  "planStateTransitionGenericMessage": "¿Deseas cambiar el estado del plan de \"{fromState}\" a \"{toState}\"?",
+  "@planStateTransitionGenericMessage": {
+    "placeholders": {
+      "fromState": { "type": "String" },
+      "toState": { "type": "String" }
+    }
+  },
+  "planStateTransitionCancelPlanButton": "Cancelar Plan",
+  "@planStateTransitionCancelPlanButton": {},
+  "planValidationErrorTitle": "Error en la Validación",
+  "@planValidationErrorTitle": {},
+  "planValidationReviewTitle": "Revisar Plan",
+  "@planValidationReviewTitle": {},
+  "planValidationErrorsIntro": "No se puede confirmar el plan debido a los siguientes errores:",
+  "@planValidationErrorsIntro": {},
+  "planValidationWarningsIntro": "Se han detectado las siguientes observaciones:",
+  "@planValidationWarningsIntro": {},
+  "planValidationWarningsHint": "Aunque el plan puede confirmarse, te recomendamos revisar:",
+  "@planValidationWarningsHint": {},
+  "planValidationErrorsFooter": "Corrige los errores antes de poder confirmar el plan.",
+  "@planValidationErrorsFooter": {},
+  "planValidationWarningsFooter": "Puedes continuar con la confirmación o volver a revisar el plan.",
+  "@planValidationWarningsFooter": {},
+  "planValidationConfirmAnyway": "Confirmar de todas formas",
+  "@planValidationConfirmAnyway": {},
+  "planValidationGoBack": "Volver",
+  "@planValidationGoBack": {},
+  "eventAdvancedOptionsTitle": "Opciones avanzadas",
+  "@eventAdvancedOptionsTitle": {},
+  "eventAdvancedOptionsSubtitle": "Límite de aforo y confirmación",
+  "@eventAdvancedOptionsSubtitle": {},
+  "eventMaxParticipantsLabel": "Límite de participantes (opcional)",
+  "@eventMaxParticipantsLabel": {},
+  "eventMaxParticipantsHint": "Ej: 10 (dejar vacío para sin límite)",
+  "@eventMaxParticipantsHint": {},
+  "eventMaxParticipantsInvalidNumber": "Debe ser un número válido",
+  "@eventMaxParticipantsInvalidNumber": {},
+  "eventMaxParticipantsMin": "Debe ser mayor que 0",
+  "@eventMaxParticipantsMin": {},
+  "eventMaxParticipantsMax": "Máximo 1000 participantes",
+  "@eventMaxParticipantsMax": {},
+  "eventConnectedTitle": "Evento conectado",
+  "@eventConnectedTitle": {},
+  "eventConnectedMessage": "Este evento está conectado a Amadeus (datos de vuelo).\n\nSi continúas, se desconectará y dejará de actualizarse desde el proveedor.\n\n¿Quieres continuar y desconectar, o cancelar para mantener la conexión?",
+  "@eventConnectedMessage": {},
+  "eventConnectedDisconnect": "Desconectar y continuar",
+  "@eventConnectedDisconnect": {},
+  "eventDeleteBlockedFallback": "No se pueden eliminar eventos en el estado actual del plan.",
+  "@eventDeleteBlockedFallback": {},
+  "accommodationDeleteBlockedFallback": "No se pueden eliminar alojamientos en el estado actual del plan.",
+  "@accommodationDeleteBlockedFallback": {},
+  "accommodationSaveBlockedCreate": "No se pueden crear alojamientos en el estado actual del plan.",
+  "@accommodationSaveBlockedCreate": {},
+  "accommodationSaveBlockedModify": "No se pueden modificar alojamientos en el estado actual del plan.",
+  "@accommodationSaveBlockedModify": {},
+  "confirmDeleteAccommodationMessage": "¿Estás seguro de que quieres eliminar el alojamiento \"{name}\"?",
+  "@confirmDeleteAccommodationMessage": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "selectAtLeastOneParticipant": "Elige al menos un participante",
+  "@selectAtLeastOneParticipant": {},
+  "mustSelectAtLeastOneParticipant": "Debes seleccionar al menos un participante",
+  "@mustSelectAtLeastOneParticipant": {},
+  "accommodationSectionLocation": "Ubicación",
+  "@accommodationSectionLocation": {},
+  "accommodationSectionStay": "Estancia",
+  "@accommodationSectionStay": {},
+  "accommodationSectionExtras": "Extras",
+  "@accommodationSectionExtras": {},
+  "accommodationNightsLabel": "Noches",
+  "@accommodationNightsLabel": {},
+  "accommodationTypeHotel": "Hotel",
+  "accommodationTypeApartment": "Apartamento",
+  "accommodationTypeHostel": "Hostal",
+  "accommodationTypeHouse": "Casa",
+  "accommodationTypeResort": "Resort",
+  "accommodationTypeCamping": "Camping",
+  "accommodationTypeCruise": "Crucero",
+  "accommodationTypeOther": "Otro",
+  "@accommodationTypeHotel": {},
+  "@accommodationTypeApartment": {},
+  "@accommodationTypeHostel": {},
+  "@accommodationTypeHouse": {},
+  "@accommodationTypeResort": {},
+  "@accommodationTypeCamping": {},
+  "@accommodationTypeCruise": {},
+  "@accommodationTypeOther": {},
   "planEventColorsTitle": "Colores del calendario",
   "@planEventColorsTitle": { "description": "T272 sección colores por tipo en Info del plan" },
   "planEventColorsSubtitle": "Color del carril/borde de los eventos. Al cambiar un color se actualizan todos los eventos de ese tipo.",
@@ -1737,10 +1973,24 @@
   "flightNumberRequired": "Introduce el número de vuelo (ej: IB6842).",
   "flightDataLoaded": "Datos del vuelo cargados.",
   "eventTabGeneral": "General",
-  "eventTabMyInfo": "Mi información",
+  "eventTabMyInfo": "Mi info",
+  "eventTabPayments": "Pagos",
   "eventTabOthersInfo": "Info de Otros",
+  "eventPaymentsSaveFirst": "Guarda el evento para registrar gastos vinculados.",
+  "eventPaymentsBudgetLabel": "Coste previsto (General)",
+  "eventPaymentsBudgetFooter": "Referencia del presupuesto; no sustituye un gasto repartido.",
+  "eventPaymentsSectionExpenses": "Gastos de este evento",
+  "eventPaymentsEmpty": "No hay gastos vinculados a este evento.",
+  "eventPaymentsRecordedTotal": "Total registrado: {amount}",
+  "@eventPaymentsRecordedTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "eventReadOnlySnackBar": "Este dato es común al plan y solo puede editarlo el creador o un administrador.",
-  "eventType": "Tipo de evento",
+  "eventType": "Tipo",
   "@eventType": {
     "description": "Label de tipo de evento"
   },
@@ -1775,9 +2025,27 @@
   "@eventDialogParticipantsScopeLabel": {
     "description": "Etiqueta del bloque «para todos» / selección (ítem 91 lista pruebas)"
   },
+  "eventDialogForAllShort": "Para todos",
+  "@eventDialogForAllShort": {
+    "description": "Label corto Settings del switch de alcance de participantes"
+  },
   "eventDialogForAllParticipantsTitle": "Este evento es para todos los participantes del plan",
   "eventDialogForAllParticipantsSubtitleOn": "Todos los participantes estarán incluidos automáticamente",
-  "eventDialogForAllParticipantsSubtitleOff": "Selecciona participantes específicos abajo",
+  "eventDialogForAllParticipantsSubtitleOff": "Elige quién participa en este evento",
+  "eventDialogParticipantsPickCaption": "Incluidos en el evento",
+  "@eventDialogParticipantsPickCaption": {
+    "description": "Caption dentro de la card bajo el switch Para todos"
+  },
+  "eventDialogSelectAtLeastOne": "Selecciona al menos un participante",
+  "@eventDialogSelectAtLeastOne": {
+    "description": "Validación UI cuando el alcance no es «para todos» y la lista está vacía"
+  },
+  "eventDialogNoParticipantsInPlan": "No hay participantes en este plan",
+  "eventDialogEventCreator": "Creador",
+  "@eventDialogEventCreator": {
+    "description": "Valor secundario en fila Settings si el usuario creó el evento"
+  },
+  "eventDialogParticipantsLoadError": "No se pudieron cargar los participantes",
   "eventDialogAddLinkedExpenseTooltip": "Añadir gasto ligado a este evento",
   "calendarContextEditEvent": "Editar evento",
   "calendarContextCopyEvent": "Copiar evento",
@@ -2545,6 +2813,8 @@
   "@entityAttachmentsEventTitle": { "description": "Título del bloque de adjuntos en diálogo de evento" },
   "entityAttachmentsAccommodationTitle": "Archivos del alojamiento",
   "@entityAttachmentsAccommodationTitle": { "description": "Título del bloque de adjuntos en diálogo de alojamiento" },
+  "entityAttachmentsLabel": "Archivos",
+  "@entityAttachmentsLabel": { "description": "Etiqueta corta de fila Settings para adjuntos (evento/alojamiento)" },
   "entityAttachmentsUpload": "Subir",
   "entityAttachmentsUploading": "Subiendo...",
   "entityAttachmentsEmpty": "Sin archivos adjuntos",
@@ -2562,9 +2832,18 @@
   "entityAttachmentsSnackbarRemoved": "Archivo eliminado. Pulsa Guardar para confirmar cambios.",
   "reservationCancellationSectionTitle": "Reserva / cancelación",
   "reservationCancellationSectionSubtitle": "Garantía y política",
-  "reservationGuaranteeLabel": "Garantía de la reserva",
+  "reservationGuaranteeLabel": "Garantía",
   "reservationGuaranteeAmount": "Garantía ({currency})",
   "@reservationGuaranteeAmount": { "placeholders": { "currency": { "type": "String" } } },
+  "reservationFieldGuarantee": "Garantía",
+  "@reservationFieldGuarantee": { "description": "Etiqueta corta fila Settings (importe depósito)" },
+  "reservationFieldStatus": "Estado",
+  "reservationFieldPayer": "Pagador",
+  "reservationFieldNote": "Nota",
+  "reservationFieldTimezone": "Zona",
+  "reservationFieldReminder": "Aviso",
+  "reservationFieldFixedFee": "Cargo",
+  "reservationFieldPercent": "Porcentaje",
   "reservationGuaranteePayer": "Quién ha adelantado",
   "reservationPayerNone": "Sin asignar",
   "reservationGuaranteeStatus": "Estado de la garantía",
@@ -2573,7 +2852,7 @@
   "reservationStatusRefunded": "Reembolsada",
   "reservationStatusRetained": "Retenida",
   "reservationGuaranteeNote": "Nota (opcional)",
-  "reservationCancellationPolicyLabel": "Política de cancelación",
+  "reservationCancellationPolicyLabel": "Política",
   "reservationRefundPercentHint": "El % es lo que recuperas del depósito si cancelas antes del límite.",
   "reservationItemTimezone": "Zona horaria del ítem",
   "reservationTier1": "Tramo 1",

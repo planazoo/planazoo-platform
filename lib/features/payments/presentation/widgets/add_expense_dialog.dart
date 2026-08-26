@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
-import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/shared/models/currency.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 import '../../domain/models/plan_expense.dart';
 import '../providers/payment_providers.dart';
-import 'package:unp_calendario/app/theme/typography.dart';
-import 'package:unp_calendario/app/theme/color_scheme.dart';
-import 'package:unp_calendario/l10n/app_localizations.dart';
 
-/// Diálogo para añadir un gasto tipo Tricount: quién pagó, importe, concepto, reparto entre participantes.
+/// Diálogo para añadir un gasto tipo Tricount: quién pagó, importe, concepto, reparto.
 class AddExpenseDialog extends ConsumerStatefulWidget {
   final Plan plan;
-  /// Opcional: nombres por userId. Si no se pasa, el diálogo mostrará userId hasta que se resuelvan.
   final Map<String, String>? userIdToName;
   final VoidCallback? onSaved;
-  /// Preselecciona el evento del plan (p. ej. desde el diálogo de evento — ítem 102).
   final String? initialEventId;
-  /// Modo edición: mismo formulario, guardado con `updateExpense`.
   final PlanExpense? existingExpense;
 
   const AddExpenseDialog({
@@ -36,16 +33,6 @@ class AddExpenseDialog extends ConsumerStatefulWidget {
 }
 
 class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
-  static const Color _cPageBg = Color(0xFF111827);
-  static const Color _cTextPrimary = Colors.white;
-  static const Color _cTextSecondary = Colors.white70;
-  static const double _aBorderStrong = 0.12;
-  static const double _aSurfaceMuted = 0.04;
-  static const double _sp8 = 8;
-  static const double _sp12 = 12;
-  static const double _sp16 = 16;
-  static const double _fsSectionTitle = 12;
-
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _conceptController = TextEditingController();
@@ -56,6 +43,16 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
   bool _equalSplit = true;
   final Map<String, TextEditingController> _customAmountControllers = {};
   String? _selectedEventId;
+  bool _isSaving = false;
+
+  bool get _isEdit => widget.existingExpense != null;
+
+  bool get _lockEventLink =>
+      !_isEdit &&
+      widget.initialEventId != null &&
+      widget.initialEventId!.isNotEmpty;
+
+  Currency get _currency => Currency.fromCodeOrEur(widget.plan.currency);
 
   @override
   void initState() {
@@ -66,7 +63,6 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       _conceptController.text = ed.concept ?? '';
       _selectedDate = ed.expenseDate;
       _selectedPayerId = ed.payerId;
-      _selectedParticipantIds.clear();
       _selectedParticipantIds.addAll(ed.participantIds);
       _equalSplit = ed.equalSplit;
       _selectedEventId = ed.eventId;
@@ -113,7 +109,8 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
   }
 
   void _initParticipants() {
-    final participationsAsync = ref.read(planParticipantsProvider(widget.plan.id!));
+    final participationsAsync =
+        ref.read(planParticipantsProvider(widget.plan.id!));
     participationsAsync.whenData((list) async {
       final real = list.where((p) => p.role != 'observer').toList();
       final ids = real.map((p) => p.userId).toSet();
@@ -121,9 +118,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       if (mounted && _selectedParticipantIds.isEmpty) {
         setState(() {
           _selectedParticipantIds.addAll(ids);
-          if (_selectedPayerId == null && ids.isNotEmpty) {
-            _selectedPayerId = ids.first;
-          }
+          _selectedPayerId ??= ids.isNotEmpty ? ids.first : null;
         });
       }
     });
@@ -152,6 +147,20 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
     }
   }
 
+  void _onAmountChanged(String _) {
+    if (_equalSplit && _selectedParticipantIds.isNotEmpty) {
+      final amount =
+          double.tryParse(_amountController.text.replaceAll(',', '.'));
+      if (amount != null && amount > 0) {
+        final per = amount / _selectedParticipantIds.length;
+        for (final uid in _selectedParticipantIds) {
+          _customAmountControllers[uid]?.text = per.toStringAsFixed(2);
+        }
+      }
+    }
+    setState(() {});
+  }
+
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -162,10 +171,85 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
     if (picked != null) setState(() => _selectedDate = picked);
   }
 
+  Future<void> _openCalculator() async {
+    final result = await showDialog<double>(
+      context: context,
+      builder: (ctx) => _CalculatorDialog(
+        initialValue:
+            double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0,
+      ),
+    );
+    if (result != null && mounted) {
+      _amountController.text = result.toStringAsFixed(2);
+      _onAmountChanged(_amountController.text);
+    }
+  }
+
   String _userName(String userId) =>
       _resolvedNames[userId] ?? widget.userIdToName?[userId] ?? userId;
 
+  Future<void> _pickPayer(List<String> participantIds) async {
+    final loc = AppLocalizations.of(context)!;
+    if (participantIds.isEmpty) return;
+    final picked = await IosFormPickerSheet.show<String>(
+      context: context,
+      title: loc.paymentsExpensePayer,
+      options: participantIds
+          .map(
+            (id) => IosFormPickerOption(
+              value: id,
+              title: _userName(id),
+              selected: id == _selectedPayerId,
+            ),
+          )
+          .toList(),
+    );
+    if (picked != null && mounted) setState(() => _selectedPayerId = picked);
+  }
+
+  Future<void> _pickEvent(Map<String, String> eventTitles) async {
+    final loc = AppLocalizations.of(context)!;
+    final options = <IosFormPickerOption<String?>>[
+      IosFormPickerOption(
+        value: null,
+        title: loc.paymentsExpenseNoEventOption,
+        selected: _selectedEventId == null || _selectedEventId!.isEmpty,
+      ),
+      ...eventTitles.entries.map(
+        (e) => IosFormPickerOption(
+          value: e.key,
+          title: e.value,
+          selected: e.key == _selectedEventId,
+        ),
+      ),
+    ];
+    if (_selectedEventId != null &&
+        _selectedEventId!.isNotEmpty &&
+        !eventTitles.containsKey(_selectedEventId)) {
+      options.add(
+        IosFormPickerOption(
+          value: _selectedEventId,
+          title: loc.paymentsExpenseUnknownLinkedEvent,
+          selected: true,
+        ),
+      );
+    }
+    final picked = await IosFormPickerSheet.show<String?>(
+      context: context,
+      title: loc.paymentsExpenseLinkedEventLabel,
+      options: options,
+    );
+    if (mounted) setState(() => _selectedEventId = picked);
+  }
+
+  String _eventDisplayValue(Map<String, String> eventTitles, AppLocalizations loc) {
+    final id = _selectedEventId;
+    if (id == null || id.isEmpty) return loc.paymentsExpenseNoEventOption;
+    return eventTitles[id] ?? loc.paymentsExpenseUnknownLinkedEvent;
+  }
+
   Future<void> _save() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
     final loc = AppLocalizations.of(context)!;
     final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
@@ -207,24 +291,31 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              loc.snackExpenseSplitSumMismatch(sum.toStringAsFixed(2), amount.toStringAsFixed(2)),
+              loc.snackExpenseSplitSumMismatch(
+                sum.toStringAsFixed(2),
+                amount.toStringAsFixed(2),
+              ),
             ),
           ),
         );
         return;
       }
     }
+    setState(() => _isSaving = true);
     final currentUser = ref.read(currentUserProvider);
-    final linkedEventId = _selectedEventId != null && _selectedEventId!.isNotEmpty
-        ? _selectedEventId
-        : null;
+    final linkedEventId =
+        _selectedEventId != null && _selectedEventId!.isNotEmpty
+            ? _selectedEventId
+            : null;
     final existing = widget.existingExpense;
     final expense = PlanExpense(
       id: existing?.id,
       planId: widget.plan.id!,
       payerId: _selectedPayerId!,
       amount: amount,
-      concept: _conceptController.text.isEmpty ? null : _conceptController.text.trim(),
+      concept: _conceptController.text.isEmpty
+          ? null
+          : _conceptController.text.trim(),
       expenseDate: _selectedDate,
       participantIds: _selectedParticipantIds.toList(),
       equalSplit: _equalSplit,
@@ -235,443 +326,370 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       eventId: linkedEventId,
     );
     final expenseService = ref.read(expenseServiceProvider);
-    if (existing?.id != null) {
-      final ok = await expenseService.updateExpense(expense);
-      if (!mounted) return;
-      if (ok) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.paymentsExpenseUpdated),
-            backgroundColor: Colors.green,
-          ),
-        );
-        widget.onSaved?.call();
-        Navigator.of(context).pop();
+    try {
+      if (existing?.id != null) {
+        final ok = await expenseService.updateExpense(expense);
+        if (!mounted) return;
+        if (ok) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(loc.paymentsExpenseUpdated),
+              backgroundColor: Colors.green,
+            ),
+          );
+          widget.onSaved?.call();
+          Navigator.of(context).pop();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.paymentsExpenseSaveError)),
+          );
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.paymentsExpenseSaveError),
-          ),
-        );
+        final id = await expenseService.createExpense(expense);
+        if (!mounted) return;
+        if (id != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(loc.paymentsExpenseSaved),
+              backgroundColor: Colors.green,
+            ),
+          );
+          widget.onSaved?.call();
+          Navigator.of(context).pop();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.paymentsExpenseSaveError)),
+          );
+        }
       }
-      return;
-    }
-    final id = await expenseService.createExpense(expense);
-    if (!mounted) return;
-    if (id != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.paymentsExpenseSaved),
-          backgroundColor: Colors.green,
-        ),
-      );
-      widget.onSaved?.call();
-      Navigator.of(context).pop();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.paymentsExpenseSaveError),
-        ),
-      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final participationsAsync = ref.watch(planParticipantsProvider(widget.plan.id!));
+    final participationsAsync =
+        ref.watch(planParticipantsProvider(widget.plan.id!));
+    final eventsAsync = ref.watch(planEventsStreamProvider(widget.plan.id!));
+    final pad = MediaQuery.sizeOf(context).width < 600 ? 12.0 : 16.0;
+    final gap = 16.0;
 
-    final isEdit = widget.existingExpense != null;
     return Scaffold(
-      backgroundColor: _cPageBg,
-      appBar: AppBar(
-        title: Text(
-          isEdit ? loc.paymentsEditExpense : loc.paymentsAddExpense,
-          style: AppTypography.bodyStyle.copyWith(
-            fontSize: 16,
-            color: _cTextPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: _cPageBg,
-        foregroundColor: _cTextPrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(_sp12),
+      backgroundColor: IosFormColors.pageBg,
+      body: SafeArea(
+        child: Material(
+          color: IosFormColors.pageBg,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (widget.initialEventId != null &&
-                  widget.initialEventId!.isNotEmpty &&
-                  widget.existingExpense == null) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColorScheme.color3.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColorScheme.color3.withValues(alpha: 0.5)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.info_outline, color: AppColorScheme.color3, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          loc.paymentsExpenseFromEventPayerHint,
-                          style: AppTypography.bodyStyle.copyWith(fontSize: 13, color: Colors.white.withValues(alpha: 0.9)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: _sp16),
-              ],
-              Text(
-                loc.paymentsExpensePayer,
-                style: AppTypography.bodyStyle.copyWith(
-                  fontSize: _fsSectionTitle,
-                  fontWeight: FontWeight.w600,
-                  color: _cTextPrimary,
-                ),
+              IosFormEditBar(
+                editing: true,
+                canEdit: true,
+                saving: _isSaving,
+                centeredTitle: true,
+                modalIconActions: true,
+                title: _isEdit ? loc.paymentsEditExpense : loc.paymentsAddExpenseTitle,
+                editLabel: loc.edit,
+                cancelLabel: loc.cancel,
+                saveLabel: loc.save,
+                onEdit: () {},
+                onCancel: () => Navigator.of(context).pop(),
+                onSave: _save,
               ),
-                const SizedBox(height: _sp8),
-                participationsAsync.when(
-                  data: (list) {
-                    final real = list.where((p) => p.role != 'observer').toList();
-                    return DropdownButtonFormField<String>(
-                      initialValue: _selectedPayerId,
-                      isExpanded: true,
-                      decoration: _inputDecoration(
-                        prefixIcon: const Icon(Icons.person, color: _cTextSecondary),
-                      ),
-                      hint: const Text('Selecciona'),
-                      items: real
-                          .map((p) => DropdownMenuItem<String>(
-                                value: p.userId,
-                                child: Text(
-                                  _userName(p.userId),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ))
-                          .toList(),
-                      onChanged: (v) => setState(() => _selectedPayerId = v),
-                      validator: (v) => v == null ? 'Selecciona quién pagó' : null,
-                    );
-                  },
-                  loading: () => const CircularProgressIndicator(),
-                  error: (e, _) => Text('Error: $e'),
-                ),
-                const SizedBox(height: _sp16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _amountController,
-                        decoration: InputDecoration(
-                          labelText: '${loc.paymentsExpenseAmount} *',
-                          prefixIcon: const Icon(Icons.euro, color: _cTextSecondary),
-                          border: const OutlineInputBorder(),
-                          filled: true,
-                          fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        onChanged: (_) {
-                          if (_equalSplit && _selectedParticipantIds.isNotEmpty) {
-                            final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
-                            if (amount != null && amount > 0) {
-                              final per = amount / _selectedParticipantIds.length;
-                              for (final uid in _selectedParticipantIds) {
-                                _customAmountControllers[uid]?.text = per.toStringAsFixed(2);
-                              }
-                            }
-                          }
-                          setState(() {});
-                        },
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return '${loc.paymentsExpenseAmount} requerido';
-                          final n = double.tryParse(v.replaceAll(',', '.'));
-                          if (n == null || n <= 0) return 'Importe inválido';
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.calculate),
-                      tooltip: loc.paymentsCalculator,
-                      onPressed: () async {
-                        final result = await showDialog<double>(
-                          context: context,
-                          builder: (ctx) => _CalculatorDialog(
-                            initialValue: double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0,
-                          ),
-                        );
-                        if (result != null && mounted) {
-                          _amountController.text = result.toStringAsFixed(2);
-                          setState(() {});
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: _sp16),
-                TextFormField(
-                  controller: _conceptController,
-                  decoration: InputDecoration(
-                    labelText: loc.paymentsExpenseConcept,
-                    prefixIcon: const Icon(Icons.description, color: _cTextSecondary),
-                    border: const OutlineInputBorder(),
-                    filled: true,
-                    fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
-                  ),
-                ),
-                const SizedBox(height: _sp16),
-                InkWell(
-                  onTap: _selectDate,
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: loc.paymentsExpenseDate,
-                      prefixIcon: const Icon(Icons.calendar_today, color: _cTextSecondary),
-                      border: const OutlineInputBorder(),
-                      filled: true,
-                      fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
-                    ),
-                    child: Text(DateFormat('dd/MM/yyyy').format(_selectedDate), style: AppTypography.bodyStyle),
-                  ),
-                ),
-                const SizedBox(height: _sp16),
-                ref.watch(planEventsStreamProvider(widget.plan.id!)).when(
-                      data: (eventList) {
-                        var withIds = eventList
-                            .where((e) => e.id != null && e.id!.isNotEmpty)
-                            .toList()
-                          ..sort((a, b) => a.date.compareTo(b.date));
-                        final seen = <String>{};
-                        final items = <DropdownMenuItem<String?>>[
-                          DropdownMenuItem<String?>(
-                            value: null,
-                            child: Text(loc.paymentsExpenseNoEventOption),
-                          ),
-                        ];
-                        for (final e in withIds) {
-                          final id = e.id!;
-                          if (seen.contains(id)) continue;
-                          seen.add(id);
-                          final raw = e.description.trim();
-                          final label =
-                              raw.isEmpty ? loc.paymentsExpenseEventFallbackTitle : raw;
-                          final short = label.length > 48
-                              ? '${label.substring(0, 48)}…'
-                              : label;
-                          items.add(
-                            DropdownMenuItem<String?>(
-                              value: id,
-                              child:
-                                  Text(short, overflow: TextOverflow.ellipsis),
-                            ),
-                          );
-                        }
-                        final sel = _selectedEventId;
-                        if (sel != null &&
-                            sel.isNotEmpty &&
-                            !seen.contains(sel)) {
-                          items.add(
-                            DropdownMenuItem<String?>(
-                              value: sel,
-                              child: Text(
-                                loc.paymentsExpenseUnknownLinkedEvent,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          );
-                        }
-                        String? dropdownValue;
-                        if (sel != null &&
-                            sel.isNotEmpty &&
-                            items.any((i) => i.value == sel)) {
-                          dropdownValue = sel;
-                        }
-                        return DropdownButtonFormField<String?>(
-                          initialValue: dropdownValue,
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            labelText: loc.paymentsExpenseLinkedEventLabel,
-                            prefixIcon: const Icon(Icons.event, color: _cTextSecondary),
-                            border: const OutlineInputBorder(),
-                            filled: true,
-                            fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
-                          ),
-                          items: items,
-                          onChanged: (v) =>
-                              setState(() => _selectedEventId = v),
-                        );
-                      },
-                      loading: () => const LinearProgressIndicator(),
-                      error: (_, __) => const SizedBox.shrink(),
-                    ),
-                const SizedBox(height: _sp16),
-                Text(
-                  loc.paymentsExpenseSplitBetween,
-                  style: AppTypography.bodyStyle.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: _fsSectionTitle,
-                    color: _cTextPrimary,
-                  ),
-                ),
-                const SizedBox(height: _sp8),
-                participationsAsync.when(
-                  data: (list) {
-                    final real = list.where((p) => p.role != 'observer').toList();
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(pad, pad, pad, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        ...real
-                            .map((p) => CheckboxListTile(
-                                  title: Text(_userName(p.userId), overflow: TextOverflow.ellipsis),
-                                  value: _selectedParticipantIds.contains(p.userId),
-                                  onChanged: (v) {
-                                    setState(() {
-                                      if (v == true) {
-                                        _selectedParticipantIds.add(p.userId);
-                                      } else {
-                                        _selectedParticipantIds.remove(p.userId);
-                                        _customAmountControllers.remove(p.userId)?.dispose();
-                                      }
-                                    });
-                                  },
-                                  controlAffinity: ListTileControlAffinity.leading,
-                                  dense: true,
-                                )),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                loc.paymentsExpenseSplitEqual,
-                                style: AppTypography.bodyStyle,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Switch(
-                              value: !_equalSplit,
-                              onChanged: (v) {
-                                setState(() {
-                                  _equalSplit = !v;
-                                  if (_equalSplit) {
-                                    for (final c in _customAmountControllers.values) {
-                                      c.dispose();
-                                    }
-                                    _customAmountControllers.clear();
-                                  } else {
-                                    final amount = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0;
-                                    final n = _selectedParticipantIds.isEmpty ? 1 : _selectedParticipantIds.length;
-                                    final per = n > 0 ? amount / n : 0.0;
-                                    _ensureCustomControllers(_selectedParticipantIds.toList(), per);
-                                  }
-                                });
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                loc.paymentsExpenseSplitCustom,
-                                style: AppTypography.bodyStyle,
-                                textAlign: TextAlign.right,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (!_equalSplit && _selectedParticipantIds.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          ...() {
-                            final amount = double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0;
-                            final n = _selectedParticipantIds.length;
-                            final per = n > 0 ? amount / n : 0.0;
-                            _ensureCustomControllers(_selectedParticipantIds.toList(), per);
-                            return _selectedParticipantIds.map((uid) {
-                              final controller = _customAmountControllers[uid]!;
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Row(
+                        if (_lockEventLink) ...[
+                          IosFormFooter(loc.paymentsExpenseFromEventPayerHint),
+                          SizedBox(height: gap),
+                        ],
+                        participationsAsync.when(
+                          data: (list) {
+                            final real =
+                                list.where((p) => p.role != 'observer').toList();
+                            final participantIds =
+                                real.map((p) => p.userId).toList();
+                            return eventsAsync.when(
+                              data: (eventList) {
+                                final eventTitles = <String, String>{};
+                                for (final e in eventList) {
+                                  final id = e.id;
+                                  if (id == null || id.isEmpty) continue;
+                                  final raw = e.description.trim();
+                                  eventTitles[id] = raw.isEmpty
+                                      ? loc.paymentsExpenseEventFallbackTitle
+                                      : raw;
+                                }
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                                    SizedBox(
-                                      width: 120,
-                                      child: Text(_userName(uid), overflow: TextOverflow.ellipsis, style: AppTypography.bodyStyle.copyWith(fontSize: 13)),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: TextFormField(
-                                        controller: controller,
-                                        decoration: _inputDecoration(
-                                          prefixText: '€ ',
-                                          isDense: true,
+                                    IosGroupedCard(
+                                      children: [
+                                        IosSettingsRow(
+                                          label: loc.paymentsExpensePayer,
+                                          value: _selectedPayerId != null
+                                              ? _userName(_selectedPayerId!)
+                                              : '—',
+                                          chevron: true,
+                                          onTap: () =>
+                                              _pickPayer(participantIds),
                                         ),
-                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                        onChanged: (_) => setState(() {}),
-                                      ),
+                                        const IosRowSeparator(),
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: IosEditField(
+                                                label:
+                                                    '${loc.paymentsExpenseAmount} (${_currency.symbol})',
+                                                controller: _amountController,
+                                                keyboardType: const TextInputType
+                                                    .numberWithOptions(
+                                                  decimal: true,
+                                                ),
+                                                onChanged: _onAmountChanged,
+                                                validator: (v) {
+                                                  if (v == null || v.isEmpty) {
+                                                    return loc
+                                                        .snackInvalidMonetaryAmount;
+                                                  }
+                                                  final n = double.tryParse(
+                                                    v.replaceAll(',', '.'),
+                                                  );
+                                                  if (n == null || n <= 0) {
+                                                    return loc
+                                                        .snackInvalidMonetaryAmount;
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 6,
+                                                right: 4,
+                                              ),
+                                              child: IconButton(
+                                                tooltip: loc.paymentsCalculator,
+                                                onPressed: _openCalculator,
+                                                icon: const Icon(
+                                                  Icons.calculate_outlined,
+                                                  color: IosFormColors
+                                                      .textSecondary,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const IosRowSeparator(),
+                                        IosEditField(
+                                          label: loc.paymentsExpenseConcept,
+                                          controller: _conceptController,
+                                        ),
+                                        const IosRowSeparator(),
+                                        IosSettingsRow(
+                                          label: loc.paymentsExpenseDate,
+                                          value: DateFormat('dd/MM/yyyy')
+                                              .format(_selectedDate),
+                                          chevron: true,
+                                          onTap: _selectDate,
+                                        ),
+                                        if (!_lockEventLink) ...[
+                                          const IosRowSeparator(),
+                                          IosSettingsRow(
+                                            label: loc
+                                                .paymentsExpenseLinkedEventLabel,
+                                            value: _eventDisplayValue(
+                                              eventTitles,
+                                              loc,
+                                            ),
+                                            chevron: true,
+                                            onTap: () =>
+                                                _pickEvent(eventTitles),
+                                          ),
+                                        ],
+                                      ],
                                     ),
+                                    SizedBox(height: gap),
+                                    IosSectionLabel(
+                                      loc.paymentsExpenseSplitBetween,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    IosGroupedCard(
+                                      children: [
+                                        IosSwitchRow(
+                                          label: loc.paymentsExpenseSplitCustom,
+                                          value: !_equalSplit,
+                                          onChanged: (custom) {
+                                            setState(() {
+                                              _equalSplit = !custom;
+                                              if (_equalSplit) {
+                                                for (final c in _customAmountControllers
+                                                    .values) {
+                                                  c.dispose();
+                                                }
+                                                _customAmountControllers.clear();
+                                              } else {
+                                                final amount = double.tryParse(
+                                                      _amountController.text
+                                                          .replaceAll(',', '.'),
+                                                    ) ??
+                                                    0;
+                                                final n = _selectedParticipantIds
+                                                        .isEmpty
+                                                    ? 1
+                                                    : _selectedParticipantIds
+                                                        .length;
+                                                final per =
+                                                    n > 0 ? amount / n : 0.0;
+                                                _ensureCustomControllers(
+                                                  _selectedParticipantIds
+                                                      .toList(),
+                                                  per,
+                                                );
+                                              }
+                                            });
+                                          },
+                                        ),
+                                        if (!_equalSplit &&
+                                            _selectedParticipantIds
+                                                .isNotEmpty) ...[
+                                          const IosRowSeparator(),
+                                          ...() {
+                                            final amount = double.tryParse(
+                                                  _amountController.text
+                                                      .replaceAll(',', '.'),
+                                                ) ??
+                                                0;
+                                            final n =
+                                                _selectedParticipantIds.length;
+                                            final per =
+                                                n > 0 ? amount / n : 0.0;
+                                            _ensureCustomControllers(
+                                              _selectedParticipantIds.toList(),
+                                              per,
+                                            );
+                                            return _selectedParticipantIds
+                                                .map((uid) {
+                                              final controller =
+                                                  _customAmountControllers[
+                                                      uid]!;
+                                              return Column(
+                                                children: [
+                                                  Padding(
+                                                    padding: EdgeInsets.only(
+                                                      left: IosFormColors
+                                                          .nestPaddingLeft(1),
+                                                    ),
+                                                    child: IosEditField(
+                                                      label: _userName(uid),
+                                                      controller: controller,
+                                                      keyboardType:
+                                                          const TextInputType
+                                                              .numberWithOptions(
+                                                        decimal: true,
+                                                      ),
+                                                      onChanged: (_) =>
+                                                          setState(() {}),
+                                                    ),
+                                                  ),
+                                                  if (uid !=
+                                                      _selectedParticipantIds
+                                                          .last)
+                                                    IosRowSeparator(
+                                                      nestLevel: 1,
+                                                    ),
+                                                ],
+                                              );
+                                            });
+                                          }(),
+                                        ],
+                                        const IosRowSeparator(),
+                                        for (var i = 0; i < real.length; i++) ...[
+                                          if (i > 0) const IosRowSeparator(),
+                                          IosCheckRow(
+                                            label: _userName(real[i].userId),
+                                            selected: _selectedParticipantIds
+                                                .contains(real[i].userId),
+                                            onTap: () {
+                                              setState(() {
+                                                final uid = real[i].userId;
+                                                if (_selectedParticipantIds
+                                                    .contains(uid)) {
+                                                  _selectedParticipantIds
+                                                      .remove(uid);
+                                                  _customAmountControllers
+                                                      .remove(uid)
+                                                      ?.dispose();
+                                                } else {
+                                                  _selectedParticipantIds
+                                                      .add(uid);
+                                                }
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    if (_equalSplit &&
+                                        _selectedParticipantIds.isNotEmpty)
+                                      Builder(
+                                        builder: (context) {
+                                          final amount = double.tryParse(
+                                            _amountController.text
+                                                .replaceAll(',', '.'),
+                                          );
+                                          if (amount == null || amount <= 0) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          final per = amount /
+                                              _selectedParticipantIds.length;
+                                          return IosFormFooter(
+                                            '${loc.paymentsExpensePerPerson}: ${per.toStringAsFixed(2)} ${_currency.symbol}',
+                                          );
+                                        },
+                                      ),
                                   ],
+                                );
+                              },
+                              loading: () => Padding(
+                                padding: const EdgeInsets.all(32),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: IosFormColors.accent,
+                                    strokeWidth: 2,
+                                  ),
                                 ),
-                              );
-                            });
-                          }(),
-                        ],
-                        if (_equalSplit && _selectedParticipantIds.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Builder(
-                            builder: (context) {
-                              final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
-                              if (amount == null || amount <= 0) return const SizedBox.shrink();
-                              final per = amount / _selectedParticipantIds.length;
-                              return Text(
-                                '${loc.paymentsExpensePerPerson}: ${per.toStringAsFixed(2)} €',
-                                style: AppTypography.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              );
-                            },
+                              ),
+                              error: (_, __) => IosFormFooter(
+                                loc.paymentsExpenseSaveError,
+                              ),
+                            );
+                          },
+                          loading: () => Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: IosFormColors.accent,
+                                strokeWidth: 2,
+                              ),
+                            ),
                           ),
-                        ],
+                          error: (_, __) => IosFormFooter(
+                            loc.paymentsExpenseSaveError,
+                          ),
+                        ),
                       ],
-                    );
-                  },
-                  loading: () => const CircularProgressIndicator(),
-                  error: (e, _) => Text('Error: $e'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(_sp12),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(loc.cancel),
-                ),
-              ),
-              const SizedBox(width: _sp12),
-              Expanded(
-                child: FilledButton(
-                  onPressed: _save,
-                  child: Text(loc.save),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -680,67 +698,31 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       ),
     );
   }
-
-  InputDecoration _inputDecoration({
-    Widget? prefixIcon,
-    String? prefixText,
-    bool isDense = false,
-  }) {
-    return InputDecoration(
-      prefixIcon: prefixIcon,
-      prefixText: prefixText,
-      isDense: isDense,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColorScheme.color2, width: 1.5),
-      ),
-      filled: true,
-      fillColor: _cTextPrimary.withValues(alpha: _aSurfaceMuted),
-    );
-  }
 }
 
 /// Calculadora simple para obtener un importe y aplicarlo al campo de gasto.
 class _CalculatorDialog extends StatefulWidget {
-  final double initialValue;
-
   const _CalculatorDialog({this.initialValue = 0});
+
+  final double initialValue;
 
   @override
   State<_CalculatorDialog> createState() => _CalculatorDialogState();
 }
 
 class _CalculatorDialogState extends State<_CalculatorDialog> {
-  static const Color _cPageBg = Color(0xFF111827);
-  static const Color _cSurfaceBg = Color(0xFF1F2937);
-  static const Color _cTextPrimary = Colors.white;
-  static const Color _cTextSecondary = Colors.white70;
-  static const double _aBorderStrong = 0.12;
-
   late String _display;
-  double? _result;
 
   @override
   void initState() {
     super.initState();
-    _display = widget.initialValue > 0 ? widget.initialValue.toStringAsFixed(2) : '0';
+    _display = widget.initialValue > 0
+        ? widget.initialValue.toStringAsFixed(2)
+        : '0';
   }
 
   void _append(String s) {
     setState(() {
-      if (_result != null) {
-        _display = s;
-        _result = null;
-        return;
-      }
       if (s == '.' && _display.contains('.')) return;
       if (s == '0' && _display == '0') return;
       if (s != '.' && _display == '0') {
@@ -751,40 +733,34 @@ class _CalculatorDialogState extends State<_CalculatorDialog> {
     });
   }
 
-  void _clear() {
-    setState(() {
-      _display = '0';
-      _result = null;
-    });
-  }
+  void _clear() => setState(() => _display = '0');
 
   void _backspace() {
     setState(() {
-      if (_display.length <= 1) {
-        _display = '0';
-      } else {
-        _display = _display.substring(0, _display.length - 1);
-      }
-      _result = null;
+      _display =
+          _display.length <= 1 ? '0' : _display.substring(0, _display.length - 1);
     });
   }
 
   void _apply() {
     final v = double.tryParse(_display.replaceAll(',', '.'));
-    if (v != null && v >= 0) {
-      Navigator.of(context).pop(v);
-    }
+    if (v != null && v >= 0) Navigator.of(context).pop(v);
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return AlertDialog(
-      backgroundColor: _cPageBg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
+      backgroundColor: IosFormColors.groupedBg,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      title: Text(
+        loc.paymentsCalculator,
+        style: const TextStyle(
+          color: IosFormColors.textPrimary,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+        ),
       ),
-      title: Text(AppLocalizations.of(context)!.paymentsCalculator),
       content: SizedBox(
         width: 260,
         child: Column(
@@ -793,16 +769,16 @@ class _CalculatorDialogState extends State<_CalculatorDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
-                color: _cSurfaceBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
+                color: IosFormColors.pageBg,
+                borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.centerRight,
               child: Text(
                 _display,
-                style: AppTypography.titleStyle.copyWith(
+                style: const TextStyle(
+                  color: IosFormColors.textPrimary,
                   fontSize: 24,
-                  color: _cTextPrimary,
+                  fontWeight: FontWeight.w500,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -836,40 +812,44 @@ class _CalculatorDialogState extends State<_CalculatorDialog> {
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
-            'Cancelar',
-            style: AppTypography.bodyStyle.copyWith(color: _cTextSecondary),
+            loc.cancel,
+            style: TextStyle(color: IosFormColors.accent),
           ),
         ),
-        FilledButton(
+        TextButton(
           onPressed: _apply,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColorScheme.color2,
-            foregroundColor: _cTextPrimary,
+          child: Text(
+            loc.save,
+            style: TextStyle(
+              color: IosFormColors.accent,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          child: const Text('Aplicar'),
         ),
       ],
     );
   }
 
-  Widget _calcButton(String label, VoidCallback onPressed, {bool fullWidth = false}) {
+  Widget _calcButton(String label, VoidCallback onPressed,
+      {bool fullWidth = false}) {
     return SizedBox(
       width: fullWidth ? 120 : 56,
       height: 48,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _cSurfaceBg,
-          foregroundColor: _cTextPrimary,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: _cTextPrimary.withValues(alpha: _aBorderStrong)),
+      child: Material(
+        color: IosFormColors.pageBg,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: Center(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: IosFormColors.textPrimary,
+                fontSize: 17,
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.bodyStyle.copyWith(fontSize: 13, color: _cTextPrimary),
         ),
       ),
     );

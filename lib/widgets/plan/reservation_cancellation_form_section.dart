@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/reservation_cancellation.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
-/// Opción de pagador para el dropdown (T273).
+/// Opción de pagador para el picker (T273).
 class ReservationPayerOption {
   final String userId;
   final String label;
@@ -13,8 +13,7 @@ class ReservationPayerOption {
   const ReservationPayerOption({required this.userId, required this.label});
 }
 
-/// Bloque «Reserva / cancelación» reutilizable en evento y alojamiento.
-/// Estilo alineado con el form de evento (compacto, campos en paralelo).
+/// Bloque «Reserva / cancelación» (evento y alojamiento) — Settings-only.
 class ReservationCancellationFormSection extends StatefulWidget {
   final ReservationCancellation? initial;
   final List<ReservationPayerOption> payers;
@@ -38,10 +37,6 @@ class ReservationCancellationFormSection extends StatefulWidget {
 
 class ReservationCancellationFormSectionState
     extends State<ReservationCancellationFormSection> {
-  static const Color _fieldSurface = Color(0xFF1F2937);
-  static const double _fieldRadius = 14;
-  static const double _gap = 10;
-
   late final TextEditingController _amountCtrl;
   late final TextEditingController _noteCtrl;
   late final TextEditingController _fixedFeeCtrl;
@@ -155,6 +150,152 @@ class ReservationCancellationFormSectionState
     return model.isEmpty ? null : model;
   }
 
+  String _moneyDisplay(TextEditingController ctrl) {
+    final raw = ctrl.text.trim();
+    if (raw.isEmpty) return '—';
+    return '$raw ${widget.currencyCode}';
+  }
+
+  String _percentDisplay(TextEditingController ctrl) {
+    final raw = ctrl.text.trim();
+    if (raw.isEmpty) return '—';
+    return raw.endsWith('%') ? raw : '$raw%';
+  }
+
+  Future<void> _editMoneyField({
+    required String title,
+    required TextEditingController controller,
+  }) async {
+    if (widget.readOnly) return;
+    final loc = AppLocalizations.of(context)!;
+    final temp = TextEditingController(text: controller.text);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: IosFormColors.groupedBg,
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: IosFormColors.textPrimary,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: TextField(
+          controller: temp,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+          ],
+          style: const TextStyle(color: IosFormColors.textPrimary, fontSize: 17),
+          decoration: InputDecoration(
+            hintText: '0',
+            suffixText: widget.currencyCode,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(loc.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, temp.text),
+            child: Text(loc.save),
+          ),
+        ],
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => temp.dispose());
+    if (!mounted || result == null) return;
+    setState(() => controller.text = result.trim());
+  }
+
+  Future<void> _editPercentField(TextEditingController controller) async {
+    if (widget.readOnly) return;
+    final loc = AppLocalizations.of(context)!;
+    final temp = TextEditingController(text: controller.text.replaceAll('%', ''));
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: IosFormColors.groupedBg,
+        title: Text(
+          loc.reservationFieldPercent,
+          style: const TextStyle(
+            color: IosFormColors.textPrimary,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: TextField(
+          controller: temp,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+          ],
+          style: const TextStyle(color: IosFormColors.textPrimary, fontSize: 17),
+          decoration: const InputDecoration(
+            hintText: '0',
+            suffixText: '%',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(loc.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, temp.text),
+            child: Text(loc.save),
+          ),
+        ],
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => temp.dispose());
+    if (!mounted || result == null) return;
+    setState(() => controller.text = result.trim());
+  }
+
+  Future<void> _openNoteEditor(AppLocalizations loc) async {
+    if (widget.readOnly) return;
+    final temp = TextEditingController(text: _noteCtrl.text);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: IosFormColors.groupedBg,
+        title: Text(
+          loc.reservationFieldNote,
+          style: const TextStyle(
+            color: IosFormColors.textPrimary,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: SizedBox(
+          width: 480,
+          child: TextField(
+            controller: temp,
+            minLines: 4,
+            maxLines: 8,
+            autofocus: true,
+            style: const TextStyle(color: IosFormColors.textPrimary, fontSize: 17),
+            decoration: InputDecoration(
+              hintText: loc.reservationGuaranteeNote,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(loc.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, temp.text),
+            child: Text(loc.save),
+          ),
+        ],
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => temp.dispose());
+    if (!mounted || result == null) return;
+    setState(() => _noteCtrl.text = result);
+  }
+
   Future<void> _pickDeadline(int tierIndex) async {
     if (widget.readOnly) return;
     final initial = tierIndex == 1
@@ -197,464 +338,140 @@ class ReservationCancellationFormSectionState
     return '$d $t';
   }
 
-  Future<void> _openReservationNotesEditor() async {
-    final loc = AppLocalizations.of(context)!;
-    final tempController = TextEditingController(text: _noteCtrl.text);
-    final result = await showDialog<String>(
+  String _statusLabel(AppLocalizations loc, String status) {
+    switch (status) {
+      case 'paid':
+        return loc.reservationStatusPaid;
+      case 'refunded':
+        return loc.reservationStatusRefunded;
+      case 'retained':
+        return loc.reservationStatusRetained;
+      case 'pending':
+      default:
+        return loc.reservationStatusPending;
+    }
+  }
+
+  String _payerLabel(AppLocalizations loc) {
+    if (_payerId == null) return loc.reservationPayerNone;
+    for (final p in widget.payers) {
+      if (p.userId == _payerId) return p.label;
+    }
+    return loc.reservationPayerNone;
+  }
+
+  String _timezoneLabel() {
+    final tz = _timezone;
+    if (tz == null || tz.isEmpty) return '—';
+    return TimezoneService.getTimezoneDisplayName(tz);
+  }
+
+  String _reminderLabel(AppLocalizations loc, [String? preset]) {
+    switch (preset ?? _reminderPreset) {
+      case CancellationReminderPreset.none:
+        return loc.reservationReminderNone;
+      case CancellationReminderPreset.day:
+        return loc.reservationReminderDayOf;
+      case CancellationReminderPreset.h24:
+        return loc.reservationReminder24h;
+      case CancellationReminderPreset.h24Day:
+        return loc.reservationReminder24hAndDay;
+      case CancellationReminderPreset.h48:
+        return loc.reservationReminder48h;
+      case CancellationReminderPreset.h48Day:
+        return loc.reservationReminder48hAndDay;
+      case CancellationReminderPreset.h168:
+        return loc.reservationReminder7d;
+      case CancellationReminderPreset.h168Day:
+        return loc.reservationReminder7dAndDay;
+      default:
+        return loc.reservationReminderNone;
+    }
+  }
+
+  Future<void> _pickStatus(AppLocalizations loc) async {
+    if (widget.readOnly) return;
+    final picked = await IosFormPickerSheet.show<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF111827),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          loc.reservationGuaranteeNote,
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+      title: loc.reservationGuaranteeStatus,
+      options: [
+        for (final s in const ['pending', 'paid', 'refunded', 'retained'])
+          IosFormPickerOption(
+            value: s,
+            title: _statusLabel(loc, s),
+            selected: _status == s,
           ),
-        ),
-        content: SizedBox(
-          width: 680,
-          child: TextField(
-            controller: tempController,
-            minLines: 8,
-            maxLines: 16,
-            autofocus: true,
-            style: GoogleFonts.poppins(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: loc.reservationGuaranteeNote,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(loc.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(tempController.text),
-            child: Text(loc.save),
-          ),
-        ],
-      ),
+      ],
     );
-    // Evitar dispose mientras el TextField del diálogo sigue montado.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      tempController.dispose();
-    });
-    if (!mounted || result == null) return;
-    setState(() {
-      _noteCtrl.text = result;
-    });
+    if (!mounted || picked == null) return;
+    setState(() => _status = picked);
   }
 
-  TextStyle get _labelOnBorderStyle => GoogleFonts.poppins(
-        fontSize: 11,
-        color: Colors.white70,
-        fontWeight: FontWeight.w500,
-      );
-
-  TextStyle get _valueStyle => GoogleFonts.poppins(
-        fontSize: 13,
-        color: Colors.white,
-        fontWeight: FontWeight.w500,
-        height: 1.2,
-      );
-
-  BoxDecoration get _borderedDecoration => BoxDecoration(
-        color: _fieldSurface,
-        borderRadius: BorderRadius.circular(_fieldRadius),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.12),
-          width: 1,
+  Future<void> _pickPayer(AppLocalizations loc) async {
+    if (widget.readOnly) return;
+    final picked = await IosFormPickerSheet.show<String>(
+      context: context,
+      title: loc.reservationGuaranteePayer,
+      options: [
+        IosFormPickerOption(
+          value: '',
+          title: loc.reservationPayerNone,
+          selected: _payerId == null,
         ),
-      );
-
-  InputDecoration _innerDec({String? hint, IconData? prefixIcon}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.white54),
-      prefixIcon: prefixIcon != null
-          ? Icon(prefixIcon, size: 18, color: Colors.white70)
-          : null,
-      border: InputBorder.none,
-      enabledBorder: InputBorder.none,
-      focusedBorder: InputBorder.none,
-      isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ...widget.payers.map(
+          (p) => IosFormPickerOption(
+            value: p.userId,
+            title: p.label,
+            selected: _payerId == p.userId,
+          ),
+        ),
+      ],
     );
+    if (!mounted || picked == null) return;
+    setState(() => _payerId = picked.isEmpty ? null : picked);
   }
 
-  /// Campo con etiqueta sobre el borde (mismo patrón que fecha/hora del evento).
-  Widget _labelOnBorder({
-    required String label,
-    required Widget child,
-    EdgeInsetsGeometry? padding,
-  }) {
-    return Container(
-      decoration: _borderedDecoration,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 12,
-            top: -7,
-            child: Container(
-              color: _fieldSurface,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(label, style: _labelOnBorderStyle),
-            ),
-          ),
-          Padding(
-            padding: padding ??
-                const EdgeInsets.only(top: 10, left: 4, right: 4, bottom: 4),
-            child: child,
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+  Future<void> _pickTimezone(AppLocalizations loc) async {
+    if (widget.readOnly) return;
     final tzList = TimezoneService.getCommonTimezones().toList();
     if (_timezone != null && !tzList.contains(_timezone)) {
       tzList.insert(0, _timezone!);
     }
-
-    return Theme(
-      data: Theme.of(context).copyWith(
-        dividerColor: Colors.transparent,
-        splashColor: Colors.transparent,
-      ),
-      child: Material(
-        color: _fieldSurface,
-        elevation: 1,
-        shadowColor: Colors.black.withValues(alpha: 0.18),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_fieldRadius),
-          side: BorderSide(
-            color: Colors.white.withValues(alpha: 0.12),
-            width: 1,
+    final picked = await IosFormPickerSheet.show<String>(
+      context: context,
+      title: loc.reservationItemTimezone,
+      options: [
+        for (final tz in tzList)
+          IosFormPickerOption(
+            value: tz,
+            title: TimezoneService.getTimezoneDisplayName(tz),
+            selected: _timezone == tz,
           ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: ExpansionTile(
-          initiallyExpanded: _expanded,
-          onExpansionChanged: (v) => setState(() => _expanded = v),
-          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          iconColor: Colors.white70,
-          collapsedIconColor: Colors.white70,
-          title: Text(
-            loc.reservationCancellationSectionTitle,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          subtitle: Text(
-            loc.reservationCancellationSectionSubtitle,
-            style: GoogleFonts.poppins(color: Colors.white60, fontSize: 12),
-          ),
-          children: [
-            AbsorbPointer(
-              absorbing: widget.readOnly,
-              child: Opacity(
-                opacity: widget.readOnly ? 0.7 : 1,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Garantía + estado
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 5,
-                          child: _labelOnBorder(
-                            label: loc.reservationGuaranteeAmount(
-                                widget.currencyCode),
-                            child: TextField(
-                              controller: _amountCtrl,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'[0-9.,]')),
-                              ],
-                              style: _valueStyle,
-                              decoration: _innerDec(
-                                hint: '0',
-                                prefixIcon: Icons.account_balance_wallet_outlined,
-                              ).copyWith(suffixText: widget.currencyCode),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: _gap),
-                        Expanded(
-                          flex: 5,
-                          child: _labelOnBorder(
-                            label: loc.reservationGuaranteeStatus,
-                            child: DropdownButtonFormField<String>(
-                              value: _status,
-                              isExpanded: true,
-                              isDense: true,
-                              dropdownColor: _fieldSurface,
-                              style: _valueStyle,
-                              decoration: _innerDec(),
-                              items: [
-                                DropdownMenuItem(
-                                    value: 'pending',
-                                    child: Text(loc.reservationStatusPending)),
-                                DropdownMenuItem(
-                                    value: 'paid',
-                                    child: Text(loc.reservationStatusPaid)),
-                                DropdownMenuItem(
-                                    value: 'refunded',
-                                    child:
-                                        Text(loc.reservationStatusRefunded)),
-                                DropdownMenuItem(
-                                    value: 'retained',
-                                    child:
-                                        Text(loc.reservationStatusRetained)),
-                              ],
-                              onChanged: (v) {
-                                if (v != null) setState(() => _status = v);
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: _gap),
-                    // Pagador + cargo fijo
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 6,
-                          child: _labelOnBorder(
-                            label: loc.reservationGuaranteePayer,
-                            child: DropdownButtonFormField<String>(
-                              value: _payerId != null &&
-                                      widget.payers
-                                          .any((p) => p.userId == _payerId)
-                                  ? _payerId
-                                  : null,
-                              isExpanded: true,
-                              isDense: true,
-                              dropdownColor: _fieldSurface,
-                              style: _valueStyle,
-                              decoration: _innerDec(
-                                prefixIcon: Icons.person_outline,
-                              ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: null,
-                                  child: Text(
-                                    loc.reservationPayerNone,
-                                    style: GoogleFonts.poppins(
-                                        color: Colors.white70, fontSize: 13),
-                                  ),
-                                ),
-                                ...widget.payers.map(
-                                  (p) => DropdownMenuItem(
-                                    value: p.userId,
-                                    child: Text(
-                                      p.label,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (v) => setState(() => _payerId = v),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: _gap),
-                        Expanded(
-                          flex: 4,
-                          child: _labelOnBorder(
-                            label: loc.reservationFixedFee(widget.currencyCode),
-                            child: TextField(
-                              controller: _fixedFeeCtrl,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'[0-9.,]')),
-                              ],
-                              style: _valueStyle,
-                              decoration: _innerDec(hint: '0')
-                                  .copyWith(suffixText: widget.currencyCode),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: _gap),
-                    // Nota (multilínea, como notas del evento)
-                    _labelOnBorder(
-                      label: loc.reservationGuaranteeNote,
-                      child: TextField(
-                        controller: _noteCtrl,
-                        minLines: 2,
-                        maxLines: 4,
-                        style: _valueStyle,
-                        decoration: _innerDec(prefixIcon: Icons.notes_outlined)
-                            .copyWith(
-                          alignLabelWithHint: true,
-                          suffixIcon: IconButton(
-                            tooltip: 'Ampliar',
-                            onPressed: widget.readOnly
-                                ? null
-                                : _openReservationNotesEditor,
-                            icon: const Icon(
-                              Icons.open_in_full,
-                              size: 18,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: _gap),
-                    // TZ + aviso
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 5,
-                          child: _labelOnBorder(
-                            label: loc.reservationItemTimezone,
-                            child: DropdownButtonFormField<String>(
-                              value: _timezone != null &&
-                                      tzList.contains(_timezone)
-                                  ? _timezone
-                                  : (tzList.isNotEmpty ? tzList.first : null),
-                              isExpanded: true,
-                              isDense: true,
-                              dropdownColor: _fieldSurface,
-                              style: _valueStyle,
-                              decoration: _innerDec(
-                                prefixIcon: Icons.public,
-                              ),
-                              items: tzList
-                                  .map(
-                                    (tz) => DropdownMenuItem(
-                                      value: tz,
-                                      child: Text(
-                                        TimezoneService.getTimezoneDisplayName(
-                                            tz),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (v) =>
-                                  setState(() => _timezone = v),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: _gap),
-                        Expanded(
-                          flex: 5,
-                          child: _labelOnBorder(
-                            label: loc.reservationReminderSchedule,
-                            child: DropdownButtonFormField<String>(
-                              value: _reminderPreset,
-                              isExpanded: true,
-                              isDense: true,
-                              dropdownColor: _fieldSurface,
-                              style: _valueStyle,
-                              decoration: _innerDec(
-                                prefixIcon: Icons.notifications_outlined,
-                              ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: CancellationReminderPreset.none,
-                                  child: Text(loc.reservationReminderNone),
-                                ),
-                                DropdownMenuItem(
-                                  value: CancellationReminderPreset.day,
-                                  child: Text(loc.reservationReminderDayOf),
-                                ),
-                                DropdownMenuItem(
-                                  value: CancellationReminderPreset.h24,
-                                  child: Text(loc.reservationReminder24h),
-                                ),
-                                DropdownMenuItem(
-                                  value: CancellationReminderPreset.h24Day,
-                                  child:
-                                      Text(loc.reservationReminder24hAndDay),
-                                ),
-                                DropdownMenuItem(
-                                  value: CancellationReminderPreset.h48,
-                                  child: Text(loc.reservationReminder48h),
-                                ),
-                                DropdownMenuItem(
-                                  value: CancellationReminderPreset.h48Day,
-                                  child:
-                                      Text(loc.reservationReminder48hAndDay),
-                                ),
-                                DropdownMenuItem(
-                                  value: CancellationReminderPreset.h168,
-                                  child: Text(loc.reservationReminder7d),
-                                ),
-                                DropdownMenuItem(
-                                  value: CancellationReminderPreset.h168Day,
-                                  child:
-                                      Text(loc.reservationReminder7dAndDay),
-                                ),
-                              ],
-                              onChanged: (v) {
-                                if (v != null) {
-                                  setState(() => _reminderPreset = v);
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: _gap),
-                    // Tramos (compactos, sin tarjeta anidada)
-                    _buildCompactTier(
-                      loc: loc,
-                      enabled: _tier1Enabled,
-                      onEnabled: (v) => setState(() => _tier1Enabled = v),
-                      label: loc.reservationTier1,
-                      deadline: _deadline1,
-                      onPickDeadline: () => _pickDeadline(1),
-                      pctCtrl: _pct1Ctrl,
-                    ),
-                    const SizedBox(height: 8),
-                    _buildCompactTier(
-                      loc: loc,
-                      enabled: _tier2Enabled,
-                      onEnabled: (v) => setState(() => _tier2Enabled = v),
-                      label: loc.reservationTier2,
-                      deadline: _deadline2,
-                      onPickDeadline: () => _pickDeadline(2),
-                      pctCtrl: _pct2Ctrl,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
+    if (!mounted || picked == null) return;
+    setState(() => _timezone = picked);
   }
 
-  Widget _buildCompactTier({
+  Future<void> _pickReminder(AppLocalizations loc) async {
+    if (widget.readOnly) return;
+    final picked = await IosFormPickerSheet.show<String>(
+      context: context,
+      title: loc.reservationReminderSchedule,
+      options: [
+        for (final p in CancellationReminderPreset.all)
+          IosFormPickerOption(
+            value: p,
+            title: _reminderLabel(loc, p),
+            selected: _reminderPreset == p,
+          ),
+      ],
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _reminderPreset = picked);
+  }
+
+  List<Widget> _tierRows({
     required AppLocalizations loc,
     required bool enabled,
     required ValueChanged<bool> onEnabled,
@@ -663,98 +480,159 @@ class ReservationCancellationFormSectionState
     required VoidCallback onPickDeadline,
     required TextEditingController pctCtrl,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return [
+      IosSwitchRow(
+        label: label,
+        value: enabled,
+        nestLevel: 1,
+        onChanged: widget.readOnly ? null : onEnabled,
+      ),
+      if (enabled) ...[
+        const IosRowSeparator(nestLevel: 2),
+        IosSettingsRow(
+          label: loc.reservationTierDeadlineShort,
+          value: _formatDeadline(deadline),
+          nestLevel: 2,
+          chevron: !widget.readOnly,
+          onTap: widget.readOnly ? null : onPickDeadline,
+        ),
+        const IosRowSeparator(nestLevel: 2),
+        IosSettingsRow(
+          label: loc.reservationFieldPercent,
+          value: _percentDisplay(pctCtrl),
+          nestLevel: 2,
+          chevron: !widget.readOnly,
+          onTap: widget.readOnly ? null : () => _editPercentField(pctCtrl),
+        ),
+      ],
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final canEdit = !widget.readOnly;
+    final notePreview = _noteCtrl.text.trim();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          width: 28,
-          height: 28,
-          child: Checkbox(
-            value: enabled,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-            onChanged: (v) => onEnabled(v ?? false),
-          ),
-        ),
-        const SizedBox(width: 4),
-        SizedBox(
-          width: 72,
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              color: Colors.white70,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+        IosGroupedCard(
+          children: [
+            IosCollapsibleHeader(
+              title: loc.reservationCancellationSectionTitle,
+              subtitle: loc.reservationCancellationSectionSubtitle,
+              expanded: _expanded,
+              onToggle: () => setState(() => _expanded = !_expanded),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          flex: 6,
-          child: Opacity(
-            opacity: enabled ? 1 : 0.45,
-            child: IgnorePointer(
-              ignoring: !enabled,
-              child: _labelOnBorder(
-                label: loc.reservationTierDeadlineShort,
-                padding: const EdgeInsets.only(
-                    top: 8, left: 2, right: 2, bottom: 2),
-                child: InkWell(
-                  onTap: onPickDeadline,
-                  borderRadius: BorderRadius.circular(10),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 10),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.event, size: 16, color: Colors.white70),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            _formatDeadline(deadline),
-                            style: _valueStyle.copyWith(fontSize: 12),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+            if (_expanded) ...[
+              const IosRowSeparator(),
+              IosGroupedCardCaption(loc.reservationGuaranteeLabel, nestLevel: 1),
+              IosSettingsRow(
+                label: loc.reservationFieldGuarantee,
+                value: _moneyDisplay(_amountCtrl),
+                nestLevel: 1,
+                chevron: canEdit,
+                onTap: canEdit
+                    ? () => _editMoneyField(
+                          title: loc.reservationFieldGuarantee,
+                          controller: _amountCtrl,
+                        )
+                    : null,
               ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 6),
-        SizedBox(
-          width: 72,
-          child: Opacity(
-            opacity: enabled ? 1 : 0.45,
-            child: IgnorePointer(
-              ignoring: !enabled,
-              child: _labelOnBorder(
-                label: loc.reservationRefundPercentShort,
-                padding: const EdgeInsets.only(
-                    top: 8, left: 2, right: 2, bottom: 2),
-                child: TextField(
-                  controller: pctCtrl,
-                  textAlign: TextAlign.center,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                  ],
-                  style: _valueStyle,
-                  decoration: _innerDec(hint: '%').copyWith(
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 10),
-                  ),
-                ),
+              const IosRowSeparator(nestLevel: 1),
+              IosSettingsRow(
+                label: loc.reservationFieldStatus,
+                value: _statusLabel(loc, _status),
+                nestLevel: 1,
+                chevron: canEdit,
+                onTap: canEdit ? () => _pickStatus(loc) : null,
               ),
+              const IosRowSeparator(nestLevel: 1),
+              IosSettingsRow(
+                label: loc.reservationFieldPayer,
+                value: _payerLabel(loc),
+                nestLevel: 1,
+                chevron: canEdit,
+                onTap: canEdit ? () => _pickPayer(loc) : null,
+              ),
+              const IosRowSeparator(nestLevel: 1),
+              IosSettingsRow(
+                label: loc.reservationFieldNote,
+                value: notePreview.isEmpty ? '—' : notePreview,
+                multiline: notePreview.length > 36,
+                nestLevel: 1,
+                chevron: canEdit,
+                onTap: canEdit ? () => _openNoteEditor(loc) : null,
+              ),
+              const IosRowSeparator(nestLevel: 1),
+              IosGroupedCardCaption(
+                loc.reservationCancellationPolicyLabel,
+                nestLevel: 1,
+              ),
+              IosSettingsRow(
+                label: loc.reservationFieldTimezone,
+                value: _timezoneLabel(),
+                nestLevel: 1,
+                chevron: canEdit,
+                onTap: canEdit ? () => _pickTimezone(loc) : null,
+              ),
+              const IosRowSeparator(nestLevel: 1),
+              IosSettingsRow(
+                label: loc.reservationFieldReminder,
+                value: _reminderLabel(loc),
+                nestLevel: 1,
+                chevron: canEdit,
+                onTap: canEdit ? () => _pickReminder(loc) : null,
+              ),
+            ],
+          ],
+        ),
+        if (_expanded) ...[
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: IosGroupedCard(
+              children: [
+                IosSettingsRow(
+                  label: loc.reservationFieldFixedFee,
+                  value: _moneyDisplay(_fixedFeeCtrl),
+                  nestLevel: 1,
+                  chevron: canEdit,
+                  onTap: canEdit
+                      ? () => _editMoneyField(
+                            title: loc.reservationFieldFixedFee,
+                            controller: _fixedFeeCtrl,
+                          )
+                      : null,
+                ),
+                const IosRowSeparator(nestLevel: 1),
+                ..._tierRows(
+                  loc: loc,
+                  enabled: _tier1Enabled,
+                  onEnabled: (v) => setState(() => _tier1Enabled = v),
+                  label: loc.reservationTier1,
+                  deadline: _deadline1,
+                  onPickDeadline: () => _pickDeadline(1),
+                  pctCtrl: _pct1Ctrl,
+                ),
+                const IosRowSeparator(nestLevel: 1),
+                ..._tierRows(
+                  loc: loc,
+                  enabled: _tier2Enabled,
+                  onEnabled: (v) => setState(() => _tier2Enabled = v),
+                  label: loc.reservationTier2,
+                  deadline: _deadline2,
+                  onPickDeadline: () => _pickDeadline(2),
+                  pctCtrl: _pct2Ctrl,
+                ),
+              ],
             ),
           ),
-        ),
+          IosFormFooter(loc.reservationFixedFeeHint, nestLevel: 1),
+          IosFormFooter(loc.reservationRefundPercentHint, nestLevel: 1),
+          IosFormFooter(loc.reservationReminderScheduleHint, nestLevel: 1),
+        ],
       ],
     );
   }

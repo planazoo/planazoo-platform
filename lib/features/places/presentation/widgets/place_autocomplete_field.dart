@@ -28,6 +28,8 @@ class PlaceAutocompleteField extends StatefulWidget {
   final String? hintText;
   /// Tamaño de fuente del texto del campo. Si null, usa el del tema.
   final double? fontSize;
+  /// Estilo del texto. Si se pasa, tiene prioridad sobre [fontSize] solo.
+  final TextStyle? style;
   /// Fondo del campo. Si no se pasa, usa el del tema. Transparent para integrar en contenedor (sin recuadro).
   final Color? fillColor;
   /// Borde del campo. Si no se pasa, usa OutlineInputBorder. InputBorder.none para quitar recuadro.
@@ -42,6 +44,12 @@ class PlaceAutocompleteField extends StatefulWidget {
   final bool preferNameAndAddressTwoLines;
   /// Líneas del campo de texto. Usar 2+ con [preferNameAndAddressTwoLines].
   final int maxLines;
+  /// Mínimo de líneas (p. ej. 1 con [maxLines] 2: crece al escribir, hint alineado con iconos).
+  final int? minLines;
+  /// Alineación vertical del texto (útil con iconos laterales).
+  final TextAlignVertical? textAlignVertical;
+  /// Si false, no muestra etiqueta flotante (útil con etiqueta externa estilo iOS D).
+  final bool showFloatingLabel;
   final FormFieldValidator<String>? validator;
 
   const PlaceAutocompleteField({
@@ -55,6 +63,7 @@ class PlaceAutocompleteField extends StatefulWidget {
     this.labelText,
     this.hintText,
     this.fontSize,
+    this.style,
     this.fillColor,
     this.border,
     this.prefixIcon,
@@ -62,6 +71,9 @@ class PlaceAutocompleteField extends StatefulWidget {
     this.preferDisplayName = false,
     this.preferNameAndAddressTwoLines = false,
     this.maxLines = 1,
+    this.minLines,
+    this.textAlignVertical,
+    this.showFloatingLabel = true,
     this.validator,
   });
 
@@ -290,13 +302,21 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
         controller: _controller,
         focusNode: _focusNode,
         validator: widget.validator,
-        style: widget.fontSize != null
-            ? TextStyle(fontSize: widget.fontSize)
-            : null,
+        style: widget.style ??
+            (widget.fontSize != null
+                ? TextStyle(fontSize: widget.fontSize)
+                : null),
         decoration: InputDecoration(
-          labelText: widget.labelText ?? loc.placeAddressLabel,
+          labelText: widget.showFloatingLabel
+              ? (widget.labelText ?? loc.placeAddressLabel)
+              : null,
+          floatingLabelBehavior: widget.showFloatingLabel
+              ? FloatingLabelBehavior.auto
+              : FloatingLabelBehavior.never,
           hintText: widget.hintText ?? loc.placeSearchHint,
-          prefixIcon: Icon(widget.prefixIcon ?? Icons.search),
+          prefixIcon: widget.prefixIcon == null && !widget.showFloatingLabel
+              ? null
+              : Icon(widget.prefixIcon ?? Icons.search),
           suffixIcon: _loading
               ? const Padding(
                   padding: EdgeInsets.all(12),
@@ -314,6 +334,11 @@ class _PlaceAutocompleteFieldState extends State<PlaceAutocompleteField> {
           focusedBorder: widget.border,
         ),
         maxLines: widget.maxLines,
+        minLines: widget.minLines,
+        // textAlignVertical solo aplica con maxLines == 1.
+        textAlignVertical: widget.maxLines == 1
+            ? (widget.textAlignVertical ?? TextAlignVertical.center)
+            : widget.textAlignVertical,
         onTap: () {
           final query = _controller.text.split('\n').first.trim();
           if (query.length >= 2 && _predictions.isEmpty && !_loading) {

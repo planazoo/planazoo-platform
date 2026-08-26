@@ -3,10 +3,9 @@
 **Estado:** ✅ Aplicado  
 **Versión:** 2.0  
 **Fecha:** Diciembre 2025  
-**Última actualización:** Febrero 2026  
-**UI Principal:** Sí
+**Última actualización:** Agosto 2026  
 
-**Implementación actual:** `AppTheme.darkTheme` y `AppColorScheme` en `lib/` (p. ej. `pg_dashboard_page.dart`, `pg_calendar_mobile_page.dart`, `pg_plan_detail_page.dart`, `wd_admin_insights_screen.dart`). Fondos `Colors.grey.shade800` y Poppins usados en dashboard y calendario.
+> **Formularios tipo ficha (plan / evento / alojamiento):** la norma canónica está en [`docs/guias/GUIA_UI.md`](../../guias/GUIA_UI.md) § tokens iOS + patrón D (view/edit). Implementación: `lib/widgets/common/ios_grouped_form.dart`.
 
 ---
 

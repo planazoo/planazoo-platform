@@ -49,6 +49,28 @@ flutter test test/features/calendar/plan_logic_test.dart test/features/calendar/
 
 UI real (modal, dashboard, iPhone/Android/web). Anotarlos como **manual** en el informe.
 
+## Dominio #3 — Eventos (CRUD)
+
+- Contrato: `docs/flujos/FLUJO_CRUD_EVENTOS.md`
+- Checklist: `docs/testing/CHECKLIST_CRUD_EVENTOS.md`
+- Spec: `docs/tareas/T278_PRUEBAS_AGENTE_CRUD_EVENTO.md`
+
+### Casos que el agente puede ejecutar solo
+
+```bash
+flutter test test/features/calendar/event_logic_test.dart test/features/calendar/event_field_validation_test.dart test/features/calendar/event_service_crud_test.dart test/features/calendar/plan_state_permissions_test.dart test/features/calendar/delete_event_dialog_test.dart
+```
+
+- Casos lógicos EVENT-C-*: `event_logic_test.dart`
+- Validadores C-005/C-006/C-009/C-011/C-017: `event_field_validation_test.dart`
+- CRUD servicio E1–E11: `event_service_crud_test.dart`
+- Permisos D-004: `plan_state_permissions_test.dart`
+- Diálogo borrar D-003: `delete_event_dialog_test.dart`
+
+### Casos que NO puede ejecutar solo
+
+UI real (`wd_event_dialog`, calendario, Places, vuelos). Anotarlos como **manual**.
+
 ## Informe (obligatorio)
 
 Por cada caso: `✅` / `❌` / `⚠️` / `⏭` (no aplicable) + una línea de evidencia.

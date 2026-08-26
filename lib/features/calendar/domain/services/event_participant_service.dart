@@ -324,13 +324,17 @@ class EventParticipantService {
     required String planId,
   }) async {
     try {
-      // Obtener todos los participantes del plan
-      final participants = await _participationService.getPlanParticipants(planId);
-      
+      // Organizador + participantes (getPlanParticipants excluye role organizer).
+      final organizers =
+          await _participationService.getPlanOrganizers(planId);
+      final participants =
+          await _participationService.getPlanParticipants(planId);
+      final members = [...organizers, ...participants];
+
       final batch = _firestore.batch();
       int created = 0;
 
-      for (final participation in participants) {
+      for (final participation in members) {
         // Verificar si ya existe un registro para este usuario y evento
         final existing = await _firestore
             .collection(_collectionName)

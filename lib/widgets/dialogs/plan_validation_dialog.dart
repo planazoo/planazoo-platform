@@ -1,168 +1,233 @@
 import 'package:flutter/material.dart';
-import '../../shared/utils/plan_validation_utils.dart';
-import '../../app/theme/typography.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/shared/utils/plan_validation_utils.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
-/// VALID-1, VALID-2: Diálogo para mostrar validaciones del plan antes de confirmar
+/// VALID-1, VALID-2: validaciones del plan antes de confirmar (bottom sheet patrón D).
 class PlanValidationDialog extends StatelessWidget {
-  final PlanValidationUtils validation;
-  final List<String> participantNames; // Nombres de participantes sin eventos (opcional)
-
   const PlanValidationDialog({
     super.key,
     required this.validation,
     this.participantNames = const [],
   });
 
+  final PlanValidationUtils validation;
+  final List<String> participantNames;
+
   @override
   Widget build(BuildContext context) {
-    // Si no hay warnings ni errors, no mostrar nada
+    final loc = AppLocalizations.of(context)!;
+
     if (validation.warnings.isEmpty && validation.errors.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1F2937),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Colors.white12),
-      ),
-      title: Row(
-        children: [
-          Icon(
-            validation.errors.isNotEmpty ? Icons.error : Icons.warning_amber,
-            color: validation.errors.isNotEmpty ? Colors.red : Colors.orange,
-            size: 28,
+    final hasErrors = validation.errors.isNotEmpty;
+    final title =
+        hasErrors ? loc.planValidationErrorTitle : loc.planValidationReviewTitle;
+    final intro = hasErrors
+        ? loc.planValidationErrorsIntro
+        : loc.planValidationWarningsIntro;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.72,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              validation.errors.isNotEmpty
-                  ? 'Error en la Validación'
-                  : 'Revisar Plan',
-              style: TextStyle(
-                color: validation.errors.isNotEmpty ? Colors.red : Colors.orange,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              validation.errors.isNotEmpty
-                  ? 'No se puede confirmar el plan debido a los siguientes errores:'
-                  : 'Se han detectado las siguientes observaciones:',
-              style: AppTypography.bodyStyle.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Errores
-            if (validation.errors.isNotEmpty) ...[
-              ...validation.errors.map((error) => _buildValidationItem(
-                error,
-                Colors.red,
-                Icons.error_outline,
-              )),
-              const SizedBox(height: 16),
-            ],
-            
-            // Warnings
-            if (validation.warnings.isNotEmpty) ...[
-              if (validation.errors.isEmpty)
-                Text(
-                  'Aunque el plan puede confirmarse, te recomendamos revisar:',
-                  style: AppTypography.bodyStyle.copyWith(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: IosFormColors.separator,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-              const SizedBox(height: 8),
-              ...validation.warnings.map((warning) => _buildValidationItem(
-                warning,
-                Colors.orange,
-                Icons.info_outline,
-              )),
-            ],
-            
-            const SizedBox(height: 16),
-            
-            // Nota informativa
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.help_outline, size: 20, color: Colors.blue),
+                  Icon(
+                    hasErrors
+                        ? Icons.error_outline
+                        : Icons.warning_amber_rounded,
+                    color: hasErrors
+                        ? IosFormColors.danger
+                        : Colors.orange.shade700,
+                    size: 22,
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(
+                  Flexible(
                     child: Text(
-                      validation.errors.isNotEmpty
-                          ? 'Corrige los errores antes de poder confirmar el plan.'
-                          : 'Puedes continuar con la confirmación o volver a revisar el plan.',
+                      title,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white70,
+                        color: hasErrors
+                            ? IosFormColors.danger
+                            : IosFormColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: IosGroupedCard(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                        child: Text(
+                          intro,
+                          style: const TextStyle(
+                            color: IosFormColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                      for (var i = 0; i < validation.errors.length; i++) ...[
+                        const IosRowSeparator(),
+                        _ValidationRow(
+                          text: validation.errors[i],
+                          color: IosFormColors.danger,
+                          icon: Icons.error_outline,
+                        ),
+                      ],
+                      if (validation.warnings.isNotEmpty) ...[
+                        const IosRowSeparator(),
+                        if (validation.errors.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                            child: Text(
+                              loc.planValidationWarningsHint,
+                              style: const TextStyle(
+                                color: IosFormColors.textSecondary,
+                                fontSize: 13,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        for (var i = 0; i < validation.warnings.length; i++) ...[
+                          const IosRowSeparator(),
+                          _ValidationRow(
+                            text: validation.warnings[i],
+                            color: Colors.orange.shade800,
+                            icon: Icons.info_outline,
+                          ),
+                        ],
+                      ],
+                      const IosRowSeparator(),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.help_outline,
+                              size: 18,
+                              color: IosFormColors.accent,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                hasErrors
+                                    ? loc.planValidationErrorsFooter
+                                    : loc.planValidationWarningsFooter,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: IosFormColors.textSecondary,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (hasErrors)
+                SizedBox(
+                  width: double.infinity,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Navigator.of(context).pop(false),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2C2C2E),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.12),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          loc.close,
+                          style: const TextStyle(
+                            color: IosFormColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                IosFormSheetActions(
+                  cancelLabel: loc.planValidationGoBack,
+                  confirmLabel: loc.planValidationConfirmAnyway,
+                  onCancel: () => Navigator.of(context).pop(false),
+                  onConfirm: () => Navigator.of(context).pop(true),
+                ),
+            ],
+          ),
         ),
       ),
-      actions: [
-        if (validation.errors.isEmpty) ...[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Volver'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Confirmar de todas formas'),
-          ),
-        ] else ...[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
-            child: const Text('Cerrar'),
-          ),
-        ],
-      ],
     );
   }
+}
 
-  Widget _buildValidationItem(String text, Color color, IconData icon) {
+class _ValidationRow extends StatelessWidget {
+  const _ValidationRow({
+    required this.text,
+    required this.color,
+    required this.icon,
+  });
+
+  final String text;
+  final Color color;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color, size: 20),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: AppTypography.bodyStyle.copyWith(
-                color: Colors.white,
+              style: const TextStyle(
+                color: IosFormColors.textPrimary,
+                fontSize: 15,
+                height: 1.35,
               ),
             ),
           ),
@@ -172,19 +237,27 @@ class PlanValidationDialog extends StatelessWidget {
   }
 }
 
-/// Muestra el diálogo de validaciones y retorna true si el usuario quiere continuar
 Future<bool?> showPlanValidationDialog({
   required BuildContext context,
   required PlanValidationUtils validation,
   List<String> participantNames = const [],
 }) async {
-  final result = await showDialog<bool>(
+  if (validation.warnings.isEmpty && validation.errors.isEmpty) {
+    return true;
+  }
+
+  return showModalBottomSheet<bool>(
     context: context,
+    isDismissible: false,
+    enableDrag: false,
+    backgroundColor: IosFormColors.groupedBg,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+    ),
     builder: (context) => PlanValidationDialog(
       validation: validation,
       participantNames: participantNames,
     ),
   );
-  return result;
 }
-

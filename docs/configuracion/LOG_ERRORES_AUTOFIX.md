@@ -14,6 +14,61 @@ Cada entrada nueva debe seguir esta estructura:
 - **Solución aplicada**: qué cambio concreto se hizo.
 - **Notas para el futuro** (opcional): patrón a recordar o “gotcha” a evitar.
 
+### [2026-08-26] EventDialog — ListTile ink bajo ColoredBox negro (pageBg)
+
+- **Contexto:** Abrir ficha evento; assert `ListTile background color or ink splashes may be invisible` con `ColoredBox(color: #000000)`.
+- **Causa raíz:** El contenido del diálogo usaba `ColoredBox(pageBg)` entre el `Material` del `AlertDialog` y `CheckboxListTile` (participantes / para todos).
+- **Solución aplicada:** `ColoredBox` → `Material(color: pageBg)` en evento y alojamiento; `Material(transparent)` alrededor de los `CheckboxListTile` de participantes.
+- **Notas:** No poner `ListTile` bajo `ColoredBox`/`DecoratedBox` opaco; el ancestro de ink debe ser `Material`.
+
+### [2026-08-26] Adjuntos iOS — `documentPickerWasCancelled` / snackbar falso de lectura
+
+- **Contexto:** Subir PDF/JPG desde ficha de evento/alojamiento en dispositivo (`flutter run`); en web sí funcionaba.
+- **Error:** `***** FilePicker canceled` / `-[FilePickerPlugin documentPickerWasCancelled:]` y UI mostraba «No se pudo leer el archivo».
+- **Causa raíz:** (1) `null` del picker (= cancelación o dismiss) se trataba como fallo de lectura. (2) En iOS, abrir el picker sin esperar a que el teclado/diálogo asiente y con `withData: true` es frágil; en debug, ir a Files en segundo plano corta la sesión y cancela el picker.
+- **Solución aplicada:** En `plan_file_picker_io.dart`: unfocus + delay 350ms, `withData: false` + lectura por `path`, `null` = cancel silencioso, `PlanFilePickReadException` solo si hubo fichero ilegible. Callers evento/alojamiento/plan Info alineados.
+- **Notas:** Si falla solo en `flutter run` al salir a Files, probar hot restart o profile/release; no mostrar error de lectura cuando el usuario cancela.
+
+### [2026-08-26] IosGroupedCard — ListTile ink invisible bajo DecoratedBox
+
+- **Contexto:** Abrir ficha evento tras migración Settings-only (`CheckboxListTile` “para todos”, etc.).
+- **Error:** `ListTile background color or ink splashes may be invisible` + `DecoratedBox(bg: #1C1C1E)`.
+- **Causa raíz:** `IosGroupedCard` era `Container`+`BoxDecoration` opaco; el ink del ListTile se pinta en el Material ancestro y la caja lo tapa.
+- **Solución aplicada:** `IosGroupedCard` → `Material(color: groupedBg, borderRadius: 12, clipBehavior: antiAlias)`.
+- **Notas:** No meter `ListTile`/`CheckboxListTile` bajo `DecoratedBox` con color; preferir `Material` en la card agrupada.
+
+### [2026-08-21] EventDialog web — no abre (RenderViewport / intrinsic)
+
+- **Contexto:** Abrir evento existente en Chrome tras UX D (vista ListView).
+- **Error:** `RenderViewport does not support returning intrinsic dimensions` en `AlertDialog` (`wd_event_dialog.dart`).
+- **Causa raíz:** `scrollable: true` + altura nula en desktop → `IntrinsicWidth` mide un `ListView`/`Expanded` de la vista D.
+- **Solución aplicada:** `scrollable: false`; altura fija en web (~420–640); `MainAxisSize.max`; edición desktop con `Expanded` (no `SizedBox(540)`). Mismo patrón de altura en alojamiento.
+- **Notas:** No poner `ListView` dentro de `AlertDialog(scrollable: true)` sin bounds.
+
+### [2026-08-19] Confirmaciones de evento omitían al organizador
+
+- **Contexto:** T278 `saveEvent` + `requiresConfirmation` en un plan con solo organizador.
+- **Error:** 0 docs en `event_participants` con `confirmationStatus: pending`.
+- **Causa raíz:** `createPendingConfirmationsForAllParticipants` usaba `getPlanParticipants`, que filtra `role == participant` y excluye al organizador.
+- **Solución aplicada:** unir `getPlanOrganizers` + `getPlanParticipants`.
+- **Notas:** “Todos los participantes del plan” incluye al organizador.
+
+### [2026-08-19] Tests saveEvent — EventParticipantService usa Firebase.instance
+
+- **Contexto:** T278 fase 2, `saveEvent` con `requiresConfirmation` en Firestore falso.
+- **Error:** Riesgo `[core/no-app]` al crear confirmaciones pendientes.
+- **Causa raíz:** `saveEvent` construía `EventParticipantService()` sin el Firestore inyectado.
+- **Solución aplicada:** usar `_eventParticipantService` (mismo fake que el resto del servicio).
+- **Notas:** Mismo patrón que PaymentService / PlanService: no instanciar colaboradores con `FirebaseFirestore.instance` en código que corren los tests.
+
+### [2026-08-18] Tests createEvent — PaymentService usa Firebase.instance
+
+- **Contexto:** T278 `event_service_crud_test` con `FakeFirebaseFirestore`.
+- **Error:** Riesgo `[core/no-app]` al crear evento: `GuaranteePaymentSync` construye `PaymentService()`, cuyo campo era `FirebaseFirestore.instance`.
+- **Causa raíz:** `PaymentService` no inyectaba Firestore.
+- **Solución aplicada:** `PaymentService({firestore})`; `EventService` pasa el mismo fake a `GuaranteePaymentSync`.
+- **Notas:** Misma pauta que PlanService: no tocar `FirebaseFirestore.instance` en el constructor de colaboradores usados en tests.
+
 ### [2026-08-18] Tests widget — firma de testWidgets perdida al editar
 
 - **Contexto:** T277 P18 `plan_state_ui_test.dart`.
@@ -713,4 +768,32 @@ Cada entrada nueva debe seguir esta estructura:
 - **Causa raíz**: mezcla SPM + CocoaPods; carpeta `ios/Pods` sin dependencias reales (Google Sign-In / GTMAppAuth).
 - **Solución aplicada**: `flutter config --no-enable-swift-package-manager`; `pod deintegrate`; borrar `Pods`/`Podfile.lock`; `flutter pub get` + `pod install` → 52 pods incl. GTMAppAuth. Luego `flutter run` desde terminal (no confiar en Xcode con DerivedData vieja).
 - **Notas**: si vuelve el error, no mezclar SPM y Pods; preferir CocoaPods en este repo hasta migrar SPM del todo. Limpiar DerivedData si Xcode insiste.
+
+### [2026-08-22] Formularios evento/alojamiento — ListTile invisible + overflow
+
+- **Contexto**: edición de alojamiento/evento (patrón D), sección coste y participantes.
+- **Error**: `ListTile background color or ink splashes may be invisible` (DecoratedBox `0xFF1C1C1E`); `RenderFlex overflowed by 123 pixels on the right`.
+- **Causa raíz**: `DropdownButtonFormField` (4 monedas vía `selectedItemBuilder`) y `CheckboxListTile` dentro de `Container`/`IosGroupedCard` con fondo sin ancestro `Material`; título largo del checkbox en una sola línea.
+- **Solución aplicada**: envolver dropdowns/campos en `Material` con `borderRadius`; `CheckboxListTile` en `Material(transparent)` + `maxLines: 3`; mismo patrón en `ReservationCancellationFormSection._labelOnBorder`.
+- **Notas**: no anidar `ListTile`/`DropdownButtonFormField` bajo `DecoratedBox` con color; usar `Material` o picker sheet (`IosFormPickerSheet`). En `IosSettingsRow`, label y valor en columnas `Expanded` 4:6. Form alojamiento móvil: altura `screenSize.height` + `ColoredBox` + `SafeArea` interno; abrir con `showAccommodationFormDialog` (barrier opaco).
+
+### [2026-08-22] PlanDetailPage — setState con árbol bloqueado al salir de Info plan
+
+- **Contexto**: cambiar de pestaña «Info del plan» en `PlanDetailPage` (`PlanDataScreen.dispose`).
+- **Error**: `setState() or markNeedsBuild() called when widget tree was locked` en `pg_plan_detail_page.dart:686`.
+- **Causa raíz**: `PlanDataScreen.dispose` llamaba `onEditChromeChanged(null)` de forma síncrona; el padre hacía `setState` durante el unmount.
+- **Solución aplicada**: diferir `onEditChromeChanged(null)` con `WidgetsBinding.instance.addPostFrameCallback` en `dispose`.
+- **Notas**: callbacks al padre desde `dispose` → siempre post-frame, nunca `setState` sync.
+
+### [2026-08-25] Alojamiento — formulario único (sin vista/edición)
+
+- **Contexto**: LISTA 140 / T251; orden de campos distinto entre vista y edición.
+- **Cambio**: eliminado `_isEditing`; un solo `_buildAccommodationForm` (orden tipo vista + campos editables); barra siempre Cancelar/Guardar; sin permiso → misma UI bloqueada (Maps/URL siguen abribles).
+- **Notas**: mismo patrón pendiente en evento.
+
+### [2026-08-26] Evento — formulario único (sin vista/edición)
+
+- **Contexto**: mismo patrón que alojamiento (LISTA 140 / T251).
+- **Cambio**: eliminado `_isEditing` y `_buildEventViewMode`; siempre pestañas + Cancelar/Guardar; hero con descripción editable y chips fecha/duración; borrar al final de General.
+- **Notas**: campos tipo-específicos del tab General siguen en layout legacy; paridad visual fina puede seguir.
 

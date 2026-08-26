@@ -2574,10 +2574,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       if (fresh != null) eventToShow = fresh;
     }
     if (!mounted) return;
-    showDialog(
+    showEventFormDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => EventDialog(
+      dialog: EventDialog(
         event: eventToShow,
         planId: widget.plan.id ?? '',
         onSaved: (updatedEvent) async {
@@ -2864,10 +2864,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       return;
     }
     
-    showDialog(
+    showEventFormDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => EventDialog(
+      dialog: EventDialog(
         event: null,
         planId: widget.plan.id ?? '',
         initialDate: date,
@@ -2998,9 +2998,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       return;
     }
     
-    showDialog(
+    showAccommodationFormDialog(
       context: context,
-      builder: (context) => AccommodationDialog(
+      dialog: AccommodationDialog(
         accommodation: accommodation,
         planId: widget.plan.id ?? '',
         planStartDate: widget.plan.startDate,
@@ -3077,9 +3077,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       return;
     }
     
-    showDialog(
+    showAccommodationFormDialog(
       context: context,
-      builder: (context) => AccommodationDialog(
+      dialog: AccommodationDialog(
         accommodation: null,
         planId: widget.plan.id ?? '',
         planStartDate: widget.plan.startDate,

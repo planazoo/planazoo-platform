@@ -4,8 +4,11 @@ import '../models/personal_payment.dart';
 
 /// T102: Servicio para gestión CRUD de pagos individuales
 class PaymentService {
+  PaymentService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
   static const String _collectionName = 'personal_payments';
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
 
   /// Obtener todos los pagos de un plan
   Stream<List<PersonalPayment>> getPaymentsByPlanId(String planId) {

@@ -13,3 +13,8 @@ class PickedPlanFile {
     this.mimeType,
   });
 }
+
+/// Selección hecha pero sin bytes legibles (p. ej. path iOS inaccesible).
+class PlanFilePickReadException implements Exception {
+  const PlanFilePickReadException();
+}

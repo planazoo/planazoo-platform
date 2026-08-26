@@ -49,6 +49,8 @@ Offline, Chat, Plataforma/release, UI transversal, Timezones, Permisos, Import/I
 Se tocan **dentro** del dominio WIP cuando hacen falta, o como bug urgente.  
 No abren un dominio propio fuera de secuencia.
 
+**Mail (T134):** no es dominio #10. Producto: [`COMUNICACIONES_MAIL_PLAN.md`](../producto/COMUNICACIONES_MAIL_PLAN.md). Gate de **lanzamiento público** (corte mínimo). Implementar intercala capa de launch (acuerdo explícito) o espera a Eventos (#3); no se añade fila a la tabla #1–#9.
+
 ---
 
 ## Cómo arrancar cada sesión

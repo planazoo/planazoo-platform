@@ -9,7 +9,8 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_file_picke
 
 Future<PickedPlanFile?> pickPlanAttachment(List<String> allowedExtensions) async {
   final completer = Completer<PickedPlanFile?>();
-  final input = html.FileUploadInputElement()..accept = allowedExtensions.map((e) => '.$e').join(',');
+  final input = html.FileUploadInputElement()
+    ..accept = allowedExtensions.map((e) => '.$e').join(',');
   input.click();
 
   input.onChange.listen((_) {
@@ -24,10 +25,18 @@ Future<PickedPlanFile?> pickPlanAttachment(List<String> allowedExtensions) async
     reader.onLoadEnd.listen((_) {
       final result = reader.result;
       if (result == null) {
-        if (!completer.isCompleted) completer.complete(null);
+        if (!completer.isCompleted) {
+          completer.completeError(const PlanFilePickReadException());
+        }
         return;
       }
       final bytes = _bytesFromDataUrl(result.toString());
+      if (bytes.isEmpty) {
+        if (!completer.isCompleted) {
+          completer.completeError(const PlanFilePickReadException());
+        }
+        return;
+      }
       if (!completer.isCompleted) {
         completer.complete(
           PickedPlanFile(
@@ -40,7 +49,9 @@ Future<PickedPlanFile?> pickPlanAttachment(List<String> allowedExtensions) async
       }
     });
     reader.onError.listen((_) {
-      if (!completer.isCompleted) completer.complete(null);
+      if (!completer.isCompleted) {
+        completer.completeError(const PlanFilePickReadException());
+      }
     });
   });
 

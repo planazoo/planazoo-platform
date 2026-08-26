@@ -257,7 +257,7 @@ El usuario no debería reescribir lo que ya existe: reservas de vuelo/hotel/rest
 
 | | |
 |--|--|
-| **Estado** | **Parcial / spec:** eventos desde correo reenviado (T134, [`CORREO_EVENTOS_SISTEMA_PARSEO.md`](./CORREO_EVENTOS_SISTEMA_PARSEO.md)); vuelo/tren por número (T246). Asistente por reglas (T266) sin implementar. Importar PDF/captura genérico = **visión**. |
+| **Estado** | **Parcial / spec:** mail → colocar en evento ([`COMUNICACIONES_MAIL_PLAN.md`](./COMUNICACIONES_MAIL_PLAN.md), T134); recepción/plantillas [`CORREO_EVENTOS_SISTEMA_PARSEO.md`](./CORREO_EVENTOS_SISTEMA_PARSEO.md); vuelo por número (T246). Asistente por reglas (T266) sin implementar. PDF/captura genérico = **visión**. |
 | **Web v1** | **No** vender Smart Import como disponible salvo lo que esté en producción el día del deploy. |
 
 ---
@@ -381,11 +381,12 @@ El mismo Planoon reaparece en cada bloque.
 | 9 | **Dinero** | Presupuesto, gastos, balances | **Sí**, con copy de no-cobro |
 | 10 | **Siempre contigo** | Offline + zonas horarias (vuelos LHR / BCN → PMI) | **Sí** — contrato **C1** y **C2** |
 | 11 | **Compartir** | Invitar (app + mail) y **exportar itinerario** | **Sí** — contrato **C3** y **C4** (export aún no está en la app) |
-| 12 | **Copiar plan** | Copia editable independiente | **Visión** — no está en el contrato |
-| 13 | **Recordar** | Plan activo → memoria | **Visión / omitir o suave** |
-| 14 | **CTA final** | *¿Cuál es el plan?* Crear el primero. Gratis. | **Sí** → `app.planoon.com` |
+| 12 | **Dónde** | Web = planificar; iOS/Android = llevar el plan | **Sí** |
+| 13 | **Copiar plan** | Copia editable independiente | **Visión** — no está en el contrato |
+| 14 | **Recordar** | Plan activo → memoria | **Visión / omitir o suave** |
+| 15 | **CTA final** | *¿Cuál es el plan?* Crear el primero. Gratis. | **Sí** → `app.planoon.com` |
 
-**Maqueta** (`marketing/index.html`, ago 2026): hero → … → dinero, **offline + timezones**, **invitar + exportar itinerario**, CTA. **Omitidos a propósito:** importación inteligente, copiar plan, recuerdos.
+**Maqueta** (`marketing/index.html`): hero → … → **web para planificar / móvil para llevarlo**, CTA.
 
 ---
 
@@ -415,6 +416,7 @@ Apoyo: **Planifica, organiza y vive cualquier cosa en grupo — de un fin de sem
 
 - CTA principal: **Crea un Planoon — es gratis** → `https://app.planoon.com` (hasta haber stores).
 - CTA secundario: **Mira cómo funciona** (ancla al relato).
+- Plataformas: **Web para planificar · iOS y Android para llevarlo** (sin badges de tienda). La web no es un “también estamos”: es el entorno de montar el plan (pantalla, otras pestañas, documentos); el móvil es para vivir el plan.
 
 El hero muestra **producto**, no foto genérica.
 
@@ -442,7 +444,9 @@ Solo si **explica** el producto: arrastrar un evento de día; una idea que entra
 
 ### Escritorio y móvil
 
-Obligatorio ambos. Escritorio = demos inmersivas. Móvil **no** es el desktop encogido. Planoon se usará mucho en el teléfono.
+Obligatorio ambos. Escritorio = demos inmersivas del tablero. Móvil **no** es el desktop encogido.
+
+**Producto:** la **web** es el entorno de **planificar** (pantalla grande, acceso a otras webs, PDFs, reservas, mapa). **iOS y Android** son para **llevar** el plan (itinerario, avisos, sin estar en el ordenador). No son tres copias iguales: se complementan. T257 (paridad) no anula esta diferencia de contexto.
 
 ---
 
@@ -578,6 +582,7 @@ Trabajo por pasos: no maquetar los 14 bloques de una vez. Orden sugerido:
 | GPS al “seguir” | No automático |
 | Testimonios / métricas falsas | Prohibido |
 | Contrato C1–C4 | Offline móvil, zonas horarias, invitar, exportar itinerario = **sí o sí** antes de público |
+| Plataformas | **Web + iOS + Android**. Web = planificar (pantalla, otras webs, documentos); móvil = llevar el plan. CTA a `app.planoon.com` hasta haber stores |
 
 ### Siguen abiertas (no cerrar al implementar)
 

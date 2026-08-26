@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:unp_calendario/features/calendar/domain/event_description_validation.dart';
+import 'package:unp_calendario/features/calendar/domain/event_field_validation.dart';
+
 /// Evaluador lógico para creación de eventos (casos EVENT-C-*).
 ///
 /// No crea eventos reales ni toca Firestore; solo aplica reglas de negocio
@@ -23,7 +26,8 @@ Map<String, dynamic> evaluateEventCreation(Map<String, dynamic> input) {
   final eventDateStr = input['eventDate'] as String?;
 
   // Regla 1: descripción obligatoria (EVENT-C-002)
-  if (!hasDescription) {
+  if (!hasDescription ||
+      validateEventDescription(hasDescription ? 'ok' : '') != null) {
     return {
       'created': false,
       'errorCode': 'missingDescription',
@@ -31,8 +35,7 @@ Map<String, dynamic> evaluateEventCreation(Map<String, dynamic> input) {
   }
 
   // Regla 2: duración máxima 24h (EVENT-C-006)
-  const maxDurationMinutes = 24 * 60;
-  if (durationMinutes > maxDurationMinutes) {
+  if (validateEventDurationMinutes(durationMinutes) != null) {
     return {
       'created': false,
       'errorCode': 'eventDurationTooLong',
@@ -40,18 +43,19 @@ Map<String, dynamic> evaluateEventCreation(Map<String, dynamic> input) {
   }
 
   // Regla 3: límite de participantes (EVENT-C-009)
-  if (maxParticipants != null) {
-    final max = maxParticipants.toInt();
-    if (participantsCount > max) {
-      return {
-        'created': false,
-        'errorCode': 'eventMaxParticipantsExceeded',
-      };
-    }
+  if (validateEventMaxParticipants(
+        maxParticipants: maxParticipants?.toInt(),
+        participantsCount: participantsCount,
+      ) !=
+      null) {
+    return {
+      'created': false,
+      'errorCode': 'eventMaxParticipantsExceeded',
+    };
   }
 
   // Regla 4: coste no negativo (EVENT-C-011)
-  if (cost != null && cost.toDouble() < 0) {
+  if (validateEventCost(cost) != null) {
     return {
       'created': false,
       'errorCode': 'invalidCost',
@@ -64,10 +68,7 @@ Map<String, dynamic> evaluateEventCreation(Map<String, dynamic> input) {
       final planStart = DateTime.parse(planStartStr);
       final planEnd = DateTime.parse(planEndStr);
       final eventDate = DateTime.parse(eventDateStr);
-      final eventDateOnly = DateTime(eventDate.year, eventDate.month, eventDate.day);
-      final planStartOnly = DateTime(planStart.year, planStart.month, planStart.day);
-      final planEndOnly = DateTime(planEnd.year, planEnd.month, planEnd.day);
-      if (eventDateOnly.isBefore(planStartOnly) || eventDateOnly.isAfter(planEndOnly)) {
+      if (validateEventInPlanRange(eventDate, planStart, planEnd) != null) {
         return {
           'created': false,
           'errorCode': 'eventOutsidePlanRange',
@@ -95,4 +96,3 @@ String? compareEventOutputs(
   }
   return 'expected $expectedJson but got $actualJson';
 }
-

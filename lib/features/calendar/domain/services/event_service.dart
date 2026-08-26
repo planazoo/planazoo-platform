@@ -4,12 +4,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../features/security/services/rate_limiter_service.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../models/event.dart';
+import '../models/plan.dart';
+import '../event_description_validation.dart';
+import '../event_field_validation.dart';
 import 'plan_participation_service.dart';
 import 'event_participant_service.dart';
 import 'event_sync_service.dart';
 import 'timezone_service.dart';
 import 'plan_event_accent_colors.dart';
 import 'guarantee_payment_sync.dart';
+import 'plan_state_permissions.dart';
+import '../../../payments/domain/services/payment_service.dart';
 
 class EventService {
   EventService({
@@ -19,6 +24,7 @@ class EventService {
         _eventParticipantServiceOverride = eventParticipantService;
 
   static const String _collectionName = 'events';
+  static const String _plansCollectionName = 'plans';
   final FirebaseFirestore _firestore;
   final EventParticipantService? _eventParticipantServiceOverride;
   PlanParticipationService? _lazyParticipationService;
@@ -39,7 +45,48 @@ class EventService {
       _lazyEventSyncService ??= EventSyncService();
 
   GuaranteePaymentSync get _guaranteePaymentSync =>
-      _lazyGuaranteePaymentSync ??= GuaranteePaymentSync();
+      _lazyGuaranteePaymentSync ??= GuaranteePaymentSync(
+        paymentService: PaymentService(firestore: _firestore),
+      );
+
+  int _assignedParticipantCount(Event event) {
+    final fromCommon = event.commonPart?.participantIds ?? const <String>[];
+    if (fromCommon.isNotEmpty) return fromCommon.length;
+    return event.participantTrackIds.length;
+  }
+
+  Future<Plan?> _planById(String planId) async {
+    final snap =
+        await _firestore.collection(_plansCollectionName).doc(planId).get();
+    if (!snap.exists) return null;
+    return Plan.fromFirestore(snap);
+  }
+
+  /// Descripción, duración, coste, cupo, rango del plan y estado (EVENT-C/D).
+  Future<bool> _passesEventWriteRules(Event event, {required bool isCreate}) async {
+    if (validateEventDescription(event.description) != null) return false;
+    if (validateEventDurationMinutes(event.durationMinutes) != null) {
+      return false;
+    }
+    if (validateEventCost(event.cost) != null) return false;
+    if (validateEventMaxParticipants(
+          maxParticipants: event.maxParticipants,
+          participantsCount: _assignedParticipantCount(event),
+        ) !=
+        null) {
+      return false;
+    }
+
+    final plan = await _planById(event.planId);
+    if (plan == null) return true;
+    if (isCreate && !PlanStatePermissions.canAddEvents(plan)) return false;
+    if (!isCreate && !PlanStatePermissions.canModifyEvents(plan)) return false;
+    if (validateEventInPlanRange(event.date, plan.startDate, plan.endDate) !=
+        null) {
+      return false;
+    }
+    return true;
+  }
 
   /// Excluye documentos de la colección 'events' que son alojamientos (typeFamily == 'alojamiento').
   static bool _isEventDoc(DocumentSnapshot doc) {
@@ -182,6 +229,14 @@ class EventService {
   // Crear un nuevo evento (solo para participantes del plan)
   Future<String?> createEvent(Event event) async {
     try {
+      if (!await _passesEventWriteRules(event, isCreate: true)) {
+        LoggerService.warning(
+          'Rejected createEvent: validation or plan state/range',
+          context: 'EVENT_SERVICE',
+        );
+        return null;
+      }
+
       // Verificar rate limiting para creación de eventos
       final rateLimiter = RateLimiterService();
       final eventLimitCheck = await rateLimiter
@@ -246,6 +301,13 @@ class EventService {
   Future<bool> updateEvent(Event event, {bool skipSync = false}) async {
     try {
       if (event.id == null) return false;
+      if (!await _passesEventWriteRules(event, isCreate: false)) {
+        LoggerService.warning(
+          'Rejected updateEvent: validation or plan state/range',
+          context: 'EVENT_SERVICE',
+        );
+        return false;
+      }
       
       // Verificar que el usuario participa en el plan (solo si no es actualización de sincronización)
       if (!skipSync) {
@@ -360,6 +422,15 @@ class EventService {
     try {
       final event = await getEventById(eventId);
       if (event == null) return false;
+
+      final plan = await _planById(event.planId);
+      if (plan != null && !PlanStatePermissions.canDeleteEvents(plan)) {
+        LoggerService.warning(
+          'Rejected deleteEvent: plan state ${plan.state}',
+          context: 'EVENT_SERVICE',
+        );
+        return false;
+      }
       
       // 1. Eliminar todos los event_participants del evento
       await _eventParticipantService.deleteAllParticipants(eventId);
@@ -400,8 +471,8 @@ class EventService {
         
         // Si requiere confirmación, crear registros pendientes para todos los participantes (T120 Fase 2)
         if (createdEvent.requiresConfirmation) {
-          final eventParticipantService = EventParticipantService();
-          await eventParticipantService.createPendingConfirmationsForAllParticipants(
+          await _eventParticipantService
+              .createPendingConfirmationsForAllParticipants(
             eventId: id,
             planId: createdEvent.planId,
           );
@@ -421,8 +492,8 @@ class EventService {
       
       // Si requiresConfirmation cambió de false a true, crear confirmaciones pendientes (T120 Fase 2)
       if (!oldEvent.requiresConfirmation && updatedEvent.requiresConfirmation) {
-        final eventParticipantService = EventParticipantService();
-        await eventParticipantService.createPendingConfirmationsForAllParticipants(
+        await _eventParticipantService
+            .createPendingConfirmationsForAllParticipants(
           eventId: event.id!,
           planId: updatedEvent.planId,
         );

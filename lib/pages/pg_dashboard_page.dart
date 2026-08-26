@@ -2027,10 +2027,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       if (fresh != null) eventToShow = fresh;
     }
     if (!mounted) return;
-    showDialog<void>(
+    showEventFormDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => EventDialog(
+      dialog: EventDialog(
         event: eventToShow,
         planId: plan.id!,
         onSaved: (updatedEvent) async {
@@ -2087,9 +2087,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (selectedPlan == null || selectedPlan!.id == null) return;
     final p = selectedPlan!;
     final planEndDate = DateTime(p.endDate.year, p.endDate.month, p.endDate.day);
-    showDialog<void>(
+    showAccommodationFormDialog<void>(
       context: context,
-      builder: (context) => AccommodationDialog(
+      dialog: AccommodationDialog(
         accommodation: accommodation,
         planId: p.id!,
         planStartDate: p.startDate,

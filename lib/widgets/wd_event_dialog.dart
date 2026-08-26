@@ -21,13 +21,13 @@ import 'package:unp_calendario/shared/services/permission_service.dart';
 import 'package:unp_calendario/widgets/dialogs/edit_personal_info_dialog.dart';
 import 'package:unp_calendario/features/calendar/domain/services/timezone_service.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
-import 'package:unp_calendario/widgets/event/event_participant_registration_widget.dart';
 import 'package:unp_calendario/shared/utils/plan_range_utils.dart';
 import 'package:unp_calendario/widgets/dialogs/expand_plan_dialog.dart';
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import 'package:unp_calendario/shared/services/exchange_rate_service.dart';
 import 'package:unp_calendario/shared/models/currency.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_permissions.dart';
+import 'package:unp_calendario/widgets/dialogs/delete_event_dialog.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
 import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
@@ -40,10 +40,9 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
-import 'package:unp_calendario/widgets/input/text_field_clear_suffix.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
-import 'package:unp_calendario/features/payments/presentation/widgets/add_expense_dialog.dart';
-import 'package:unp_calendario/features/payments/presentation/providers/payment_providers.dart';
+import 'package:unp_calendario/widgets/plan/event_payments_tab.dart';
 
 class EventDialog extends ConsumerStatefulWidget {
   final Event? event;
@@ -97,8 +96,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   late bool _initialIsForAllParticipants;
   late String _selectedTimezone;
   late String _selectedArrivalTimezone;
-  late TextEditingController _maxParticipantsController;
-  late bool _requiresConfirmation;
   late TextEditingController _costController; // T101/T153
   String?
       _costCurrency; // T153: Moneda local del coste (null = moneda del plan)
@@ -484,14 +481,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _selectedTimezone = widget.event?.timezone ?? 'Europe/Madrid';
     _selectedArrivalTimezone = widget.event?.arrivalTimezone ?? 'Europe/Madrid';
 
-    // Inicializar controlador de límite de participantes
-    _maxParticipantsController = TextEditingController(
-      text: widget.event?.maxParticipants?.toString() ?? '',
-    );
-
-    // Inicializar requiere confirmación (T120 Fase 2)
-    _requiresConfirmation = widget.event?.requiresConfirmation ?? false;
-
     // Inicializar coste (T101)
     _costController = TextEditingController(
       text: widget.event?.cost?.toString() ?? '',
@@ -566,57 +555,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return true;
     }
 
-    // Mostrar diálogo de confirmación
-    final result = await showDialog<bool>(
+    final loc = AppLocalizations.of(context)!;
+    final result = await IosFormConfirmSheet.show(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF111827),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Evento conectado',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        content: Text(
-          'Este evento está conectado a Amadeus (datos de vuelo).\n\n'
-          'Si continúas, se desconectará y dejará de actualizarse desde el proveedor.\n\n'
-          '¿Quieres continuar y desconectar, o cancelar para mantener la conexión?',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: Colors.white70,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(
-              'Cancelar',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.white70,
-              ),
-            ),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColorScheme.color2,
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              'Desconectar y continuar',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
+      title: loc.eventConnectedTitle,
+      message: loc.eventConnectedMessage,
+      cancelLabel: loc.cancel,
+      confirmLabel: loc.eventConnectedDisconnect,
+      destructive: false,
     );
 
     if (result == true) {
@@ -789,59 +735,47 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     _rentalContractCodeController.dispose();
     _rentalVehiclePlateController.dispose();
     _rentalPickupReturnNotesController.dispose();
-    _maxParticipantsController.dispose();
     _costController.dispose(); // T101
     super.dispose();
   }
 
-  // Surfaces alineados con alojamientos: panel más claro, campos más oscuros.
-  static const Color _formSurface = Color(0xFF374151);
-  static const Color _fieldSurface = Color(0xFF1F2937);
-  static const double _fieldRadius = 14;
+  // Surfaces iOS D (GUIA_UI formularios tipo ficha).
+  static const Color _formSurface = IosFormColors.pageBg;
+  static const Color _fieldSurface = IosFormColors.groupedBg;
+  static const double _fieldRadius = 12;
   static const double _fieldGap = 14;
   static const double _fieldIconSize = 20;
   static const EdgeInsets _fieldContentPadding =
       EdgeInsets.symmetric(horizontal: 16, vertical: 14);
 
-  TextStyle get _labelStyle => GoogleFonts.poppins(
+  TextStyle get _labelStyle => const TextStyle(
         fontSize: 13,
-        color: Colors.white70,
-        fontWeight: FontWeight.w500,
+        color: IosFormColors.textSecondary,
+        fontWeight: FontWeight.w400,
       );
 
-  TextStyle get _valueStyle => GoogleFonts.poppins(
-        fontSize: 14,
-        color: Colors.white,
-        fontWeight: FontWeight.w500,
+  TextStyle get _valueStyle => const TextStyle(
+        fontSize: 17,
+        color: IosFormColors.textPrimary,
+        fontWeight: FontWeight.w400,
         height: 1.2,
       );
 
-  TextStyle get _hintStyle => GoogleFonts.poppins(
-        fontSize: 14,
-        color: Colors.white60,
+  TextStyle get _hintStyle => const TextStyle(
+        fontSize: 17,
+        color: IosFormColors.textTertiary,
         fontWeight: FontWeight.w400,
         height: 1.2,
       );
 
   Icon _fieldIcon(IconData icon) =>
-      Icon(icon, size: _fieldIconSize, color: Colors.white70);
+      Icon(icon, size: _fieldIconSize, color: IosFormColors.textSecondary);
 
-  /// Decoración tipo login: fondo sólido, borde y sombra (estética unificada).
+  /// Decoración tipo login: fondo sólido, sin borde duro (patrón D).
   BoxDecoration _buildLoginStyleDecoration() {
     return BoxDecoration(
       color: _fieldSurface,
       borderRadius: BorderRadius.circular(_fieldRadius),
-      border: Border.all(
-        color: Colors.white.withValues(alpha: 0.12),
-        width: 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.18),
-          blurRadius: 10,
-          offset: const Offset(0, 1),
-        ),
-      ],
     );
   }
 
@@ -881,52 +815,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Decoración para campos con título sobre el borde (fecha/hora compactos).
-  BoxDecoration get _borderedFieldDecoration => BoxDecoration(
-        color: _fieldSurface,
-        borderRadius: BorderRadius.circular(_fieldRadius),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.12),
-          width: 1,
-        ),
-      );
-
-  /// Estilo del título que va sobre el borde del campo.
-  TextStyle get _labelOnBorderStyle => GoogleFonts.poppins(
-        fontSize: 11,
-        color: Colors.white70,
-        fontWeight: FontWeight.w500,
-      );
-
-  /// Campo con título sobre el borde superior (fecha/hora/duración, timezone).
-  Widget _buildLabelOnBorderField({
-    required String label,
-    required Widget child,
-    EdgeInsetsGeometry? contentPadding,
-  }) {
-    final padding = contentPadding ??
-        const EdgeInsets.only(top: 12, left: 14, right: 14, bottom: 12);
-    return Container(
-      decoration: _borderedFieldDecoration,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            left: 12,
-            top: -7,
-            child: Container(
-              color: _fieldSurface,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(label, style: _labelOnBorderStyle),
-            ),
-          ),
-          Padding(padding: padding, child: child),
-        ],
-      ),
-    );
-  }
-
-  /// Envuelve [child] en una capa que, si no puede editar (solo lectura), muestra SnackBar al tocar.
   Widget _wrapReadOnlyIfNeeded({required Widget child}) {
     if (_canEditGeneral) return child;
     return Stack(
@@ -959,83 +847,184 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   /// Localización: un solo campo con nombre (1ª línea) y dirección (2ª).
+  /// Fila Places dentro de card Settings (label arriba + autocomplete).
+  Widget _iosPlaceFieldRow({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required void Function(PlaceDetails details) onPlaceSelected,
+    String? initialAddress,
+    VoidCallback? onOpenMaps,
+    bool canOpenMaps = false,
+  }) {
+    final canEdit = _canEditGeneral || _canEditGeneralInitial;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: IosFormColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                IgnorePointer(
+                  ignoring: !canEdit,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      inputDecorationTheme: const InputDecorationTheme(
+                        contentPadding: EdgeInsets.zero,
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                      ),
+                    ),
+                    child: PlaceAutocompleteField(
+                      controller: controller,
+                      initialAddress: initialAddress,
+                      lodgingOnly: false,
+                      preferNameAndAddressTwoLines: true,
+                      maxLines: 2,
+                      showFloatingLabel: false,
+                      labelText: label,
+                      hintText: hint,
+                      fontSize: 17,
+                      fillColor: Colors.transparent,
+                      border: InputBorder.none,
+                      onPlaceSelected: onPlaceSelected,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onOpenMaps != null)
+            IconButton(
+              tooltip: AppLocalizations.of(context)!.openInGoogleMaps,
+              onPressed: canOpenMaps ? onOpenMaps : null,
+              icon: Icon(
+                Icons.map_outlined,
+                size: 22,
+                color: canOpenMaps
+                    ? IosFormColors.accent
+                    : IosFormColors.textTertiary,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _timezoneRowValue(String timezone) =>
+      '${TimezoneService.getTimezoneCityName(timezone)} (${TimezoneService.getUtcOffsetFormatted(timezone)})';
+
   Widget _buildUnifiedLocationField() {
     final loc = AppLocalizations.of(context)!;
     final previous = _lookupPreviousPlanLocation();
+    final canEdit = _canEditGeneral || _canEditGeneralInitial;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          decoration: _buildLoginStyleDecoration(),
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              inputDecorationTheme: InputDecorationTheme(
-                labelStyle: _labelStyle,
-                hintStyle: _hintStyle,
-                prefixIconColor: Colors.white70,
-                contentPadding: _fieldContentPadding,
-                filled: true,
-                fillColor: Colors.transparent,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: IgnorePointer(
+                  ignoring: !canEdit,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      inputDecorationTheme: const InputDecorationTheme(
+                        contentPadding: EdgeInsets.zero,
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                      ),
+                    ),
+                    child: PlaceAutocompleteField(
+                      controller: _locationController,
+                      initialAddress: _locationController.text.isNotEmpty
+                          ? _locationController.text
+                          : null,
+                      lodgingOnly: false,
+                      preferNameAndAddressTwoLines: true,
+                      minLines: 1,
+                      maxLines: 2,
+                      showFloatingLabel: false,
+                      labelText: '',
+                      hintText: loc.eventAddressSingleHint,
+                      fontSize: 17,
+                      fillColor: Colors.transparent,
+                      border: InputBorder.none,
+                      onPlaceSelected: (PlaceDetails details) {
+                        setState(() {
+                          _lastPlaceDetails = details;
+                          _locationController.text = formatPlaceNameAndAddress(
+                            details.displayName,
+                            details.formattedAddress,
+                          );
+                          final web = details.websiteUri?.trim();
+                          if (web != null && web.isNotEmpty) {
+                            _urlController.text = web;
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                ),
               ),
-            ),
-            child: PlaceAutocompleteField(
-              controller: _locationController,
-              initialAddress: _locationController.text.isNotEmpty
-                  ? _locationController.text
-                  : null,
-              lodgingOnly: false,
-              preferNameAndAddressTwoLines: true,
-              maxLines: 2,
-              labelText: loc.eventAddressSingleLabel,
-              hintText: loc.eventAddressSingleHint,
-              prefixIcon: Icons.place,
-              fontSize: 14,
-              fillColor: Colors.transparent,
-              border: InputBorder.none,
-              suffixIcon: ListenableBuilder(
+              ListenableBuilder(
                 listenable: _locationController,
                 builder: (context, _) {
                   final canOpenMaps = _canOpenEventLocationInMaps;
                   return IconButton(
                     tooltip: loc.openInGoogleMaps,
-                    onPressed:
-                        canOpenMaps ? _openLocationInGoogleMaps : null,
+                    onPressed: canOpenMaps ? _openLocationInGoogleMaps : null,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
                     icon: Icon(
                       Icons.map_outlined,
-                      size: _fieldIconSize,
+                      size: 22,
                       color: canOpenMaps
-                          ? AppColorScheme.color2
-                          : Colors.white60,
+                          ? IosFormColors.accent
+                          : IosFormColors.textTertiary,
                     ),
                   );
                 },
               ),
-              onPlaceSelected: (PlaceDetails details) {
-                setState(() {
-                  _lastPlaceDetails = details;
-                  _locationController.text = formatPlaceNameAndAddress(
-                    details.displayName,
-                    details.formattedAddress,
-                  );
-                  final web = details.websiteUri?.trim();
-                  if (web != null && web.isNotEmpty) {
-                    _urlController.text = web;
-                  }
-                });
-              },
-            ),
+            ],
           ),
         ),
-        if (previous != null &&
-            (_canEditGeneral || _canEditGeneralInitial)) ...[
-          const SizedBox(height: 8),
-          _buildUsePreviousLocationButton(
-            previous: previous,
-            onApply: _applyPreviousPlanLocation,
+        if (previous != null && canEdit) ...[
+          const IosRowSeparator(),
+          IosSettingsRow(
+            label: loc.usePreviousLocation,
+            value: () {
+              final raw = (previous.sourceLabel ?? previous.address).trim();
+              if (raw.isEmpty) return '—';
+              return raw.length > 36 ? '${raw.substring(0, 34)}…' : raw;
+            }(),
+            valueColor: IosFormColors.accent,
+            chevron: true,
+            onTap: () => _applyPreviousPlanLocation(previous),
           ),
         ],
       ],
@@ -1053,53 +1042,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final parsed = parsePlaceNameAndAddress(_locationController.text);
     if (parsed.name.isNotEmpty) return parsed.name;
     return parsed.address;
-  }
-
-  Widget _buildUsePreviousLocationButton({
-    required PreviousPlanLocation previous,
-    required void Function(PreviousPlanLocation previous) onApply,
-  }) {
-    final loc = AppLocalizations.of(context)!;
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TextButton.icon(
-        onPressed: () => onApply(previous),
-        icon: Icon(
-          Icons.history,
-          size: 16,
-          color: AppColorScheme.color2,
-        ),
-        label: Text(
-          _previousLocationButtonLabel(loc, previous),
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: AppColorScheme.color2,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          visualDensity: VisualDensity.compact,
-          foregroundColor: AppColorScheme.color2,
-        ),
-      ),
-    );
-  }
-
-  String _previousLocationButtonLabel(
-    AppLocalizations loc,
-    PreviousPlanLocation previous,
-  ) {
-    final raw = (previous.sourceLabel ?? previous.address).trim();
-    final short =
-        raw.length > 32 ? '${raw.substring(0, 30)}…' : raw;
-    if (raw.isEmpty) return loc.usePreviousLocation;
-    if (previous.role == PreviousLocationRole.transportDestination) {
-      return loc.usePreviousDestinationFrom(short);
-    }
-    return loc.usePreviousLocationFrom(short);
   }
 
   PreviousPlanLocation? _lookupPreviousPlanLocation() {
@@ -1312,128 +1254,198 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   Widget _buildNonTransportTimezoneSelector() {
     final loc = AppLocalizations.of(context)!;
-    return _buildLabelOnBorderField(
+    final canEdit = _canEditGeneral;
+    final value =
+        '${TimezoneService.getTimezoneCityName(_selectedTimezone)} (${TimezoneService.getUtcOffsetFormatted(_selectedTimezone)})';
+    return IosSettingsRow(
       label: loc.timezone,
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '${TimezoneService.getTimezoneCityName(_selectedTimezone)} (${TimezoneService.getUtcOffsetFormatted(_selectedTimezone)})',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          _buildFlightTimezoneCircle(
-            timezone: _selectedTimezone,
-            tooltip:
-                '${loc.timezone}: ${TimezoneService.getTimezoneCityName(_selectedTimezone)} (${TimezoneService.getUtcOffsetFormatted(_selectedTimezone)})',
-            onTap: _canEditGeneral
-                ? () => _openFlightTimezonePicker(isArrival: false)
-                : _showReadOnlySnackBar,
-          ),
-        ],
-      ),
+      value: value,
+      chevron: canEdit,
+      onTap: canEdit
+          ? () => _openFlightTimezonePicker(isArrival: false)
+          : null,
     );
   }
 
-  Widget _buildIsForAllParticipantsSelector() {
+  /// Alcance de participantes: switch «Para todos» + lista en la misma card.
+  Widget _buildParticipantsScopeSection() {
     final loc = AppLocalizations.of(context)!;
-    return _wrapReadOnlyIfNeeded(
-      child: _buildLabelOnBorderField(
-        label: loc.eventDialogParticipantsScopeLabel,
-        contentPadding: const EdgeInsets.fromLTRB(14, 20, 14, 12),
-          child: CheckboxTheme(
-          data: CheckboxThemeData(
-            fillColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return AppColorScheme.color2;
+    final canEdit = _canEditGeneral;
+    final planId = widget.planId;
+
+    final children = <Widget>[
+      IosSwitchRow(
+        label: loc.eventDialogForAllShort,
+        value: _isForAllParticipants,
+        onChanged: canEdit
+            ? (value) {
+                setState(() {
+                  _isForAllParticipants = value;
+                  if (_isForAllParticipants) {
+                    _selectedParticipantIds.clear();
+                  }
+                });
               }
-              return Colors.white.withValues(alpha: 0.12);
-            }),
-            side: BorderSide(color: Colors.white60, width: 1.5),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            : null,
+      ),
+    ];
+
+    String? footerText = _isForAllParticipants
+        ? loc.eventDialogForAllParticipantsSubtitleOn
+        : loc.eventDialogForAllParticipantsSubtitleOff;
+    Color? footerColor;
+
+    if (!_isForAllParticipants) {
+      children.add(const IosRowSeparator());
+      children.add(
+        IosGroupedCardCaption(loc.eventDialogParticipantsPickCaption),
+      );
+
+      if (planId == null) {
+        children.add(
+          IosSettingsRow(
+            label: loc.eventDialogNoParticipantsInPlan,
+            value: '',
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: CheckboxListTile(
-              title: Text(
-                loc.eventDialogForAllParticipantsTitle,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                  fontSize: 14,
+        );
+      } else {
+        final participantsAsync =
+            ref.watch(planRealParticipantsProvider(planId));
+        participantsAsync.when(
+          data: (participations) {
+            if (participations.isEmpty) {
+              children.add(
+                IosSettingsRow(
+                  label: loc.eventDialogNoParticipantsInPlan,
+                  value: '',
                 ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  _isForAllParticipants
-                      ? loc.eventDialogForAllParticipantsSubtitleOn
-                      : loc.eventDialogForAllParticipantsSubtitleOff,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white70,
-                    fontSize: 12,
+              );
+              return;
+            }
+            for (var i = 0; i < participations.length; i++) {
+              final participation = participations[i];
+              final isSelected =
+                  _selectedParticipantIds.contains(participation.userId);
+              final isEventCreator =
+                  widget.event?.userId == participation.userId;
+              if (i > 0) children.add(const IosRowSeparator());
+              children.add(
+                FutureBuilder<String>(
+                  future: _getUserDisplayName(participation.userId),
+                  builder: (context, snapshot) {
+                    final displayName =
+                        snapshot.data ?? participation.userId;
+                    String secondary = '';
+                    if (isEventCreator) {
+                      secondary = loc.eventDialogEventCreator;
+                    } else if (participation.isOrganizer) {
+                      secondary = loc.planRoleOrganizer;
+                    }
+                    return IosCheckRow(
+                      label: displayName,
+                      value: secondary,
+                      selected: isSelected,
+                      indented: true,
+                      onTap: canEdit
+                          ? () {
+                              setState(() {
+                                if (isSelected) {
+                                  if (_selectedParticipantIds.length > 1) {
+                                    _selectedParticipantIds
+                                        .remove(participation.userId);
+                                  } else {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          loc.eventDialogSelectAtLeastOne,
+                                          style: GoogleFonts.poppins(
+                                              color: Colors.white),
+                                        ),
+                                        backgroundColor: Colors.red.shade600,
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                } else if (!_selectedParticipantIds
+                                    .contains(participation.userId)) {
+                                  _selectedParticipantIds
+                                      .add(participation.userId);
+                                }
+                              });
+                            }
+                          : null,
+                    );
+                  },
+                ),
+              );
+            }
+            if (_selectedParticipantIds.isEmpty &&
+                !_isLegacyEventWithoutParticipants) {
+              footerText = loc.eventDialogSelectAtLeastOne;
+              footerColor = IosFormColors.danger;
+            }
+          },
+          loading: () {
+            children.add(
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
               ),
-              value: _isForAllParticipants,
-              onChanged: _canEditGeneral
-                  ? (value) {
-                      setState(() {
-                        _isForAllParticipants = value ?? true;
-                        if (_isForAllParticipants) {
-                          _selectedParticipantIds.clear();
-                        }
-                      });
-                    }
-                  : null,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              dense: true,
-              horizontalTitleGap: 10,
-            ),
-          ),
-        ),
-      ),
+            );
+          },
+          error: (_, __) {
+            footerText = loc.eventDialogParticipantsLoadError;
+            footerColor = IosFormColors.danger;
+          },
+        );
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IosSectionLabel(loc.eventDialogParticipantsScopeLabel),
+        IosGroupedCard(children: children),
+        if (footerText != null && footerText!.isNotEmpty)
+          IosFormFooter(footerText!, color: footerColor),
+      ],
     );
   }
 
   /// Campo opcional: enlace web del evento (p. ej. reserva, web del lugar).
   Widget _buildUrlField() {
     final loc = AppLocalizations.of(context)!;
-    return Container(
-      decoration: _buildLoginStyleDecoration(),
-      child: TextFormField(
-        controller: _urlController,
-        readOnly: !_canEditGeneral,
-        style: _valueStyle,
-        onChanged: (_) => setState(() {}),
-        decoration: _standardFieldDecoration(
-          labelText: loc.eventUrlLabel,
-          hintText: loc.eventUrlHint,
-          prefixIcon: Icons.link,
-          counterText: '',
-        ).copyWith(
-          suffixIcon: _canOpenEventWebLink
-              ? IconButton(
-                  tooltip: loc.openWebLink,
-                  onPressed: _openEventWebLink,
-                  icon: Icon(
-                    Icons.open_in_new,
-                    size: _fieldIconSize,
-                    color: AppColorScheme.color2,
-                  ),
-                )
-              : null,
+    final canEdit = _canEditGeneral || _canEditGeneralInitial;
+    return IosGroupedCard(
+      children: [
+        IgnorePointer(
+          ignoring: !canEdit,
+          child: IosEditField(
+            label: loc.eventUrlLabel,
+            controller: _urlController,
+            keyboardType: TextInputType.url,
+            hint: loc.eventUrlHint,
+            onChanged: (_) => setState(() {}),
+          ),
         ),
-        keyboardType: TextInputType.url,
-        maxLength: 500,
-        maxLines: 1,
-      ),
+        if (_canOpenEventWebLink) ...[
+          const IosRowSeparator(),
+          IosSettingsRow(
+            label: loc.openWebLink,
+            value: _urlController.text.trim(),
+            valueColor: IosFormColors.accent,
+            chevron: true,
+            onTap: _openEventWebLink,
+          ),
+        ],
+      ],
     );
   }
 
@@ -1517,8 +1529,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Future<void> _pickEventAttachment() async {
     final planId = widget.planId;
     if (planId == null) return;
-    final picked = await PlanFileService.pickAttachment();
-    if (picked == null) {
+    final PickedPlanFile picked;
+    try {
+      final result = await PlanFileService.pickAttachment();
+      // null = cancelación del selector nativo (no es error de lectura).
+      if (result == null) return;
+      picked = result;
+    } catch (_) {
       if (!mounted) return;
       final loc = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1572,33 +1589,15 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   Future<void> _deleteEventAttachment(EventDocument doc) async {
-    final confirm = await showDialog<bool>(
-          context: context,
-          builder: (ctx) {
-            final loc = AppLocalizations.of(ctx)!;
-            return Theme(
-              data: AppTheme.darkTheme,
-              child: AlertDialog(
-                backgroundColor: const Color(0xFF111827),
-                title: Text(loc.entityAttachmentsDeleteTitle,
-                    style: GoogleFonts.poppins(color: Colors.white)),
-                content: Text(
-                  loc.entityAttachmentsDeleteConfirm(doc.name),
-                  style: GoogleFonts.poppins(color: Colors.white70),
-                ),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(false),
-                      child: Text(loc.cancel)),
-                  TextButton(
-                      onPressed: () => Navigator.of(ctx).pop(true),
-                      child: Text(loc.delete)),
-                ],
-              ),
-            );
-          },
-        ) ??
-        false;
+    final loc = AppLocalizations.of(context)!;
+    final confirm = await IosFormConfirmSheet.show(
+      context: context,
+      title: loc.entityAttachmentsDeleteTitle,
+      message: loc.entityAttachmentsDeleteConfirm(doc.name),
+      cancelLabel: loc.cancel,
+      confirmLabel: loc.delete,
+      destructive: true,
+    );
     if (!confirm) return;
     setState(() => _uploadingEventAttachment = true);
     try {
@@ -1714,52 +1713,45 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final showSearch = _typePickerExpanded ||
         (hasType && _subtypePickerExpanded);
 
+    // Fila colapsada: solo subtipo (más espacio); si no hay, familia.
+    String collapsedTypeValue() {
+      if (hasSubtype) return _typeSubtypeController.text.trim();
+      if (hasType) return _typeFamilyController.text.trim();
+      return '';
+    }
+
     if (!_canEditGeneral) {
-      return _buildLabelOnBorderField(
+      final typeValue = collapsedTypeValue();
+      return IosSettingsRow(
         label: loc.eventType,
-        contentPadding:
-            const EdgeInsets.only(top: 14, left: 16, right: 16, bottom: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (hasType || hasSubtype)
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  if (hasType)
-                    _buildTypeSubtypeChip(
-                      label: _typeFamilyController.text,
-                      icon: _typeIcons[_typeFamilyController.text] ??
-                          Icons.category,
-                    ),
-                  if (hasSubtype)
-                    _buildTypeSubtypeChip(
-                      label: _typeSubtypeController.text,
-                      icon: _subtypeIcons[
-                              '${_typeFamilyController.text}|${_typeSubtypeController.text}'] ??
-                          Icons.label,
-                    ),
-                ],
-              )
-            else
-              Text(
-                '—',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.white60,
-                ),
-              ),
-          ],
-        ),
+        value: typeValue.isEmpty ? '—' : typeValue,
       );
     }
 
-    return _buildLabelOnBorderField(
-      label: loc.eventType,
-      contentPadding:
-          const EdgeInsets.only(top: 14, left: 16, right: 16, bottom: 16),
+    final typeValue = collapsedTypeValue();
+    final pickerOpen = _typePickerExpanded || _subtypePickerExpanded;
+
+    if (!pickerOpen) {
+      return IosSettingsRow(
+        label: loc.eventType,
+        value: typeValue.isEmpty ? '—' : typeValue,
+        chevron: true,
+        onTap: () {
+          setState(() {
+            if (hasType) {
+              _subtypePickerExpanded = true;
+              _typePickerExpanded = false;
+            } else {
+              _typePickerExpanded = true;
+            }
+            _clearTypeSearch();
+          });
+        },
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -2171,75 +2163,51 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   }
 
   /// Bloque Origen + Destino (+ opcionalmente Plazas) para Desplazamiento.
-  /// Un campo por extremo: nombre en 1ª línea, dirección en 2ª. [showPlazas] solo Taxi.
   Widget _buildTransportOriginDestinationBlock({required bool showPlazas}) {
     final loc = AppLocalizations.of(context)!;
     final previous = _lookupPreviousPlanLocation();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final canEdit = _canEditGeneral || _canEditGeneralInitial;
+    return IosGroupedCard(
       children: [
-        _buildLabelOnBorderField(
+        _iosPlaceFieldRow(
           label: loc.taxiOriginLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 0, bottom: 8),
-          child: PlaceAutocompleteField(
-            controller: _taxiOriginController,
-            initialAddress: _taxiOriginController.text.isNotEmpty
-                ? _taxiOriginController.text
-                : null,
-            lodgingOnly: false,
-            preferNameAndAddressTwoLines: true,
-            maxLines: 2,
-            labelText: '',
-            hintText: loc.taxiOriginHint,
-            fontSize: 13,
-            fillColor: Colors.transparent,
-            border: InputBorder.none,
-            suffixIcon: ListenableBuilder(
-              listenable: _taxiOriginController,
-              builder: (context, _) {
-                final canOpen =
-                    _taxiOriginController.text.trim().isNotEmpty ||
-                        _taxiOriginDetails != null ||
-                        _taxiOriginStoredLat != null;
-                return IconButton(
-                  tooltip: loc.openInGoogleMaps,
-                  onPressed: canOpen
-                      ? () => _openTaxiAddressInMaps(
-                            _twoLinePlaceMapsQuery(
-                                _taxiOriginController.text),
-                            _taxiOriginDetails?.lat ?? _taxiOriginStoredLat,
-                            _taxiOriginDetails?.lng ?? _taxiOriginStoredLng,
-                          )
-                      : null,
-                  icon: Icon(
-                    Icons.map_outlined,
-                    color: canOpen ? AppColorScheme.color2 : Colors.white60,
-                  ),
-                );
-              },
-            ),
-            onPlaceSelected: (PlaceDetails details) {
-              setState(() {
-                _taxiOriginDetails = details;
-                _taxiOriginController.text = formatPlaceNameAndAddress(
-                  details.displayName,
-                  details.formattedAddress,
-                );
-                _taxiOriginStoredLat = details.lat;
-                _taxiOriginStoredLng = details.lng;
-              });
-            },
+          hint: loc.taxiOriginHint,
+          controller: _taxiOriginController,
+          initialAddress: _taxiOriginController.text.isNotEmpty
+              ? _taxiOriginController.text
+              : null,
+          canOpenMaps: _taxiOriginController.text.trim().isNotEmpty ||
+              _taxiOriginDetails != null ||
+              _taxiOriginStoredLat != null,
+          onOpenMaps: () => _openTaxiAddressInMaps(
+            _twoLinePlaceMapsQuery(_taxiOriginController.text),
+            _taxiOriginDetails?.lat ?? _taxiOriginStoredLat,
+            _taxiOriginDetails?.lng ?? _taxiOriginStoredLng,
           ),
+          onPlaceSelected: (PlaceDetails details) {
+            setState(() {
+              _taxiOriginDetails = details;
+              _taxiOriginController.text = formatPlaceNameAndAddress(
+                details.displayName,
+                details.formattedAddress,
+              );
+              _taxiOriginStoredLat = details.lat;
+              _taxiOriginStoredLng = details.lng;
+            });
+          },
         ),
-        if (previous != null &&
-            (_canEditGeneral || _canEditGeneralInitial)) ...[
-          const SizedBox(height: 6),
-          _buildUsePreviousLocationButton(
-            previous: previous,
-            onApply: _applyPreviousPlanLocationToOrigin,
+        if (previous != null && canEdit)
+          IosSettingsRow(
+            label: loc.usePreviousLocation,
+            value: () {
+              final raw = (previous.sourceLabel ?? previous.address).trim();
+              if (raw.isEmpty) return '—';
+              return raw.length > 36 ? '${raw.substring(0, 34)}…' : raw;
+            }(),
+            valueColor: IosFormColors.accent,
+            chevron: true,
+            onTap: () => _applyPreviousPlanLocationToOrigin(previous),
           ),
-        ],
         Builder(
           builder: (context) {
             final hotelAction = _buildAccommodationEndpointActions(
@@ -2250,67 +2218,38 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             );
             if (hotelAction == null) return const SizedBox.shrink();
             return Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: hotelAction,
             );
           },
         ),
-        const SizedBox(height: 12),
-        _buildLabelOnBorderField(
+        const IosRowSeparator(),
+        _iosPlaceFieldRow(
           label: loc.taxiDestinationLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 0, bottom: 8),
-          child: PlaceAutocompleteField(
-            controller: _taxiDestinationController,
-            initialAddress: _taxiDestinationController.text.isNotEmpty
-                ? _taxiDestinationController.text
-                : null,
-            lodgingOnly: false,
-            preferNameAndAddressTwoLines: true,
-            maxLines: 2,
-            labelText: '',
-            hintText: loc.taxiDestinationHint,
-            fontSize: 13,
-            fillColor: Colors.transparent,
-            border: InputBorder.none,
-            suffixIcon: ListenableBuilder(
-              listenable: _taxiDestinationController,
-              builder: (context, _) {
-                final canOpen =
-                    _taxiDestinationController.text.trim().isNotEmpty ||
-                        _taxiDestinationDetails != null ||
-                        _taxiDestinationStoredLat != null;
-                return IconButton(
-                  tooltip: loc.openInGoogleMaps,
-                  onPressed: canOpen
-                      ? () => _openTaxiAddressInMaps(
-                            _twoLinePlaceMapsQuery(
-                                _taxiDestinationController.text),
-                            _taxiDestinationDetails?.lat ??
-                                _taxiDestinationStoredLat,
-                            _taxiDestinationDetails?.lng ??
-                                _taxiDestinationStoredLng,
-                          )
-                      : null,
-                  icon: Icon(
-                    Icons.map_outlined,
-                    color: canOpen ? AppColorScheme.color2 : Colors.white60,
-                  ),
-                );
-              },
-            ),
-            onPlaceSelected: (PlaceDetails details) {
-              setState(() {
-                _taxiDestinationDetails = details;
-                _taxiDestinationController.text = formatPlaceNameAndAddress(
-                  details.displayName,
-                  details.formattedAddress,
-                );
-                _taxiDestinationStoredLat = details.lat;
-                _taxiDestinationStoredLng = details.lng;
-              });
-            },
+          hint: loc.taxiDestinationHint,
+          controller: _taxiDestinationController,
+          initialAddress: _taxiDestinationController.text.isNotEmpty
+              ? _taxiDestinationController.text
+              : null,
+          canOpenMaps: _taxiDestinationController.text.trim().isNotEmpty ||
+              _taxiDestinationDetails != null ||
+              _taxiDestinationStoredLat != null,
+          onOpenMaps: () => _openTaxiAddressInMaps(
+            _twoLinePlaceMapsQuery(_taxiDestinationController.text),
+            _taxiDestinationDetails?.lat ?? _taxiDestinationStoredLat,
+            _taxiDestinationDetails?.lng ?? _taxiDestinationStoredLng,
           ),
+          onPlaceSelected: (PlaceDetails details) {
+            setState(() {
+              _taxiDestinationDetails = details;
+              _taxiDestinationController.text = formatPlaceNameAndAddress(
+                details.displayName,
+                details.formattedAddress,
+              );
+              _taxiDestinationStoredLat = details.lat;
+              _taxiDestinationStoredLng = details.lng;
+            });
+          },
         ),
         Builder(
           builder: (context) {
@@ -2322,12 +2261,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             );
             if (hotelAction == null) return const SizedBox.shrink();
             return Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: hotelAction,
             );
           },
         ),
-        const SizedBox(height: 10),
+        const IosRowSeparator(),
         ListenableBuilder(
           listenable: Listenable.merge([
             _taxiOriginController,
@@ -2337,71 +2276,38 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             final canOpenRoute =
                 _taxiOriginController.text.trim().isNotEmpty &&
                     _taxiDestinationController.text.trim().isNotEmpty;
-            return OutlinedButton.icon(
-              onPressed:
-                  canOpenRoute ? _openTransportRouteInGoogleMaps : null,
-              icon: Icon(
-                Icons.directions,
-                size: 18,
-                color: canOpenRoute ? AppColorScheme.color2 : Colors.white38,
-              ),
-              label: Text(
-                loc.openRouteInGoogleMaps,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: canOpenRoute ? Colors.white : Colors.white38,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: BorderSide(
-                  color: canOpenRoute
-                      ? AppColorScheme.color2.withValues(alpha: 0.7)
-                      : Colors.white24,
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(_fieldRadius),
-                ),
-              ),
+            return IosSettingsRow(
+              label: loc.openRouteInGoogleMaps,
+              value: '',
+              valueColor: IosFormColors.accent,
+              chevron: canOpenRoute,
+              onTap: canOpenRoute ? _openTransportRouteInGoogleMaps : null,
             );
           },
         ),
         if (showPlazas) ...[
-          const SizedBox(height: 12),
-          DropdownButtonFormField<int>(
-            initialValue: _taxiSeats.clamp(1, 9),
-            decoration: InputDecoration(
-              labelText: loc.taxiSeatsLabel,
-              hintText: loc.taxiSeatsHint,
-              labelStyle: GoogleFonts.poppins(
-                fontSize: 13,
-                color: Colors.white70,
-                fontWeight: FontWeight.w500,
-              ),
-              prefixIcon: Icon(Icons.airline_seat_recline_normal,
-                  color: Colors.white70),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: Colors.transparent,
-            ),
-            dropdownColor: const Color(0xFF1F2937),
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-            items: List.generate(9, (i) => i + 1).map((n) {
-              return DropdownMenuItem<int>(value: n, child: Text('$n'));
-            }).toList(),
-            onChanged: _canEditGeneral
-                ? (int? value) {
-                    if (value != null) setState(() => _taxiSeats = value);
+          const IosRowSeparator(),
+          IosSettingsRow(
+            label: loc.taxiSeatsLabel,
+            value: '$_taxiSeats',
+            chevron: canEdit,
+            onTap: canEdit
+                ? () async {
+                    final picked = await IosFormPickerSheet.show<int>(
+                      context: context,
+                      title: loc.taxiSeatsLabel,
+                      options: List.generate(
+                        9,
+                        (i) => IosFormPickerOption(
+                          value: i + 1,
+                          title: '${i + 1}',
+                          selected: _taxiSeats == i + 1,
+                        ),
+                      ),
+                    );
+                    if (picked != null && mounted) {
+                      setState(() => _taxiSeats = picked);
+                    }
                   }
                 : null,
           ),
@@ -2414,83 +2320,34 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Widget _buildGroundTransferAirportExtraFields() {
     final loc = AppLocalizations.of(context)!;
     final ro = !(_canEditGeneral || _canEditGeneralInitial);
-    InputDecoration deco(String hint) => InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.white60,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: AppColorScheme.color2,
-              width: 2.5,
-            ),
-          ),
-          fillColor: Colors.transparent,
-          filled: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return IosGroupedCard(
       children: [
-        _buildLabelOnBorderField(
-          label: loc.eventTransferTerminalLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: TextFormField(
+        IgnorePointer(
+          ignoring: ro,
+          child: IosEditField(
+            label: loc.eventTransferTerminalLabel,
             controller: _transferTerminalController,
-            readOnly: ro,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: deco(loc.eventTransferTerminalHint),
+            hint: loc.eventTransferTerminalHint,
           ),
         ),
-        const SizedBox(height: 12),
-        _buildLabelOnBorderField(
-          label: loc.eventTransferAirlineLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: TextFormField(
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: ro,
+          child: IosEditField(
+            label: loc.eventTransferAirlineLabel,
             controller: _transferAirlineController,
-            readOnly: ro,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: deco(loc.eventTransferAirlineHint),
+            hint: loc.eventTransferAirlineHint,
           ),
         ),
-        const SizedBox(height: 12),
-        _buildLabelOnBorderField(
-          label: loc.eventTransferAirportMeetLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: TextFormField(
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: ro,
+          child: IosEditField(
+            label: loc.eventTransferAirportMeetLabel,
             controller: _transferAirportMeetController,
-            readOnly: ro,
             minLines: 1,
             maxLines: 2,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-            decoration: deco(loc.eventTransferAirportMeetHint),
+            hint: loc.eventTransferAirportMeetHint,
           ),
         ),
       ],
@@ -2507,52 +2364,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Widget _buildRentalVehicleActionFields() {
     final loc = AppLocalizations.of(context)!;
     final ro = !(_canEditGeneral || _canEditGeneralInitial);
-
-    InputDecoration deco(String hint) => InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.white60,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: AppColorScheme.color2,
-              width: 2.5,
-            ),
-          ),
-          fillColor: Colors.transparent,
-          filled: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        );
-
-    TextStyle style() => GoogleFonts.poppins(
-          fontSize: 13,
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return IosGroupedCard(
       children: [
-        _buildLabelOnBorderField(
-          label: loc.eventRentalCompanyLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: TextFormField(
+        IgnorePointer(
+          ignoring: ro,
+          child: IosEditField(
+            label: loc.eventRentalCompanyLabel,
             controller: _rentalCompanyController,
-            readOnly: ro,
-            style: style(),
-            decoration: deco(loc.eventRentalCompanyHint),
+            hint: loc.eventRentalCompanyHint,
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
@@ -2561,16 +2380,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             },
           ),
         ),
-        const SizedBox(height: 12),
-        _buildLabelOnBorderField(
-          label: loc.eventRentalOfficeLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: TextFormField(
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: ro,
+          child: IosEditField(
+            label: loc.eventRentalOfficeLabel,
             controller: _rentalOfficeController,
-            readOnly: ro,
-            style: style(),
-            decoration: deco(loc.eventRentalOfficeHint),
+            hint: loc.eventRentalOfficeHint,
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
@@ -2579,16 +2395,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             },
           ),
         ),
-        const SizedBox(height: 12),
-        _buildLabelOnBorderField(
-          label: loc.eventRentalContractCodeLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: TextFormField(
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: ro,
+          child: IosEditField(
+            label: loc.eventRentalContractCodeLabel,
             controller: _rentalContractCodeController,
-            readOnly: ro,
-            style: style(),
-            decoration: deco(loc.eventRentalContractCodeHint),
+            hint: loc.eventRentalContractCodeHint,
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
@@ -2597,16 +2410,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             },
           ),
         ),
-        const SizedBox(height: 12),
-        _buildLabelOnBorderField(
-          label: loc.eventRentalVehiclePlateLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: TextFormField(
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: ro,
+          child: IosEditField(
+            label: loc.eventRentalVehiclePlateLabel,
             controller: _rentalVehiclePlateController,
-            readOnly: ro,
-            style: style(),
-            decoration: deco(loc.eventRentalVehiclePlateHint),
+            hint: loc.eventRentalVehiclePlateHint,
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
@@ -2615,18 +2425,15 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             },
           ),
         ),
-        const SizedBox(height: 12),
-        _buildLabelOnBorderField(
-          label: loc.eventRentalPickupReturnNotesLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: TextFormField(
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: ro,
+          child: IosEditField(
+            label: loc.eventRentalPickupReturnNotesLabel,
             controller: _rentalPickupReturnNotesController,
-            readOnly: ro,
             minLines: 1,
             maxLines: 3,
-            style: style(),
-            decoration: deco(loc.eventRentalPickupReturnNotesHint),
+            hint: loc.eventRentalPickupReturnNotesHint,
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
@@ -2800,157 +2607,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
   }
 
-  /// Campo Fecha / Hora / Duración con título sobre el borde.
-  Widget _buildWhenField({
-    required String label,
-    required String value,
-    required VoidCallback onTap,
-    required bool isMobile,
-    required double fsBody,
-  }) {
-    return _buildLabelOnBorderField(
-      label: label,
-      contentPadding: EdgeInsets.only(
-          left: 8, right: 8, top: 14, bottom: isMobile ? 10 : 12),
-      child: SizedBox(
-        width: double.infinity,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: fsBody,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// P13: Timezone con el mismo patrón que el resto de campos (título sobre el borde).
-  /// [compact] para la columna estrecha junto a aeropuertos en vuelos.
-  Widget _buildTimezoneFieldOnBorder({
-    required String label,
-    required String value,
-    required void Function(String?)? onChanged,
-    bool compact = false,
-    IconData? leadingIcon,
-    bool showCityInMenuAndGmtSelected = false,
-  }) {
-    final fs = compact ? 11.0 : 13.0;
-    final pad = compact
-        ? const EdgeInsets.only(top: 8, left: 4, right: 4, bottom: 8)
-        : const EdgeInsets.only(top: 10, left: 6, right: 8, bottom: 10);
-    final commonTimezones =
-        TimezoneService.getCommonTimezones().toSet().toList();
-    // Evita assertion del Dropdown cuando el valor actual (p. ej. "UTC")
-    // no está en la lista común o hay duplicados.
-    if (value.trim().isNotEmpty &&
-        !commonTimezones.contains(value) &&
-        TimezoneService.isValidTimezone(value)) {
-      commonTimezones.insert(0, value);
-    }
-    final safeValue =
-        commonTimezones.contains(value) ? value : commonTimezones.first;
-    final dropdown = DropdownButtonFormField<String>(
-      initialValue: safeValue,
-      isExpanded: true,
-      dropdownColor: const Color(0xFF1F2937),
-      style: GoogleFonts.poppins(
-          fontSize: fs, color: Colors.white, fontWeight: FontWeight.w500),
-      decoration: InputDecoration(
-        border: InputBorder.none,
-        isDense: true,
-        contentPadding: EdgeInsets.zero,
-        filled: false,
-      ),
-      icon: Icon(Icons.arrow_drop_down,
-          color: Colors.white70, size: compact ? 20 : 24),
-      selectedItemBuilder: showCityInMenuAndGmtSelected
-          ? (context) => commonTimezones.map((tz) {
-                return Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    TimezoneService.getUtcOffsetFormatted(tz),
-                    style: GoogleFonts.poppins(
-                        fontSize: fs,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList()
-          : null,
-      items: commonTimezones.map((tz) {
-        return DropdownMenuItem<String>(
-          value: tz,
-          child: showCityInMenuAndGmtSelected
-              ? Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        TimezoneService.getTimezoneCityName(tz),
-                        style: GoogleFonts.poppins(
-                          fontSize: fs,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      TimezoneService.getUtcOffsetFormatted(tz),
-                      style: GoogleFonts.poppins(
-                        fontSize: fs - 1,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                )
-              : Text(
-                  TimezoneService.getUtcOffsetFormatted(tz),
-                  style: GoogleFonts.poppins(
-                      fontSize: fs,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500),
-                  overflow: TextOverflow.ellipsis,
-                ),
-        );
-      }).toList(),
-      onChanged: onChanged,
-    );
-
-    return _buildLabelOnBorderField(
-      label: label,
-      contentPadding: pad,
-      child: leadingIcon != null
-          ? Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(leadingIcon,
-                    size: compact ? 18 : 20, color: Colors.white70),
-                const SizedBox(width: 8),
-                Expanded(child: dropdown),
-              ],
-            )
-          : dropdown,
-    );
-  }
-
-  String _timezoneOffsetBadge(String timezone) {
-    final gmt = TimezoneService.getUtcOffsetFormatted(timezone);
-    return gmt.startsWith('GMT') ? gmt.replaceFirst('GMT', '') : gmt;
-  }
-
   Future<void> _openFlightTimezonePicker({required bool isArrival}) async {
     if (!_canEditGeneral) return;
     final selected = isArrival ? _selectedArrivalTimezone : _selectedTimezone;
@@ -3003,242 +2659,108 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     });
   }
 
-  Widget _buildFlightTimezoneCircle({
-    required String timezone,
-    required String tooltip,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(999),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColorScheme.color2.withValues(alpha: 0.18),
-              border:
-                  Border.all(color: AppColorScheme.color2.withValues(alpha: 0.65)),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              _timezoneOffsetBadge(timezone),
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// T246: Bloque número de vuelo + botón Obtener datos (Amadeus).
-  /// Aeropuertos con Google Places (formato título sobre el borde); timezone salida/llegada al lado de cada uno.
+  /// T246: Bloque vuelo (aeropuertos + nº + Amadeus) en card Settings.
   Widget _buildFlightNumberBlock() {
     final loc = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final canEdit = _canEditGeneral;
+    return IosGroupedCard(
       children: [
-        // Aeropuerto de origen
-        _buildLabelOnBorderField(
+        _iosPlaceFieldRow(
           label: loc.departureAirportLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: PlaceAutocompleteField(
-                  controller: _departureAirportController,
-                  initialAddress: null,
-                  lodgingOnly: false,
-                  labelText: '',
-                  hintText: loc.departureAirportHint,
-                  fontSize: 12,
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                  onPlaceSelected: (PlaceDetails details) {
-                    setState(() {
-                      _departureAirportDetails = details;
-                      final addr = details.formattedAddress;
-                      _departureAirportController.text = (addr != null &&
-                              addr.isNotEmpty &&
-                              addr != details.displayName)
-                          ? '${details.displayName}, $addr'
-                          : details.displayName;
-                    });
-                    _autodetectFlightTimezoneFromPlace(
-                      details: details,
-                      isArrival: false,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildFlightTimezoneCircle(
-                timezone: _selectedTimezone,
-                tooltip:
-                    '${loc.timezone}: ${TimezoneService.getTimezoneCityName(_selectedTimezone)} (${TimezoneService.getUtcOffsetFormatted(_selectedTimezone)})',
-                onTap: () => _openFlightTimezonePicker(isArrival: false),
-              ),
-            ],
-          ),
+          hint: loc.departureAirportHint,
+          controller: _departureAirportController,
+          onPlaceSelected: (PlaceDetails details) {
+            setState(() {
+              _departureAirportDetails = details;
+              final addr = details.formattedAddress;
+              _departureAirportController.text = (addr != null &&
+                      addr.isNotEmpty &&
+                      addr != details.displayName)
+                  ? '${details.displayName}, $addr'
+                  : details.displayName;
+            });
+            _autodetectFlightTimezoneFromPlace(
+              details: details,
+              isArrival: false,
+            );
+          },
         ),
-        const SizedBox(height: 12),
-        // Aeropuerto de destino
-        _buildLabelOnBorderField(
+        IosSettingsRow(
+          label: loc.timezone,
+          value: _timezoneRowValue(_selectedTimezone),
+          chevron: canEdit,
+          onTap: canEdit
+              ? () => _openFlightTimezonePicker(isArrival: false)
+              : null,
+        ),
+        const IosRowSeparator(),
+        _iosPlaceFieldRow(
           label: loc.arrivalAirportLabel,
-          contentPadding:
-              const EdgeInsets.only(top: 14, left: 8, right: 8, bottom: 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: PlaceAutocompleteField(
-                  controller: _arrivalAirportController,
-                  initialAddress: null,
-                  lodgingOnly: false,
-                  labelText: '',
-                  hintText: loc.arrivalAirportHint,
-                  fontSize: 12,
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                  onPlaceSelected: (PlaceDetails details) {
-                    setState(() {
-                      _arrivalAirportDetails = details;
-                      final addr = details.formattedAddress;
-                      _arrivalAirportController.text = (addr != null &&
-                              addr.isNotEmpty &&
-                              addr != details.displayName)
-                          ? '${details.displayName}, $addr'
-                          : details.displayName;
-                    });
-                    _autodetectFlightTimezoneFromPlace(
-                      details: details,
-                      isArrival: true,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              _buildFlightTimezoneCircle(
-                timezone: _selectedArrivalTimezone,
-                tooltip:
-                    '${loc.arrivalTimezone}: ${TimezoneService.getTimezoneCityName(_selectedArrivalTimezone)} (${TimezoneService.getUtcOffsetFormatted(_selectedArrivalTimezone)})',
-                onTap: () => _openFlightTimezonePicker(isArrival: true),
-              ),
-            ],
+          hint: loc.arrivalAirportHint,
+          controller: _arrivalAirportController,
+          onPlaceSelected: (PlaceDetails details) {
+            setState(() {
+              _arrivalAirportDetails = details;
+              final addr = details.formattedAddress;
+              _arrivalAirportController.text = (addr != null &&
+                      addr.isNotEmpty &&
+                      addr != details.displayName)
+                  ? '${details.displayName}, $addr'
+                  : details.displayName;
+            });
+            _autodetectFlightTimezoneFromPlace(
+              details: details,
+              isArrival: true,
+            );
+          },
+        ),
+        IosSettingsRow(
+          label: loc.arrivalTimezone,
+          value: _timezoneRowValue(_selectedArrivalTimezone),
+          chevron: canEdit,
+          onTap: canEdit
+              ? () => _openFlightTimezonePicker(isArrival: true)
+              : null,
+        ),
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: !canEdit,
+          child: IosEditField(
+            label: loc.flightNumberLabel,
+            controller: _flightNumberController,
+            hint: loc.flightNumberHint,
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _flightNumberController,
-                readOnly: !_canEditGeneral,
-                textCapitalization: TextCapitalization.characters,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-                decoration: InputDecoration(
-                  labelText: loc.flightNumberLabel,
-                  hintText: loc.flightNumberHint,
-                  labelStyle: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  hintStyle: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.white60,
-                  ),
-                  prefixIcon: Icon(Icons.flight, color: Colors.white70),
-                  suffixIcon: _canEditGeneral
-                      ? IconButton(
-                          onPressed:
-                              _flightStatusLoading ? null : _fetchFlightStatus,
-                          icon: _flightStatusLoading
-                              ? SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColorScheme.color2,
-                                  ),
-                                )
-                              : Icon(Icons.search, color: Colors.white70),
-                          tooltip: loc.getFlightDataButton,
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: AppColorScheme.color2,
-                      width: 2.5,
-                    ),
-                  ),
-                  fillColor: Colors.transparent,
-                  filled: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                ),
+        if (canEdit) ...[
+          const IosRowSeparator(),
+          IosSettingsRow(
+            label: loc.getFlightDataButton,
+            value: _flightStatusLoading
+                ? '…'
+                : (_lastFlightStatus?.shortDescription ?? ''),
+            valueColor: IosFormColors.accent,
+            chevron: !_flightStatusLoading,
+            onTap: _flightStatusLoading ? null : _fetchFlightStatus,
+          ),
+        ],
+        if (_lastFlightStatus != null &&
+            (_lastFlightStatus!.departureScheduled != null ||
+                _lastFlightStatus!.arrivalScheduled != null)) ...[
+          const IosRowSeparator(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+            child: Text(
+              _formatFlightTimes(
+                _lastFlightStatus!.departureScheduled,
+                _lastFlightStatus!.arrivalScheduled,
+              ),
+              style: const TextStyle(
+                fontSize: 13,
+                color: IosFormColors.textSecondary,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _lastFlightStatus != null
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _lastFlightStatus!.shortDescription,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.white70,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        if (_lastFlightStatus!.departureScheduled != null ||
-                            _lastFlightStatus!.arrivalScheduled != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            _formatFlightTimes(
-                              _lastFlightStatus!.departureScheduled,
-                              _lastFlightStatus!.arrivalScheduled,
-                            ),
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ],
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
-        ),
+          ),
+        ],
       ],
     );
   }
@@ -3431,50 +2953,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
-  /// Lista §3.2 ítem 102: acceso a añadir gasto ligado al evento (solo si ya tiene id y hay plan).
-  List<Widget>? _eventDialogLinkedExpenseBarActions(bool isMobile) {
-    final planId = widget.planId;
-    final eventId = widget.event?.id;
-    if (planId == null || eventId == null || eventId.isEmpty) return null;
-    final loc = AppLocalizations.of(context)!;
-    return [
-      IconButton(
-        icon: Icon(Icons.receipt_long_outlined,
-            size: isMobile ? 20 : 22, color: Colors.white),
-        tooltip: loc.eventDialogAddLinkedExpenseTooltip,
-        onPressed: _openAddExpenseLinkedToThisEvent,
-        padding: const EdgeInsets.all(4),
-        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-        style: IconButton.styleFrom(
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-      ),
-    ];
-  }
-
-  Future<void> _openAddExpenseLinkedToThisEvent() async {
-    final planId = widget.planId;
-    final eventId = widget.event?.id;
-    if (!mounted || planId == null || eventId == null || eventId.isEmpty) {
-      return;
-    }
-    final planService = ref.read(planServiceProvider);
-    final plan = await planService.getPlanById(planId);
-    if (!mounted || plan == null || plan.id == null) return;
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (ctx) => AddExpenseDialog(
-          plan: plan,
-          initialEventId: eventId,
-          onSaved: () {
-            ref.invalidate(paymentSummaryProvider(plan.id!));
-          },
-        ),
-      ),
-    );
-  }
-
   /// T238: Barra verde superior del modal (UI estándar).
   /// Si [showDraftSwitch] es true, se muestra el selector Borrador/Confirmado alineado a la derecha.
   /// En móvil puede mostrarse [showCloseButton] para cerrar el modal.
@@ -3657,6 +3135,30 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     );
   }
 
+  void _onEventCancel() {
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _onEventSave() async {
+    await _saveEvent();
+  }
+
+  String _formatEventDateLabel() => DateFormatter.formatDate(_selectedDate);
+
+  String _formatEventTimeLabel() {
+    final hh = _selectedHour.toString().padLeft(2, '0');
+    final mm = _selectedStartMinute.toString().padLeft(2, '0');
+    return '$hh:$mm';
+  }
+
+  String _formatEventDurationLabel() {
+    final h = _selectedDurationMinutes ~/ 60;
+    final m = _selectedDurationMinutes % 60;
+    if (h > 0 && m > 0) return '$h h $m min';
+    if (h > 0) return '$h h';
+    return '$m min';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
@@ -3720,21 +3222,18 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ? AppLocalizations.of(context)!.createEvent
         : AppLocalizations.of(context)!.editEvent;
     final screenSize = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
-    // El AlertDialog coloca [content] y luego [actions] en columna. Si el content ocupa
-    // casi toda la pantalla, la fila Eliminar/Cancelar/Guardar queda fuera del viewport o
-    // bajo el área táctil (p. ej. Chrome estrecho / móvil). Reservar altura para acciones + safe area.
-    const actionsRowReserve = 112.0;
     final contentHeight = isMobile
-        ? (screenSize.height - padding.vertical - 64 - actionsRowReserve)
-            .clamp(240.0, 9000.0)
-        : null;
-    final contentWidth = isMobile ? screenSize.width : null;
+        ? screenSize.height
+        : (screenSize.height - 96).clamp(420.0, 640.0);
+    final contentWidth = isMobile ? screenSize.width : 520.0;
+    final canEditBar =
+        (_canEditGeneral || _canEditGeneralInitial) && _canSaveEvent();
 
     return Theme(
       data: AppTheme.darkTheme,
       child: AlertDialog(
-        scrollable: true,
+        // scrollable:true fuerza IntrinsicWidth y rompe ListView (vista D) en web.
+        scrollable: false,
         backgroundColor: _formSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(isMobile ? 0 : 18),
@@ -3751,258 +3250,151 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         content: SizedBox(
           width: contentWidth,
           height: contentHeight,
-          child: Column(
-            mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildEventDialogGreenBar(
-                context,
-                dialogTitle,
-                isMobile: isMobile,
-                showBadges: true,
-                showDraftSwitch:
-                    _canEditGeneral && !_isParticipantCreatingProposal,
-                isDraft: _isDraft,
-                onDraftChanged: (value) => setState(() => _isDraft = value),
-                showCloseButton: isMobile,
-                onClose: () => Navigator.of(context).pop(),
-                trailingActions: _eventDialogLinkedExpenseBarActions(isMobile),
+          // Material (no ColoredBox): ListTile/Checkbox ink bajo pageBg negro.
+          child: Material(
+            color: _formSurface,
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: IosFormEditBar(
+                          editing: true,
+                          canEdit: canEditBar,
+                          saving: _isSavingEvent,
+                          centeredTitle: true,
+                          modalIconActions: true,
+                          editLabel: AppLocalizations.of(context)!.edit,
+                          cancelLabel: AppLocalizations.of(context)!
+                              .planDetailsBarCancelShort,
+                          saveLabel: widget.event == null
+                              ? AppLocalizations.of(context)!.create
+                              : AppLocalizations.of(context)!
+                                  .planDetailsBarSaveShort,
+                          title: dialogTitle,
+                          onEdit: () {},
+                          onCancel: _onEventCancel,
+                          onSave: _onEventSave,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_isParticipantCreatingProposal)
+                    _buildProposalHint(context, isMobile),
+                  Expanded(
+                    child: _buildEventTabsForm(isMobile: isMobile),
+                  ),
+                ],
               ),
-              if (_isParticipantCreatingProposal)
-                _buildProposalHint(context, isMobile),
-              isMobile
-                  ? Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                        child: Form(
-                          key: _formKey,
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: DefaultTabController(
-                              length: _isAdmin ? 3 : 2,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Builder(
-                                    builder: (context) {
-                                      final tabController =
-                                          DefaultTabController.of(context);
-                                      final tabLabels = [
-                                        AppLocalizations.of(context)!
-                                            .eventTabGeneral,
-                                        AppLocalizations.of(context)!
-                                            .eventTabMyInfo,
-                                        if (_isAdmin)
-                                          AppLocalizations.of(context)!
-                                              .eventTabOthersInfo,
-                                      ].whereType<String>().toList();
-                                      return ListenableBuilder(
-                                        listenable: tabController,
-                                        builder: (context, _) {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 6),
-                                            child: Row(
-                                              children: List.generate(
-                                                  tabController.length, (i) {
-                                                final isSelected =
-                                                    tabController.index == i;
-                                                return Expanded(
-                                                  child: Padding(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 2),
-                                                    child: _EventTabChip(
-                                                      label: tabLabels[i],
-                                                      isSelected: isSelected,
-                                                      isMobile: true,
-                                                      onTap: () => tabController
-                                                          .animateTo(i),
-                                                    ),
-                                                  ),
-                                                );
-                                              }),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Expanded(
-                                    child: TabBarView(
-                                      children:
-                                          _buildEventTabViews(isMobile: true),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  : SizedBox(
-                      height: 540,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                        child: Form(
-                          key: _formKey,
-                          child: SizedBox(
-                            width: 520,
-                            child: DefaultTabController(
-                              length: _isAdmin ? 3 : 2,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Builder(
-                                    builder: (context) {
-                                      final tabController =
-                                          DefaultTabController.of(context);
-                                      final tabLabels = [
-                                        AppLocalizations.of(context)!
-                                            .eventTabGeneral,
-                                        AppLocalizations.of(context)!
-                                            .eventTabMyInfo,
-                                        if (_isAdmin)
-                                          AppLocalizations.of(context)!
-                                              .eventTabOthersInfo,
-                                      ].whereType<String>().toList();
-                                      return ListenableBuilder(
-                                        listenable: tabController,
-                                        builder: (context, _) {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 8),
-                                            child: Row(
-                                              children: List.generate(
-                                                  tabController.length, (i) {
-                                                final isSelected =
-                                                    tabController.index == i;
-                                                return Expanded(
-                                                  child: Padding(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 4),
-                                                    child: _EventTabChip(
-                                                      label: tabLabels[i],
-                                                      isSelected: isSelected,
-                                                      isMobile: false,
-                                                      onTap: () => tabController
-                                                          .animateTo(i),
-                                                    ),
-                                                  ),
-                                                );
-                                              }),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Expanded(
-                                    child: TabBarView(
-                                      children:
-                                          _buildEventTabViews(isMobile: false),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-            ],
+            ),
           ),
         ),
-        actions: [
-          // Botón eliminar (solo si es edición) (T109: Deshabilitado según estado del plan)
-          if (widget.event != null)
-            TextButton(
-              onPressed: _canDeleteEvent() ? () => _confirmDelete() : null,
-              child: Text(
-                AppLocalizations.of(context)!.delete,
-                style: GoogleFonts.poppins(
-                  color: Colors.red.shade400,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-
-          // Botón cancelar
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              AppLocalizations.of(context)!.cancel,
-              style: GoogleFonts.poppins(
-                color: Colors.white70,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-
-          // Botón guardar / aceptar en verde (T209)
-          Container(
-            decoration: BoxDecoration(
-              color: AppColorScheme.color2,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColorScheme.color2.withValues(alpha: 0.35),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed:
-                  (_canSaveEvent() && !_isSavingEvent) ? _saveEvent : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                foregroundColor: Colors.white,
-                shadowColor: Colors.transparent,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: _isSavingEvent
-                  ? SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      widget.event == null
-                          ? AppLocalizations.of(context)!.create
-                          : AppLocalizations.of(context)!.save,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  /// Lista de pestañas del formulario (General, Mi información, [Otros]). Compartido entre móvil y desktop.
+  /// Formulario único con pestañas (General / Mi info / Pagos / [Otros]).
+  int get _eventFormTabCount => 3 + (_isAdmin ? 1 : 0);
+
+  Widget _buildEventTabsForm({required bool isMobile}) {
+    final horizontalPad = isMobile ? 12.0 : 16.0;
+    final topPad = isMobile ? 8.0 : 12.0;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPad, topPad, horizontalPad, 0),
+      child: Form(
+        key: _formKey,
+        child: SizedBox(
+          width: isMobile ? double.infinity : 520,
+          child: DefaultTabController(
+            length: _eventFormTabCount,
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Builder(
+                  builder: (context) {
+                    final tabController = DefaultTabController.of(context);
+                    final tabLabels = [
+                      AppLocalizations.of(context)!.eventTabGeneral,
+                      AppLocalizations.of(context)!.eventTabMyInfo,
+                      AppLocalizations.of(context)!.eventTabPayments,
+                      if (_isAdmin)
+                        AppLocalizations.of(context)!.eventTabOthersInfo,
+                    ].whereType<String>().toList();
+                    return ListenableBuilder(
+                      listenable: tabController,
+                      builder: (context, _) {
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: isMobile ? 6 : 8),
+                          child: IosSegmentedControl(
+                            labels: tabLabels,
+                            selectedIndex: tabController.index,
+                            fontSize: isMobile ? 12 : 13,
+                            onChanged: tabController.animateTo,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: TabBarView(
+                    children: _buildEventTabViews(isMobile: isMobile),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickEventStatus() async {
+    final loc = AppLocalizations.of(context)!;
+    final picked = await IosFormPickerSheet.show<bool>(
+      context: context,
+      title: loc.planDetailsStateLabel,
+      options: [
+        IosFormPickerOption(
+          value: true,
+          title: loc.eventStatusDraft,
+          selected: _isDraft,
+        ),
+        IosFormPickerOption(
+          value: false,
+          title: loc.eventStatusConfirmed,
+          selected: !_isDraft,
+        ),
+      ],
+    );
+    if (picked != null && mounted) {
+      setState(() => _isDraft = picked);
+    }
+  }
+
+  /// Lista de pestañas del formulario (General, Mi info, Pagos, [Otros]).
   List<Widget> _buildEventTabViews({required bool isMobile}) {
     return [
       _buildGeneralTabScroll(isMobile),
       _buildMyInfoTabScroll(isMobile),
+      _buildPaymentsTabScroll(isMobile),
       if (_isAdmin) _buildOthersInfoTab(),
     ].whereType<Widget>().toList();
+  }
+
+  Widget _buildPaymentsTabScroll(bool isMobile) {
+    return EventPaymentsTab(
+      plan: _plan,
+      eventId: widget.event?.id,
+      budgetCost: widget.event?.cost,
+      planCurrency: _planCurrency ?? 'EUR',
+      isMobile: isMobile,
+    );
   }
 
   bool _hasGeneralEventTypeSelected() {
@@ -4010,33 +3402,105 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return f.isNotEmpty && _typeFamilies.contains(f);
   }
 
-  Widget _buildDemoSectionCard({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: _buildLoginStyleDecoration(),
-      child: child,
-    );
-  }
-
   Widget _buildGeneralTabScroll(bool isMobile) {
     final pad = isMobile ? 4.0 : 8.0;
-    final fsBody = isMobile ? 13.0 : 14.0;
     final spacing = isMobile ? _fieldGap : 16.0;
-    final whenGap = isMobile ? 6.0 : 8.0;
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(pad, pad, pad, isMobile ? 16 : 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Tipo / subtipo (sin card de título)
-          _buildDemoSectionCard(
-            child: _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
-          ),
+          // Hero: título + chips (fecha / hora / duración / estado)
+          Builder(builder: (context) {
+            final loc = AppLocalizations.of(context)!;
+            final canEdit = _canEditGeneral || _canEditGeneralInitial;
+            final titleText = _descriptionController.text.trim().isEmpty
+                ? loc.editEvent
+                : _descriptionController.text.trim();
+            final showAsDraft =
+                _isParticipantCreatingProposal ? true : _isDraft;
+            final statusColor = showAsDraft
+                ? ColorUtils.confirmedColors['actividad']! // naranja app
+                : ColorUtils.confirmedColors['alojamiento']!; // verde app
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                IosHeroHeader(
+                  title: canEdit ? null : titleText,
+                  titleWidget: canEdit
+                      ? TextFormField(
+                          controller: _descriptionController,
+                          style: const TextStyle(
+                            color: IosFormColors.textPrimary,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.6,
+                            height: 1.15,
+                          ),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            hintText: loc.eventDescriptionHint,
+                            hintStyle: const TextStyle(
+                              color: IosFormColors.textTertiary,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.6,
+                              height: 1.15,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (!_canEditGeneral) return null;
+                            final v = value?.trim() ?? '';
+                            if (v.isNotEmpty && v.length < 3) {
+                              return 'Mínimo 3 caracteres';
+                            }
+                            if (v.length > 1000) return 'Máximo 1000 caracteres';
+                            return null;
+                          },
+                          onChanged: (_) => setState(() {}),
+                        )
+                      : null,
+                  chips: [
+                    IosHeroChipData(
+                      _formatEventDateLabel(),
+                      accent: true,
+                      onTap: canEdit ? _selectDate : null,
+                    ),
+                    IosHeroChipData(
+                      _formatEventTimeLabel(),
+                      onTap: canEdit ? _selectStartTime : null,
+                    ),
+                    IosHeroChipData(
+                      _formatEventDurationLabel(),
+                      onTap: canEdit ? _selectDuration : null,
+                    ),
+                    IosHeroChipData(
+                      showAsDraft
+                          ? loc.eventStatusDraft
+                          : loc.eventStatusConfirmed,
+                      color: statusColor,
+                      onTap: (!_isParticipantCreatingProposal && canEdit)
+                          ? _pickEventStatus
+                          : null,
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }),
+          // Tipo / subtipo (label solo dentro de la fila Settings)
           SizedBox(height: spacing),
+          IosGroupedCard(
+            children: [
+              _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
+            ],
+          ),
           if (widget.event == null && !_hasGeneralEventTypeSelected())
             Padding(
-              padding: EdgeInsets.only(bottom: spacing),
+              padding: EdgeInsets.only(top: 8, bottom: spacing),
               child: Text(
                 AppLocalizations.of(context)!.eventSelectTypeFirstHint,
                 style: GoogleFonts.poppins(
@@ -4044,251 +3508,102 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
             ),
           if (widget.event != null || _hasGeneralEventTypeSelected()) ...[
-            // 2. Descripción
-            _wrapReadOnlyIfNeeded(
-              child: Container(
-                decoration: _buildLoginStyleDecoration(),
-                child: TextFormField(
-                  controller: _descriptionController,
-                  readOnly: !(_canEditGeneral || _canEditGeneralInitial),
-                  maxLines: 1,
-                  style: _valueStyle,
-                  decoration: _standardFieldDecoration(
-                    labelText: AppLocalizations.of(context)!.eventDescription,
-                    hintText:
-                        AppLocalizations.of(context)!.eventDescriptionHint,
-                    prefixIcon: Icons.subject,
-                  ).copyWith(
-                    suffixIcon: textFieldClearSuffix(
-                      _descriptionController,
-                      onCleared: () => setState(() {}),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (!_canEditGeneral) return null;
-                    final v = value?.trim() ?? '';
-                    if (v.isNotEmpty && v.length < 3) {
-                      return 'Mínimo 3 caracteres';
-                    }
-                    if (v.length > 1000) return 'Máximo 1000 caracteres';
-                    return null;
-                  },
-                ),
-              ),
-            ),
-            SizedBox(height: spacing),
-            // 3. Fecha / Hora / Duración
-            Row(
-              children: [
-                Expanded(
-                  child: _buildWhenField(
-                    label: AppLocalizations.of(context)!.date,
-                    value: DateFormatter.formatDate(_selectedDate),
-                    onTap: _canEditGeneral
-                        ? _selectDate
-                        : _showReadOnlySnackBar,
-                    isMobile: isMobile,
-                    fsBody: fsBody,
-                  ),
-                ),
-                SizedBox(width: whenGap),
-                Expanded(
-                  child: _buildWhenField(
-                    label: AppLocalizations.of(context)!.time,
-                    value: DateFormatter.formatTimeOnly(
-                      DateTime(
-                          2000, 1, 1, _selectedHour, _selectedStartMinute),
-                    ),
-                    onTap: _canEditGeneral
-                        ? _selectStartTime
-                        : _showReadOnlySnackBar,
-                    isMobile: isMobile,
-                    fsBody: fsBody,
-                  ),
-                ),
-                SizedBox(width: whenGap),
-                Expanded(
-                  child: _buildWhenField(
-                    label: AppLocalizations.of(context)!.duration,
-                    value: _formatDuration(_selectedDurationMinutes),
-                    onTap: _canEditGeneral
-                        ? _selectDuration
-                        : _showReadOnlySnackBar,
-                    isMobile: isMobile,
-                    fsBody: fsBody,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: spacing),
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text == 'Avión') ...[
+              SizedBox(height: spacing),
               _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
-              SizedBox(height: spacing),
             ],
-            // 4. Ubicación / transporte / extras
+            // Ubicación / transporte / extras
             if (_typeFamilyController.text != 'Desplazamiento') ...[
-              _buildUnifiedLocationField(),
               SizedBox(height: spacing),
+              IosGroupedCard(
+                children: [
+                  _buildUnifiedLocationField(),
+                  const IosRowSeparator(),
+                  _buildNonTransportTimezoneSelector(),
+                ],
+              ),
             ],
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text.isNotEmpty &&
                 _typeSubtypeController.text != 'Avión') ...[
+              SizedBox(height: spacing),
               _wrapReadOnlyIfNeeded(
                   child: _buildTransportOriginDestinationBlock(
                       showPlazas: _typeSubtypeController.text == 'Taxi')),
-              SizedBox(height: spacing),
             ],
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 (_typeSubtypeController.text == 'Shuttle' ||
                     _typeSubtypeController.text == 'Transfer')) ...[
+              SizedBox(height: spacing),
               _wrapReadOnlyIfNeeded(
                   child: _buildGroundTransferAirportExtraFields()),
-              SizedBox(height: spacing),
             ],
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text.isNotEmpty) ...[
-              _buildStaticSponsorCard(),
               SizedBox(height: spacing),
+              _buildStaticSponsorCard(),
             ],
             if (_isRentalVehicleActionSubtype) ...[
+              SizedBox(height: spacing),
               _wrapReadOnlyIfNeeded(child: _buildRentalVehicleActionFields()),
-              SizedBox(height: spacing),
-            ],
-            // 5. Timezone junto a cuándo/dónde
-            if (_typeFamilyController.text != 'Desplazamiento') ...[
-              _buildNonTransportTimezoneSelector(),
-              SizedBox(height: spacing),
             ],
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text != 'Avión') ...[
-              _wrapReadOnlyIfNeeded(
-                child: _buildTimezoneFieldOnBorder(
-                  label: AppLocalizations.of(context)!.timezone,
-                  value: _selectedTimezone,
-                  leadingIcon: Icons.public,
-                  showCityInMenuAndGmtSelected: true,
-                  onChanged: _canEditGeneral
-                      ? (value) {
-                          setState(() {
-                            _selectedTimezone = value ?? 'Europe/Madrid';
-                          });
-                        }
-                      : null,
-                ),
-              ),
               SizedBox(height: spacing),
-              _wrapReadOnlyIfNeeded(
-                child: _buildTimezoneFieldOnBorder(
-                  label: AppLocalizations.of(context)!.arrivalTimezone,
-                  value: _selectedArrivalTimezone,
-                  leadingIcon: Icons.flight_land,
-                  showCityInMenuAndGmtSelected: true,
-                  onChanged: _canEditGeneral
-                      ? (value) {
-                          setState(() {
-                            _selectedArrivalTimezone = value ?? 'Europe/Madrid';
-                          });
-                        }
-                      : null,
-                ),
+              IosGroupedCard(
+                children: [
+                  IosSettingsRow(
+                    label: AppLocalizations.of(context)!.timezone,
+                    value: _timezoneRowValue(_selectedTimezone),
+                    chevron: _canEditGeneral,
+                    onTap: _canEditGeneral
+                        ? () => _openFlightTimezonePicker(isArrival: false)
+                        : null,
+                  ),
+                  const IosRowSeparator(),
+                  IosSettingsRow(
+                    label: AppLocalizations.of(context)!.arrivalTimezone,
+                    value: _timezoneRowValue(_selectedArrivalTimezone),
+                    chevron: _canEditGeneral,
+                    onTap: _canEditGeneral
+                        ? () => _openFlightTimezonePicker(isArrival: true)
+                        : null,
+                  ),
+                ],
               ),
-              SizedBox(height: spacing),
             ],
-            // 6. URL
+            SizedBox(height: spacing),
+            // 6. URL + notas + archivos + coste + reserva
             _wrapReadOnlyIfNeeded(child: _buildUrlField()),
             SizedBox(height: spacing),
-            // 7. Notas
-            _wrapReadOnlyIfNeeded(
-              child: Container(
-                decoration: _buildLoginStyleDecoration(),
-                child: TextFormField(
-                  controller: _longNotesController,
-                  readOnly: !(_canEditGeneral || _canEditGeneralInitial),
-                  minLines: 2,
-                  maxLines: 4,
-                  style: _valueStyle,
-                  decoration: _standardFieldDecoration(
-                    labelText:
-                        AppLocalizations.of(context)!.eventLongNotesLabel,
-                    hintText:
-                        AppLocalizations.of(context)!.eventLongNotesLabel,
-                    prefixIcon: Icons.article_outlined,
-                  ).copyWith(
-                    suffixIcon: IconButton(
-                      tooltip: 'Ampliar',
-                      onPressed: _openLongNotesEditor,
-                      icon: _fieldIcon(Icons.open_in_full),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: spacing),
-            // 8. Adjuntos
+            _wrapReadOnlyIfNeeded(child: _buildLongNotesField()),
             if (widget.planId != null) ...[
-              EntityAttachmentsSection(
-                title:
-                    AppLocalizations.of(context)!.entityAttachmentsEventTitle,
-                files: _eventDocuments,
-                canManage: _canEditGeneral || _canEditGeneralInitial,
-                isUploading: _uploadingEventAttachment,
-                onUpload: (_canEditGeneral || _canEditGeneralInitial)
-                    ? _pickEventAttachment
-                    : null,
-                onDelete: _deleteEventAttachment,
-              ),
               SizedBox(height: spacing),
-            ],
-            // 9. Participantes
-            _buildIsForAllParticipantsSelector(),
-            SizedBox(height: spacing),
-            _wrapReadOnlyIfNeeded(child: _buildParticipantsSection()),
-            SizedBox(height: spacing),
-            if (widget.event != null && widget.planId != null) ...[
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: _buildLoginStyleDecoration(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.people_outline,
-                            color: AppColorScheme.color2, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            AppLocalizations.of(context)!
-                                .participantsRegistered,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    EventParticipantRegistrationWidget(
-                      event: widget.event!,
-                      planId: widget.planId!,
-                    ),
-                  ],
-                ),
+              // Archivos (Settings: Añadir + filas por archivo)
+              IosGroupedCard(
+                children: [
+                  EntityAttachmentsSection(
+                    title: '',
+                    files: _eventDocuments,
+                    canManage: _canEditGeneral || _canEditGeneralInitial,
+                    isUploading: _uploadingEventAttachment,
+                    onUpload: (_canEditGeneral || _canEditGeneralInitial)
+                        ? _pickEventAttachment
+                        : null,
+                    onDelete: _deleteEventAttachment,
+                    embeddedInGroupedCard: true,
+                  ),
+                ],
               ),
-              SizedBox(height: spacing),
             ],
-            // 10. Coste
             if (_planCurrency != null) ...[
-              _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
               SizedBox(height: spacing),
+              _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
             ],
-            // 10b. T273 Reserva / cancelación (siempre moneda del plan)
             if (widget.planId != null && _planCurrency != null) ...[
+              SizedBox(height: spacing),
+              // T273 Reserva / cancelación (siempre moneda del plan)
               _wrapReadOnlyIfNeeded(
                 child: Builder(builder: (context) {
                   final parts = ref
@@ -4319,127 +3634,62 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   );
                 }),
               ),
-              SizedBox(height: spacing),
             ],
-            // 11. Color compacto (fila + picker)
+            SizedBox(height: spacing),
+            // Participantes (switch + lista en la misma card)
+            _wrapReadOnlyIfNeeded(child: _buildParticipantsScopeSection()),
+            SizedBox(height: spacing),
+            // Color
             _wrapReadOnlyIfNeeded(child: _buildColorSelectorRow()),
             SizedBox(height: spacing),
-            // 12. Avanzado (colapsado)
-            Theme(
-              data: Theme.of(context).copyWith(
-                dividerColor: Colors.transparent,
-                splashColor: Colors.transparent,
-              ),
-              child: Material(
-                color: _fieldSurface,
-                elevation: 1,
-                shadowColor: Colors.black.withValues(alpha: 0.18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(_fieldRadius),
-                  side: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    width: 1,
-                  ),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: ExpansionTile(
-                  initiallyExpanded: false,
-                  tilePadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  iconColor: Colors.white70,
-                  collapsedIconColor: Colors.white70,
-                  title: Text(
-                    'Opciones avanzadas',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Límite de aforo y confirmación',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white60,
-                      fontSize: 12,
-                    ),
-                  ),
-                  children: [
-                    _wrapReadOnlyIfNeeded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.08),
-                          ),
-                        ),
-                        child: TextFormField(
-                          controller: _maxParticipantsController,
-                          readOnly: !_canEditGeneral,
-                          keyboardType: TextInputType.number,
-                          style: _valueStyle,
-                          decoration: _standardFieldDecoration(
-                            labelText: 'Límite de participantes (opcional)',
-                            hintText: 'Ej: 10 (dejar vacío para sin límite)',
-                            prefixIcon: Icons.people_outline,
-                          ),
-                          validator: (value) {
-                            if (!_canEditGeneral) return null;
-                            final v = value?.trim() ?? '';
-                            if (v.isEmpty) return null;
-                            final intValue = int.tryParse(v);
-                            if (intValue == null) {
-                              return 'Debe ser un número válido';
-                            }
-                            if (intValue < 1) return 'Debe ser mayor que 0';
-                            if (intValue > 1000) {
-                              return 'Máximo 1000 participantes';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ),
-                    if (_canEditGeneral) ...[
-                      const SizedBox(height: 10),
-                      CheckboxListTile(
-                        title: Text(
-                          AppLocalizations.of(context)!.requiresConfirmation,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        subtitle: Text(
-                          AppLocalizations.of(context)!
-                              .requiresConfirmationSubtitle,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                        value: _requiresConfirmation,
-                        activeColor: AppColorScheme.color2,
-                        onChanged: (value) {
-                          setState(() {
-                            _requiresConfirmation = value ?? false;
-                          });
-                        },
-                        secondary: Icon(Icons.assignment_turned_in_outlined,
-                            color: AppColorScheme.color2),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 0),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+          ],
+          if (widget.event != null &&
+              _canDeleteEvent() &&
+              (_canEditGeneral || _canEditGeneralInitial)) ...[
+            const SizedBox(height: 20),
+            IosDestructiveTile(
+              label: AppLocalizations.of(context)!.delete,
+              onPressed: _confirmDelete,
             ),
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildLongNotesField() {
+    final loc = AppLocalizations.of(context)!;
+    final canEdit = _canEditGeneral || _canEditGeneralInitial;
+    return IosGroupedCard(
+      children: [
+        Stack(
+          children: [
+            IgnorePointer(
+              ignoring: !canEdit,
+              child: IosEditField(
+                label: loc.eventLongNotesLabel,
+                controller: _longNotesController,
+                minLines: 2,
+                maxLines: 4,
+                hint: loc.eventLongNotesLabel,
+              ),
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: IconButton(
+                tooltip: 'Ampliar',
+                onPressed: _openLongNotesEditor,
+                icon: const Icon(
+                  Icons.open_in_full,
+                  size: 18,
+                  color: IosFormColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -5036,105 +4286,32 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   Widget _buildColorSelectorRow() {
     final loc = AppLocalizations.of(context)!;
-    final selected = _getColorFromName(_selectedColor);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _canEditGeneral ? _showColorPicker : _showReadOnlySnackBar,
-        borderRadius: BorderRadius.circular(_fieldRadius),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: _buildLoginStyleDecoration(),
-          child: Row(
-            children: [
-              _fieldIcon(Icons.palette_outlined),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(loc.color, style: _valueStyle),
-              ),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: selected,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.45),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.expand_more,
-                  size: _fieldIconSize, color: Colors.white54),
-            ],
-          ),
+    return IosGroupedCard(
+      children: [
+        IosColorSettingRow(
+          label: loc.color,
+          color: _getColorFromName(_selectedColor),
+          chevron: _canEditGeneral,
+          onTap: _canEditGeneral ? _showColorPicker : null,
         ),
-      ),
+      ],
     );
   }
 
   Future<void> _showColorPicker() async {
     final loc = AppLocalizations.of(context)!;
-    final picked = await showDialog<String>(
+    final picked = await IosFormColorPickerSheet.show(
       context: context,
-      builder: (ctx) {
-        return Theme(
-          data: AppTheme.darkTheme,
-          child: AlertDialog(
-            backgroundColor: _formSurface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+      title: loc.color,
+      selectedId: _selectedColor,
+      options: _eventColors
+          .map(
+            (colorName) => IosFormColorPickerOption(
+              id: colorName,
+              color: _getColorFromName(colorName),
             ),
-            title: Text(
-              loc.color,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            content: Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: _eventColors.map((colorName) {
-                final color = _getColorFromName(colorName);
-                final isSelected = _selectedColor == colorName;
-                return GestureDetector(
-                  onTap: () => Navigator.of(ctx).pop(colorName),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColorScheme.color2
-                            : Colors.white38,
-                        width: isSelected ? 2.5 : 1,
-                      ),
-                    ),
-                    child: isSelected
-                        ? const Icon(Icons.check, color: Colors.white, size: 18)
-                        : null,
-                  ),
-                );
-              }).toList(),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  loc.cancel,
-                  style: GoogleFonts.poppins(color: Colors.white70),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+          )
+          .toList(),
     );
     if (!mounted || picked == null) return;
     setState(() => _selectedColor = picked);
@@ -5176,7 +4353,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           SnackBar(
             content: Text(
               blockedReason ??
-                  'No se pueden eliminar eventos en el estado actual del plan.',
+                  AppLocalizations.of(context)!.eventDeleteBlockedFallback,
               style: GoogleFonts.poppins(color: Colors.white),
             ),
             backgroundColor: Colors.orange.shade600,
@@ -5187,82 +4364,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => Theme(
-        data: AppTheme.darkTheme,
-        child: AlertDialog(
-          backgroundColor: const Color(0xFF1F2937),
-          title: Text(
-            AppLocalizations.of(context)!.confirmDeleteTitle,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          content: Text(
-            '¿Estás seguro de que quieres eliminar el evento "${widget.event?.description}"?',
-            style: GoogleFonts.poppins(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                AppLocalizations.of(context)!.cancel,
-                style: GoogleFonts.poppins(
-                  color: Colors.white70,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.red.shade600,
-                    Colors.red.shade600.withValues(alpha: 0.85),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.red.shade600.withValues(alpha: 0.4),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: Colors.white,
-                  shadowColor: Colors.transparent,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: Text(
-                  AppLocalizations.of(context)!.delete,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    final confirmed = await showDeleteEventConfirmDialog(
+      context,
+      description: widget.event?.description ?? '',
     );
 
     if (confirmed == true &&
@@ -5272,452 +4376,218 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
   }
 
-  /// Construye la sección de selección de participantes (T47)
-  Widget _buildParticipantsSection() {
-    // Si no hay planId, no mostrar selector de participantes
-    if (widget.planId == null) {
-      return Text(
-        '⚠️ No hay planId disponible',
-        style: GoogleFonts.poppins(
-          color: Colors.orange.shade400,
-          fontSize: 12,
-        ),
-      );
-    }
-
-    // Obtener participantes reales del plan (excluye observadores)
-    final participantsAsync =
-        ref.watch(planRealParticipantsProvider(widget.planId!));
-
-    return participantsAsync.when(
-      data: (participations) {
-        if (participations.isEmpty) {
-          return Text(
-            'No hay participantes en este plan',
-            style: GoogleFonts.poppins(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          );
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Lista de participantes (solo visible si checkbox principal está desmarcado)
-            if (!_isForAllParticipants) ...[
-              Text(
-                'Seleccionar participantes:',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Lista de checkboxes de participantes
-              ...participations.map((participation) {
-                final isSelected =
-                    _selectedParticipantIds.contains(participation.userId);
-                final isEventCreator =
-                    widget.event?.userId == participation.userId;
-
-                return FutureBuilder<String>(
-                  future: _getUserDisplayName(participation.userId),
-                  builder: (context, snapshot) {
-                    final displayName = snapshot.data ?? participation.userId;
-                    final roleText = participation.isOrganizer
-                        ? ' (Organizador)'
-                        : participation.isParticipant
-                            ? ' (Participante)'
-                            : '';
-                    final participantName = '$displayName$roleText';
-
-                    return CheckboxListTile(
-                      title: Text(
-                        participantName,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      value: isSelected,
-                      activeColor: AppColorScheme.color2,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            if (!_selectedParticipantIds
-                                .contains(participation.userId)) {
-                              _selectedParticipantIds.add(participation.userId);
-                            }
-                          } else {
-                            // No permitir deseleccionar si es el único seleccionado
-                            if (_selectedParticipantIds.length > 1) {
-                              _selectedParticipantIds
-                                  .remove(participation.userId);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Debe haber al menos un participante seleccionado',
-                                    style: GoogleFonts.poppins(
-                                        color: Colors.white),
-                                  ),
-                                  backgroundColor: Colors.red.shade600,
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          }
-                        });
-                      },
-                      secondary: isEventCreator
-                          ? Icon(Icons.person, color: Colors.orange.shade300)
-                          : null,
-                      subtitle: isEventCreator
-                          ? Text(
-                              'Creador del evento',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontStyle: FontStyle.italic,
-                                color: Colors.white70,
-                              ),
-                            )
-                          : null,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    );
-                  },
-                );
-              }),
-
-              // Mensaje de validación
-              if (_selectedParticipantIds.isEmpty &&
-                  !_isLegacyEventWithoutParticipants)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    '⚠️ Selecciona al menos un participante',
-                    style: GoogleFonts.poppins(
-                      color: Colors.red.shade400,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-            ],
-          ],
-        );
-      },
-      loading: () => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: CircularProgressIndicator(color: AppColorScheme.color2),
-        ),
-      ),
-      error: (error, stackTrace) => Text(
-        'Error al cargar participantes: $error',
-        style: GoogleFonts.poppins(
-          color: Colors.red.shade400,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-
-
-  /// T153: Construir campo de coste con selector de moneda y conversión automática.
-  /// Moneda del coste y Coste del evento con formato título sobre el borde.
+  /// Coste: una fila — importe a la izquierda, moneda (código+símbolo) a la derecha.
   Widget _buildCostFieldWithCurrency() {
+    final loc = AppLocalizations.of(context)!;
     final exchangeRateService = ExchangeRateService();
+    final currencyValue = _costCurrency ?? _planCurrency ?? 'EUR';
+    final currency = Currency.fromCodeOrEur(currencyValue);
+    final canEdit = _canEditGeneral;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Moneda + coste en una sola línea (ID 48)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        IosGroupedCard(
           children: [
-            Expanded(
-              child: _buildLabelOnBorderField(
-                label: 'Moneda del coste',
-                child: DropdownButtonFormField<String>(
-                  initialValue: _costCurrency ?? _planCurrency ?? 'EUR',
-                  isExpanded: true,
-                  dropdownColor: const Color(0xFF1F2937),
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(
-                      _getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'),
-                      color: Colors.white70,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: AppColorScheme.color2,
-                        width: 2.5,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: IgnorePointer(
+                      ignoring: !canEdit,
+                      child: TextFormField(
+                        controller: _costController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: const TextStyle(
+                          color: IosFormColors.textPrimary,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        cursorColor: IosFormColors.accent,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          hintText: '${loc.cost}: ${loc.costHint}',
+                          hintStyle: const TextStyle(
+                            color: IosFormColors.textTertiary,
+                            fontSize: 17,
+                          ),
+                        ),
+                        onChanged: canEdit
+                            ? (_) => _convertCostToPlanCurrency(
+                                  exchangeRateService,
+                                )
+                            : null,
+                        validator: (value) {
+                          if (!canEdit) return null;
+                          final v = value?.trim() ?? '';
+                          if (v.isEmpty) return null;
+                          final doubleValue =
+                              double.tryParse(v.replaceAll(',', '.'));
+                          if (doubleValue == null) return loc.mustBeValidNumber;
+                          if (doubleValue < 0) return loc.cannotBeNegative;
+                          if (doubleValue > 1000000) return loc.maxAmount;
+                          return null;
+                        },
                       ),
                     ),
-                    filled: true,
-                    fillColor: Colors.transparent,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
                   ),
-                  items: Currency.supportedCurrencies.map((currency) {
-                    return DropdownMenuItem<String>(
-                      value: currency.code,
-                      child: Text(
-                        '${currency.code} - ${currency.symbol} ${currency.name}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: canEdit ? _pickCostCurrency : null,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${currency.code} ${currency.symbol}',
+                              style: const TextStyle(
+                                color: IosFormColors.textSecondary,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (canEdit) ...[
+                              const SizedBox(width: 2),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: IosFormColors.textTertiary,
+                                size: 20,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                    );
-                  }).toList(),
-                  selectedItemBuilder: (context) {
-                    return Currency.supportedCurrencies.map((currency) {
-                      return Text(
-                        '${currency.code} ${currency.symbol}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      );
-                    }).toList();
-                  },
-                  onChanged: _canEditGeneral
-                      ? (value) async {
-                          if (value == null) return;
-                          setState(() => _costCurrency = value);
-                          await _convertCostToPlanCurrency(exchangeRateService);
-                        }
-                      : null,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildLabelOnBorderField(
-                label: 'Coste del evento (opcional)',
-                child: TextFormField(
-                  controller: _costController,
-                  enabled: _canEditGeneral,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  decoration: InputDecoration(
-                    hintText: 'Ej: 150.50',
-                    hintStyle: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.white60,
-                    ),
-                    prefixIcon: Icon(
-                      _getCurrencyIcon(_costCurrency ?? _planCurrency ?? 'EUR'),
-                      color: Colors.white70,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: AppColorScheme.color2,
-                        width: 2.5,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 1,
-                      ),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: Colors.red.shade400,
-                        width: 2.5,
-                      ),
-                    ),
-                    fillColor: Colors.transparent,
-                    filled: true,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
-                  ),
-                  onChanged: _canEditGeneral
-                      ? (value) {
-                          _convertCostToPlanCurrency(exchangeRateService);
-                        }
-                      : null,
-                  validator: (value) {
-                    if (!_canEditGeneral) return null;
-                    final v = value?.trim() ?? '';
-                    if (v.isEmpty) return null;
-                    final doubleValue = double.tryParse(v.replaceAll(',', '.'));
-                    if (doubleValue == null) return 'Debe ser un número válido';
-                    if (doubleValue < 0) return 'No puede ser negativo';
-                    if (doubleValue > 1000000) return 'Máximo 1.000.000';
-                    return null;
-                  },
-                ),
+                ],
               ),
             ),
           ],
         ),
-        // Mostrar conversión si la moneda local es diferente a la del plan
         if (_costCurrency != null &&
             _planCurrency != null &&
             _costCurrency != _planCurrency &&
-            _costController.text.trim().isNotEmpty) ...[
-          const SizedBox(height: 8),
-          FutureBuilder<double?>(
-            future: exchangeRateService.convertAmount(
-              double.tryParse(_costController.text.replaceAll(',', '.')) ?? 0.0,
-              _costCurrency!,
-              _planCurrency!,
-            ),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColorScheme.color2,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Calculando...',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (snapshot.hasData && snapshot.data != null) {
-                final convertedAmount = snapshot.data!;
-                return Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: _buildLoginStyleDecoration().copyWith(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: AppColorScheme.color2.withValues(alpha: 0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.info_outline,
-                              size: 16, color: AppColorScheme.color2),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Convertido a $_planCurrency:',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        CurrencyFormatterService.formatAmount(
-                            convertedAmount, _planCurrency!),
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColorScheme.color2,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '⚠️ Los tipos de cambio son orientativos. El valor real será el aplicado por tu banco o tarjeta de crédito al momento del pago.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          color: Colors.white70,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    'No se pudo calcular la conversión',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: Colors.orange.shade400,
-                    ),
-                  ),
-                );
-              }
-
-              return const SizedBox.shrink();
-            },
+            _costController.text.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+            child: _buildCostConversionHint(),
           ),
-        ],
       ],
     );
   }
 
-  /// T153: Obtener icono según moneda
-  IconData _getCurrencyIcon(String currencyCode) {
-    switch (currencyCode.toUpperCase()) {
-      case 'EUR':
-        return Icons.euro;
-      case 'USD':
-        return Icons.attach_money;
-      case 'GBP':
-        return Icons.currency_pound;
-      case 'JPY':
-        return Icons.currency_yen;
-      default:
-        return Icons.money;
+  Future<void> _pickCostCurrency() async {
+    final loc = AppLocalizations.of(context)!;
+    final current = _costCurrency ?? _planCurrency ?? 'EUR';
+    final picked = await IosFormPickerSheet.show<String>(
+      context: context,
+      title: loc.costCurrency,
+      options: Currency.supportedCurrencies
+          .map(
+            (c) => IosFormPickerOption(
+              value: c.code,
+              title: '${c.code} — ${c.symbol} ${c.name}',
+              selected: c.code == current,
+            ),
+          )
+          .toList(),
+    );
+    if (picked != null && mounted) {
+      setState(() => _costCurrency = picked);
+      await _convertCostToPlanCurrency(ExchangeRateService());
     }
+  }
+
+  Widget _buildCostConversionHint() {
+    final loc = AppLocalizations.of(context)!;
+    final exchangeRateService = ExchangeRateService();
+    return FutureBuilder<double?>(
+      future: exchangeRateService.convertAmount(
+        double.tryParse(_costController.text.replaceAll(',', '.')) ?? 0.0,
+        _costCurrency!,
+        _planCurrency!,
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: IosFormColors.accent,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  loc.calculating,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: IosFormColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (snapshot.hasData && snapshot.data != null) {
+          final convertedAmount = snapshot.data!;
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: IosFormColors.groupedBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: IosFormColors.accent.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.convertedTo(_planCurrency!),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: IosFormColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  CurrencyFormatterService.formatAmount(
+                    convertedAmount,
+                    _planCurrency!,
+                  ),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: IosFormColors.accent,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
   }
 
   /// T153: Obtener coste convertido a la moneda del plan
@@ -6328,10 +5198,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         isDraft: effectiveIsDraft,
         timezone: _selectedTimezone,
         arrivalTimezone: _selectedArrivalTimezone,
-        maxParticipants: _maxParticipantsController.text.trim().isEmpty
-            ? null
-            : int.tryParse(_maxParticipantsController.text.trim()),
-        requiresConfirmation: _requiresConfirmation,
+        maxParticipants: widget.event?.maxParticipants,
+        requiresConfirmation: widget.event?.requiresConfirmation ?? false,
         cost:
             await _getConvertedCost(), // T153: Coste convertido a moneda del plan
         createdAt: widget.event?.createdAt ?? DateTime.now(),
@@ -6785,64 +5653,18 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
 }
 
 /// Chip de pestaña del diálogo de evento (estilo W14/W15: fondo destacado si seleccionado).
-class _EventTabChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final bool isMobile;
-  final VoidCallback onTap;
 
-  const _EventTabChip({
-    required this.label,
-    required this.isSelected,
-    required this.isMobile,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = isSelected ? Colors.white : Colors.white70;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        padding: EdgeInsets.symmetric(
-          vertical: isMobile ? 10 : 12,
-          horizontal: isMobile ? 8 : 12,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColorScheme.color2.withValues(alpha: 0.28)
-              : const Color(0xFF1F2937),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2
-                : Colors.white.withValues(alpha: 0.12),
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isSelected ? 0.18 : 0.10),
-              blurRadius: isSelected ? 8 : 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              color: textColor,
-              fontSize: isMobile ? 12 : 14,
-              fontWeight: FontWeight.w600,
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
-  }
+/// Presentación a pantalla completa en móvil (barrier opaco).
+Future<T?> showEventFormDialog<T>({
+  required BuildContext context,
+  required Widget dialog,
+  bool barrierDismissible = true,
+}) {
+  return showDialog<T>(
+    context: context,
+    barrierDismissible: barrierDismissible,
+    barrierColor: IosFormColors.pageBg,
+    useSafeArea: false,
+    builder: (context) => dialog,
+  );
 }

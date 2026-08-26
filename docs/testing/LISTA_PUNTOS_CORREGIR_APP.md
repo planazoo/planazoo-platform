@@ -12,7 +12,7 @@
 |---------|------------------------|
 | Participantes / invitaciones | Deep links, aceptar/rechazar, campana — T259 / ítem **123**, checklist push |
 | Planes | Cascada borrar **126**/**127** cerrados (T277 P16, 2026-08-18) |
-| Eventos / calendario | Ítems de formularios y FAB (ver nota al final de TASKS sobre «ítem N» ≠ «TN») |
+| Eventos / calendario | T278 CRUD agente (fase 1); ítems de formularios y FAB |
 | Pagos | PAY-* / ítems 101–107 · T222 |
 | Offline | Ítem 58 cerrado documentalmente; roadmap T56–T62 / T265 |
 | UI / navegación | Ítems 63–65 → T263–T265 |
@@ -44,14 +44,161 @@
 
 ### 3. Resumen actual
 
-- **Pendientes:** 2 (**123** deep link web; **125** create plan iOS overflow — validar)
+- **Pendientes:** 15 (**123** deep link web; **125** create plan iOS overflow — validar; **126–140** nuevos)
 - **En progreso:** 0
-- **Siguiente ID libre:** **128**
+- **Siguiente ID libre:** **141**
 - **Hechos/cerrados en histórico:** 74+ (incluye **111–122**; **126–127** cascada borrar plan, 2026-08-18)
+
+### Cola humana (dispositivo) — no agente
+
+Aplazado a propósito (2026-08-18) mientras el agente cubre tests de CRUD:
+
+- **T277 P5:** crear un plan en la app (web / iOS / Android) y verlo en la lista.
+- **125:** validar en iPhone el overflow del modal al crear plan (fix ya en código; hace falta hot restart).
+- **T259:** deploy AASA + QA Mail/Safari (deep link nativo).
+- **124:** validar en dispositivo reabrir el mismo link de invitación + una invitación nueva.
+- **123:** deep link web `/invitation/{token}` (código listo; validación aplazada).
 
 ---
 
 ### 4. Puntos abiertos
+
+#### 140. UX formularios móvil tipo iOS — patrón D
+- **Plataforma:** iOS / Android (prioridad; web mismo widget)
+- **Pantalla / flujo:** Info del plan · modal evento · alojamiento
+- **Tipo:** UX / diseño
+- **Gravedad:** media
+- **Descripción breve:** Patrón **D** (Settings + iOS dark). **Evento/alojamiento:** formulario único siempre editable + Cancelar/Guardar + chip estado (verde/naranja) junto a duración/noches. **Info plan:** aún view/edit. Spec: `GUIA_UI.md` § formularios tipo ficha.
+- **Estado:** evento/alojamiento implementado — validar en dispositivo; Info plan pendiente de alinear
+- **Gate de lanzamiento:** sí (legibilidad formularios)
+- **Referencias:** `GUIA_UI.md`; `ios_grouped_form.dart`; `wd_plan_data_screen.dart`; `wd_event_dialog.dart`; `wd_accommodation_dialog.dart`; LISTA 126, 129, 130
+
+#### 139. Detección de conflictos entre planes (inter-plan)
+- **Plataforma:** todas
+- **Pantalla / flujo:** Vista global del usuario / calendario personal
+- **Tipo:** funcionalidad nueva (diferencial competitivo)
+- **Gravedad:** media
+- **Descripción breve:** Cuando un usuario participa en varios planes activos, detectar solapamientos de eventos entre planes distintos. Requiere consultar eventos de todos los planes del usuario y cruzar horarios. Complementa LISTA 138 (intra-plan). Caso de uso: familia con plan "Verano", plan "Trabajo" y plan "Boda del primo" — el martes tiene eventos en los tres. Relacionado con la consideración de Planoon como planificador recurrente/familiar (no solo viajes puntuales): si la gente usa varios planes a la vez, los conflictos entre ellos son inevitables.
+- **Estado:** pendiente — diseñar
+- **Gate de lanzamiento:** no (P2; depende de vista multi-plan)
+
+#### 138. Detección automática de conflictos/solapamientos entre eventos
+- **Plataforma:** todas
+- **Pantalla / flujo:** Calendario / creación-edición de evento
+- **Tipo:** funcionalidad nueva (diferencial competitivo)
+- **Gravedad:** media
+- **Descripción breve:** Detectar y avisar cuando dos eventos se solapan en horario para un mismo participante dentro de un mismo plan (ej. vuelo llega a las 10h pero tiene evento a las 9h). Ningún competidor lo hace. Bajo-medio esfuerzo, alto impacto. Para conflictos entre planes distintos, ver LISTA 139.
+- **Estado:** pendiente — diseñar
+- **Gate de lanzamiento:** sí
+
+#### 137. Historial de cambios del plan ("qué cambió desde tu última visita")
+- **Plataforma:** todas
+- **Pantalla / flujo:** Entrada al plan / resumen
+- **Tipo:** funcionalidad nueva (diferencial competitivo)
+- **Gravedad:** media
+- **Descripción breve:** Badge "N cambios desde tu última visita" + vista diff: "La cena se movió de 20h a 21h", "Nuevo evento: Tour guiado". Especialmente útil para el participante pasivo que abre la app de vez en cuando. Complementa LISTA 133 (avisos de cambios CRUD). Ningún competidor lo tiene.
+- **Estado:** pendiente — diseñar
+- **Gate de lanzamiento:** sí
+
+#### 136. Vista "¿Qué hago ahora?" para el participante no-planificador
+- **Plataforma:** todas (especialmente móvil)
+- **Pantalla / flujo:** Pantalla principal / resumen del plan
+- **Tipo:** funcionalidad nueva (diferencial competitivo)
+- **Gravedad:** alta
+- **Descripción breve:** Pantalla ultra-simple para el viajero pasivo: "Ahora → [evento actual]. Después → [siguiente evento + hora]". Sin calendario complejo, solo mi próximo evento + cómo llegar. Opcionalmente push contextual ("En 30 min: salida al aeropuerto"). Resuelve la queja más común de Wanderlog/TripIt: "no sé qué toca ahora". Ningún competidor lo tiene.
+- **Estado:** pendiente — diseñar
+- **Gate de lanzamiento:** sí
+
+#### 135. Rendimiento móvil: offline-first como principio de UX
+- **Plataforma:** iOS / Android
+- **Pantalla / flujo:** Toda la app
+- **Tipo:** principio de arquitectura / UX
+- **Gravedad:** alta
+- **Descripción breve:** El rendimiento en móvil es lo que hace o rompe la app (lección Wanderlog). Offline-first (Firestore cache + operaciones locales inmediatas) es la clave: la UI responde al instante, la sincronización ocurre en background. Nada debe "tardar" ni requerir tocar dos veces. Revisar que todos los CRUD principales (eventos, alojamientos, participantes, pagos) funcionen con percepción instantánea. Relacionado: T56–T62, T265.
+- **Estado:** pendiente — auditar flujos principales
+- **Gate de lanzamiento:** sí (parcial: los flujos core deben ser fluidos)
+
+#### 134. Pagos: mostrar conversión de moneda inline (equivalencia visible)
+- **Plataforma:** todas
+- **Pantalla / flujo:** Pagos / presupuesto
+- **Tipo:** mejora UX
+- **Gravedad:** media
+- **Descripción breve:** Al registrar o ver un pago en moneda extranjera, mostrar la equivalencia en la moneda del usuario/plan junto al importe original. La base existe (T153 multi-moneda); falta mostrarlo inline en la UI de pagos. Lección Wanderlog: presupuesto sin conversión visible es inútil.
+- **Estado:** pendiente
+- **Gate de lanzamiento:** sí (fase 2 pagos)
+
+#### 133. Avisos configurables de cambios CRUD en eventos del plan
+- **Plataforma:** todas
+- **Pantalla / flujo:** Configuración del plan / participante
+- **Tipo:** funcionalidad nueva (avisos)
+- **Gravedad:** alta
+- **Descripción breve:** Opción configurable para que ciertos participantes reciban avisos (campana/push/email) cuando se crean, editan o borran eventos dentro de un plan. Aplica tanto en fase de planificación como durante el viaje. Debe ser una opción por participante o por plan (decidir granularidad).
+- **Estado:** pendiente — diseñar
+- **Gate de lanzamiento:** sí
+
+#### 132. Notificaciones en dispositivo: falta botón "marcar todas como leídas"
+- **Plataforma:** iOS / Android
+- **Pantalla / flujo:** Notificaciones
+- **Tipo:** paridad web → móvil
+- **Gravedad:** media
+- **Descripción breve:** En web existe el botón "marcar todas como leídas"; en dispositivo no aparece. Usar icono (sin texto) para que quepa bien.
+- **Estado:** pendiente
+- **Gate de lanzamiento:** sí
+
+#### 131. Resumen del plan: iconos de filtro demasiado grandes + layout
+- **Plataforma:** iOS / Android
+- **Pantalla / flujo:** Resumen del plan ("Mi resumen")
+- **Tipo:** UX / diseño
+- **Gravedad:** media
+- **Descripción breve:** Los iconos de filtro (Participantes, Desplazamientos, Alojamiento, Notas) son demasiado grandes. Propuesta: reducir tamaño y aprovechar el espacio a la derecha del título "Mi resumen".
+- **Estado:** pendiente
+- **Gate de lanzamiento:** sí (legibilidad)
+
+#### 130. Resumen del plan: separación de días poco clara + icono borrador demasiado grande
+- **Plataforma:** iOS / Android
+- **Pantalla / flujo:** Resumen del plan
+- **Tipo:** UX / diseño
+- **Gravedad:** media
+- **Descripción breve:** La separación entre días no se distingue bien (jugar con formato de texto / líneas). El icono "Borrador" en eventos draft es demasiado grande; buscar otra solución más discreta.
+- **Estado:** pendiente
+- **Gate de lanzamiento:** sí (legibilidad)
+
+#### 129. UX general: contraste y tamaños de letra desiguales
+- **Plataforma:** iOS / Android (parcialmente web)
+- **Pantalla / flujo:** Varias pantallas, especialmente resumen del plan
+- **Tipo:** UX / diseño
+- **Gravedad:** media
+- **Descripción breve:** Falta contraste texto/fondo en algunas zonas. Tamaños de letra desiguales entre pantallas. Revisar y unificar según GUIA_UI.
+- **Estado:** pendiente
+- **Gate de lanzamiento:** sí (parcialmente; lo que afecte legibilidad)
+
+#### 128. Calendario dispositivo: filtro por participante (mis eventos / seleccionados / todos)
+- **Plataforma:** iOS / Android
+- **Pantalla / flujo:** Vista calendario
+- **Tipo:** mejora funcional
+- **Gravedad:** media
+- **Descripción breve:** Poder filtrar para ver solo mis eventos, los de participantes seleccionados, o todos. Pensar UX cuando hay muchas columnas (muchos participantes) en un mismo día.
+- **Estado:** pendiente
+- **Gate de lanzamiento:** no (mejora para luego)
+
+#### 127. Columnas de participantes en dispositivo: eventos no se distribuyen correctamente
+- **Plataforma:** iOS / Android (en web funciona bien)
+- **Pantalla / flujo:** Vista calendario con eventos asignados a participantes concretos
+- **Tipo:** bug funcional
+- **Gravedad:** alta
+- **Descripción breve:** Los eventos asignados a solo algunos participantes no se colocan en la columna correcta de cada participante en dispositivo. En web sí lo hace correctamente.
+- **Estado:** pendiente
+- **Gate de lanzamiento:** sí
+
+#### 126. Modal de evento: separar visualización de edición
+- **Plataforma:** todas
+- **Pantalla / flujo:** Abrir evento existente
+- **Tipo:** UX / producto
+- **Gravedad:** media
+- **Descripción breve:** En modo visualización sobran muchos campos del formulario de edición. **Hecho (patrón D):** formulario único siempre editable + Cancelar/Guardar + chip estado en hero (`EventDialog`; alineado con alojamiento).
+- **Estado:** implementado — validar en dispositivo
+- **Gate de lanzamiento:** sí
+- **Referencias:** `wd_event_dialog.dart`; `GUIA_UI.md` § formularios tipo ficha; LISTA 140
 
 #### 125. Crear plan iOS: overflow amarillo/negro al validar nombre (<3 chars) + texto UNP ID
 - **Plataforma:** iOS

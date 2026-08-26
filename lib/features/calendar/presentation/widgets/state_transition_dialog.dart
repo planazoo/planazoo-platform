@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/color_scheme.dart';
-import '../../domain/services/plan_state_service.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
 import '../../domain/models/plan.dart';
+import '../../domain/services/plan_state_service.dart';
+import '../../../../shared/utils/plan_state_l10n.dart';
+import '../../../../widgets/common/ios_grouped_form.dart';
 
-/// Diálogo de confirmación para cambiar el estado de un plan (T205: estilo estándar, mensaje de implicación).
-///
-/// Muestra información sobre la transición y solicita confirmación del usuario.
+/// Confirmación para cambiar el estado de un plan (bottom sheet patrón D).
 class StateTransitionDialog extends StatelessWidget {
-  final Plan plan;
-  final String newState;
-  final String? customMessage;
-
   const StateTransitionDialog({
     super.key,
     required this.plan,
@@ -18,188 +14,146 @@ class StateTransitionDialog extends StatelessWidget {
     this.customMessage,
   });
 
+  final Plan plan;
+  final String newState;
+  final String? customMessage;
+
   @override
   Widget build(BuildContext context) {
-    const surface = Color(0xFF1F2937);
+    final loc = AppLocalizations.of(context)!;
     final currentState = plan.state ?? 'planificando';
-    final currentInfo = PlanStateService.getStateDisplayInfo(currentState);
-    final newInfo = PlanStateService.getStateDisplayInfo(newState);
+    final currentLabel = localizedPlanStateLabel(loc, currentState);
+    final newLabel = localizedPlanStateLabel(loc, newState);
 
-    // Mensajes según la transición
-    String title;
-    String message;
-    Color? actionColor;
-    IconData titleIcon;
+    late final String title;
+    late final String message;
+    late final String confirmLabel;
+    var destructive = false;
 
     switch (newState) {
       case 'confirmado':
-        title = 'Confirmar Plan';
-        actionColor = Colors.green;
-        titleIcon = Icons.check_circle_outline;
-        message = customMessage ??
-            'Este plan quedará como confirmado. Los cambios importantes estarán bloqueados.\n\n'
-                '¿Deseas continuar?';
+        title = loc.planStateTransitionConfirmTitle;
+        message = customMessage ?? loc.planStateTransitionConfirmMessage;
+        confirmLabel = loc.confirm;
         break;
-
       case 'en_curso':
-        title = 'Marcar Plan como En Curso';
-        actionColor = Colors.orange;
-        titleIcon = Icons.play_circle_outline;
-        message = customMessage ??
-            'El plan pasará a estado "En Curso". Solo se permitirán cambios urgentes.\n\n'
-                '¿Deseas continuar?';
+        title = loc.planStateTransitionInProgressTitle;
+        message = customMessage ?? loc.planStateTransitionInProgressMessage;
+        confirmLabel = loc.confirm;
         break;
-
       case 'finalizado':
-        title = 'Finalizar Plan';
-        actionColor = Colors.blueGrey;
-        titleIcon = Icons.check_circle;
-        message = customMessage ??
-            'El plan pasará a estado "Finalizado". No se podrán realizar más cambios.\n\n'
-                '¿Deseas continuar?';
+        title = loc.planStateTransitionFinishedTitle;
+        message = customMessage ?? loc.planStateTransitionFinishedMessage;
+        confirmLabel = loc.confirm;
         break;
-
       case 'cancelado':
-        title = 'Cancelar Plan';
-        actionColor = Colors.red;
-        titleIcon = Icons.cancel_outlined;
-        message = customMessage ??
-            '⚠️ ADVERTENCIA:\n\n'
-                '• Todos los participantes serán notificados\n'
-                '• El plan no se podrá reactivar\n'
-                '• Se cancelarán todos los eventos futuros\n\n'
-                '¿Estás seguro de que deseas cancelar este plan?';
+        title = loc.planStateTransitionCancelTitle;
+        destructive = true;
+        message = customMessage ?? loc.planStateTransitionCancelMessage;
+        confirmLabel = loc.planStateTransitionCancelPlanButton;
         break;
-
       case 'planificando':
-        title = 'Volver a Planificación';
-        actionColor = Colors.blue;
-        titleIcon = Icons.event_note;
-        message = customMessage ??
-            'El plan volverá a estado "Planificando". Se desbloquearán todas las restricciones.\n\n'
-                '¿Deseas continuar?';
+        title = loc.planStateTransitionPlanningTitle;
+        message = customMessage ?? loc.planStateTransitionPlanningMessage;
+        confirmLabel = loc.confirm;
         break;
-
       default:
-        title = 'Cambiar Estado del Plan';
-        actionColor = Colors.grey;
-        titleIcon = Icons.info_outline;
+        title = loc.planStateTransitionGenericTitle;
         message = customMessage ??
-            '¿Deseas cambiar el estado del plan de "${currentInfo['label']}" a "${newInfo['label']}"?';
+            loc.planStateTransitionGenericMessage(currentLabel, newLabel);
+        confirmLabel = loc.confirm;
     }
 
-    const String? implicationText = null;
-
-    return AlertDialog(
-      backgroundColor: surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Colors.white12),
-      ),
-      title: null,
-      contentPadding: EdgeInsets.zero,
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: const BoxDecoration(
-              color: AppColorScheme.color2,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: IosFormColors.separator,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-            child: Row(
-              children: [
-                Icon(titleIcon, color: Colors.white, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: IosFormColors.textPrimary,
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 16),
+            IosGroupedCard(
               children: [
-                Row(
-                  children: [
-                    _buildStateChip(currentInfo['label'] as String,
-                        Color(currentInfo['color'] as int)),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Icon(Icons.arrow_forward, size: 20, color: Colors.white70),
-                    ),
-                    _buildStateChip(
-                        newInfo['label'] as String, Color(newInfo['color'] as int)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(message, style: const TextStyle(color: Colors.white70)),
-                if (implicationText != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColorScheme.color2.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColorScheme.color2.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.info_outline, size: 18, color: AppColorScheme.color2),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            implicationText,
-                            style: const TextStyle(fontSize: 13, color: Colors.white70),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          _StateChip(label: currentLabel, state: currentState),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Icon(
+                              Icons.arrow_forward,
+                              size: 18,
+                              color: IosFormColors.textSecondary,
+                            ),
                           ),
+                          _StateChip(label: newLabel, state: newState),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        message,
+                        style: const TextStyle(
+                          color: IosFormColors.textSecondary,
+                          fontSize: 15,
+                          height: 1.35,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            IosFormSheetActions(
+              cancelLabel: loc.cancel,
+              confirmLabel: confirmLabel,
+              confirmDestructive: destructive,
+              onCancel: () => Navigator.of(context).pop(false),
+              onConfirm: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.of(context).pop(true),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: actionColor,
-            foregroundColor: Colors.white,
-          ),
-          child: Text(title.contains('Cancelar') ? 'Cancelar Plan' : 'Confirmar'),
-        ),
-      ],
     );
   }
+}
 
-  Widget _buildStateChip(String label, Color color) {
+class _StateChip extends StatelessWidget {
+  const _StateChip({required this.label, required this.state});
+
+  final String label;
+  final String state;
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        Color(PlanStateService.getStateDisplayInfo(state)['color'] as int);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        color: color.withValues(alpha: 0.12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -207,23 +161,28 @@ class StateTransitionDialog extends StatelessWidget {
         style: TextStyle(
           color: color,
           fontSize: 12,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
 }
 
-/// Muestra el diálogo de confirmación y retorna true si el usuario confirma
 Future<bool> showStateTransitionDialog({
   required BuildContext context,
   required Plan plan,
   required String newState,
   String? customMessage,
 }) async {
-  final result = await showDialog<bool>(
+  final result = await showModalBottomSheet<bool>(
     context: context,
-    barrierDismissible: false,
+    isDismissible: false,
+    enableDrag: false,
+    backgroundColor: IosFormColors.groupedBg,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+    ),
     builder: (context) => StateTransitionDialog(
       plan: plan,
       newState: newState,

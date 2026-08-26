@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
+import 'package:unp_calendario/app/theme/color_scheme.dart';
 
 /// Hub temporal para navegar a demos UI en revisión.
 class UiReviewHubPage extends StatelessWidget {
@@ -22,6 +23,20 @@ class UiReviewHubPage extends StatelessWidget {
               style: GoogleFonts.poppins(color: Colors.white70),
             ),
             const SizedBox(height: 16),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: AppColorScheme.color2.withValues(alpha: 0.5)),
+              ),
+              tileColor: AppColorScheme.color2.withValues(alpha: 0.12),
+              leading: Icon(Icons.phone_iphone, color: AppColorScheme.color2),
+              title: const Text('Propuestas UX iOS (nuevo)'),
+              subtitle: const Text('Info plan · Evento · Alojamiento · A/B/C'),
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/demo/ios-ux-proposals'),
+            ),
+            const SizedBox(height: 10),
             ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               shape: RoundedRectangleBorder(
