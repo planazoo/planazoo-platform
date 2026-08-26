@@ -3833,8 +3833,14 @@ abstract class AppLocalizations {
   /// Label del tipo de alojamiento
   ///
   /// In es, this message translates to:
-  /// **'Tipo de alojamiento'**
+  /// **'Tipo'**
   String get accommodationType;
+
+  /// Pie bajo switch Para todos (off) en ficha alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Elige quién participa en este alojamiento'**
+  String get accommodationParticipantsSubtitleOff;
 
   /// Error de tipo de alojamiento inválido
   ///
@@ -4321,6 +4327,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Total registrado: {amount}'**
   String eventPaymentsRecordedTotal(String amount);
+
+  /// Mensaje pestaña Pagos alojamiento sin id guardado
+  ///
+  /// In es, this message translates to:
+  /// **'Guarda el alojamiento para registrar gastos vinculados.'**
+  String get accommodationPaymentsSaveFirst;
+
+  /// Título sección gastos en pestaña Pagos alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Gastos de este alojamiento'**
+  String get accommodationPaymentsSectionExpenses;
+
+  /// Lista vacía gastos alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'No hay gastos vinculados a este alojamiento.'**
+  String get accommodationPaymentsEmpty;
+
+  /// Pie modal gasto abierto desde alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Indica quién pagó con su dinero; el reparto entre personas lo eliges más abajo.'**
+  String get paymentsExpenseFromAccommodationPayerHint;
+
+  /// Intro pestaña Mi info alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Solo visible para ti en este alojamiento'**
+  String get accommodationMyInfoSubtitle;
+
+  /// Campo habitación Mi info alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'N.º habitación'**
+  String get accommodationMyInfoRoomNumber;
+
+  /// Hint habitación Mi info alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: 412 o Suite B'**
+  String get accommodationMyInfoRoomNumberHint;
+
+  /// Campo cama Mi info alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Tipo de cama'**
+  String get accommodationMyInfoBedType;
+
+  /// Hint cama Mi info alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Individual, doble, literas…'**
+  String get accommodationMyInfoBedTypeHint;
+
+  /// Aviso privacidad Mi info alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Otros participantes no verán estos datos.'**
+  String get accommodationMyInfoPrivacyFooter;
 
   /// No description provided for @eventReadOnlySnackBar.
   ///

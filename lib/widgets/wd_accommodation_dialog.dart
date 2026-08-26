@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/accommodation.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart' show EventDocument;
 import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
@@ -24,6 +23,7 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/app/theme/app_theme.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
+import 'package:unp_calendario/widgets/plan/event_payments_tab.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AccommodationDialog extends ConsumerStatefulWidget {
@@ -59,6 +59,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   late TextEditingController _urlController; // Enlace web del alojamiento
   PlaceDetails? _lastPlaceDetails; // T225: último lugar seleccionado (lat/lng en extraData)
   late TextEditingController _descriptionController;
+  late TextEditingController _roomNumberController;
+  late TextEditingController _bedTypeController;
+  late TextEditingController _preferencesController;
+  late TextEditingController _personalNotesController;
   late TextEditingController _costController; // T101/T153
   String? _costCurrency; // T153: Moneda local del coste
   String? _planCurrency; // T153: Moneda del plan
@@ -107,6 +111,22 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     );
     _descriptionController = TextEditingController(
       text: widget.accommodation?.description ?? '',
+    );
+    final currentUserId = ref.read(currentUserProvider)?.id ?? '';
+    final personalPart = widget.accommodation?.personalParts?[currentUserId];
+    _roomNumberController = TextEditingController(
+      text: personalPart?.roomNumber ?? '',
+    );
+    _bedTypeController = TextEditingController(
+      text: personalPart?.bedType ?? '',
+    );
+    _preferencesController = TextEditingController(
+      text: personalPart?.preferences?['text']?.toString() ?? '',
+    );
+    _personalNotesController = TextEditingController(
+      text: personalPart?.fields?['notasPersonales']?.toString() ??
+          personalPart?.notes?['text']?.toString() ??
+          '',
     );
     _costController = TextEditingController(
       text: _formatCostForInput(widget.accommodation?.cost),
@@ -182,6 +202,33 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
 
   bool get _canEdit => _canSaveAccommodation();
 
+  static const double _fieldGap = 14;
+
+  Widget _wrapReadOnlyIfNeeded({required Widget child}) {
+    if (_canEdit) return child;
+    return Stack(
+      children: [
+        child,
+        Positioned.fill(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(onTap: _showReadOnlySnackBar),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showReadOnlySnackBar() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.eventReadOnlySnackBar),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   /// T109: Verifica si se puede eliminar el alojamiento según el estado del plan
   bool _canDeleteAccommodation() {
     if (_plan == null) return true; // Si no hay plan cargado, permitir por defecto
@@ -211,6 +258,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     _addressController.dispose();
     _urlController.dispose();
     _descriptionController.dispose();
+    _roomNumberController.dispose();
+    _bedTypeController.dispose();
+    _preferencesController.dispose();
+    _personalNotesController.dispose();
     _costController.dispose(); // T101
     super.dispose();
   }
@@ -226,10 +277,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       final loc = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            loc.entityAttachmentsReadError,
-            style: GoogleFonts.poppins(color: Colors.white),
-          ),
+          content: Text(loc.entityAttachmentsReadError),
           backgroundColor: Colors.red.shade600,
         ),
       );
@@ -240,7 +288,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(validationError, style: GoogleFonts.poppins(color: Colors.white)),
+          content: Text(validationError),
           backgroundColor: Colors.orange.shade700,
         ),
       );
@@ -262,7 +310,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       final loc = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(loc.entityAttachmentsUploadError('$e'), style: GoogleFonts.poppins(color: Colors.white)),
+          content: Text(loc.entityAttachmentsUploadError('$e')),
           backgroundColor: Colors.red.shade600,
         ),
       );
@@ -294,7 +342,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       final loc = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(loc.entityAttachmentsDeleteError, style: GoogleFonts.poppins(color: Colors.white)),
+          content: Text(loc.entityAttachmentsDeleteError),
           backgroundColor: Colors.red.shade600,
         ),
       );
@@ -307,38 +355,6 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   static const Color _formSurface = IosFormColors.pageBg;
   static const double _fieldIconSize = 20;
 
-  TextStyle get _labelStyle => const TextStyle(
-        fontSize: 13,
-        color: IosFormColors.textSecondary,
-        fontWeight: FontWeight.w400,
-      );
-
-  TextStyle get _valueStyle => const TextStyle(
-        fontSize: 17,
-        color: IosFormColors.textPrimary,
-        fontWeight: FontWeight.w400,
-        height: 1.2,
-      );
-
-  TextStyle get _hintStyle => const TextStyle(
-        fontSize: 17,
-        color: IosFormColors.textTertiary,
-        fontWeight: FontWeight.w400,
-        height: 1.2,
-      );
-
-  TextStyle get _captionStyle => GoogleFonts.poppins(
-        fontSize: 12,
-        color: Colors.white70,
-        fontWeight: FontWeight.w400,
-      );
-
-  TextStyle get _linkStyle => GoogleFonts.poppins(
-        fontSize: 13,
-        color: AppColorScheme.color2,
-        fontWeight: FontWeight.w600,
-      );
-
   void _onCancel() {
     Navigator.of(context).pop();
   }
@@ -347,14 +363,16 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     await _saveAccommodation();
   }
 
-  /// Formulario único (orden de la antigua vista; campos editables).
-  Widget _buildAccommodationForm(AppLocalizations loc) {
+  /// Formulario General (pestaña 0).
+  Widget _buildGeneralTabScroll(bool isMobile, AppLocalizations loc) {
+    final spacing = isMobile ? _fieldGap : 16.0;
+    final pad = isMobile ? 4.0 : 8.0;
     final nights = _calculateNights(_selectedCheckIn, _selectedCheckOut);
     final stay = _formatStayRange();
     final status = _isDraft ? loc.eventStatusDraft : loc.eventStatusConfirmed;
     final statusColor = _isDraft
-        ? ColorUtils.confirmedColors['actividad']! // naranja app
-        : ColorUtils.confirmedColors['alojamiento']!; // verde app
+        ? ColorUtils.confirmedColors['actividad']!
+        : ColorUtils.confirmedColors['alojamiento']!;
     final hotelName = _hotelNameController.text.trim();
     final displayTitle = hotelName.isEmpty
         ? (widget.accommodation == null
@@ -364,7 +382,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     final canEdit = _canEdit;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      padding: EdgeInsets.fromLTRB(pad, pad, pad, isMobile ? 16 : 12),
       children: [
         IosHeroHeader(
           title: canEdit ? null : displayTitle,
@@ -384,195 +402,66 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             ),
           ],
         ),
-        IosSectionLabel(loc.accommodationSectionLocation),
-        IosGroupedCard(
-          children: canEdit
-              ? [_buildAddressField(loc)]
-              : [
-                  if (_addressController.text.trim().isNotEmpty)
-                    IosSettingsRow(
-                      label: loc.placeAddressLabel,
-                      value: _addressController.text.trim(),
-                      multiline: true,
-                      valueColor: _canOpenLocationInMaps
-                          ? IosFormColors.accent
-                          : null,
-                      chevron: _canOpenLocationInMaps,
-                      onTap: _canOpenLocationInMaps
-                          ? _openLocationInGoogleMaps
-                          : null,
-                    )
-                  else
-                    IosSettingsRow(
-                      label: loc.placeAddressLabel,
-                      value: '—',
-                    ),
-                ],
-        ),
-        IosGroupedCard(
-          children: [
-            IosSettingsRow(
-              label: loc.accommodationType,
-              value: localizedAccommodationType(loc, _selectedType),
-              chevron: canEdit,
-              onTap: canEdit ? _pickAccommodationType : null,
-            ),
-          ],
-        ),
-        if (_planCurrency != null) ...[
-          IosSectionLabel(loc.planDetailsBudgetLabel),
-          IosGroupedCard(
+        SizedBox(height: spacing),
+        _wrapReadOnlyIfNeeded(child: _buildLocationAndTypeCard(loc, canEdit)),
+        SizedBox(height: spacing),
+        _wrapReadOnlyIfNeeded(child: _buildUrlField(loc, canEdit)),
+        SizedBox(height: spacing),
+        _wrapReadOnlyIfNeeded(child: _buildNotesField(loc, canEdit)),
+        SizedBox(height: spacing),
+        _wrapReadOnlyIfNeeded(
+          child: IosGroupedCard(
             children: [
-              IosSettingsRow(
-                label: loc.costCurrency,
-                value: _currencyDisplayLabel(
-                  _costCurrency ?? _planCurrency ?? 'EUR',
-                ),
-                chevron: canEdit,
-                onTap: canEdit ? _pickCostCurrency : null,
-              ),
-              const IosRowSeparator(),
-              IgnorePointer(
-                ignoring: !canEdit,
-                child: IosEditField(
-                  label: loc.cost,
-                  controller: _costController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  hint: loc.costHint,
-                  onChanged: (_) async {
-                    await _convertCostToPlanCurrency(ExchangeRateService());
-                  },
-                  validator: (value) {
-                    final v = value?.trim() ?? '';
-                    if (v.isEmpty) return null;
-                    final doubleValue = double.tryParse(v.replaceAll(',', '.'));
-                    if (doubleValue == null) return loc.mustBeValidNumber;
-                    if (doubleValue < 0) return loc.cannotBeNegative;
-                    if (doubleValue > 1000000) return loc.maxAmount;
-                    return null;
-                  },
-                ),
+              EntityAttachmentsSection(
+                title: '',
+                files: _accommodationDocuments,
+                canManage: canEdit,
+                isUploading: _uploadingAccAttachment,
+                onUpload: canEdit ? _pickAccommodationAttachment : null,
+                onDelete: _deleteAccommodationAttachment,
+                embeddedInGroupedCard: true,
               ),
             ],
           ),
-          if (_costCurrency != null &&
-              _planCurrency != null &&
-              _costCurrency != _planCurrency &&
-              _costController.text.trim().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-              child: _buildCostConversionHint(),
-            ),
-          IosSectionLabel(loc.reservationCancellationSectionTitle),
-          Builder(builder: (context) {
-            final parts = ref
-                    .watch(planRealParticipantsProvider(widget.planId))
-                    .valueOrNull ??
-                [];
-            final names = ref
-                    .watch(planParticipantDisplayNamesProvider(widget.planId))
-                    .valueOrNull ??
-                {};
-            final payers = parts
-                .map(
-                  (p) => ReservationPayerOption(
-                    userId: p.userId,
-                    label: names[p.userId] ?? p.userId,
-                  ),
-                )
-                .toList();
-            return ReservationCancellationFormSection(
-              key: _reservationSectionKey,
-              initial: widget.accommodation?.reservationCancellation,
-              payers: payers,
-              defaultTimezone: _plan?.timezone,
-              currencyCode: _planCurrency!,
-              readOnly: !canEdit,
-            );
-          }),
+        ),
+        if (_planCurrency != null) ...[
+          SizedBox(height: spacing),
+          _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency(loc, canEdit)),
+          SizedBox(height: spacing),
+          _wrapReadOnlyIfNeeded(
+            child: Builder(builder: (context) {
+              final parts = ref
+                      .watch(planRealParticipantsProvider(widget.planId))
+                      .valueOrNull ??
+                  [];
+              final names = ref
+                      .watch(
+                          planParticipantDisplayNamesProvider(widget.planId))
+                      .valueOrNull ??
+                  {};
+              final payers = parts
+                  .map(
+                    (p) => ReservationPayerOption(
+                      userId: p.userId,
+                      label: names[p.userId] ?? p.userId,
+                    ),
+                  )
+                  .toList();
+              return ReservationCancellationFormSection(
+                key: _reservationSectionKey,
+                initial: widget.accommodation?.reservationCancellation,
+                payers: payers,
+                defaultTimezone: _plan?.timezone,
+                currencyCode: _planCurrency!,
+                readOnly: !canEdit,
+              );
+            }),
+          ),
         ],
-        IosSectionLabel(loc.planDetailsSectionNotes),
-        IosGroupedCard(
-          children: [
-            IgnorePointer(
-              ignoring: !canEdit,
-              child: IosEditField(
-                label: loc.accommodationNotes,
-                controller: _descriptionController,
-                maxLines: 6,
-                minLines: 3,
-                hint: loc.accommodationNotesHint,
-                validator: (value) {
-                  final v = value?.trim() ?? '';
-                  if (v.isEmpty) return null;
-                  if (v.length > 1000) return loc.maxCharacters(1000);
-                  return null;
-                },
-              ),
-            ),
-          ],
-        ),
-        IosSectionLabel(loc.participants),
-        IosGroupedCard(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-              child: IgnorePointer(
-                ignoring: !canEdit,
-                child: _buildParticipantSelection(),
-              ),
-            ),
-          ],
-        ),
-        IosGroupedCard(
-          children: [
-            IosColorSettingRow(
-              label: loc.color,
-              color: _getColorFromName(_selectedColor),
-              chevron: canEdit,
-              onTap: canEdit ? _showColorPicker : null,
-            ),
-          ],
-        ),
-        IosGroupedCard(
-          children: [
-            EntityAttachmentsSection(
-              title: '',
-              files: _accommodationDocuments,
-              canManage: canEdit,
-              isUploading: _uploadingAccAttachment,
-              onUpload: canEdit ? _pickAccommodationAttachment : null,
-              onDelete: _deleteAccommodationAttachment,
-              embeddedInGroupedCard: true,
-            ),
-          ],
-        ),
-        IosSectionLabel(loc.accommodationSectionExtras),
-        IosGroupedCard(
-          children: [
-            IgnorePointer(
-              ignoring: !canEdit,
-              child: IosEditField(
-                label: loc.eventUrlLabel,
-                controller: _urlController,
-                keyboardType: TextInputType.url,
-                hint: loc.eventUrlHint,
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-            if (_canOpenWebLink) ...[
-              const IosRowSeparator(),
-              IosSettingsRow(
-                label: loc.openWebLink,
-                value: _urlController.text.trim(),
-                valueColor: IosFormColors.accent,
-                chevron: true,
-                onTap: _openAccommodationWebLink,
-              ),
-            ],
-          ],
-        ),
+        SizedBox(height: spacing),
+        _wrapReadOnlyIfNeeded(child: _buildParticipantsScopeSection()),
+        SizedBox(height: spacing),
+        _wrapReadOnlyIfNeeded(child: _buildColorSelectorRow(loc, canEdit)),
         if (_canDeleteAccommodation() && canEdit) ...[
           const SizedBox(height: 20),
           IosDestructiveTile(
@@ -584,6 +473,581 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     );
   }
 
+  static const int _accommodationFormTabCount = 3;
+
+  Widget _buildAccommodationTabsForm({required bool isMobile}) {
+    final horizontalPad = isMobile ? 12.0 : 16.0;
+    final topPad = isMobile ? 8.0 : 12.0;
+    final loc = AppLocalizations.of(context)!;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPad, topPad, horizontalPad, 0),
+      child: SizedBox(
+        width: isMobile ? double.infinity : 520,
+        child: DefaultTabController(
+          length: _accommodationFormTabCount,
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Builder(
+                builder: (context) {
+                  final tabController = DefaultTabController.of(context);
+                  final tabLabels = [
+                    loc.eventTabGeneral,
+                    loc.eventTabMyInfo,
+                    loc.eventTabPayments,
+                  ];
+                  return ListenableBuilder(
+                    listenable: tabController,
+                    builder: (context, _) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: isMobile ? 6 : 8),
+                        child: IosSegmentedControl(
+                          labels: tabLabels,
+                          selectedIndex: tabController.index,
+                          fontSize: isMobile ? 12 : 13,
+                          onChanged: tabController.animateTo,
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 4),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildGeneralTabScroll(isMobile, loc),
+                    _buildMyInfoTabScroll(isMobile, loc),
+                    _buildPaymentsTabScroll(isMobile),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMyInfoTabScroll(bool isMobile, AppLocalizations loc) {
+    final pad = isMobile ? 4.0 : 8.0;
+    final gap = isMobile ? _fieldGap : 16.0;
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(pad, pad, pad, isMobile ? 16 : 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            loc.accommodationMyInfoSubtitle,
+            style: const TextStyle(
+              fontSize: 12,
+              color: IosFormColors.textSecondary,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          SizedBox(height: gap),
+          IosGroupedCard(
+            children: [
+              IosEditField(
+                label: loc.accommodationMyInfoRoomNumber,
+                controller: _roomNumberController,
+                hint: loc.accommodationMyInfoRoomNumberHint,
+                validator: (value) {
+                  final v = value?.trim() ?? '';
+                  if (v.isEmpty) return null;
+                  if (v.length > 50) return loc.maxCharacters(50);
+                  return null;
+                },
+              ),
+              const IosRowSeparator(),
+              IosEditField(
+                label: loc.accommodationMyInfoBedType,
+                controller: _bedTypeController,
+                hint: loc.accommodationMyInfoBedTypeHint,
+                validator: (value) {
+                  final v = value?.trim() ?? '';
+                  if (v.isEmpty) return null;
+                  if (v.length > 50) return loc.maxCharacters(50);
+                  return null;
+                },
+              ),
+              const IosRowSeparator(),
+              IosEditField(
+                label: loc.preferences,
+                controller: _preferencesController,
+                hint: loc.preferencesHint,
+                maxLines: 2,
+                minLines: 1,
+                validator: (value) {
+                  final v = value?.trim() ?? '';
+                  if (v.isEmpty) return null;
+                  if (v.length > 200) return loc.maxCharacters(200);
+                  return null;
+                },
+              ),
+              const IosRowSeparator(),
+              IosEditField(
+                label: loc.personalNotes,
+                controller: _personalNotesController,
+                hint: loc.accommodationNotesHint,
+                maxLines: 4,
+                minLines: 2,
+                validator: (value) {
+                  final v = value?.trim() ?? '';
+                  if (v.isEmpty) return null;
+                  if (v.length > 1000) return loc.maxCharacters(1000);
+                  return null;
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: gap),
+          IosFormFooter(loc.accommodationMyInfoPrivacyFooter),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentsTabScroll(bool isMobile) {
+    return EventPaymentsTab(
+      plan: _plan,
+      accommodationId: widget.accommodation?.id,
+      budgetCost: widget.accommodation?.cost,
+      planCurrency: _planCurrency ?? 'EUR',
+      isMobile: isMobile,
+    );
+  }
+
+  Widget _buildLocationAndTypeCard(AppLocalizations loc, bool canEdit) {
+    return IosGroupedCard(
+      children: canEdit
+          ? [
+              _buildAddressField(loc),
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.accommodationType,
+                value: localizedAccommodationType(loc, _selectedType),
+                chevron: true,
+                onTap: _pickAccommodationType,
+              ),
+            ]
+          : [
+              if (_addressController.text.trim().isNotEmpty)
+                IosSettingsRow(
+                  label: loc.placeAddressLabel,
+                  value: _addressController.text.trim(),
+                  multiline: true,
+                  valueColor:
+                      _canOpenLocationInMaps ? IosFormColors.accent : null,
+                  chevron: _canOpenLocationInMaps,
+                  onTap: _canOpenLocationInMaps
+                      ? _openLocationInGoogleMaps
+                      : null,
+                )
+              else
+                IosSettingsRow(
+                  label: loc.placeAddressLabel,
+                  value: '—',
+                ),
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.accommodationType,
+                value: localizedAccommodationType(loc, _selectedType),
+              ),
+            ],
+    );
+  }
+
+  Widget _buildUrlField(AppLocalizations loc, bool canEdit) {
+    return IosGroupedCard(
+      children: [
+        IgnorePointer(
+          ignoring: !canEdit,
+          child: IosEditField(
+            label: loc.eventUrlLabel,
+            controller: _urlController,
+            keyboardType: TextInputType.url,
+            hint: loc.eventUrlHint,
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        if (_canOpenWebLink) ...[
+          const IosRowSeparator(),
+          IosSettingsRow(
+            label: loc.openWebLink,
+            value: _urlController.text.trim(),
+            valueColor: IosFormColors.accent,
+            chevron: true,
+            onTap: _openAccommodationWebLink,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildNotesField(AppLocalizations loc, bool canEdit) {
+    return IosGroupedCard(
+      children: [
+        Stack(
+          children: [
+            IgnorePointer(
+              ignoring: !canEdit,
+              child: IosEditField(
+                label: loc.accommodationNotes,
+                controller: _descriptionController,
+                maxLines: 4,
+                minLines: 2,
+                hint: loc.accommodationNotesHint,
+                validator: (value) {
+                  final v = value?.trim() ?? '';
+                  if (v.isEmpty) return null;
+                  if (v.length > 1000) return loc.maxCharacters(1000);
+                  return null;
+                },
+              ),
+            ),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: IconButton(
+                tooltip: 'Ampliar',
+                onPressed: _openLongNotesEditor,
+                icon: const Icon(
+                  Icons.open_in_full,
+                  size: 18,
+                  color: IosFormColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openLongNotesEditor() async {
+    final loc = AppLocalizations.of(context)!;
+    final canEdit = _canEdit;
+    final tempController =
+        TextEditingController(text: _descriptionController.text);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => Theme(
+        data: AppTheme.darkTheme,
+        child: AlertDialog(
+          backgroundColor: IosFormColors.groupedBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            loc.accommodationNotes,
+            style: const TextStyle(
+              color: IosFormColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: SizedBox(
+            width: 680,
+            child: TextFormField(
+              controller: tempController,
+              minLines: 8,
+              maxLines: 16,
+              readOnly: !canEdit,
+              style: const TextStyle(color: IosFormColors.textPrimary),
+              cursorColor: IosFormColors.accent,
+              decoration: InputDecoration(
+                hintText: loc.accommodationNotesHint,
+                hintStyle: const TextStyle(color: IosFormColors.textTertiary),
+                filled: true,
+                fillColor: IosFormColors.pageBg,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(loc.cancel),
+            ),
+            TextButton(
+              onPressed: canEdit
+                  ? () => Navigator.of(context).pop(tempController.text)
+                  : null,
+              child: Text(loc.save),
+            ),
+          ],
+        ),
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      tempController.dispose();
+    });
+    if (!mounted || result == null) return;
+    setState(() {
+      _descriptionController.text = result;
+    });
+  }
+
+  Widget _buildCostFieldWithCurrency(AppLocalizations loc, bool canEdit) {
+    final exchangeRateService = ExchangeRateService();
+    final currencyValue = _costCurrency ?? _planCurrency ?? 'EUR';
+    final currency = Currency.fromCodeOrEur(currencyValue);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IosGroupedCard(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: IgnorePointer(
+                      ignoring: !canEdit,
+                      child: TextFormField(
+                        controller: _costController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        style: const TextStyle(
+                          color: IosFormColors.textPrimary,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        cursorColor: IosFormColors.accent,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          hintText: '${loc.cost}: ${loc.costHint}',
+                          hintStyle: const TextStyle(
+                            color: IosFormColors.textTertiary,
+                            fontSize: 17,
+                          ),
+                        ),
+                        onChanged: canEdit
+                            ? (_) => _convertCostToPlanCurrency(
+                                  exchangeRateService,
+                                )
+                            : null,
+                        validator: (value) {
+                          if (!canEdit) return null;
+                          final v = value?.trim() ?? '';
+                          if (v.isEmpty) return null;
+                          final doubleValue =
+                              double.tryParse(v.replaceAll(',', '.'));
+                          if (doubleValue == null) return loc.mustBeValidNumber;
+                          if (doubleValue < 0) return loc.cannotBeNegative;
+                          if (doubleValue > 1000000) return loc.maxAmount;
+                          return null;
+                        },
+                      ),
+                    ),
+                  ),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: canEdit ? _pickCostCurrency : null,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${currency.code} ${currency.symbol}',
+                              style: const TextStyle(
+                                color: IosFormColors.textSecondary,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            if (canEdit) ...[
+                              const SizedBox(width: 2),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: IosFormColors.textTertiary,
+                                size: 20,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (_costCurrency != null &&
+            _planCurrency != null &&
+            _costCurrency != _planCurrency &&
+            _costController.text.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+            child: _buildCostConversionHint(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildColorSelectorRow(AppLocalizations loc, bool canEdit) {
+    return IosGroupedCard(
+      children: [
+        IosColorSettingRow(
+          label: loc.color,
+          color: _getColorFromName(_selectedColor),
+          chevron: canEdit,
+          onTap: canEdit ? _showColorPicker : null,
+        ),
+      ],
+    );
+  }
+
+  /// Alcance de participantes: switch «Para todos» + lista en la misma card.
+  Widget _buildParticipantsScopeSection() {
+    final loc = AppLocalizations.of(context)!;
+    final canEdit = _canEdit;
+    final currentUserId = ref.watch(currentUserProvider)?.id;
+
+    final children = <Widget>[
+      IosSwitchRow(
+        label: loc.eventDialogForAllShort,
+        value: _isForAllParticipants,
+        onChanged: canEdit
+            ? (value) {
+                setState(() {
+                  _isForAllParticipants = value;
+                  if (_isForAllParticipants) {
+                    _selectedParticipantTrackIds.clear();
+                  } else if (currentUserId != null &&
+                      !_selectedParticipantTrackIds.contains(currentUserId)) {
+                    _selectedParticipantTrackIds.add(currentUserId);
+                  }
+                });
+              }
+            : null,
+      ),
+    ];
+
+    String? footerText = _isForAllParticipants
+        ? loc.eventDialogForAllParticipantsSubtitleOn
+        : loc.accommodationParticipantsSubtitleOff;
+    Color? footerColor;
+
+    if (!_isForAllParticipants) {
+      children.add(const IosRowSeparator());
+
+      final participantsAsync =
+          ref.watch(planRealParticipantsProvider(widget.planId));
+      participantsAsync.when(
+        data: (participations) {
+          if (participations.isEmpty) {
+            children.add(
+              IosSettingsRow(
+                label: loc.eventDialogNoParticipantsInPlan,
+                value: '',
+              ),
+            );
+            return;
+          }
+          for (var i = 0; i < participations.length; i++) {
+            final participation = participations[i];
+            final isSelected =
+                _selectedParticipantTrackIds.contains(participation.userId);
+            if (i > 0) children.add(const IosRowSeparator());
+            children.add(
+              FutureBuilder<String>(
+                future: _getUserDisplayName(participation.userId),
+                builder: (context, snapshot) {
+                  final displayName =
+                      snapshot.data ?? participation.userId;
+                  String secondary = '';
+                  if (participation.isOrganizer) {
+                    secondary = loc.planRoleOrganizer;
+                  }
+                  return IosCheckRow(
+                    label: displayName,
+                    value: secondary,
+                    selected: isSelected,
+                    indented: true,
+                    onTap: canEdit
+                        ? () {
+                            setState(() {
+                              if (isSelected) {
+                                if (_selectedParticipantTrackIds.length > 1) {
+                                  _selectedParticipantTrackIds
+                                      .remove(participation.userId);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        loc.eventDialogSelectAtLeastOne,
+                                      ),
+                                      backgroundColor: Colors.red.shade600,
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              } else if (!_selectedParticipantTrackIds
+                                  .contains(participation.userId)) {
+                                _selectedParticipantTrackIds
+                                    .add(participation.userId);
+                              }
+                            });
+                          }
+                        : null,
+                  );
+                },
+              ),
+            );
+          }
+          if (_selectedParticipantTrackIds.isEmpty) {
+            footerText = loc.eventDialogSelectAtLeastOne;
+            footerColor = IosFormColors.danger;
+          }
+        },
+        loading: () {
+          children.add(
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+          );
+        },
+        error: (_, __) {
+          footerText = loc.eventDialogParticipantsLoadError;
+          footerColor = IosFormColors.danger;
+        },
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IosSectionLabel(loc.participants),
+        IosGroupedCard(children: children),
+        if (footerText != null && footerText!.isNotEmpty)
+          IosFormFooter(footerText!, color: footerColor),
+      ],
+    );
+  }
+
   String _formatShortDate(DateTime d) {
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
@@ -591,25 +1055,98 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   String _formatStayRange() =>
       '${_formatShortDate(_selectedCheckIn)} – ${_formatShortDate(_selectedCheckOut)}';
 
-  String _currencyDisplayLabel(String code) {
-    final currency = Currency.fromCodeOrEur(code);
-    return '${currency.code} ${currency.symbol}';
-  }
-
-  Widget _buildLabeledFormField({
-    required String label,
-    required Widget field,
-    EdgeInsetsGeometry padding =
-        const EdgeInsets.fromLTRB(16, 10, 16, 10),
-  }) {
+  /// Dirección con Places: rellena dirección y, si el nombre está vacío, el nombre.
+  Widget _buildAddressField(AppLocalizations loc) {
     return Padding(
-      padding: padding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: _labelStyle),
-          const SizedBox(height: 4),
-          field,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  loc.placeAddressLabel,
+                  style: const TextStyle(
+                    color: IosFormColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Theme(
+                  data: Theme.of(context).copyWith(
+                    inputDecorationTheme: const InputDecorationTheme(
+                      contentPadding: EdgeInsets.zero,
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                    ),
+                  ),
+                  child: PlaceAutocompleteField(
+                    controller: _addressController,
+                    initialAddress: _addressController.text.isNotEmpty
+                        ? _addressController.text
+                        : null,
+                    lodgingOnly: true,
+                    preferDisplayName: false,
+                    showFloatingLabel: false,
+                    maxLines: 3,
+                    labelText: loc.placeAddressLabel,
+                    hintText: loc.placeSearchHint,
+                    prefixIcon: Icons.place_outlined,
+                    fontSize: 17,
+                    fillColor: Colors.transparent,
+                    border: InputBorder.none,
+                    onPlaceSelected: (PlaceDetails details) {
+                      setState(() {
+                        _lastPlaceDetails = details;
+                        final address = (details.formattedAddress ?? '').trim();
+                        if (address.isNotEmpty) {
+                          _addressController.text = address;
+                        }
+                        final placeName = details.displayName.trim();
+                        if (placeName.isNotEmpty) {
+                          final currentName = _hotelNameController.text.trim();
+                          final nameLooksLikeAddress = currentName.isEmpty ||
+                              currentName == address ||
+                              (address.isNotEmpty &&
+                                  currentName.contains(address)) ||
+                              currentName.split(',').length >= 3;
+                          if (nameLooksLikeAddress) {
+                            _hotelNameController.text = placeName;
+                          }
+                        }
+                        final web = details.websiteUri?.trim();
+                        if (web != null && web.isNotEmpty) {
+                          _urlController.text = web;
+                        }
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_canOpenLocationInMaps)
+            ListenableBuilder(
+              listenable: _addressController,
+              builder: (context, _) {
+                if (!_canOpenLocationInMaps) return const SizedBox.shrink();
+                return IconButton(
+                  tooltip: loc.openInGoogleMaps,
+                  onPressed: _openLocationInGoogleMaps,
+                  icon: Icon(
+                    Icons.map_outlined,
+                    size: _fieldIconSize,
+                    color: IosFormColors.accent,
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -720,92 +1257,6 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         return null;
       },
       onChanged: (_) => setState(() {}),
-    );
-  }
-
-  /// Dirección con Places: rellena dirección y, si el nombre está vacío, el nombre.
-  Widget _buildAddressField(AppLocalizations loc) {
-    return _buildLabeledFormField(
-      label: loc.placeAddressLabel,
-      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-      field: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Theme(
-              data: Theme.of(context).copyWith(
-                inputDecorationTheme: InputDecorationTheme(
-                  hintStyle: _hintStyle,
-                  contentPadding: EdgeInsets.zero,
-                  filled: true,
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                ),
-              ),
-              child: PlaceAutocompleteField(
-                controller: _addressController,
-                initialAddress: _addressController.text.isNotEmpty
-                    ? _addressController.text
-                    : null,
-                lodgingOnly: true,
-                preferDisplayName: false,
-                showFloatingLabel: false,
-                maxLines: 3,
-                labelText: loc.placeAddressLabel,
-                hintText: loc.placeSearchHint,
-                prefixIcon: Icons.place_outlined,
-                style: _valueStyle,
-                fillColor: Colors.transparent,
-                border: InputBorder.none,
-                onPlaceSelected: (PlaceDetails details) {
-                  setState(() {
-                    _lastPlaceDetails = details;
-                    final address = (details.formattedAddress ?? '').trim();
-                    if (address.isNotEmpty) {
-                      _addressController.text = address;
-                    }
-                    // Nombre: solo el displayName de Places, nunca la dirección.
-                    final placeName = details.displayName.trim();
-                    if (placeName.isNotEmpty) {
-                      final currentName = _hotelNameController.text.trim();
-                      final nameLooksLikeAddress = currentName.isEmpty ||
-                          currentName == address ||
-                          (address.isNotEmpty &&
-                              currentName.contains(address)) ||
-                          currentName.split(',').length >= 3;
-                      if (nameLooksLikeAddress) {
-                        _hotelNameController.text = placeName;
-                      }
-                    }
-                    final web = details.websiteUri?.trim();
-                    if (web != null && web.isNotEmpty) {
-                      _urlController.text = web;
-                    }
-                  });
-                },
-              ),
-            ),
-          ),
-          if (_canOpenLocationInMaps)
-            ListenableBuilder(
-              listenable: _addressController,
-              builder: (context, _) {
-                if (!_canOpenLocationInMaps) return const SizedBox.shrink();
-                return IconButton(
-                  tooltip: loc.openInGoogleMaps,
-                  onPressed: _openLocationInGoogleMaps,
-                  icon: Icon(
-                    Icons.map_outlined,
-                    size: _fieldIconSize,
-                    color: IosFormColors.accent,
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
     );
   }
 
@@ -925,7 +1376,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                   Expanded(
                     child: Form(
                       key: _formKey,
-                      child: _buildAccommodationForm(loc),
+                      child: _buildAccommodationTabsForm(isMobile: isMobile),
                     ),
                   ),
                 ],
@@ -1001,11 +1452,11 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         }),
         cancelButtonStyle: TextButton.styleFrom(
           foregroundColor: Colors.white70,
-          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+          textStyle: const TextStyle(fontWeight: FontWeight.w500),
         ),
         confirmButtonStyle: TextButton.styleFrom(
           foregroundColor: AppColorScheme.color2,
-          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       appBarTheme: const AppBarTheme(
@@ -1017,7 +1468,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColorScheme.color2,
-          textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );
@@ -1096,144 +1547,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     return checkOutUtcDate.difference(checkInUtcDate).inDays;
   }
 
-  /// Construye la sección de selección de participantes
-  Widget _buildParticipantSelection() {
-    return Consumer(
-      builder: (context, ref, child) {
-        final participationsAsync = ref.watch(planRealParticipantsProvider(widget.planId));
-        final currentUserId = ref.watch(currentUserProvider)?.id;
-        
-        return participationsAsync.when(
-          data: (participations) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Material(
-                  color: Colors.transparent,
-                  child: CheckboxListTile(
-                    title: Text(
-                      AppLocalizations.of(context)!
-                          .eventDialogForAllParticipantsTitle,
-                      style: _valueStyle.copyWith(fontSize: 15),
-                      maxLines: 3,
-                      softWrap: true,
-                    ),
-                    value: _isForAllParticipants,
-                    onChanged: (value) {
-                      setState(() {
-                        _isForAllParticipants = value ?? true;
-                        if (_isForAllParticipants) {
-                          _selectedParticipantTrackIds.clear();
-                        } else {
-                          if (currentUserId != null &&
-                              !_selectedParticipantTrackIds
-                                  .contains(currentUserId)) {
-                            _selectedParticipantTrackIds.add(currentUserId);
-                          }
-                        }
-                      });
-                    },
-                    activeColor: AppColorScheme.color2,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ),
-                if (!_isForAllParticipants) ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: participations.map((participation) {
-                      final isSelected =
-                          _selectedParticipantTrackIds.contains(participation.userId);
-                      return FutureBuilder<String>(
-                        future: _getUserDisplayName(participation.userId),
-                        builder: (context, snapshot) {
-                          final displayName = snapshot.data ?? participation.userId;
-                          return FilterChip(
-                            label: Text(displayName),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                if (selected) {
-                                  if (!_selectedParticipantTrackIds
-                                      .contains(participation.userId)) {
-                                    _selectedParticipantTrackIds
-                                        .add(participation.userId);
-                                  }
-                                } else {
-                                  if (_selectedParticipantTrackIds.length > 1) {
-                                    _selectedParticipantTrackIds
-                                        .remove(participation.userId);
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          AppLocalizations.of(context)!
-                                              .selectAtLeastOneParticipant,
-                                        ),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                }
-                              });
-                            },
-                            selectedColor:
-                                AppColorScheme.color2.withValues(alpha: 0.35),
-                            backgroundColor:
-                                Colors.white.withValues(alpha: 0.06),
-                            side: BorderSide(
-                              color: isSelected
-                                  ? AppColorScheme.color2
-                                  : Colors.white.withValues(alpha: 0.12),
-                            ),
-                            checkmarkColor: Colors.white,
-                            labelStyle: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 13,
-                            ),
-                          );
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  if (_selectedParticipantTrackIds.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        AppLocalizations.of(context)!
-                            .selectAtLeastOneParticipant,
-                        style: TextStyle(
-                          color: IosFormColors.danger,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                ],
-              ],
-            );
-          },
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
-            ),
-          ),
-          error: (error, stackTrace) => Text(
-            AppLocalizations.of(context)!.errorLoadingParticipants(error.toString()),
-            style: const TextStyle(color: Colors.red, fontSize: 12),
-          ),
-        );
-      },
-    );
-  }
-
   /// Hint de conversión de moneda (T153).
   Widget _buildCostConversionHint() {
+    final loc = AppLocalizations.of(context)!;
     final exchangeRateService = ExchangeRateService();
     return FutureBuilder<double?>(
       future: exchangeRateService.convertAmount(
@@ -1247,15 +1563,21 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: IosFormColors.accent,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  AppLocalizations.of(context)!.calculating,
-                  style: _captionStyle,
+                  loc.calculating,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: IosFormColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -1270,26 +1592,19 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
               color: IosFormColors.groupedBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColorScheme.color2.withValues(alpha: 0.35),
+                color: IosFormColors.accent.withValues(alpha: 0.35),
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: AppColorScheme.color2,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      AppLocalizations.of(context)!
-                          .convertedTo(_planCurrency!),
-                      style: _linkStyle.copyWith(fontSize: 12),
-                    ),
-                  ],
+                Text(
+                  loc.convertedTo(_planCurrency!),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: IosFormColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -1297,7 +1612,11 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                     convertedAmount,
                     _planCurrency!,
                   ),
-                  style: _valueStyle.copyWith(fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: IosFormColors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -1305,15 +1624,9 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         }
 
         if (snapshot.hasError) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Text(
-              AppLocalizations.of(context)!.conversionError,
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: Colors.orange.shade400,
-              ),
-            ),
+          return IosFormFooter(
+            loc.conversionError,
+            color: Colors.orange.shade400,
           );
         }
 
@@ -1578,6 +1891,41 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         isDraft: _isDraft,
       );
 
+      Map<String, AccommodationPersonalPart>? personalParts;
+      final userId = ref.read(currentUserProvider)?.id;
+      if (userId != null && userId.isNotEmpty) {
+        personalParts = Map<String, AccommodationPersonalPart>.from(
+          widget.accommodation?.personalParts ?? {},
+        );
+        final roomNumber = Sanitizer.sanitizePlainText(
+          _roomNumberController.text,
+          maxLength: 50,
+        );
+        final bedType = Sanitizer.sanitizePlainText(
+          _bedTypeController.text,
+          maxLength: 50,
+        );
+        final preferencesText = Sanitizer.sanitizePlainText(
+          _preferencesController.text,
+          maxLength: 200,
+        );
+        final personalNotes = Sanitizer.sanitizePlainText(
+          _personalNotesController.text,
+          maxLength: 1000,
+        );
+        personalParts[userId] = AccommodationPersonalPart(
+          participantId: userId,
+          roomNumber: roomNumber.isEmpty ? null : roomNumber,
+          bedType: bedType.isEmpty ? null : bedType,
+          preferences: preferencesText.isEmpty
+              ? null
+              : {'text': preferencesText},
+          fields: personalNotes.isEmpty
+              ? null
+              : {'notasPersonales': personalNotes},
+        );
+      }
+
       final accommodation = Accommodation(
         id: widget.accommodation?.id,
         planId: widget.planId,
@@ -1594,6 +1942,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         createdAt: widget.accommodation?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
         commonPart: commonPart,
+        personalParts: personalParts,
         documents: _accommodationDocuments.isEmpty
             ? null
             : List<EventDocument>.from(_accommodationDocuments),

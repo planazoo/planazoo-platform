@@ -2126,7 +2126,11 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get accommodationType => 'Tipo de alojamiento';
+  String get accommodationType => 'Tipo';
+
+  @override
+  String get accommodationParticipantsSubtitleOff =>
+      'Elige quién participa en este alojamiento';
 
   @override
   String get invalidAccommodationType => 'Tipo de alojamiento inválido';
@@ -2385,6 +2389,43 @@ class AppLocalizationsEs extends AppLocalizations {
   String eventPaymentsRecordedTotal(String amount) {
     return 'Total registrado: $amount';
   }
+
+  @override
+  String get accommodationPaymentsSaveFirst =>
+      'Guarda el alojamiento para registrar gastos vinculados.';
+
+  @override
+  String get accommodationPaymentsSectionExpenses =>
+      'Gastos de este alojamiento';
+
+  @override
+  String get accommodationPaymentsEmpty =>
+      'No hay gastos vinculados a este alojamiento.';
+
+  @override
+  String get paymentsExpenseFromAccommodationPayerHint =>
+      'Indica quién pagó con su dinero; el reparto entre personas lo eliges más abajo.';
+
+  @override
+  String get accommodationMyInfoSubtitle =>
+      'Solo visible para ti en este alojamiento';
+
+  @override
+  String get accommodationMyInfoRoomNumber => 'N.º habitación';
+
+  @override
+  String get accommodationMyInfoRoomNumberHint => 'Ej: 412 o Suite B';
+
+  @override
+  String get accommodationMyInfoBedType => 'Tipo de cama';
+
+  @override
+  String get accommodationMyInfoBedTypeHint =>
+      'Ej: Individual, doble, literas…';
+
+  @override
+  String get accommodationMyInfoPrivacyFooter =>
+      'Otros participantes no verán estos datos.';
 
   @override
   String get eventReadOnlySnackBar =>

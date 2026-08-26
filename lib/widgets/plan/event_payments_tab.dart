@@ -11,12 +11,13 @@ import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
-/// Pestaña Pagos del formulario de evento: coste previsto + gastos Tricount ligados.
+/// Pestaña Pagos del formulario de evento o alojamiento: coste previsto + gastos Tricount ligados.
 class EventPaymentsTab extends ConsumerWidget {
   const EventPaymentsTab({
     super.key,
     required this.plan,
-    required this.eventId,
+    this.eventId,
+    this.accommodationId,
     this.budgetCost,
     required this.planCurrency,
     required this.isMobile,
@@ -24,9 +25,24 @@ class EventPaymentsTab extends ConsumerWidget {
 
   final Plan? plan;
   final String? eventId;
+  final String? accommodationId;
   final double? budgetCost;
   final String planCurrency;
   final bool isMobile;
+
+  bool get _isAccommodation =>
+      accommodationId != null && accommodationId!.isNotEmpty;
+
+  bool get _hasLinkedEntity =>
+      (eventId != null && eventId!.isNotEmpty) ||
+      (accommodationId != null && accommodationId!.isNotEmpty);
+
+  bool _expenseMatchesEntity(PlanExpense expense) {
+    if (_isAccommodation) {
+      return expense.accommodationId == accommodationId;
+    }
+    return expense.eventId == eventId;
+  }
 
   static bool canManageExpense(
     Plan plan,
@@ -48,8 +64,7 @@ class EventPaymentsTab extends ConsumerWidget {
     PlanExpense? existing,
   }) async {
     final p = plan;
-    final eid = eventId;
-    if (p?.id == null || eid == null || eid.isEmpty) return;
+    if (p?.id == null || !_hasLinkedEntity) return;
 
     final names = ref.read(planParticipantDisplayNamesProvider(p!.id!)).valueOrNull;
 
@@ -59,7 +74,8 @@ class EventPaymentsTab extends ConsumerWidget {
         builder: (ctx) => AddExpenseDialog(
           plan: p,
           userIdToName: names,
-          initialEventId: eid,
+          initialEventId: _isAccommodation ? null : eventId,
+          initialAccommodationId: _isAccommodation ? accommodationId : null,
           existingExpense: existing,
           onSaved: () {
             ref.invalidate(paymentSummaryProvider(p.id!));
@@ -114,10 +130,9 @@ class EventPaymentsTab extends ConsumerWidget {
     final pad = isMobile ? 4.0 : 8.0;
     final gap = isMobile ? 12.0 : 16.0;
     final p = plan;
-    final eid = eventId;
     final currentUserId = ref.watch(currentUserProvider)?.id;
 
-    if (p?.id == null || eid == null || eid.isEmpty) {
+    if (p?.id == null || !_hasLinkedEntity) {
       return SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(pad, pad, pad, isMobile ? 16 : 12),
         child: IosGroupedCard(
@@ -125,7 +140,9 @@ class EventPaymentsTab extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Text(
-                loc.eventPaymentsSaveFirst,
+                _isAccommodation
+                    ? loc.accommodationPaymentsSaveFirst
+                    : loc.eventPaymentsSaveFirst,
                 style: const TextStyle(
                   color: IosFormColors.textSecondary,
                   fontSize: 15,
@@ -161,13 +178,18 @@ class EventPaymentsTab extends ConsumerWidget {
           ),
           IosFormFooter(loc.eventPaymentsBudgetFooter),
           SizedBox(height: gap),
-          IosSectionLabel(loc.eventPaymentsSectionExpenses),
+          IosSectionLabel(
+            _isAccommodation
+                ? loc.accommodationPaymentsSectionExpenses
+                : loc.eventPaymentsSectionExpenses,
+          ),
           const SizedBox(height: 6),
           expensesAsync.when(
             data: (all) {
               final names = namesAsync.valueOrNull ?? {};
-              final linked =
-                  all.where((e) => e.eventId == eid).toList(growable: false);
+              final linked = all
+                  .where(_expenseMatchesEntity)
+                  .toList(growable: false);
               final total =
                   linked.fold<double>(0, (sum, e) => sum + e.amount);
 
@@ -183,7 +205,9 @@ class EventPaymentsTab extends ConsumerWidget {
                             vertical: 14,
                           ),
                           child: Text(
-                            loc.eventPaymentsEmpty,
+                            _isAccommodation
+                                ? loc.accommodationPaymentsEmpty
+                                : loc.eventPaymentsEmpty,
                             style: const TextStyle(
                               color: IosFormColors.textSecondary,
                               fontSize: 15,
@@ -241,7 +265,11 @@ class EventPaymentsTab extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  IosFormFooter(loc.paymentsExpenseFromEventPayerHint),
+                  IosFormFooter(
+                    _isAccommodation
+                        ? loc.paymentsExpenseFromAccommodationPayerHint
+                        : loc.paymentsExpenseFromEventPayerHint,
+                  ),
                 ],
               );
             },

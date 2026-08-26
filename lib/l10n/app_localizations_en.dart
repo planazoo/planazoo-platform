@@ -2107,7 +2107,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get accommodationType => 'Accommodation type';
+  String get accommodationType => 'Type';
+
+  @override
+  String get accommodationParticipantsSubtitleOff =>
+      'Choose who participates in this stay';
 
   @override
   String get invalidAccommodationType => 'Invalid accommodation type';
@@ -2364,6 +2368,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String eventPaymentsRecordedTotal(String amount) {
     return 'Total recorded: $amount';
   }
+
+  @override
+  String get accommodationPaymentsSaveFirst =>
+      'Save the stay to record linked expenses.';
+
+  @override
+  String get accommodationPaymentsSectionExpenses => 'Expenses for this stay';
+
+  @override
+  String get accommodationPaymentsEmpty => 'No expenses linked to this stay.';
+
+  @override
+  String get paymentsExpenseFromAccommodationPayerHint =>
+      'Enter who paid out of pocket; choose how to split below.';
+
+  @override
+  String get accommodationMyInfoSubtitle => 'Only visible to you for this stay';
+
+  @override
+  String get accommodationMyInfoRoomNumber => 'Room no.';
+
+  @override
+  String get accommodationMyInfoRoomNumberHint => 'E.g. 412 or Suite B';
+
+  @override
+  String get accommodationMyInfoBedType => 'Bed type';
+
+  @override
+  String get accommodationMyInfoBedTypeHint =>
+      'E.g. Single, double, bunk beds…';
+
+  @override
+  String get accommodationMyInfoPrivacyFooter =>
+      'Other participants won\'t see this information.';
 
   @override
   String get eventReadOnlySnackBar =>

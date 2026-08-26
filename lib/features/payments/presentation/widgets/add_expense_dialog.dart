@@ -17,6 +17,7 @@ class AddExpenseDialog extends ConsumerStatefulWidget {
   final Map<String, String>? userIdToName;
   final VoidCallback? onSaved;
   final String? initialEventId;
+  final String? initialAccommodationId;
   final PlanExpense? existingExpense;
 
   const AddExpenseDialog({
@@ -25,6 +26,7 @@ class AddExpenseDialog extends ConsumerStatefulWidget {
     this.userIdToName,
     this.onSaved,
     this.initialEventId,
+    this.initialAccommodationId,
     this.existingExpense,
   });
 
@@ -43,6 +45,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
   bool _equalSplit = true;
   final Map<String, TextEditingController> _customAmountControllers = {};
   String? _selectedEventId;
+  String? _selectedAccommodationId;
   bool _isSaving = false;
 
   bool get _isEdit => widget.existingExpense != null;
@@ -51,6 +54,11 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       !_isEdit &&
       widget.initialEventId != null &&
       widget.initialEventId!.isNotEmpty;
+
+  bool get _lockAccommodationLink =>
+      !_isEdit &&
+      widget.initialAccommodationId != null &&
+      widget.initialAccommodationId!.isNotEmpty;
 
   Currency get _currency => Currency.fromCodeOrEur(widget.plan.currency);
 
@@ -66,6 +74,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       _selectedParticipantIds.addAll(ed.participantIds);
       _equalSplit = ed.equalSplit;
       _selectedEventId = ed.eventId;
+      _selectedAccommodationId = ed.accommodationId;
       if (widget.userIdToName != null && widget.userIdToName!.isNotEmpty) {
         _resolvedNames = Map.from(widget.userIdToName!);
       }
@@ -78,6 +87,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       }
     } else {
       _selectedEventId = widget.initialEventId;
+      _selectedAccommodationId = widget.initialAccommodationId;
       if (widget.userIdToName != null && widget.userIdToName!.isNotEmpty) {
         _resolvedNames = Map.from(widget.userIdToName!);
       }
@@ -304,8 +314,14 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
     setState(() => _isSaving = true);
     final currentUser = ref.read(currentUserProvider);
     final linkedEventId =
-        _selectedEventId != null && _selectedEventId!.isNotEmpty
-            ? _selectedEventId
+        _selectedAccommodationId != null && _selectedAccommodationId!.isNotEmpty
+            ? null
+            : (_selectedEventId != null && _selectedEventId!.isNotEmpty
+                ? _selectedEventId
+                : null);
+    final linkedAccommodationId =
+        _selectedAccommodationId != null && _selectedAccommodationId!.isNotEmpty
+            ? _selectedAccommodationId
             : null;
     final existing = widget.existingExpense;
     final expense = PlanExpense(
@@ -324,6 +340,7 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
       updatedAt: DateTime.now(),
       registeredBy: existing?.registeredBy ?? currentUser?.id,
       eventId: linkedEventId,
+      accommodationId: linkedAccommodationId,
     );
     final expenseService = ref.read(expenseServiceProvider);
     try {
@@ -408,6 +425,12 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                       children: [
                         if (_lockEventLink) ...[
                           IosFormFooter(loc.paymentsExpenseFromEventPayerHint),
+                          SizedBox(height: gap),
+                        ],
+                        if (_lockAccommodationLink) ...[
+                          IosFormFooter(
+                            loc.paymentsExpenseFromAccommodationPayerHint,
+                          ),
                           SizedBox(height: gap),
                         ],
                         participationsAsync.when(
@@ -502,7 +525,8 @@ class _AddExpenseDialogState extends ConsumerState<AddExpenseDialog> {
                                           chevron: true,
                                           onTap: _selectDate,
                                         ),
-                                        if (!_lockEventLink) ...[
+                                        if (!_lockEventLink &&
+                                            !_lockAccommodationLink) ...[
                                           const IosRowSeparator(),
                                           IosSettingsRow(
                                             label: loc

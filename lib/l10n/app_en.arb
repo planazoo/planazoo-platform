@@ -1772,9 +1772,13 @@
       }
     }
   },
-  "accommodationType": "Accommodation type",
+  "accommodationType": "Type",
   "@accommodationType": {
     "description": "Accommodation type label"
+  },
+  "accommodationParticipantsSubtitleOff": "Choose who participates in this stay",
+  "@accommodationParticipantsSubtitleOff": {
+    "description": "Footer under For all switch (off) on accommodation form"
   },
   "invalidAccommodationType": "Invalid accommodation type",
   "@invalidAccommodationType": {
@@ -1988,6 +1992,46 @@
         "type": "String"
       }
     }
+  },
+  "accommodationPaymentsSaveFirst": "Save the stay to record linked expenses.",
+  "@accommodationPaymentsSaveFirst": {
+    "description": "Payments tab message when accommodation has no saved id"
+  },
+  "accommodationPaymentsSectionExpenses": "Expenses for this stay",
+  "@accommodationPaymentsSectionExpenses": {
+    "description": "Expenses section title on accommodation Payments tab"
+  },
+  "accommodationPaymentsEmpty": "No expenses linked to this stay.",
+  "@accommodationPaymentsEmpty": {
+    "description": "Empty accommodation expenses list"
+  },
+  "paymentsExpenseFromAccommodationPayerHint": "Enter who paid out of pocket; choose how to split below.",
+  "@paymentsExpenseFromAccommodationPayerHint": {
+    "description": "Footer when add expense opened from accommodation"
+  },
+  "accommodationMyInfoSubtitle": "Only visible to you for this stay",
+  "@accommodationMyInfoSubtitle": {
+    "description": "My info tab intro for accommodation"
+  },
+  "accommodationMyInfoRoomNumber": "Room no.",
+  "@accommodationMyInfoRoomNumber": {
+    "description": "Room field on accommodation My info"
+  },
+  "accommodationMyInfoRoomNumberHint": "E.g. 412 or Suite B",
+  "@accommodationMyInfoRoomNumberHint": {
+    "description": "Room field hint"
+  },
+  "accommodationMyInfoBedType": "Bed type",
+  "@accommodationMyInfoBedType": {
+    "description": "Bed type field on accommodation My info"
+  },
+  "accommodationMyInfoBedTypeHint": "E.g. Single, double, bunk beds…",
+  "@accommodationMyInfoBedTypeHint": {
+    "description": "Bed type hint"
+  },
+  "accommodationMyInfoPrivacyFooter": "Other participants won't see this information.",
+  "@accommodationMyInfoPrivacyFooter": {
+    "description": "Privacy notice on accommodation My info"
   },
   "eventReadOnlySnackBar": "This field is shared for the plan and can only be edited by the creator or an administrator.",
   "eventType": "Type",

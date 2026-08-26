@@ -1772,9 +1772,13 @@
       }
     }
   },
-  "accommodationType": "Tipo de alojamiento",
+  "accommodationType": "Tipo",
   "@accommodationType": {
     "description": "Label del tipo de alojamiento"
+  },
+  "accommodationParticipantsSubtitleOff": "Elige quién participa en este alojamiento",
+  "@accommodationParticipantsSubtitleOff": {
+    "description": "Pie bajo switch Para todos (off) en ficha alojamiento"
   },
   "invalidAccommodationType": "Tipo de alojamiento inválido",
   "@invalidAccommodationType": {
@@ -1988,6 +1992,46 @@
         "type": "String"
       }
     }
+  },
+  "accommodationPaymentsSaveFirst": "Guarda el alojamiento para registrar gastos vinculados.",
+  "@accommodationPaymentsSaveFirst": {
+    "description": "Mensaje pestaña Pagos alojamiento sin id guardado"
+  },
+  "accommodationPaymentsSectionExpenses": "Gastos de este alojamiento",
+  "@accommodationPaymentsSectionExpenses": {
+    "description": "Título sección gastos en pestaña Pagos alojamiento"
+  },
+  "accommodationPaymentsEmpty": "No hay gastos vinculados a este alojamiento.",
+  "@accommodationPaymentsEmpty": {
+    "description": "Lista vacía gastos alojamiento"
+  },
+  "paymentsExpenseFromAccommodationPayerHint": "Indica quién pagó con su dinero; el reparto entre personas lo eliges más abajo.",
+  "@paymentsExpenseFromAccommodationPayerHint": {
+    "description": "Pie modal gasto abierto desde alojamiento"
+  },
+  "accommodationMyInfoSubtitle": "Solo visible para ti en este alojamiento",
+  "@accommodationMyInfoSubtitle": {
+    "description": "Intro pestaña Mi info alojamiento"
+  },
+  "accommodationMyInfoRoomNumber": "N.º habitación",
+  "@accommodationMyInfoRoomNumber": {
+    "description": "Campo habitación Mi info alojamiento"
+  },
+  "accommodationMyInfoRoomNumberHint": "Ej: 412 o Suite B",
+  "@accommodationMyInfoRoomNumberHint": {
+    "description": "Hint habitación Mi info alojamiento"
+  },
+  "accommodationMyInfoBedType": "Tipo de cama",
+  "@accommodationMyInfoBedType": {
+    "description": "Campo cama Mi info alojamiento"
+  },
+  "accommodationMyInfoBedTypeHint": "Ej: Individual, doble, literas…",
+  "@accommodationMyInfoBedTypeHint": {
+    "description": "Hint cama Mi info alojamiento"
+  },
+  "accommodationMyInfoPrivacyFooter": "Otros participantes no verán estos datos.",
+  "@accommodationMyInfoPrivacyFooter": {
+    "description": "Aviso privacidad Mi info alojamiento"
   },
   "eventReadOnlySnackBar": "Este dato es común al plan y solo puede editarlo el creador o un administrador.",
   "eventType": "Tipo",
