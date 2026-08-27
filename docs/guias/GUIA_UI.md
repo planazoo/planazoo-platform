@@ -200,7 +200,7 @@ Cuando una card se expande (`IosCollapsibleHeader`) o un control despliega hijos
 
 ### Info del plan
 
-Sigue el patrón view/edit con `IosFormEditBar` (`Editar` → `Cancelar`/`Guardar`) hasta alinearlo con evento/alojamiento.
+Alineado a evento/alojamiento (2026-08-27): **formulario siempre editable** si hay permiso (`Cancelar` descarta / `Guardar` persiste; sin modo vista intermedio). Solo lectura cuando `forceReadOnly` o el estado del plan lo bloquea. Cards Settings + `IosFormEditBar` (local o hosteada en detalle del plan).
 
 ## Estructura obligatoria de formulario/dialog (contenido en edición)
 
@@ -249,7 +249,7 @@ Componente estándar para titular cada sección principal dentro de una pantalla
 ### Modales y hojas inferiores (norma)
 
 - `AlertDialog` y `Dialog` de ficha (evento / alojamiento / info): fondo `IosFormColors.pageBg` (`#000`), sin borde duro en móvil (full-bleed); en desktop radio `12–18`.
-- Patrón ficha evento/alojamiento: ver § **Formularios tipo ficha (patrón D)** (formulario único; Info plan aún view/edit).
+- Patrón ficha evento/alojamiento/info plan: ver § **Formularios tipo ficha (patrón D)** (formulario único editable con permiso).
 - `showModalBottomSheet`: usar fondo de hoja en `cPageBg`; handle y separadores en texto terciario/borde sutil.
 - Bloques informativos internos (info/warning/success): mantener fondo tenue con alpha bajo y borde semántico semitransparente, sin volver a paletas legacy claras.
 - En diálogos con filtros/chips, estado activo en `cAccent`; inactivo en superficie oscura con borde sutil.

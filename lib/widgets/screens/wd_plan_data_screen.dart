@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/plan_date_range_validation.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_participation.dart';
@@ -74,7 +73,8 @@ class PlanDataScreen extends ConsumerStatefulWidget {
   ConsumerState<PlanDataScreen> createState() => _PlanDataScreenState();
 }
 
-/// Chrome de edición para hostear Cancelar | Info | Editar/Guardar fuera del body.
+/// Chrome de edición para hostear Cancelar | Info | Guardar fuera del body.
+/// Con permiso, `editing` es siempre true (patrón D alineado a evento).
 class PlanInfoEditChrome {
   const PlanInfoEditChrome({
     required this.editing,
@@ -124,8 +124,8 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   /// Descripción del plan: bloque expandible (cerrado por defecto).
   bool _planDescriptionExpanded = false;
 
-  /// UX D: ficha en lectura; formulario solo al pulsar Editar.
-  bool _isEditing = false;
+  /// UX D alineado a evento/alojamiento: siempre editable si hay permiso.
+  bool get _isEditing => _canEditPlanDetails;
   bool _viewNotesExpanded = false;
 
   final GlobalKey _participantsSectionKey = GlobalKey();
@@ -247,18 +247,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         editing: _isEditing,
         canEdit: _canEditPlanDetails,
         saving: _isSavingPlan,
-        onEdit: _enterEditing,
+        onEdit: () {},
         onCancel: _discardUnsavedChanges,
         onSave: () {
           _onSavePressed();
         },
       ),
     );
-  }
-
-  void _enterEditing() {
-    setState(() => _isEditing = true);
-    _notifyEditChrome();
   }
 
   void _discardUnsavedChanges() {
@@ -278,18 +273,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     _syncFormEventColorsFromPlan(currentPlan);
     setState(() {
       _hasUnsavedChanges = false;
-      _isEditing = false;
     });
     _notifyEditChrome();
   }
 
   Future<void> _onSavePressed() async {
-    if (_hasUnsavedChanges) {
-      await _savePlanDetails();
-    } else {
-      setState(() => _isEditing = false);
-      _notifyEditChrome();
-    }
+    if (!_hasUnsavedChanges) return;
+    await _savePlanDetails();
   }
 
   void _markDirty() {
@@ -343,26 +333,24 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     }
   }
 
-  /// SnackBar estándar UI: éxito (verde), Poppins blanco 14, floating.
+  /// SnackBar estándar UI: éxito (verde), floating.
   void _showSnackBarSuccess(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message,
-            style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
+        content: Text(message, style: const TextStyle(color: Colors.white, fontSize: 14)),
         backgroundColor: Colors.green.shade700,
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
-  /// SnackBar estándar UI: error (rojo), Poppins blanco 14, floating.
+  /// SnackBar estándar UI: error (rojo), floating.
   void _showSnackBarError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message,
-            style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
+        content: Text(message, style: const TextStyle(color: Colors.white, fontSize: 14)),
         backgroundColor: Colors.red.shade600,
         behavior: SnackBarBehavior.floating,
       ),
@@ -541,7 +529,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           _endDate = currentPlan.endDate;
           _syncFormEventColorsFromPlan(currentPlan);
           _hasUnsavedChanges = false;
-          _isEditing = false;
         });
         _notifyEditChrome();
         // No usar ref.invalidate(plansStreamProvider): re-suscribe el StreamProvider y en Chrome puede
@@ -607,21 +594,14 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (widget.onManageParticipants != null) ...[
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: TextButton.icon(
-                              onPressed: widget.onManageParticipants,
-                              icon: const Icon(Icons.open_in_new, size: 18),
-                              label:
-                                  Text(loc.planDetailsParticipantsManageLink),
-                              style: TextButton.styleFrom(
-                                foregroundColor: IosFormColors.accent,
-                                padding: EdgeInsets.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                            ),
+                          IosSettingsRow(
+                            label: loc.planDetailsParticipantsManageLink,
+                            value: '',
+                            valueColor: IosFormColors.accent,
+                            chevron: true,
+                            onTap: widget.onManageParticipants,
                           ),
-                          const SizedBox(height: 8),
+                          const IosRowSeparator(),
                         ],
                         if (participants.isEmpty)
                           Text(
@@ -721,7 +701,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         cancelLabel: loc.planDetailsBarCancelShort,
         saveLabel: loc.planDetailsBarSaveShort,
         title: title ?? loc.planDetailsBarTitleShort,
-        onEdit: _enterEditing,
+        onEdit: () {},
         onCancel: _discardUnsavedChanges,
         onSave: () {
           _onSavePressed();
@@ -812,7 +792,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     isCompact: isCompact,
                     canManagePlanAttachments: canManagePlanAttachments,
                   ),
-                  if (currentPlan.id != null && !_isEditing) ...[
+                  if (currentPlan.id != null) ...[
                     const SizedBox(height: cardSpacing),
                     UpcomingCancellationsSection(
                       planId: currentPlan.id!,
@@ -847,7 +827,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     ),
                     const SizedBox(height: cardSpacing),
                   ],
-                  if (!widget.forceReadOnly && !_isEditing) ...[
+                  if (!widget.forceReadOnly) ...[
                     _buildLeavePlanButton(),
                     const SizedBox(height: 12),
                     _buildDeleteButton(),
@@ -1448,65 +1428,36 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Material(
-          color: IosFormColors.groupedBg,
-          borderRadius: BorderRadius.circular(12),
-          child: Column(
-            children: [
-              InkWell(
-                onTap: () => setState(() =>
-                    _infoSectionDangerExpanded = !_infoSectionDangerExpanded),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          loc.planInfoDangerZoneTitle,
-                          style: const TextStyle(
-                            color: IosFormColors.danger,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        _infoSectionDangerExpanded
-                            ? Icons.expand_less
-                            : Icons.expand_more,
-                        color: IosFormColors.danger,
-                      ),
-                    ],
+        IosGroupedCard(
+          children: [
+            IosCollapsibleHeader(
+              title: loc.planInfoDangerZoneTitle,
+              expanded: _infoSectionDangerExpanded,
+              onToggle: () => setState(() =>
+                  _infoSectionDangerExpanded = !_infoSectionDangerExpanded),
+              titleColor: IosFormColors.danger,
+            ),
+            if (_infoSectionDangerExpanded) ...[
+              const IosRowSeparator(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Text(
+                  loc.planInfoDangerZoneSubtitle,
+                  style: const TextStyle(
+                    color: IosFormColors.textSecondary,
+                    fontSize: 13,
                   ),
                 ),
               ),
-              if (_infoSectionDangerExpanded) ...[
-                const IosRowSeparator(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        loc.planInfoDangerZoneSubtitle,
-                        style: const TextStyle(
-                          color: IosFormColors.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      IosDestructiveTile(
-                        label: loc.planDeleteDialogConfirm,
-                        onPressed: () => _showDeleteConfirmation(context),
-                      ),
-                    ],
-                  ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: IosDestructiveTile(
+                  label: loc.planDeleteDialogConfirm,
+                  onPressed: () => _showDeleteConfirmation(context),
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ],
     );
@@ -2251,26 +2202,20 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
             if (_infoSectionAnnouncementsExpanded) ...[
               const IosRowSeparator(),
               if (_isEditing) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) =>
-                              AnnouncementDialog(planId: currentPlan.id!),
-                        );
-                      },
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text(loc.planDetailsAnnouncementsPublish),
-                      style: TextButton.styleFrom(
-                        foregroundColor: IosFormColors.accent,
-                      ),
-                    ),
-                  ),
+                IosSettingsRow(
+                  label: loc.planDetailsAnnouncementsPublish,
+                  value: '',
+                  valueColor: IosFormColors.accent,
+                  chevron: true,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) =>
+                          AnnouncementDialog(planId: currentPlan.id!),
+                    );
+                  },
                 ),
+                const IosRowSeparator(),
               ],
               ConstrainedBox(
                 constraints:

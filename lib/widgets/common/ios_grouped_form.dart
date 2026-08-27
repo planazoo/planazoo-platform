@@ -286,6 +286,7 @@ class IosCollapsibleHeader extends StatelessWidget {
     required this.onToggle,
     this.trailing,
     this.subtitle,
+    this.titleColor,
   });
 
   final String title;
@@ -294,6 +295,8 @@ class IosCollapsibleHeader extends StatelessWidget {
   final Widget? trailing;
   /// Texto secundario a la derecha (p. ej. contador).
   final String? subtitle;
+  /// Color del título (p. ej. peligro). Por defecto `textPrimary`.
+  final Color? titleColor;
 
   @override
   Widget build(BuildContext context) {
@@ -308,8 +311,8 @@ class IosCollapsibleHeader extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: IosFormColors.textPrimary,
+                  style: TextStyle(
+                    color: titleColor ?? IosFormColors.textPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w400,
                   ),
@@ -332,7 +335,7 @@ class IosCollapsibleHeader extends StatelessWidget {
               ],
               Icon(
                 expanded ? Icons.expand_less : Icons.expand_more,
-                color: IosFormColors.textTertiary,
+                color: titleColor ?? IosFormColors.textTertiary,
                 size: 22,
               ),
             ],
