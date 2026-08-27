@@ -12,6 +12,8 @@ import 'package:unp_calendario/shared/providers/help_text_providers.dart';
 /// [helpId] — id del documento en Firestore (ej. plan_details.aviso).
 /// [contextLabel] — nombre del contexto para accesibilidad ("Ayuda sobre [contextLabel]").
 /// [defaultBody] y [defaultUrl] — fallback cuando no hay red o no existe el doc.
+/// [compact] — cabe en fila Settings de [IosFormColors.rowHeight] (44); usar en
+/// cabeceras colapsables / trailings de fila.
 class HelpIconButton extends ConsumerWidget {
   const HelpIconButton({
     super.key,
@@ -21,6 +23,7 @@ class HelpIconButton extends ConsumerWidget {
     this.defaultUrl,
     this.iconSize = 18,
     this.iconColor,
+    this.compact = false,
   });
 
   final String helpId;
@@ -29,6 +32,8 @@ class HelpIconButton extends ConsumerWidget {
   final String? defaultUrl;
   final double iconSize;
   final Color? iconColor;
+  /// Si true, tamaño táctil ≤ 28 para no romper filas de 44 px.
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,16 +41,23 @@ class HelpIconButton extends ConsumerWidget {
     final locale = Localizations.localeOf(context).languageCode;
     final service = ref.read(helpTextServiceProvider);
     final color = iconColor ?? Colors.white70;
+    final resolvedIconSize = compact ? 16.0 : iconSize;
+    final tapExtent = compact ? 28.0 : 32.0;
 
     return Semantics(
       label: 'Ayuda sobre $contextLabel',
       hint: 'Abre una explicación y un enlace a más información',
       button: true,
       child: IconButton(
-        icon: Icon(Icons.help_outline, size: iconSize, color: color),
+        icon: Icon(Icons.help_outline, size: resolvedIconSize, color: color),
         onPressed: () => _openHelpModal(context, ref, service, locale, l10n),
-        padding: const EdgeInsets.all(4),
-        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+        padding: EdgeInsets.all(compact ? 2 : 4),
+        constraints: BoxConstraints(
+          minWidth: tapExtent,
+          minHeight: tapExtent,
+          maxWidth: tapExtent,
+          maxHeight: tapExtent,
+        ),
         style: IconButton.styleFrom(
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),

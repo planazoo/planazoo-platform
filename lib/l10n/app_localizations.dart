@@ -1781,7 +1781,7 @@ abstract class AppLocalizations {
   /// No description provided for @createPlanNameLabel.
   ///
   /// In es, this message translates to:
-  /// **'Nombre del plan'**
+  /// **'Nombre'**
   String get createPlanNameLabel;
 
   /// No description provided for @createPlanNameHint.
@@ -1889,7 +1889,7 @@ abstract class AppLocalizations {
   /// No description provided for @createPlanCurrencyLabel.
   ///
   /// In es, this message translates to:
-  /// **'Moneda del plan'**
+  /// **'Moneda'**
   String get createPlanCurrencyLabel;
 
   /// No description provided for @createPlanVisibilityLabel.
@@ -1955,13 +1955,13 @@ abstract class AppLocalizations {
   /// No description provided for @planDetailsMetaTitle.
   ///
   /// In es, this message translates to:
-  /// **'Identificación del plan'**
+  /// **'IDs'**
   String get planDetailsMetaTitle;
 
   /// No description provided for @planTimezoneLabel.
   ///
   /// In es, this message translates to:
-  /// **'Zona horaria del plan'**
+  /// **'Zona'**
   String get planTimezoneLabel;
 
   /// No description provided for @planTimezoneHelper.
@@ -1985,7 +1985,7 @@ abstract class AppLocalizations {
   /// No description provided for @planDetailsParticipantsManageLink.
   ///
   /// In es, this message translates to:
-  /// **'Gestionar participantes'**
+  /// **'Gestionar'**
   String get planDetailsParticipantsManageLink;
 
   /// Título de la sección Avisos en Info plan (T207)
@@ -2009,7 +2009,7 @@ abstract class AppLocalizations {
   /// No description provided for @planDetailsBudgetLabel.
   ///
   /// In es, this message translates to:
-  /// **'Presupuesto estimado'**
+  /// **'Presupuesto'**
   String get planDetailsBudgetLabel;
 
   /// Etiqueta corta del campo presupuesto cuando está vacío
@@ -2119,6 +2119,18 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Fechas'**
   String get planDetailsDatesLabel;
+
+  /// Label corto fecha inicio en sheet Info plan
+  ///
+  /// In es, this message translates to:
+  /// **'Inicio'**
+  String get planDetailsDateStartShort;
+
+  /// Label corto fecha fin en sheet Info plan
+  ///
+  /// In es, this message translates to:
+  /// **'Fin'**
+  String get planDetailsDateEndShort;
 
   /// No description provided for @planDetailsStateLabel.
   ///
@@ -2633,7 +2645,7 @@ abstract class AppLocalizations {
   /// T272 sección colores por tipo en Info del plan
   ///
   /// In es, this message translates to:
-  /// **'Colores del calendario'**
+  /// **'Colores'**
   String get planEventColorsTitle;
 
   /// No description provided for @planEventColorsSubtitle.
@@ -3725,7 +3737,7 @@ abstract class AppLocalizations {
   /// No description provided for @createPlanDatesSectionTitle.
   ///
   /// In es, this message translates to:
-  /// **'Fechas del plan'**
+  /// **'Fechas'**
   String get createPlanDatesSectionTitle;
 
   /// No description provided for @createPlanStartDateLabel.
@@ -5057,7 +5069,7 @@ abstract class AppLocalizations {
   /// Label de color
   ///
   /// In es, this message translates to:
-  /// **'Color:'**
+  /// **'Color'**
   String get color;
 
   /// Label de participantes
@@ -5612,6 +5624,18 @@ abstract class AppLocalizations {
   /// **'Alojamientos'**
   String get myPlanSummaryAccommodation;
 
+  /// Mi resumen: subtítulo de fila de alojamiento en el día
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamiento'**
+  String get myPlanSummaryAccommodationRowLabel;
+
+  /// Mi resumen: noche actual de la estancia (p. ej. noche 2/3)
+  ///
+  /// In es, this message translates to:
+  /// **'noche {current}/{total}'**
+  String myPlanSummaryAccommodationNightOf(int current, int total);
+
   /// T252: Bloque resumen plan
   ///
   /// In es, this message translates to:
@@ -5689,6 +5713,12 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Solo borradores'**
   String get myPlanSummaryDraftsOnlyTooltip;
+
+  /// Mi resumen: inicial compacta de borrador (tooltip = eventStatusDraft)
+  ///
+  /// In es, this message translates to:
+  /// **'B'**
+  String get myPlanSummaryDraftBadgeLetter;
 
   /// Botón barra superior: compartir itinerario con links
   ///
@@ -6840,7 +6870,7 @@ abstract class AppLocalizations {
   /// Título del bloque de adjuntos en Info del plan
   ///
   /// In es, this message translates to:
-  /// **'Archivos del plan'**
+  /// **'Archivos'**
   String get entityAttachmentsPlanTitle;
 
   /// Título del bloque de adjuntos en diálogo de evento

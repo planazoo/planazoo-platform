@@ -55,6 +55,38 @@ Cada pantalla debe declarar y reutilizar un set mínimo de tokens.
 - `cAccent = AppColorScheme.color2`
 - `cDanger = Color(0xFFFF453A)`
 
+### Tokens de densidad (formularios iOS / patrón D)
+
+- `rowPaddingV = 12` — padding vertical interno (solo si la fila **no** usa altura fija exterior)
+- `rowPaddingH = 16` — padding horizontal derecho (`rowPaddingH`; izquierda: `nestPaddingLeft`)
+- `rowHeight` / `rowMinHeight` = **44** — altura **fija** de fila de una línea
+- `cardGap = 12` — separación entre cards/bloques (solo si el bloque se pinta; sin huecos fantasma)
+- `IosSectionLabel`: top bajo (el `cardGap` ya separa); no duplicar label + collapsible con el mismo título
+
+**Regla de altura fija (obligatoria)**
+
+Las filas de **una línea** miden exactamente **44** (`IosFormColors.rowHeight`).
+
+1. Preferir `SizedBox(height: rowHeight)` (como `IosCollapsibleHeader`, `IosSwitchRow`), no solo `minHeight` + padding: el `minHeight` **no impide** que un hijo alto estire la fila.
+2. Si un hijo no cabe sin estirar → **no subir la altura ad hoc**. Comentar el conflicto y acordar solución:
+   - `HelpIconButton(compact: true)` (tap ≤ 28)
+   - Iconos / `IconButton` en fila: max **28×28**, `shrinkWrap`
+   - Swatch de color en fila: ≤ **28** (ideal ≤ 22 en trailing de cabecera)
+   - `Switch.adaptive`: fila fija 44 + `Transform.scale(~0.90)` + `materialTapTargetSize: shrinkWrap` (`IosSwitchRow`)
+3. **Excepciones documentadas** (pueden superar 44):
+   - Multilínea: `IosSettingsRow.multiline`, `IosEditField` con `minLines` > 1, `IosExpandableText`
+   - Hero, rejilla tipo/subtipo, bloques Places/Amadeus dentro de card
+   - Listas / timelines con altura propia (avisos, participantes expandido)
+
+**Anti-patrones detectados (evitar / migrar)**
+
+| Widget / patrón | Problema | Solución acordada |
+|-----------------|----------|-------------------|
+| `IosSwitchRow` + `Switch` nativo | Switch ~31px + pad → ~55 | Fila fija 44 + scale (hecho) |
+| `IosColorSettingRow` + swatch | Swatch 28 + pad → ~52 | Fila fija 44 + swatch 22 (hecho) |
+| Filas de archivo + borrar | IconButton + pad → ~52 | Fila fija 44 + botón ≤28 (hecho) |
+| `IosSettingsRow` / `IosCheckRow` / coste | solo `minHeight` | Fila fija 44 en una línea (hecho); multilínea sigue siendo excepción |
+
 ### Tokens legacy (pantallas aún no migradas)
 
 - `cPageBgLegacy = Color(0xFF111827)`
@@ -156,6 +188,11 @@ Un solo lenguaje visual en ficha evento/alojamiento. Prohibido mezclar estilos l
 - Captions de card: `textTertiary`, mayúsculas (`IosGroupedCardCaption`).
 - Tokens: solo `IosFormColors` (no tipografías ad hoc por campo).
 
+**Etiquetas de fila (copy)**
+
+- Labels de fila Settings (`IosSettingsRow`, `IosColorSettingRow`, `IosEditField`, switches…): **sin dos puntos finales**. Correcto: `Color`, `Presupuesto`. Incorrecto: `Color:`.
+- La puntuación no aporta jerarquía; el layout (label / valor) ya separa el significado.
+
 **Secciones colapsables — jerarquía en árbol (`nestLevel`)** *(estándar 2026-08-26)*
 
 Cuando una card se expande (`IosCollapsibleHeader`) o un control despliega hijos (switch «Para todos», tramo de cancelación…), los campos hijos deben leerse claramente como **pertenecientes** a esa sección:
@@ -170,10 +207,11 @@ Cuando una card se expande (`IosCollapsibleHeader`) o un control despliega hijos
 
 **Reglas**
 
-- Tras expandir: primer separador a ancho completo (`nestLevel: 0`); el resto del bloque hijo en nivel 1.
+- Bloques opcionales con activación clara: preferir `IosSwitchRow` maestro (p. ej. Reserva / cancelación) frente a colapsable + subtítulo largo; ON muestra campos (`nestLevel: 1+`), OFF no persiste el bloque.
+- Tras activar/expandir: primer separador a ancho completo (`nestLevel: 0`); el resto del bloque hijo en nivel 1.
 - Sub-bloques en card aparte (p. ej. tramos de cancelación): `Padding(left: 8)` + filas con `nestLevel: 1`.
 - No mezclar filas anidadas sin `nestLevel` junto a cabeceras colapsables.
-- Referencia implementada: `ReservationCancellationFormSection`, participantes («Para todos» + lista).
+- Referencia implementada: `ReservationCancellationFormSection` (switch maestro), participantes («Para todos» + lista).
 
 **Excepciones**
 
@@ -208,8 +246,10 @@ Alineado a evento/alojamiento (2026-08-27): **formulario siempre editable** si h
 2. Datos generales
 3. Campos específicos del caso
 4. Participación y límites
-5. Coste
+5. Coste (y reserva/cancelación si aplica)
 6. Apariencia (color; si no se incluyó antes)
+
+Orden alineado en evento y alojamiento (2026-08-27): adjuntos → participantes → coste → reserva → color → eliminar.
 
 *(Opciones avanzadas — aforo / confirmación explícita: aparcadas; ver Settings-only § Aparcado.)*
 
@@ -221,9 +261,28 @@ Alineado a evento/alojamiento (2026-08-27): **formulario siempre editable** si h
 - Botón primario: `cAccent`, texto blanco, radio 12.
 - Botón secundario: contraste medio.
 - Botón destructivo: rojo semántico.
-- Chips de acceso rápido (resumen): fondo tenue (`aSurfaceMuted`) + borde sutil (`aBorderStrong`); estado activo con acento.
-- Chips de enlace (maps/web): contenedor compacto oscuro con borde de acento semitransparente; icono en `cAccent`.
 - Chat (burbujas y reacciones): burbuja propia en `cAccent`, resto en `cSurfaceBg`; metadatos en texto secundario; reacciones como chips compactos de bajo contraste.
+
+### Mi resumen / itinerario (`wd_my_plan_summary_screen.dart`) *(2026-08-27)*
+
+Referencia de densidad y acciones en lista cronológica.
+
+- **Sin** chips de acceso rápido (Participantes / Desplazamientos·Alojamiento / Notas): el itinerario es la vista principal.
+- **Filas** (`_buildSummaryLinkRow`): altura fija **48**; centrado vertical; título/subtítulo con `ellipsis`; gap entre filas **2**.
+- **Trailing de enlaces** (chips **26×26**, icono ~15): solo si hay enlace — **ruta** (`Icons.route` → Google Maps dir), **maps** (pin → búsqueda) o **web**. Si hay ruta de desplazamiento, no duplicar pin de localización.
+- **Icono de tipo** a la izquierda: desktop (≥600); oculto en móvil (excepción: hotel en filas de alojamiento, siempre).
+- **Badges inline 18×18** (antes del título): borrador **B**/**D**; tipo **desplazamiento** / **restauración** (mismo hueco; tooltip = familia).
+- **Días**: una **card** por día, cabecera plegable (por defecto **desplegado**); alojamientos del día arriba (`Alojamiento · noche n/N`) y luego eventos.
+- URL de ruta compartida: `PlanSummaryShareContent.eventRouteUrl(event)`.
+
+### Formulario evento · Desplazamiento
+
+- Chip gráfico **26×26** `Icons.route` **junto al título de sección** «DESPLAZAMIENTO» (mismo lenguaje que Mi resumen). Activo solo con origen+destino; si no, tooltip con `openRouteInGoogleMapsHint`.
+- Presupuesto/coste: fila Settings «Presupuesto» → sheet (importe + moneda). Igual en alojamiento.
+
+### Reserva / cancelación (evento y alojamiento)
+
+- Switch maestro «Reserva / cancelación» (no colapsable + subtítulo largo). OFF → no se persiste el bloque.
 
 ### Header de sección (SectionTitleBar)
 

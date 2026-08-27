@@ -20,6 +20,20 @@ class IosFormColors {
   static const double nestBase = 16;
   static const double nestStep = 12;
   static double nestPaddingLeft(int level) => nestBase + nestStep * level;
+
+  // —— Densidad Settings (filas / cards) ——
+  /// Padding vertical de fila estándar (cuando la fila no usa altura fija exterior).
+  static const double rowPaddingV = 12;
+  /// Padding horizontal de fila (derecha; izquierda usa [nestPaddingLeft]).
+  static const double rowPaddingH = 16;
+  /// Altura **fija** de fila de una línea (Settings / collapsible / color / archivo).
+  /// No estirarla por trailings o iconos: si algo no cabe, documentar y acordar
+  /// otra solución (p. ej. variante compacta), no subir este valor ad hoc.
+  static const double rowMinHeight = 44;
+  /// Alias semántico de [rowMinHeight] (altura acordada, no “mínima flexible”).
+  static const double rowHeight = rowMinHeight;
+  /// Separación entre cards / bloques de la ficha.
+  static const double cardGap = 12;
 }
 
 class IosSectionLabel extends StatelessWidget {
@@ -29,7 +43,8 @@ class IosSectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 20, 4, 8),
+      // Top bajo: el [IosFormColors.cardGap] ya separa del bloque anterior.
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
       child: Text(
         title.toUpperCase(),
         style: const TextStyle(
@@ -114,10 +129,15 @@ class IosSettingsRow extends StatelessWidget {
     final resolvedValueColor = valueColor ?? defaultValueColor;
     final horizontal = IosFormColors.nestPaddingLeft(nestLevel);
 
-    final child = Padding(
-      padding: EdgeInsets.fromLTRB(horizontal, 12, 16, 12),
-      child: multiline
-          ? Column(
+    final child = multiline
+        ? Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontal,
+              IosFormColors.rowPaddingV,
+              IosFormColors.rowPaddingH,
+              IosFormColors.rowPaddingV,
+            ),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -138,69 +158,78 @@ class IosSettingsRow extends StatelessWidget {
                   ),
                 ),
               ],
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: labelColor,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w400,
+            ),
+          )
+        : SizedBox(
+            height: IosFormColors.rowHeight,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: horizontal,
+                right: IosFormColors.rowPaddingH,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: labelColor,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 6,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (valueDotColor != null) ...[
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: valueDotColor,
-                            shape: BoxShape.circle,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 6,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (valueDotColor != null) ...[
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: valueDotColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        Flexible(
+                          child: Text(
+                            display,
+                            textAlign: TextAlign.right,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: resolvedValueColor,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 6),
-                      ],
-                      Flexible(
-                        child: Text(
-                          display,
-                          textAlign: TextAlign.right,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: resolvedValueColor,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w400,
+                        if (chevron) ...[
+                          const SizedBox(width: 2),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: IosFormColors.textTertiary,
+                            size: 20,
                           ),
-                        ),
-                      ),
-                      if (chevron) ...[
-                        const SizedBox(width: 2),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: IosFormColors.textTertiary,
-                          size: 20,
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-    );
+          );
     if (onTap == null) return child;
     return Material(
       color: Colors.transparent,
@@ -233,20 +262,28 @@ class IosEditField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showLabel = label.trim().isNotEmpty;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      padding: const EdgeInsets.fromLTRB(
+        IosFormColors.rowPaddingH,
+        IosFormColors.rowPaddingV,
+        IosFormColors.rowPaddingH,
+        IosFormColors.rowPaddingV,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: IosFormColors.textSecondary,
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
+          if (showLabel) ...[
+            Text(
+              label,
+              style: const TextStyle(
+                color: IosFormColors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
+            const SizedBox(height: 4),
+          ],
           TextFormField(
             controller: controller,
             maxLines: maxLines,
@@ -278,6 +315,8 @@ class IosEditField extends StatelessWidget {
 }
 
 /// Cabecera plegable estilo Settings (participantes, avisos, meta…).
+/// Altura fija [IosFormColors.rowHeight]. El [trailing] debe caber en esa fila
+/// (p. ej. [HelpIconButton] con `compact: true`); no agrandar la cabecera.
 class IosCollapsibleHeader extends StatelessWidget {
   const IosCollapsibleHeader({
     super.key,
@@ -304,41 +343,55 @@ class IosCollapsibleHeader extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onToggle,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: titleColor ?? IosFormColors.textPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w400,
+        child: SizedBox(
+          height: IosFormColors.rowHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: IosFormColors.rowPaddingH,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: titleColor ?? IosFormColors.textPrimary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ),
-              ),
-              if (subtitle != null) ...[
-                Text(
-                  subtitle!,
-                  style: const TextStyle(
-                    color: IosFormColors.textSecondary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
+                if (subtitle != null) ...[
+                  Text(
+                    subtitle!,
+                    style: const TextStyle(
+                      color: IosFormColors.textSecondary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                ],
+                if (trailing != null) ...[
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 32,
+                      maxHeight: 28,
+                    ),
+                    child: Center(child: trailing),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Icon(
+                  expanded ? Icons.expand_less : Icons.expand_more,
+                  color: titleColor ?? IosFormColors.textTertiary,
+                  size: 22,
                 ),
-                const SizedBox(width: 8),
               ],
-              if (trailing != null) ...[
-                trailing!,
-                const SizedBox(width: 4),
-              ],
-              Icon(
-                expanded ? Icons.expand_less : Icons.expand_more,
-                color: titleColor ?? IosFormColors.textTertiary,
-                size: 22,
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -416,7 +469,12 @@ class IosExpandableText extends StatelessWidget {
     return InkWell(
       onTap: (!empty && long) ? onToggle : null,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        padding: const EdgeInsets.fromLTRB(
+          IosFormColors.rowPaddingH,
+          IosFormColors.rowPaddingV,
+          IosFormColors.rowPaddingH,
+          IosFormColors.rowPaddingV,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -573,25 +631,30 @@ class IosHeroHeader extends StatelessWidget {
                     onTap: c.onTap,
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                      height: 28,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
-                        color: c.color != null
-                            ? c.color!.withValues(alpha: 0.22)
-                            : c.accent
+                        color: c.color ??
+                            (c.accent
                                 ? IosFormColors.accent.withValues(alpha: 0.22)
-                                : const Color(0xFF2C2C2E),
+                                : const Color(0xFF2C2C2E)),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(
-                        c.label,
-                        style: TextStyle(
-                          color: c.color ??
-                              (c.accent
-                                  ? IosFormColors.accent
-                                  : IosFormColors.textSecondary),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                      child: Align(
+                        alignment: Alignment.center,
+                        widthFactor: 1,
+                        child: Text(
+                          c.label,
+                          style: TextStyle(
+                            color: c.color != null
+                                ? Colors.white
+                                : c.accent
+                                    ? IosFormColors.accent
+                                    : IosFormColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            height: 1.0,
+                          ),
                         ),
                       ),
                     ),
@@ -1092,16 +1155,19 @@ class IosColorSettingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const rowHeight = 48.0;
     final child = SizedBox(
-      height: rowHeight,
+      height: IosFormColors.rowHeight,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: IosFormColors.rowPaddingH,
+        ),
         child: Row(
           children: [
             Expanded(
               child: Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: IosFormColors.textPrimary,
                   fontSize: 17,
@@ -1109,7 +1175,7 @@ class IosColorSettingRow extends StatelessWidget {
                 ),
               ),
             ),
-            IosFormColorSwatch(color: color, size: 32),
+            IosFormColorSwatch(color: color, size: 22),
             if (chevron) ...[
               const SizedBox(width: 6),
               const Icon(
@@ -1148,38 +1214,45 @@ class IosSwitchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nested = nestLevel > 0;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        IosFormColors.nestPaddingLeft(nestLevel),
-        6,
-        16,
-        6,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: nested
-                    ? IosFormColors.textSecondary
-                    : IosFormColors.textPrimary,
-                fontSize: 17,
-                fontWeight: FontWeight.w400,
+    // Switch.adaptive (~31px) no debe estirar la fila: altura fija rowHeight.
+    return SizedBox(
+      height: IosFormColors.rowHeight,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: IosFormColors.nestPaddingLeft(nestLevel),
+          right: IosFormColors.rowPaddingH,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: nested
+                      ? IosFormColors.textSecondary
+                      : IosFormColors.textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Switch.adaptive(
-            value: value,
-            activeThumbColor: Colors.white,
-            activeTrackColor: IosFormColors.accent,
-            onChanged: onChanged,
-          ),
-        ],
+            const SizedBox(width: 8),
+            Transform.scale(
+              scale: 0.90,
+              alignment: Alignment.centerRight,
+              child: Switch.adaptive(
+                value: value,
+                activeThumbColor: Colors.white,
+                activeTrackColor: IosFormColors.accent,
+                onChanged: onChanged,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1210,50 +1283,56 @@ class IosCheckRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nested = _level > 0;
-    final child = Padding(
-      padding: EdgeInsets.fromLTRB(IosFormColors.nestPaddingLeft(_level), 12, 16, 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: nested
-                    ? IosFormColors.textSecondary
-                    : IosFormColors.textPrimary,
-                fontSize: 17,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-          if (value.trim().isNotEmpty) ...[
-            const SizedBox(width: 8),
-            Flexible(
+    final child = SizedBox(
+      height: IosFormColors.rowHeight,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: IosFormColors.nestPaddingLeft(_level),
+          right: IosFormColors.rowPaddingH,
+        ),
+        child: Row(
+          children: [
+            Expanded(
               child: Text(
-                value.trim(),
-                textAlign: TextAlign.right,
+                label,
                 maxLines: 1,
+                softWrap: false,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: nested
-                      ? IosFormColors.textPrimary
-                      : IosFormColors.textSecondary,
-                  fontSize: 15,
+                      ? IosFormColors.textSecondary
+                      : IosFormColors.textPrimary,
+                  fontSize: 17,
                   fontWeight: FontWeight.w400,
                 ),
               ),
             ),
+            if (value.trim().isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  value.trim(),
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: nested
+                        ? IosFormColors.textPrimary
+                        : IosFormColors.textSecondary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
+            SizedBox(
+              width: 28,
+              child: selected
+                  ? Icon(Icons.check, color: IosFormColors.accent, size: 22)
+                  : null,
+            ),
           ],
-          SizedBox(
-            width: 28,
-            child: selected
-                ? Icon(Icons.check, color: IosFormColors.accent, size: 22)
-                : null,
-          ),
-        ],
+        ),
       ),
     );
     if (onTap == null) return child;
@@ -1310,9 +1389,9 @@ class IosGroupedCardCaption extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         IosFormColors.nestPaddingLeft(nestLevel),
-        10,
-        16,
-        2,
+        8,
+        IosFormColors.rowPaddingH,
+        4,
       ),
       child: Text(
         text.toUpperCase(),

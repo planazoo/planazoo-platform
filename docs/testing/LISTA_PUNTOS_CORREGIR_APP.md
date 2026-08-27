@@ -44,10 +44,10 @@
 
 ### 3. Resumen actual
 
-- **Pendientes:** 15 (**123** deep link web; **125** create plan iOS overflow — validar; **126–140** nuevos)
+- **Pendientes:** 14 (**123** deep link web; **125** create plan iOS overflow — validar; **126–129**, **132–141** abiertos; **130–131** cerrados 2026-08-27)
 - **En progreso:** 0
-- **Siguiente ID libre:** **141**
-- **Hechos/cerrados en histórico:** 74+ (incluye **111–122**; **126–127** cascada borrar plan, 2026-08-18)
+- **Siguiente ID libre:** **142**
+- **Hechos/cerrados en histórico:** 76+ (incluye **111–122**; **126–127** cascada borrar plan, 2026-08-18; **130–131** Mi resumen UI, 2026-08-27)
 
 ### Cola humana (dispositivo) — no agente
 
@@ -62,6 +62,16 @@ Aplazado a propósito (2026-08-18) mientras el agente cubre tests de CRUD:
 ---
 
 ### 4. Puntos abiertos
+
+#### 141. Visibilidad del plan (público / privado) — opción futura
+- **Plataforma:** todas
+- **Pantalla / flujo:** Info del plan · discovery / plantillas · reglas de acceso
+- **Tipo:** producto / funcionalidad futura
+- **Gravedad:** baja (aplazado a propósito)
+- **Descripción breve:** Campo `Plan.visibility` (`private`|`public`) y rules Firestore ya existen; create plan fuerza `private`. **Quitado de Info del plan** (2026-08-27) porque aún no hay producto real (listados públicos, copiar plantilla, etc.). Reintroducir UI + flujos cuando haya discovery / planes públicos.
+- **Estado:** pendiente — opción futura
+- **Gate de lanzamiento:** no
+- **Referencias:** `plan.dart` (`visibility`); `firestore.rules`; create plan; LISTA / docs flujo público-privado
 
 #### 140. UX formularios móvil tipo iOS — patrón D
 - **Plataforma:** iOS / Android (prioridad; web mismo widget)
@@ -144,24 +154,6 @@ Aplazado a propósito (2026-08-18) mientras el agente cubre tests de CRUD:
 - **Descripción breve:** En web existe el botón "marcar todas como leídas"; en dispositivo no aparece. Usar icono (sin texto) para que quepa bien.
 - **Estado:** pendiente
 - **Gate de lanzamiento:** sí
-
-#### 131. Resumen del plan: iconos de filtro demasiado grandes + layout
-- **Plataforma:** iOS / Android
-- **Pantalla / flujo:** Resumen del plan ("Mi resumen")
-- **Tipo:** UX / diseño
-- **Gravedad:** media
-- **Descripción breve:** Los iconos de filtro (Participantes, Desplazamientos, Alojamiento, Notas) son demasiado grandes. Propuesta: reducir tamaño y aprovechar el espacio a la derecha del título "Mi resumen".
-- **Estado:** pendiente
-- **Gate de lanzamiento:** sí (legibilidad)
-
-#### 130. Resumen del plan: separación de días poco clara + icono borrador demasiado grande
-- **Plataforma:** iOS / Android
-- **Pantalla / flujo:** Resumen del plan
-- **Tipo:** UX / diseño
-- **Gravedad:** media
-- **Descripción breve:** La separación entre días no se distingue bien (jugar con formato de texto / líneas). El icono "Borrador" en eventos draft es demasiado grande; buscar otra solución más discreta.
-- **Estado:** pendiente
-- **Gate de lanzamiento:** sí (legibilidad)
 
 #### 129. UX general: contraste y tamaños de letra desiguales
 - **Plataforma:** iOS / Android (parcialmente web)

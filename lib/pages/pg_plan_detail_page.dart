@@ -329,6 +329,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         canEdit: (chrome?.canEdit ?? false) && !isPendingPreview,
         saving: chrome?.saving ?? false,
         centeredTitle: true,
+        modalIconActions: true,
         editLabel: loc.edit,
         cancelLabel: loc.planDetailsBarCancelShort,
         saveLabel: loc.planDetailsBarSaveShort,

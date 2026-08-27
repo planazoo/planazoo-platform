@@ -740,7 +740,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   // Surfaces iOS D (GUIA_UI formularios tipo ficha).
   static const Color _formSurface = IosFormColors.pageBg;
-  static const double _fieldGap = 14;
 
   TextStyle get _valueStyle => const TextStyle(
         fontSize: 17,
@@ -853,9 +852,20 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             IconButton(
               tooltip: AppLocalizations.of(context)!.openInGoogleMaps,
               onPressed: canOpenMaps ? onOpenMaps : null,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(
+                minWidth: 28,
+                minHeight: 28,
+                maxWidth: 28,
+                maxHeight: 28,
+              ),
+              style: IconButton.styleFrom(
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               icon: Icon(
                 Icons.map_outlined,
-                size: 22,
+                size: 20,
                 color: canOpenMaps
                     ? IosFormColors.accent
                     : IosFormColors.textTertiary,
@@ -938,12 +948,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(
-                      minWidth: 40,
-                      minHeight: 40,
+                      minWidth: 28,
+                      minHeight: 28,
+                      maxWidth: 28,
+                      maxHeight: 28,
+                    ),
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     icon: Icon(
                       Icons.map_outlined,
-                      size: 22,
+                      size: 20,
                       color: canOpenMaps
                           ? IosFormColors.accent
                           : IosFormColors.textTertiary,
@@ -1239,7 +1254,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     if (!_isForAllParticipants) {
       children.add(const IosRowSeparator());
       children.add(
-        IosGroupedCardCaption(loc.eventDialogParticipantsPickCaption),
+        IosGroupedCardCaption(
+          loc.eventDialogParticipantsPickCaption,
+          nestLevel: 1,
+        ),
       );
 
       if (planId == null) {
@@ -1247,6 +1265,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           IosSettingsRow(
             label: loc.eventDialogNoParticipantsInPlan,
             value: '',
+            nestLevel: 1,
           ),
         );
       } else {
@@ -1259,6 +1278,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 IosSettingsRow(
                   label: loc.eventDialogNoParticipantsInPlan,
                   value: '',
+                  nestLevel: 1,
                 ),
               );
               return;
@@ -1269,7 +1289,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   _selectedParticipantIds.contains(participation.userId);
               final isEventCreator =
                   widget.event?.userId == participation.userId;
-              if (i > 0) children.add(const IosRowSeparator());
+              if (i > 0) {
+                children.add(const IosRowSeparator(nestLevel: 1));
+              }
               children.add(
                 FutureBuilder<String>(
                   future: _getUserDisplayName(participation.userId),
@@ -1303,7 +1325,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                                           style: TextStyle(
                                               color: Colors.white),
                                         ),
-                                        backgroundColor: Colors.red.shade600,
+                                        backgroundColor: IosFormColors.danger,
                                         duration: const Duration(seconds: 2),
                                       ),
                                     );
@@ -1329,8 +1351,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           },
           loading: () {
             children.add(
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
+              const SizedBox(
+                height: IosFormColors.rowHeight,
                 child: Center(
                   child: SizedBox(
                     width: 22,
@@ -1352,7 +1374,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        IosSectionLabel(loc.eventDialogParticipantsScopeLabel),
+        if (!_isForAllParticipants)
+          IosSectionLabel(loc.eventDialogParticipantsScopeLabel),
         IosGroupedCard(children: children),
         if (footerText != null && footerText!.isNotEmpty)
           IosFormFooter(footerText!, color: footerColor),
@@ -1364,7 +1387,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Widget _buildUrlField() {
     final loc = AppLocalizations.of(context)!;
     final canEdit = _canEditGeneral || _canEditGeneralInitial;
-    return IosGroupedCard(
+    final showOpenLink = _canOpenEventWebLink;
+    final card = IosGroupedCard(
       children: [
         IgnorePointer(
           ignoring: !canEdit,
@@ -1376,7 +1400,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             onChanged: (_) => setState(() {}),
           ),
         ),
-        if (_canOpenEventWebLink) ...[
+        if (showOpenLink) ...[
           const IosRowSeparator(),
           IosSettingsRow(
             label: loc.openWebLink,
@@ -1386,6 +1410,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             onTap: _openEventWebLink,
           ),
         ],
+      ],
+    );
+    if (!showOpenLink) return card;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IosSectionLabel(loc.eventUrlLabel),
+        card,
       ],
     );
   }
@@ -2116,151 +2148,201 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final loc = AppLocalizations.of(context)!;
     final previous = _lookupPreviousPlanLocation();
     final canEdit = _canEditGeneral || _canEditGeneralInitial;
-    return IosGroupedCard(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _iosPlaceFieldRow(
-          label: loc.taxiOriginLabel,
-          hint: loc.taxiOriginHint,
-          controller: _taxiOriginController,
-          initialAddress: _taxiOriginController.text.isNotEmpty
-              ? _taxiOriginController.text
-              : null,
-          canOpenMaps: _taxiOriginController.text.trim().isNotEmpty ||
-              _taxiOriginDetails != null ||
-              _taxiOriginStoredLat != null,
-          onOpenMaps: () => _openTaxiAddressInMaps(
-            _twoLinePlaceMapsQuery(_taxiOriginController.text),
-            _taxiOriginDetails?.lat ?? _taxiOriginStoredLat,
-            _taxiOriginDetails?.lng ?? _taxiOriginStoredLng,
-          ),
-          onPlaceSelected: (PlaceDetails details) {
-            setState(() {
-              _taxiOriginDetails = details;
-              _taxiOriginController.text = formatPlaceNameAndAddress(
-                details.displayName,
-                details.formattedAddress,
-              );
-              _taxiOriginStoredLat = details.lat;
-              _taxiOriginStoredLng = details.lng;
-            });
-          },
-        ),
-        if (previous != null && canEdit)
-          IosSettingsRow(
-            label: loc.usePreviousLocation,
-            value: () {
-              final raw = (previous.sourceLabel ?? previous.address).trim();
-              if (raw.isEmpty) return '—';
-              return raw.length > 36 ? '${raw.substring(0, 34)}…' : raw;
-            }(),
-            valueColor: IosFormColors.accent,
-            chevron: true,
-            onTap: () => _applyPreviousPlanLocationToOrigin(previous),
-          ),
-        Builder(
-          builder: (context) {
-            final hotelAction = _buildAccommodationEndpointActions(
-              hotels: _lookupPreviousDayAccommodations(),
-              onApply: _applyPreviousPlanLocationToOrigin,
-              singleLabel: loc.useAccommodationAsOrigin,
-              menuLabel: loc.useAccommodationAsOriginMenu,
-            );
-            if (hotelAction == null) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: hotelAction,
-            );
-          },
-        ),
-        const IosRowSeparator(),
-        _iosPlaceFieldRow(
-          label: loc.taxiDestinationLabel,
-          hint: loc.taxiDestinationHint,
-          controller: _taxiDestinationController,
-          initialAddress: _taxiDestinationController.text.isNotEmpty
-              ? _taxiDestinationController.text
-              : null,
-          canOpenMaps: _taxiDestinationController.text.trim().isNotEmpty ||
-              _taxiDestinationDetails != null ||
-              _taxiDestinationStoredLat != null,
-          onOpenMaps: () => _openTaxiAddressInMaps(
-            _twoLinePlaceMapsQuery(_taxiDestinationController.text),
-            _taxiDestinationDetails?.lat ?? _taxiDestinationStoredLat,
-            _taxiDestinationDetails?.lng ?? _taxiDestinationStoredLng,
-          ),
-          onPlaceSelected: (PlaceDetails details) {
-            setState(() {
-              _taxiDestinationDetails = details;
-              _taxiDestinationController.text = formatPlaceNameAndAddress(
-                details.displayName,
-                details.formattedAddress,
-              );
-              _taxiDestinationStoredLat = details.lat;
-              _taxiDestinationStoredLng = details.lng;
-            });
-          },
-        ),
-        Builder(
-          builder: (context) {
-            final hotelAction = _buildAccommodationEndpointActions(
-              hotels: _lookupSameDayAccommodations(),
-              onApply: _applyPreviousPlanLocationToDestination,
-              singleLabel: loc.useAccommodationAsDestination,
-              menuLabel: loc.useAccommodationAsDestinationMenu,
-            );
-            if (hotelAction == null) return const SizedBox.shrink();
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: hotelAction,
-            );
-          },
-        ),
-        const IosRowSeparator(),
-        ListenableBuilder(
-          listenable: Listenable.merge([
-            _taxiOriginController,
-            _taxiDestinationController,
-          ]),
-          builder: (context, _) {
-            final canOpenRoute =
-                _taxiOriginController.text.trim().isNotEmpty &&
-                    _taxiDestinationController.text.trim().isNotEmpty;
-            return IosSettingsRow(
-              label: loc.openRouteInGoogleMaps,
-              value: '',
-              valueColor: IosFormColors.accent,
-              chevron: canOpenRoute,
-              onTap: canOpenRoute ? _openTransportRouteInGoogleMaps : null,
-            );
-          },
-        ),
-        if (showPlazas) ...[
-          const IosRowSeparator(),
-          IosSettingsRow(
-            label: loc.taxiSeatsLabel,
-            value: '$_taxiSeats',
-            chevron: canEdit,
-            onTap: canEdit
-                ? () async {
-                    final picked = await IosFormPickerSheet.show<int>(
-                      context: context,
-                      title: loc.taxiSeatsLabel,
-                      options: List.generate(
-                        9,
-                        (i) => IosFormPickerOption(
-                          value: i + 1,
-                          title: '${i + 1}',
-                          selected: _taxiSeats == i + 1,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+          child: ListenableBuilder(
+            listenable: Listenable.merge([
+              _taxiOriginController,
+              _taxiDestinationController,
+            ]),
+            builder: (context, _) {
+              final canOpenRoute =
+                  _taxiOriginController.text.trim().isNotEmpty &&
+                      _taxiDestinationController.text.trim().isNotEmpty;
+              return Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      loc.planEventColorsFamilyDesplazamiento.toUpperCase(),
+                      style: const TextStyle(
+                        color: IosFormColors.textTertiary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -0.08,
+                      ),
+                    ),
+                  ),
+                  Tooltip(
+                    message: canOpenRoute
+                        ? loc.openRouteInGoogleMaps
+                        : loc.openRouteInGoogleMapsHint,
+                    child: Material(
+                      color: const Color(0xFF2D2D2D),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(
+                          color: (canOpenRoute
+                                  ? IosFormColors.accent
+                                  : IosFormColors.textTertiary)
+                              .withValues(alpha: canOpenRoute ? 0.45 : 0.25),
+                          width: 1,
                         ),
                       ),
-                    );
-                    if (picked != null && mounted) {
-                      setState(() => _taxiSeats = picked);
-                    }
-                  }
-                : null,
+                      child: InkWell(
+                        onTap: canOpenRoute
+                            ? _openTransportRouteInGoogleMaps
+                            : null,
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: 26,
+                          height: 26,
+                          child: Icon(
+                            Icons.route,
+                            size: 15,
+                            color: canOpenRoute
+                                ? IosFormColors.accent
+                                : IosFormColors.textTertiary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
-        ],
+        ),
+        IosGroupedCard(
+          children: [
+            _iosPlaceFieldRow(
+              label: loc.taxiOriginLabel,
+              hint: loc.taxiOriginHint,
+              controller: _taxiOriginController,
+              initialAddress: _taxiOriginController.text.isNotEmpty
+                  ? _taxiOriginController.text
+                  : null,
+              canOpenMaps: _taxiOriginController.text.trim().isNotEmpty ||
+                  _taxiOriginDetails != null ||
+                  _taxiOriginStoredLat != null,
+              onOpenMaps: () => _openTaxiAddressInMaps(
+                _twoLinePlaceMapsQuery(_taxiOriginController.text),
+                _taxiOriginDetails?.lat ?? _taxiOriginStoredLat,
+                _taxiOriginDetails?.lng ?? _taxiOriginStoredLng,
+              ),
+              onPlaceSelected: (PlaceDetails details) {
+                setState(() {
+                  _taxiOriginDetails = details;
+                  _taxiOriginController.text = formatPlaceNameAndAddress(
+                    details.displayName,
+                    details.formattedAddress,
+                  );
+                  _taxiOriginStoredLat = details.lat;
+                  _taxiOriginStoredLng = details.lng;
+                });
+              },
+            ),
+            if (previous != null && canEdit)
+              IosSettingsRow(
+                label: loc.usePreviousLocation,
+                value: () {
+                  final raw = (previous.sourceLabel ?? previous.address).trim();
+                  if (raw.isEmpty) return '—';
+                  return raw.length > 36 ? '${raw.substring(0, 34)}…' : raw;
+                }(),
+                valueColor: IosFormColors.accent,
+                chevron: true,
+                onTap: () => _applyPreviousPlanLocationToOrigin(previous),
+              ),
+            Builder(
+              builder: (context) {
+                final hotelAction = _buildAccommodationEndpointActions(
+                  hotels: _lookupPreviousDayAccommodations(),
+                  onApply: _applyPreviousPlanLocationToOrigin,
+                  singleLabel: loc.useAccommodationAsOrigin,
+                  menuLabel: loc.useAccommodationAsOriginMenu,
+                );
+                if (hotelAction == null) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: hotelAction,
+                );
+              },
+            ),
+            const IosRowSeparator(),
+            _iosPlaceFieldRow(
+              label: loc.taxiDestinationLabel,
+              hint: loc.taxiDestinationHint,
+              controller: _taxiDestinationController,
+              initialAddress: _taxiDestinationController.text.isNotEmpty
+                  ? _taxiDestinationController.text
+                  : null,
+              canOpenMaps: _taxiDestinationController.text.trim().isNotEmpty ||
+                  _taxiDestinationDetails != null ||
+                  _taxiDestinationStoredLat != null,
+              onOpenMaps: () => _openTaxiAddressInMaps(
+                _twoLinePlaceMapsQuery(_taxiDestinationController.text),
+                _taxiDestinationDetails?.lat ?? _taxiDestinationStoredLat,
+                _taxiDestinationDetails?.lng ?? _taxiDestinationStoredLng,
+              ),
+              onPlaceSelected: (PlaceDetails details) {
+                setState(() {
+                  _taxiDestinationDetails = details;
+                  _taxiDestinationController.text = formatPlaceNameAndAddress(
+                    details.displayName,
+                    details.formattedAddress,
+                  );
+                  _taxiDestinationStoredLat = details.lat;
+                  _taxiDestinationStoredLng = details.lng;
+                });
+              },
+            ),
+            Builder(
+              builder: (context) {
+                final hotelAction = _buildAccommodationEndpointActions(
+                  hotels: _lookupSameDayAccommodations(),
+                  onApply: _applyPreviousPlanLocationToDestination,
+                  singleLabel: loc.useAccommodationAsDestination,
+                  menuLabel: loc.useAccommodationAsDestinationMenu,
+                );
+                if (hotelAction == null) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: hotelAction,
+                );
+              },
+            ),
+            if (showPlazas) ...[
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.taxiSeatsLabel,
+                value: '$_taxiSeats',
+                chevron: canEdit,
+                onTap: canEdit
+                    ? () async {
+                        final picked = await IosFormPickerSheet.show<int>(
+                          context: context,
+                          title: loc.taxiSeatsLabel,
+                          options: List.generate(
+                            9,
+                            (i) => IosFormPickerOption(
+                              value: i + 1,
+                              title: '${i + 1}',
+                              selected: _taxiSeats == i + 1,
+                            ),
+                          ),
+                        );
+                        if (picked != null && mounted) {
+                          setState(() => _taxiSeats = picked);
+                        }
+                      }
+                    : null,
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }
@@ -2397,11 +2479,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   /// Lista §3.2 ítem 108: prueba estática de patrocinio contextual.
   /// Solo UI; no hay red publicitaria ni tracking en esta fase.
-  Widget _buildStaticSponsorCard() {
+  /// Null cuando no hay sponsor para el subtipo (evita hueco fantasma).
+  Widget? _buildStaticSponsorCard() {
     final loc = AppLocalizations.of(context)!;
     final subtype = _typeSubtypeController.text.trim();
     final sponsor = _getStaticSponsorForSubtype(subtype);
-    if (sponsor == null) return const SizedBox.shrink();
+    if (sponsor == null) return null;
 
     return IosGroupedCard(
       children: [
@@ -2614,104 +2697,110 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Widget _buildFlightNumberBlock() {
     final loc = AppLocalizations.of(context)!;
     final canEdit = _canEditGeneral;
-    return IosGroupedCard(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _iosPlaceFieldRow(
-          label: loc.departureAirportLabel,
-          hint: loc.departureAirportHint,
-          controller: _departureAirportController,
-          onPlaceSelected: (PlaceDetails details) {
-            setState(() {
-              _departureAirportDetails = details;
-              final addr = details.formattedAddress;
-              _departureAirportController.text = (addr != null &&
-                      addr.isNotEmpty &&
-                      addr != details.displayName)
-                  ? '${details.displayName}, $addr'
-                  : details.displayName;
-            });
-            _autodetectFlightTimezoneFromPlace(
-              details: details,
-              isArrival: false,
-            );
-          },
-        ),
-        IosSettingsRow(
-          label: loc.timezone,
-          value: _timezoneRowValue(_selectedTimezone),
-          chevron: canEdit,
-          onTap: canEdit
-              ? () => _openFlightTimezonePicker(isArrival: false)
-              : null,
-        ),
-        const IosRowSeparator(),
-        _iosPlaceFieldRow(
-          label: loc.arrivalAirportLabel,
-          hint: loc.arrivalAirportHint,
-          controller: _arrivalAirportController,
-          onPlaceSelected: (PlaceDetails details) {
-            setState(() {
-              _arrivalAirportDetails = details;
-              final addr = details.formattedAddress;
-              _arrivalAirportController.text = (addr != null &&
-                      addr.isNotEmpty &&
-                      addr != details.displayName)
-                  ? '${details.displayName}, $addr'
-                  : details.displayName;
-            });
-            _autodetectFlightTimezoneFromPlace(
-              details: details,
-              isArrival: true,
-            );
-          },
-        ),
-        IosSettingsRow(
-          label: loc.arrivalTimezone,
-          value: _timezoneRowValue(_selectedArrivalTimezone),
-          chevron: canEdit,
-          onTap: canEdit
-              ? () => _openFlightTimezonePicker(isArrival: true)
-              : null,
-        ),
-        const IosRowSeparator(),
-        IgnorePointer(
-          ignoring: !canEdit,
-          child: IosEditField(
-            label: loc.flightNumberLabel,
-            controller: _flightNumberController,
-            hint: loc.flightNumberHint,
-          ),
-        ),
-        if (canEdit) ...[
-          const IosRowSeparator(),
-          IosSettingsRow(
-            label: loc.getFlightDataButton,
-            value: _flightStatusLoading
-                ? '…'
-                : (_lastFlightStatus?.shortDescription ?? ''),
-            valueColor: IosFormColors.accent,
-            chevron: !_flightStatusLoading,
-            onTap: _flightStatusLoading ? null : _fetchFlightStatus,
-          ),
-        ],
-        if (_lastFlightStatus != null &&
-            (_lastFlightStatus!.departureScheduled != null ||
-                _lastFlightStatus!.arrivalScheduled != null)) ...[
-          const IosRowSeparator(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-            child: Text(
-              _formatFlightTimes(
-                _lastFlightStatus!.departureScheduled,
-                _lastFlightStatus!.arrivalScheduled,
-              ),
-              style: const TextStyle(
-                fontSize: 13,
-                color: IosFormColors.textSecondary,
+        IosSectionLabel(loc.flightNumberLabel),
+        IosGroupedCard(
+          children: [
+            _iosPlaceFieldRow(
+              label: loc.departureAirportLabel,
+              hint: loc.departureAirportHint,
+              controller: _departureAirportController,
+              onPlaceSelected: (PlaceDetails details) {
+                setState(() {
+                  _departureAirportDetails = details;
+                  final addr = details.formattedAddress;
+                  _departureAirportController.text = (addr != null &&
+                          addr.isNotEmpty &&
+                          addr != details.displayName)
+                      ? '${details.displayName}, $addr'
+                      : details.displayName;
+                });
+                _autodetectFlightTimezoneFromPlace(
+                  details: details,
+                  isArrival: false,
+                );
+              },
+            ),
+            IosSettingsRow(
+              label: loc.timezone,
+              value: _timezoneRowValue(_selectedTimezone),
+              chevron: canEdit,
+              onTap: canEdit
+                  ? () => _openFlightTimezonePicker(isArrival: false)
+                  : null,
+            ),
+            const IosRowSeparator(),
+            _iosPlaceFieldRow(
+              label: loc.arrivalAirportLabel,
+              hint: loc.arrivalAirportHint,
+              controller: _arrivalAirportController,
+              onPlaceSelected: (PlaceDetails details) {
+                setState(() {
+                  _arrivalAirportDetails = details;
+                  final addr = details.formattedAddress;
+                  _arrivalAirportController.text = (addr != null &&
+                          addr.isNotEmpty &&
+                          addr != details.displayName)
+                      ? '${details.displayName}, $addr'
+                      : details.displayName;
+                });
+                _autodetectFlightTimezoneFromPlace(
+                  details: details,
+                  isArrival: true,
+                );
+              },
+            ),
+            IosSettingsRow(
+              label: loc.arrivalTimezone,
+              value: _timezoneRowValue(_selectedArrivalTimezone),
+              chevron: canEdit,
+              onTap: canEdit
+                  ? () => _openFlightTimezonePicker(isArrival: true)
+                  : null,
+            ),
+            const IosRowSeparator(),
+            IgnorePointer(
+              ignoring: !canEdit,
+              child: IosEditField(
+                label: loc.flightNumberLabel,
+                controller: _flightNumberController,
+                hint: loc.flightNumberHint,
               ),
             ),
-          ),
-        ],
+            if (canEdit) ...[
+              const IosRowSeparator(),
+              IosSettingsRow(
+                label: loc.getFlightDataButton,
+                value: _flightStatusLoading
+                    ? '…'
+                    : (_lastFlightStatus?.shortDescription ?? ''),
+                valueColor: IosFormColors.accent,
+                chevron: !_flightStatusLoading,
+                onTap: _flightStatusLoading ? null : _fetchFlightStatus,
+              ),
+            ],
+            if (_lastFlightStatus != null &&
+                (_lastFlightStatus!.departureScheduled != null ||
+                    _lastFlightStatus!.arrivalScheduled != null)) ...[
+              const IosRowSeparator(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                child: Text(
+                  _formatFlightTimes(
+                    _lastFlightStatus!.departureScheduled,
+                    _lastFlightStatus!.arrivalScheduled,
+                  ),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: IosFormColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ],
     );
   }
@@ -3355,7 +3444,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   Widget _buildGeneralTabScroll(bool isMobile) {
     final pad = isMobile ? 4.0 : 8.0;
-    final spacing = isMobile ? _fieldGap : 16.0;
+    const spacing = IosFormColors.cardGap;
+    final loc = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(pad, pad, pad, isMobile ? 16 : 12),
       child: Column(
@@ -3364,7 +3454,6 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         children: [
           // Hero: título + chips (fecha / hora / duración / estado)
           Builder(builder: (context) {
-            final loc = AppLocalizations.of(context)!;
             final canEdit = _canEditGeneral || _canEditGeneralInitial;
             final titleText = _descriptionController.text.trim().isEmpty
                 ? loc.editEvent
@@ -3445,7 +3534,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             );
           }),
           // Tipo / subtipo (label solo dentro de la fila Settings)
-          SizedBox(height: spacing),
+          const SizedBox(height: spacing),
           IosGroupedCard(
             children: [
               _wrapReadOnlyIfNeeded(child: _buildTypeSubtypeSelector()),
@@ -3453,9 +3542,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           ),
           if (widget.event == null && !_hasGeneralEventTypeSelected())
             Padding(
-              padding: EdgeInsets.only(top: 8, bottom: spacing),
+              padding: const EdgeInsets.only(top: 8, bottom: spacing),
               child: Text(
-                AppLocalizations.of(context)!.eventSelectTypeFirstHint,
+                loc.eventSelectTypeFirstHint,
                 style: const TextStyle(
                   fontSize: 13,
                   color: IosFormColors.textSecondary,
@@ -3465,12 +3554,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           if (widget.event != null || _hasGeneralEventTypeSelected()) ...[
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text == 'Avión') ...[
-              SizedBox(height: spacing),
+              const SizedBox(height: spacing),
               _wrapReadOnlyIfNeeded(child: _buildFlightNumberBlock()),
             ],
             // Ubicación / transporte / extras
             if (_typeFamilyController.text != 'Desplazamiento') ...[
-              SizedBox(height: spacing),
+              const SizedBox(height: spacing),
+              IosSectionLabel(loc.eventLocationLabel),
               IosGroupedCard(
                 children: [
                   _buildUnifiedLocationField(),
@@ -3482,7 +3572,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text.isNotEmpty &&
                 _typeSubtypeController.text != 'Avión') ...[
-              SizedBox(height: spacing),
+              const SizedBox(height: spacing),
               _wrapReadOnlyIfNeeded(
                   child: _buildTransportOriginDestinationBlock(
                       showPlazas: _typeSubtypeController.text == 'Taxi')),
@@ -3490,26 +3580,29 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 (_typeSubtypeController.text == 'Shuttle' ||
                     _typeSubtypeController.text == 'Transfer')) ...[
-              SizedBox(height: spacing),
+              const SizedBox(height: spacing),
               _wrapReadOnlyIfNeeded(
                   child: _buildGroundTransferAirportExtraFields()),
             ],
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text.isNotEmpty) ...[
-              SizedBox(height: spacing),
-              _buildStaticSponsorCard(),
+              if (_buildStaticSponsorCard() case final sponsor?) ...[
+                const SizedBox(height: spacing),
+                sponsor,
+              ],
             ],
             if (_isRentalVehicleActionSubtype) ...[
-              SizedBox(height: spacing),
+              const SizedBox(height: spacing),
               _wrapReadOnlyIfNeeded(child: _buildRentalVehicleActionFields()),
             ],
             if (_typeFamilyController.text == 'Desplazamiento' &&
                 _typeSubtypeController.text != 'Avión') ...[
-              SizedBox(height: spacing),
+              const SizedBox(height: spacing),
+              IosSectionLabel(loc.timezone),
               IosGroupedCard(
                 children: [
                   IosSettingsRow(
-                    label: AppLocalizations.of(context)!.timezone,
+                    label: loc.timezone,
                     value: _timezoneRowValue(_selectedTimezone),
                     chevron: _canEditGeneral,
                     onTap: _canEditGeneral
@@ -3518,7 +3611,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   ),
                   const IosRowSeparator(),
                   IosSettingsRow(
-                    label: AppLocalizations.of(context)!.arrivalTimezone,
+                    label: loc.arrivalTimezone,
                     value: _timezoneRowValue(_selectedArrivalTimezone),
                     chevron: _canEditGeneral,
                     onTap: _canEditGeneral
@@ -3528,13 +3621,13 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 ],
               ),
             ],
-            SizedBox(height: spacing),
-            // 6. URL + notas + archivos + coste + reserva
+            const SizedBox(height: spacing),
+            // URL + notas + archivos → participantes → coste → reserva → color
             _wrapReadOnlyIfNeeded(child: _buildUrlField()),
-            SizedBox(height: spacing),
+            const SizedBox(height: spacing),
             _wrapReadOnlyIfNeeded(child: _buildLongNotesField()),
             if (widget.planId != null) ...[
-              SizedBox(height: spacing),
+              const SizedBox(height: spacing),
               // Archivos (Settings: Añadir + filas por archivo)
               IosGroupedCard(
                 children: [
@@ -3552,12 +3645,15 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 ],
               ),
             ],
+            const SizedBox(height: spacing),
+            // Participantes (switch + lista en la misma card)
+            _wrapReadOnlyIfNeeded(child: _buildParticipantsScopeSection()),
             if (_planCurrency != null) ...[
-              SizedBox(height: spacing),
+              const SizedBox(height: spacing),
               _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency()),
             ],
             if (widget.planId != null && _planCurrency != null) ...[
-              SizedBox(height: spacing),
+              const SizedBox(height: spacing),
               // T273 Reserva / cancelación (siempre moneda del plan)
               _wrapReadOnlyIfNeeded(
                 child: Builder(builder: (context) {
@@ -3590,20 +3686,16 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 }),
               ),
             ],
-            SizedBox(height: spacing),
-            // Participantes (switch + lista en la misma card)
-            _wrapReadOnlyIfNeeded(child: _buildParticipantsScopeSection()),
-            SizedBox(height: spacing),
+            const SizedBox(height: spacing),
             // Color
             _wrapReadOnlyIfNeeded(child: _buildColorSelectorRow()),
-            SizedBox(height: spacing),
           ],
           if (widget.event != null &&
               _canDeleteEvent() &&
               (_canEditGeneral || _canEditGeneralInitial)) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: IosFormColors.cardGap),
             IosDestructiveTile(
-              label: AppLocalizations.of(context)!.delete,
+              label: loc.delete,
               onPressed: _confirmDelete,
             ),
           ],
@@ -3650,9 +3742,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
   Widget _buildMyInfoTabScroll(bool isMobile) {
     final pad = isMobile ? 4.0 : 8.0;
-    final gap = isMobile ? _fieldGap : 16.0;
+    const gap = IosFormColors.cardGap;
     final loc = AppLocalizations.of(context)!;
     final isActivity = _typeFamilyController.text == 'Actividad';
+    // Mi info es editable si el plan permite guardar (no usa _canEditGeneral:
+    // un participante no-owner debe poder editar su ficha personal).
+    final canEditMyInfo = _canSaveEvent();
 
     String? maxLenValidator(String? value, int max) {
       final v = value?.trim() ?? '';
@@ -3728,7 +3823,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       IosSwitchRow(
         label: loc.cardObtained,
         value: _tarjetaObtenida,
-        onChanged: (value) => setState(() => _tarjetaObtenida = value),
+        onChanged: canEditMyInfo
+            ? (value) => setState(() => _tarjetaObtenida = value)
+            : null,
       ),
       const IosRowSeparator(),
       IosEditField(
@@ -3755,9 +3852,12 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               fontWeight: FontWeight.w400,
             ),
           ),
-          SizedBox(height: gap),
-          IosGroupedCard(children: cardChildren),
-          SizedBox(height: gap),
+          const SizedBox(height: gap),
+          IgnorePointer(
+            ignoring: !canEditMyInfo,
+            child: IosGroupedCard(children: cardChildren),
+          ),
+          const SizedBox(height: gap),
           IosFormFooter(loc.eventMyInfoPrivacyFooter),
         ],
       ),
@@ -3824,7 +3924,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           IosFormFooter(loc.eventOthersInfoAdminBanner),
-          const SizedBox(height: 12),
+          const SizedBox(height: IosFormColors.cardGap),
           ...otherParticipants.map(_buildParticipantCard),
         ],
       ),
@@ -3934,8 +4034,20 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       ),
     ]);
 
+    if (canEditOthers) {
+      rows.addAll([
+        const IosRowSeparator(),
+        IosSettingsRow(
+          label: loc.edit,
+          value: '',
+          chevron: true,
+          onTap: () => _editParticipantInfo(participantId),
+        ),
+      ]);
+    }
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: IosFormColors.cardGap),
       child: FutureBuilder<String>(
         future: _getUserDisplayName(participantId),
         builder: (context, snapshot) {
@@ -3945,22 +4057,8 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             children: [
               IosSectionLabel(displayName),
               IosGroupedCard(children: rows),
-              if (canEditOthers) ...[
-                const SizedBox(height: 8),
-                IosGroupedCard(
-                  children: [
-                    IosSettingsRow(
-                      label: loc.editInfo,
-                      value: '',
-                      chevron: true,
-                      onTap: () => _editParticipantInfo(participantId),
-                    ),
-                  ],
-                ),
-              ] else ...[
-                const SizedBox(height: 6),
+              if (!canEditOthers)
                 IosFormFooter(loc.eventOthersInfoNoEditPermission),
-              ],
             ],
           );
         },
@@ -4165,138 +4263,210 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     }
   }
 
-  /// Coste: una fila — importe a la izquierda, moneda (código+símbolo) a la derecha.
+  /// Coste/presupuesto: fila Settings → sheet (importe + moneda).
   Widget _buildCostFieldWithCurrency() {
     final loc = AppLocalizations.of(context)!;
-    final exchangeRateService = ExchangeRateService();
     final currencyValue = _costCurrency ?? _planCurrency ?? 'EUR';
-    final currency = Currency.fromCodeOrEur(currencyValue);
+    final amountRaw = _costController.text.trim();
+    final display = amountRaw.isEmpty
+        ? '—'
+        : '$amountRaw ${Currency.fromCodeOrEur(currencyValue).code}';
     final canEdit = _canEditGeneral;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        IosGroupedCard(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: IgnorePointer(
-                      ignoring: !canEdit,
-                      child: TextFormField(
-                        controller: _costController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        style: const TextStyle(
-                          color: IosFormColors.textPrimary,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        cursorColor: IosFormColors.accent,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          hintText: '${loc.cost}: ${loc.costHint}',
-                          hintStyle: const TextStyle(
-                            color: IosFormColors.textTertiary,
-                            fontSize: 17,
-                          ),
-                        ),
-                        onChanged: canEdit
-                            ? (_) => _convertCostToPlanCurrency(
-                                  exchangeRateService,
-                                )
-                            : null,
-                        validator: (value) {
-                          if (!canEdit) return null;
-                          final v = value?.trim() ?? '';
-                          if (v.isEmpty) return null;
-                          final doubleValue =
-                              double.tryParse(v.replaceAll(',', '.'));
-                          if (doubleValue == null) return loc.mustBeValidNumber;
-                          if (doubleValue < 0) return loc.cannotBeNegative;
-                          if (doubleValue > 1000000) return loc.maxAmount;
-                          return null;
-                        },
-                      ),
+        FormField<String>(
+          validator: (_) {
+            if (!canEdit) return null;
+            final v = _costController.text.trim();
+            if (v.isEmpty) return null;
+            final doubleValue = double.tryParse(v.replaceAll(',', '.'));
+            if (doubleValue == null) return loc.mustBeValidNumber;
+            if (doubleValue < 0) return loc.cannotBeNegative;
+            if (doubleValue > 1000000) return loc.maxAmount;
+            return null;
+          },
+          builder: (field) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                IosGroupedCard(
+                  children: [
+                    IosSettingsRow(
+                      label: loc.planDetailsBudgetLabel,
+                      value: display,
+                      chevron: canEdit,
+                      onTap: canEdit
+                          ? () async {
+                              await _pickCostSheet(loc);
+                              field.didChange(_costController.text);
+                            }
+                          : null,
                     ),
+                  ],
+                ),
+                if (field.hasError && field.errorText != null)
+                  IosFormFooter(
+                    field.errorText!,
+                    color: IosFormColors.danger,
                   ),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: canEdit ? _pickCostCurrency : null,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 8,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '${currency.code} ${currency.symbol}',
-                              style: const TextStyle(
-                                color: IosFormColors.textSecondary,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            if (canEdit) ...[
-                              const SizedBox(width: 2),
-                              const Icon(
-                                Icons.chevron_right,
-                                color: IosFormColors.textTertiary,
-                                size: 20,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
         if (_costCurrency != null &&
             _planCurrency != null &&
             _costCurrency != _planCurrency &&
             _costController.text.trim().isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-            child: _buildCostConversionHint(),
-          ),
+          _buildCostConversionHint(),
       ],
     );
   }
 
-  Future<void> _pickCostCurrency() async {
-    final loc = AppLocalizations.of(context)!;
-    final current = _costCurrency ?? _planCurrency ?? 'EUR';
-    final picked = await IosFormPickerSheet.show<String>(
+  Future<void> _pickCostSheet(AppLocalizations loc) async {
+    final amountController = TextEditingController(text: _costController.text);
+    var sheetCurrency = _costCurrency ?? _planCurrency ?? 'EUR';
+    String? errorText;
+
+    final applied = await showModalBottomSheet<bool>(
       context: context,
-      title: loc.costCurrency,
-      options: Currency.supportedCurrencies
-          .map(
-            (c) => IosFormPickerOption(
-              value: c.code,
-              title: '${c.code} — ${c.symbol} ${c.name}',
-              selected: c.code == current,
-            ),
-          )
-          .toList(),
+      backgroundColor: IosFormColors.groupedBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setInner) {
+            final bottomInset = MediaQuery.viewInsetsOf(ctx).bottom;
+            final currency = Currency.fromCodeOrEur(sheetCurrency);
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + bottomInset),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: IosFormColors.separator,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      loc.planDetailsBudgetLabel,
+                      style: const TextStyle(
+                        color: IosFormColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    IosGroupedCard(
+                      children: [
+                        IosEditField(
+                          label: loc.paymentsExpenseAmount,
+                          controller: amountController,
+                          hint: loc.costHint,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (_) {
+                            if (errorText != null) {
+                              setInner(() => errorText = null);
+                            }
+                          },
+                        ),
+                        const IosRowSeparator(),
+                        IosSettingsRow(
+                          label: loc.costCurrency,
+                          value: '${currency.code} ${currency.symbol}',
+                          chevron: true,
+                          onTap: () async {
+                            final picked = await IosFormPickerSheet.show<String>(
+                              context: ctx,
+                              title: loc.costCurrency,
+                              options: Currency.supportedCurrencies
+                                  .map(
+                                    (c) => IosFormPickerOption(
+                                      value: c.code,
+                                      title:
+                                          '${c.code} — ${c.symbol} ${c.name}',
+                                      selected: c.code == sheetCurrency,
+                                    ),
+                                  )
+                                  .toList(),
+                            );
+                            if (picked == null) return;
+                            setInner(() => sheetCurrency = picked);
+                          },
+                        ),
+                      ],
+                    ),
+                    if (errorText != null) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          errorText!,
+                          style: const TextStyle(
+                            color: IosFormColors.danger,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    IosFormSheetActions(
+                      cancelLabel: loc.cancel,
+                      confirmLabel: loc.planNotesApplySelection,
+                      onCancel: () => Navigator.of(ctx).pop(false),
+                      onConfirm: () {
+                        final trimmed = amountController.text.trim();
+                        if (trimmed.isEmpty) {
+                          Navigator.of(ctx).pop(true);
+                          return;
+                        }
+                        final sanitized = trimmed.replaceAll(',', '.');
+                        final parsed = double.tryParse(sanitized);
+                        if (parsed == null) {
+                          setInner(() => errorText = loc.mustBeValidNumber);
+                          return;
+                        }
+                        if (parsed < 0) {
+                          setInner(() => errorText = loc.cannotBeNegative);
+                          return;
+                        }
+                        if (parsed > 1000000) {
+                          setInner(() => errorText = loc.maxAmount);
+                          return;
+                        }
+                        amountController.text = sanitized;
+                        Navigator.of(ctx).pop(true);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
-    if (picked != null && mounted) {
-      setState(() => _costCurrency = picked);
-      await _convertCostToPlanCurrency(ExchangeRateService());
-    }
+
+    final raw = amountController.text.trim();
+    final chosenCurrency = sheetCurrency;
+    amountController.dispose();
+    if (!mounted || applied != true) return;
+
+    setState(() {
+      _costController.text = raw;
+      _costCurrency = chosenCurrency;
+    });
+    await _convertCostToPlanCurrency(ExchangeRateService());
   }
 
   Widget _buildCostConversionHint() {
@@ -4310,67 +4480,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: IosFormColors.accent,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  loc.calculating,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: IosFormColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          );
+          return IosFormFooter(loc.calculating);
         }
 
         if (snapshot.hasData && snapshot.data != null) {
           final convertedAmount = snapshot.data!;
-          return Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: IosFormColors.groupedBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: IosFormColors.accent.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  loc.convertedTo(_planCurrency!),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: IosFormColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  CurrencyFormatterService.formatAmount(
-                    convertedAmount,
-                    _planCurrency!,
-                  ),
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: IosFormColors.accent,
-                  ),
-                ),
-              ],
-            ),
+          final amountText = CurrencyFormatterService.formatAmount(
+            convertedAmount,
+            _planCurrency!,
+          );
+          return IosFormFooter(
+            '${loc.convertedTo(_planCurrency!)}: $amountText',
           );
         }
 
@@ -4538,7 +4658,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             'Debes seleccionar al menos un participante',
             style: TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.red.shade600,
+          backgroundColor: IosFormColors.danger,
         ),
       );
       return;

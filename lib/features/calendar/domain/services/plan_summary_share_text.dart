@@ -300,22 +300,61 @@ class PlanSummaryShareContent {
     return null;
   }
 
-  static String? _eventRouteUrl(Event e) {
-    final fam = (e.typeFamily ?? '').trim();
-    if (fam != 'Desplazamiento') return null;
+  /// URL Google Maps direcciones origen→destino para un desplazamiento (o null).
+  static String? eventRouteUrl(Event e) {
+    final fam = (e.typeFamily ?? '').toLowerCase();
+    if (!fam.contains('desplazamiento') && !fam.contains('desplaz')) {
+      return null;
+    }
     final ed = e.commonPart?.extraData;
     if (ed == null) return null;
-    final origin =
-        _singleLine((ed['taxiOriginAddress'] as String?)?.trim() ?? '');
-    final dest =
-        _singleLine((ed['taxiDestinationAddress'] as String?)?.trim() ?? '');
+
+    String point({
+      required String addressKey,
+      required String latKey,
+      required String lngKey,
+    }) {
+      final lat = ed[latKey];
+      final lng = ed[lngKey];
+      if (lat is num && lng is num) return '${lat.toDouble()},${lng.toDouble()}';
+      return _singleLine((ed[addressKey] as String?)?.trim() ?? '');
+    }
+
+    final origin = point(
+      addressKey: 'taxiOriginAddress',
+      latKey: 'taxiOriginLat',
+      lngKey: 'taxiOriginLng',
+    );
+    final dest = point(
+      addressKey: 'taxiDestinationAddress',
+      latKey: 'taxiDestinationLat',
+      lngKey: 'taxiDestinationLng',
+    );
     if (origin.isEmpty || dest.isEmpty) return null;
+
+    String travelMode = 'driving';
+    final sub = (e.typeSubtype ?? '').trim();
+    switch (sub) {
+      case 'Caminar':
+        travelMode = 'walking';
+      case 'Autobús':
+      case 'Tren':
+      case 'Shuttle':
+      case 'Transfer':
+        travelMode = 'transit';
+      default:
+        travelMode = 'driving';
+    }
+
     return Uri.https('www.google.com', '/maps/dir/', {
       'api': '1',
       'origin': origin,
       'destination': dest,
+      'travelmode': travelMode,
     }).toString();
   }
+
+  static String? _eventRouteUrl(Event e) => eventRouteUrl(e);
 
   static String _mapsSearchUrl(String query) {
     final q = _singleLine(query);

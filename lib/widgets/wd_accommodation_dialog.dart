@@ -202,8 +202,6 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
 
   bool get _canEdit => _canSaveAccommodation();
 
-  static const double _fieldGap = 14;
-
   Widget _wrapReadOnlyIfNeeded({required Widget child}) {
     if (_canEdit) return child;
     return Stack(
@@ -278,7 +276,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.entityAttachmentsReadError),
-          backgroundColor: Colors.red.shade600,
+          backgroundColor: IosFormColors.danger,
         ),
       );
       return;
@@ -311,7 +309,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.entityAttachmentsUploadError('$e')),
-          backgroundColor: Colors.red.shade600,
+          backgroundColor: IosFormColors.danger,
         ),
       );
     } finally {
@@ -343,7 +341,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.entityAttachmentsDeleteError),
-          backgroundColor: Colors.red.shade600,
+          backgroundColor: IosFormColors.danger,
         ),
       );
     } finally {
@@ -365,7 +363,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
 
   /// Formulario General (pestaña 0).
   Widget _buildGeneralTabScroll(bool isMobile, AppLocalizations loc) {
-    final spacing = isMobile ? _fieldGap : 16.0;
+    const spacing = IosFormColors.cardGap;
     final pad = isMobile ? 4.0 : 8.0;
     final nights = _calculateNights(_selectedCheckIn, _selectedCheckOut);
     final stay = _formatStayRange();
@@ -402,13 +400,13 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             ),
           ],
         ),
-        SizedBox(height: spacing),
+        const SizedBox(height: spacing),
         _wrapReadOnlyIfNeeded(child: _buildLocationAndTypeCard(loc, canEdit)),
-        SizedBox(height: spacing),
+        const SizedBox(height: spacing),
         _wrapReadOnlyIfNeeded(child: _buildUrlField(loc, canEdit)),
-        SizedBox(height: spacing),
+        const SizedBox(height: spacing),
         _wrapReadOnlyIfNeeded(child: _buildNotesField(loc, canEdit)),
-        SizedBox(height: spacing),
+        const SizedBox(height: spacing),
         _wrapReadOnlyIfNeeded(
           child: IosGroupedCard(
             children: [
@@ -424,10 +422,12 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             ],
           ),
         ),
+        const SizedBox(height: spacing),
+        _wrapReadOnlyIfNeeded(child: _buildParticipantsScopeSection()),
         if (_planCurrency != null) ...[
-          SizedBox(height: spacing),
+          const SizedBox(height: spacing),
           _wrapReadOnlyIfNeeded(child: _buildCostFieldWithCurrency(loc, canEdit)),
-          SizedBox(height: spacing),
+          const SizedBox(height: spacing),
           _wrapReadOnlyIfNeeded(
             child: Builder(builder: (context) {
               final parts = ref
@@ -458,12 +458,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             }),
           ),
         ],
-        SizedBox(height: spacing),
-        _wrapReadOnlyIfNeeded(child: _buildParticipantsScopeSection()),
-        SizedBox(height: spacing),
+        const SizedBox(height: spacing),
         _wrapReadOnlyIfNeeded(child: _buildColorSelectorRow(loc, canEdit)),
         if (_canDeleteAccommodation() && canEdit) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: IosFormColors.cardGap),
           IosDestructiveTile(
             label: loc.delete,
             onPressed: _confirmDelete,
@@ -531,7 +529,6 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
 
   Widget _buildMyInfoTabScroll(bool isMobile, AppLocalizations loc) {
     final pad = isMobile ? 4.0 : 8.0;
-    final gap = isMobile ? _fieldGap : 16.0;
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(pad, pad, pad, isMobile ? 16 : 12),
       child: Column(
@@ -545,63 +542,65 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
               fontWeight: FontWeight.w400,
             ),
           ),
-          SizedBox(height: gap),
-          IosGroupedCard(
-            children: [
-              IosEditField(
-                label: loc.accommodationMyInfoRoomNumber,
-                controller: _roomNumberController,
-                hint: loc.accommodationMyInfoRoomNumberHint,
-                validator: (value) {
-                  final v = value?.trim() ?? '';
-                  if (v.isEmpty) return null;
-                  if (v.length > 50) return loc.maxCharacters(50);
-                  return null;
-                },
-              ),
-              const IosRowSeparator(),
-              IosEditField(
-                label: loc.accommodationMyInfoBedType,
-                controller: _bedTypeController,
-                hint: loc.accommodationMyInfoBedTypeHint,
-                validator: (value) {
-                  final v = value?.trim() ?? '';
-                  if (v.isEmpty) return null;
-                  if (v.length > 50) return loc.maxCharacters(50);
-                  return null;
-                },
-              ),
-              const IosRowSeparator(),
-              IosEditField(
-                label: loc.preferences,
-                controller: _preferencesController,
-                hint: loc.preferencesHint,
-                maxLines: 2,
-                minLines: 1,
-                validator: (value) {
-                  final v = value?.trim() ?? '';
-                  if (v.isEmpty) return null;
-                  if (v.length > 200) return loc.maxCharacters(200);
-                  return null;
-                },
-              ),
-              const IosRowSeparator(),
-              IosEditField(
-                label: loc.personalNotes,
-                controller: _personalNotesController,
-                hint: loc.accommodationNotesHint,
-                maxLines: 4,
-                minLines: 2,
-                validator: (value) {
-                  final v = value?.trim() ?? '';
-                  if (v.isEmpty) return null;
-                  if (v.length > 1000) return loc.maxCharacters(1000);
-                  return null;
-                },
-              ),
-            ],
+          const SizedBox(height: IosFormColors.cardGap),
+          _wrapReadOnlyIfNeeded(
+            child: IosGroupedCard(
+              children: [
+                IosEditField(
+                  label: loc.accommodationMyInfoRoomNumber,
+                  controller: _roomNumberController,
+                  hint: loc.accommodationMyInfoRoomNumberHint,
+                  validator: (value) {
+                    final v = value?.trim() ?? '';
+                    if (v.isEmpty) return null;
+                    if (v.length > 50) return loc.maxCharacters(50);
+                    return null;
+                  },
+                ),
+                const IosRowSeparator(),
+                IosEditField(
+                  label: loc.accommodationMyInfoBedType,
+                  controller: _bedTypeController,
+                  hint: loc.accommodationMyInfoBedTypeHint,
+                  validator: (value) {
+                    final v = value?.trim() ?? '';
+                    if (v.isEmpty) return null;
+                    if (v.length > 50) return loc.maxCharacters(50);
+                    return null;
+                  },
+                ),
+                const IosRowSeparator(),
+                IosEditField(
+                  label: loc.preferences,
+                  controller: _preferencesController,
+                  hint: loc.preferencesHint,
+                  maxLines: 2,
+                  minLines: 1,
+                  validator: (value) {
+                    final v = value?.trim() ?? '';
+                    if (v.isEmpty) return null;
+                    if (v.length > 200) return loc.maxCharacters(200);
+                    return null;
+                  },
+                ),
+                const IosRowSeparator(),
+                IosEditField(
+                  label: loc.personalNotes,
+                  controller: _personalNotesController,
+                  hint: loc.accommodationNotesHint,
+                  maxLines: 4,
+                  minLines: 2,
+                  validator: (value) {
+                    final v = value?.trim() ?? '';
+                    if (v.isEmpty) return null;
+                    if (v.length > 1000) return loc.maxCharacters(1000);
+                    return null;
+                  },
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: gap),
+          const SizedBox(height: IosFormColors.cardGap),
           IosFormFooter(loc.accommodationMyInfoPrivacyFooter),
         ],
       ),
@@ -619,47 +618,53 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   }
 
   Widget _buildLocationAndTypeCard(AppLocalizations loc, bool canEdit) {
-    return IosGroupedCard(
-      children: canEdit
-          ? [
-              _buildAddressField(loc),
-              const IosRowSeparator(),
-              IosSettingsRow(
-                label: loc.accommodationType,
-                value: localizedAccommodationType(loc, _selectedType),
-                chevron: true,
-                onTap: _pickAccommodationType,
-              ),
-            ]
-          : [
-              if (_addressController.text.trim().isNotEmpty)
-                IosSettingsRow(
-                  label: loc.placeAddressLabel,
-                  value: _addressController.text.trim(),
-                  multiline: true,
-                  valueColor:
-                      _canOpenLocationInMaps ? IosFormColors.accent : null,
-                  chevron: _canOpenLocationInMaps,
-                  onTap: _canOpenLocationInMaps
-                      ? _openLocationInGoogleMaps
-                      : null,
-                )
-              else
-                IosSettingsRow(
-                  label: loc.placeAddressLabel,
-                  value: '—',
-                ),
-              const IosRowSeparator(),
-              IosSettingsRow(
-                label: loc.accommodationType,
-                value: localizedAccommodationType(loc, _selectedType),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IosSectionLabel(loc.accommodationSectionLocation),
+        IosGroupedCard(
+          children: canEdit
+              ? [
+                  _buildAddressField(loc),
+                  const IosRowSeparator(),
+                  IosSettingsRow(
+                    label: loc.accommodationType,
+                    value: localizedAccommodationType(loc, _selectedType),
+                    chevron: true,
+                    onTap: _pickAccommodationType,
+                  ),
+                ]
+              : [
+                  if (_addressController.text.trim().isNotEmpty)
+                    IosSettingsRow(
+                      label: loc.placeAddressLabel,
+                      value: _addressController.text.trim(),
+                      multiline: true,
+                      valueColor:
+                          _canOpenLocationInMaps ? IosFormColors.accent : null,
+                      chevron: _canOpenLocationInMaps,
+                      onTap: _canOpenLocationInMaps
+                          ? _openLocationInGoogleMaps
+                          : null,
+                    )
+                  else
+                    IosSettingsRow(
+                      label: loc.placeAddressLabel,
+                      value: '—',
+                    ),
+                  const IosRowSeparator(),
+                  IosSettingsRow(
+                    label: loc.accommodationType,
+                    value: localizedAccommodationType(loc, _selectedType),
+                  ),
+                ],
+        ),
+      ],
     );
   }
 
   Widget _buildUrlField(AppLocalizations loc, bool canEdit) {
-    return IosGroupedCard(
+    final card = IosGroupedCard(
       children: [
         IgnorePointer(
           ignoring: !canEdit,
@@ -681,6 +686,14 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             onTap: _openAccommodationWebLink,
           ),
         ],
+      ],
+    );
+    if (!_canOpenWebLink) return card;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IosSectionLabel(loc.eventUrlLabel),
+        card,
       ],
     );
   }
@@ -792,112 +805,206 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   }
 
   Widget _buildCostFieldWithCurrency(AppLocalizations loc, bool canEdit) {
-    final exchangeRateService = ExchangeRateService();
     final currencyValue = _costCurrency ?? _planCurrency ?? 'EUR';
-    final currency = Currency.fromCodeOrEur(currencyValue);
+    final amountRaw = _costController.text.trim();
+    final display = amountRaw.isEmpty
+        ? '—'
+        : '$amountRaw ${Currency.fromCodeOrEur(currencyValue).code}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        IosGroupedCard(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: IgnorePointer(
-                      ignoring: !canEdit,
-                      child: TextFormField(
-                        controller: _costController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        style: const TextStyle(
-                          color: IosFormColors.textPrimary,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        cursorColor: IosFormColors.accent,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          hintText: '${loc.cost}: ${loc.costHint}',
-                          hintStyle: const TextStyle(
-                            color: IosFormColors.textTertiary,
-                            fontSize: 17,
-                          ),
-                        ),
-                        onChanged: canEdit
-                            ? (_) => _convertCostToPlanCurrency(
-                                  exchangeRateService,
-                                )
-                            : null,
-                        validator: (value) {
-                          if (!canEdit) return null;
-                          final v = value?.trim() ?? '';
-                          if (v.isEmpty) return null;
-                          final doubleValue =
-                              double.tryParse(v.replaceAll(',', '.'));
-                          if (doubleValue == null) return loc.mustBeValidNumber;
-                          if (doubleValue < 0) return loc.cannotBeNegative;
-                          if (doubleValue > 1000000) return loc.maxAmount;
-                          return null;
-                        },
-                      ),
+        FormField<String>(
+          validator: (_) {
+            if (!canEdit) return null;
+            final v = _costController.text.trim();
+            if (v.isEmpty) return null;
+            final doubleValue = double.tryParse(v.replaceAll(',', '.'));
+            if (doubleValue == null) return loc.mustBeValidNumber;
+            if (doubleValue < 0) return loc.cannotBeNegative;
+            if (doubleValue > 1000000) return loc.maxAmount;
+            return null;
+          },
+          builder: (field) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                IosGroupedCard(
+                  children: [
+                    IosSettingsRow(
+                      label: loc.planDetailsBudgetLabel,
+                      value: display,
+                      chevron: canEdit,
+                      onTap: canEdit
+                          ? () async {
+                              await _pickCostSheet(loc);
+                              field.didChange(_costController.text);
+                            }
+                          : null,
                     ),
+                  ],
+                ),
+                if (field.hasError && field.errorText != null)
+                  IosFormFooter(
+                    field.errorText!,
+                    color: IosFormColors.danger,
                   ),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: canEdit ? _pickCostCurrency : null,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 8,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '${currency.code} ${currency.symbol}',
-                              style: const TextStyle(
-                                color: IosFormColors.textSecondary,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            if (canEdit) ...[
-                              const SizedBox(width: 2),
-                              const Icon(
-                                Icons.chevron_right,
-                                color: IosFormColors.textTertiary,
-                                size: 20,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
         if (_costCurrency != null &&
             _planCurrency != null &&
             _costCurrency != _planCurrency &&
             _costController.text.trim().isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
-            child: _buildCostConversionHint(),
-          ),
+          _buildCostConversionHint(),
       ],
     );
+  }
+
+  Future<void> _pickCostSheet(AppLocalizations loc) async {
+    final amountController = TextEditingController(text: _costController.text);
+    var sheetCurrency = _costCurrency ?? _planCurrency ?? 'EUR';
+    String? errorText;
+
+    final applied = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: IosFormColors.groupedBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setInner) {
+            final bottomInset = MediaQuery.viewInsetsOf(ctx).bottom;
+            final currency = Currency.fromCodeOrEur(sheetCurrency);
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + bottomInset),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: IosFormColors.separator,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      loc.planDetailsBudgetLabel,
+                      style: const TextStyle(
+                        color: IosFormColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    IosGroupedCard(
+                      children: [
+                        IosEditField(
+                          label: loc.paymentsExpenseAmount,
+                          controller: amountController,
+                          hint: loc.costHint,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (_) {
+                            if (errorText != null) {
+                              setInner(() => errorText = null);
+                            }
+                          },
+                        ),
+                        const IosRowSeparator(),
+                        IosSettingsRow(
+                          label: loc.costCurrency,
+                          value: '${currency.code} ${currency.symbol}',
+                          chevron: true,
+                          onTap: () async {
+                            final picked = await IosFormPickerSheet.show<String>(
+                              context: ctx,
+                              title: loc.costCurrency,
+                              options: Currency.supportedCurrencies
+                                  .map(
+                                    (c) => IosFormPickerOption(
+                                      value: c.code,
+                                      title:
+                                          '${c.code} — ${c.symbol} ${c.name}',
+                                      selected: c.code == sheetCurrency,
+                                    ),
+                                  )
+                                  .toList(),
+                            );
+                            if (picked == null) return;
+                            setInner(() => sheetCurrency = picked);
+                          },
+                        ),
+                      ],
+                    ),
+                    if (errorText != null) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          errorText!,
+                          style: const TextStyle(
+                            color: IosFormColors.danger,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    IosFormSheetActions(
+                      cancelLabel: loc.cancel,
+                      confirmLabel: loc.planNotesApplySelection,
+                      onCancel: () => Navigator.of(ctx).pop(false),
+                      onConfirm: () {
+                        final trimmed = amountController.text.trim();
+                        if (trimmed.isEmpty) {
+                          Navigator.of(ctx).pop(true);
+                          return;
+                        }
+                        final sanitized = trimmed.replaceAll(',', '.');
+                        final parsed = double.tryParse(sanitized);
+                        if (parsed == null) {
+                          setInner(() => errorText = loc.mustBeValidNumber);
+                          return;
+                        }
+                        if (parsed < 0) {
+                          setInner(() => errorText = loc.cannotBeNegative);
+                          return;
+                        }
+                        if (parsed > 1000000) {
+                          setInner(() => errorText = loc.maxAmount);
+                          return;
+                        }
+                        amountController.text = sanitized;
+                        Navigator.of(ctx).pop(true);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    final raw = amountController.text.trim();
+    final chosenCurrency = sheetCurrency;
+    amountController.dispose();
+    if (!mounted || applied != true) return;
+
+    setState(() {
+      _costController.text = raw;
+      _costCurrency = chosenCurrency;
+    });
+    await _convertCostToPlanCurrency(ExchangeRateService());
   }
 
   Widget _buildColorSelectorRow(AppLocalizations loc, bool canEdit) {
@@ -964,7 +1071,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             final participation = participations[i];
             final isSelected =
                 _selectedParticipantTrackIds.contains(participation.userId);
-            if (i > 0) children.add(const IosRowSeparator());
+            if (i > 0) children.add(const IosRowSeparator(nestLevel: 1));
             children.add(
               FutureBuilder<String>(
                 future: _getUserDisplayName(participation.userId),
@@ -993,7 +1100,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                                       content: Text(
                                         loc.eventDialogSelectAtLeastOne,
                                       ),
-                                      backgroundColor: Colors.red.shade600,
+                                      backgroundColor: IosFormColors.danger,
                                       duration: const Duration(seconds: 2),
                                     ),
                                   );
@@ -1018,8 +1125,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         },
         loading: () {
           children.add(
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
+            const SizedBox(
+              height: IosFormColors.rowHeight,
               child: Center(
                 child: SizedBox(
                   width: 22,
@@ -1040,7 +1147,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        IosSectionLabel(loc.participants),
+        if (!_isForAllParticipants) IosSectionLabel(loc.participants),
         IosGroupedCard(children: children),
         if (footerText != null && footerText!.isNotEmpty)
           IosFormFooter(footerText!, color: footerColor),
@@ -1058,7 +1165,12 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   /// Dirección con Places: rellena dirección y, si el nombre está vacío, el nombre.
   Widget _buildAddressField(AppLocalizations loc) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+      padding: const EdgeInsets.fromLTRB(
+        IosFormColors.rowPaddingH,
+        IosFormColors.rowPaddingV,
+        8,
+        IosFormColors.rowPaddingV,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1139,6 +1251,16 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                 return IconButton(
                   tooltip: loc.openInGoogleMaps,
                   onPressed: _openLocationInGoogleMaps,
+                  padding: const EdgeInsets.all(2),
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 28,
+                    maxWidth: 28,
+                    maxHeight: 28,
+                  ),
+                  style: IconButton.styleFrom(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   icon: Icon(
                     Icons.map_outlined,
                     size: _fieldIconSize,
@@ -1201,29 +1323,6 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     }
   }
 
-  Future<void> _pickCostCurrency() async {
-    final loc = AppLocalizations.of(context)!;
-    final current = _costCurrency ?? _planCurrency ?? 'EUR';
-    final picked = await IosFormPickerSheet.show<String>(
-      context: context,
-      title: loc.costCurrency,
-      options: Currency.supportedCurrencies
-          .map(
-            (currency) => IosFormPickerOption(
-              value: currency.code,
-              title: '${currency.code} — ${currency.symbol} ${currency.name}',
-              selected: currency.code == current,
-            ),
-          )
-          .toList(),
-    );
-    if (picked != null && mounted) {
-      setState(() => _costCurrency = picked);
-      await _convertCostToPlanCurrency(ExchangeRateService());
-    }
-  }
-
-  /// Nombre editable en el hero (texto libre; Places vive en la dirección).
   Widget _buildHeroNameField(AppLocalizations loc) {
     return TextFormField(
       controller: _hotelNameController,
@@ -1559,67 +1658,17 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: IosFormColors.accent,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  loc.calculating,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: IosFormColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          );
+          return IosFormFooter(loc.calculating);
         }
 
         if (snapshot.hasData && snapshot.data != null) {
           final convertedAmount = snapshot.data!;
-          return Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: IosFormColors.groupedBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: IosFormColors.accent.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  loc.convertedTo(_planCurrency!),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: IosFormColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  CurrencyFormatterService.formatAmount(
-                    convertedAmount,
-                    _planCurrency!,
-                  ),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: IosFormColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
+          final amount = CurrencyFormatterService.formatAmount(
+            convertedAmount,
+            _planCurrency!,
+          );
+          return IosFormFooter(
+            '${loc.convertedTo(_planCurrency!)} $amount',
           );
         }
 
@@ -1789,7 +1838,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(loc.accommodationNameRequiredError),
-            backgroundColor: Colors.red,
+            backgroundColor: IosFormColors.danger,
           ),
         );
         return false;
@@ -1801,7 +1850,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(loc.checkOutAfterCheckInError),
-            backgroundColor: Colors.red,
+            backgroundColor: IosFormColors.danger,
           ),
         );
         return false;
@@ -1812,7 +1861,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(loc.mustSelectAtLeastOneParticipant),
-            backgroundColor: Colors.red,
+            backgroundColor: IosFormColors.danger,
           ),
         );
         return false;

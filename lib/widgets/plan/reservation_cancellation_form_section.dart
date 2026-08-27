@@ -46,7 +46,7 @@ class ReservationCancellationFormSectionState
   String? _payerId;
   String _status = 'pending';
   String? _timezone;
-  bool _expanded = false;
+  bool _enabled = false;
   bool _tier1Enabled = false;
   bool _tier2Enabled = false;
   DateTime? _deadline1;
@@ -99,7 +99,7 @@ class ReservationCancellationFormSectionState
     } else {
       _pct2Ctrl = TextEditingController(text: '50');
     }
-    _expanded = init != null && !init.isEmpty;
+    _enabled = init != null && !init.isEmpty;
   }
 
   @override
@@ -112,8 +112,9 @@ class ReservationCancellationFormSectionState
     super.dispose();
   }
 
-  /// Valor actual del bloque (null si vacío).
+  /// Valor actual del bloque (null si desactivado o vacío).
   ReservationCancellation? toModel() {
+    if (!_enabled) return null;
     final amount = double.tryParse(_amountCtrl.text.replaceAll(',', '.'));
     final fixedFee = double.tryParse(_fixedFeeCtrl.text.replaceAll(',', '.'));
     final tiers = <CancellationTier>[];
@@ -519,13 +520,14 @@ class ReservationCancellationFormSectionState
       children: [
         IosGroupedCard(
           children: [
-            IosCollapsibleHeader(
-              title: loc.reservationCancellationSectionTitle,
-              subtitle: loc.reservationCancellationSectionSubtitle,
-              expanded: _expanded,
-              onToggle: () => setState(() => _expanded = !_expanded),
+            IosSwitchRow(
+              label: loc.reservationCancellationSectionTitle,
+              value: _enabled,
+              onChanged: canEdit
+                  ? (v) => setState(() => _enabled = v)
+                  : null,
             ),
-            if (_expanded) ...[
+            if (_enabled) ...[
               const IosRowSeparator(),
               IosGroupedCardCaption(loc.reservationGuaranteeLabel, nestLevel: 1),
               IosSettingsRow(
@@ -588,8 +590,8 @@ class ReservationCancellationFormSectionState
             ],
           ],
         ),
-        if (_expanded) ...[
-          const SizedBox(height: 10),
+        if (_enabled) ...[
+          const SizedBox(height: IosFormColors.cardGap),
           Padding(
             padding: const EdgeInsets.only(left: 8),
             child: IosGroupedCard(

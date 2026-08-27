@@ -1046,7 +1046,7 @@
   },
   "createPlanGeneralSectionTitle": "General Information",
   "@createPlanGeneralSectionTitle": {},
-  "createPlanNameLabel": "Plan name",
+  "createPlanNameLabel": "Name",
   "@createPlanNameLabel": {},
   "createPlanNameHint": "Eg: London Vacation 2025",
   "@createPlanNameHint": {},
@@ -1090,7 +1090,7 @@
   "@createPlanDescriptionHint": {},
   "createPlanConfigurationSectionTitle": "Configuration",
   "@createPlanConfigurationSectionTitle": {},
-  "createPlanCurrencyLabel": "Plan currency",
+  "createPlanCurrencyLabel": "Currency",
   "@createPlanCurrencyLabel": {},
   "createPlanVisibilityLabel": "Visibility",
   "@createPlanVisibilityLabel": {},
@@ -1112,9 +1112,9 @@
   "@planDetailsNoParticipants": {},
   "planDetailsInfoTitle": "Detailed information",
   "@planDetailsInfoTitle": {},
-  "planDetailsMetaTitle": "Plan identifiers",
+  "planDetailsMetaTitle": "IDs",
   "@planDetailsMetaTitle": {},
-  "planTimezoneLabel": "Plan timezone",
+  "planTimezoneLabel": "Timezone",
   "@planTimezoneLabel": {},
   "planTimezoneHelper": "Used as the default reference when creating events and converting participants' schedules.",
   "@planTimezoneHelper": {},
@@ -1122,7 +1122,7 @@
   "@planDetailsStateTitle": {},
   "planDetailsParticipantsTitle": "Participants",
   "@planDetailsParticipantsTitle": {},
-  "planDetailsParticipantsManageLink": "Manage participants",
+  "planDetailsParticipantsManageLink": "Manage",
   "@planDetailsParticipantsManageLink": {},
   "planDetailsAnnouncementsTitle": "Announcements",
   "@planDetailsAnnouncementsTitle": {
@@ -1136,7 +1136,7 @@
   "@helpMoreInfo": {
     "description": "T157: Link in contextual help modal"
   },
-  "planDetailsBudgetLabel": "Estimated budget",
+  "planDetailsBudgetLabel": "Budget",
   "@planDetailsBudgetLabel": {},
   "planBudgetLabelShort": "Budget",
   "@planBudgetLabelShort": {
@@ -1178,11 +1178,19 @@
   "planDetailsSectionNotes": "Notes",
   "planDetailsSectionDescription": "Description",
   "planDetailsDatesLabel": "Dates",
+  "planDetailsDateStartShort": "Start",
+  "planDetailsDateEndShort": "End",
   "planDetailsStateLabel": "Status",
   "@planDetailsSectionGeneral": {},
   "@planDetailsSectionNotes": {},
   "@planDetailsSectionDescription": {},
   "@planDetailsDatesLabel": {},
+  "@planDetailsDateStartShort": {
+    "description": "Short start date label on plan info sheet"
+  },
+  "@planDetailsDateEndShort": {
+    "description": "Short end date label on plan info sheet"
+  },
   "@planDetailsStateLabel": {},
   "planDetailsNoAvailableParticipants": "There are no users available to add.",
   "@planDetailsNoAvailableParticipants": {},
@@ -1395,7 +1403,7 @@
   "@accommodationTypeCamping": {},
   "@accommodationTypeCruise": {},
   "@accommodationTypeOther": {},
-  "planEventColorsTitle": "Calendar colors",
+  "planEventColorsTitle": "Colors",
   "@planEventColorsTitle": { "description": "T272 plan event type accent colors section" },
   "planEventColorsSubtitle": "Event rail/border color. Changing a color updates all events of that type.",
   "@planEventColorsSubtitle": {},
@@ -1715,7 +1723,7 @@
   "dashboardSelectPlanToSeeNotifications": "Select a plan to see its notifications",
   "planCalendarEmpty": "No plans scheduled in these months.",
   "@planCalendarEmpty": {},
-  "createPlanDatesSectionTitle": "Plan dates",
+  "createPlanDatesSectionTitle": "Dates",
   "@createPlanDatesSectionTitle": {},
   "createPlanStartDateLabel": "Start: {date}",
   "@createPlanStartDateLabel": {
@@ -2451,7 +2459,7 @@
       }
     }
   },
-  "color": "Color:",
+  "color": "Color",
   "@color": {
     "description": "Color label"
   },
@@ -2650,6 +2658,16 @@
   "@myPlanSummaryFlightsHint": { "description": "Transport section criterion in My summary" },
   "myPlanSummaryAccommodation": "Accommodations",
   "@myPlanSummaryAccommodation": { "description": "T252: Quick access accommodation" },
+  "myPlanSummaryAccommodationRowLabel": "Accommodation",
+  "@myPlanSummaryAccommodationRowLabel": { "description": "My summary: accommodation row subtitle in day list" },
+  "myPlanSummaryAccommodationNightOf": "night {current}/{total}",
+  "@myPlanSummaryAccommodationNightOf": {
+    "description": "My summary: current night of the stay (e.g. night 2/3)",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
   "myPlanSummaryImportant": "Key information",
   "@myPlanSummaryImportant": { "description": "T252: Plan summary block" },
   "myPlanSummaryResumenSection": "Summary",
@@ -2676,6 +2694,8 @@
   "@myPlanSummarySeeLess": { "description": "Collapse chronological list" },
   "myPlanSummaryDraftsOnlyTooltip": "Drafts only",
   "@myPlanSummaryDraftsOnlyTooltip": { "description": "Item 81: filter unconfirmed events" },
+  "myPlanSummaryDraftBadgeLetter": "D",
+  "@myPlanSummaryDraftBadgeLetter": { "description": "My summary: compact draft initial (tooltip = eventStatusDraft)" },
   "myPlanSummaryShareTooltip": "Share summary",
   "@myPlanSummaryShareTooltip": { "description": "Top bar button: share itinerary with links" },
   "myPlanSummaryShareSubject": "Summary: {planName}",
@@ -2946,7 +2966,7 @@
   "snackParticipantRemoveError": "Could not remove participant: {error}",
   "@snackParticipantRemoveError": { "placeholders": { "error": { "type": "String" } } },
   "invitationsSectionTitle": "Invitations",
-  "entityAttachmentsPlanTitle": "Plan files",
+  "entityAttachmentsPlanTitle": "Files",
   "@entityAttachmentsPlanTitle": { "description": "Title for file attachments block on plan info" },
   "entityAttachmentsEventTitle": "Event files",
   "@entityAttachmentsEventTitle": { "description": "Title for file attachments block on event dialog" },

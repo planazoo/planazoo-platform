@@ -74,9 +74,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
 
   static const int _chronoLimit = 15;
   bool _chronoExpanded = false;
+  /// Días plegados en el itinerario (clave yyyy-MM-dd). Vacío = todos desplegados.
+  final Set<String> _collapsedDayKeys = {};
   /// 'mine' = solo mis eventos; 'plan' = todos los participantes.
   String _internalViewMode = 'mine';
-  String? _activeQuickPanel;
   /// Ítem 81: en planificando, mostrar solo eventos borrador / no confirmados.
   bool _internalDraftOnlyFilter = false;
 
@@ -198,12 +199,6 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           ),
         );
 
-        final flights = displayEvents.where((e) {
-          final fam = (e.typeFamily ?? '').toLowerCase();
-          return fam.contains('desplazamiento') || fam.contains('desplaz');
-        }).toList()
-          ..sort(_compareEventsBySchedule);
-
         final isEmpty = displayEvents.isEmpty && displayAccommodations.isEmpty;
         final showParticipantLabels = _viewMode == 'plan';
 
@@ -222,24 +217,11 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                         ListView(
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                           children: [
-                            _buildQuickAccessChips(loc),
-                            if (_activeQuickPanel != null) ...[
-                              const SizedBox(height: 8),
-                              _buildQuickPanelCard(
-                                loc,
-                                planId: planId,
-                                flights: flights,
-                                displayAccommodations: displayAccommodations,
-                                showParticipantLabels: showParticipantLabels,
-                                participantNamesMap: participantNamesMap,
-                                dimPastInCourse: dimPastInCourse,
-                              ),
-                            ],
-                            const SizedBox(height: 18),
                             _buildChronologicalSectionBody(
                               context,
                               loc,
                               displayEvents,
+                              displayAccommodations,
                               showParticipantLabels,
                               participantNamesMap,
                               dimPastInCourse: dimPastInCourse,
@@ -307,185 +289,6 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickAccessChips(AppLocalizations loc) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _buildQuickChip(
-          keyName: 'participants',
-          icon: Icons.people_outline,
-          label: loc.myPlanSummaryQuickParticipants,
-        ),
-        _buildQuickChip(
-          keyName: 'travel',
-          icon: Icons.luggage_rounded,
-          label: '${loc.myPlanSummaryFlights} · ${loc.myPlanSummaryAccommodation}',
-        ),
-        _buildQuickChip(
-          keyName: 'notes',
-          icon: Icons.description_outlined,
-          label: loc.planReferenceNotesTitle,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickChip({
-    required String keyName,
-    required IconData icon,
-    required String label,
-  }) {
-    final active = _activeQuickPanel == keyName;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => setState(() => _activeQuickPanel = active ? null : keyName),
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            color: active
-                ? AppColorScheme.color2.withValues(alpha: 0.25)
-                : Colors.white.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: active
-                  ? AppColorScheme.color2
-                  : Colors.white.withValues(alpha: 0.12),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 15, color: active ? AppColorScheme.color2 : Colors.white70),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  color: active ? Colors.white : Colors.white70,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickPanelCard(
-    AppLocalizations loc, {
-    required String planId,
-    required List<Event> flights,
-    required List<Accommodation> displayAccommodations,
-    required bool showParticipantLabels,
-    required Map<String, String> participantNamesMap,
-    required bool dimPastInCourse,
-  }) {
-    final key = _activeQuickPanel;
-    if (key == null) return const SizedBox.shrink();
-
-    String title;
-    Widget body;
-    switch (key) {
-      case 'participants':
-        title = loc.myPlanSummaryParticipantsSection;
-        body = planId.isEmpty
-            ? Text(
-                '—',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: _textTertiary,
-                ),
-              )
-            : ParticipantsListWidget(
-                planId: planId,
-                showActions: false,
-                compact: true,
-              );
-        break;
-      case 'travel':
-        title = '${loc.myPlanSummaryFlights} · ${loc.myPlanSummaryAccommodation}';
-        body = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              loc.myPlanSummaryFlights,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 6),
-            _buildFlightsQuickContent(
-              loc,
-              flights,
-              showParticipantLabels,
-              participantNamesMap,
-              dimPastInCourse: dimPastInCourse,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              loc.myPlanSummaryAccommodation,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 6),
-            _buildAccommodationQuickContent(
-              loc,
-              displayAccommodations,
-              showParticipantLabels,
-              participantNamesMap,
-            ),
-          ],
-        );
-        break;
-      case 'notes':
-      default:
-        title = loc.planReferenceNotesTitle;
-        final notes = (widget.plan.referenceNotes ?? '').trim();
-        body = Text(
-          notes.isEmpty ? '—' : notes,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.white70,
-          ),
-        );
-        break;
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 8),
-          body,
         ],
       ),
     );
@@ -1310,18 +1113,19 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                 ? '${_formatEventTime(e, loc)} $code · ${e.description}'
                 : '${_formatEventTime(e, loc)} ${e.description}';
             final past = dimPastInCourse && _isEventPast(e, now);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: _buildSummaryLinkRow(
-                text: head,
-                onOpenDetail: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
-                mapsQuery: e.commonPart?.location,
-                webUrl: e.commonPart?.url,
-                leadingIcon: _eventTypeIcon(e),
-                subtitle: subtitle,
-                subtitleEmphasizeAll: showParticipantLabels && e.participantTrackIds.isEmpty,
-                mutedPast: past,
-              ),
+            final typeBadge = _inlineTypeBadge(e, loc);
+            return _buildSummaryLinkRow(
+              text: head,
+              onOpenDetail: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
+              mapsQuery: e.commonPart?.location,
+              routeUrl: PlanSummaryShareContent.eventRouteUrl(e),
+              webUrl: e.commonPart?.url,
+              leadingIcon: _eventTypeIcon(e),
+              subtitle: subtitle,
+              subtitleEmphasizeAll: showParticipantLabels && e.participantTrackIds.isEmpty,
+              mutedPast: past,
+              typeBadgeIcon: typeBadge?.icon,
+              typeBadgeTooltip: typeBadge?.tooltip,
             );
           })
           .toList(),
@@ -1363,100 +1167,237 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     return '$startStr–$endH:$endM${loc.myPlanSummaryTimeNextDaySuffix}';
   }
 
-  /// Fila de resumen con hasta 3 acciones: detalle interno, Maps y URL.
+  /// Fila de itinerario (altura fija): icono · [hora] · título · Maps/Web reservados.
+  static const double _summaryRowHeight = 48;
+  static const double _summaryLinkChipSize = 26;
+  static const double _summaryLinkChipIconSize = 15;
+  static const double _summaryLinkChipGap = 4;
+  static const double _summaryTimeColWidth = 82;
+  static const double _summaryLeadingIconWidth = 22;
+  static const double _summaryRowGap = 2;
+
+  /// Fila de resumen con hasta 3 acciones: detalle interno, Maps/ruta y URL.
   Widget _buildSummaryLinkRow({
     required String text,
     VoidCallback? onOpenDetail,
     String? mapsQuery,
+    String? routeUrl,
     String? webUrl,
     IconData? leadingIcon,
+    String? timeLabel,
     String? subtitle,
     /// Lista §3.2 ítem 78: evento/alojamiento para todos los participantes.
     bool subtitleEmphasizeAll = false,
     /// Ítem 69: plan en curso, evento ya pasado.
     bool mutedPast = false,
+    bool showDraftBadge = false,
+    /// Icono compacto (18×18, como badge B) + tooltip (desplazamiento, restauración…).
+    IconData? typeBadgeIcon,
+    String? typeBadgeTooltip,
+    /// Mostrar icono líder también en móvil (p. ej. alojamiento).
+    bool forceShowLeadingIcon = false,
   }) {
-    final hasMaps = mapsQuery != null && mapsQuery.trim().isNotEmpty;
+    final loc = AppLocalizations.of(context)!;
+    final hasRoute = routeUrl != null && routeUrl.trim().isNotEmpty;
+    final hasMaps =
+        !hasRoute && mapsQuery != null && mapsQuery.trim().isNotEmpty;
     final hasWebUrl = webUrl != null && webUrl.trim().isNotEmpty;
     final safeMapsQuery = mapsQuery ?? '';
+    final safeRouteUrl = routeUrl ?? '';
     final safeWebUrl = webUrl ?? '';
     final titleColor = mutedPast
         ? _textMuted
-        : (onOpenDetail != null
-            ? AppColorScheme.color2
-            : _textSecondary);
+        : (onOpenDetail != null ? AppColorScheme.color2 : _textSecondary);
     final subColor = mutedPast
         ? _textMuted
-        : (subtitleEmphasizeAll
-            ? Colors.orange.shade200
-            : _textTertiary);
-    final subWeight =
-        mutedPast ? FontWeight.w400 : (subtitleEmphasizeAll ? FontWeight.w600 : FontWeight.w400);
-    final iconColor = mutedPast
-        ? _textMuted
-        : _textTertiary;
+        : (subtitleEmphasizeAll ? Colors.orange.shade200 : _textTertiary);
+    final subWeight = mutedPast
+        ? FontWeight.w400
+        : (subtitleEmphasizeAll ? FontWeight.w600 : FontWeight.w400);
+    final iconColor = mutedPast ? _textMuted : _textTertiary;
+    final timeColor = mutedPast ? _textMuted : _textSecondary;
+    final hasSubtitle = subtitle != null && subtitle.isNotEmpty;
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+    final showLeadingIcon =
+        leadingIcon != null && (!isMobile || forceShowLeadingIcon);
+    final showTypeBadge = typeBadgeIcon != null;
+    final typeBadgeColor = mutedPast ? _textMuted : AppColorScheme.color2;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: InkWell(
-        onTap: onOpenDetail,
-        borderRadius: BorderRadius.circular(4),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (leadingIcon != null) ...[
-                SizedBox(
-                  width: 22,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 1),
-                      child: Icon(leadingIcon, size: 17, color: iconColor),
+      padding: const EdgeInsets.only(bottom: _summaryRowGap),
+      child: SizedBox(
+        height: _summaryRowHeight,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onOpenDetail,
+            borderRadius: BorderRadius.circular(8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (showLeadingIcon) ...[
+                  SizedBox(
+                    width: _summaryLeadingIconWidth,
+                    child: Icon(leadingIcon, size: 18, color: iconColor),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                if (timeLabel != null) ...[
+                  SizedBox(
+                    width: _summaryTimeColWidth,
+                    child: Text(
+                      timeLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: timeColor,
+                        height: 1.2,
+                      ),
+                      textHeightBehavior: _tightFirstLineHeight,
                     ),
                   ),
-                ),
-                const SizedBox(width: 6),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      text,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: titleColor,
-                        height: 1.25,
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Row(
+                        children: [
+                          if (showDraftBadge) ...[
+                            Tooltip(
+                              message: loc.eventStatusDraft,
+                              child: Container(
+                                width: 18,
+                                height: 18,
+                                margin: const EdgeInsets.only(right: 6),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade800
+                                      .withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: Colors.orange.shade300
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                child: Text(
+                                  loc.myPlanSummaryDraftBadgeLetter,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.orange.shade100,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (showTypeBadge) ...[
+                            Tooltip(
+                              message: typeBadgeTooltip ?? '',
+                              child: Container(
+                                width: 18,
+                                height: 18,
+                                margin: const EdgeInsets.only(right: 6),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: typeBadgeColor.withValues(
+                                    alpha: mutedPast ? 0.15 : 0.22,
+                                  ),
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: typeBadgeColor.withValues(
+                                      alpha: mutedPast ? 0.35 : 0.55,
+                                    ),
+                                  ),
+                                ),
+                                child: Icon(
+                                  typeBadgeIcon,
+                                  size: 12,
+                                  color: mutedPast
+                                      ? _textMuted
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                          Expanded(
+                            child: Text(
+                              text,
+                              maxLines: hasSubtitle ? 1 : 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                fontSize: timeLabel != null ? 14 : 13,
+                                color: titleColor,
+                                height: 1.2,
+                              ),
+                              textHeightBehavior: _tightFirstLineHeight,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    if (subtitle != null && subtitle.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: subColor,
-                          fontWeight: subWeight,
+                      if (hasSubtitle) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: subColor,
+                            fontWeight: subWeight,
+                            height: 1.15,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (hasMaps) _buildMapLinkChip(onTap: () => _openMapsQuery(safeMapsQuery)),
-                    if (hasWebUrl) _buildWebLinkChip(onTap: () => _openWebUrl(safeWebUrl)),
-                  ],
-                ),
-              ),
-            ],
+                if (hasRoute || hasMaps || hasWebUrl) ...[
+                  const SizedBox(width: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (hasRoute)
+                        SizedBox(
+                          width: _summaryLinkChipSize,
+                          height: _summaryLinkChipSize,
+                          child: Tooltip(
+                            message: loc.openRouteInGoogleMaps,
+                            child: _buildMapLinkChip(
+                              onTap: () => _openWebUrl(safeRouteUrl),
+                              icon: Icons.route,
+                            ),
+                          ),
+                        ),
+                      if (hasRoute && (hasMaps || hasWebUrl))
+                        const SizedBox(width: _summaryLinkChipGap),
+                      if (hasMaps)
+                        SizedBox(
+                          width: _summaryLinkChipSize,
+                          height: _summaryLinkChipSize,
+                          child: _buildMapLinkChip(
+                            onTap: () => _openMapsQuery(safeMapsQuery),
+                          ),
+                        ),
+                      if (hasMaps && hasWebUrl)
+                        const SizedBox(width: _summaryLinkChipGap),
+                      if (hasWebUrl)
+                        SizedBox(
+                          width: _summaryLinkChipSize,
+                          height: _summaryLinkChipSize,
+                          child: _buildWebLinkChip(
+                            onTap: () => _openWebUrl(safeWebUrl),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1465,21 +1406,27 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
 
   Color get _linkChipIconColor => AppColorScheme.color2;
 
-  Widget _buildMapLinkChip({required VoidCallback onTap}) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Material(
-        color: const Color(0xFF2D2D2D),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: AppColorScheme.color2.withValues(alpha: 0.45), width: 1),
+  Widget _buildMapLinkChip({
+    required VoidCallback onTap,
+    IconData icon = Icons.location_on,
+  }) {
+    return Material(
+      color: const Color(0xFF2D2D2D),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: AppColorScheme.color2.withValues(alpha: 0.45),
+          width: 1,
         ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Icon(Icons.location_on, size: 20, color: _linkChipIconColor),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Center(
+          child: Icon(
+            icon,
+            size: _summaryLinkChipIconSize,
+            color: _linkChipIconColor,
           ),
         ),
       ),
@@ -1488,20 +1435,23 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
 
   /// Misma huella visual que [_buildMapLinkChip] (lista §3.2 ítem 83).
   Widget _buildWebLinkChip({required VoidCallback onTap}) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Material(
-        color: const Color(0xFF2D2D2D),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: AppColorScheme.color2.withValues(alpha: 0.45), width: 1),
+    return Material(
+      color: const Color(0xFF2D2D2D),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(
+          color: AppColorScheme.color2.withValues(alpha: 0.45),
+          width: 1,
         ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Icon(Icons.public, size: 20, color: _linkChipIconColor),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Center(
+          child: Icon(
+            Icons.public,
+            size: _summaryLinkChipIconSize,
+            color: _linkChipIconColor,
           ),
         ),
       ),
@@ -1533,88 +1483,58 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     return 'https://$value';
   }
 
-  Widget _buildFlightsQuickContent(
-    AppLocalizations loc,
-    List<Event> flights,
-    bool showParticipantLabels,
-    Map<String, String> participantNamesMap, {
-    required bool dimPastInCourse,
-  }) {
-    if (flights.isEmpty) {
-      return Text(
-        '—',
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          color: _textTertiary,
-        ),
-      );
-    }
-    final now = DateTime.now();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: flights.map((e) {
-        final subtitle = showParticipantLabels ? _participantLabelForEvent(e, participantNamesMap, loc) : null;
-        final code = _transportCodeLabel(e);
-        final line = code != null
-            ? '${DateFormatter.formatDate(e.date)} ${_formatEventTime(e, loc)} $code · ${e.description}'
-            : '${DateFormatter.formatDate(e.date)} ${_formatEventTime(e, loc)} ${e.description}';
-        final past = dimPastInCourse && _isEventPast(e, now);
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: _buildSummaryLinkRow(
-            text: line,
-            onOpenDetail: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
-            mapsQuery: e.commonPart?.location,
-            webUrl: e.commonPart?.url,
-            subtitle: subtitle,
-            subtitleEmphasizeAll: showParticipantLabels && e.participantTrackIds.isEmpty,
-            mutedPast: past,
-          ),
-        );
-      }).toList(),
-    );
+  bool _isDisplacementEvent(Event e) {
+    final fam = (e.typeFamily ?? '').toLowerCase();
+    return fam.contains('desplazamiento') || fam.contains('desplaz');
   }
 
-  Widget _buildAccommodationQuickContent(
+  bool _isDiningEvent(Event e) {
+    final fam = (e.typeFamily ?? '').toLowerCase();
+    final sub = (e.typeSubtype ?? '').toLowerCase();
+    return fam.contains('restauración') ||
+        fam.contains('restauracion') ||
+        sub.contains('comida') ||
+        sub.contains('restaurant') ||
+        sub.contains('restauración') ||
+        sub.contains('restauracion');
+  }
+
+  /// Badge inline 18×18 (como la B) para tipos que conviene destacar.
+  ({IconData icon, String tooltip})? _inlineTypeBadge(
+    Event e,
     AppLocalizations loc,
-    List<Accommodation> accommodations,
-    bool showParticipantLabels,
-    Map<String, String> participantNamesMap,
   ) {
-    if (accommodations.isEmpty) {
-      return Text(
-        '—',
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          color: _textTertiary,
-        ),
+    if (_isDisplacementEvent(e)) {
+      return (icon: _eventTypeIcon(e), tooltip: loc.myPlanSummaryFlights);
+    }
+    if (_isDiningEvent(e)) {
+      return (
+        icon: Icons.restaurant,
+        tooltip: loc.planEventColorsFamilyRestauracion,
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: accommodations.map((a) {
-        final nights = a.duration;
-        final dateLine =
-            '${DateFormatter.formatDate(a.checkIn)} – ${DateFormatter.formatDate(a.checkOut)}';
-        final parts = <String>[dateLine];
-        if (nights > 0) parts.add(loc.nights(nights));
-        if (showParticipantLabels) {
-          parts.add(_participantLabelForAccommodation(a, participantNamesMap, loc));
-        }
-        final subtitle = parts.join(' · ');
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: _buildSummaryLinkRow(
-            text: a.hotelName,
-            onOpenDetail: widget.onOpenAccommodation != null ? () => widget.onOpenAccommodation!(a) : null,
-            mapsQuery: a.commonPart?.address,
-            webUrl: a.commonPart?.url,
-            subtitle: subtitle,
-            subtitleEmphasizeAll: showParticipantLabels && a.participantTrackIds.isEmpty,
-          ),
-        );
-      }).toList(),
-    );
+    return null;
+  }
+
+  DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  String _dayKey(DateTime day) =>
+      '${day.year.toString().padLeft(4, '0')}-'
+      '${day.month.toString().padLeft(2, '0')}-'
+      '${day.day.toString().padLeft(2, '0')}';
+
+  /// Noches de estancia: [checkIn, checkOut). Si misma fecha, solo ese día.
+  Iterable<DateTime> _accommodationStayDays(Accommodation a) sync* {
+    var d = _dateOnly(a.checkIn);
+    final end = _dateOnly(a.checkOut);
+    if (!end.isAfter(d)) {
+      yield d;
+      return;
+    }
+    while (d.isBefore(end)) {
+      yield d;
+      d = d.add(const Duration(days: 1));
+    }
   }
 
   /// Número vuelo/tren/etc. desde extraData (ID 50).
@@ -1637,220 +1557,259 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     BuildContext context,
     AppLocalizations loc,
     List<Event> events,
+    List<Accommodation> accommodations,
     bool showParticipantLabels,
     Map<String, String> participantNamesMap, {
     required bool dimPastInCourse,
   }) {
-    final showLimit = events.length > _chronoLimit && !_chronoExpanded;
-    final displayEvents = showLimit ? events.take(_chronoLimit).toList() : events;
+    final dayEntries = _buildDayEntries(events, accommodations);
+    if (dayEntries.isEmpty) {
+      return Text(
+        '—',
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          color: _textTertiary,
+        ),
+      );
+    }
+
+    final showLimit = dayEntries.length > _chronoLimit && !_chronoExpanded;
+    final displayDays =
+        showLimit ? dayEntries.take(_chronoLimit).toList() : dayEntries;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (events.isEmpty)
-          Text(
-            '—',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: _textTertiary,
-            ),
-          )
-        else ...[
-          ..._buildChronologicalGroupedByDay(
+        ...displayDays.map(
+          (entry) => _buildCollapsibleDaySection(
             context,
-            displayEvents,
+            loc,
+            entry,
             showParticipantLabels,
             participantNamesMap,
-            loc,
             dimPastInCourse: dimPastInCourse,
           ),
-          if (events.length > _chronoLimit)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: TextButton(
-                onPressed: () => setState(() => _chronoExpanded = !_chronoExpanded),
-                child: Text(
-                  _chronoExpanded ? loc.myPlanSummarySeeLess : loc.myPlanSummarySeeMore,
-                  style: GoogleFonts.poppins(fontSize: 13, color: AppColorScheme.color2),
+        ),
+        if (dayEntries.length > _chronoLimit)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: TextButton(
+              onPressed: () =>
+                  setState(() => _chronoExpanded = !_chronoExpanded),
+              child: Text(
+                _chronoExpanded
+                    ? loc.myPlanSummarySeeLess
+                    : loc.myPlanSummarySeeMore,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppColorScheme.color2,
                 ),
               ),
             ),
-        ],
+          ),
       ],
     );
   }
 
-  /// Agrupa eventos por día y devuelve una lista de widgets: encabezado de día + filas de eventos.
-  List<Widget> _buildChronologicalGroupedByDay(
-    BuildContext context,
+  List<({DateTime day, List<Accommodation> accommodations, List<Event> events})>
+      _buildDayEntries(
     List<Event> events,
+    List<Accommodation> accommodations,
+  ) {
+    final map = <DateTime, ({List<Accommodation> accommodations, List<Event> events})>{};
+
+    void ensure(DateTime day) {
+      map.putIfAbsent(
+        day,
+        () => (accommodations: <Accommodation>[], events: <Event>[]),
+      );
+    }
+
+    for (final a in accommodations) {
+      for (final day in _accommodationStayDays(a)) {
+        ensure(day);
+        map[day]!.accommodations.add(a);
+      }
+    }
+    for (final e in events) {
+      final day = _dateOnly(e.date);
+      ensure(day);
+      map[day]!.events.add(e);
+    }
+
+    final days = map.keys.toList()..sort();
+    return [
+      for (final day in days)
+        (
+          day: day,
+          accommodations: map[day]!.accommodations,
+          events: map[day]!.events,
+        ),
+    ];
+  }
+
+  Widget _buildCollapsibleDaySection(
+    BuildContext context,
+    AppLocalizations loc,
+    ({DateTime day, List<Accommodation> accommodations, List<Event> events}) entry,
     bool showParticipantLabels,
-    Map<String, String> participantNamesMap,
-    AppLocalizations loc, {
+    Map<String, String> participantNamesMap, {
     required bool dimPastInCourse,
   }) {
     final localeTag = Localizations.localeOf(context).toString();
+    final key = _dayKey(entry.day);
+    final expanded = !_collapsedDayKeys.contains(key);
+    final dayLabel = DateFormat.yMMMMEEEEd(localeTag).format(entry.day);
     final now = DateTime.now();
-    final list = <Widget>[];
-    DateTime? currentDay;
 
-    for (final e in events) {
-      final day = DateTime(e.date.year, e.date.month, e.date.day);
-      if (currentDay == null || day != currentDay) {
-        if (currentDay != null) {
-          list.add(
-            Divider(
-              height: 20,
-              thickness: 1,
-              color: _border,
-            ),
-          );
-        }
-        currentDay = day;
-        final dayLabel = DateFormat.yMMMMEEEEd(localeTag).format(e.date);
-        list.add(
-          Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 4),
-            child: Text(
-              dayLabel,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: _textSecondary,
-              ),
-            ),
-          ),
-        );
-      }
-      final participantLabel = showParticipantLabels ? _participantLabelForEvent(e, participantNamesMap, loc) : null;
-      final past = dimPastInCourse && _isEventPast(e, now);
-      final timeColor = past
-          ? _textMuted
-          : _textSecondary;
-      final titleColor = past
-          ? _textMuted
-          : (widget.onOpenEvent != null
-              ? AppColorScheme.color2
-              : _textSecondary);
-      final iconColor =
-          past ? _textMuted : _textTertiary;
-      final allLabelOrange =
-          showParticipantLabels && e.participantTrackIds.isEmpty && !past;
-      list.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: InkWell(
-            onTap: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
-            borderRadius: BorderRadius.circular(4),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 22,
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 1),
-                        child: Icon(_eventTypeIcon(e), size: 18, color: iconColor),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  SizedBox(
-                    width: 82,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text(
-                        _formatEventTime(e, loc),
-                        style: GoogleFonts.poppins(fontSize: 12, color: timeColor, height: 1.2),
-                        textHeightBehavior: _tightFirstLineHeight,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (e.isDraft || (e.commonPart?.isDraft == true)) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                margin: const EdgeInsets.only(right: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade800.withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.orange.shade300.withValues(alpha: 0.6)),
-                                ),
-                                child: Text(
-                                  'Borrador',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.orange.shade100,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            Expanded(
-                              child: Text(
-                                _chronologicalEventTitle(e),
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: titleColor,
-                                  height: 1.2,
-                                ),
-                                textHeightBehavior: _tightFirstLineHeight,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (participantLabel != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            participantLabel,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: past
-                                  ? _textMuted
-                                  : (allLabelOrange
-                                      ? Colors.orange.shade200
-                                      : _textTertiary),
-                              fontWeight:
-                                  !past && allLabelOrange ? FontWeight.w600 : FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (e.commonPart?.location != null && e.commonPart!.location!.trim().isNotEmpty)
-                          _buildMapLinkChip(onTap: () => _openMapsQuery(e.commonPart!.location!)),
-                        if (e.commonPart?.url != null && e.commonPart!.url!.trim().isNotEmpty)
-                          _buildWebLinkChip(onTap: () => _openWebUrl(e.commonPart!.url!)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _border),
         ),
-      );
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    if (expanded) {
+                      _collapsedDayKeys.add(key);
+                    } else {
+                      _collapsedDayKeys.remove(key);
+                    }
+                  });
+                },
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          dayLabel,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        expanded ? Icons.expand_less : Icons.expand_more,
+                        color: _textSecondary,
+                        size: 22,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (expanded) ...[
+              Divider(height: 1, thickness: 1, color: _border),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final a in entry.accommodations)
+                      _buildAccommodationDayRow(
+                        loc,
+                        a,
+                        entry.day,
+                        showParticipantLabels,
+                        participantNamesMap,
+                      ),
+                    for (final e in entry.events)
+                      _buildEventDayRow(
+                        loc,
+                        e,
+                        showParticipantLabels,
+                        participantNamesMap,
+                        dimPastInCourse: dimPastInCourse,
+                        now: now,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccommodationDayRow(
+    AppLocalizations loc,
+    Accommodation a,
+    DateTime day,
+    bool showParticipantLabels,
+    Map<String, String> participantNamesMap,
+  ) {
+    final stayDays = _accommodationStayDays(a).toList();
+    final total = stayDays.isEmpty ? 1 : stayDays.length;
+    final dayOnly = _dateOnly(day);
+    var current = stayDays.indexWhere((d) => d == dayOnly) + 1;
+    if (current <= 0) current = 1;
+
+    final parts = <String>[
+      loc.myPlanSummaryAccommodationRowLabel,
+      loc.myPlanSummaryAccommodationNightOf(current, total),
+    ];
+    if (showParticipantLabels) {
+      parts.add(_participantLabelForAccommodation(a, participantNamesMap, loc));
     }
-    return list;
+    return _buildSummaryLinkRow(
+      text: a.hotelName,
+      leadingIcon: Icons.hotel_outlined,
+      forceShowLeadingIcon: true,
+      onOpenDetail: widget.onOpenAccommodation != null
+          ? () => widget.onOpenAccommodation!(a)
+          : null,
+      mapsQuery: a.commonPart?.address,
+      webUrl: a.commonPart?.url,
+      subtitle: parts.join(' · '),
+      subtitleEmphasizeAll:
+          showParticipantLabels && a.participantTrackIds.isEmpty,
+    );
+  }
+
+  Widget _buildEventDayRow(
+    AppLocalizations loc,
+    Event e,
+    bool showParticipantLabels,
+    Map<String, String> participantNamesMap, {
+    required bool dimPastInCourse,
+    required DateTime now,
+  }) {
+    final participantLabel = showParticipantLabels
+        ? _participantLabelForEvent(e, participantNamesMap, loc)
+        : null;
+    final past = dimPastInCourse && _isEventPast(e, now);
+    final isDraft = e.isDraft || (e.commonPart?.isDraft == true);
+    final typeBadge = _inlineTypeBadge(e, loc);
+    return _buildSummaryLinkRow(
+      text: _chronologicalEventTitle(e),
+      timeLabel: _formatEventTime(e, loc),
+      leadingIcon: _eventTypeIcon(e),
+      onOpenDetail:
+          widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
+      mapsQuery: e.commonPart?.location,
+      routeUrl: PlanSummaryShareContent.eventRouteUrl(e),
+      webUrl: e.commonPart?.url,
+      subtitle: participantLabel,
+      subtitleEmphasizeAll:
+          showParticipantLabels && e.participantTrackIds.isEmpty,
+      mutedPast: past,
+      showDraftBadge: isDraft,
+      typeBadgeIcon: typeBadge?.icon,
+      typeBadgeTooltip: typeBadge?.tooltip,
+    );
   }
 }

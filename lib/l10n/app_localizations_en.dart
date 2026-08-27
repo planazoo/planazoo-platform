@@ -938,7 +938,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createPlanGeneralSectionTitle => 'General Information';
 
   @override
-  String get createPlanNameLabel => 'Plan name';
+  String get createPlanNameLabel => 'Name';
 
   @override
   String get createPlanNameHint => 'Eg: London Vacation 2025';
@@ -999,7 +999,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createPlanConfigurationSectionTitle => 'Configuration';
 
   @override
-  String get createPlanCurrencyLabel => 'Plan currency';
+  String get createPlanCurrencyLabel => 'Currency';
 
   @override
   String get createPlanVisibilityLabel => 'Visibility';
@@ -1032,10 +1032,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planDetailsInfoTitle => 'Detailed information';
 
   @override
-  String get planDetailsMetaTitle => 'Plan identifiers';
+  String get planDetailsMetaTitle => 'IDs';
 
   @override
-  String get planTimezoneLabel => 'Plan timezone';
+  String get planTimezoneLabel => 'Timezone';
 
   @override
   String get planTimezoneHelper =>
@@ -1048,7 +1048,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planDetailsParticipantsTitle => 'Participants';
 
   @override
-  String get planDetailsParticipantsManageLink => 'Manage participants';
+  String get planDetailsParticipantsManageLink => 'Manage';
 
   @override
   String get planDetailsAnnouncementsTitle => 'Announcements';
@@ -1061,7 +1061,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpMoreInfo => 'More information';
 
   @override
-  String get planDetailsBudgetLabel => 'Estimated budget';
+  String get planDetailsBudgetLabel => 'Budget';
 
   @override
   String get planBudgetLabelShort => 'Budget';
@@ -1120,6 +1120,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planDetailsDatesLabel => 'Dates';
+
+  @override
+  String get planDetailsDateStartShort => 'Start';
+
+  @override
+  String get planDetailsDateEndShort => 'End';
 
   @override
   String get planDetailsStateLabel => 'Status';
@@ -1417,7 +1423,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accommodationTypeOther => 'Other';
 
   @override
-  String get planEventColorsTitle => 'Calendar colors';
+  String get planEventColorsTitle => 'Colors';
 
   @override
   String get planEventColorsSubtitle =>
@@ -2042,7 +2048,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planCalendarEmpty => 'No plans scheduled in these months.';
 
   @override
-  String get createPlanDatesSectionTitle => 'Plan dates';
+  String get createPlanDatesSectionTitle => 'Dates';
 
   @override
   String createPlanStartDateLabel(String date) {
@@ -2773,7 +2779,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get color => 'Color:';
+  String get color => 'Color';
 
   @override
   String get participantsLabel => 'Participants:';
@@ -3065,6 +3071,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myPlanSummaryAccommodation => 'Accommodations';
 
   @override
+  String get myPlanSummaryAccommodationRowLabel => 'Accommodation';
+
+  @override
+  String myPlanSummaryAccommodationNightOf(int current, int total) {
+    return 'night $current/$total';
+  }
+
+  @override
   String get myPlanSummaryImportant => 'Key information';
 
   @override
@@ -3104,6 +3118,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get myPlanSummaryDraftsOnlyTooltip => 'Drafts only';
+
+  @override
+  String get myPlanSummaryDraftBadgeLetter => 'D';
 
   @override
   String get myPlanSummaryShareTooltip => 'Share summary';
@@ -3768,7 +3785,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invitationsSectionTitle => 'Invitations';
 
   @override
-  String get entityAttachmentsPlanTitle => 'Plan files';
+  String get entityAttachmentsPlanTitle => 'Files';
 
   @override
   String get entityAttachmentsEventTitle => 'Event files';

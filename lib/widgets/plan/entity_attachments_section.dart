@@ -101,57 +101,66 @@ class EntityAttachmentsSection extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => openUrl(file.url),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  file.name,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  // Secundario (como value Settings): se distingue de «Archivos».
+        child: SizedBox(
+          height: IosFormColors.rowHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: IosFormColors.rowPaddingH,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    file.name,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: IosFormColors.textSecondary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  formatFileSize(file.size),
                   style: const TextStyle(
                     color: IosFormColors.textSecondary,
                     fontSize: 17,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                formatFileSize(file.size),
-                style: const TextStyle(
-                  color: IosFormColors.textSecondary,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              if (canManage) ...[
-                const SizedBox(width: 4),
-                IconButton(
-                  tooltip: loc.entityAttachmentsDeleteTitle,
-                  onPressed: isUploading ? null : () => onDelete(file),
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  color: IosFormColors.textTertiary,
-                  constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
+                if (canManage) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: loc.entityAttachmentsDeleteTitle,
+                    onPressed: isUploading ? null : () => onDelete(file),
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    color: IosFormColors.textTertiary,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                      maxWidth: 28,
+                      maxHeight: 28,
+                    ),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
-                  padding: EdgeInsets.zero,
-                  visualDensity: VisualDensity.compact,
-                ),
-              ] else ...[
-                const SizedBox(width: 2),
-                const Icon(
-                  Icons.chevron_right,
-                  color: IosFormColors.textTertiary,
-                  size: 20,
-                ),
+                ] else ...[
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: IosFormColors.textTertiary,
+                    size: 20,
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

@@ -37,7 +37,9 @@ import 'package:unp_calendario/widgets/help/help_icon_button.dart';
 import 'package:unp_calendario/shared/utils/color_utils.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_event_accent_colors.dart';
 import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
+import 'package:unp_calendario/features/calendar/domain/models/event.dart'
+    show EventDocument;
 
 class PlanDataScreen extends ConsumerStatefulWidget {
   final Plan plan;
@@ -103,7 +105,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _referenceNotesController;
   late TextEditingController _budgetController;
-  late String _selectedVisibility;
   late String _selectedCurrency;
   late DateTime _startDate;
   late DateTime _endDate;
@@ -120,6 +121,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   bool _infoSectionAnnouncementsExpanded = false;
   bool _infoSectionMetaExpanded = false;
   bool _infoSectionDangerExpanded = false;
+  bool _infoSectionColorsExpanded = false;
 
   /// Descripción del plan: bloque expandible (cerrado por defecto).
   bool _planDescriptionExpanded = false;
@@ -159,7 +161,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     _budgetController = TextEditingController(
       text: _budget != null ? _formatBudgetForInput(_budget!) : '',
     );
-    _selectedVisibility = currentPlan.visibility ?? 'private';
     _selectedCurrency = currentPlan.currency;
     _startDate = currentPlan.startDate;
     _endDate = currentPlan.endDate;
@@ -190,7 +191,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     _budget = plan.budget;
     _budgetController.text =
         _budget != null ? _formatBudgetForInput(_budget!) : '';
-    _selectedVisibility = plan.visibility ?? 'private';
     _selectedCurrency = plan.currency;
     _startDate = plan.startDate;
     _endDate = plan.endDate;
@@ -263,7 +263,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     _budget = currentPlan.budget;
     _budgetController.text =
         _budget != null ? _formatBudgetForInput(_budget!) : '';
-    _selectedVisibility = currentPlan.visibility ?? 'private';
     _selectedCurrency = currentPlan.currency;
     _startDate = currentPlan.startDate;
     _endDate = currentPlan.endDate;
@@ -429,14 +428,14 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     IosGroupedCard(
                       children: [
                         IosSettingsRow(
-                          label: loc.invitationLabelStartDate,
+                          label: loc.planDetailsDateStartShort,
                           value: DateFormatter.formatDate(tempStart),
                           chevron: true,
                           onTap: () => pickStart(setInner),
                         ),
                         const IosRowSeparator(),
                         IosSettingsRow(
-                          label: loc.invitationLabelEndDate,
+                          label: loc.planDetailsDateEndShort,
                           value: DateFormatter.formatDate(tempEnd),
                           chevron: true,
                           onTap: () => pickEnd(setInner),
@@ -500,7 +499,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         startDate: normalizedStart,
         endDate: normalizedEnd,
         columnCount: newColumnCount,
-        visibility: _selectedVisibility,
         currency: _selectedCurrency,
         timezone: _selectedTimezone,
         budget: _budget,
@@ -568,7 +566,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        IosSectionLabel(loc.planDetailsParticipantsTitle),
         participantsAsync.when(
           data: (participants) {
             return IosGroupedCard(
@@ -584,42 +581,46 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                     helpId: HelpContextIds.planDetailsParticipants,
                     contextLabel: loc.planDetailsParticipantsTitle,
                     defaultBody: loc.planDetailsParticipantsHelp,
+                    compact: true,
                   ),
                 ),
                 if (_infoSectionParticipantsExpanded) ...[
                   const IosRowSeparator(),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (widget.onManageParticipants != null) ...[
-                          IosSettingsRow(
-                            label: loc.planDetailsParticipantsManageLink,
-                            value: '',
-                            valueColor: IosFormColors.accent,
-                            chevron: true,
-                            onTap: widget.onManageParticipants,
-                          ),
-                          const IosRowSeparator(),
-                        ],
-                        if (participants.isEmpty)
-                          Text(
-                            loc.planDetailsNoParticipants,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: IosFormColors.textSecondary,
-                            ),
-                          )
-                        else
-                          ParticipantsListWidget(
-                            planId: currentPlan.id!,
-                            showActions: false,
-                            compact: isCompact,
-                          ),
-                      ],
+                  if (widget.onManageParticipants != null) ...[
+                    IosSettingsRow(
+                      label: loc.planDetailsParticipantsManageLink,
+                      value: '',
+                      valueColor: IosFormColors.accent,
+                      chevron: true,
+                      onTap: widget.onManageParticipants,
                     ),
-                  ),
+                    const IosRowSeparator(),
+                  ],
+                  if (participants.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: IosFormColors.rowPaddingH,
+                        vertical: IosFormColors.rowPaddingV,
+                      ),
+                      child: Text(
+                        loc.planDetailsNoParticipants,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: IosFormColors.textSecondary,
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: IosFormColors.rowPaddingV,
+                      ),
+                      child: ParticipantsListWidget(
+                        planId: currentPlan.id!,
+                        showActions: false,
+                        compact: isCompact,
+                      ),
+                    ),
                 ],
               ],
             );
@@ -697,6 +698,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
         canEdit: _canEditPlanDetails,
         saving: _isSavingPlan,
         centeredTitle: true,
+        modalIconActions: true,
         editLabel: loc.edit,
         cancelLabel: loc.planDetailsBarCancelShort,
         saveLabel: loc.planDetailsBarSaveShort,
@@ -728,12 +730,27 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       final verticalPadding = isCompact ? 8.0 : 16.0;
       final dateRange =
           '${DateFormatter.formatDate(_startDate)} – ${DateFormatter.formatDate(_endDate)}';
+      final stateInfo = PlanStateService.getStateDisplayInfo(currentPlan.state);
+      final stateLabel = localizedPlanStateLabel(loc, currentPlan.state);
+      final stateColor = Color(stateInfo['color'] as int);
+      final stateTransitions = _getAvailableStateTransitions(loc);
+      final canChangeState = _isEditing &&
+          isOrganizer &&
+          stateTransitions.isNotEmpty &&
+          !widget.forceReadOnly;
       final heroChips = <IosHeroChipData>[
         if (participantsCount > 0)
           IosHeroChipData(
             loc.planDetailsParticipantsChip(participantsCount),
             onTap: scrollToParticipants,
           ),
+        IosHeroChipData(
+          stateLabel,
+          color: stateColor,
+          onTap: canChangeState
+              ? () => _pickPlanState(loc, stateTransitions)
+              : null,
+        ),
       ];
       if (DaysRemainingUtils.shouldShowDaysRemaining(currentPlan)) {
         final days = DaysRemainingUtils.calculateDaysRemaining(currentPlan);
@@ -760,46 +777,72 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           key: _planFormKey,
           child: Builder(
             builder: (context) {
-              const double cardSpacing = 8;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (widget.forceReadOnly ||
-                      PlanStatePermissions.isReadOnly(currentPlan)) ...[
-                    _buildReadOnlyWarning(),
-                    const SizedBox(height: 12),
-                  ],
-                  IosHeroHeader(
-                    title: (!_isEditing && widget.showAppBar)
-                        ? (_nameController.text.trim().isEmpty
-                            ? currentPlan.name
-                            : _nameController.text.trim())
-                        : null,
-                    subtitle: dateRange,
-                    chips: heroChips,
-                    leading: _buildCompactPlanAvatar(
-                      size: isCompact ? 56 : 64,
-                    ),
+              final blocks = <Widget?>[
+                if (widget.forceReadOnly ||
+                    PlanStatePermissions.isReadOnly(currentPlan))
+                  _buildReadOnlyWarning(),
+                IosHeroHeader(
+                  title: _isEditing
+                      ? null
+                      : (_nameController.text.trim().isEmpty
+                          ? currentPlan.name
+                          : _nameController.text.trim()),
+                  titleWidget: _isEditing
+                      ? TextFormField(
+                          controller: _nameController,
+                          style: const TextStyle(
+                            color: IosFormColors.textPrimary,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.6,
+                            height: 1.15,
+                          ),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                            hintText: loc.createPlanNameHint,
+                            hintStyle: const TextStyle(
+                              color: IosFormColors.textTertiary,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.6,
+                              height: 1.15,
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return loc.createPlanNameRequiredError;
+                            }
+                            return null;
+                          },
+                          onChanged: (_) {
+                            _markDirty();
+                            setState(() {});
+                          },
+                        )
+                      : null,
+                  subtitle: dateRange,
+                  onSubtitleTap: _isEditing ? _showDatesModal : null,
+                  chips: heroChips,
+                  leading: _buildCompactPlanAvatar(
+                    size: isCompact ? 56 : 64,
                   ),
-                  const SizedBox(height: cardSpacing),
-                  _buildInfoSection(loc,
-                      showBaseInfo: true,
-                      isCompact: isCompact,
-                      isOrganizer: isOrganizer),
-                  const SizedBox(height: cardSpacing),
-                  _buildPlanSummarySection(
-                    loc,
+                ),
+                _buildDescriptionSection(loc),
+                _buildInfoSection(loc,
+                    showBaseInfo: true, isCompact: isCompact),
+                _buildNotesSection(loc),
+                _buildPlanAttachmentsSection(
+                  loc,
+                  canManage: canManagePlanAttachments,
+                ),
+                if (currentPlan.id != null)
+                  UpcomingCancellationsSection(
+                    planId: currentPlan.id!,
                     isCompact: isCompact,
-                    canManagePlanAttachments: canManagePlanAttachments,
                   ),
-                  if (currentPlan.id != null) ...[
-                    const SizedBox(height: cardSpacing),
-                    UpcomingCancellationsSection(
-                      planId: currentPlan.id!,
-                      isCompact: isCompact,
-                    ),
-                  ],
-                  const SizedBox(height: cardSpacing),
+                if (currentPlan.id != null)
                   KeyedSubtree(
                     key: _participantsSectionKey,
                     child: _buildParticipantsSection(
@@ -809,30 +852,39 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                       isCompact: isCompact,
                     ),
                   ),
-                  const SizedBox(height: cardSpacing),
-                  if (isOrganizer && !widget.forceReadOnly) ...[
-                    _buildEventColorsSection(loc, isCompact: isCompact),
-                    const SizedBox(height: cardSpacing),
-                    _buildAnnouncementsSection(isCompact: isCompact),
-                    const SizedBox(height: cardSpacing),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        IosSectionLabel(loc.planDetailsMetaTitle),
-                        _buildInfoSection(loc,
-                            showBaseInfo: false,
-                            isCompact: isCompact,
-                            isOrganizer: isOrganizer),
-                      ],
-                    ),
-                    const SizedBox(height: cardSpacing),
-                  ],
-                  if (!widget.forceReadOnly) ...[
-                    _buildLeavePlanButton(),
-                    const SizedBox(height: 12),
-                    _buildDeleteButton(),
-                  ],
+                if (isOrganizer && !widget.forceReadOnly) ...[
+                  _buildEventColorsSection(loc, isCompact: isCompact),
+                  _buildAnnouncementsSection(isCompact: isCompact),
+                  _buildInfoSection(loc,
+                      showBaseInfo: false, isCompact: isCompact),
                 ],
+                if (!widget.forceReadOnly) ...[
+                  _buildLeavePlanButton(),
+                  _buildDeleteButton(),
+                ],
+              ];
+
+              final children = <Widget>[];
+              for (final block in blocks) {
+                if (block == null) continue;
+                // p. ej. UpcomingCancellations vacío → SizedBox.shrink(): no cuenta.
+                if (block is SizedBox &&
+                    block.child == null &&
+                    (block.height ?? 0) == 0 &&
+                    (block.width ?? 0) == 0) {
+                  continue;
+                }
+                if (children.isNotEmpty) {
+                  children.add(
+                    const SizedBox(height: IosFormColors.cardGap),
+                  );
+                }
+                children.add(block);
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: children,
               );
             },
           ),
@@ -904,9 +956,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   Widget _buildInfoSection(AppLocalizations loc,
-      {required bool showBaseInfo,
-      bool isCompact = false,
-      bool isOrganizer = false}) {
+      {required bool showBaseInfo, bool isCompact = false}) {
     if (!showBaseInfo) {
       return IosGroupedCard(
         children: [
@@ -933,9 +983,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       );
     }
 
-    final visibilityShort = _selectedVisibility == 'public'
-        ? loc.createPlanVisibilityPublicShort
-        : loc.createPlanVisibilityPrivateShort;
     final tz = _selectedTimezone ??
         currentPlan.timezone ??
         TimezoneService.getSystemTimezone();
@@ -943,29 +990,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     final budgetText = _budget == null
         ? '—'
         : '${_formatBudgetForInput(_budget!)} $_selectedCurrency';
-    final datesText =
-        '${DateFormatter.formatDate(_startDate)} – ${DateFormatter.formatDate(_endDate)}';
-    final stateInfo = PlanStateService.getStateDisplayInfo(currentPlan.state);
-    final stateLabel = localizedPlanStateLabel(loc, currentPlan.state);
-    final stateColor = Color(stateInfo['color'] as int);
-    final stateTransitions = _getAvailableStateTransitions(loc);
-    final canChangeState = _isEditing &&
-        isOrganizer &&
-        stateTransitions.isNotEmpty &&
-        !widget.forceReadOnly;
-
-    Widget stateRow({required bool chevron}) {
-      return IosSettingsRow(
-        label: loc.planDetailsStateLabel,
-        value: stateLabel,
-        valueDotColor: stateColor,
-        valueColor: stateColor,
-        chevron: chevron && canChangeState,
-        onTap: canChangeState
-            ? () => _pickPlanState(loc, stateTransitions)
-            : null,
-      );
-    }
 
     if (!_isEditing) {
       return Column(
@@ -974,13 +998,6 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
           IosSectionLabel(loc.planDetailsSectionGeneral),
           IosGroupedCard(
             children: [
-              stateRow(chevron: true),
-              const IosRowSeparator(),
-              IosSettingsRow(
-                label: loc.createPlanVisibilityLabel,
-                value: visibilityShort,
-              ),
-              const IosRowSeparator(),
               IosSettingsRow(
                 label: loc.planTimezoneLabel,
                 value: tzLabel,
@@ -1002,43 +1019,13 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     }
 
     // Modo edición: campos interactivos en card agrupada.
+    // Nombre, fechas y estado viven en el hero (sin duplicar).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         IosSectionLabel(loc.planDetailsSectionGeneral),
         IosGroupedCard(
           children: [
-            IosEditField(
-              label: loc.createPlanNameLabel,
-              controller: _nameController,
-              onChanged: (_) {
-                _markDirty();
-                setState(() {});
-              },
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return loc.createPlanNameRequiredError;
-                }
-                return null;
-              },
-            ),
-            const IosRowSeparator(),
-            IosSettingsRow(
-              label: loc.planDetailsDatesLabel,
-              value: datesText,
-              chevron: true,
-              onTap: _showDatesModal,
-            ),
-            const IosRowSeparator(),
-            stateRow(chevron: true),
-            const IosRowSeparator(),
-            IosSettingsRow(
-              label: loc.createPlanVisibilityLabel,
-              value: visibilityShort,
-              chevron: true,
-              onTap: () => _pickVisibility(loc),
-            ),
-            const IosRowSeparator(),
             IosSettingsRow(
               label: loc.planTimezoneLabel,
               value: tzLabel,
@@ -1053,31 +1040,11 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
               onTap: () => _pickCurrency(loc),
             ),
             const IosRowSeparator(),
-            IosEditField(
-              label: '${loc.planDetailsBudgetLabel} ($_selectedCurrency)',
-              controller: _budgetController,
-              hint: loc.planBudgetLabelShort,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              validator: (value) {
-                final trimmed = value?.trim() ?? '';
-                if (trimmed.isEmpty) return null;
-                final sanitized = trimmed.replaceAll(',', '.');
-                final parsed = double.tryParse(sanitized);
-                if (parsed == null || parsed < 0) {
-                  return loc.planDetailsBudgetInvalid;
-                }
-                return null;
-              },
-              onChanged: (raw) {
-                final trimmed = raw.trim();
-                final sanitized = trimmed.replaceAll(',', '.');
-                setState(() {
-                  _budget =
-                      trimmed.isEmpty ? null : double.tryParse(sanitized);
-                });
-                _markDirty();
-              },
+            IosSettingsRow(
+              label: loc.planDetailsBudgetLabel,
+              value: budgetText,
+              chevron: true,
+              onTap: () => _pickBudget(loc),
             ),
           ],
         ),
@@ -1085,26 +1052,119 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     );
   }
 
-  Future<void> _pickVisibility(AppLocalizations loc) async {
-    final picked = await IosFormPickerSheet.show<String>(
-      context: context,
-      title: loc.createPlanVisibilityLabel,
-      options: [
-        IosFormPickerOption(
-          value: 'private',
-          title: loc.createPlanVisibilityPrivateShort,
-          selected: _selectedVisibility == 'private',
-        ),
-        IosFormPickerOption(
-          value: 'public',
-          title: loc.createPlanVisibilityPublicShort,
-          selected: _selectedVisibility == 'public',
-        ),
-      ],
+  Future<void> _pickBudget(AppLocalizations loc) async {
+    final controller = TextEditingController(
+      text: _budget != null ? _formatBudgetForInput(_budget!) : '',
     );
-    if (!mounted || picked == null || picked == _selectedVisibility) return;
+    String? errorText;
+
+    final applied = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: IosFormColors.groupedBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setInner) {
+            final bottomInset = MediaQuery.viewInsetsOf(ctx).bottom;
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + bottomInset),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: IosFormColors.separator,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      loc.planDetailsBudgetLabel,
+                      style: const TextStyle(
+                        color: IosFormColors.textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    IosGroupedCard(
+                      children: [
+                        IosEditField(
+                          label: _selectedCurrency,
+                          controller: controller,
+                          hint: loc.planBudgetLabelShort,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          onChanged: (_) {
+                            if (errorText != null) {
+                              setInner(() => errorText = null);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    if (errorText != null) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          errorText!,
+                          style: const TextStyle(
+                            color: IosFormColors.danger,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    IosFormSheetActions(
+                      cancelLabel: loc.cancel,
+                      confirmLabel: loc.planNotesApplySelection,
+                      onCancel: () => Navigator.of(ctx).pop(false),
+                      onConfirm: () {
+                        final trimmed = controller.text.trim();
+                        if (trimmed.isEmpty) {
+                          Navigator.of(ctx).pop(true);
+                          return;
+                        }
+                        final sanitized = trimmed.replaceAll(',', '.');
+                        final parsed = double.tryParse(sanitized);
+                        if (parsed == null || parsed < 0) {
+                          setInner(
+                            () => errorText = loc.planDetailsBudgetInvalid,
+                          );
+                          return;
+                        }
+                        controller.text = _formatBudgetForInput(parsed);
+                        Navigator.of(ctx).pop(true);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    final raw = controller.text.trim();
+    controller.dispose();
+    if (!mounted || applied != true) return;
+
+    final sanitized = raw.replaceAll(',', '.');
+    final parsed = raw.isEmpty ? null : double.tryParse(sanitized);
     setState(() {
-      _selectedVisibility = picked;
+      _budget = parsed;
+      _budgetController.text =
+          parsed != null ? _formatBudgetForInput(parsed) : '';
       _markDirty();
     });
   }
@@ -1314,14 +1374,14 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
   }
 
   /// Botón "Salir del plan" para participantes (no organizador). Elimina su participación.
-  Widget _buildLeavePlanButton() {
+  Widget? _buildLeavePlanButton() {
     final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
     if (currentPlan.id == null || currentUser == null) {
-      return const SizedBox.shrink();
+      return null;
     }
     final isOwner = currentUser.id == currentPlan.userId;
-    if (isOwner) return const SizedBox.shrink();
+    if (isOwner) return null;
 
     final participantsAsync =
         ref.watch(planParticipantsProvider(currentPlan.id!));
@@ -1329,7 +1389,7 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
       data: (list) => list.any((p) => p.userId == currentUser.id),
       orElse: () => false,
     );
-    if (!isParticipant) return const SizedBox.shrink();
+    if (!isParticipant) return null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1417,48 +1477,53 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
     }
   }
 
-  Widget _buildDeleteButton() {
+  Widget? _buildDeleteButton() {
     final loc = AppLocalizations.of(context)!;
     final currentUser = ref.watch(currentUserProvider);
     final isOwner = currentUser?.id == currentPlan.userId;
     if (!isOwner) {
-      return const SizedBox.shrink();
+      return null;
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return IosGroupedCard(
       children: [
-        IosGroupedCard(
-          children: [
-            IosCollapsibleHeader(
-              title: loc.planInfoDangerZoneTitle,
-              expanded: _infoSectionDangerExpanded,
-              onToggle: () => setState(() =>
-                  _infoSectionDangerExpanded = !_infoSectionDangerExpanded),
-              titleColor: IosFormColors.danger,
-            ),
-            if (_infoSectionDangerExpanded) ...[
-              const IosRowSeparator(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Text(
-                  loc.planInfoDangerZoneSubtitle,
-                  style: const TextStyle(
-                    color: IosFormColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: IosDestructiveTile(
-                  label: loc.planDeleteDialogConfirm,
-                  onPressed: () => _showDeleteConfirmation(context),
-                ),
-              ),
-            ],
-          ],
+        IosCollapsibleHeader(
+          title: loc.planInfoDangerZoneTitle,
+          expanded: _infoSectionDangerExpanded,
+          onToggle: () => setState(() =>
+              _infoSectionDangerExpanded = !_infoSectionDangerExpanded),
+          titleColor: IosFormColors.danger,
         ),
+        if (_infoSectionDangerExpanded) ...[
+          const IosRowSeparator(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              IosFormColors.rowPaddingH,
+              IosFormColors.rowPaddingV,
+              IosFormColors.rowPaddingH,
+              8,
+            ),
+            child: Text(
+              loc.planInfoDangerZoneSubtitle,
+              style: const TextStyle(
+                color: IosFormColors.textSecondary,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              IosFormColors.rowPaddingH,
+              0,
+              IosFormColors.rowPaddingH,
+              IosFormColors.rowPaddingV,
+            ),
+            child: IosDestructiveTile(
+              label: loc.planDeleteDialogConfirm,
+              onPressed: () => _showDeleteConfirmation(context),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1597,63 +1662,82 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return IosGroupedCard(
       children: [
-        IosSectionLabel(loc.planEventColorsTitle),
-        IosGroupedCard(
-          children: [
+        IosCollapsibleHeader(
+          title: loc.planEventColorsTitle,
+          expanded: _infoSectionColorsExpanded,
+          onToggle: () => _setScreenState(
+            () => _infoSectionColorsExpanded = !_infoSectionColorsExpanded,
+          ),
+          trailing: IosFormColorSwatch(
+            color: ColorUtils.colorFromName(base),
+            size: 20,
+          ),
+        ),
+        if (_infoSectionColorsExpanded) ...[
+          const IosRowSeparator(),
+          colorRow(
+            loc.planEventColorsBase,
+            base,
+            () => _pickBaseColor(loc),
+          ),
+          const IosRowSeparator(),
+          IosGroupedCardCaption(loc.planEventColorsSubtitle),
+          for (var i = 0; i < PlanEventAccentColors.typeFamilies.length; i++) ...[
+            if (i > 0) const IosRowSeparator(),
             colorRow(
-              loc.planEventColorsBase,
-              base,
-              () => _pickBaseColor(loc),
-            ),
-            const IosRowSeparator(),
-            IosGroupedCardCaption(loc.planEventColorsSubtitle),
-            for (var i = 0; i < PlanEventAccentColors.typeFamilies.length; i++) ...[
-              if (i > 0) const IosRowSeparator(),
-              colorRow(
-                _familyLabel(loc, PlanEventAccentColors.typeFamilies[i]),
-                PlanEventAccentColors.effectiveFamilyColor(
-                  previewPlan,
-                  PlanEventAccentColors.typeFamilies[i],
-                ),
-                () => _pickFamilyColor(
-                  loc,
-                  PlanEventAccentColors.typeFamilies[i],
-                ),
+              _familyLabel(loc, PlanEventAccentColors.typeFamilies[i]),
+              PlanEventAccentColors.effectiveFamilyColor(
+                previewPlan,
+                PlanEventAccentColors.typeFamilies[i],
               ),
-            ],
-            if (canEditColors) ...[
-              const IosRowSeparator(),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _isSavingPlan ? null : _restoreDraftEventColorDefaults,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    child: Text(
-                      loc.planEventColorsRestore,
-                      style: TextStyle(
-                        color: IosFormColors.accent,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w400,
+              () => _pickFamilyColor(
+                loc,
+                PlanEventAccentColors.typeFamilies[i],
+              ),
+            ),
+          ],
+          if (canEditColors) ...[
+            const IosRowSeparator(),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _isSavingPlan ? null : _restoreDraftEventColorDefaults,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: IosFormColors.rowPaddingH,
+                    vertical: IosFormColors.rowPaddingV,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: IosFormColors.rowMinHeight -
+                          IosFormColors.rowPaddingV * 2,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        loc.planEventColorsRestore,
+                        style: TextStyle(
+                          color: IosFormColors.accent,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ],
-            if (_isSavingPlan && _isUpdatingEventColors) ...[
-              const IosRowSeparator(),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                child: LinearProgressIndicator(minHeight: 2),
-              ),
-            ],
+            ),
           ],
-        ),
+          if (_isSavingPlan && _isUpdatingEventColors) ...[
+            const IosRowSeparator(),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: LinearProgressIndicator(minHeight: 2),
+            ),
+          ],
+        ],
       ],
     );
   }
@@ -1753,58 +1837,22 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     }
   }
 
-  Widget _buildPlanSummarySection(
-    AppLocalizations loc, {
-    bool isCompact = false,
-    bool canManagePlanAttachments = false,
-  }) {
+  Widget? _buildDescriptionSection(AppLocalizations loc) {
+    final text = _descriptionController.text;
+    final hasDescription = text.trim().isNotEmpty;
+
     if (!_isEditing) {
-      final hasDescription = _descriptionController.text.trim().isNotEmpty;
-      final hasNotes = _referenceNotesController.text.trim().isNotEmpty;
-      if (!hasDescription && !hasNotes) {
-        return _buildPlanAttachmentsBar(
-          loc,
-          canManage: false,
-          isCompact: isCompact,
-        );
-      }
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      if (!hasDescription) return null;
+      return IosGroupedCard(
         children: [
-          IosSectionLabel(loc.planDetailsSectionDescription),
-          IosGroupedCard(
-            children: [
-              if (hasDescription)
-                IosExpandableText(
-                  text: _descriptionController.text,
-                  expanded: _planDescriptionExpanded,
-                  onToggle: () => _setScreenState(
-                    () =>
-                        _planDescriptionExpanded = !_planDescriptionExpanded,
-                  ),
-                  seeMoreLabel: loc.planDetailsSeeMore,
-                  seeLessLabel: loc.planDetailsSeeLess,
-                ),
-              if (hasDescription && hasNotes) const IosRowSeparator(),
-              if (hasNotes) ...[
-                if (hasDescription)
-                  IosGroupedCardCaption(loc.planDetailsSectionNotes),
-                IosExpandableText(
-                  text: _referenceNotesController.text,
-                  expanded: _viewNotesExpanded,
-                  onToggle: () => _setScreenState(
-                    () => _viewNotesExpanded = !_viewNotesExpanded,
-                  ),
-                  seeMoreLabel: loc.planDetailsSeeMore,
-                  seeLessLabel: loc.planDetailsSeeLess,
-                ),
-              ],
-            ],
-          ),
-          _buildPlanAttachmentsBar(
-            loc,
-            canManage: false,
-            isCompact: isCompact,
+          IosExpandableText(
+            text: text,
+            expanded: _planDescriptionExpanded,
+            onToggle: () => _setScreenState(
+              () => _planDescriptionExpanded = !_planDescriptionExpanded,
+            ),
+            seeMoreLabel: loc.planDetailsSeeMore,
+            seeLessLabel: loc.planDetailsSeeLess,
           ),
         ],
       );
@@ -1817,20 +1865,54 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
         IosGroupedCard(
           children: [
             IosEditField(
-              label: loc.createPlanDescriptionLabel,
+              label: '',
               controller: _descriptionController,
               hint: loc.createPlanDescriptionHint,
-              minLines: 3,
+              minLines: 2,
               maxLines: 8,
               onChanged: (_) => _markDirty(),
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget? _buildNotesSection(AppLocalizations loc) {
+    final text = _referenceNotesController.text;
+    final hasNotes = text.trim().isNotEmpty;
+
+    if (!_isEditing) {
+      if (!hasNotes) return null;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IosSectionLabel(loc.planDetailsSectionNotes),
+          IosGroupedCard(
+            children: [
+              IosExpandableText(
+                text: text,
+                expanded: _viewNotesExpanded,
+                onToggle: () => _setScreenState(
+                  () => _viewNotesExpanded = !_viewNotesExpanded,
+                ),
+                seeMoreLabel: loc.planDetailsSeeMore,
+                seeLessLabel: loc.planDetailsSeeLess,
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
         IosSectionLabel(loc.planDetailsSectionNotes),
         IosGroupedCard(
           children: [
             IosEditField(
-              label: loc.planReferenceNotesTitle,
+              label: '',
               controller: _referenceNotesController,
               hint: loc.planReferenceNotesHint,
               minLines: 3,
@@ -1839,139 +1921,39 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
             ),
           ],
         ),
-        _buildPlanAttachmentsBar(
-          loc,
-          canManage: canManagePlanAttachments,
-          isCompact: isCompact,
-        ),
       ],
     );
   }
 
-  Widget _buildPlanAttachmentsBar(AppLocalizations loc,
-      {required bool canManage, required bool isCompact}) {
-    final files = _planAttachments;
-    final showInEdit = _isEditing && canManage;
-    if (files.isEmpty && !showInEdit) {
-      return const SizedBox.shrink();
+  Widget? _buildPlanAttachmentsSection(
+    AppLocalizations loc, {
+    required bool canManage,
+  }) {
+    final files = _planAttachments
+        .map(EventDocument.fromPlanAttachment)
+        .toList(growable: false);
+    final showManage = _isEditing && canManage && currentPlan.id != null;
+    if (files.isEmpty && !showManage) {
+      return null;
     }
 
-    final children = <Widget>[];
-    if (showInEdit) {
-      children.add(
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: (_isUploadingAttachment || currentPlan.id == null)
-                ? null
-                : _pickAndUploadPlanAttachment,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  if (_isUploadingAttachment)
-                    const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  else
-                    Icon(Icons.upload_file,
-                        size: 20, color: IosFormColors.accent),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _isUploadingAttachment
-                          ? loc.entityAttachmentsUploading
-                          : loc.entityAttachmentsUpload,
-                      style: TextStyle(
-                        color: IosFormColors.accent,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (files.isEmpty) {
-      if (children.isNotEmpty) children.add(const IosRowSeparator());
-      children.add(
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Text(
-            loc.entityAttachmentsEmpty,
-            style: const TextStyle(
-              fontSize: 15,
-              color: IosFormColors.textSecondary,
-            ),
-          ),
-        ),
-      );
-    } else {
-      for (var i = 0; i < files.length; i++) {
-        final file = files[i];
-        if (children.isNotEmpty) children.add(const IosRowSeparator());
-        children.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () => _openPlanAttachment(file.url),
-                    child: Text(
-                      file.name,
-                      style: TextStyle(
-                        color: IosFormColors.accent,
-                        fontSize: 17,
-                        decoration: TextDecoration.underline,
-                        decorationColor: IosFormColors.accent,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _formatFileSize(file.size),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: IosFormColors.textSecondary,
-                  ),
-                ),
-                if (canManage) ...[
-                  const SizedBox(width: 4),
-                  IconButton(
-                    tooltip: loc.entityAttachmentsDeleteTitle,
-                    onPressed: _isUploadingAttachment
-                        ? null
-                        : () => _deletePlanAttachment(file),
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                    color: IosFormColors.danger,
-                    constraints:
-                        const BoxConstraints(minWidth: 32, minHeight: 32),
-                    padding: EdgeInsets.zero,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        );
-      }
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return IosGroupedCard(
       children: [
-        IosSectionLabel(loc.entityAttachmentsPlanTitle),
-        IosGroupedCard(children: children),
+        EntityAttachmentsSection(
+          title: '',
+          files: files,
+          canManage: showManage,
+          isUploading: _isUploadingAttachment,
+          onUpload: showManage ? _pickAndUploadPlanAttachment : null,
+          onDelete: (doc) {
+            final idx =
+                _planAttachments.indexWhere((a) => a.url == doc.url);
+            if (idx >= 0) {
+              _deletePlanAttachment(_planAttachments[idx]);
+            }
+          },
+          embeddedInGroupedCard: true,
+        ),
       ],
     );
   }
@@ -2058,18 +2040,6 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
         _isUploadingAttachment = false;
       });
     }
-  }
-
-  Future<void> _openPlanAttachment(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  String _formatFileSize(int bytes) {
-    if (bytes < 1024) return '${bytes}B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
   }
 
   Widget _buildPlanAvatar(double size) {
@@ -2181,53 +2151,48 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
     }
 
     final loc = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return IosGroupedCard(
       children: [
-        IosSectionLabel(loc.planDetailsAnnouncementsTitle),
-        IosGroupedCard(
-          children: [
-            IosCollapsibleHeader(
-              title: loc.planDetailsAnnouncementsTitle,
-              expanded: _infoSectionAnnouncementsExpanded,
-              onToggle: () => _setScreenState(() =>
-                  _infoSectionAnnouncementsExpanded =
-                      !_infoSectionAnnouncementsExpanded),
-              trailing: HelpIconButton(
-                helpId: HelpContextIds.planDetailsAviso,
-                contextLabel: loc.planDetailsAnnouncementsTitle,
-                defaultBody: loc.planDetailsAnnouncementsHelp,
-              ),
-            ),
-            if (_infoSectionAnnouncementsExpanded) ...[
-              const IosRowSeparator(),
-              if (_isEditing) ...[
-                IosSettingsRow(
-                  label: loc.planDetailsAnnouncementsPublish,
-                  value: '',
-                  valueColor: IosFormColors.accent,
-                  chevron: true,
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) =>
-                          AnnouncementDialog(planId: currentPlan.id!),
-                    );
-                  },
-                ),
-                const IosRowSeparator(),
-              ],
-              ConstrainedBox(
-                constraints:
-                    const BoxConstraints(minHeight: 160, maxHeight: 420),
-                child: AnnouncementTimeline(
-                  planId: currentPlan.id!,
-                  compact: isCompact,
-                ),
-              ),
-            ],
-          ],
+        IosCollapsibleHeader(
+          title: loc.planDetailsAnnouncementsTitle,
+          expanded: _infoSectionAnnouncementsExpanded,
+          onToggle: () => _setScreenState(() =>
+              _infoSectionAnnouncementsExpanded =
+                  !_infoSectionAnnouncementsExpanded),
+          trailing: HelpIconButton(
+            helpId: HelpContextIds.planDetailsAviso,
+            contextLabel: loc.planDetailsAnnouncementsTitle,
+            defaultBody: loc.planDetailsAnnouncementsHelp,
+            compact: true,
+          ),
         ),
+        if (_infoSectionAnnouncementsExpanded) ...[
+          const IosRowSeparator(),
+          if (_isEditing) ...[
+            IosSettingsRow(
+              label: loc.planDetailsAnnouncementsPublish,
+              value: '',
+              valueColor: IosFormColors.accent,
+              chevron: true,
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) =>
+                      AnnouncementDialog(planId: currentPlan.id!),
+                );
+              },
+            ),
+            const IosRowSeparator(),
+          ],
+          ConstrainedBox(
+            constraints:
+                const BoxConstraints(minHeight: 160, maxHeight: 420),
+            child: AnnouncementTimeline(
+              planId: currentPlan.id!,
+              compact: isCompact,
+            ),
+          ),
+        ],
       ],
     );
   }

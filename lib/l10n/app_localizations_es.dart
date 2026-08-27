@@ -949,7 +949,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get createPlanGeneralSectionTitle => 'Información general';
 
   @override
-  String get createPlanNameLabel => 'Nombre del plan';
+  String get createPlanNameLabel => 'Nombre';
 
   @override
   String get createPlanNameHint => 'Ej: Vacaciones Londres 2025';
@@ -1011,7 +1011,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get createPlanConfigurationSectionTitle => 'Configuración';
 
   @override
-  String get createPlanCurrencyLabel => 'Moneda del plan';
+  String get createPlanCurrencyLabel => 'Moneda';
 
   @override
   String get createPlanVisibilityLabel => 'Visibilidad';
@@ -1045,10 +1045,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get planDetailsInfoTitle => 'Información detallada';
 
   @override
-  String get planDetailsMetaTitle => 'Identificación del plan';
+  String get planDetailsMetaTitle => 'IDs';
 
   @override
-  String get planTimezoneLabel => 'Zona horaria del plan';
+  String get planTimezoneLabel => 'Zona';
 
   @override
   String get planTimezoneHelper =>
@@ -1061,7 +1061,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get planDetailsParticipantsTitle => 'Participantes';
 
   @override
-  String get planDetailsParticipantsManageLink => 'Gestionar participantes';
+  String get planDetailsParticipantsManageLink => 'Gestionar';
 
   @override
   String get planDetailsAnnouncementsTitle => 'Avisos';
@@ -1074,7 +1074,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get helpMoreInfo => 'Más información';
 
   @override
-  String get planDetailsBudgetLabel => 'Presupuesto estimado';
+  String get planDetailsBudgetLabel => 'Presupuesto';
 
   @override
   String get planBudgetLabelShort => 'Presupuesto';
@@ -1133,6 +1133,12 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get planDetailsDatesLabel => 'Fechas';
+
+  @override
+  String get planDetailsDateStartShort => 'Inicio';
+
+  @override
+  String get planDetailsDateEndShort => 'Fin';
 
   @override
   String get planDetailsStateLabel => 'Estado';
@@ -1432,7 +1438,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get accommodationTypeOther => 'Otro';
 
   @override
-  String get planEventColorsTitle => 'Colores del calendario';
+  String get planEventColorsTitle => 'Colores';
 
   @override
   String get planEventColorsSubtitle =>
@@ -2061,7 +2067,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get planCalendarEmpty => 'No hay planes en estos meses.';
 
   @override
-  String get createPlanDatesSectionTitle => 'Fechas del plan';
+  String get createPlanDatesSectionTitle => 'Fechas';
 
   @override
   String createPlanStartDateLabel(String date) {
@@ -2804,7 +2810,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get color => 'Color:';
+  String get color => 'Color';
 
   @override
   String get participantsLabel => 'Participantes:';
@@ -3101,6 +3107,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get myPlanSummaryAccommodation => 'Alojamientos';
 
   @override
+  String get myPlanSummaryAccommodationRowLabel => 'Alojamiento';
+
+  @override
+  String myPlanSummaryAccommodationNightOf(int current, int total) {
+    return 'noche $current/$total';
+  }
+
+  @override
   String get myPlanSummaryImportant => 'Lo más importante';
 
   @override
@@ -3140,6 +3154,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPlanSummaryDraftsOnlyTooltip => 'Solo borradores';
+
+  @override
+  String get myPlanSummaryDraftBadgeLetter => 'B';
 
   @override
   String get myPlanSummaryShareTooltip => 'Compartir resumen';
@@ -3804,7 +3821,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get invitationsSectionTitle => 'Invitaciones';
 
   @override
-  String get entityAttachmentsPlanTitle => 'Archivos del plan';
+  String get entityAttachmentsPlanTitle => 'Archivos';
 
   @override
   String get entityAttachmentsEventTitle => 'Archivos del evento';

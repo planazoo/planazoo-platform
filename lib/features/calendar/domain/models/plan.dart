@@ -17,7 +17,7 @@ class Plan {
   final int? participants;
   final String? imageUrl;
   final String? state; // planificando, confirmado, en_curso, finalizado, cancelado (borrador unificado con planificando)
-  final String? visibility; // private, public
+  final String? visibility; // private, public — campo persistido; UI futura (LISTA 141)
   final String? timezone; // IANA timezone (ej: "Europe/Madrid")
   /// Texto libre: correos con agencias, proveedores, etc. (P20 lista puntos).
   final String? referenceNotes;
