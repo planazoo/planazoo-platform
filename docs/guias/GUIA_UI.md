@@ -283,6 +283,7 @@ Referencia de densidad y acciones en lista cronológica.
 ### Reserva / cancelación (evento y alojamiento)
 
 - Switch maestro «Reserva / cancelación» (no colapsable + subtítulo largo). OFF → no se persiste el bloque.
+- Enlace web (evento / alojamiento): **un** bloque — etiqueta + chip abrir (26×26) si hay URL válida + campo editable; sin sección duplicada ni fila «Abrir enlace» que repita la URL.
 
 ### Header de sección (SectionTitleBar)
 

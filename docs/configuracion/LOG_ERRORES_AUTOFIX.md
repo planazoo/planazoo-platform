@@ -14,6 +14,14 @@ Cada entrada nueva debe seguir esta estructura:
 - **Solución aplicada**: qué cambio concreto se hizo.
 - **Notas para el futuro** (opcional): patrón a recordar o “gotcha” a evitar.
 
+### [2026-08-27] AccommodationDialog — `invalid_constant` con `IosFormColors.accent`
+
+- **Contexto:** Chip «abrir enlace» en campo URL (alojamiento).
+- **Error:** `Invalid constant value` en `const SizedBox` / `Icon(color: IosFormColors.accent)`.
+- **Causa raíz:** `IosFormColors.accent` es getter (no `const`); no puede usarse dentro de un subtree `const`.
+- **Solución aplicada:** quitar `const` del `SizedBox`/`Icon`.
+- **Notas:** No marcar `const` widgets que usen `IosFormColors.accent` / `AppColorScheme.color2`.
+
 ### [2026-08-26] EventDialog — ListTile ink bajo ColoredBox negro (pageBg)
 
 - **Contexto:** Abrir ficha evento; assert `ListTile background color or ink splashes may be invisible` con `ColoredBox(color: #000000)`.

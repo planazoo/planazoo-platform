@@ -1387,37 +1387,67 @@ class _EventDialogState extends ConsumerState<EventDialog> {
   Widget _buildUrlField() {
     final loc = AppLocalizations.of(context)!;
     final canEdit = _canEditGeneral || _canEditGeneralInitial;
-    final showOpenLink = _canOpenEventWebLink;
-    final card = IosGroupedCard(
+    return IosGroupedCard(
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            IosFormColors.rowPaddingH,
+            IosFormColors.rowPaddingV,
+            IosFormColors.rowPaddingH,
+            0,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  loc.eventUrlLabel,
+                  style: const TextStyle(
+                    color: IosFormColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+              if (_canOpenEventWebLink)
+                Tooltip(
+                  message: loc.openWebLink,
+                  child: Material(
+                    color: const Color(0xFF2D2D2D),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(
+                        color: IosFormColors.accent.withValues(alpha: 0.45),
+                        width: 1,
+                      ),
+                    ),
+                    child: InkWell(
+                      onTap: _openEventWebLink,
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: 26,
+                        height: 26,
+                        child: Icon(
+                          Icons.open_in_new,
+                          size: 15,
+                          color: IosFormColors.accent,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
         IgnorePointer(
           ignoring: !canEdit,
           child: IosEditField(
-            label: loc.eventUrlLabel,
+            label: '',
             controller: _urlController,
             keyboardType: TextInputType.url,
             hint: loc.eventUrlHint,
             onChanged: (_) => setState(() {}),
           ),
         ),
-        if (showOpenLink) ...[
-          const IosRowSeparator(),
-          IosSettingsRow(
-            label: loc.openWebLink,
-            value: _urlController.text.trim(),
-            valueColor: IosFormColors.accent,
-            chevron: true,
-            onTap: _openEventWebLink,
-          ),
-        ],
-      ],
-    );
-    if (!showOpenLink) return card;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        IosSectionLabel(loc.eventUrlLabel),
-        card,
       ],
     );
   }
