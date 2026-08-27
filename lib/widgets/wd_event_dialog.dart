@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
@@ -780,7 +779,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       SnackBar(
         content: Text(
           AppLocalizations.of(context)!.eventReadOnlySnackBar,
-          style: GoogleFonts.poppins(color: Colors.white),
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.orange.shade700,
         duration: const Duration(seconds: 2),
@@ -1132,14 +1131,14 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           icon: Icon(
             Icons.hotel_outlined,
             size: 16,
-            color: AppColorScheme.color2,
+            color: IosFormColors.accent,
           ),
           label: Text(
             singleLabel(short),
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: AppColorScheme.color2,
+              color: IosFormColors.accent,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1147,7 +1146,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             visualDensity: VisualDensity.compact,
-            foregroundColor: AppColorScheme.color2,
+            foregroundColor: IosFormColors.accent,
           ),
         ),
       );
@@ -1164,7 +1163,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 value: h,
                 child: Text(
                   h.sourceLabel ?? h.address,
-                  style: GoogleFonts.poppins(fontSize: 13),
+                  style: const TextStyle(fontSize: 13),
                 ),
               ),
             )
@@ -1175,18 +1174,18 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.hotel_outlined,
-                  size: 16, color: AppColorScheme.color2),
+                  size: 16, color: IosFormColors.accent),
               const SizedBox(width: 6),
               Text(
                 menuLabel,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: AppColorScheme.color2,
+                  color: IosFormColors.accent,
                 ),
               ),
               Icon(Icons.arrow_drop_down,
-                  size: 18, color: AppColorScheme.color2),
+                  size: 18, color: IosFormColors.accent),
             ],
           ),
         ),
@@ -1301,7 +1300,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                                       SnackBar(
                                         content: Text(
                                           loc.eventDialogSelectAtLeastOne,
-                                          style: GoogleFonts.poppins(
+                                          style: TextStyle(
                                               color: Colors.white),
                                         ),
                                         backgroundColor: Colors.red.shade600,
@@ -1424,8 +1423,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(
             loc.eventLongNotesLabel,
-            style: GoogleFonts.poppins(
-                color: Colors.white, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: IosFormColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           content: SizedBox(
             width: 680,
@@ -1434,11 +1435,17 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               minLines: 8,
               maxLines: 16,
               readOnly: !_canEditGeneral,
-              style: GoogleFonts.poppins(color: Colors.white),
+              style: const TextStyle(color: IosFormColors.textPrimary),
+              cursorColor: IosFormColors.accent,
               decoration: InputDecoration(
                 hintText: loc.eventLongNotesLabel,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                hintStyle: const TextStyle(color: IosFormColors.textTertiary),
+                filled: true,
+                fillColor: IosFormColors.pageBg,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ),
@@ -1483,7 +1490,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.entityAttachmentsReadError,
-              style: GoogleFonts.poppins(color: Colors.white)),
+              style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.red.shade600,
         ),
       );
@@ -1495,7 +1502,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(validationError,
-              style: GoogleFonts.poppins(color: Colors.white)),
+              style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.orange.shade700,
         ),
       );
@@ -1521,7 +1528,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.entityAttachmentsUploadError('$e'),
-              style: GoogleFonts.poppins(color: Colors.white)),
+              style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.red.shade600,
         ),
       );
@@ -1555,7 +1562,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.entityAttachmentsDeleteError,
-              style: GoogleFonts.poppins(color: Colors.white)),
+              style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.red.shade600,
         ),
       );
@@ -1712,9 +1719,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
                         loc.eventTypeSearchEmpty,
-                        style: GoogleFonts.poppins(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: Colors.white60,
+                          color: IosFormColors.textTertiary,
                         ),
                       ),
                     );
@@ -1811,9 +1818,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               const SizedBox(height: 16),
               Text(
                 loc.eventSubtype,
-                style: GoogleFonts.poppins(
+                style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.white70,
+                  color: IosFormColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1832,9 +1839,9 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
                         loc.eventTypeSearchEmpty,
-                        style: GoogleFonts.poppins(
+                        style: const TextStyle(
                           fontSize: 12,
-                          color: Colors.white60,
+                          color: IosFormColors.textTertiary,
                         ),
                       ),
                     );
@@ -1959,7 +1966,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: 10.5,
                 height: 1.1,
                 fontWeight: FontWeight.w500,
@@ -1982,7 +1989,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                 label,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   fontSize: 11,
                   height: 1.15,
                   fontWeight: FontWeight.w500,
@@ -2317,7 +2324,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
-              if (v.length > 120) return 'Máximo 120 caracteres';
+              if (v.length > 120) return loc.maxCharacters(120);
               return null;
             },
           ),
@@ -2332,7 +2339,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
-              if (v.length > 180) return 'Máximo 180 caracteres';
+              if (v.length > 180) return loc.maxCharacters(180);
               return null;
             },
           ),
@@ -2347,7 +2354,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
-              if (v.length > 60) return 'Máximo 60 caracteres';
+              if (v.length > 60) return loc.maxCharacters(60);
               return null;
             },
           ),
@@ -2362,7 +2369,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
-              if (v.length > 20) return 'Máximo 20 caracteres';
+              if (v.length > 20) return loc.maxCharacters(20);
               return null;
             },
           ),
@@ -2379,7 +2386,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             validator: (value) {
               final v = value?.trim() ?? '';
               if (v.isEmpty) return null;
-              if (v.length > 600) return 'Máximo 600 caracteres';
+              if (v.length > 600) return loc.maxCharacters(600);
               return null;
             },
           ),
@@ -2396,60 +2403,62 @@ class _EventDialogState extends ConsumerState<EventDialog> {
     final sponsor = _getStaticSponsorForSubtype(subtype);
     if (sponsor == null) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColorScheme.color2.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColorScheme.color2.withValues(alpha: 0.45)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return IosGroupedCard(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.campaign_outlined, size: 18, color: AppColorScheme.color2),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  loc.eventSponsoredBy(sponsor.name),
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+              Row(
+                children: [
+                  Icon(
+                    Icons.campaign_outlined,
+                    size: 18,
+                    color: IosFormColors.accent,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      loc.eventSponsoredBy(sponsor.name),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: IosFormColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(
+                    loc.eventSponsoredTag,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: IosFormColors.accent,
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 6),
               Text(
-                loc.eventSponsoredTag,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColorScheme.color2,
+                loc.eventSponsoredStaticHint,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: IosFormColors.textSecondary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            loc.eventSponsoredStaticHint,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.white70,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => _openSponsoredLink(sponsor.url),
-              icon: const Icon(Icons.open_in_new, size: 16),
-              label: Text(loc.eventSponsoredOpenOffer),
-            ),
-          ),
-        ],
-      ),
+        ),
+        const IosRowSeparator(),
+        IosSettingsRow(
+          label: loc.eventSponsoredOpenOffer,
+          value: '',
+          valueColor: IosFormColors.accent,
+          chevron: true,
+          onTap: () => _openSponsoredLink(sponsor.url),
+        ),
+      ],
     );
   }
 
@@ -2574,11 +2583,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               ),
               title: Text(
                 TimezoneService.getTimezoneCityName(tz),
-                style: GoogleFonts.poppins(color: Colors.white),
+                style: TextStyle(color: Colors.white),
               ),
               trailing: Text(
                 TimezoneService.getUtcOffsetFormatted(tz),
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   color: tz == selected
                       ? AppColorScheme.color2
                       : Colors.white70,
@@ -2715,7 +2724,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           SnackBar(
             content: Text(
               AppLocalizations.of(context)!.flightNumberRequired,
-              style: GoogleFonts.poppins(color: Colors.white),
+              style: TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.orange.shade700,
           ),
@@ -2775,7 +2784,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           SnackBar(
             content: Text(
               AppLocalizations.of(context)!.flightDataLoaded,
-              style: GoogleFonts.poppins(color: Colors.white),
+              style: TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.green.shade600,
           ),
@@ -2789,7 +2798,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         SnackBar(
           content: Text(
             msg,
-            style: GoogleFonts.poppins(color: Colors.white),
+            style: TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red.shade600,
           duration: const Duration(seconds: 4),
@@ -2802,7 +2811,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         SnackBar(
           content: Text(
             e.toString(),
-            style: GoogleFonts.poppins(color: Colors.white),
+            style: TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red.shade600,
         ),
@@ -2884,7 +2893,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
               horizontal: isMobile ? 10 : 14, vertical: isMobile ? 6 : 8),
           child: Text(
             label,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               fontSize: isMobile ? 11 : 12,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
               color: Colors.white,
@@ -2942,7 +2951,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           Expanded(
             child: Text(
               title,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 fontSize: isMobile ? 14 : 17,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -2971,7 +2980,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     const SizedBox(width: 4),
                     Text(
                       AppLocalizations.of(context)!.creator,
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: Colors.white),
@@ -3000,7 +3009,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                     const SizedBox(width: 4),
                     Text(
                       'Admin',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: Colors.white),
@@ -3145,7 +3154,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                       SizedBox(height: isMobile ? 12 : 16),
                       Text(
                         AppLocalizations.of(context)!.initializingPermissions,
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           color: Colors.white70,
                           fontSize: isMobile ? 13 : 14,
                         ),
@@ -4134,7 +4143,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             content: Text(
               blockedReason ??
                   AppLocalizations.of(context)!.eventDeleteBlockedFallback,
-              style: GoogleFonts.poppins(color: Colors.white),
+              style: TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.orange.shade600,
             duration: const Duration(seconds: 3),
@@ -4452,7 +4461,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           SnackBar(
             content: Text(
               loc.eventDialogFixValidationErrors,
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
+              style: TextStyle(color: Colors.white, fontSize: 14),
             ),
             backgroundColor: Colors.orange.shade700,
             behavior: SnackBarBehavior.floating,
@@ -4468,7 +4477,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(loc.selectValidTypeFirst,
-                style: GoogleFonts.poppins(color: Colors.white)),
+                style: TextStyle(color: Colors.white)),
             backgroundColor: Colors.orange.shade700,
           ),
         );
@@ -4482,7 +4491,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.selectValidTypeFirst,
-              style: GoogleFonts.poppins(color: Colors.white)),
+              style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.orange.shade700,
         ),
       );
@@ -4496,7 +4505,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.invalidSubtype,
-              style: GoogleFonts.poppins(color: Colors.white)),
+              style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.orange.shade700,
         ),
       );
@@ -4508,7 +4517,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         SnackBar(
           content: Text(
             loc.noPermissionEditEvent,
-            style: GoogleFonts.poppins(color: Colors.white),
+            style: TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red.shade600,
         ),
@@ -4527,7 +4536,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
         SnackBar(
           content: Text(
             'Debes seleccionar al menos un participante',
-            style: GoogleFonts.poppins(color: Colors.white),
+            style: TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.red.shade600,
         ),
@@ -4543,7 +4552,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
             '⚠️ Un evento no puede durar más de 24 horas.\n\n'
             '• Si es alojamiento → usa la fila de Alojamientos\n'
             '• Si son actividades diferentes → crea eventos separados por día',
-            style: GoogleFonts.poppins(color: Colors.white),
+            style: TextStyle(color: Colors.white),
           ),
           backgroundColor: Colors.orange.shade600,
           duration: const Duration(seconds: 6),
@@ -5037,7 +5046,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   SnackBar(
                     content: Text(
                       '✅ Plan expandido exitosamente',
-                      style: GoogleFonts.poppins(color: Colors.white),
+                      style: TextStyle(color: Colors.white),
                     ),
                     backgroundColor: Colors.green.shade600,
                     duration: const Duration(seconds: 2),
@@ -5048,7 +5057,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   SnackBar(
                     content: Text(
                       '⚠️ Error al expandir el plan',
-                      style: GoogleFonts.poppins(color: Colors.white),
+                      style: TextStyle(color: Colors.white),
                     ),
                     backgroundColor: Colors.orange.shade600,
                     duration: const Duration(seconds: 2),
@@ -5062,7 +5071,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   SnackBar(
                     content: Text(
                       AppLocalizations.of(context)!.eventNotSaved,
-                      style: GoogleFonts.poppins(color: Colors.white),
+                      style: TextStyle(color: Colors.white),
                     ),
                     backgroundColor: const Color(0xFF1F2937),
                     duration: const Duration(seconds: 2),
@@ -5090,7 +5099,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
           SnackBar(
             content: Text(
               AppLocalizations.of(context)!.eventNotSaved,
-              style: GoogleFonts.poppins(color: Colors.white),
+              style: TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.red.shade700,
           ),
@@ -5243,8 +5252,8 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      labelStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
-      hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.white54),
+      labelStyle: const TextStyle(fontSize: 12, color: IosFormColors.textSecondary),
+      hintStyle: const TextStyle(fontSize: 13, color: IosFormColors.textTertiary),
       filled: true,
       fillColor: const Color(0xFF111827),
       border: OutlineInputBorder(
@@ -5267,12 +5276,12 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final sectionStyle = GoogleFonts.poppins(
+    final sectionStyle = TextStyle(
       fontWeight: FontWeight.w600,
       color: Colors.white,
       fontSize: 14,
     );
-    final itemStyle = GoogleFonts.poppins(color: Colors.white, fontSize: 14);
+    final itemStyle = TextStyle(color: Colors.white, fontSize: 14);
     final endLabel = DateFormatter.formatTimeOnly(
       DateTime(2000, 1, 1, _impliedEndTime.hour, _impliedEndTime.minute),
     );
@@ -5284,7 +5293,7 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text(
           loc.duration,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: Colors.white,
@@ -5306,7 +5315,7 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
                     leading: const Icon(Icons.schedule, color: Colors.white70),
                     title: Text(
                       '${loc.eventDurationEndTime}: $endLabel',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -5314,7 +5323,7 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
                     ),
                     subtitle: Text(
                       loc.eventDurationEndTimeHint(_startTimeLabel),
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
                         color: Colors.white60,
                         fontSize: 12,
                       ),
@@ -5353,7 +5362,7 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
                   const SizedBox(height: 6),
                   Text(
                     _customError!,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 12,
                       color: Colors.red.shade300,
                     ),
@@ -5372,7 +5381,7 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
                   ),
                   child: Text(
                     loc.eventDurationApplyCustom,
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -5405,7 +5414,7 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
                     trailing: hours == 24
                         ? Text(
                             '(máx.)',
-                            style: GoogleFonts.poppins(
+                            style: TextStyle(
                               fontSize: 11,
                               color: Colors.white70,
                             ),
@@ -5416,7 +5425,7 @@ class _EventDurationPickerDialogState extends State<_EventDurationPickerDialog> 
                 const SizedBox(height: 8),
                 Text(
                   loc.eventDurationMaxHint,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 11,
                     color: Colors.white70,
                     fontStyle: FontStyle.italic,

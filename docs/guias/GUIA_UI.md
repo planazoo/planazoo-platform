@@ -188,7 +188,7 @@ Cuando una card se expande (`IosCollapsibleHeader`) o un control despliega hijos
 3. ~~Transporte / vuelo / transfer / alquiler~~ (`_buildLabelOnBorderField` retirado del General)
 4. ~~Pestaña “Mi info” (evento y alojamiento)~~ → Settings. ~~Info de Otros (admin)~~ → Settings. ~~Participantes~~ / ~~Reserva·cancelación~~ → Settings + `nestLevel`.
 
-**General evento:** bloques principales en Settings; transporte/vuelo mantiene excepciones controladas (Places, Amadeus).
+**General evento:** tipografía y cards unificadas a Settings/`IosFormColors` (incl. vuelo, transporte, transfer, alquiler, sponsor). Places/Amadeus siguen como widgets específicos **dentro** de cards Settings.
 
 **Pagos:** `AddExpenseDialog` permite vincular evento **o** alojamiento; resumen del plan muestra ambos enlaces.
 
