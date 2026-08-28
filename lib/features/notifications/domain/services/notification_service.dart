@@ -297,12 +297,10 @@ class NotificationService {
           .doc(userId)
           .collection(_subCollectionName)
           .where('planId', isEqualTo: planId)
+          .where('type', isEqualTo: NotificationType.invitation.name)
           .get();
 
-      final toDelete = snapshot.docs.where((doc) {
-        final type = doc.data()['type'] as String?;
-        return type == NotificationType.invitation.name;
-      }).toList();
+      final toDelete = snapshot.docs;
 
       if (toDelete.isEmpty) return 0;
 

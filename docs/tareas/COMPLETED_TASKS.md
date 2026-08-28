@@ -8,10 +8,23 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 Para navegar más rápido en este archivo (Ctrl+F):
 
-- **Recientes (2026):** `T276`, `T269`, `T273`, `T255`, `T238`, `T242`, `T229`, `T235`, `T240`, `T241`, `T230`, `T236`, `T239`, `T217–T221`.
+- **Recientes (2026):** `T259`, `T276`, `T269`, `T273`, `T255`, `T238`, `T242`, `T229`, `T235`, `T240`, `T241`, `T230`, `T236`, `T239`, `T217–T221`.
 - **Bloque 2026 (UI/flujos):** `T203`, `T198`, `T161`, `T207`, `T206`, `T216`, `T189`, `T200`, `T201`, `T209`, `T213`, `T202`, `T194–T197`, `T199`, `T193`.
 - **Bloque funcional 2025 (sistemas core):** `T101`, `T113`, `T107`, `T123`, `T112`, `T100`, `T105`, `T109`, `T120`, `T117`, `T153`, `T152`, `T164`, `T177`, `T178`.
 - **Bloque histórico inicial (fundaciones UI/calendario):** `T1–T99` (widgets base, calendario, tracks, validaciones, reglas y seguridad).
+
+---
+
+## T259 - Deep link invitación iOS (Agosto 2026)
+
+**Estado:** ✅ Completada (iOS)  
+**Fecha de finalización:** 2026-08-27  
+
+**Descripción:** Universal Links `app.planoon.com/invitation/{token}` abren la app nativa (Mail → HTTPS). AASA + Associated Domains + `app_links`. Scheme `planazoo://` para debug. Dominio #1 cerrado junto con este cierre.
+
+**Criterios / QA:** AASA live ✅; Mail → HTTPS abre app iPhone ✅ (2026-08-27). Android `assetlinks.json` opcional fuera de WIP.
+
+**Archivos clave:** `app.dart`, `invitation_deep_link.dart`, `pg_invitation_page.dart`, AASA hosting, entitlements iOS. Spec: `T259_DEEP_LINK_INVITACION_IOS.md`.
 
 ---
 

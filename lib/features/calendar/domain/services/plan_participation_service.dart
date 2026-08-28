@@ -183,11 +183,12 @@ class PlanParticipationService {
             return doc.id;
           }
           // Aceptar invitación con participación ya pending → pasar a accepted.
+          // Solo status/lastActiveAt (mismo criterio que acceptInvitation): tocar invitedBy
+          // en el update del invitado puede chocar con rules / races.
           if (autoAccept && data.status == 'pending') {
             await doc.reference.update({
               'status': 'accepted',
               'lastActiveAt': Timestamp.fromDate(DateTime.now()),
-              if (invitedBy != null) 'invitedBy': invitedBy,
             });
             LoggerService.database(
               'Participation pending→accepted: ${doc.id}',

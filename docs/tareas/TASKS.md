@@ -8,7 +8,7 @@
 
 **Sistema de procesos:** [`docs/flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md) · **orden definitivo:** [`ORDEN_POR_DOMINIOS.md`](../flujos/ORDEN_POR_DOMINIOS.md) (#1→#9).
 
-**WIP dominio (1 a la vez):** **#1 Participantes / altas-bajas / invitaciones** → contrato [`DIAGRAMA_ALTAS_BAJAS_PLAN.md`](../flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md) · trabajo activo **T259** (deep link nativo; slice `app_links` + scheme en repo). T268 auto aplazada. Al cerrar/aparcar dominio → **#2 Planes**.
+**WIP dominio (1 a la vez):** **#2 Planes (+ estados)** → [`FLUJO_CRUD_PLANES.md`](../flujos/FLUJO_CRUD_PLANES.md) · [`FLUJO_ESTADOS_PLAN.md`](../flujos/FLUJO_ESTADOS_PLAN.md) · foco **T277**. Dominio #1 cerrado 2026-08-27 (T259 iOS ✅). Al cerrar/aparcar → **#3 Eventos**.
 
 ### Índice por dominio
 
@@ -16,8 +16,8 @@
 
 | Dominio / área | Códigos pendientes (aprox.) |
 |----------------|----------------------------|
-| **Participantes / invitaciones (WIP)** | T20, T120, T224, **T259**, T233, T234, **T275**, T261*, T252* |
-| Planes / estados | T122, T204, T205, T237, T243*, T261*, **T277** |
+| Participantes / invitaciones (**cerrado**) | T20, T120, T224, T233, T234, **T275**, T261*, T252* (fuera de WIP; T259 iOS ✅) |
+| **Planes / estados (WIP)** | T122, T204, T205, T237, T243*, T261*, **T277** |
 | Eventos + calendario | T35, T37, T38, T88, T96–T99, T182, T208, T210–T212, T215, T225, T238, T242, T246, T247, T250, T251, T270, T271, T272, **T278** |
 | Alojamientos | T121, T225*, T251*, T271* |
 | Pagos | T222, T260 |
@@ -254,7 +254,7 @@
 | **T256** | **Implementar Fastlane** para publicar apps iOS y Android. Tras evaluación T255: `fastlane init` en `ios/` y `android/`, Appfile y credenciales, lanes beta (TestFlight + Play interna) y opcionalmente release; Gemfile en ambas carpetas; opcional CI (GitHub Actions). Ver `docs/tareas/T256_IMPLEMENTAR_FASTLANE.md`. | Media |
 | **T257** | **Revisión web vs iOS (prioridad iOS):** Identificar y cerrar diferencias entre versión web (más desarrollada) e iOS. La plataforma prioritaria es iOS. Checklist y hallazgos en `docs/configuracion/REVISION_IOS_VS_WEB.md`; tarea en `docs/tareas/T257_REVISION_WEB_VS_IOS.md`. | Alta |
 | **T258** | **Icono de la app Planazoo:** Configuración y mantenimiento del icono propio en iOS y Android (sin borde blanco, full bleed si aplica). Detalle en `docs/tareas/T258_ICONO_APP.md`. | Baja |
-| **T259** | **Deep link invitación nativo (iOS/Android):** Abrir `InvitationPage` desde email. **En curso:** `app_links` + scheme `planazoo://` + entitlements Associated Domains + AASA draft. Pendiente: deploy AASA + QA Mail/Safari. Detalle: `docs/tareas/T259_DEEP_LINK_INVITACION_IOS.md`. Relacionado: §2 diagrama, REVISION_IOS_VS_WEB ítem 7. | Media |
+| **T259** | **Deep link invitación nativo (iOS/Android):** **Cerrado iOS** (2026-08-27) — Mail→HTTPS Universal Link OK. Opcional fuera de WIP: Android `assetlinks.json`. Detalle: `docs/tareas/T259_DEEP_LINK_INVITACION_IOS.md`. | Media |
 | **T267** | **App Android y push FCM (paridad con iOS):** Tener la app compilable y usable en Android y validar el flujo de notificaciones push con la misma lógica que en iOS (`FCMService`, tokens en Firestore, foreground/background, tap). Incluye: proyecto `android/` (Firebase `google-services.json`, manifest, canales de notificación si aplica), pruebas en dispositivo/emulador, y documentar checklist Android equivalente a `docs/configuracion/CHECKLIST_IOS_PUSH_DEEPLINKS.md` cuando se cierre. **Contexto:** push iOS cerrado en 2026-04 (AppDelegate clásico, sin UIScene). | Alta |
 | **T274** | **Sistema métrico/imperial por usuario (soporte UK/USA):** Añadir preferencia de unidades en perfil (`metric`/`imperial`) y aplicarla en toda la UI relevante (distancias, alturas, pesos, temperatura u otras magnitudes visibles), manteniendo un formato consistente por plataforma. Definir: (1) dónde se guarda la preferencia (Firestore + snapshot local si aplica); (2) estrategia de conversión/rounding y etiquetas (`km/mi`, `C/F`, etc.); (3) fallback para usuarios sin preferencia (default métrico); (4) impacto en formularios y visualización (sin romper datos existentes); (5) pruebas web+iOS+Android y l10n ES/EN. Relacionado: T158, T232, T257, T267. **Especificación en `docs/tareas/T274_UNIDADES_METRICO_IMPERIAL.md`.** | Media |
 | **T260** | **Sistema multi-moneda:** Soporte de múltiples monedas por plan (EUR, USD, GBP, etc.), formateo automático en UI según moneda del plan y, opcionalmente, conversión de tipos de cambio al visualizar o registrar. Relacionado con T101 (presupuesto) y T102 (pagos). Especificación en `docs/tareas/CURRENCY_SYSTEM_PROPOSAL.md`. | Media |

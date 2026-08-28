@@ -14,6 +14,21 @@ Cada entrada nueva debe seguir esta estructura:
 - **Solución aplicada**: qué cambio concreto se hizo.
 - **Notas para el futuro** (opcional): patrón a recordar o “gotcha” a evitar.
 
+### [2026-08-27] Participantes — invitar por email: modal no cierra, usuario parpadea y error
+
+- **Contexto:** T259 / dominio #1; enviar invitación por mail desde Participantes.
+- **Síntoma:** Modal no se cierra; el invitado aparece un instante en la lista y desaparece; mensaje tipo «no se pudo crear/enviar la invitación».
+- **Causa raíz probable:** (1) `createInvitation` tragaba `permission-denied` y devolvía `null` sin detalle. (2) Cancelar pending (`status: cancelled`) exigía `createdAt`/`expiresAt` iguales en rules → fallos al reinvitar. (3) Orden participación→invitación: la participación hacía flicker en el stream si el create de invitación fallaba después. (4) Limpieza de notifs del invitado no era queryable por el owner.
+- **Solución aplicada:** rules cancel sin Timestamp==; `cancelled` en validación; owner puede leer/borrar notifs `invitation` (query `planId`+`type`); `createInvitation` comprueba organizador, crea doc invitación primero, propaga el error real; índice notifications planId+type.
+- **Notas:** Solo `plans.userId` (o admin) puede crear invitaciones. Hot restart tras el cambio de servicio; rules ya desplegadas.
+
+### [2026-08-27] Invitación — falso error al aceptar + enlace «Ver el plan» en el mail
+
+- **Contexto:** Tras invitar OK, al abrir mail con `?action=accept` salía un momento «no se pudo aceptar» y luego el plan sí quedaba aceptado.
+- **Causa raíz:** Race en accept (createParticipation devolvía null / UI mostraba fallo aunque la membresía ya era `accepted`); en web al abrir no reintentaba leer el plan.
+- **Solución:** accept idempotente (re-check participación); UI no muestra error si ya `accepted`; `_openPlanAfterAccept` reintenta y abre `PlanDetailPage` también en web; email CF con botón «Ver el plan».
+- **Notas:** Redeploy `sendInvitationEmail` para mails nuevos.
+
 ### [2026-08-27] AccommodationDialog — `invalid_constant` con `IosFormColors.accent`
 
 - **Contexto:** Chip «abrir enlace» en campo URL (alojamiento).

@@ -2,7 +2,7 @@
 
 > Visión de **proceso** (qué hace cada persona), sin detalles técnicos.  
 > **Sistema:** [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md) · Histórico prosa: [`archivo/FLUJO_GESTION_PARTICIPANTES.md`](./archivo/FLUJO_GESTION_PARTICIPANTES.md)  
-> **Estado:** borrador vivo — núcleo altas/bajas **probado** (Ago 2026); T269 ✅ T276 ✅; T268 automática **aplazada**; quedan POR HACER (§1.2 resto, Universal Links nativos).
+> **Estado:** dominio **#1 cerrado** (Ago 2026) — núcleo altas/bajas **probado**; T269 ✅ T276 ✅ T259 iOS Universal Link ✅; T268 automática **aplazada**; restos (Android App Links, estética mail, §1.2 menores) fuera de WIP.
 
 **Leyenda del diagrama**
 - Cajas normales = **ya implementado**
@@ -236,7 +236,7 @@ flowchart TD
 | # | Situación | Qué ve / qué hace la app | Hoy |
 |---|-----------|--------------------------|-----|
 | J | Sesión actual **≠** email/usuario de la invitación | «Esta invitación es para otra cuenta. Cierra sesión o usa la cuenta invitada.» No aceptar con la sesión equivocada | ✅ en `InvitationPage` / accept|reject by token |
-| K | Sin sesión / hay que registrarse (enlace email §2) | Flujo registro/login y luego revalidar §1.2; si el email no coincide, caso J | ✅ web deep link; nativo → T259 |
+| K | Sin sesión / hay que registrarse (enlace email §2) | Flujo registro/login y luego revalidar §1.2; si el email no coincide, caso J | ✅ web + iOS Universal Link (T259) |
 | L | Usuario **eliminado / desactivado** entre aviso y tap | «Esta cuenta ya no está disponible» · limpiar avisos locales si aplica | Gap |
 | M | Misma dirección de email, **cuenta recreada** (otro `userId`) | Solo válido si la invitación apunta al email/userId actual; si no, invitación no aplicable + el org puede reinvitar | Gap |
 | N | Aceptó en dispositivo A; luego toca push en B | Caso B («ya formas parte») · limpiar avisos en B | Gap parcial |
@@ -328,7 +328,7 @@ flowchart TD
 - Si el email ya tenía una invitación pendiente a ese plan: se **reenvía** (cancela la anterior + nuevo token/email).
 - Plan en marcha / finalizado / cancelado: mismos mensajes F/G/H del §1.2.
 - **Hoy (web):** ruta `/invitation/{token}` → `InvitationPage` (pública). Sin sesión → login/registro (K); email de sesión ≠ invitado → aviso (J); `?action=accept|reject` → progreso («Aceptando…») y entra al plan **sin** pantalla «¡Has sido invitado!» (esa ficha queda para enlace sin action / decidir en app). Mail CF incluye ficha del plan (nombre, descripción, fechas).
-- **Hoy (nativo iOS/Android):** Universal Links / App Links **aún no** (T259); el mail abre el navegador → flujo web.
+- **Hoy (nativo iOS):** Universal Links ✅ (T259, Mail → `app.planoon.com/invitation/...`). Android App Links (`assetlinks.json`) opcional.
 - Nuevas invitaciones: doc ID = token (lectura pública si `pending`).
 
 ---
@@ -396,7 +396,7 @@ Un pending **puede ver un preview en solo lectura** del plan para decidir con in
 - [x] §1.3 buzón «Mis invitaciones» — **T269 ✅** (campana + solo accionables + 1→modal / N→lista; QA Ago 2026)  
 - [x] §1.4 efectos en eventos/alojamientos/tracks al alta/baja — **LISTA 121** A2+B2+B3 ✅  
 - [x] §1.5 preview pending (solo lectura) — **T276 ✅** (móvil + web desktop)  
-- [x] §2 invitar por email sin cuenta — deep link **web** ✅ (`InvitationPage`); nativo Universal Links = T259  
+- [x] §2 invitar por email sin cuenta — deep link **web** ✅ (`InvitationPage`); **iOS** Universal Links ✅ (T259)  
 - [x] §3 bajas básicas — salir / expulsar / cancelar pendiente + avisos 119/120 ✅; aviso al cancelar pendiente a acordar; limpieza profunda eventos = 121  
 
-**Estado:** `Borrador vivo` — T269 ✅ T276 ✅; T268 auto **aplazada**; quedan §1.2 resto, Universal Links nativos (T259).
+**Estado:** dominio **#1 cerrado** (2026-08-27) — T269 ✅ T276 ✅ T259 iOS ✅; T268 auto **aplazada**; WIP de proceso → **#2 Planes**.

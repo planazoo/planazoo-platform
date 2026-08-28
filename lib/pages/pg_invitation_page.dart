@@ -5,12 +5,14 @@ import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/login_page.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/register_page.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
+import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan_invitation.dart';
+import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
+import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
-import 'package:unp_calendario/shared/utils/platform_utils.dart';
 
 /// Página pública del deep link `/invitation/{token}` (diagrama §2 + §1.2 J/K).
 class InvitationPage extends ConsumerStatefulWidget {
@@ -67,9 +69,13 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
             final autoAccept =
                 widget.initialAction?.toLowerCase().trim() == 'accept';
             if (autoAccept) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _openPlanAfterAccept(invitation.planId);
-              });
+              // Si accept está en curso, él navega al plan. Solo auto-abrir
+              // cuando el link llega ya accepted (re-tap) y no hay accept activo.
+              if (!_isProcessing) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _openPlanAfterAccept(invitation.planId);
+                });
+              }
               return _buildAutoActionProgress(context, loc, 'accept');
             }
             return _buildSuccess(context, loc.invitationAlreadyAccepted);
@@ -528,12 +534,20 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
   Future<void> _openPlanAfterAccept(String planId) async {
     if (_didNavigateToPlan || !mounted) return;
     _didNavigateToPlan = true;
-    final plan = await ref.read(planByIdProvider(planId).future);
+    // Tras accept, la lectura del plan puede fallar un instante (rules/caché).
+    Plan? plan;
+    for (var i = 0; i < 5; i++) {
+      ref.invalidate(planByIdProvider(planId));
+      plan = await ref.read(planByIdProvider(planId).future);
+      if (plan != null) break;
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      if (!mounted) return;
+    }
     if (!mounted) return;
-    if (plan != null && PlatformUtils.shouldShowMobileUI(context)) {
+    if (plan != null) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(
-          builder: (context) => PlanDetailPage(plan: plan),
+          builder: (context) => PlanDetailPage(plan: plan!),
         ),
         (route) => route.isFirst,
       );
@@ -549,18 +563,36 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
   }) async {
     setState(() => _isProcessing = true);
     try {
-      final result = await ref.read(invitationServiceProvider).acceptInvitationByToken(
+      var result = await ref.read(invitationServiceProvider).acceptInvitationByToken(
             widget.token,
             userId,
           );
       if (!mounted) return;
 
+      // Si el servicio reportó fallo pero la membresía ya quedó accepted (race),
+      // no mostrar error rojo: abrir el plan.
+      if (!result.success) {
+        final part = await ref
+            .read(planParticipationServiceProvider)
+            .getParticipation(invitation.planId, userId);
+        if (part != null && part.isActive && part.status == 'accepted') {
+          result = InvitationRespondResult(
+            success: true,
+            message: 'Has aceptado la invitación',
+            planId: invitation.planId,
+            alreadyMember: true,
+          );
+        }
+      }
+
       if (!fromDeepLinkAction || !result.success) {
+        if (!mounted) return;
+        final loc = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               result.success
-                  ? AppLocalizations.of(context)!.invitationAcceptSuccess
+                  ? loc.invitationAcceptSuccess
                   : result.message,
             ),
             backgroundColor: result.success ? Colors.green : Colors.red,

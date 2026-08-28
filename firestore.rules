@@ -237,7 +237,7 @@ service cloud.firestore {
              request.resource.data.createdAt is timestamp &&
              request.resource.data.expiresAt is timestamp &&
              (!('status' in request.resource.data) || 
-              request.resource.data.status in ['pending', 'accepted', 'rejected', 'expired']) &&
+              request.resource.data.status in ['pending', 'accepted', 'rejected', 'expired', 'cancelled']) &&
              (!('role' in request.resource.data) || 
               request.resource.data.role in ['participant', 'observer']);
     }
@@ -729,13 +729,18 @@ service cloud.firestore {
                           'alarm'
                         ]);
       
-      // Leer: Solo el propio usuario puede leer sus notificaciones
-      allow read: if isAuthenticated() && 
-                     request.auth.uid == userId;
+      // Leer: propio usuario, o owner del plan solo para avisos `invitation` (reinvitar / dedupe).
+      allow read: if isAuthenticated() && (
+                     request.auth.uid == userId ||
+                     (
+                       resource.data.type == 'invitation' &&
+                       resource.data.planId is string &&
+                       isPlanOwner(resource.data.planId)
+                     )
+                   );
       
-      // Listar: Necesario para consultas con where() y orderBy()
-      allow list: if isAuthenticated() && 
-                     request.auth.uid == userId;
+      // Listar: autenticados; cada doc debe cumplir allow read (p. ej. query type+planId del owner).
+      allow list: if isAuthenticated();
       
       // Actualizar: Solo el propio usuario puede actualizar sus notificaciones
       // (Principalmente para marcar como leída)
@@ -749,9 +754,15 @@ service cloud.firestore {
                        (!('planId' in request.resource.data) || request.resource.data.planId == resource.data.planId) &&
                        (!('eventId' in request.resource.data) || request.resource.data.eventId == resource.data.eventId);
       
-      // Eliminar: Solo el propio usuario puede eliminar sus notificaciones
-      allow delete: if isAuthenticated() && 
-                       request.auth.uid == userId;
+      // Eliminar: propio usuario, o el owner del plan (limpiar avisos `invitation` al reinvitar).
+      allow delete: if isAuthenticated() && (
+                       request.auth.uid == userId ||
+                       (
+                         resource.data.type == 'invitation' &&
+                         resource.data.planId is string &&
+                         isPlanOwner(resource.data.planId)
+                       )
+                     );
     }
     
     // ============================================
@@ -898,14 +909,12 @@ service cloud.firestore {
       //    Por eso comprobamos que los campos inmutables no cambien (== resource.data), no que estén ausentes.
       allow update: if isAuthenticated() && (
         (
-          // Cancelar por owner
+          // Cancelar por owner (no comparar createdAt/expiresAt: Timestamp == falla tras merge)
           isPlanOwner(resource.data.planId) &&
           resource.data.status == 'pending' &&
           request.resource.data.planId == resource.data.planId &&
           request.resource.data.email == resource.data.email &&
           request.resource.data.token == resource.data.token &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.expiresAt == resource.data.expiresAt &&
           (request.resource.data.get('role', 'participant') == resource.data.get('role', 'participant')) &&
           ('status' in request.resource.data) && request.resource.data.status == 'cancelled'
         ) || (

@@ -1,6 +1,6 @@
 # T277 — Pruebas ejecutables por agente: CRUD de plan
 
-> Dominio: **#2 Planes**. No aparca el WIP #1 (participantes / T259).  
+> Dominio: **#2 Planes** · **WIP actual** (desde 2026-08-27; #1 cerrado).  
 > Contrato: [`FLUJO_CRUD_PLANES.md`](../flujos/FLUJO_CRUD_PLANES.md).  
 > Checklist: [`CHECKLIST_CRUD_PLANES.md`](../testing/CHECKLIST_CRUD_PLANES.md).
 

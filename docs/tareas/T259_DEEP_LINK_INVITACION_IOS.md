@@ -1,5 +1,7 @@
 # T259 – Deep link invitación en iOS (y Android)
 
+**Estado:** **cerrado iOS** (2026-08-27). Dominio #1 cerrado; Android `assetlinks.json` queda opcional fuera de WIP.
+
 **Objetivo:** Que el link de invitación a un plan (p. ej. el que se envía por email) abra la app nativa en la pantalla de invitación, en paridad con la experiencia web.
 
 **Referencia:** `docs/configuracion/REVISION_IOS_VS_WEB.md` §2.3 y §3 ítem 7; contrato `DIAGRAMA_ALTAS_BAJAS_PLAN.md` §2 / §1.2 K.
@@ -34,10 +36,11 @@
 - [x] Cert SSL Connected (`CN=app.planoon.com`)
 - [x] `firebase functions:config:set app.base_url="https://app.planoon.com"` + deploy functions
 - [x] AASA en `https://app.planoon.com/.well-known/apple-app-site-association` → JSON 200
-- [ ] Rebuild app iOS (Associated Domains)
+- [x] Rebuild app iOS (Associated Domains) — validado en dispositivo
 - [ ] (Android) `assetlinks.json` si se quiere App Link verificado
-- [ ] Prueba dispositivo: Mail → HTTPS `app.planoon.com/invitation/...` abre la app
-- [ ] Marcar `REVISION_IOS_VS_WEB.md` ítem 7 como resuelto cuando pase QA
+- [x] Prueba dispositivo: Mail → HTTPS `app.planoon.com/invitation/...` abre la app (**OK** 2026-08-27, iPhone)
+- [x] Marcar `REVISION_IOS_VS_WEB.md` ítem 7 como resuelto cuando pase QA
+
 ## Archivos clave
 
 | Pieza | Path |

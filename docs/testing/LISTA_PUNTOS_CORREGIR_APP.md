@@ -10,7 +10,7 @@
 
 | Dominio | Notas / IDs frecuentes |
 |---------|------------------------|
-| Participantes / invitaciones | Deep links, aceptar/rechazar, campana — T259 / ítem **123**, checklist push |
+| Participantes / invitaciones | Cerrado 2026-08-27 — T259 iOS ✅; restos fuera de WIP |
 | Planes | Cascada borrar **126**/**127** cerrados (T277 P16, 2026-08-18) |
 | Eventos / calendario | T278 CRUD agente (fase 1); ítems de formularios y FAB |
 | Pagos | PAY-* / ítems 101–107 · T222 |
@@ -55,7 +55,7 @@ Aplazado a propósito (2026-08-18) mientras el agente cubre tests de CRUD:
 
 - **T277 P5:** crear un plan en la app (web / iOS / Android) y verlo en la lista.
 - **125:** validar en iPhone el overflow del modal al crear plan (fix ya en código; hace falta hot restart).
-- **T259:** deploy AASA + QA Mail/Safari (deep link nativo).
+- **T259:** iOS Mail→HTTPS Universal Link **OK** (2026-08-27). Android `assetlinks.json` opcional.
 - **124:** validar en dispositivo reabrir el mismo link de invitación + una invitación nueva.
 - **123:** deep link web `/invitation/{token}` (código listo; validación aplazada).
 

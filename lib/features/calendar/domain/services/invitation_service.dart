@@ -3,6 +3,7 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import '../../../../shared/services/logger_service.dart';
@@ -90,8 +91,33 @@ class InvitationService {
     String? customMessage,
   }) async {
     try {
-      // Normalizar email a minúsculas
       final normalizedEmail = email.toLowerCase().trim();
+      final normalizedRole =
+          (role == 'observer' || role == 'participant') ? role : 'participant';
+
+      final authUid = FirebaseAuth.instance.currentUser?.uid;
+      if (authUid == null) {
+        throw Exception('Debes iniciar sesión para enviar invitaciones');
+      }
+
+      final planDoc = await _firestore.collection('plans').doc(planId).get();
+      if (!planDoc.exists) {
+        throw Exception('Plan no encontrado');
+      }
+      final planOwnerId = planDoc.data()?['userId'] as String?;
+      if (planOwnerId != authUid) {
+        bool isPlatformAdmin = false;
+        try {
+          final userDoc =
+              await _firestore.collection('users').doc(authUid).get();
+          isPlatformAdmin = userDoc.data()?['isAdmin'] == true;
+        } catch (_) {}
+        if (!isPlatformAdmin) {
+          throw Exception(
+            'Solo el organizador del plan puede enviar invitaciones por email',
+          );
+        }
+      }
 
       // Si el correo ya existe en la BD, invitar directamente (crear participación pending)
       // para que aparezca en la lista de participantes y reciba notificación in-app.
@@ -108,7 +134,30 @@ class InvitationService {
           return null;
         }
 
-        // Usuario registrado: participación pending (nueva o ya existente sin notificación).
+        // 1) Doc invitación primero (CF email). Si falla, no hay flicker de participación.
+        await dismissPendingInvitationDocsForEmail(
+          planId: planId,
+          email: normalizedEmail,
+        );
+        final token = _generateToken();
+        final now = DateTime.now();
+        final invitation = PlanInvitation(
+          planId: planId,
+          email: normalizedEmail,
+          token: token,
+          invitedBy: invitedBy ?? authUid,
+          role: normalizedRole,
+          customMessage: customMessage,
+          createdAt: now,
+          expiresAt: now.add(const Duration(days: 7)),
+          status: 'pending',
+        );
+        await _firestore
+            .collection(_collectionName)
+            .doc(token)
+            .set(invitation.toFirestore());
+
+        // 2) Participación pending (nueva o reabrir).
         String? participationId = existingParticipation?.id;
         if (participationId == null ||
             existingParticipation?.isActive != true ||
@@ -116,104 +165,88 @@ class InvitationService {
           participationId = await _participationService.createParticipation(
             planId: planId,
             userId: existingUser.id,
-            role: role,
-            invitedBy: invitedBy,
+            role: normalizedRole,
+            invitedBy: invitedBy ?? authUid,
             autoAccept: false,
           );
         } else if (invitedBy != null &&
             existingParticipation!.invitedBy != invitedBy &&
             participationId != null) {
-          // Alinear invitedBy con quien reenvía (la CF de push lo exige).
           try {
-            await _firestore.collection('plan_participations').doc(participationId).update({
-              'invitedBy': invitedBy,
-            });
+            await _firestore
+                .collection('plan_participations')
+                .doc(participationId)
+                .update({'invitedBy': invitedBy});
           } catch (e) {
             LoggerService.warning(
               'Could not update invitedBy on pending participation $participationId: $e',
             );
           }
         }
-        if (participationId != null) {
-          // Cancelar invitaciones pending previas y crear una nueva con token.
-          // onCreate de sendInvitationEmail envía el correo (LISTA / diagrama §1.1 decisión 1).
-          await dismissPendingInvitationDocsForEmail(
-            planId: planId,
-            email: normalizedEmail,
-          );
-          final token = _generateToken();
-          final now = DateTime.now();
-          final invitation = PlanInvitation(
-            planId: planId,
-            email: normalizedEmail,
-            token: token,
-            invitedBy: invitedBy,
-            role: role,
-            customMessage: customMessage,
-            createdAt: now,
-            expiresAt: now.add(const Duration(days: 7)),
-            status: 'pending',
-          );
-          // Doc ID = token → get público si pending (deep link §2 sin sesión).
-          await _firestore.collection(_collectionName).doc(token).set(invitation.toFirestore());
 
-          String? inviterName;
-          if (invitedBy != null) {
-            final inviter = await _userService.getUser(invitedBy);
-            inviterName = inviter?.displayName ?? inviter?.email ?? 'Un usuario';
-          }
-          await NotificationHelper().notifyInvitationCreated(
-            planId: planId,
-            invitedUserId: existingUser.id,
-            invitedEmail: normalizedEmail,
-            inviterUserId: invitedBy ?? '',
-            invitationToken: token,
-            planName: null,
-            inviterName: inviterName,
-          );
+        String? inviterName;
+        final inviterId = invitedBy ?? authUid;
+        try {
+          final inviter = await _userService.getUser(inviterId);
+          inviterName = inviter?.displayName ?? inviter?.email ?? 'Un usuario';
+        } catch (_) {
+          inviterName = 'Un usuario';
+        }
+        await NotificationHelper().notifyInvitationCreated(
+          planId: planId,
+          invitedUserId: existingUser.id,
+          invitedEmail: normalizedEmail,
+          inviterUserId: inviterId,
+          invitationToken: token,
+          planName: null,
+          inviterName: inviterName,
+        );
+
+        if (participationId != null) {
           LoggerService.database(
             'Direct invitation (participation pending + email): $participationId for $normalizedEmail',
             operation: 'CREATE',
           );
           return 'direct:$participationId';
         }
+        LoggerService.warning(
+          'Invitation doc created but participation missing for $normalizedEmail',
+          context: 'INVITATION_SERVICE',
+        );
+        return token;
       }
 
-      // Si ya hay pending: cancelar y crear de nuevo → reenvío email (onCreate CF) + enlace nuevo.
+      // Usuario no registrado: cancelar pending y crear invitación con token.
       await dismissPendingInvitationDocsForEmail(
         planId: planId,
         email: normalizedEmail,
       );
 
-      // Siempre crear una invitación con token (requiere aceptación explícita)
-      // Esto aplica tanto para usuarios nuevos como para usuarios previamente eliminados
       final token = _generateToken();
       final now = DateTime.now();
-      final expiresAt = now.add(const Duration(days: 7)); // Expira en 7 días
+      final expiresAt = now.add(const Duration(days: 7));
 
       final invitation = PlanInvitation(
         planId: planId,
         email: normalizedEmail,
         token: token,
-        invitedBy: invitedBy,
-        role: role,
+        invitedBy: invitedBy ?? authUid,
+        role: normalizedRole,
         customMessage: customMessage,
         createdAt: now,
         expiresAt: expiresAt,
         status: 'pending',
       );
 
-      // Doc ID = token → get público si pending (deep link §2 sin sesión).
-      await _firestore.collection(_collectionName).doc(token).set(invitation.toFirestore());
+      await _firestore
+          .collection(_collectionName)
+          .doc(token)
+          .set(invitation.toFirestore());
 
       LoggerService.database(
         'Invitation created: $token for email: $normalizedEmail (requires explicit acceptance)',
         operation: 'CREATE',
       );
-
-      // El email se envía automáticamente mediante Cloud Function
-      // que se activa cuando se crea el documento en Firestore (T104)
-      // Ver: functions/index.js - sendInvitationEmail
 
       return token;
     } catch (e) {
@@ -222,7 +255,16 @@ class InvitationService {
         context: 'INVITATION_SERVICE',
         error: e,
       );
-      return null;
+      if (e is FirebaseException) {
+        final code = e.code;
+        if (code == 'permission-denied') {
+          throw Exception(
+            'No tienes permiso para crear la invitación (solo el organizador del plan)',
+          );
+        }
+        throw Exception('Error de Firestore ($code): ${e.message ?? e}');
+      }
+      rethrow;
     }
   }
 
@@ -833,7 +875,7 @@ class InvitationService {
         );
       }
 
-      final participationId = await _participationService.createParticipation(
+      var participationId = await _participationService.createParticipation(
         planId: planId,
         userId: userId,
         role: invitation.role ?? 'participant',
@@ -841,22 +883,46 @@ class InvitationService {
         autoAccept: true,
       );
 
+      // Idempotencia: create puede devolver null por race aunque el accept ya quedó escrito.
+      var afterCreate =
+          await _participationService.getParticipation(planId, userId);
       if (participationId == null) {
+        if (afterCreate != null &&
+            afterCreate.isActive &&
+            afterCreate.status == 'accepted') {
+          participationId = afterCreate.id;
+        } else if (afterCreate != null &&
+            afterCreate.isActive &&
+            afterCreate.isPending) {
+          final ok =
+              await _participationService.acceptInvitation(planId, userId);
+          afterCreate =
+              await _participationService.getParticipation(planId, userId);
+          if (ok && afterCreate != null) {
+            participationId = afterCreate.id;
+          }
+        }
+      }
+
+      var confirmedAccepted = afterCreate != null &&
+          afterCreate.isActive &&
+          afterCreate.status == 'accepted';
+
+      if (!confirmedAccepted) {
+        await _participationService.acceptInvitation(planId, userId);
+        afterCreate =
+            await _participationService.getParticipation(planId, userId);
+        confirmedAccepted = afterCreate != null &&
+            afterCreate.isActive &&
+            afterCreate.status == 'accepted';
+        participationId ??= afterCreate?.id;
+      }
+
+      if (!confirmedAccepted) {
         return const InvitationRespondResult(
           success: false,
           message: 'No se pudo aceptar la invitación',
         );
-      }
-
-      // Tras createParticipation: si ya accepted, no re-notificar ni fallar por side effects.
-      final afterCreate =
-          await _participationService.getParticipation(planId, userId);
-      final wasAlreadyAccepted = afterCreate != null &&
-          afterCreate.isActive &&
-          afterCreate.status == 'accepted';
-
-      if (!wasAlreadyAccepted) {
-        await _participationService.acceptInvitation(planId, userId);
       }
 
       final token = invitation.token;
@@ -899,24 +965,19 @@ class InvitationService {
         } catch (_) {}
       }
 
-      if (!wasAlreadyAccepted) {
-        final respondedDisplay =
-            user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
-        await NotificationHelper().notifyInvitationResponded(
-          inviterUserId: invitation.invitedBy,
-          planId: planId,
-          respondedUserDisplay: respondedDisplay,
-          accepted: true,
-        );
-      }
+      final respondedDisplay =
+          user.displayName?.trim().isNotEmpty == true ? user.displayName! : user.email!;
+      await NotificationHelper().notifyInvitationResponded(
+        inviterUserId: invitation.invitedBy,
+        planId: planId,
+        respondedUserDisplay: respondedDisplay,
+        accepted: true,
+      );
       await _cleanupInviteeInvitationNotifications(userId, planId);
       return InvitationRespondResult(
         success: true,
-        message: wasAlreadyAccepted
-            ? 'Ya formas parte de este plan'
-            : 'Has aceptado la invitación',
+        message: 'Has aceptado la invitación',
         planId: planId,
-        alreadyMember: wasAlreadyAccepted,
       );
     } catch (e) {
       LoggerService.error(

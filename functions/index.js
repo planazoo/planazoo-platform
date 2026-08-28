@@ -150,19 +150,22 @@ function getInvitationEmailTemplate(invitationData) {
               ` : ''}
 
               <p style="margin:0 0 16px;font-size:15px;color:#5f6368;">Responde con un clic:</p>
-              <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 24px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 16px;">
                 <tr>
-                  <td style="padding:6px;">
+                  <td style="padding:6px;" align="center">
                     <a href="${invitationLink}?action=accept" style="display:inline-block;padding:14px 22px;background:#1a5f4a;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;">Aceptar invitación</a>
                   </td>
-                  <td style="padding:6px;">
+                  <td style="padding:6px;" align="center">
                     <a href="${invitationLink}?action=reject" style="display:inline-block;padding:14px 22px;background:#ffffff;color:#c5221f;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;border:1px solid #f5c2c0;">Rechazar</a>
                   </td>
                 </tr>
               </table>
+              <p style="margin:0 0 24px;text-align:center;">
+                <a href="${invitationLink}" style="display:inline-block;padding:12px 20px;background:#f8faf9;color:#1a5f4a;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px;border:1px solid #dce8e3;">Ver el plan</a>
+              </p>
 
               <p style="margin:0 0 8px;font-size:12px;color:#80868b;word-break:break-all;">
-                Si los botones no funcionan, usa este enlace:<br>
+                Si los botones no funcionan, usa este enlace al plan:<br>
                 <a href="${invitationLink}" style="color:#1a5f4a;">${invitationLink}</a>
               </p>
 
@@ -258,10 +261,9 @@ exports.sendInvitationEmail = functions.firestore
       const descTxt = plan.description ? `\n${plan.description}` : '';
       const emailText = `${inviterName} te ha invitado a unirte al plan "${planName}" en Planoon.${datesTxt}${descTxt}
 
+Ver el plan: ${APP_BASE_URL}/invitation/${invitation.token}
 Aceptar: ${APP_BASE_URL}/invitation/${invitation.token}?action=accept
 Rechazar: ${APP_BASE_URL}/invitation/${invitation.token}?action=reject
-
-Enlace: ${APP_BASE_URL}/invitation/${invitation.token}
 
 Este es un email automático. Por favor, no respondas a este mensaje.`;
 

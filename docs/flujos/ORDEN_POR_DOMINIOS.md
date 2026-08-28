@@ -23,9 +23,9 @@ No es una sugerencia: es la secuencia de dominio a dominio.
 
 | # | Dominio | Contrato / entrada | Estado |
 |---|---------|-------------------|--------|
-| **1** | Participantes / altas-bajas / invitaciones (+ avisos de alta) | [`DIAGRAMA_ALTAS_BAJAS_PLAN.md`](./DIAGRAMA_ALTAS_BAJAS_PLAN.md) | **WIP actual** (T259) |
-| **2** | Planes (+ estados) | [`FLUJO_CRUD_PLANES.md`](./FLUJO_CRUD_PLANES.md) · [`FLUJO_ESTADOS_PLAN.md`](./FLUJO_ESTADOS_PLAN.md) | Siguiente |
-| **3** | Eventos (+ calendario) | [`FLUJO_CRUD_EVENTOS.md`](./FLUJO_CRUD_EVENTOS.md) | En cola |
+| **1** | Participantes / altas-bajas / invitaciones (+ avisos de alta) | [`DIAGRAMA_ALTAS_BAJAS_PLAN.md`](./DIAGRAMA_ALTAS_BAJAS_PLAN.md) | **Cerrado** (2026-08-27) |
+| **2** | Planes (+ estados) | [`FLUJO_CRUD_PLANES.md`](./FLUJO_CRUD_PLANES.md) · [`FLUJO_ESTADOS_PLAN.md`](./FLUJO_ESTADOS_PLAN.md) | **WIP actual** |
+| **3** | Eventos (+ calendario) | [`FLUJO_CRUD_EVENTOS.md`](./FLUJO_CRUD_EVENTOS.md) | Siguiente |
 | **4** | Alojamientos | [`FLUJO_CRUD_ALOJAMIENTOS.md`](./FLUJO_CRUD_ALOJAMIENTOS.md) | En cola |
 | **5** | Pagos | [`FLUJO_PRESUPUESTO_PAGOS.md`](./FLUJO_PRESUPUESTO_PAGOS.md) | En cola |
 | **6** | Notas del plan | [`FLUJO_NOTAS_PLAN.md`](./FLUJO_NOTAS_PLAN.md) | En cola |
@@ -55,18 +55,19 @@ No abren un dominio propio fuera de secuencia.
 
 ## Cómo arrancar cada sesión
 
-1. Abrir este archivo → ver **WIP actual** (`#1` ahora).
+1. Abrir este archivo → ver **WIP actual** (`#2` ahora).
 2. Abrir el contrato del dominio.
 3. Trabajar solo tareas de ese dominio en `TASKS.md`.
 4. Hallazgos → `LISTA_PUNTOS_CORREGIR_APP.md`.
 5. Si cambió el comportamiento → actualizar el contrato.
 
 Frase útil:  
-**«Seguimos el orden definitivo. Dominio #1. Objetivo: …»**
+**«Seguimos el orden definitivo. Dominio #2. Objetivo: …»**
 
 ---
 
 ## Log
 
 - **2026-08-11:** Orden v1 elevado a **definitivo** (acuerdo de trabajo conjunto).
-- **WIP:** Dominio #1 — Participantes / invitaciones (**T259** deep link nativo en curso; T276 ✅ T269 ✅; T268 aplazada).
+- **2026-08-27:** Dominio **#1 cerrado** (T259 iOS Universal Link Mail→HTTPS ✅; T269/T276 ✅; T268 aplazada; Android `assetlinks` / estética mail = fuera de WIP). **WIP → #2 Planes.**
+- **WIP:** Dominio **#2** — Planes (+ estados) · contratos [`FLUJO_CRUD_PLANES.md`](./FLUJO_CRUD_PLANES.md) · [`FLUJO_ESTADOS_PLAN.md`](./FLUJO_ESTADOS_PLAN.md) · foco T277.

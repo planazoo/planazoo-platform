@@ -125,7 +125,7 @@ La decisión de qué mostrar (mobile vs desktop) se hace en `app.dart` con `Plat
 | 4 | Quitar `import 'dart:io'` de `pg_plans_list_page.dart` | Baja | **Hecho:** Ya no existe ese import. |
 | 5 | Añadir `UIBackgroundModes` → `remote-notification` en Info.plist para FCM | Alta (si quieres push en iOS) | **Hecho:** Añadido en `ios/Runner/Info.plist`. |
 | 6 | Comprobar GoogleService-Info.plist y APNs en Firebase para iOS | Alta | **Pendiente:** Verificar en proyecto y Firebase Console. |
-| 7 | Decidir y, si aplica, implementar deep link (Universal Links o URL scheme) para invitaciones | Media | **Pendiente.** |
+| 7 | Decidir y, si aplica, implementar deep link (Universal Links o URL scheme) para invitaciones | Media | **Hecho** (T259, 2026-08-27): Mail → HTTPS `app.planoon.com/invitation/...` abre app nativa iOS. Android App Links (`assetlinks.json`) pendiente si se quiere verificado. |
 | 8 | Probar barra de pestañas del plan en iPhone pequeño; ajustar si hace falta | Baja | **Pendiente** (prueba manual). |
 | 9 | Añadir descripciones de uso cámara/fotos en Info.plist si la app las usa | Media | **Hecho:** Añadidos `NSPhotoLibraryUsageDescription` y `NSCameraUsageDescription` en `ios/Runner/Info.plist` (la app usa ImagePicker para imagen del plan y perfil). |
 
@@ -138,7 +138,7 @@ La decisión de qué mostrar (mobile vs desktop) se hace en `app.dart` con `Plat
 | **Lista de planes** | Paridad | iOS: filtros (todos, estoy in, pendientes, cerrados), búsqueda (`WdPlanSearchWidget`), crear plan, card con imagen, iconos resumen/notificaciones/chat, navegación a detalle. Mismo contenido que web (PlanListWidget + PlanCardWidget). |
 | **Detalle del plan / pestañas** | Paridad | Las 7 pestañas existen en iOS (Info, Mi resumen, Calendario, Participantes, Chat, Stats, Pagos). Mismas pantallas: `WdPlanDataScreen`, `WdMyPlanSummaryScreen`, `CalendarMobilePage`/resumen, `PgPlanParticipantsPage`, `WdPlanChatScreen`, `PlanStatsPage`, `PaymentSummaryPage`. |
 | **Calendario** | Paridad funcional | iOS usa `CalendarMobilePage` (1–3 días visibles), con tracks, eventos, alojamientos, diálogos crear/editar evento y alojamiento. Menos vista “rejilla grande” que web; adecuado para móvil. |
-| **Notificaciones e invitaciones** | Paridad + 1 pendiente | Aceptar/rechazar invitación en ambas. Tras aceptar en móvil ya se navega a `PlanDetailPage(plan)`. **Pendiente:** deep link (Universal Links o URL scheme) para abrir app desde link de invitación. |
+| **Notificaciones e invitaciones** | Paridad | Aceptar/rechazar invitación en ambas. Tras aceptar en móvil → `PlanDetailPage(plan)`. Deep link iOS (Universal Links) ✅ T259. |
 | **Perfil y ajustes** | Paridad | Acceso desde barra inferior en iOS (`ProfilePage`). Misma página que web (edición, idioma, zona horaria, eliminar cuenta). |
 | **Multi-idioma** | OK | PlansListPage e InvitationPage usan solo AppLocalizations. InvitationPage: añadidas y usadas claves para header, detalles del plan, aviso email incorrecto y fecha de expiración (ES/EN). |
 | **Safe area y navegación** | OK | `PlansListPage` y `PlanDetailPage` usan `SafeArea`. Barra de pestañas del plan: 7 opciones en horizontal; en iPhone pequeño puede requerir scroll (pendiente prueba manual, ítem 8). |
@@ -188,7 +188,7 @@ Decisión por diferencia: **mantener distinto (A)** o **igualar (B)**.
 | 4 | Offline / Hive / sync (solo móvil) | **A** | Mantener: web siempre online. |
 | 5 | FCM push (solo móvil) | **A** | Mantener. |
 | 6 | Google Places (Cloud Function web vs API directa móvil) | **A** | Mantener: misma UX, distinta implementación. |
-| 7 | Invitación por link / deep link en iOS | **B** | Igualar: implementar deep link. **T259** creada. |
+| 7 | Invitación por link / deep link en iOS | **B** | Igualar: implementar deep link. **T259** — iOS Mail→HTTPS OK (2026-08-27). |
 | 8 | Barra de pestañas del plan (7 tabs, scroll en iPhone pequeño) | **A** | Mantener: aceptar scroll. |
 | 9 | Diálogos evento/alojamiento (fullscreen vs modal por ancho) | **A** | Mantener: adaptación responsive. |
 | 10 | ConnectivityService (web sin plugin vs móvil con plugin) | **A** | Mantener. |

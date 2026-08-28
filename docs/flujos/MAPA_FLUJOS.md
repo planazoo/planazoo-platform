@@ -54,9 +54,9 @@ flowchart LR
 
 | Dominio | Estado contrato | Contrato / stub | Referencia | Trabajo (TASKS) |
 |---------|-----------------|-----------------|------------|-----------------|
-| **Participantes / altas-bajas / invitaciones** | **Contrato vivo** · **WIP** | [DIAGRAMA_ALTAS_BAJAS_PLAN.md](./DIAGRAMA_ALTAS_BAJAS_PLAN.md) · stub [FLUJO_GESTION_PARTICIPANTES.md](./FLUJO_GESTION_PARTICIPANTES.md) · stub [FLUJO_INVITACIONES_NOTIFICACIONES.md](./FLUJO_INVITACIONES_NOTIFICACIONES.md) | [NOTIFICACIONES_ESPECIFICACION.md](../producto/NOTIFICACIONES_ESPECIFICACION.md) · [ROLES_Y_TIPOS_USUARIO.md](../configuracion/ROLES_Y_TIPOS_USUARIO.md) | T269 ✅, T276 ✅, T268 aplazada, **T259**, T224, T233, T234, T20, T120, T261*, T252* |
+| **Participantes / altas-bajas / invitaciones** | **Contrato vivo** · **cerrado** (2026-08-27) | [DIAGRAMA_ALTAS_BAJAS_PLAN.md](./DIAGRAMA_ALTAS_BAJAS_PLAN.md) · stub [FLUJO_GESTION_PARTICIPANTES.md](./FLUJO_GESTION_PARTICIPANTES.md) · stub [FLUJO_INVITACIONES_NOTIFICACIONES.md](./FLUJO_INVITACIONES_NOTIFICACIONES.md) | [NOTIFICACIONES_ESPECIFICACION.md](../producto/NOTIFICACIONES_ESPECIFICACION.md) · [ROLES_Y_TIPOS_USUARIO.md](../configuracion/ROLES_Y_TIPOS_USUARIO.md) | T269 ✅, T276 ✅, T259 iOS ✅, T268 aplazada; restos T224/T233/… fuera de WIP |
+| **Planes (+ estados)** | Stub · **WIP** | [FLUJO_CRUD_PLANES.md](./FLUJO_CRUD_PLANES.md) · estados [FLUJO_ESTADOS_PLAN.md](./FLUJO_ESTADOS_PLAN.md) | [PLAN_FORM_FIELDS.md](../especificaciones/PLAN_FORM_FIELDS.md) | **T277**, T122, T204, T205, T237, T243*, T261* |
 | Notificaciones (campana / producto) | Cubierto por diagrama §1.1 + spec | Mismo DIAGRAMA | [NOTIFICACIONES_ESPECIFICACION.md](../producto/NOTIFICACIONES_ESPECIFICACION.md) · [NOTIFICACIONES_PLAN_CODIFICACION.md](../producto/NOTIFICACIONES_PLAN_CODIFICACION.md) | Empujones con participantes; FCM ↔ T267 |
-| Planes | Stub | [FLUJO_CRUD_PLANES.md](./FLUJO_CRUD_PLANES.md) · estados [FLUJO_ESTADOS_PLAN.md](./FLUJO_ESTADOS_PLAN.md) | [PLAN_FORM_FIELDS.md](../especificaciones/PLAN_FORM_FIELDS.md) | T122, T204, T205, T237, T243*, T261*, **T277** |
 | Eventos (+ calendario) | Stub (+ T273 cerrado) | [FLUJO_CRUD_EVENTOS.md](./FLUJO_CRUD_EVENTOS.md) | [EVENT_FORM_FIELDS.md](../especificaciones/EVENT_FORM_FIELDS.md) · [CALENDAR_CAPABILITIES.md](../especificaciones/CALENDAR_CAPABILITIES.md) · [T273 ✅](../tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md) · mail [COMUNICACIONES_MAIL_PLAN.md](../producto/COMUNICACIONES_MAIL_PLAN.md) | T35, T37–T38, T88, T96–T99, T182, T208, T210–T212, T215, T225, T238, T242, T246–T247, T250–T251, T270–T272, **T278**, **T134** |
 | Alojamientos | Stub (+ T273 cerrado) | [FLUJO_CRUD_ALOJAMIENTOS.md](./FLUJO_CRUD_ALOJAMIENTOS.md) | [ACCOMMODATION_FORM_FIELDS.md](../especificaciones/ACCOMMODATION_FORM_FIELDS.md) | T121, T225, T251, T271 |
 | Pagos | Stub | [FLUJO_PRESUPUESTO_PAGOS.md](./FLUJO_PRESUPUESTO_PAGOS.md) | [PAGOS_MVP.md](../producto/PAGOS_MVP.md) | T222, T260 |
@@ -89,7 +89,7 @@ flowchart LR
 
 Plantilla reusable para cualquier dominio: [`PLANTILLA_DOMINIO.md`](./PLANTILLA_DOMINIO.md)
 
-1. **Altas / bajas** — contrato: `DIAGRAMA_ALTAS_BAJAS_PLAN.md` (**WIP:** T269 ✅ T276 ✅; T268 auto aplazada; siguiente T259 / §1.2).
+1. **Altas / bajas** — contrato: `DIAGRAMA_ALTAS_BAJAS_PLAN.md` (**cerrado** 2026-08-27; T269/T276/T259 iOS ✅; T268 aplazada).
 2. **Reserva / cancelación** — **cerrado** (T273 ✅ Ago 2026). Spec: `docs/tareas/archivo/T273_RESERVA_CANCELACION_DEPOSITO.md`.
 
 ---
