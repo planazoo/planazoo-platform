@@ -1,6 +1,6 @@
 # T277 — Pruebas ejecutables por agente: CRUD de plan
 
-> Dominio: **#2 Planes** · **WIP actual** (desde 2026-08-27; #1 cerrado).  
+> Dominio: **#2 Planes** · **WIP** (retomado 2026-08-31; T134 cerrado).  
 > Contrato: [`FLUJO_CRUD_PLANES.md`](../flujos/FLUJO_CRUD_PLANES.md).  
 > Checklist: [`CHECKLIST_CRUD_PLANES.md`](../testing/CHECKLIST_CRUD_PLANES.md).
 
@@ -25,7 +25,7 @@ No sustituye Sesión A (iPhone / Android / web). Cubre la capa de servicio + val
 
 ## Fase 3 (esta pasada)
 
-- **Hecho:** Cancelar P8 — `planificando`→`cancelado` (sigue en lista); no se puede desde `en_curso`.
+- **Hecho:** Cancelar P8 — `planificando`→`cancelado` (sigue en lista); no se puede desde `en_curso`. 2026-09-01: avisa miembros (in-app `planStateChanged`) y cierra invitaciones pending (T261 slice).
 - **Hecho:** PLAN-R-003 lookup por UNP ID; PLAN-R-005 filtro por nombre.
 - **Hecho:** P14 matriz `PlanStatePermissions`.
 ## Fase 4 (esta pasada)

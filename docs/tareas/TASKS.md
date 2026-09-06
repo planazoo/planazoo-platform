@@ -4,11 +4,11 @@
 > **Tareas completadas:** ver `docs/tareas/COMPLETED_TASKS.md`.  
 > **Índice de documentos por tarea (Txxx_*.md):** ver `docs/tareas/README_TAREAS.md`.
 
-**Siguiente código de tarea: T279**
+**Siguiente código de tarea: T280**
 
 **Sistema de procesos:** [`docs/flujos/MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md) · **orden definitivo:** [`ORDEN_POR_DOMINIOS.md`](../flujos/ORDEN_POR_DOMINIOS.md) (#1→#9).
 
-**WIP dominio (1 a la vez):** **#2 Planes (+ estados)** → [`FLUJO_CRUD_PLANES.md`](../flujos/FLUJO_CRUD_PLANES.md) · [`FLUJO_ESTADOS_PLAN.md`](../flujos/FLUJO_ESTADOS_PLAN.md) · foco **T277**. Dominio #1 cerrado 2026-08-27 (T259 iOS ✅). Al cerrar/aparcar → **#3 Eventos**.
+**WIP dominio (1 a la vez):** **#2 Planes** · **T277** · [`FLUJO_CRUD_PLANES.md`](../flujos/FLUJO_CRUD_PLANES.md). #1 cerrado. **T134 mail cerrado** (2026-08-31).
 
 ### Índice por dominio
 
@@ -18,7 +18,7 @@
 |----------------|----------------------------|
 | Participantes / invitaciones (**cerrado**) | T20, T120, T224, T233, T234, **T275**, T261*, T252* (fuera de WIP; T259 iOS ✅) |
 | **Planes / estados (WIP)** | T122, T204, T205, T237, T243*, T261*, **T277** |
-| Eventos + calendario | T35, T37, T38, T88, T96–T99, T182, T208, T210–T212, T215, T225, T238, T242, T246, T247, T250, T251, T270, T271, T272, **T278** |
+| Eventos + calendario | T35, T37, T38, T88, T96–T99, T182, T208, T210–T212, T215, T225, T238, T242, T246, T247, T250, T251, T270, T271, T272, **T278**, **T279** |
 | Alojamientos | T121, T225*, T251*, T271* |
 | Pagos | T222, T260 |
 | Notas | **T262** |
@@ -31,7 +31,7 @@
 | Plataforma / release | T256–T258, T267 |
 | UI transversal | T194–T214, T226, T231, T237*, T244, T249, T251* |
 | Producto / ayuda / legal | T135, T136, T150, T157, T158, T192, T254, T263–T266 |
-| Import / export / IA | T131, T133, **T134**, T181, T266* |
+| Import / export / IA | T131, T133, T134 ✅, T181, T266* |
 
 **📊 Resumen compacto (solo pendientes):** ~100 códigos; detalle en §§0–13. Completadas → `COMPLETED_TASKS.md`.
 
@@ -119,6 +119,7 @@
 | **T250** | **Definir campos por combinación tipo-subtipo de evento:** Para cada par tipo/subtipo (Desplazamiento/Avión, Desplazamiento/Taxi, Restauración/Comida, etc.), especificar qué campos son visibles, editables, obligatorios u opcionales, y en qué contexto (crear vs editar, rol del usuario). Documentar en `docs/especificaciones/EVENT_FORM_FIELDS.md` o anexo; alinear después el formulario `wd_event_dialog.dart` con esa definición. | Media |
 | **T271** | **Fotos automáticas de lugares/alojamientos (Places Photos + cache):** Evaluar e implementar imagen por evento/alojamiento para enriquecer resumen y detalle. Preferencia: **Google Place Photos** al crear/editar (cuando haya `placeId`), **descargar 1 miniatura** y **guardarla en storage propio** (Firebase/GCS) para no repetir el SKU Place Photos en cada vista (~$7/1.000 requests). Criterios: 1 foto por entidad; lazy-load; atribución Places; override/quitar manual; coste controlado (no hotlink de URLs de Places; no galería). Alternativas/fallback gratis a valorar: Wikimedia / Unsplash. Dejado en espera a propósito (2026-08); no implementar hasta priorizar. | Baja |
 | **T272** | **Colores de tipos de evento a nivel de plan (carril/borde):** En Info del plan, color **base** + color por **familia** (Desplazamiento, Restauración, Actividad, Acción, Otro). Al crear evento se aplica esa config; al cambiar un color se propagan a todos los eventos de esa familia (sin respetar override manual). Solo carril/borde; alojamientos fuera; solo organizador edita. Planes sin config → base `color2`. Especificación en `docs/tareas/T272_COLORES_TIPOS_EVENTO_PLAN.md`. | Media |
+| **T279** | **Mapa del plan (lugares a visitar):** desde Mi resumen, mapa con pin por lugar (Places lat/lng), **color por día** y **número de secuencia**. Alojamientos = pin H. Contrato eventos: [`FLUJO_CRUD_EVENTOS.md`](../flujos/FLUJO_CRUD_EVENTOS.md). Spec: [`T279_MAPA_PLAN_LUGARES.md`](./T279_MAPA_PLAN_LUGARES.md). **Implementado** (pendiente confirmación para Completada). | Media |
 ---
 
 ### 3. Administración y datos
@@ -217,14 +218,14 @@
 | **T120** | Sistema de invitaciones y confirmación de eventos (base implementada; faltan notificaciones push, etc.). | Alta |
 | **T121** | Revisión y enriquecimiento de formularios EventDialog y AccommodationDialog por tipo. | Media |
 | **T122** | Guardar plan como plantilla (local, editar, usar plantilla). | Baja |
-| **T277** | **Pruebas ejecutables por agente (CRUD plan):** `createPlan` + releer en Firestore falso; validación de nombre alineada con el modal. No sustituye E2E de dispositivos. **En progreso (fase 1).** Especificación en `docs/tareas/T277_PRUEBAS_AGENTE_CRUD_PLAN.md`. Checklist: `docs/testing/CHECKLIST_CRUD_PLANES.md`. | Media |
+| **T277** | **Pruebas ejecutables por agente (CRUD plan):** `createPlan` + releer en Firestore falso; validación de nombre alineada con el modal. No sustituye E2E de dispositivos. **Agente P1–P20 cubierto** (salvo **P5 humano**). Especificación en `docs/tareas/T277_PRUEBAS_AGENTE_CRUD_PLAN.md`. Checklist: `docs/testing/CHECKLIST_CRUD_PLANES.md`. | Media |
 | **T278** | **Pruebas ejecutables por agente (CRUD evento):** `createEvent` + releer/listar/editar/borrar en Firestore falso; duración/cupo/rango/estado; diálogo borrar. No sustituye E2E de calendario. **En progreso (fase 2).** Especificación en `docs/tareas/T278_PRUEBAS_AGENTE_CRUD_EVENTO.md`. Checklist: `docs/testing/CHECKLIST_CRUD_EVENTOS.md`. | Media |
 | **T224** | **Reenviar invitación (recordatorio manual):** El organizador recuerda a pendientes con «Reenviar» (campana + push + email; sin duplicar ítem de campana). **Acordado** Ago 2026 como sustituto del recordatorio automático. Relacionado: T104, T105, LISTA 115/122. Ver `DIAGRAMA_ALTAS_BAJAS_PLAN.md`. | Media |
 | **T268** | ~~Recordatorios diarios automáticos de invitaciones pendientes~~ — **Aplazada / no ahora** (Ago 2026): agobia al invitado. Sustituido por **reenviar manual** (T224 / caso 2). Posible reabrir en el futuro como sistema opt-in. | — |
 | **T233** | Página Participantes: (1) La lista de participantes ha de ser lo primero; hacerla más compacta para ver el máximo posible. (2) La parte de invitar va a continuación de la lista. (3) Revisar si la parte de aceptar invitaciones es necesaria — *aclarar al abordar la tarea*: ¿se refiere a la vista del organizador (gestionar invitaciones) o a la del invitado (aceptar/rechazar)? (4) Eliminar el botón «Aceptar/Rechazar por token» y todo el código y documentación relacionada (opción ya no activa). (5) Eliminar el icono «X» para cerrar si ya no es necesario. (6) En la barra superior solo ha de aparecer el nombre de la página, sin el nombre del plan. Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T234** | Invitaciones: (1) Cuando la invitación está enviada, el usuario invitado (ej. UB) ha de aparecer en la lista de participantes con estado «pendiente de aceptar invitación» (verificar si ya está implementado). (2) Cuando el invitado acepta o rechaza, el organizador (ej. UA) ha de recibir notificación. (3) En el recuadro de enviar por mail, añadir icono «?» para explicar cada tipo de usuario (participante, observador). Origen: REGISTRO_OBSERVACIONES_PRUEBAS.md § MIS NOTAS. | Media |
 | **T275** | **Audiencias configurables de avisos por fase del plan (planificación vs ejecución):** Permitir al organizador definir **quién recibe avisos** en cada fase (p. ej. solo organizador/coorganizers, participantes activos, observadores o selección manual). Aplicar la configuración en campana, push FCM y email para avisos de cambios relevantes. Incluir: (1) modelo de configuración por plan; (2) matriz de tipos de aviso × fase × audiencia; (3) fallback seguro para planes sin configuración; (4) permisos de edición (solo organizador/rol autorizado); (5) pruebas E2E web+iOS+Android y documentación en contrato de participantes/notificaciones (`DIAGRAMA_ALTAS_BAJAS_PLAN.md` + spec de notificaciones). Relacionado: T105, T224, T268, T267, T261. **Especificación en `docs/tareas/T275_AUDIENCIAS_AVISOS_POR_FASE.md`.** | Alta |
-| **T261** | **Cancelar plan (flujo completo y comunicación):** Evaluar e implementar todo el flujo cuando un plan se cancela, con foco en avisar correctamente a participantes. Incluir: (1) estado/acción de cancelación y permisos; (2) impacto en visibilidad del plan y eventos; (3) notificaciones in-app y push/email a organizador e invitados/participantes; (4) texto legal/UX del mensaje de cancelación; (5) comportamiento offline/sincronización; (6) pruebas E2E web+iOS. Actualizar flujos y documentación relacionados (`FLUJO_CRUD_PLANES.md`, `FLUJO_INVITACIONES_NOTIFICACIONES.md`, checklist de testing). | Alta |
+| **T261** | **Cancelar plan (flujo completo y comunicación):** Evaluar e implementar todo el flujo cuando un plan se cancela, con foco en avisar correctamente a participantes. Incluir: (1) estado/acción de cancelación y permisos; (2) impacto en visibilidad del plan y eventos; (3) notificaciones in-app y push/email a organizador e invitados/participantes; (4) texto legal/UX del mensaje de cancelación; (5) comportamiento offline/sincronización; (6) pruebas E2E web+iOS. **En curso (2026-09-01):** al pasar a `cancelado`, in-app + push a aceptados y pendientes (no al que cancela); pending → `expired`; invitaciones pending → `cancelled`. Resta: email a quien no tiene cuenta, E2E, copy legal. Actualizar flujos (`FLUJO_CRUD_PLANES.md`, `FLUJO_ESTADOS_PLAN.md`, `FLUJO_INVITACIONES_NOTIFICACIONES.md`, checklist). | Alta |
 ---
 
 ### 10. IA, importación, exportación, integración
@@ -233,7 +234,7 @@
 |--------|-------------|-----------|
 | **T131** | Sincronización con calendarios externos (.ics, etc.). | Media |
 | **T133** | Exportación profesional de planes (PDF/Email). **Contrato web C4** ([`WEB_COMERCIAL.md`](../producto/WEB_COMERCIAL.md)): exportar/imprimir/compartir itinerario propio y del plan; el destinatario no necesita la app. | **Alta** (contrato comercial) |
-| **T134** | **Mail → plan:** reenvío a dirección plataforma; buzón de comunicaciones; **colocar** en evento existente **o** crear evento; copia en cuenta del usuario. Parseo por plantillas = fase posterior. **Gate lanzamiento público** (corte mínimo). From = usuario registrado; anti-spam. Producto: [`COMUNICACIONES_MAIL_PLAN.md`](../producto/COMUNICACIONES_MAIL_PLAN.md). Técnico recepción: [`CORREO_EVENTOS_SISTEMA_PARSEO.md`](../producto/CORREO_EVENTOS_SISTEMA_PARSEO.md). | **Alta** (launch) |
+| **T134** | **Mail → plan (corte mínimo) ✅** (2026-08-31): reenvío, buzón, colocar en evento/alojamiento o crear evento, copia + anexos, nota manual. Ver `COMPLETED_TASKS.md`. Deuda fuera de WIP: LISTA **142** (excepción unicidad inbound). **143** cerrado 2026-09-01 (cid + anexos validados). Producto: [`COMUNICACIONES_MAIL_PLAN.md`](../producto/COMUNICACIONES_MAIL_PLAN.md). | — |
 | **T181** | Definir guía de layout modular para pantallas (grid, secciones, espaciados). | Media |
 
 ---

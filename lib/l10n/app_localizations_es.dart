@@ -1677,7 +1677,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get notificationsSectionInvitations => 'Invitaciones a planes';
 
   @override
-  String get notificationsSectionEmailEvents => 'Eventos desde correo';
+  String get notificationsSectionEmailEvents => 'Comunicaciones sin colocar';
 
   @override
   String get notificationsFilterAll => 'Todas';
@@ -1711,14 +1711,17 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get pendingEventsTitle => 'Eventos desde correo';
+  String get pendingEventsTitle => 'Comunicaciones sin colocar';
 
   @override
-  String get pendingEventsEmpty =>
-      'No tienes eventos pendientes. Reenvía confirmaciones a la dirección de la plataforma.';
+  String get pendingEventsEmpty => 'No tienes nada pendiente.';
 
   @override
-  String get pendingEventsAssignToPlan => 'Asignar a plan';
+  String get pendingEventsInboxHint =>
+      'Reenvía desde tu correo principal o desde uno verificado en el perfil. Planoon no lee tu bandeja.';
+
+  @override
+  String get pendingEventsAssignToPlan => 'Colocar';
 
   @override
   String get pendingEventsDiscard => 'Descartar';
@@ -1730,17 +1733,290 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pendingEventAssignTitle => 'Elegir plan';
 
   @override
-  String get pendingEventAssigned => 'Evento asignado al plan';
+  String get pendingEventAssigned => 'Comunicación colocada';
 
   @override
-  String get pendingEventDiscarded => 'Evento descartado';
+  String pendingEventPlacedOn(String name) {
+    return 'Colocada en $name';
+  }
 
   @override
-  String get pendingEventDiscardConfirm => '¿Descartar este evento pendiente?';
+  String get pendingEventDiscarded => 'Comunicación descartada';
+
+  @override
+  String get pendingEventDiscardConfirm => '¿Descartar esta comunicación?';
 
   @override
   String get pendingEventsNoPlans =>
-      'No tienes planes. Crea uno antes de asignar.';
+      'No tienes planes. Crea uno antes de colocar.';
+
+  @override
+  String get pendingEventAddressCopied => 'Dirección copiada';
+
+  @override
+  String get pendingEventChooseDestination => 'Dónde colocar';
+
+  @override
+  String get pendingEventVisibilityPlan => 'Visible para el plan';
+
+  @override
+  String get pendingEventVisibilityPrivate => 'Solo yo';
+
+  @override
+  String get pendingEventSectionEvents => 'Eventos';
+
+  @override
+  String get pendingEventSectionAccommodations => 'Alojamientos';
+
+  @override
+  String get pendingEventCreateEvent => 'Crear evento';
+
+  @override
+  String get pendingEventPlanEmpty =>
+      'Este plan aún no tiene eventos ni alojamientos.';
+
+  @override
+  String pendingEventPlaceConfirm(String name, String visibility) {
+    return '¿Colocar en «$name» $visibility?';
+  }
+
+  @override
+  String get pendingEventPlaceConfirmPlan => 'visible para el plan';
+
+  @override
+  String get pendingEventPlaceConfirmPrivate => 'solo tú';
+
+  @override
+  String get pendingEventPlaceFailed =>
+      'No se pudo colocar. Inténtalo de nuevo.';
+
+  @override
+  String get pendingEventSearchPlanHint => 'Buscar plan';
+
+  @override
+  String get pendingEventSearchEventHint => 'Buscar evento';
+
+  @override
+  String get pendingEventSearchNoMatch => 'Ningún resultado';
+
+  @override
+  String get communicationComposeTitle => 'Nueva comunicación';
+
+  @override
+  String get communicationComposeSubject => 'Título';
+
+  @override
+  String get communicationComposeBody => 'Texto';
+
+  @override
+  String get communicationComposeBodyHint => 'Pega aquí un WhatsApp, una nota…';
+
+  @override
+  String get communicationComposeAttach => 'Añadir archivo o foto';
+
+  @override
+  String get communicationComposeSave => 'Guardar';
+
+  @override
+  String get communicationComposeNeedBody =>
+      'Escribe un texto o añade un archivo.';
+
+  @override
+  String get communicationKindManual => 'Nota';
+
+  @override
+  String get communicationAdd => 'Añadir';
+
+  @override
+  String get communicationAttachFailed => 'No se pudo adjuntar el archivo.';
+
+  @override
+  String get communicationEditTitle => 'Editar comunicación';
+
+  @override
+  String communicationFilesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count archivos',
+      one: '1 archivo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get communicationAttachmentsLabel => 'Archivos';
+
+  @override
+  String helpAboutContext(String label) {
+    return 'Ayuda sobre $label';
+  }
+
+  @override
+  String get helpSemanticsHint =>
+      'Abre una explicación y un enlace a más información';
+
+  @override
+  String get deleteAnnouncementTitle => 'Eliminar aviso';
+
+  @override
+  String get deleteAnnouncementConfirm =>
+      '¿Eliminar este aviso? No se puede deshacer.';
+
+  @override
+  String get announcementDeleted => 'Aviso eliminado';
+
+  @override
+  String get announcementDeleteError => 'No se pudo eliminar el aviso';
+
+  @override
+  String get announcementsLoadError => 'No se pudieron cargar los avisos';
+
+  @override
+  String get announcementsEmpty => 'No hay avisos aún';
+
+  @override
+  String get announcementsEmptyHint => 'Sé el primero en publicar un aviso';
+
+  @override
+  String get announcementBadgeUrgent => 'Urgente';
+
+  @override
+  String get announcementBadgeImportant => 'Importante';
+
+  @override
+  String get deleteGroupTitle => 'Eliminar grupo';
+
+  @override
+  String deleteGroupConfirm(String name) {
+    return '¿Eliminar el grupo $name?';
+  }
+
+  @override
+  String get groupDeletedSuccess => 'Grupo eliminado';
+
+  @override
+  String get groupDeleteError => 'No se pudo eliminar el grupo';
+
+  @override
+  String get makeOrganizer => 'Hacer organizador';
+
+  @override
+  String get makeOrganizerConfirm => '¿Hacer organizador a este usuario?';
+
+  @override
+  String get userPromotedOrganizer => 'Usuario promovido a organizador';
+
+  @override
+  String get removeParticipant => 'Quitar';
+
+  @override
+  String get removeParticipantConfirm => '¿Quitar a este usuario del plan?';
+
+  @override
+  String get userRemovedFromPlan => 'Usuario quitado del plan';
+
+  @override
+  String get cannotRemoveParticipantsNow =>
+      'No se pueden quitar participantes en el estado actual del plan.';
+
+  @override
+  String get loadParticipantsError => 'No se pudieron cargar los participantes';
+
+  @override
+  String get loadPlanError => 'No se pudo cargar el plan';
+
+  @override
+  String get noParticipants => 'No hay participantes';
+
+  @override
+  String get timeAgoMoments => 'Hace un momento';
+
+  @override
+  String timeAgoMinutes(int count) {
+    return 'Hace $count min';
+  }
+
+  @override
+  String timeAgoHours(int count) {
+    return 'Hace $count h';
+  }
+
+  @override
+  String get yesterday => 'Ayer';
+
+  @override
+  String timeAgoDays(int count) {
+    return 'Hace $count d';
+  }
+
+  @override
+  String get entityCommunicationsTitle => 'Comunicaciones';
+
+  @override
+  String get entityCommunicationsEmpty => 'Aún no hay correos colocados aquí.';
+
+  @override
+  String get entityCommunicationsLoadError =>
+      'No se pudieron cargar las comunicaciones.';
+
+  @override
+  String get entityCommunicationsPrivateBadge => 'Solo tú';
+
+  @override
+  String get entityCommunicationsRemove => 'Quitar de aquí';
+
+  @override
+  String get entityCommunicationsRemoveConfirm =>
+      '¿Quitar esta comunicación? Volverá a tu buzón.';
+
+  @override
+  String get inboundEmailsTitle => 'Correos para reenviar';
+
+  @override
+  String get inboundEmailsSubtitle =>
+      'Planoon no lee tu bandeja. Reenvía a la dirección de la plataforma desde el correo con el que entras o desde uno verificado aquí.';
+
+  @override
+  String get inboundEmailsPrimaryLabel => 'Con este entras';
+
+  @override
+  String get inboundEmailsAdd => 'Añadir correo';
+
+  @override
+  String get inboundEmailsPending => 'Pendiente de verificar';
+
+  @override
+  String get inboundEmailsVerified => 'Verificado';
+
+  @override
+  String get inboundEmailsResend => 'Reenviar correo';
+
+  @override
+  String get inboundEmailsRemove => 'Quitar';
+
+  @override
+  String get inboundEmailsSent => 'Te hemos enviado un enlace de verificación.';
+
+  @override
+  String get inboundEmailsRemoved => 'Correo quitado';
+
+  @override
+  String get inboundEmailsInvalid => 'Introduce un correo válido.';
+
+  @override
+  String get inboundEmailsMax =>
+      'Puedes tener como máximo dos correos adicionales.';
+
+  @override
+  String get inboundEmailsOwnPrimary =>
+      'Ese ya es el correo con el que entras.';
+
+  @override
+  String get inboundEmailsTaken => 'Ese correo ya está en otra cuenta.';
+
+  @override
+  String get inboundEmailsError => 'No se pudo guardar. Inténtalo de nuevo.';
 
   @override
   String get understood => 'Entendido';
@@ -2219,6 +2495,38 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get accommodationPlaceLabel => 'Buscar alojamiento';
+
+  @override
+  String get accommodationPlaceSearchHint => 'Hotel, apartamento, dirección…';
+
+  @override
+  String get accommodationUpdateNameTitle => '¿Usar el nombre del nuevo hotel?';
+
+  @override
+  String accommodationUpdateNameMessage(String current, String place) {
+    return 'El nombre actual («$current») es distinto del nuevo lugar («$place»).';
+  }
+
+  @override
+  String get accommodationUseNewName => 'Usar nombre nuevo';
+
+  @override
+  String get accommodationKeepCustomName => 'Mantener el mío';
+
+  @override
+  String get accommodationSearchPlaceTooltip => 'Buscar alojamiento';
+
+  @override
+  String get accommodationPhoneLabel => 'Teléfono';
+
+  @override
+  String get accommodationPhoneHint => 'Teléfono de contacto';
+
+  @override
+  String get accommodationEmailLabel => 'Correo electrónico';
+
+  @override
+  String get accommodationEmailHint => 'correo@hotel.com';
 
   @override
   String get enterLocationManually => 'Introducir a mano';
@@ -3199,6 +3507,59 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get myPlanSummaryShareSectionItinerary => 'Itinerario';
+
+  @override
+  String get planMapTitle => 'Mapa';
+
+  @override
+  String get planMapTooltip => 'Mapa del plan';
+
+  @override
+  String get planMapClose => 'Cerrar';
+
+  @override
+  String get planMapAllDays => 'Todos';
+
+  @override
+  String planMapDayChip(int day) {
+    return 'Día $day';
+  }
+
+  @override
+  String get planMapEmpty => 'No hay lugares con ubicación en este plan.';
+
+  @override
+  String get planMapEmptyHint =>
+      'Al crear un evento o alojamiento, elige el lugar con Google Places para que aparezca en el mapa.';
+
+  @override
+  String get planMapMissingKey =>
+      'El mapa embebido necesita la clave de Maps (la misma que Places: --dart-define=PLACES_API_KEY=…) y Maps JavaScript API habilitada. Mientras tanto puedes usar la lista y abrir cada sitio en Google Maps.';
+
+  @override
+  String get planMapLoadError =>
+      'No se pudo cargar el mapa. Comprueba que Maps JavaScript API está habilitada para esa clave.';
+
+  @override
+  String get planMapOpenDayRoute => 'Ruta del día en Google Maps';
+
+  @override
+  String get planMapLegendHotel => 'Alojamiento';
+
+  @override
+  String get planMapLegendAirport => 'Aeropuerto';
+
+  @override
+  String get planMapAirportArrival => 'Llegada';
+
+  @override
+  String get planMapAirportDeparture => 'Salida';
+
+  @override
+  String get planMapOpenItem => 'Abrir ficha';
+
+  @override
+  String get planMapPlacesList => 'LUGARES';
 
   @override
   String myPlanSummaryParticipantsCount(int count) {

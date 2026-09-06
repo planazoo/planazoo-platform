@@ -116,6 +116,7 @@ adb shell svc wifi disable && adb shell svc data disable
 - [ ] Puedes crear nuevos planes/eventos (persistencia local vía **caché/ cola de Firestore**)
 - [ ] Puedes editar planes/eventos existentes (igual)
 - [ ] Tras reconectar, los cambios pendientes del SDK llegan a Firestore (la **`sync_queue` Hive** no es el camino activo para este CRUD)
+- [ ] **T279 mapa del plan (OFF-005):** con caché previa, en offline la **lista** del recorrido (número/color/H/A) se ve; el mapa Google puede no cargar. Detalle en [TESTING_CHECKLIST.md](../configuracion/TESTING_CHECKLIST.md) **OFF-005**.
 
 ### 4. Sincronización (Volver a Online)
 
@@ -204,7 +205,7 @@ Buscar en la consola:
 - Los cambios offline de planes/eventos pasan por la **caché y cola del cliente Firestore**; Hive refleja el remoto al estar online
 - Conflictos multi-dispositivo: reglas efectivas de **Firestore / última escritura**; `SyncService` documenta una estrategia `updatedAt` para cuando se active la cola Hive explícita
 - El perfil del usuario autenticado tiene copia en Hive (`current_user`) para arranque y sesión sin Firestore
-- Casos de prueba formales (checklist): [TESTING_CHECKLIST.md](../configuracion/TESTING_CHECKLIST.md) — **REG-2026-022** (§12.3, regresión ítem **58** / §0 de esta guía); sección 15 (**OFF-001–004**, **OFF-PROF-001**, **OFF-PROF-002**); borrado de cuenta **USER-D-007** (paso 5, móvil)
+- Casos de prueba formales (checklist): [TESTING_CHECKLIST.md](../configuracion/TESTING_CHECKLIST.md) — **REG-2026-022** (§12.3, regresión ítem **58** / §0 de esta guía); sección 15 (**OFF-001–005**, **OFF-PROF-001**, **OFF-PROF-002**); borrado de cuenta **USER-D-007** (paso 5, móvil)
 
-**Última actualización:** Abril 2026 — `current_user`; arquitectura Firestore-first vs `sync_queue` Hive aclarada
+**Última actualización:** 2026-09-05 — T279 mapa del plan en offline (**OFF-005**); Abril 2026 `current_user` / Firestore-first
 

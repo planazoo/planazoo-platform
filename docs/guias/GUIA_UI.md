@@ -3,7 +3,7 @@
 Documento canónico y único para definir reglas UI de Planazoo (web, iOS y Android).  
 Incluye diseño visual, jerarquía, tokens y tokenización estricta.
 
-**Versión:** 2.1  
+**Versión:** 2.2  
 **Fecha:** Agosto 2026
 
 ## Objetivo
@@ -151,6 +151,7 @@ Las filas de **una línea** miden exactamente **44** (`IosFormColors.rowHeight`)
 6. **Cards** `IosGroupedCard` sin borde duro; separadores `IosRowSeparator`.
 7. **Destructivas** (eliminar): abajo, `IosDestructiveTile`.
 8. **Sin permiso**: misma UI; edición bloqueada; Maps/URL seguibles si aplica.
+9. **Alojamiento · lugar (Places):** icono **buscar** junto al hero abre sheet Places (`lodgingOnly`). Al elegir: rellena nombre (salvo personalizado → confirmación), dirección, web y teléfono si vienen de Places. La **dirección** es campo de texto normal (no búsqueda). Teléfono/email editables junto a la URL (`extraData.placePhone` / `placeEmail`; Places no aporta email).
 
 ### Sistema de campos Settings-only (acordado 2026-08-26)
 
@@ -272,8 +273,9 @@ Referencia de densidad y acciones en lista cronológica.
 - **Trailing de enlaces** (chips **26×26**, icono ~15): solo si hay enlace — **ruta** (`Icons.route` → Google Maps dir), **maps** (pin → búsqueda) o **web**. Si hay ruta de desplazamiento, no duplicar pin de localización.
 - **Icono de tipo** a la izquierda: desktop (≥600); oculto en móvil (excepción: hotel en filas de alojamiento, siempre).
 - **Badges inline 18×18** (antes del título): borrador **B**/**D**; tipo **desplazamiento** / **restauración** (mismo hueco; tooltip = familia).
-- **Días**: una **card** por día, cabecera plegable (por defecto **desplegado**); alojamientos del día arriba (`Alojamiento · noche n/N`) y luego eventos.
+- **Días**: una **card** por día, cabecera plegable (al abrir, **todas cerradas**); eventos primero y **alojamiento al final** de la jornada (cabecera `ALOJAMIENTO`, marca **H** en cuadrado del color del día, subtítulo `Alojamiento · noche n/N`). Mismo criterio que el mapa (T279). Noches = `[check-in, check-out)`.
 - URL de ruta compartida: `PlanSummaryShareContent.eventRouteUrl(event)`.
+- **Mapa del plan (T279):** icono `Icons.map_outlined` en la barra (web) o botón circular arriba a la derecha (iOS, `showTopSummaryBar: false`). Pantalla `wd_plan_map_screen.dart`: chips de día 44, header 48, tokens `IosFormColors`. Color = día; número = secuencia de visitas; hotel al **final** de la lista (sección Alojamiento, **H** en cuadrado, no círculo numerado); aeropuerto = **A**. Lista: badge + misma fila que Mi resumen (`PlanSummaryLinkRow`). Pin ↔ fila; ancho ≥720 mapa | lista, si no mapa arriba y lista abajo.
 
 ### Formulario evento · Desplazamiento
 
@@ -308,11 +310,31 @@ Componente estándar para titular cada sección principal dentro de una pantalla
 
 ### Modales y hojas inferiores (norma)
 
-- `AlertDialog` y `Dialog` de ficha (evento / alojamiento / info): fondo `IosFormColors.pageBg` (`#000`), sin borde duro en móvil (full-bleed); en desktop radio `12–18`.
-- Patrón ficha evento/alojamiento/info plan: ver § **Formularios tipo ficha (patrón D)** (formulario único editable con permiso).
-- `showModalBottomSheet`: usar fondo de hoja en `cPageBg`; handle y separadores en texto terciario/borde sutil.
-- Bloques informativos internos (info/warning/success): mantener fondo tenue con alpha bajo y borde semántico semitransparente, sin volver a paletas legacy claras.
-- En diálogos con filtros/chips, estado activo en `cAccent`; inactivo en superficie oscura con borde sutil.
+Tres anatomías. **No** usar `AlertDialog` Material en crudo en código nuevo.
+
+| Tipo | Widget | Uso |
+|------|--------|-----|
+| Confirmación (Cancelar / Confirmar) | `IosFormConfirmSheet` | Borrar, descartar, colocar, salir, rechazar |
+| Mensaje (OK) | `IosFormMessageSheet` | Ayuda, resultado, aviso sin decisión |
+| Dato corto | `IosFormInputSheet` | Email, contraseña, URL, un campo |
+| Varias opciones | `IosFormActionSheet` | Cambios sin guardar, elegir origen de foto |
+| Lista / color | `IosFormPickerSheet` / `IosFormColorPickerSheet` | Timezone, visibilidad, color |
+| Ficha CRUD | Patrón D + `AlertDialog`/`Dialog` con `IosFormColors.pageBg` | Evento, alojamiento, info plan, gasto |
+
+**Reglas**
+
+1. Confirmación simple → sheet, nunca `AlertDialog` sin tokens.
+2. Mensaje/ayuda → `IosFormMessageSheet` (cuerpo opcional; enlace «Más información» dentro de `body`).
+3. Un campo → `IosFormInputSheet` (`obscureText` si es contraseña). Borrar plan con contraseña puede seguir siendo sheet propio si hay async extra.
+4. Ficha (crear/editar entidad) → patrón D; en móvil full-bleed (radio 0); en desktop radio `12–18`.
+5. `showModalBottomSheet`: fondo `IosFormColors.groupedBg` (o `pageBg` si la hoja es página); handle 36×4 en `separator`; texto título 17 / mensaje 15 secundario.
+6. Acciones: Cancelar superficie `#2C2C2E`; Confirmar acento; destructiva `cDanger`. Labels desde `AppLocalizations`.
+7. Referencia ya migrada: borrar evento/plan; T134 colocar/descartar/quitar; rechazar invitación; borrar gasto; ayuda (?); avisos/grupos/quitar participante.
+
+Patrón ficha evento/alojamiento/info plan: ver § **Formularios tipo ficha (patrón D)**.
+
+Bloques informativos internos (info/warning/success): fondo tenue con alpha bajo y borde semántico, sin paletas legacy claras.
+En diálogos con filtros/chips, estado activo en `cAccent`; inactivo en superficie oscura con borde sutil.
 
 ### Componentes financieros UI-SP (añadido)
 

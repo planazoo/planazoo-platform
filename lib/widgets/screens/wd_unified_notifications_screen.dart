@@ -123,6 +123,17 @@ class WdUnifiedNotificationsScreen extends ConsumerWidget {
                   ...pendingEvents.map((item) => WdPendingEventCard(
                         pending: item,
                         userId: authUid,
+                        onTap: () => PendingEmailEventActions.showBody(
+                          context,
+                          item,
+                          userId: authUid,
+                          onPlace: () => PendingEmailEventActions.showAssignDialog(
+                            context,
+                            ref,
+                            item,
+                            authUid,
+                          ),
+                        ),
                         onAssign: () => PendingEmailEventActions.showAssignDialog(context, ref, item, authUid),
                         onDiscard: () => PendingEmailEventActions.discard(context, ref, item, authUid),
                       )),

@@ -8,3 +8,4 @@ No registrar nuevos hallazgos en esta carpeta.
 - Fuente viva de hallazgos: [`../LISTA_PUNTOS_CORREGIR_APP.md`](../LISTA_PUNTOS_CORREGIR_APP.md)
 - Esta carpeta se consulta solo para histórico/trazabilidad.
 - Ago 2026: [`ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_08.md`](./ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_08.md) (**126**, **127**).
+- Sep 2026: [`ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_09.md`](./ARCHIVO_LISTA_PUNTOS_CORREGIR_APP_2026_09.md) (**143**).

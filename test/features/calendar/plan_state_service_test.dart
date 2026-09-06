@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 
@@ -127,7 +129,7 @@ void main() {
     test('owner can cancel from planificando; plan stays in list', () async {
       final firestore = FakeFirebaseFirestore();
       final plans = planServiceWithFake(firestore);
-      final states = PlanStateService(planService: plans);
+      final states = planStateServiceWithFake(firestore, planService: plans);
 
       final planId = await plans.createPlan(
         samplePlan(userId: 'user-ua', name: 'Viaje', unpId: 'ua-1'),
@@ -150,7 +152,7 @@ void main() {
     test('cannot cancel from en_curso', () async {
       final firestore = FakeFirebaseFirestore();
       final plans = planServiceWithFake(firestore);
-      final states = PlanStateService(planService: plans);
+      final states = planStateServiceWithFake(firestore, planService: plans);
 
       final planId = await plans.createPlan(
         samplePlan(userId: 'user-ua', name: 'Viaje', unpId: 'ua-1'),
@@ -168,6 +170,101 @@ void main() {
       );
       expect(ok, isFalse);
       expect((await plans.getPlanById(planId))!.state, 'en_curso');
+    });
+
+    test('notifies accepted members and pending invitees, not the canceller',
+        () async {
+      final firestore = FakeFirebaseFirestore();
+      final plans = planServiceWithFake(firestore);
+      final participation = PlanParticipationService(firestore: firestore);
+      final states = planStateServiceWithFake(firestore, planService: plans);
+
+      final planId = await plans.createPlan(
+        samplePlan(userId: 'user-ua', name: 'Viaje', unpId: 'ua-1'),
+      );
+
+      await participation.createParticipation(
+        planId: planId!,
+        userId: 'user-ub',
+        role: 'participant',
+        autoAccept: true,
+      );
+      await participation.createParticipation(
+        planId: planId,
+        userId: 'user-uc',
+        role: 'participant',
+        autoAccept: false,
+      );
+
+      final ok = await states.changePlanState(
+        planId: planId,
+        newState: 'cancelado',
+        userId: 'user-ua',
+      );
+      expect(ok, isTrue);
+
+      final ubNotes = await firestore
+          .collection('users')
+          .doc('user-ub')
+          .collection('notifications')
+          .get();
+      expect(ubNotes.docs, hasLength(1));
+      expect(ubNotes.docs.first.data()['type'], 'planStateChanged');
+      expect(ubNotes.docs.first.data()['title'], 'Plan cancelado');
+      expect(
+        ubNotes.docs.first.data()['body'],
+        contains('Viaje'),
+      );
+
+      final ucNotes = await firestore
+          .collection('users')
+          .doc('user-uc')
+          .collection('notifications')
+          .get();
+      expect(ucNotes.docs, hasLength(1));
+      expect(ucNotes.docs.first.data()['type'], 'planStateChanged');
+
+      final uaNotes = await firestore
+          .collection('users')
+          .doc('user-ua')
+          .collection('notifications')
+          .get();
+      expect(uaNotes.docs, isEmpty);
+
+      final pending = await participation.getParticipation(planId, 'user-uc');
+      expect(pending!.status, 'expired');
+    });
+
+    test('cancels pending invitation docs so the link is no longer actionable',
+        () async {
+      final firestore = FakeFirebaseFirestore();
+      final plans = planServiceWithFake(firestore);
+      final states = planStateServiceWithFake(firestore, planService: plans);
+
+      final planId = await plans.createPlan(
+        samplePlan(userId: 'user-ua', name: 'Viaje', unpId: 'ua-1'),
+      );
+
+      await firestore.collection('plan_invitations').add({
+        'planId': planId,
+        'email': 'invitado@example.com',
+        'token': 'tok-cancel-1',
+        'status': 'pending',
+        'role': 'participant',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 8, 16, 12)),
+        'expiresAt': Timestamp.fromDate(DateTime(2026, 8, 23, 12)),
+      });
+
+      final ok = await states.changePlanState(
+        planId: planId!,
+        newState: 'cancelado',
+        userId: 'user-ua',
+      );
+      expect(ok, isTrue);
+
+      final invites = await firestore.collection('plan_invitations').get();
+      expect(invites.docs, hasLength(1));
+      expect(invites.docs.first.data()['status'], 'cancelled');
     });
   });
 

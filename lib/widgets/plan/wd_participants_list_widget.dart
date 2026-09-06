@@ -7,6 +7,8 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_state_perm
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/calendar_providers.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
 class ParticipantsListWidget extends ConsumerWidget {
   final String planId;
@@ -23,6 +25,7 @@ class ParticipantsListWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
     final participantsAsync = ref.watch(planParticipantsProvider(planId));
     final currentUser = ref.watch(currentUserProvider);
     final planAsync = ref.watch(planByIdStreamProvider(planId));
@@ -33,10 +36,10 @@ class ParticipantsListWidget extends ConsumerWidget {
         return participantsAsync.when(
       data: (participations) {
         if (participations.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
-              'No hay participantes',
-              style: TextStyle(
+              loc.noParticipants,
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
               ),
@@ -102,15 +105,15 @@ class ParticipantsListWidget extends ConsumerWidget {
                             },
                             itemBuilder: (context) => [
                               if (!isOrganizer)
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'make_organizer',
-                                  child: Text('Hacer organizador'),
+                                  child: Text(loc.makeOrganizer),
                                 ),
                               if (!isOrganizer &&
                                   PlanStatePermissions.canRemoveParticipants(plan))
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'remove',
-                                  child: Text('Remover'),
+                                  child: Text(loc.removeParticipant),
                                 ),
                             ],
                           )
@@ -127,7 +130,7 @@ class ParticipantsListWidget extends ConsumerWidget {
           ),
           error: (error, stackTrace) => Center(
             child: Text(
-              'Error al cargar participantes: $error',
+              loc.loadParticipantsError,
               style: const TextStyle(color: Colors.red),
             ),
           ),
@@ -138,7 +141,7 @@ class ParticipantsListWidget extends ConsumerWidget {
       ),
       error: (error, stackTrace) => Center(
         child: Text(
-          'Error al cargar plan: $error',
+          loc.loadPlanError,
           style: const TextStyle(color: Colors.red),
         ),
       ),
@@ -152,14 +155,15 @@ class ParticipantsListWidget extends ConsumerWidget {
     String action,
     Plan plan, // T109: Plan para verificar estado
   ) {
+    final loc = AppLocalizations.of(context)!;
     final notifier = ref.read(planParticipationNotifierProvider(planId).notifier);
 
     switch (action) {
       case 'make_organizer':
         _showConfirmDialog(
           context,
-          'Hacer organizador',
-          '¿Estás seguro de que quieres hacer organizador a este usuario?',
+          loc.makeOrganizer,
+          loc.makeOrganizerConfirm,
           () async {
             final success = await notifier.changeParticipantRole(
               planId,
@@ -168,7 +172,7 @@ class ParticipantsListWidget extends ConsumerWidget {
             );
             if (success && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Usuario promovido a organizador')),
+                SnackBar(content: Text(loc.userPromotedOrganizer)),
               );
             }
           },
@@ -180,7 +184,7 @@ class ParticipantsListWidget extends ConsumerWidget {
           final blockedReason = PlanStatePermissions.getBlockedReason('remove_participants', plan);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(blockedReason ?? 'No se pueden remover participantes en el estado actual del plan.'),
+              content: Text(blockedReason ?? loc.cannotRemoveParticipantsNow),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 3),
             ),
@@ -190,8 +194,8 @@ class ParticipantsListWidget extends ConsumerWidget {
         
         _showConfirmDialog(
           context,
-          'Remover participante',
-          '¿Estás seguro de que quieres remover a este usuario del plan?',
+          loc.removeParticipant,
+          loc.removeParticipantConfirm,
           () async {
             final success = await notifier.removeUserFromPlan(
               planId,
@@ -199,7 +203,7 @@ class ParticipantsListWidget extends ConsumerWidget {
             );
             if (success && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Usuario removido del plan')),
+                SnackBar(content: Text(loc.userRemovedFromPlan)),
               );
             }
           },
@@ -208,31 +212,20 @@ class ParticipantsListWidget extends ConsumerWidget {
     }
   }
 
-  void _showConfirmDialog(
+  Future<void> _showConfirmDialog(
     BuildContext context,
     String title,
     String content,
     VoidCallback onConfirm,
-  ) {
-    showDialog(
+  ) async {
+    final loc = AppLocalizations.of(context)!;
+    final ok = await IosFormConfirmSheet.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              onConfirm();
-            },
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
+      title: title,
+      message: content,
+      cancelLabel: loc.cancel,
+      confirmLabel: loc.confirm,
     );
+    if (ok) onConfirm();
   }
 }

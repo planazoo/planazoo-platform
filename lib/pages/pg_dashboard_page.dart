@@ -44,6 +44,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/invitati
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_notifications_screen.dart';
+import 'package:unp_calendario/widgets/screens/wd_pending_email_events_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_summary_screen.dart';
 import 'package:unp_calendario/widgets/screens/wd_my_plan_summary_screen.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
@@ -1941,6 +1942,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         content = _buildChatScreen();
         break;
       case 'pendingEvents':
+        content = const WdPendingEmailEventsScreen();
+        break;
       case 'unifiedNotifications':
         content = selectedPlan != null
             ? WdPlanNotificationsScreen(plan: selectedPlan!)

@@ -3,78 +3,121 @@
 > Configuración para que la plataforma lea el buzón con Gmail API (recepción 100% Google).  
 > Relacionado: `docs/producto/CORREO_EVENTOS_SISTEMA_PARSEO.md` (documento canónico T134), Cloud Function `processInboundGmail`.
 
-**Buzón actual:** `unplanzoo+eventos@gmail.com` (los usuarios reenvían sus confirmaciones a esta dirección).
+**Buzón actual:** `unplanazoo+eventos@gmail.com` (los usuarios reenvían sus confirmaciones a esta dirección).
+
+El job **no** está “encendido” solo con desplegar código: hace falta autorizar esa cuenta Gmail (OAuth) o, en Workspace, una service account.
 
 ## Requisitos
 
-- Un buzón Gmail o **Google Workspace** (actual: `unplanzoo+eventos@gmail.com`). Los usuarios reenvían ahí sus confirmaciones.
-- **Autenticación:**  
-  - **Si el buzón es Google Workspace** (ej. `eventos@tudominio.com`): **Domain-wide delegation** con una Service Account que impersona a ese usuario (lo que describe este doc).  
-  - **Si el buzón es Gmail consumidor** (ej. `unplanzoo+eventos@gmail.com`): Domain-wide delegation **no aplica**. Hace falta **OAuth 2.0** con refresh token de esa cuenta (el usuario/administrador autoriza la app una vez; se guarda el refresh token y la Cloud Function usa ese token para acceder al buzón). La implementación actual en código usa solo JWT + impersonation (Workspace). Para usar `unplanzoo+eventos@gmail.com` habría que añadir flujo OAuth y guardar el refresh token en config/Secret Manager.
+- Un buzón Gmail o **Google Workspace**. Los usuarios reenvían ahí.
+- **Gmail consumidor** (`unplanazoo+eventos@gmail.com`): **OAuth 2.0** con refresh token de la cuenta dueña de esa bandeja. Domain-wide delegation **no aplica**.
+- **Google Workspace** (`eventos@tudominio.com`): service account + **domain-wide delegation** (sección más abajo).
 
-## Pasos
+El poll lista no leídos recientes (incl. spam) y **solo procesa** si To / Delivered-To contiene el buzón. Gmail trata `+` como AND, así que no se usa `deliveredto:"user+alias"` en la query. `GMAIL_INBOUND_QUERY` puede sustituir la query. La respuesta del job incluye `authenticatedAs` (cuenta Gmail del token OAuth).
+
+## Gmail consumidor (lanzamiento actual) — OAuth
+
+### 1. APIs
+
+En [Google Cloud Console](https://console.cloud.google.com/) proyecto **planazoo**: APIs y servicios → Biblioteca → **Gmail API** → Habilitar.
+
+### 2. Pantalla de consentimiento OAuth (Google Auth Platform)
+
+Mismo proyecto que el login de la app: **dejar Audience en In production** (no pasar a Testing: rompería Google Sign-In para usuarios que no están en la lista de prueba).
+
+1. [Auth Platform](https://console.cloud.google.com/auth/overview?project=planazoo): **Data Access** → scopes `gmail.readonly` y `gmail.modify`.
+2. Sale **Verification required / Approval required**. **No** enviar la app a verificación: solo se autoriza el buzón. Al consentir aparecerá “Google no ha verificado esta app” → Avanzado → continuar.
+
+### 3. Cliente OAuth (escritorio)
+
+1. Auth Platform → **Clients** → Create client → tipo **Desktop app**.
+2. Nombre: `Planoon Gmail inbound`.
+3. URI de redirección: `http://127.0.0.1:4180/oauth2callback`.
+4. **Client ID** (28 ago 2026; se puede rotar):  
+   `794752310537-041ja0c2p4c4u0enmso390ueojhsifn9.apps.googleusercontent.com`  
+   El **client secret** no se documenta aquí (solo Functions config / vault).
+
+### 4. Autorizar una vez (refresh token)
+
+En el Mac, con la cuenta **dueña del buzón** en el navegador:
+
+```bash
+cd /Users/emmclaraso/development/unp_calendario/functions
+GMAIL_INBOUND_OAUTH_CLIENT_ID="794752310537-041ja0c2p4c4u0enmso390ueojhsifn9.apps.googleusercontent.com" \
+GMAIL_INBOUND_OAUTH_CLIENT_SECRET="…" \
+npm run gmail-inbound-oauth
+```
+
+Abre la URL que imprime el script, acepta permisos, copia el **refresh token** de la terminal (no va a git).
+
+### 5. Config de Functions y deploy
+
+Desde la raíz del repo:
+
+```bash
+npx firebase-tools functions:config:set \
+  gmail_inbound.mailbox="unplanazoo+eventos@gmail.com" \
+  gmail_inbound.oauth_client_id="….apps.googleusercontent.com" \
+  gmail_inbound.oauth_client_secret="…" \
+  gmail_inbound.oauth_refresh_token="…"
+
+npx firebase-tools deploy --only functions:processInboundGmail
+```
+
+Equivalente por env: `GMAIL_INBOUND_MAILBOX`, `GMAIL_INBOUND_OAUTH_CLIENT_ID`, `GMAIL_INBOUND_OAUTH_CLIENT_SECRET`, `GMAIL_INBOUND_OAUTH_REFRESH_TOKEN`.
+
+### 6. Cloud Scheduler
+
+Job HTTP cada 2 minutos (`*/2 * * * *`), GET o POST a  
+`https://us-central1-planazoo.cloudfunctions.net/processInboundGmail`  
+con **OIDC** (la función no es pública). Si configuras `GMAIL_POLL_SECRET` / `gmail_inbound.poll_secret`, cabecera `X-Gmail-Poll-Secret`.
+
+Disparo a mano (dueño del proyecto):
+
+```bash
+curl -sS \
+  -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  "https://us-central1-planazoo.cloudfunctions.net/processInboundGmail"
+```
+
+El correo tiene que seguir **no leído**. Si ya lo abriste en Gmail, márcalo otra vez como no leído.
+
+---
+
+## Workspace — Service Account (cuando el buzón sea del dominio)
 
 ### 1. Service Account y clave
 
-1. En Google Cloud Console → IAM y administración → Cuentas de servicio, crea una cuenta de servicio (o usa una existente del proyecto de Firebase).
-2. Crea una **clave JSON** y descárgala. Necesitarás `client_email` y `private_key` (o el JSON completo).
+1. IAM → Cuentas de servicio: crea o usa una del proyecto Firebase.
+2. Clave JSON: `client_email` y `private_key`.
 
-### 2. Domain-wide delegation (Google Workspace)
+### 2. Domain-wide delegation
 
-1. En la cuenta de servicio, copia el **ID de cliente numérico** (no el email).
-2. En **Google Workspace Admin** (admin.google.com) → Seguridad → Controles de acceso y datos → Delegación de autoridad de dominio.
-3. Añade el ID de cliente con los siguientes scopes:
-   - `https://www.googleapis.com/auth/gmail.readonly`
-   - `https://www.googleapis.com/auth/gmail.modify`
-4. Guarda.
+1. En la SA, **ID de cliente numérico**.
+2. Admin Workspace → Seguridad → Delegación de autoridad de dominio.
+3. Scopes: `gmail.readonly` y `gmail.modify`.
 
-### 3. Variables de entorno / Firebase config
-
-En el proyecto de Cloud Functions (Secret Manager, env al desplegar, o `firebase functions:config:set`), configura:
+### 3. Config
 
 | Variable / config | Descripción |
 |-------------------|-------------|
-| `GMAIL_INBOUND_MAILBOX` o `gmail_inbound.mailbox` | Un solo buzón (actual: `unplanzoo+eventos@gmail.com`). |
-| `GMAIL_INBOUND_MAILBOX_LIST` o `gmail_inbound.mailbox_list` | **Varios buzones** (resiliencia): lista separada por comas (`eventos@,eventos-backup@`) o JSON array. El job procesa cada uno; si uno falla, sigue con el siguiente. |
-| `GMAIL_INBOUND_SA_JSON` o `gmail_inbound.service_account_json` | JSON completo de la clave de la SA (string). **O bien** los dos siguientes. |
-| `GMAIL_INBOUND_SA_CLIENT_EMAIL` / `gmail_inbound.client_email` | `client_email` de la SA. |
-| `GMAIL_INBOUND_SA_PRIVATE_KEY` / `gmail_inbound.private_key` | `private_key` de la SA (con `\n` si es necesario). |
-| `GMAIL_POLL_SECRET` o `gmail_inbound.poll_secret` | (Opcional) Secreto que debe enviar Cloud Scheduler en la cabecera `X-Gmail-Poll-Secret`. |
+| `GMAIL_INBOUND_MAILBOX` o `gmail_inbound.mailbox` | Un buzón. Defecto en código: `unplanazoo+eventos@gmail.com`. |
+| `GMAIL_INBOUND_MAILBOX_LIST` o `gmail_inbound.mailbox_list` | Varios buzones (coma o JSON). |
+| `GMAIL_INBOUND_OAUTH_*` / `gmail_inbound.oauth_*` | Gmail consumidor (arriba). |
+| `GMAIL_INBOUND_SA_JSON` o `gmail_inbound.service_account_json` | JSON de la SA. **O** client_email + private_key. |
+| `GMAIL_INBOUND_SA_CLIENT_EMAIL` / `gmail_inbound.client_email` | |
+| `GMAIL_INBOUND_SA_PRIVATE_KEY` / `gmail_inbound.private_key` | `\n` si hace falta. |
+| `GMAIL_POLL_SECRET` o `gmail_inbound.poll_secret` | Cabecera `X-Gmail-Poll-Secret`. |
+| `GMAIL_INBOUND_QUERY` o `gmail_inbound.query` | Query Gmail opcional (sustituye el `deliveredto` por defecto). |
 
-Ejemplo con Firebase config (solo para desarrollo; en producción usar Secret Manager o env):
-
-```bash
-firebase functions:config:set gmail_inbound.mailbox="unplanzoo+eventos@gmail.com"
-# Y la SA: mejor inyectar GMAIL_INBOUND_SA_JSON como variable de entorno en Cloud Functions.
-```
-
-### 4. Cloud Scheduler
-
-1. En Google Cloud Console → Cloud Scheduler, crea un job.
-2. Frecuencia: p. ej. cada 10 minutos (`*/10 * * * *`).
-3. Tipo: HTTP.
-4. URL: `https://<region>-<project>.cloudfunctions.net/processInboundGmail` (sustituir región y proyecto).
-5. Método: POST (o GET).
-6. Si configuraste `GMAIL_POLL_SECRET`, añade cabecera: `X-Gmail-Poll-Secret` = valor del secreto.
-
-Tras el primer deploy de functions, la URL estará en la consola de Firebase o en la salida de `firebase deploy --only functions`.
-
-### 5. Habilitar Gmail API
-
-En Google Cloud Console → APIs y servicios → Biblioteca, busca **Gmail API** y habilítala para el proyecto.
+El cliente OAuth **gana** sobre la SA si ambos están configurados.
 
 ---
 
 ## Varios buzones y desvío (resiliencia)
 
-Si la cuenta principal (`eventos@`) sufre un ataque, se bloquea o deja de funcionar, puedes:
+Si la cuenta principal (`eventos@`) se bloquea:
 
-1. **Varios buzones en el mismo job:** Configura `GMAIL_INBOUND_MAILBOX_LIST` con dos (o más) direcciones, por ejemplo:
-   - `eventos@tudominio.com,eventos-backup@tudominio.com`
-   La misma Service Account (con domain-wide delegation) puede impersonar a cualquiera de las cuentas del dominio. El job procesa primero el principal y luego el de respaldo; si uno falla (auth, cuenta deshabilitada), se registra y se continúa con el siguiente. La respuesta del job incluye `byMailbox` con el resultado por buzón.
-
-2. **Desvío en Google Workspace:** En Admin (admin.google.com) → Apps → Google Workspace → Gmail → Configuración de enrutamiento (o Reenvío), puedes:
-   - Hacer que **eventos@** reenvíe todo a **eventos-backup@** cuando quieras (p. ej. tras un incidente). Los correos nuevos llegarán al backup; el job, si tiene ambos en `GMAIL_INBOUND_MAILBOX_LIST`, los leerá del backup cuando entren ahí.
-   - O definir una **regla**: si la cuenta eventos@ está en cuarentena o deshabilitada, el administrador puede activar reenvío a eventos-backup@ y añadir (o dejar ya configurado) eventos-backup@ en la lista de buzones.
-
-3. **Cambio rápido de buzón:** Si solo usas un buzón (`GMAIL_INBOUND_MAILBOX`), en caso de incidente puedes cambiar la variable a la cuenta de respaldo y redesplegar (o actualizar la config en Secret Manager/env) para que el job lea solo del backup hasta que se recupere el principal.
+1. **Varios buzones en el mismo job:** `GMAIL_INBOUND_MAILBOX_LIST` (p. ej. `eventos@,eventos-backup@`). Con **Workspace**, la misma SA puede impersonar ambos. Con **OAuth de consumidor**, el token es **una** cuenta Gmail: los extra en la lista son alias/`deliveredto` de esa misma bandeja.
+2. **Desvío en Google Workspace:** reenvío o ruta hacia el backup; el job debe incluir ese buzón en la lista.
+3. **Cambio rápido:** cambiar `GMAIL_INBOUND_MAILBOX` y redesplegar o actualizar Secret Manager.

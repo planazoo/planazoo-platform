@@ -102,6 +102,7 @@ Fastlane para Android (T256) está previsto; cuando se implemente, documentar en
 
 ## Resumen rápido por “primera vez que publico”
 
+- **Orden de un ciclo (web + TestFlight):** [PUBLICAR_APP.md](./PUBLICAR_APP.md).
 - **iOS (App Store / TestFlight):** [FASTLANE_IOS_CHECKLIST.md](./FASTLANE_IOS_CHECKLIST.md) (incluye Paso 0: cuenta Apple Developer, Xcode, luego Fastlane y subida).
 - **Web (producción):** [DEPLOY_WEB_FIREBASE_HOSTING.md](./DEPLOY_WEB_FIREBASE_HOSTING.md).
 - **Android (Play Store):** Por hacer (T256); mientras tanto: `applicationId` y firma en `android/app/build.gradle`, `google-services.json` desde Firebase.

@@ -357,6 +357,23 @@ service cloud.firestore {
         (resource.data.get('typeFamily', '') == 'alojamiento' && isPlanOwner(resource.data.planId))
         || (resource.data.get('typeFamily', '') != 'alojamiento' && (isPlanOwner(resource.data.planId) || resource.data.userId == request.auth.uid))
       ) || isAdmin(request.auth.uid);
+
+      // T134: copias de mail colocadas en el evento/alojamiento.
+      // Lectura de `plan` = cualquier autenticado (misma cota que el padre `events`);
+      // `private` solo el dueño. Escritura de visibilidad/borrado = dueño.
+      match /communications/{commId} {
+        allow create: if isAuthenticated() &&
+          request.resource.data.ownerId == request.auth.uid &&
+          request.resource.data.kind in ['email', 'manual'] &&
+          request.resource.data.visibility in ['plan', 'private'];
+        allow read: if isAuthenticated();
+        allow update: if isAuthenticated() &&
+          resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == resource.data.ownerId &&
+          request.resource.data.kind == resource.data.kind &&
+          request.resource.data.visibility in ['plan', 'private'];
+        allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      }
     }
     
     // ============================================
@@ -969,6 +986,20 @@ service cloud.firestore {
     match /users/{userId}/pending_email_events/{eventId} {
       // Solo el propio usuario puede leer, crear, actualizar y eliminar sus eventos pendientes
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // T134: extras verificados para inbound. Solo Admin SDK escribe.
+    match /users/{userId}/inbound_emails/{emailId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create, update, delete: if false;
+    }
+
+    match /inbound_from_lookup/{emailKey} {
+      allow read, write: if false;
+    }
+
+    match /inbound_email_tokens/{token} {
+      allow read, write: if false;
     }
     
     // ============================================

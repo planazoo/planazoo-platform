@@ -24,7 +24,7 @@ No es una sugerencia: es la secuencia de dominio a dominio.
 | # | Dominio | Contrato / entrada | Estado |
 |---|---------|-------------------|--------|
 | **1** | Participantes / altas-bajas / invitaciones (+ avisos de alta) | [`DIAGRAMA_ALTAS_BAJAS_PLAN.md`](./DIAGRAMA_ALTAS_BAJAS_PLAN.md) | **Cerrado** (2026-08-27) |
-| **2** | Planes (+ estados) | [`FLUJO_CRUD_PLANES.md`](./FLUJO_CRUD_PLANES.md) · [`FLUJO_ESTADOS_PLAN.md`](./FLUJO_ESTADOS_PLAN.md) | **WIP actual** |
+| **2** | Planes (+ estados) | [`FLUJO_CRUD_PLANES.md`](./FLUJO_CRUD_PLANES.md) · [`FLUJO_ESTADOS_PLAN.md`](./FLUJO_ESTADOS_PLAN.md) | **WIP** |
 | **3** | Eventos (+ calendario) | [`FLUJO_CRUD_EVENTOS.md`](./FLUJO_CRUD_EVENTOS.md) | Siguiente |
 | **4** | Alojamientos | [`FLUJO_CRUD_ALOJAMIENTOS.md`](./FLUJO_CRUD_ALOJAMIENTOS.md) | En cola |
 | **5** | Pagos | [`FLUJO_PRESUPUESTO_PAGOS.md`](./FLUJO_PRESUPUESTO_PAGOS.md) | En cola |
@@ -49,20 +49,20 @@ Offline, Chat, Plataforma/release, UI transversal, Timezones, Permisos, Import/I
 Se tocan **dentro** del dominio WIP cuando hacen falta, o como bug urgente.  
 No abren un dominio propio fuera de secuencia.
 
-**Mail (T134):** no es dominio #10. Producto: [`COMUNICACIONES_MAIL_PLAN.md`](../producto/COMUNICACIONES_MAIL_PLAN.md). Gate de **lanzamiento público** (corte mínimo). Implementar intercala capa de launch (acuerdo explícito) o espera a Eventos (#3); no se añade fila a la tabla #1–#9.
+**Mail (T134):** no es dominio #10. **Cerrado** 2026-08-31 (corte mínimo: reenviar + colocar). Producto: [`COMUNICACIONES_MAIL_PLAN.md`](../producto/COMUNICACIONES_MAIL_PLAN.md). Hallazgos posteriores → LISTA (p. ej. **142** unicidad inbound). No se añade fila a la tabla #1–#9.
 
 ---
 
 ## Cómo arrancar cada sesión
 
-1. Abrir este archivo → ver **WIP actual** (`#2` ahora).
+1. Abrir este archivo → ver **WIP actual** (**#2 Planes** / T277).
 2. Abrir el contrato del dominio.
 3. Trabajar solo tareas de ese dominio en `TASKS.md`.
 4. Hallazgos → `LISTA_PUNTOS_CORREGIR_APP.md`.
 5. Si cambió el comportamiento → actualizar el contrato.
 
 Frase útil:  
-**«Seguimos el orden definitivo. Dominio #2. Objetivo: …»**
+**«Seguimos el orden definitivo. Dominio #2 Planes. Objetivo: …»**
 
 ---
 
@@ -70,4 +70,6 @@ Frase útil:
 
 - **2026-08-11:** Orden v1 elevado a **definitivo** (acuerdo de trabajo conjunto).
 - **2026-08-27:** Dominio **#1 cerrado** (T259 iOS Universal Link Mail→HTTPS ✅; T269/T276 ✅; T268 aplazada; Android `assetlinks` / estética mail = fuera de WIP). **WIP → #2 Planes.**
-- **WIP:** Dominio **#2** — Planes (+ estados) · contratos [`FLUJO_CRUD_PLANES.md`](./FLUJO_CRUD_PLANES.md) · [`FLUJO_ESTADOS_PLAN.md`](./FLUJO_ESTADOS_PLAN.md) · foco T277.
+- **2026-08-28:** **T134 intercalado** (mail → colocar; launch). T277 (#2 Planes) **aparcado**.
+- **2026-08-31:** **T134 cerrado** (corte mínimo; hallazgos futuros en LISTA). **WIP → #2 Planes** (T277).
+- **WIP:** **#2 Planes** · contrato [`FLUJO_CRUD_PLANES.md`](./FLUJO_CRUD_PLANES.md) · **T277**.

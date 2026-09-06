@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../notifications/domain/services/notification_helper.dart';
 import '../models/plan.dart';
-import 'plan_service.dart';
 import 'event_service.dart';
+import 'invitation_service.dart';
 import 'plan_participation_service.dart';
+import 'plan_service.dart';
 
 /// Resultado de validación de transición
 class ValidationResult {
@@ -22,16 +24,23 @@ class PlanStateService {
     PlanService? planService,
     EventService? eventService,
     PlanParticipationService? participationService,
+    NotificationHelper? notificationHelper,
+    InvitationService? invitationService,
   })  : _planServiceOverride = planService,
         _eventServiceOverride = eventService,
-        _participationServiceOverride = participationService;
+        _participationServiceOverride = participationService,
+        _notificationHelperOverride = notificationHelper,
+        _invitationServiceOverride = invitationService;
 
   final PlanService? _planServiceOverride;
   final EventService? _eventServiceOverride;
   final PlanParticipationService? _participationServiceOverride;
+  final NotificationHelper? _notificationHelperOverride;
+  final InvitationService? _invitationServiceOverride;
   PlanService? _lazyPlanService;
   EventService? _lazyEventService;
   PlanParticipationService? _lazyParticipationService;
+  InvitationService? _lazyInvitationService;
 
   PlanService get _planService =>
       _planServiceOverride ?? (_lazyPlanService ??= PlanService());
@@ -40,10 +49,20 @@ class PlanStateService {
   EventService get _eventService =>
       _eventServiceOverride ?? (_lazyEventService ??= EventService());
 
-  // ignore: unused_element
   PlanParticipationService get _participationService =>
       _participationServiceOverride ??
       (_lazyParticipationService ??= PlanParticipationService());
+
+  InvitationService get _invitationService =>
+      _invitationServiceOverride ??
+      (_lazyInvitationService ??= InvitationService());
+
+  NotificationHelper get _notificationHelper =>
+      _notificationHelperOverride ??
+      NotificationHelper(
+        planService: _planService,
+        participationService: _participationService,
+      );
 
   /// Estados válidos según FLUJO_ESTADOS_PLAN.md (borrador unificado con planificando)
   static const List<String> validStates = [
@@ -188,6 +207,14 @@ class PlanStateService {
         LoggerService.database(
             'Plan state changed: $planId from $currentState to $newState',
             operation: 'UPDATE');
+        if (newState == 'cancelado' && currentState != 'cancelado') {
+          await _afterPlanCancelled(
+            planId: planId,
+            planName: plan.name,
+            actorUserId: userId,
+            previousState: currentState,
+          );
+        }
       }
 
       return success;
@@ -195,6 +222,48 @@ class PlanStateService {
       LoggerService.error('Error changing plan state: $planId to $newState',
           context: 'PLAN_STATE_SERVICE', error: e);
       rethrow;
+    }
+  }
+
+  /// T261: avisar miembros e invalidar invitaciones pendientes.
+  /// El estado ya está en `cancelado`; un fallo aquí no revierte el cambio.
+  Future<void> _afterPlanCancelled({
+    required String planId,
+    required String planName,
+    required String actorUserId,
+    required String previousState,
+  }) async {
+    try {
+      await _notificationHelper.notifyPlanCancelled(
+        planId: planId,
+        actorUserId: actorUserId,
+        planName: planName,
+        previousState: previousState,
+      );
+    } catch (e) {
+      LoggerService.error(
+        'Error notifying after plan cancelled: $planId',
+        context: 'PLAN_STATE_SERVICE',
+        error: e,
+      );
+    }
+    try {
+      await _participationService.expireAllPendingForPlan(planId);
+    } catch (e) {
+      LoggerService.error(
+        'Error expiring pending after plan cancelled: $planId',
+        context: 'PLAN_STATE_SERVICE',
+        error: e,
+      );
+    }
+    try {
+      await _invitationService.cancelAllPendingInvitationsForPlan(planId);
+    } catch (e) {
+      LoggerService.error(
+        'Error cancelling invitations after plan cancelled: $planId',
+        context: 'PLAN_STATE_SERVICE',
+        error: e,
+      );
     }
   }
 

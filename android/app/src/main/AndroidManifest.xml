@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Android 13+: requerido para mostrar notificaciones FCM fuera de la app -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- T279: Maps JavaScript API en WebView (release) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="unp_calendario"
         android:name="${applicationName}"

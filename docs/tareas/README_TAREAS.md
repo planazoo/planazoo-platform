@@ -41,6 +41,7 @@ Algunas tareas tienen un `.md` propio con especificación, plan de fases o crite
 | T275 | `T275_AUDIENCIAS_AVISOS_POR_FASE.md` | Audiencias de avisos por fase (planificación/ejecución). |
 | T277 | `T277_PRUEBAS_AGENTE_CRUD_PLAN.md` | Tests agente: crear/releer plan (fase 1). |
 | T278 | `T278_PRUEBAS_AGENTE_CRUD_EVENTO.md` | Tests agente: CRUD evento (fase 2). |
+| T279 | `T279_MAPA_PLAN_LUGARES.md` | Mapa del plan: color por día y secuencia. |
 | T134 | Producto: `docs/producto/COMUNICACIONES_MAIL_PLAN.md` · técnico: `docs/producto/CORREO_EVENTOS_SISTEMA_PARSEO.md` | Mail → colocar en evento; gate launch. |
 | T272 | `T272_COLORES_TIPOS_EVENTO_PLAN.md` | Color base + colores por familia; propagación a eventos; carril/borde. |
 

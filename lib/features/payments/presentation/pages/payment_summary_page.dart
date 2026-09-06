@@ -17,6 +17,7 @@ import 'package:unp_calendario/shared/services/currency_formatter_service.dart';
 import '../widgets/add_expense_dialog.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
 /// T102: Página de resumen de pagos y balances del plan
 class PaymentSummaryPage extends ConsumerWidget {
@@ -617,28 +618,13 @@ class PaymentSummaryPage extends ConsumerWidget {
                   return;
                 }
                 if (value == 'delete') {
-                  final confirmed = await showDialog<bool>(
+                  final confirmed = await IosFormConfirmSheet.show(
                     context: context,
-                    builder: (ctx) {
-                      final dialog = AlertDialog(
-                        title: Text(loc.paymentsExpenseDeleteConfirmTitle),
-                        content: Text(loc.paymentsExpenseDeleteConfirmBody),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(false),
-                            child: Text(loc.cancel),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(true),
-                            child: Text(
-                              loc.delete,
-                              style: const TextStyle(color: Colors.redAccent),
-                            ),
-                          ),
-                        ],
-                      );
-                      return dialog;
-                    },
+                    title: loc.paymentsExpenseDeleteConfirmTitle,
+                    message: loc.paymentsExpenseDeleteConfirmBody,
+                    cancelLabel: loc.cancel,
+                    confirmLabel: loc.delete,
+                    destructive: true,
                   );
                   if (confirmed != true || !context.mounted) return;
                   final ok = await ref

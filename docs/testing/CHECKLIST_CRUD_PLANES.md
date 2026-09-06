@@ -28,7 +28,7 @@ flutter test test/features/calendar/plan_logic_test.dart test/features/calendar/
 | P5w | Modal widget: nombre vacío/corto, cancelar, crear OK | **Agente** (`wd_create_plan_modal_test`) | |
 | P6 | Editar campos y guardar (`updatePlan`, no toca `createdAt`) | **Agente** (`plan_service_create_test`) | |
 | P7 | Cambiar estado (transiciones + `changePlanState` owner vs participante) | **Agente** (`plan_state_service_test`) | |
-| P8 | Cancelar (estado `cancelado`; no es borrar) | **Agente** (`plan_state_service_test`) | |
+| P8 | Cancelar (`cancelado`; avisa miembros; cierra invitaciones pending; no es borrar) | **Agente** (`plan_state_service_test`) | |
 | P9 | PLAN-R-001 lista de planes propios | **Agente** (`plan_service_list_test`) | |
 | P10 | PLAN-R-002 ver plan como participante | **Agente** (`plan_service_list_test`) | |
 | P11 | PLAN-R-004 filtrar lista por estado | **Agente** (`plan_service_list_test`) | |

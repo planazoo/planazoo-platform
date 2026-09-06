@@ -10,4 +10,5 @@
 | Codificación notificaciones | [`docs/producto/NOTIFICACIONES_PLAN_CODIFICACION.md`](../producto/NOTIFICACIONES_PLAN_CODIFICACION.md) |
 | Deep link iOS | T259 ✅ · `docs/tareas/T259_DEEP_LINK_INVITACION_IOS.md` |
 | Trabajo dominio | **Cerrado** 2026-08-27 · [`DIAGRAMA_ALTAS_BAJAS_PLAN.md`](./DIAGRAMA_ALTAS_BAJAS_PLAN.md) |
+| Cancelar plan | T261 · al cancelar, invitaciones pending → `cancelled` ([`FLUJO_ESTADOS_PLAN.md`](./FLUJO_ESTADOS_PLAN.md)) |
 | Mapa | [`MAPA_FLUJOS.md`](./MAPA_FLUJOS.md) |

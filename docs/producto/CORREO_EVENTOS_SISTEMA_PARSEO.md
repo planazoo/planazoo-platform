@@ -6,6 +6,8 @@
 
 **Alcance para usuarios vs administración:** Lo que ve el **usuario** (objetivo de producto): reenviar a la dirección de la plataforma, ver comunicaciones **sin colocar**, **añadirlas a un evento existente o crear un evento**, y conservar la **copia** en su cuenta. El detalle de recepción y plantillas sigue en este archivo. El **catálogo de plantillas** es un **proceso interno de administración de la plataforma**: no está disponible en la app para usuarios finales. Solo los admins de la plataforma gestionan las plantillas.
 
+> **Nota (2026-08-31):** el **producto vivo** es [`COMUNICACIONES_MAIL_PLAN.md`](./COMUNICACIONES_MAIL_PLAN.md). Este archivo es referencia técnica (recepción, plantillas, anti-spam). El resumen de abajo aún habla de «asignar el evento a un plan» y de From = solo email principal: en código el pendiente se **coloca** en un evento/alojamiento (`events/{id}/communications`) y el From puede ser principal **o extra verificado**. No tratar esas frases del resumen como contrato.
+
 ---
 
 ## Resumen del sistema completo (con detalles)
@@ -149,17 +151,19 @@ El usuario reenvía una confirmación (vuelo, hotel, restaurante, etc.) **a una 
 ### 1.2 Recepción 100% Google: configuración e implementación
 
 - **Buzón:** Una cuenta o alias tipo `eventos@tudominio.com` en Google Workspace (recomendado) o Gmail. Los usuarios reenvían ahí sus confirmaciones.
-- **Autenticación Gmail API (Workspace):** Service account del proyecto GCP con **domain-wide delegation**. En Admin de Google Workspace se autoriza al client ID de la SA con los scopes `https://www.googleapis.com/auth/gmail.readonly` y `https://www.googleapis.com/auth/gmail.modify` (para marcar como leído). La Cloud Function usa la SA para **impersonar** al usuario del buzón (`eventos@...`) y listar/leer mensajes.
+- **Autenticación Gmail API:**
+  - **Gmail consumidor** (lanzamiento: `unplanazoo+eventos@gmail.com`): OAuth 2.0 con refresh token de la cuenta dueña del buzón (`GMAIL_INBOUND_OAUTH_CLIENT_ID` / `_SECRET` / `_REFRESH_TOKEN` o `gmail_inbound.oauth_*`). Pasos: [`GMAIL_INBOUND_BUZON.md`](../configuracion/GMAIL_INBOUND_BUZON.md).
+  - **Google Workspace:** Service account del proyecto GCP con **domain-wide delegation**. En Admin se autoriza al client ID de la SA con `gmail.readonly` y `gmail.modify`. La Cloud Function impersona a `eventos@...`.
 - **Configuración (Firebase config o variables de entorno en la Cloud Function):**
-  - **Buzón:** `GMAIL_INBOUND_MAILBOX` o `functions.config().gmail_inbound.mailbox` = email del buzón. Actual: `unplanzoo+eventos@gmail.com` (ver `docs/configuracion/GMAIL_INBOUND_BUZON.md`).
-  - **Service account (domain-wide delegation):** Una de las dos:
-    - `GMAIL_INBOUND_SA_JSON`: JSON completo de la clave de la cuenta de servicio (string).
-    - O bien `GMAIL_INBOUND_SA_CLIENT_EMAIL` + `GMAIL_INBOUND_SA_PRIVATE_KEY` (la clave con `\n` escapados o reales).
-  - **Protección del job:** `GMAIL_POLL_SECRET` o `gmail_inbound.poll_secret`: si está definido, Cloud Scheduler debe enviar la cabecera `X-Gmail-Poll-Secret` con ese valor (evita que cualquiera llame la URL).
-- **Cloud Scheduler:** Crear un job en Google Cloud Console (Cloud Scheduler) que ejecute cada 5–10 minutos (ej. `*/10 * * * *`), método HTTP POST (o GET), URL = `https://<region>-<project>.cloudfunctions.net/processInboundGmail`, y cabecera `X-Gmail-Poll-Secret: <valor>` si se configuró el secreto.
+  - **Buzón:** `GMAIL_INBOUND_MAILBOX` o `functions.config().gmail_inbound.mailbox`. Si no hay valor, el código usa `unplanazoo+eventos@gmail.com`.
+  - **OAuth (Gmail consumidor):** `oauth_client_id`, `oauth_client_secret`, `oauth_refresh_token`.
+  - **Service account (Workspace):** `GMAIL_INBOUND_SA_JSON` o `GMAIL_INBOUND_SA_CLIENT_EMAIL` + `GMAIL_INBOUND_SA_PRIVATE_KEY`.
+  - **Protección del job:** `GMAIL_POLL_SECRET` o `gmail_inbound.poll_secret`: si está definido, hay que enviar `X-Gmail-Poll-Secret`.
+  - **Query:** por defecto `is:unread deliveredto:"<buzón>"` (no todo el unread de la cuenta).
+- **Cloud Scheduler:** Job HTTP cada 1–2 minutos, URL `https://us-central1-planazoo.cloudfunctions.net/processInboundGmail`, autenticación OIDC (la URL no es pública). Cabecera del secreto si aplica.
 - **Varios buzones (resiliencia):** Se puede configurar **más de un buzón** (`GMAIL_INBOUND_MAILBOX_LIST`: lista separada por comas o JSON array). El job procesa cada buzón en secuencia; si uno falla (cuenta bloqueada, auth, cuota), se registra el error y se sigue con el siguiente. Así se puede tener `eventos@` principal y `eventos-backup@`; si el principal sufre un ataque o se deshabilita, se puede desviar el correo al backup en Workspace y el job ya lee ambos (o solo el backup si se quita el principal de la lista).
 - **Desvío en Workspace:** En Google Workspace Admin se puede configurar **reenvío** desde `eventos@` hacia `eventos-backup@` (o una regla de enrutamiento). En caso de incidente, se activa el reenvío y se asegura que la lista de buzones del job incluya el buzón de respaldo (o se cambia la config para usar solo el backup).
-- **Implementación:** La función `processInboundGmail` recorre la lista de buzones, para cada uno lista mensajes con `is:unread`, obtiene From (se extrae la dirección de "Nombre <email>"), Subject y cuerpo (text/plain o html→texto), llama a `processInboundEmail` y marca el mensaje como leído.
+- **Implementación:** La función `processInboundGmail` recorre la lista de buzones, para cada uno lista mensajes con `is:unread` entregados a esa dirección, obtiene From, Subject y cuerpo (text/plain o html→texto, MIME anidado), llama a `processInboundEmail` y marca el mensaje como leído.
 - **Detalle de extracción desde Gmail API:** En `payload.headers` se busca `From` y `Subject`. En `payload.parts` se busca la parte con `mimeType === 'text/plain'`; si no hay, la parte `text/html` y se convierte a texto plano. Decodificación Base64url en `body.data` cuando exista.
 
 ### 1.3 Riesgos de la solución (buzón + Gmail API)

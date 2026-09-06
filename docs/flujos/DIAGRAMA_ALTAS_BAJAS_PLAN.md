@@ -399,4 +399,4 @@ Un pending **puede ver un preview en solo lectura** del plan para decidir con in
 - [x] §2 invitar por email sin cuenta — deep link **web** ✅ (`InvitationPage`); **iOS** Universal Links ✅ (T259)  
 - [x] §3 bajas básicas — salir / expulsar / cancelar pendiente + avisos 119/120 ✅; aviso al cancelar pendiente a acordar; limpieza profunda eventos = 121  
 
-**Estado:** dominio **#1 cerrado** (2026-08-27) — T269 ✅ T276 ✅ T259 iOS ✅; T268 auto **aplazada**; WIP de proceso → **#2 Planes**.
+**Estado:** dominio **#1 cerrado** (2026-08-27) — T269 ✅ T276 ✅ T259 iOS ✅; T268 auto **aplazada**. WIP de proceso: **#2 Planes** (T277). T134 mail cerrado 2026-08-31.

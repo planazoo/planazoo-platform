@@ -2,6 +2,61 @@
 
 Registro ligero de errores que la IA ha detectado y corregido automáticamente, para evitar repetirlos y documentar patrones de solución.
 
+### [2026-09-05] T279 — fotos de planes negras al cerrar el mapa (web)
+
+- **Contexto:** Chrome; abrir mapa del plan y volver a la lista de selección de planes. Miniaturas `CachedNetworkImage` quedan negras (el resto de la card sí se ve).
+- **Causa raíz:** Maps JavaScript (WebGL) choca con CanvasKit. `iframe.remove()` empeora. `Clip.antiAlias`/`ClipRRect` en la card oculta el `<img>` HTML.
+- **Solución aplicada:** mapa en `RASTER`; dispose sin `remove()`; `PlanCoverImage` en web con `Image.network` + `WebHtmlElementStrategy.prefer`; en la card `clipBehavior: Clip.none` en web.
+- **Notas:** No envolver esas fotos en `ClipRRect`/`ClipOval` en web (esquinas transparentes = negro en CanvasKit). W5: `div` opaco con `radial-gradient` (foto circular + esquinas del color del header). No usar `HtmlElementView` a medida ni `clip-path`. Tras el cambio, `q` + `flutter run`.
+
+### [2026-09-05] Calendario — drag & drop no actualizaba la hora visible
+
+- **Contexto:** Arrastrar un evento en la rejilla web; el bloque se mueve, pero la hora de la ficha y el orden del mapa (T279) seguían la anterior.
+- **Error:** Tras el drop, `Mi resumen` podía reordenar por `event.hour` y el mapa/ficha no.
+- **Causa raíz:** `_endDrag` hacía `copyWith(date, hour, startMinute)` solo en la raíz. `toFirestore()` persistía también `commonPart` con `startHour`/`date` viejos. El diálogo y el mapa leen `commonPart`.
+- **Solución aplicada:** `Event.withSchedule` actualiza raíz y `commonPart`. El mapa usa `event.hour` como la rejilla.
+- **Notas:** Mover fecha/hora de un evento con `commonPart` siempre con `withSchedule` (o copiando ambos). Un `copyWith(hour: …)` solo deja la ficha desfasada.
+
+### [2026-09-05] T279 — mapa en blanco tras migrar a AdvancedMarkerElement
+
+- **Contexto:** Chrome; el mapa funcionaba con `google.maps.Marker`. Tras el cambio a `importLibrary` + `AdvancedMarkerElement` + `mapId: DEMO_MAP_ID` dejó de verse.
+- **Error:** el mapa no pinta (fallback o iframe vacío). `initMap` async/`importLibrary` fallaba o exigía Map ID de Cloud; el `catch` avisaba `error/auth` y la UI ocultaba el mapa.
+- **Causa raíz:** los pines avanzados requieren Map ID de Cloud Console; `DEMO_MAP_ID` + carga `loading=async` sin `callback` no inicializa igual que el script clásico.
+- **Solución aplicada:** volver a `callback=initMap` + `Marker` + `styles` JSON (lo que sí pintaba). En la URL se mantiene `&loading=async`. El aviso de Marker deprecado puede reaparecer; no bloquea.
+- **Notas:** no migrar a AdvancedMarkerElement hasta tener un Map ID propio en Cloud.
+
+### [2026-09-05] T279 — web: `Trying to render a disposed EngineFlutterView` al hot restart
+
+- **Contexto:** Chrome; `R` con el mapa del plan abierto (iframe / `HtmlElementView`).
+- **Error:** `Assertion failed: window.dart !isDisposed "Trying to render a disposed EngineFlutterView."` y luego la app vuelve a arrancar (`Starting application from main method`).
+- **Causa raíz:** en hot restart el motor web pinta un frame sobre la vista del iframe ya destruida. Bug típico de Flutter web + platform views; no es un fallo de la API key ni de Maps.
+- **Solución aplicada:** en `plan_map_google_js_view_web.dart`, `dispose` cancela `onLoad`, quita el listener `message`, hace `iframe.remove()` y ignora callbacks si `_disposed`.
+- **Notas:** Si sale al pulsar `R` con el mapa abierto, recargar Chrome o `q` + `flutter run` otra vez. No tratarlo como error de Maps JavaScript API.
+
+### [2026-09-05] T279 — consola Maps: loading=async y Marker deprecado
+
+- **Contexto:** Mapa del plan en Chrome; el mapa cargaba bien.
+- **Error:** `Google Maps JavaScript API has been loaded directly without loading=async` y `google.maps.Marker is deprecated. Please use google.maps.marker.AdvancedMarkerElement`.
+- **Causa raíz:** el script se inyectaba con `callback=initMap` sin `loading=async`, y los pines usaban `Marker` clásico.
+- **Solución aplicada:** carga `.../js?v=weekly&loading=async` + `importLibrary('maps'|'marker')`; pines con `AdvancedMarkerElement` (HTML), `mapId: DEMO_MAP_ID` (obligatorio para advanced markers) y `colorScheme.DARK` si existe. `marker.map = map|null` en el filtro por día.
+- **Notas:** Con `mapId` no se puede usar `styles` JSON; el oscuro va por `colorScheme`. No volver a `new google.maps.Marker`.
+
+### [2026-08-28] T134 — flutter_html: `qs.matches` no existe (web)
+
+- **Contexto:** `flutter run -d chrome` tras añadir `flutter_html` para el cuerpo HTML de comunicaciones.
+- **Error:** `flutter_html-3.0.0/lib/src/tree/styled_element.dart:31:17: Error: Method not found: 'matches'. return qs.matches(element, selector);`
+- **Causa raíz:** `html` 0.15.7 (pub.dev, mismo día) eliminó el top-level `matches` de `package:html/src/query_selector.dart`. `flutter_html` 3.0.0 importa ese API interno.
+- **Solución aplicada:** pin directo `html: 0.15.6` en `pubspec.yaml`.
+- **Notas:** No subir `html` a 0.15.7+ hasta que `flutter_html` deje de llamar a `qs.matches`.
+
+### [2026-08-28] T134 — `const Icon` con `IosFormColors.accent`
+
+- **Contexto:** Fila de anexo en `communication_body_view.dart`.
+- **Error:** `Invalid constant value` en `color: IosFormColors.accent`.
+- **Causa raíz:** `accent` es un getter (`AppColorScheme.color2`), no un `const`.
+- **Solución aplicada:** quitar `const` del `Icon`.
+- **Notas:** No usar `const` en widgets que tomen `IosFormColors.accent`.
+
 ## Formato recomendado
 
 Cada entrada nueva debe seguir esta estructura:
@@ -13,6 +68,38 @@ Cada entrada nueva debe seguir esta estructura:
 - **Causa raíz**: qué estaba mal realmente.
 - **Solución aplicada**: qué cambio concreto se hizo.
 - **Notas para el futuro** (opcional): patrón a recordar o “gotcha” a evitar.
+
+### [2026-08-28] T134 — ficha evento: «No se pudo colocar» sin snackbar
+
+- **Contexto:** Abrir evento destino; sección Comunicaciones.
+- **Error:** Texto `pendingEventPlaceFailed` en la ficha; en consola Firestore no hay colección raíz `communications`.
+- **Causa raíz:** `communications` es **subcolección** de `events/{id}`. La regla de lectura por `visibility`/`ownerId` hace que un `snapshots()` **sin where** sea `permission-denied` (también en colección vacía). El StreamBuilder pintaba ese error como si Colocar hubiera fallado.
+- **Solución aplicada:** `allow read` si autenticado; filtrar `private` en cliente; copy de carga `entityCommunicationsLoadError`; deploy rules.
+- **Notas:** En consola, abrir el documento del evento → Subcolecciones → `communications`.
+
+### [2026-08-28] T134 — Colocar en evento existente (permission / payload)
+
+- **Contexto:** Colocar mail en evento ya creado; el sheet de destino no dependía del hot restart del fix de “crear evento”.
+- **Error:** `placeOn` fallaba (snackbar genérico); la copia no aparecía en Comunicaciones.
+- **Causa raíz probable:** (1) reglas `communications` con `exists(events/…)` o no desplegadas; (2) `parsed: null` / campos nulos en el `set`; (3) el error se tragaba con `catch (_)`.
+- **Solución aplicada:** create de `communications` sin `exists()`; payload sin nulls; snackbar con código Firebase; deploy de rules.
+- **Notas:** Tras desplegar rules, hot restart no hace falta para rules; sí para el snackbar con código.
+
+### [2026-08-28] T134 — crear evento desde Colocar no ligaba el mail
+
+- **Contexto:** Wizard Colocar → crear evento nuevo (`wd_place_communication_flow.dart`).
+- **Error:** El evento se creaba; la copia no aparecía en Comunicaciones (o se creaba un segundo evento vacío).
+- **Causa raíz:** Tras `placeOn`, `Navigator.pop()` usaba el contexto del bottom sheet. `showDialog` va al navigator raíz; el pop cerraba el sheet y dejaba abierto el formulario de **crear**. Un segundo Guardar creaba otro evento **sin** el mail. Además, en ficha de alta `widget.event` es null → sección Comunicaciones no se pinta.
+- **Solución aplicada:** Cerrar el diálogo con `rootNavigator`; cerrar el sheet solo si `placeOn` fue bien; reintentos si el evento aún no existe; no tragar el error de `placeOn`.
+- **Notas:** Tras Guardar, cerrar fichas y reabrir el evento desde el calendario para ver Comunicaciones.
+
+### [2026-08-28] Flutter web — hot restart: `web_entrypoint.dart` File not found
+
+- **Contexto:** T134; `flutter run -d chrome` tras añadir archivos nuevos (buzón/colocar).
+- **Error:** `org-dartlang-app:/web_entrypoint.dart: Error: Error when reading '...': File not found`
+- **Causa raíz:** el compilador web (DDC) pierde el entrypoint en hot restart/reload cuando hay archivos nuevos; no es un fallo de Dart de la app.
+- **Solución aplicada:** parar `flutter run` y volver a lanzar Chrome (compilación completa). No hace falta `flutter clean` salvo que el arranque en frío también falle.
+- **Notas:** Tras T134 (o cualquier tanda grande de `.dart` nuevos), en web usar **stop + run**, no solo `R`.
 
 ### [2026-08-27] Participantes — invitar por email: modal no cierra, usuario parpadea y error
 

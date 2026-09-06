@@ -1,6 +1,6 @@
 # Planes — índice de proceso
 
-> **Stub vivo** · **WIP dominio #2** (desde 2026-08-27). Histórico: [`archivo/FLUJO_CRUD_PLANES.md`](./archivo/FLUJO_CRUD_PLANES.md).
+> **Stub vivo** · **WIP dominio #2** (retomado 2026-08-31; T134 cerrado). Histórico: [`archivo/FLUJO_CRUD_PLANES.md`](./archivo/FLUJO_CRUD_PLANES.md).
 
 ## Contrato / trabajo
 

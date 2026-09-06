@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+4
+version: 1.0.0+9
 
 environment:
   sdk: '>=3.2.3 <4.0.0'
@@ -83,8 +83,13 @@ dependencies:
   url_launcher: ^6.2.5
   # Share itinerary / resumen (system share sheet)
   share_plus: ^10.1.4
+  # T279: mapa del plan (Maps JavaScript API en WebView / iframe)
+  webview_flutter: ^4.10.0
   file_picker: ^10.3.10
   app_links: ^7.2.1
+  flutter_html: ^3.0.0
+  # html 0.15.7 quitó qs.matches; flutter_html 3.0.0 aún lo usa (fallo al compilar web).
+  html: 0.15.6
 
 dev_dependencies:
   flutter_test:

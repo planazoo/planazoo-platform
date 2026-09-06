@@ -16,3 +16,4 @@ Al acordar transiciones (borrador → confirmado → …), añadir checklist «A
 ## Código de entrada
 
 - Estado en modelo de plan + UI Info / chip de estado (`plan_status_chip_actions.dart`, pantallas Info)
+- Cancelar (`planificando` / `confirmado` → `cancelado`): in-app + push a miembros aceptados y pendientes (no al que cancela); participaciones pending → `expired`; docs `plan_invitations` pending → `cancelled`. Email a invitados sin cuenta y E2E: T261 restante.

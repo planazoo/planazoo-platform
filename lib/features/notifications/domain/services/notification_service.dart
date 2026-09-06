@@ -8,7 +8,10 @@ import '../models/notification_model.dart';
 class NotificationService {
   static const String _collectionName = 'users';
   static const String _subCollectionName = 'notifications';
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+
+  NotificationService({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Crear una notificación para un usuario
   /// 

@@ -2,8 +2,12 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:unp_calendario/features/calendar/domain/models/event.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/event_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/invitation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_participation_service.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_service.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
+import 'package:unp_calendario/features/notifications/domain/services/notification_helper.dart';
+import 'package:unp_calendario/features/notifications/domain/services/notification_service.dart';
 
 Plan samplePlan({
   required String userId,
@@ -39,6 +43,24 @@ PlanService planServiceWithFake(FakeFirebaseFirestore firestore) {
   return PlanService(
     firestore: firestore,
     participationService: PlanParticipationService(firestore: firestore),
+  );
+}
+
+PlanStateService planStateServiceWithFake(
+  FakeFirebaseFirestore firestore, {
+  PlanService? planService,
+}) {
+  final plans = planService ?? planServiceWithFake(firestore);
+  final participation = PlanParticipationService(firestore: firestore);
+  return PlanStateService(
+    planService: plans,
+    participationService: participation,
+    invitationService: InvitationService(firestore: firestore),
+    notificationHelper: NotificationHelper(
+      planService: plans,
+      participationService: participation,
+      notificationService: NotificationService(firestore: firestore),
+    ),
   );
 }
 

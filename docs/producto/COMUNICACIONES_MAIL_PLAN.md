@@ -1,11 +1,11 @@
 # Comunicaciones por mail → plan / evento
 
-**Estado:** Acordado en conversación (24–25 ago 2026). Producto, no código aún.  
-**Trabajo:** transversal **Import** · tarea **T134** (reorientada).  
+**Estado:** **Cerrado** (31 ago 2026) — corte mínimo (reenviar + colocar).  
+**Trabajo:** transversal **Import** · tarea **T134** ✅.  
 **No es** un dominio de proceso nuevo (#1–#9 siguen).  
 **Canónico de recepción/plantillas/anti-spam:** [`CORREO_EVENTOS_SISTEMA_PARSEO.md`](./CORREO_EVENTOS_SISTEMA_PARSEO.md) (detalle técnico T134). Este archivo manda en **qué es el producto** y el orden de las fases.
 
-**Lanzamiento:** el corte mínimo de mail (reenviar + colocar) es **gate de lanzamiento público**, no un extra P2. No abre el dominio Eventos por su cuenta: se intercala como capa de launch (igual que legal/stores), con acuerdo explícito respecto al WIP #1.
+**Lanzamiento:** el corte mínimo de mail (reenviar + colocar) sigue siendo **gate de lanzamiento público** (ya implementado). Hallazgos posteriores → LISTA (p. ej. **142**). Dominio WIP actual: **#2 Planes** (T277).
 
 ---
 
@@ -15,7 +15,7 @@
 |----------|-----------|
 | ¿Dominio de proceso nuevo? | **No.** El orden #1→#9 no cambia. |
 | ¿Dónde vive? | Transversal **Import / export / IA** ([`MAPA_FLUJOS.md`](../flujos/MAPA_FLUJOS.md)). Al implementar, el contrato de **Eventos** (#3) se actualiza (el mail acaba en un evento). |
-| ¿WIP ahora? | El WIP sigue **#1 participantes**. Documentar ≠ implementar. Para *construir* el mail antes de cerrar #1 hace falta **acuerdo explícito de saltar/intercalar** ([`ORDEN_POR_DOMINIOS.md`](../flujos/ORDEN_POR_DOMINIOS.md) regla 3). |
+| ¿WIP ahora? | **No.** T134 **cerrado** 2026-08-31. WIP de proceso: **#2 Planes** (T277). |
 
 ---
 
@@ -26,13 +26,13 @@ El usuario **reenvía** (o, más adelante, un filtro lo hace por él) confirmaci
 - en un **evento (o alojamiento) ya creado**, o
 - **creando un evento nuevo** a partir de ese mail.
 
-Se guarda una **copia** (cuerpo + anexos). **No** se responde al hotel. En v1 las copias viven en la **cuenta del usuario** (parte personal), no en el wiki del grupo.
+Se guarda una **copia** (cuerpo). **No** se responde al hotel. **No** hay auto-respuesta SMTP al reenvío. Al colocar, la copia vive en `events/{id}/communications` (eventos y alojamientos). Defecto **visible para el plan**; opción **Solo yo**.
 
 El **parseo es un paso posterior**, no la puerta de entrada. Si no se extraen fechas, el mail **igual se conserva** en el evento.
 
 Contrato corto:
 
-> El mail entra. Tú lo colocas. La copia se queda en tu cuenta. Parsear es opcional.
+> El mail entra. Tú lo colocas. La copia queda en la ficha (plan o privada). Parsear es opcional.
 
 ---
 
@@ -56,7 +56,7 @@ El mail no es el diferenciador mágico. Es el canal realista para **traer el jus
 | Fuente | Qué dice | Encaje |
 |--------|----------|--------|
 | T134 + `CORREO_EVENTOS_SISTEMA_PARSEO.md` | Reenvío a `eventos@`, From = usuario, plantillas, `pending_email_events`, **crear evento** | Se **reorienta**: el pendiente es comunicación sin colocar, no “evento a medias”. Conservar copia. |
-| `EventDocument` / adjuntos | PDF/JPG en el evento, **comunes** | Distinto: comunicaciones v1 son **personales**. |
+| `EventDocument` / adjuntos | PDF/JPG en el evento, **comunes** | Distinto: copias en **Comunicaciones**; visibilidad defecto **plan**, opción privada. No es el bloque Adjuntos. |
 | WEB_COMERCIAL Pilar 5 y 9 | Evento-contenedor; “No lo teclees. Compártelo.” | Este flujo es el corte honesto de Pilar 9 para launch. |
 | TIMELINE P2 (histórico) | Import correo como post-lanzamiento | **Superado:** corte mínimo = launch público. |
 | `FLUJO_CRUD_EVENTOS.md` (archivo) | Pegar mail en modal; **no guardar el cuerpo** | **T179 eliminada.** La frase de no guardar el cuerpo **queda retractada** para este producto. |
@@ -73,11 +73,11 @@ El mail no es el diferenciador mágico. Es el canal realista para **traer el jus
 | Modelo | Caso B: una reserva cada vez, identificada por lo que envía. |
 | Escritura en proveedores | Solo **lectura**. No cambiar billetes. |
 | Qué se guarda | Copia del mensaje + anexos. Sin responder. |
-| Visibilidad v1 | Cuenta del **usuario** (personal). El grupo no ve el mail salvo “compartir” futuro. |
+| Visibilidad v1 | Defecto **plan**. Opción **privado** (solo quien aportó). |
 | Auto-crear eventos | **No.** Siempre colocar o confirmar creación. |
 | Parseo runtime | Plantillas (T134). LLM solo en admin para generar plantillas. No es el MVP de launch. |
 | Dirección | Global `eventos@` (o la configurada). Alias por plan (`eventos+planId@`): más tarde. |
-| Anti-spam | From = email principal registrado; rate limit (ver parseo T134). |
+| Anti-spam | From = principal **o extra verificado**; rate 50/día por usuario. **Sin auto-respuesta SMTP.** |
 | Filtro Gmail/Outlook | “Una vez y olvidas”: crear/actualizar regla vía OAuth de **ajustes**, sin `gmail.readonly`. Post-corte-mínimo. |
 | iCloud | Sin API decente; el usuario crea la regla a mano o reenvía. |
 
@@ -90,7 +90,7 @@ Debe funcionar de punta a punta:
 1. Usuario registrado reenvía un mail de reserva a la dirección de la plataforma.
 2. Aparece en su buzón de **comunicaciones sin colocar**.
 3. Puede **añadirlo a un evento existente** (del plan que elija) **o crear un evento** (campos a mano si no hay parseo).
-4. Luego ve la **copia** en ese evento (apartado personal).
+4. Luego ve la **copia** en ese evento o alojamiento (visible para el plan o solo tú).
 
 **No** es gate: filtro automático, parseo fiable de Hertz/Booking, Wallet, WhatsApp, sync de asiento/maleta, publicidad, acuerdos con aerolíneas.
 
@@ -98,23 +98,22 @@ Soft launch familia (fase 0 actual): **no** bloquea por sí solo (el núcleo sig
 
 ---
 
-## 7. Fases de construcción (cuando se implemente)
+## 7. Fases de construcción
 
-1. **Modelo** `Communication`: copia mail+anexos en `users/{uid}/…`; `planId` / `eventId` opcionales.
-2. **Recepción** ya esbozada (T134 / `processInboundGmail`): el documento deja de ser solo “evento pendiente”.
-3. **UI colocar:** lista → plan → evento existente **o** crear evento.
-4. **UI evento:** comunicaciones personales.
-5. **Después:** filtro Gmail; parseo sobre copias; alias por plan; otros tipos (WhatsApp, captura) en el mismo contenedor.
-6. **Vuelos vivos (T246/T247):** paralelo, no sustituye el archivo de mail.
+1. **Modelo:** pending en `users/{uid}/pending_email_events`; al colocar, `events/{id}/communications`.
+2. **Recepción** (`processInboundGmail`): Gmail consumidor = OAuth refresh token ([`GMAIL_INBOUND_BUZON.md`](../configuracion/GMAIL_INBOUND_BUZON.md)); From = principal o extra verificado; sin respuesta SMTP.
+3. **UI colocar:** buzón → plan → evento/alojamiento existente **o** crear evento.
+4. **UI ficha:** sección Comunicaciones (aparte de Adjuntos). Cuerpo: HTML o plano Outlook; **nota manual** (pegar WhatsApp) desde el buzón o la ficha; **anexos e imágenes** (Storage `communication_files/`).
+5. **Perfil:** principal + 2 extras verificados, solo inbound.
+6. **Después:** filtro Gmail; parseo sobre copias; alias por plan; WhatsApp **captura automática**; LISTA **142** unicidad inbound.
 
 ---
 
 ## 8. Cómo trabajarlo respecto al WIP
 
-- **Documentar** (este archivo): hecho; no rompe #1.
-- **Implementar:** o se **aparca #1** con acuerdo y se intercala esta capa de launch, o se espera a poder tocar Eventos. No abrir un dominio “Mail” en `ORDEN_POR_DOMINIOS.md`.
-- Hallazgos de prueba → `LISTA_PUNTOS_CORREGIR_APP.md`.
-- Al implementar, actualizar el stub [`FLUJO_CRUD_EVENTOS.md`](../flujos/FLUJO_CRUD_EVENTOS.md) (capa 1) si el comportamiento del evento cambia.
+- **Cerrado** 2026-08-31 (corte mínimo). T277 (#2 Planes) **retomado**.
+- Hallazgos de prueba → `LISTA_PUNTOS_CORREGIR_APP.md` (no reabren T134 como dominio WIP).
+- Si el comportamiento del evento cambia, actualizar el stub [`FLUJO_CRUD_EVENTOS.md`](../flujos/FLUJO_CRUD_EVENTOS.md) (capa 1).
 
 ---
 

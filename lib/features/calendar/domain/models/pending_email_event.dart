@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'communication_attachment.dart';
 
 /// Evento pendiente de asignar a un plan (buzón de correos reenviados).
 /// Documento en `users/{userId}/pending_email_events/{eventId}`.
@@ -6,10 +7,13 @@ class PendingEmailEvent {
   final String id;
   final String subject;
   final String bodyPlain;
+  final String? bodyHtml;
   final String? fromEmail;
   final Map<String, dynamic>? parsed;
   final String? templateId;
   final String status;
+  final String kind;
+  final List<CommunicationAttachment> attachments;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -17,10 +21,13 @@ class PendingEmailEvent {
     required this.id,
     required this.subject,
     required this.bodyPlain,
+    this.bodyHtml,
     this.fromEmail,
     this.parsed,
     this.templateId,
     this.status = 'pending',
+    this.kind = 'email',
+    this.attachments = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -31,10 +38,13 @@ class PendingEmailEvent {
       id: doc.id,
       subject: data['subject'] as String? ?? '',
       bodyPlain: data['bodyPlain'] as String? ?? '',
+      bodyHtml: data['bodyHtml'] as String?,
       fromEmail: data['fromEmail'] as String?,
       parsed: data['parsed'] as Map<String, dynamic>?,
       templateId: data['templateId'] as String?,
       status: data['status'] as String? ?? 'pending',
+      kind: data['kind'] as String? ?? 'email',
+      attachments: CommunicationAttachment.listFrom(data['attachments']),
       createdAt: data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate() : null,
       updatedAt: data['updatedAt'] != null ? (data['updatedAt'] as Timestamp).toDate() : null,
     );

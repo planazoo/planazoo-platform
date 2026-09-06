@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/shared/models/help_text.dart';
 import 'package:unp_calendario/shared/providers/help_text_providers.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
 /// T157: Botón de ayuda contextual (?). Abre un modal con texto y opcional enlace "Más información".
 /// [helpId] — id del documento en Firestore (ej. plan_details.aviso).
@@ -40,13 +39,13 @@ class HelpIconButton extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context).languageCode;
     final service = ref.read(helpTextServiceProvider);
-    final color = iconColor ?? Colors.white70;
+    final color = iconColor ?? IosFormColors.textSecondary;
     final resolvedIconSize = compact ? 16.0 : iconSize;
     final tapExtent = compact ? 28.0 : 32.0;
 
     return Semantics(
-      label: 'Ayuda sobre $contextLabel',
-      hint: 'Abre una explicación y un enlace a más información',
+      label: l10n.helpAboutContext(contextLabel),
+      hint: l10n.helpSemanticsHint,
       button: true,
       child: IconButton(
         icon: Icon(Icons.help_outline, size: resolvedIconSize, color: color),
@@ -77,86 +76,42 @@ class HelpIconButton extends ConsumerWidget {
     final String? url = helpText?.url ?? defaultUrl;
 
     if (!context.mounted) return;
-    showDialog<void>(
+    await IosFormMessageSheet.show(
       context: context,
-      builder: (ctx) => _HelpModal(
-        title: contextLabel,
-        body: body,
-        url: url,
-        moreInfoLabel: l10n.helpMoreInfo,
-        closeLabel: l10n.close,
-      ),
-    );
-  }
-}
-
-class _HelpModal extends StatelessWidget {
-  const _HelpModal({
-    required this.title,
-    required this.body,
-    this.url,
-    required this.moreInfoLabel,
-    required this.closeLabel,
-  });
-
-  final String title;
-  final String body;
-  final String? url;
-  final String moreInfoLabel;
-  final String closeLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColorScheme.titleColor,
-        ),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              body,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: AppColorScheme.bodyColor,
-                height: 1.4,
-              ),
+      title: contextLabel,
+      okLabel: l10n.close,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            body,
+            style: const TextStyle(
+              color: IosFormColors.textSecondary,
+              fontSize: 15,
+              height: 1.4,
             ),
-            if (url != null && url!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Semantics(
-                label: '$moreInfoLabel sobre $title',
-                link: true,
-                child: InkWell(
-                  onTap: () => _launchUrl(url!),
-                  child: Text(
-                    moreInfoLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: AppColorScheme.interactiveColor,
-                      decoration: TextDecoration.underline,
-                      fontWeight: FontWeight.w500,
-                    ),
+          ),
+          if (url != null && url.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Semantics(
+              label: '${l10n.helpMoreInfo} $contextLabel',
+              link: true,
+              child: InkWell(
+                onTap: () => _launchUrl(url),
+                child: Text(
+                  l10n.helpMoreInfo,
+                  style: TextStyle(
+                    color: IosFormColors.accent,
+                    fontSize: 15,
+                    decoration: TextDecoration.underline,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(closeLabel),
-        ),
-      ],
     );
   }
 

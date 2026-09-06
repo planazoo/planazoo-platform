@@ -44,10 +44,10 @@
 
 ### 3. Resumen actual
 
-- **Pendientes:** 14 (**123** deep link web; **125** create plan iOS overflow — validar; **126–129**, **132–141** abiertos; **130–131** cerrados 2026-08-27)
+- **Pendientes:** 15 (**123** deep link web; **125** create plan iOS overflow — validar; **126–129**, **132–142**, **144** abiertos; **130–131** cerrados 2026-08-27; **143** cerrado 2026-09-01)
 - **En progreso:** 0
-- **Siguiente ID libre:** **142**
-- **Hechos/cerrados en histórico:** 76+ (incluye **111–122**; **126–127** cascada borrar plan, 2026-08-18; **130–131** Mi resumen UI, 2026-08-27)
+- **Siguiente ID libre:** **145**
+- **Hechos/cerrados en histórico:** 77+ (incluye **111–122**; **126–127** cascada borrar plan, 2026-08-18; **130–131** Mi resumen UI, 2026-08-27; **143** cid/anexos comunicaciones, 2026-09-01)
 
 ### Cola humana (dispositivo) — no agente
 
@@ -62,6 +62,26 @@ Aplazado a propósito (2026-08-18) mientras el agente cubre tests de CRUD:
 ---
 
 ### 4. Puntos abiertos
+
+#### 144. Textos hardcodeados y AlertDialog Material restantes
+- **Plataforma:** todas
+- **Pantalla / flujo:** UI transversal · i18n + modales
+- **Tipo:** deuda
+- **Gravedad:** media
+- **Descripción breve:** Quedan ~150–200 cadenas de UI fuera de `app_*.arb` (formularios de avisos/grupos/roles/expandir plan, snackbars de calendario, stats, chat, `plan_state_permissions`, notificaciones al escribir). ~25 `AlertDialog` siguen sin `IosForm*` (login, perfil, crear plan, roles, kitty). Pasada 2026-08-31: confirmaciones T134 + invitación + gasto + ayuda + avisos + grupos + quitar participante → `IosFormConfirmSheet` / `IosFormMessageSheet`; esas cadenas localizadas.
+- **Estado:** pendiente (parcial)
+- **Gate de lanzamiento:** no (i18n EN incompleto sí molesta en stores)
+- **Referencias:** `GUIA_UI.md` § Modales; `ios_grouped_form.dart` (`IosFormConfirmSheet`, `IosFormMessageSheet`, `IosFormInputSheet`)
+
+#### 142. Quitar excepción unicidad inbound `cricla@hotmail.com`
+- **Plataforma:** todas (Cloud Functions)
+- **Pantalla / flujo:** T134 · Perfil → Correos para reenviar · From del reenvío
+- **Tipo:** deuda / excepción temporal de QA
+- **Gravedad:** media (no launch sin quitarla o sustituirla)
+- **Descripción breve:** Excepción en `functions/index.js` (`INBOUND_EMAIL_UNIQUENESS_EXCEPTIONS`): la cuenta `unplanazoo+cricla@gmail.com` puede verificar `cricla@hotmail.com` como extra aunque ese email ya sea **principal** del power admin `cricla_pa`. Mientras esté activa, un reenvío **From hotmail** cae en la cuenta +cricla, no en el PA. **Quitar** la lista de excepciones y restaurar unicidad estricta cuando acabe esta ronda de pruebas.
+- **Estado:** pendiente. **T134 cerrado** 2026-08-31; quitar la excepción cuando acabe la ronda de pruebas / antes de stores.
+- **Gate de lanzamiento:** sí (quitar antes de stores públicos)
+- **Referencias:** `functions/index.js` (`isInboundUniquenessException`, `findUserIdByEmail`); T134 [`COMUNICACIONES_MAIL_PLAN.md`](../producto/COMUNICACIONES_MAIL_PLAN.md)
 
 #### 141. Visibilidad del plan (público / privado) — opción futura
 - **Plataforma:** todas

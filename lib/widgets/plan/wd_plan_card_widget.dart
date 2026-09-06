@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:unp_calendario/widgets/plan/plan_cover_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
@@ -120,7 +120,8 @@ class PlanCardWidget extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: borderColor, width: 1),
       ),
-      clipBehavior: Clip.antiAlias,
+      // En web Clip.antiAlias oculta el <img> HTML de la foto (T279 / Maps WebGL).
+      clipBehavior: kIsWeb ? Clip.none : Clip.antiAlias,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -409,23 +410,10 @@ class PlanCardWidget extends ConsumerWidget {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColorScheme.color2.withValues(alpha: 0.3)),
         ),
-        child: ClipRRect(
+        child: PlanCoverImage(
+          imageUrl: plan.imageUrl,
           borderRadius: BorderRadius.circular(8),
-          child: CachedNetworkImage(
-            imageUrl: plan.imageUrl!,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Container(
-              color: AppColorScheme.color2.withValues(alpha: 0.1),
-              child: const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            ),
-            errorWidget: (context, url, error) => _buildDefaultImage(),
-          ),
+          error: _buildDefaultImage(),
         ),
       );
     } else {

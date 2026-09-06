@@ -6,6 +6,7 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/widgets/dialogs/group_edit_dialog.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
 /// T123: Página para gestionar grupos de participantes
 class ParticipantGroupsPage extends ConsumerWidget {
@@ -253,43 +254,24 @@ class ParticipantGroupsPage extends ConsumerWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, WidgetRef ref, ParticipantGroup group) {
-    showDialog(
+  Future<void> _showDeleteConfirmation(BuildContext context, WidgetRef ref, ParticipantGroup group) async {
+    final loc = AppLocalizations.of(context)!;
+    final confirmed = await IosFormConfirmSheet.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar grupo'),
-        content: Text('¿Estás seguro de que quieres eliminar el grupo "${group.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              final groupService = ref.read(participantGroupServiceProvider);
-              final success = await groupService.deleteGroup(group.id!);
-              
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success 
-                        ? 'Grupo eliminado exitosamente' 
-                        : 'Error al eliminar el grupo',
-                    ),
-                    backgroundColor: success ? Colors.green : Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Eliminar'),
-          ),
-        ],
+      title: loc.deleteGroupTitle,
+      message: loc.deleteGroupConfirm(group.name),
+      cancelLabel: loc.cancel,
+      confirmLabel: loc.delete,
+      destructive: true,
+    );
+    if (!confirmed || !context.mounted) return;
+    final groupService = ref.read(participantGroupServiceProvider);
+    final success = await groupService.deleteGroup(group.id!);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(success ? loc.groupDeletedSuccess : loc.groupDeleteError),
+        backgroundColor: success ? Colors.green : Colors.red,
       ),
     );
   }

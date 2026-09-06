@@ -144,6 +144,7 @@ Las decisiones del proyecto (diseño, implementación, testing, documentación, 
   En la documentación y en los comandos propuestos, usar siempre la variante con `npx`.
 
 ### 10.1) Publicación iOS (TestFlight / App Store)
+- **Orden de un ciclo completo** (inventario → git → Firebase backend → web → TestFlight → docs): **`docs/configuracion/PUBLICAR_APP.md`**.
 - El flujo documentado del repo es: **`flutter build ipa`** (desde la raíz) y luego **`cd ios && bundle exec fastlane beta`** (o `release`). Detalle en **`docs/configuracion/FASTLANE_IOS_APPSTORE.md`** y checklist en **`docs/configuracion/FASTLANE_IOS_CHECKLIST.md`**.
 - Cuenta Apple con **2FA:** antes de subir, exportar **`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`** (contraseña específica de apps en appleid.apple.com). Sin eso, `upload_to_testflight` suele fallar con error **-22938**.
 - Si falla el **export del IPA** (`No Accounts`, `No … Distribution`): revisar **Xcode → Settings → Accounts** y certificado **Apple Distribution** (ver guía Fastlane anterior).

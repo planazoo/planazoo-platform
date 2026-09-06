@@ -81,9 +81,15 @@ class UnifiedNotificationItem extends ConsumerWidget {
         child: WdPendingEventCard(
           pending: pending,
           userId: authUid!,
+          compact: true,
+          onTap: () => PendingEmailEventActions.showBody(
+            context,
+            pending,
+            userId: authUid!,
+            onPlace: () => PendingEmailEventActions.showAssignDialog(context, ref, pending, authUid!),
+          ),
           onAssign: () => PendingEmailEventActions.showAssignDialog(context, ref, pending, authUid!),
           onDiscard: () => PendingEmailEventActions.discard(context, ref, pending, authUid!),
-          compact: true,
         ),
       );
     }

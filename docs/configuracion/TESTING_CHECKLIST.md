@@ -1025,6 +1025,12 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Esperado: Información personal guardada
   - Estado: 🔄
 
+- [ ] **EVENT-MAP-001:** Mapa del plan (T279) en iOS/Android con red
+  - Pasos: Plan con Places en eventos/hoteles/aeropuertos. Mi resumen → mapa. Comprobar pines (número / H / A), lista sincronizada pin ↔ fila, chips de día. Misma clave `--dart-define=PLACES_API_KEY`.
+  - Esperado: Mapa JS visible; lista con el mismo orden horario que Mi resumen.
+  - Estado: 🔄 (iPhone 2026-09-05: mapa OK con red; falta Android y el caso offline **OFF-005**)
+  - Spec: [`T279_MAPA_PLAN_LUGARES.md`](../tareas/T279_MAPA_PLAN_LUGARES.md)
+
 ### 4.4 Eliminar Evento
 
 - [ ] **EVENT-D-001:** Eliminar evento propio
@@ -2584,6 +2590,12 @@ Ver sección 4.3 de `FLUJO_CRUD_PLANES.md` para el orden actual de eliminación 
   - Pasos: Cambios offline que entran en conflicto
   - Esperado: Resolución o notificación de conflicto
   - Estado: 🔄
+
+- [ ] **OFF-005:** Mapa del plan (T279) sin red — lista del recorrido
+  - Pasos: iOS o Android. Abrir el plan **con red** (para que haya caché). Modo avión. Mi resumen → mapa.
+  - Esperado: La **lista** (número, color, H/A, orden) sigue disponible desde caché, como Mi resumen. El mapa de Google **puede no pintar** (JS/teselas necesitan red); no es fallo. No se exige mapa offline de calles.
+  - Estado: 🔄
+  - Humano; proceso offline: [`TESTING_OFFLINE_FIRST.md`](../testing/TESTING_OFFLINE_FIRST.md). Contrato eventos: [`CHECKLIST_CRUD_EVENTOS.md`](../testing/CHECKLIST_CRUD_EVENTOS.md) E13.
 
 ### 15.2 Perfil local Hive (current_user, solo móvil)
 

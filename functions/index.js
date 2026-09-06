@@ -2,6 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const sgMail = require('@sendgrid/mail');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 // googleapis se carga solo en getGmailClientForMailbox (eventos desde correo) para no bloquear el deploy si no está instalado
 admin.initializeApp();
 
@@ -10,6 +11,14 @@ const RATE_LIMIT_EMAILS_PER_DAY = 50;
 const PENDING_EMAIL_EVENTS_COLLECTION = 'pending_email_events';
 const USERS_COLLECTION = 'users';
 const EMAIL_TEMPLATES_COLLECTION = 'email_templates';
+
+/**
+ * Excepción temporal de unicidad (QA T134). Quitar: LISTA 142.
+ * Extra hotmail en cuenta +cricla aunque sea principal del power admin.
+ */
+const INBOUND_EMAIL_UNIQUENESS_EXCEPTIONS = [
+  { extraEmail: 'cricla@hotmail.com', primaryEmail: 'unplanazoo+cricla@gmail.com' },
+];
 
 // Configuración: Prioridad Gmail SMTP > SendGrid
 // Gmail SMTP (recomendado - solo Google)
@@ -673,7 +682,7 @@ exports.placesDetails = functions.https.onCall(async (data, context) => {
   const url = `${PLACES_BASE}/places/${encodeURIComponent(placeId)}${params.toString() ? `?${params}` : ''}`;
   const headers = {
     'X-Goog-Api-Key': PLACES_API_KEY,
-    'X-Goog-FieldMask': 'id,name,displayName,formattedAddress,location,websiteUri',
+    'X-Goog-FieldMask': 'id,name,displayName,formattedAddress,location,websiteUri,nationalPhoneNumber,internationalPhoneNumber',
   };
   const res = await fetch(url, { headers });
   const json = await res.json().catch(() => ({}));
@@ -1129,12 +1138,30 @@ function normalizeEmailAndBase(email) {
   return { normalized, base };
 }
 
-/** Busca userId por email. Solo acepta el email principal del usuario (T216: no se aceptan alias como user+alias@gmail.com). */
+function isInboundUniquenessException(primaryEmail, extraEmail) {
+  return INBOUND_EMAIL_UNIQUENESS_EXCEPTIONS.some(
+    (e) => e.primaryEmail === primaryEmail && e.extraEmail === extraEmail,
+  );
+}
+
+function isInboundExceptionExtra(extraEmail) {
+  return INBOUND_EMAIL_UNIQUENESS_EXCEPTIONS.some((e) => e.extraEmail === extraEmail);
+}
+
+/** Busca userId por email principal (exacto, T216) o extra inbound verificado. */
 async function findUserIdByEmail(db, fromEmail) {
   const normalized = (fromEmail || '').toLowerCase().trim();
   if (!normalized) return null;
+  const lookup = await db.collection('inbound_from_lookup').doc(normalized).get();
+  const lookupData = lookup.exists ? (lookup.data() || {}) : {};
+  const extraUid = lookupData.verified === true && lookupData.userId ? lookupData.userId : null;
+  // LISTA 142: extra de excepción gana al principal (hotmail = PA).
+  if (isInboundExceptionExtra(normalized) && extraUid) {
+    return extraUid;
+  }
   const snap = await db.collection(USERS_COLLECTION).where('email', '==', normalized).limit(1).get();
-  return snap.empty ? null : snap.docs[0].id;
+  if (!snap.empty) return snap.docs[0].id;
+  return extraUid || null;
 }
 
 /** Cuenta cuántos pending_email_events ha creado el usuario desde medianoche UTC (hoy). */
@@ -1270,31 +1297,32 @@ async function runTemplateEngine(db, subject, bodyPlain) {
  * Usado por inboundEmail (HTTP) y processInboundGmail (Gmail API).
  * @returns {{ success: true, pendingEventId: string, userId: string }} | {{ success: false, error: string, code: string }}
  */
-async function processInboundEmail(db, { from, subject, bodyPlain }) {
+async function processInboundEmail(db, {from, subject, bodyPlain, bodyHtml, gmail, messageId, payload}) {
   const fromTrimmed = (from || '').trim();
   const subjectTrimmed = (subject || '').trim();
   if (!fromTrimmed || !subjectTrimmed) {
-    return { success: false, error: 'from and subject required', code: 'invalid_argument' };
+    return {success: false, error: 'from and subject required', code: 'invalid_argument'};
   }
   const plain = (bodyPlain !== undefined && bodyPlain !== null) ? String(bodyPlain) : '';
+  const html = bodyHtml ? sanitizeEmailHtml(bodyHtml) : '';
 
   const userId = await findUserIdByEmail(db, fromTrimmed);
   if (!userId) {
     console.warn(`processInboundEmail: From not registered: ${fromTrimmed}`);
-    return { success: false, error: 'Sender email is not a registered user', code: 'from_not_registered' };
+    return {success: false, error: 'Sender email is not a registered user', code: 'from_not_registered'};
   }
 
   const countToday = await countPendingEmailsToday(db, userId);
   if (countToday >= RATE_LIMIT_EMAILS_PER_DAY) {
     console.warn(`processInboundEmail: Rate limit exceeded for user ${userId}`);
-    return { success: false, error: 'Daily limit reached', code: 'rate_limit_exceeded' };
+    return {success: false, error: 'Daily limit reached', code: 'rate_limit_exceeded'};
   }
 
-  const { templateId, parsed } = await runTemplateEngine(db, subjectTrimmed, plain);
+  const {templateId, parsed} = await runTemplateEngine(db, subjectTrimmed, plain);
 
   const ref = db.collection(USERS_COLLECTION).doc(userId).collection(PENDING_EMAIL_EVENTS_COLLECTION).doc();
   const now = admin.firestore.FieldValue.serverTimestamp();
-  await ref.set({
+  const doc = {
     subject: subjectTrimmed,
     bodyPlain: plain,
     fromEmail: fromTrimmed,
@@ -1303,7 +1331,28 @@ async function processInboundEmail(db, { from, subject, bodyPlain }) {
     status: 'pending',
     createdAt: now,
     updatedAt: now,
-  });
+  };
+  if (html) doc.bodyHtml = html;
+  doc.kind = 'email';
+  await ref.set(doc);
+  if (gmail && messageId && payload) {
+    try {
+      const ingested = await ingestGmailAttachments({
+        gmail,
+        messageId,
+        payload,
+        userId,
+        pendingId: ref.id,
+        html: html || '',
+      });
+      const patch = {};
+      if (ingested.attachments.length) patch.attachments = ingested.attachments;
+      if (ingested.html) patch.bodyHtml = ingested.html;
+      if (Object.keys(patch).length) await ref.update(patch);
+    } catch (e) {
+      console.warn('processInboundEmail: attachments failed', e.message);
+    }
+  }
   if (templateId) console.log(`processInboundEmail: Created pending_email_event ${ref.id} for user ${userId} (template ${templateId})`);
   else console.log(`processInboundEmail: Created pending_email_event ${ref.id} for user ${userId}`);
   return { success: true, pendingEventId: ref.id, userId };
@@ -1345,8 +1394,9 @@ exports.inboundEmail = functions.https.onRequest(async (req, res) => {
   }
 
   const bodyPlain = getBodyPlain(data);
+  const bodyHtml = data.html ? sanitizeEmailHtml(String(data.html)) : '';
   const db = admin.firestore();
-  const result = await processInboundEmail(db, { from, subject, bodyPlain });
+  const result = await processInboundEmail(db, {from, subject, bodyPlain, bodyHtml});
 
   if (result.success) {
     res.status(200).json({ success: true, pendingEventId: result.pendingEventId, userId: result.userId });
@@ -1360,15 +1410,23 @@ exports.inboundEmail = functions.https.onRequest(async (req, res) => {
 
 // ============================================
 // Eventos desde correo (T134): lectura del buzón con Gmail API (100% Google)
+// Gmail consumidor = OAuth refresh token; Workspace = SA + domain-wide delegation.
 // Cloud Scheduler llama a processInboundGmail cada X minutos.
 // ============================================
 
 const GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly', 'https://www.googleapis.com/auth/gmail.modify'];
+/** Buzón de lanzamiento (mismo valor que `kPlanoonInboundMailbox` en la app). */
+const DEFAULT_GMAIL_INBOUND_MAILBOX = 'unplanazoo+eventos@gmail.com';
+
+function gmailInboundConfig() {
+  return functions.config().gmail_inbound || {};
+}
 
 /** Devuelve la lista de buzones a procesar. Soporta uno (string) o varios (coma-separados o JSON array). */
 function getMailboxList() {
-  const single = process.env.GMAIL_INBOUND_MAILBOX || functions.config().gmail_inbound?.mailbox;
-  const listRaw = process.env.GMAIL_INBOUND_MAILBOX_LIST || functions.config().gmail_inbound?.mailbox_list;
+  const cfg = gmailInboundConfig();
+  const single = process.env.GMAIL_INBOUND_MAILBOX || cfg.mailbox;
+  const listRaw = process.env.GMAIL_INBOUND_MAILBOX_LIST || cfg.mailbox_list;
   if (listRaw) {
     if (typeof listRaw === 'string' && listRaw.trim().startsWith('[')) {
       try {
@@ -1381,14 +1439,31 @@ function getMailboxList() {
     return listRaw.split(',').map(m => m.trim()).filter(Boolean);
   }
   if (single) return [single.trim()];
-  return [];
+  return [DEFAULT_GMAIL_INBOUND_MAILBOX];
+}
+
+/** Gmail consumidor: OAuth con refresh token (no aplica domain-wide delegation). */
+function getGmailClientFromOAuth() {
+  const cfg = gmailInboundConfig();
+  const clientId = process.env.GMAIL_INBOUND_OAUTH_CLIENT_ID || cfg.oauth_client_id;
+  const clientSecret = process.env.GMAIL_INBOUND_OAUTH_CLIENT_SECRET || cfg.oauth_client_secret;
+  const refreshToken = process.env.GMAIL_INBOUND_OAUTH_REFRESH_TOKEN || cfg.oauth_refresh_token;
+  if (!clientId || !clientSecret || !refreshToken) return null;
+  const {google} = require('googleapis');
+  const auth = new google.auth.OAuth2(clientId, clientSecret);
+  auth.setCredentials({refresh_token: refreshToken});
+  return google.gmail({version: 'v1', auth});
 }
 
 function getGmailClientForMailbox(mailbox) {
   if (!mailbox) return null;
+  const oauthClient = getGmailClientFromOAuth();
+  if (oauthClient) return oauthClient;
+
   let clientEmail;
   let privateKey;
-  const saJson = process.env.GMAIL_INBOUND_SA_JSON || functions.config().gmail_inbound?.service_account_json;
+  const cfg = gmailInboundConfig();
+  const saJson = process.env.GMAIL_INBOUND_SA_JSON || cfg.service_account_json;
   if (saJson) {
     try {
       const key = typeof saJson === 'string' ? JSON.parse(saJson) : saJson;
@@ -1399,19 +1474,36 @@ function getGmailClientForMailbox(mailbox) {
       return null;
     }
   } else {
-    clientEmail = process.env.GMAIL_INBOUND_SA_CLIENT_EMAIL || functions.config().gmail_inbound?.client_email;
-    privateKey = process.env.GMAIL_INBOUND_SA_PRIVATE_KEY || functions.config().gmail_inbound?.private_key;
+    clientEmail = process.env.GMAIL_INBOUND_SA_CLIENT_EMAIL || cfg.client_email;
+    privateKey = process.env.GMAIL_INBOUND_SA_PRIVATE_KEY || cfg.private_key;
     if (privateKey && typeof privateKey === 'string') privateKey = privateKey.replace(/\\n/g, '\n');
   }
   if (!clientEmail || !privateKey) return null;
-  const { google } = require('googleapis');
+  const {google} = require('googleapis');
   const auth = new google.auth.JWT({
     email: clientEmail,
     key: privateKey,
     subject: mailbox,
     scopes: GMAIL_SCOPES,
   });
-  return google.gmail({ version: 'v1', auth });
+  return google.gmail({version: 'v1', auth});
+}
+
+/** Gmail trata `+` como AND; no filtramos el alias en `q`. El corte por destinatario va en cabeceras. */
+function gmailUnreadQuery() {
+  const custom = process.env.GMAIL_INBOUND_QUERY || gmailInboundConfig().query;
+  if (custom && String(custom).trim()) return String(custom).trim();
+  return 'is:unread newer_than:30d';
+}
+
+function messageAddressedToMailbox(payload, mailbox) {
+  const want = (mailbox || '').trim().toLowerCase();
+  if (!want) return false;
+  const blob = ['To', 'Delivered-To', 'X-Original-To', 'X-Forwarded-To', 'Cc', 'Envelope-To']
+      .map((h) => getHeader(payload, h))
+      .join(' ')
+      .toLowerCase();
+  return blob.includes(want);
 }
 
 function getHeader(payload, name) {
@@ -1437,24 +1529,233 @@ function decodeBase64url(str) {
   }
 }
 
-function getBodyFromPayload(payload) {
-  let textPlain = '';
-  let html = '';
-  if (payload.body && payload.body.data) {
-    const decoded = decodeBase64url(payload.body.data);
-    if ((payload.mimeType || '').toLowerCase() === 'text/plain') textPlain = decoded;
-    else if ((payload.mimeType || '').toLowerCase() === 'text/html') html = decoded;
-    else textPlain = decoded;
+function collectMimeBodies(part, acc) {
+  if (!part) return;
+  const mime = (part.mimeType || '').toLowerCase();
+  if (part.body && part.body.data) {
+    const decoded = decodeBase64url(part.body.data);
+    if (mime === 'text/plain' && !acc.textPlain) acc.textPlain = decoded;
+    else if (mime === 'text/html' && !acc.html) acc.html = decoded;
+    else if (!mime.startsWith('multipart/') && !acc.textPlain && decoded) acc.textPlain = decoded;
+  } else if (part.body && part.body.attachmentId) {
+    acc.pending.push({mime, attachmentId: part.body.attachmentId});
   }
-  (payload.parts || []).forEach(part => {
-    const mime = (part.mimeType || '').toLowerCase();
-    const decoded = part.body && part.body.data ? decodeBase64url(part.body.data) : '';
-    if (mime === 'text/plain') textPlain = decoded;
-    else if (mime === 'text/html') html = decoded;
-  });
-  if (textPlain.trim()) return textPlain.trim();
-  if (html.trim()) return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  return '';
+  (part.parts || []).forEach((child) => collectMimeBodies(child, acc));
+}
+
+function htmlToPlain(html) {
+  return String(html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** Outlook/Hotmail: `manage reservation <https://…>` → `<a href="…">manage reservation</a>`. */
+function outlookPlainToHtml(plain) {
+  const text = String(plain || '');
+  if (!text) return '';
+  const re = /\[(https?:\/\/[^\s\]]+)\]|([^\n<]{1,80}?)\s*<((?:https?|tel|mailto):[^>]+)>|(https?:\/\/[^\s<>]+)/gi;
+  let out = '';
+  let last = 0;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    out += escapeHtml(text.slice(last, m.index)).replace(/\n/g, '<br>');
+    if (m[1]) {
+      const url = m[1];
+      if (/\.(png|jpe?g|gif|webp)(\?|$)/i.test(url)) {
+        out += `<img src="${escapeHtml(url)}" alt="">`;
+      } else {
+        out += `<a href="${escapeHtml(url)}">${escapeHtml(url)}</a>`;
+      }
+    } else if (m[3]) {
+      let label = (m[2] || '').trim().replace(/^[|\-–—]+\s*/, '');
+      if (label.includes('\n')) label = label.split('\n').pop().trim();
+      if (!label) label = m[3];
+      out += `<a href="${escapeHtml(m[3])}">${escapeHtml(label)}</a>`;
+    } else if (m[4]) {
+      out += `<a href="${escapeHtml(m[4])}">${escapeHtml(m[4])}</a>`;
+    }
+    last = m.index + m[0].length;
+  }
+  out += escapeHtml(text.slice(last)).replace(/\n/g, '<br>');
+  return out;
+}
+
+function sanitizeEmailHtml(html) {
+  let s = String(html || '');
+  s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
+  s = s.replace(/<style[\s\S]*?<\/style>/gi, '');
+  s = s.replace(/<head[\s\S]*?<\/head>/gi, '');
+  s = s.replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  s = s.replace(/javascript:/gi, '');
+  // data: embebido puede ser enorme; cid se reescribe a Storage después.
+  s = s.replace(/<img\b[^>]*\bsrc\s*=\s*["']?data:[^>]*>/gi, '');
+  // Colores del HTML del hotel chocan con el sheet oscuro de la app.
+  s = s.replace(/color\s*:\s*[^;}"']+;?/gi, '');
+  s = s.replace(/background(?:-color)?\s*:\s*[^;}"']+;?/gi, '');
+  s = s.replace(/\s(?:bg)?color\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  const max = 120000;
+  if (s.length > max) s = s.slice(0, max);
+  return s.trim();
+}
+
+async function getBodiesFromPayload(gmail, messageId, payload) {
+  const acc = {textPlain: '', html: '', pending: []};
+  collectMimeBodies(payload, acc);
+  if (gmail && messageId && acc.pending.length) {
+    for (const p of acc.pending) {
+      try {
+        const att = await gmail.users.messages.attachments.get({
+          userId: 'me',
+          messageId,
+          id: p.attachmentId,
+        });
+        const decoded = decodeBase64url(att.data && att.data.data);
+        if (!decoded) continue;
+        if (p.mime === 'text/html' && !acc.html) acc.html = decoded;
+        else if (p.mime === 'text/plain' && !acc.textPlain) acc.textPlain = decoded;
+      } catch (e) {
+        console.warn('getBodiesFromPayload: attachment fetch failed', e.message);
+      }
+    }
+  }
+  let html = sanitizeEmailHtml(acc.html);
+  if (!html && acc.textPlain) html = outlookPlainToHtml(acc.textPlain);
+  const textPlain = acc.textPlain.trim() || htmlToPlain(html);
+  return {textPlain, html};
+}
+
+function getBodyFromPayload(payload) {
+  const acc = {textPlain: '', html: '', pending: []};
+  collectMimeBodies(payload, acc);
+  return acc.textPlain.trim() || htmlToPlain(acc.html);
+}
+
+const MAX_COMM_ATTACHMENT_BYTES = 8 * 1024 * 1024;
+const MAX_COMM_ATTACHMENTS = 8;
+
+function decodeBase64urlToBuffer(str) {
+  if (!str) return Buffer.alloc(0);
+  const base64 = String(str).replace(/-/g, '+').replace(/_/g, '/');
+  try {
+    return Buffer.from(base64, 'base64');
+  } catch (e) {
+    return Buffer.alloc(0);
+  }
+}
+
+function collectAttachmentParts(part, list) {
+  if (!part) return;
+  const mime = (part.mimeType || '').toLowerCase();
+  if (!mime.startsWith('multipart/')) {
+    const filename = part.filename || '';
+    const cid = (getHeader(part, 'Content-ID') || '').replace(/[<>]/g, '').trim();
+    const disp = (getHeader(part, 'Content-Disposition') || '').toLowerCase();
+    const isTextBody = (mime === 'text/plain' || mime === 'text/html') && !filename && !cid;
+    if (!isTextBody && part.body && (part.body.data || part.body.attachmentId)) {
+      if (filename || cid || mime.startsWith('image/') || disp.includes('attachment')) {
+        list.push({
+          mime,
+          filename,
+          cid,
+          attachmentId: (part.body && part.body.attachmentId) || '',
+          data: (part.body && part.body.data) || '',
+          size: (part.body && part.body.size) || 0,
+        });
+      }
+    }
+  }
+  (part.parts || []).forEach((child) => collectAttachmentParts(child, list));
+}
+
+function extensionFromMime(mime, filename) {
+  if (filename && filename.includes('.')) {
+    return filename.split('.').pop().toLowerCase();
+  }
+  if (mime === 'image/jpeg') return 'jpg';
+  if (mime === 'image/png') return 'png';
+  if (mime === 'image/gif') return 'gif';
+  if (mime === 'image/webp') return 'webp';
+  if (mime === 'application/pdf') return 'pdf';
+  if (mime === 'text/calendar') return 'ics';
+  return 'bin';
+}
+
+function isAllowedCommAttachment(mime, filename) {
+  const ext = extensionFromMime(mime, filename);
+  const allowed = new Set(['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'ics']);
+  if (allowed.has(ext)) return true;
+  if ((mime || '').startsWith('image/')) return true;
+  if (mime === 'application/pdf' || mime === 'text/calendar') return true;
+  return false;
+}
+
+function rewriteCidInHtml(html, cid, url) {
+  const clean = String(cid || '').replace(/[<>]/g, '').trim();
+  if (!clean) return html;
+  const variants = [clean];
+  if (clean.includes('@')) variants.push(clean.split('@')[0]);
+  let out = html;
+  for (const v of variants) {
+    const escaped = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    out = out.replace(new RegExp(`cid:${escaped}`, 'gi'), url);
+  }
+  return out;
+}
+
+async function ingestGmailAttachments({gmail, messageId, payload, userId, pendingId, html}) {
+  const parts = [];
+  collectAttachmentParts(payload, parts);
+  const attachments = [];
+  let rewritten = html || '';
+  const bucket = admin.storage().bucket();
+  for (const p of parts) {
+    if (attachments.length >= MAX_COMM_ATTACHMENTS) break;
+    if (!isAllowedCommAttachment(p.mime, p.filename)) continue;
+    if (p.size && p.size > MAX_COMM_ATTACHMENT_BYTES) continue;
+    let raw = p.data ? decodeBase64urlToBuffer(p.data) : Buffer.alloc(0);
+    if ((!raw || !raw.length) && p.attachmentId) {
+      try {
+        const att = await gmail.users.messages.attachments.get({
+          userId: 'me',
+          messageId,
+          id: p.attachmentId,
+        });
+        raw = decodeBase64urlToBuffer(att.data && att.data.data);
+      } catch (e) {
+        console.warn('ingestGmailAttachments: fetch failed', e.message);
+        continue;
+      }
+    }
+    if (!raw || !raw.length || raw.length > MAX_COMM_ATTACHMENT_BYTES) continue;
+    const ext = extensionFromMime(p.mime, p.filename);
+    const baseName = (p.filename || `inline-${p.cid || attachments.length}`).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = baseName.includes('.')
+      ? `${Date.now()}_${attachments.length}_${baseName}`
+      : `${Date.now()}_${attachments.length}_${baseName}.${ext}`;
+    const path = `communication_files/${userId}/${pendingId}/${fileName}`;
+    const token = crypto.randomUUID();
+    const file = bucket.file(path);
+    await file.save(raw, {
+      resumable: false,
+      metadata: {
+        contentType: p.mime || 'application/octet-stream',
+        metadata: {
+          firebaseStorageDownloadTokens: token,
+          originalName: p.filename || baseName,
+        },
+      },
+    });
+    const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
+    const item = {
+      name: p.filename || fileName,
+      url,
+      type: p.mime || 'application/octet-stream',
+      size: raw.length,
+    };
+    if (p.cid) item.contentId = p.cid;
+    attachments.push(item);
+    if (p.cid) rewritten = rewriteCidInHtml(rewritten, p.cid, url);
+  }
+  rewritten = rewritten.replace(/<img\b[^>]*\bsrc\s*=\s*["']?cid:[^>]*>/gi, '');
+  return {attachments, html: rewritten};
 }
 
 /**
@@ -1464,26 +1765,62 @@ function getBodyFromPayload(payload) {
 async function processOneMailbox(gmail, mailboxLabel, db) {
   let processed = 0;
   let errors = 0;
-  const listRes = await gmail.users.messages.list({ userId: 'me', q: 'is:unread', maxResults: 50 });
+  let skippedOther = 0;
+  let authenticatedAs = null;
+  try {
+    const profile = await gmail.users.getProfile({userId: 'me'});
+    authenticatedAs = profile.data.emailAddress || null;
+  } catch (e) {
+    console.warn('processInboundGmail: getProfile failed', e.message);
+  }
+  const listRes = await gmail.users.messages.list({
+    userId: 'me',
+    q: gmailUnreadQuery(),
+    maxResults: 50,
+    includeSpamTrash: true,
+  });
   const messages = listRes.data.messages || [];
   for (const item of messages) {
     try {
-      const msgRes = await gmail.users.messages.get({ userId: 'me', id: item.id, format: 'full' });
+      const msgRes = await gmail.users.messages.get({userId: 'me', id: item.id, format: 'full'});
       const payload = msgRes.data.payload || {};
+      if (!messageAddressedToMailbox(payload, mailboxLabel)) {
+        skippedOther++;
+        continue;
+      }
       const fromHeader = getHeader(payload, 'From');
       const from = extractEmailFromHeader(fromHeader);
       const subject = getHeader(payload, 'Subject');
-      const bodyPlain = getBodyFromPayload(payload);
-      const result = await processInboundEmail(db, { from, subject, bodyPlain });
+      const {textPlain, html} = await getBodiesFromPayload(gmail, item.id, payload);
+      console.log(`processInboundGmail [${mailboxLabel}]: as=${authenticatedAs} from=${from} subject=${subject}`);
+      const result = await processInboundEmail(db, {
+        from,
+        subject,
+        bodyPlain: textPlain,
+        bodyHtml: html,
+        gmail,
+        messageId: item.id,
+        payload,
+      });
       if (result.success) processed++;
       else errors++;
-      await gmail.users.messages.modify({ userId: 'me', id: item.id, requestBody: { removeLabelIds: ['UNREAD'] } });
+      await gmail.users.messages.modify({
+        userId: 'me',
+        id: item.id,
+        requestBody: {removeLabelIds: ['UNREAD']},
+      });
     } catch (err) {
       console.error(`processInboundGmail [${mailboxLabel}]: Error processing message ${item.id}`, err);
       errors++;
     }
   }
-  return { processed, errors, total: messages.length };
+  return {
+    processed,
+    errors,
+    total: messages.length,
+    skippedOther,
+    authenticatedAs,
+  };
 }
 
 /**
@@ -1495,7 +1832,7 @@ exports.processInboundGmail = functions.https.onRequest(async (req, res) => {
     res.status(405).json({ error: 'method_not_allowed' });
     return;
   }
-  const secret = process.env.GMAIL_POLL_SECRET || functions.config().gmail_inbound?.poll_secret;
+  const secret = process.env.GMAIL_POLL_SECRET || gmailInboundConfig().poll_secret;
   if (secret && req.get('X-Gmail-Poll-Secret') !== secret) {
     res.status(403).json({ error: 'forbidden', message: 'Invalid or missing poll secret' });
     return;
@@ -1847,5 +2184,144 @@ exports.triggerCancellationDeadlineCheck = functions.https.onRequest(async (req,
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+async function sendPlatformEmail({ to, subject, text, html }) {
+  if (gmailTransporter) {
+    await gmailTransporter.sendMail({ from: FROM_EMAIL, to, subject, text, html });
+    return;
+  }
+  if (SENDGRID_API_KEY) {
+    await sgMail.send({ to, from: FROM_EMAIL, subject, text, html });
+    return;
+  }
+  throw new Error('No email transport configured');
+}
+
+function confirmInboundEmailUrl(token) {
+  const project = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || '';
+  return `https://us-central1-${project}.cloudfunctions.net/confirmInboundEmail?token=${encodeURIComponent(token)}`;
+}
+
+function isValidEmailAddress(email) {
+  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+exports.requestInboundEmailVerification = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+  const uid = context.auth.uid;
+  const email = (data?.email || '').toLowerCase().trim();
+  if (!isValidEmailAddress(email)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Email inválido.');
+  }
+  const db = admin.firestore();
+  const userDoc = await db.collection(USERS_COLLECTION).doc(uid).get();
+  const primary = ((userDoc.data() || {}).email || '').toLowerCase().trim();
+  if (email === primary) {
+    throw new functions.https.HttpsError('failed-precondition', 'primary');
+  }
+  const extrasSnap = await db.collection(USERS_COLLECTION).doc(uid).collection('inbound_emails').get();
+  const existing = extrasSnap.docs.find((d) => ((d.data() || {}).email || '').toLowerCase() === email);
+  if (!existing && extrasSnap.size >= 2) {
+    throw new functions.https.HttpsError('failed-precondition', 'Máximo 2 extras.');
+  }
+  const primaryTaken = await db.collection(USERS_COLLECTION).where('email', '==', email).limit(1).get();
+  const uniquenessException = isInboundUniquenessException(primary, email);
+  if (!primaryTaken.empty && !uniquenessException) {
+    throw new functions.https.HttpsError('already-exists', 'Email en otra cuenta.');
+  }
+  const lookupRef = db.collection('inbound_from_lookup').doc(email);
+  const lookup = await lookupRef.get();
+  if (lookup.exists && lookup.data().userId && lookup.data().userId !== uid && !uniquenessException) {
+    throw new functions.https.HttpsError('already-exists', 'Email en otra cuenta.');
+  }
+
+  const token = crypto.randomBytes(24).toString('hex');
+  const expiresAt = admin.firestore.Timestamp.fromDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
+  const extraRef = existing
+    ? extrasSnap.docs.find((d) => ((d.data() || {}).email || '').toLowerCase() === email).ref
+    : db.collection(USERS_COLLECTION).doc(uid).collection('inbound_emails').doc();
+
+  const batch = db.batch();
+  batch.set(extraRef, {
+    email,
+    verified: false,
+    createdAt: existing ? (existing.data().createdAt || admin.firestore.FieldValue.serverTimestamp()) : admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+  batch.set(lookupRef, {
+    userId: uid,
+    verified: false,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  batch.set(db.collection('inbound_email_tokens').doc(token), {
+    userId: uid,
+    email,
+    extraId: extraRef.id,
+    expiresAt,
+  });
+  await batch.commit();
+
+  const url = confirmInboundEmailUrl(token);
+  const subject = 'Verifica tu correo en Planoon';
+  const text = `Confirma este correo para reenviar reservas a Planoon:\n${url}\n\nEl enlace caduca en 24 horas.`;
+  const html = `<p>Confirma este correo para reenviar reservas a Planoon.</p><p><a href="${url}">Verificar correo</a></p><p>El enlace caduca en 24 horas.</p>`;
+  await sendPlatformEmail({ to: email, subject, text, html });
+  return { ok: true };
+});
+
+exports.removeInboundEmail = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Debes estar autenticado.');
+  }
+  const uid = context.auth.uid;
+  const email = (data?.email || '').toLowerCase().trim();
+  if (!isValidEmailAddress(email)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Email inválido.');
+  }
+  const db = admin.firestore();
+  const extrasSnap = await db.collection(USERS_COLLECTION).doc(uid).collection('inbound_emails').get();
+  const extra = extrasSnap.docs.find((d) => ((d.data() || {}).email || '').toLowerCase() === email);
+  const lookup = await db.collection('inbound_from_lookup').doc(email).get();
+  const batch = db.batch();
+  if (extra) batch.delete(extra.ref);
+  if (lookup.exists && lookup.data().userId === uid) {
+    batch.delete(lookup.ref);
+  }
+  await batch.commit();
+  return { ok: true };
+});
+
+exports.confirmInboundEmail = functions.https.onRequest(async (req, res) => {
+  const token = (req.query.token || '').toString().trim();
+  if (!token) {
+    res.status(400).send('Falta token.');
+    return;
+  }
+  const db = admin.firestore();
+  const tokenRef = db.collection('inbound_email_tokens').doc(token);
+  const tokenDoc = await tokenRef.get();
+  if (!tokenDoc.exists) {
+    res.status(400).send('Enlace no válido o ya usado.');
+    return;
+  }
+  const data = tokenDoc.data() || {};
+  const expiresAt = data.expiresAt && data.expiresAt.toDate ? data.expiresAt.toDate() : null;
+  if (expiresAt && expiresAt.getTime() < Date.now()) {
+    await tokenRef.delete();
+    res.status(400).send('El enlace ha caducado. Vuelve a Planoon y reenvía el correo de verificación.');
+    return;
+  }
+  const extraRef = db.collection(USERS_COLLECTION).doc(data.userId).collection('inbound_emails').doc(data.extraId);
+  const lookupRef = db.collection('inbound_from_lookup').doc(data.email);
+  const batch = db.batch();
+  batch.set(extraRef, { verified: true, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  batch.set(lookupRef, { userId: data.userId, verified: true, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  batch.delete(tokenRef);
+  await batch.commit();
+  res.status(200).send('<!doctype html><html><body style="font-family:sans-serif;padding:32px"><h1>Correo verificado</h1><p>Ya puedes reenviar confirmaciones a Planoon desde esta dirección. Vuelve a la app.</p></body></html>');
+});
+
 
 

@@ -1257,6 +1257,42 @@ class InvitationService {
     return '$baseUrl/invitation/$token';
   }
 
+  /// Cancela todos los docs `plan_invitations` pending del plan (T261).
+  /// No toca participaciones: el llamador debe expirar pending aparte.
+  Future<int> cancelAllPendingInvitationsForPlan(String planId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where('planId', isEqualTo: planId)
+          .where('status', isEqualTo: 'pending')
+          .get();
+
+      if (querySnapshot.docs.isEmpty) return 0;
+
+      final batch = _firestore.batch();
+      final now = Timestamp.fromDate(DateTime.now());
+      for (final doc in querySnapshot.docs) {
+        batch.update(doc.reference, {
+          'status': 'cancelled',
+          'respondedAt': now,
+        });
+      }
+      await batch.commit();
+      LoggerService.database(
+        'Cancelled ${querySnapshot.docs.length} pending invitation(s) for plan $planId',
+        operation: 'UPDATE',
+      );
+      return querySnapshot.docs.length;
+    } catch (e) {
+      LoggerService.error(
+        'Error cancelling pending invitations for plan: $planId',
+        context: 'INVITATION_SERVICE',
+        error: e,
+      );
+      return 0;
+    }
+  }
+
   /// Obtener todas las invitaciones pendientes de un plan
   Future<List<PlanInvitation>> getPendingInvitations(String planId) async {
     try {

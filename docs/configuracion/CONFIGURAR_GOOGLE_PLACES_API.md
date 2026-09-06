@@ -132,9 +132,10 @@ En la app, en **web** se llama a estas functions (el usuario debe estar **loguea
 1. **APIs y servicios** → **Biblioteca**.
 2. Busca **"Places API (New)"** (recomendada) o **"Places API"** (clásica).
 3. Entra en la API y pulsa **"Habilitar"**.
-4. (Opcional para web) Si usas componentes de mapa en web más adelante: busca **"Maps JavaScript API"** y habilítala también.
+4. Busca **"Maps JavaScript API"** y pulsa **"Habilitar"** (T279: mapa del plan con pines numerados). Si la clave tiene restricciones por API, añade también Maps JavaScript API a esa lista.
+5. Busca **"Geocoding API"** y pulsa **"Habilitar"** (T279: visitas sin `placeLat`/`placeLng` pero con nombre/dirección, p. ej. un paseo escrito a mano). Añádela a las restricciones de la clave si las usas.
 
-**Nota:** Tras habilitar Places API (New), la consola puede mostrar una larga lista de otras APIs (calidad del aire, solar, etc.). **No hace falta activar ninguna de esas** para autocompletado y detalles de lugar; solo necesitas "Places API (New)" (o "Places API" clásica) habilitada.
+**Nota:** Tras habilitar Places API (New), la consola puede mostrar una larga lista de otras APIs (calidad del aire, solar, etc.). **No hace falta activar ninguna de esas** para autocompletado y detalles de lugar; solo necesitas "Places API (New)" (o "Places API" clásica). El mapa del plan (T279) necesita **Maps JavaScript API** y, para pines sin coordenadas de Places, **Geocoding API**.
 
 ### 2.3 Crear una API key solo para Places (recomendado)
 

@@ -30,6 +30,7 @@ import 'package:unp_calendario/widgets/dialogs/delete_event_dialog.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
 import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
+import 'package:unp_calendario/widgets/plan/entity_communications_section.dart';
 import 'package:unp_calendario/widgets/plan/reservation_cancellation_form_section.dart';
 import 'package:unp_calendario/features/places/data/places_api_service.dart';
 import 'package:unp_calendario/features/places/presentation/widgets/place_autocomplete_field.dart';
@@ -51,6 +52,8 @@ class EventDialog extends ConsumerStatefulWidget {
 
   /// Minuto de inicio si se fija [initialHour] desde fuera (p. ej. FAB con plan en curso = ahora).
   final int? initialStartMinute;
+  /// Prefill del título al crear (p. ej. asunto del mail al colocar).
+  final String? initialDescription;
   final FutureOr<void> Function(Event)? onSaved;
   final FutureOr<void> Function(String)? onDeleted;
 
@@ -61,6 +64,7 @@ class EventDialog extends ConsumerStatefulWidget {
     this.initialDate,
     this.initialHour,
     this.initialStartMinute,
+    this.initialDescription,
     this.onSaved,
     this.onDeleted,
   });
@@ -300,7 +304,7 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
     // Inicializar controladores
     _descriptionController = TextEditingController(
-      text: widget.event?.commonPart?.description ?? '',
+      text: widget.event?.commonPart?.description ?? widget.initialDescription ?? '',
     );
     _longNotesController = TextEditingController(
       text: widget.event?.commonPart?.notes ?? '',
@@ -454,14 +458,16 @@ class _EventDialogState extends ConsumerState<EventDialog> {
 
     // T247: guardar estado inicial de conexión y campos sincronizados
     _initialConnection = widget.event?.commonPart?.connection;
-    _initialCommonDate = widget.event?.commonPart?.date;
-    _initialCommonStartHour = widget.event?.commonPart?.startHour;
-    _initialCommonStartMinute = widget.event?.commonPart?.startMinute;
-    _initialCommonDurationMinutes = widget.event?.commonPart?.durationMinutes;
+    _initialCommonDate = widget.event?.date ?? widget.event?.commonPart?.date;
+    _initialCommonStartHour = widget.event?.hour ?? widget.event?.commonPart?.startHour;
+    _initialCommonStartMinute =
+        widget.event?.startMinute ?? widget.event?.commonPart?.startMinute;
+    _initialCommonDurationMinutes =
+        widget.event?.durationMinutes ?? widget.event?.commonPart?.durationMinutes;
     _initialFlightNumber = ed != null ? ed['flightNumber'] as String? : null;
     // Inicializar valores
     _selectedDate =
-        widget.initialDate ?? widget.event?.commonPart?.date ?? DateTime.now();
+        widget.initialDate ?? widget.event?.date ?? widget.event?.commonPart?.date ?? DateTime.now();
     final depStr = ed?['departureScheduled'] as String?;
     if (depStr != null && depStr.isNotEmpty) {
       final dt = DateTime.tryParse(depStr);
@@ -470,11 +476,11 @@ class _EventDialogState extends ConsumerState<EventDialog> {
       }
     }
     _selectedHour =
-        widget.initialHour ?? widget.event?.commonPart?.startHour ?? 9;
-    _selectedDuration = (widget.event?.commonPart?.durationMinutes ?? 60) ~/ 60;
+        widget.initialHour ?? widget.event?.hour ?? widget.event?.commonPart?.startHour ?? 9;
+    _selectedDuration = (widget.event?.durationMinutes ?? widget.event?.commonPart?.durationMinutes ?? 60) ~/ 60;
     _selectedStartMinute =
-        widget.initialStartMinute ?? widget.event?.commonPart?.startMinute ?? 0;
-    _selectedDurationMinutes = widget.event?.commonPart?.durationMinutes ?? 60;
+        widget.initialStartMinute ?? widget.event?.startMinute ?? widget.event?.commonPart?.startMinute ?? 0;
+    _selectedDurationMinutes = widget.event?.durationMinutes ?? widget.event?.commonPart?.durationMinutes ?? 60;
     _selectedColor = widget.event?.commonPart?.customColor ?? 'color2';
     _isDraft = widget.event?.commonPart?.isDraft ?? false;
     _selectedTimezone = widget.event?.timezone ?? 'Europe/Madrid';
@@ -3674,6 +3680,10 @@ class _EventDialogState extends ConsumerState<EventDialog> {
                   ),
                 ],
               ),
+              if (widget.event?.id != null) ...[
+                const SizedBox(height: spacing),
+                EntityCommunicationsSection(entityId: widget.event!.id!),
+              ],
             ],
             const SizedBox(height: spacing),
             // Participantes (switch + lista en la misma card)

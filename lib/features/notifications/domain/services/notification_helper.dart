@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/services/push_notification_sender.dart';
 import '../models/notification_model.dart';
@@ -479,6 +480,95 @@ class NotificationHelper {
         error: e,
       );
       return false;
+    }
+  }
+
+  /// T261: avisa a miembros activos (aceptados y pendientes) al cancelar el plan.
+  ///
+  /// No incluye al usuario que cancela. Fallos de push no impiden las in-app.
+  Future<int> notifyPlanCancelled({
+    required String planId,
+    required String actorUserId,
+    String? planName,
+    String? previousState,
+  }) async {
+    try {
+      String finalPlanName = planName ?? 'Un plan';
+      if (planName == null) {
+        final plan = await _planService.getPlanById(planId);
+        if (plan != null) finalPlanName = plan.name;
+      }
+
+      final participations =
+          await _participationService.getPlanParticipations(planId).first;
+
+      final recipientIds = participations
+          .where((p) =>
+              p.isActive &&
+              p.userId.isNotEmpty &&
+              p.userId != actorUserId &&
+              (p.isAccepted || p.isPending))
+          .map((p) => p.userId)
+          .toSet()
+          .toList();
+
+      if (recipientIds.isEmpty) {
+        LoggerService.info(
+          'No recipients for plan cancelled: $planId',
+          context: 'NOTIFICATION_HELPER',
+        );
+        return 0;
+      }
+
+      const title = 'Plan cancelado';
+      final body = 'El plan "$finalPlanName" ha sido cancelado.';
+      final notification = NotificationModel(
+        userId: '',
+        type: NotificationType.planStateChanged,
+        title: title,
+        body: body,
+        planId: planId,
+        createdAt: DateTime.now(),
+        data: {
+          'newState': 'cancelado',
+          if (previousState != null) 'previousState': previousState,
+          'actorUserId': actorUserId,
+        },
+      );
+
+      final count = await _notificationService.createNotificationsForUsers(
+        recipientIds,
+        notification,
+      );
+
+      if (Firebase.apps.isNotEmpty) {
+        for (final userId in recipientIds) {
+          await PushNotificationSender.trySendPushNotification(
+            userId: userId,
+            title: title,
+            body: body,
+            data: {
+              'type': NotificationType.planStateChanged.name,
+              'planId': planId,
+              'plan_id': planId,
+              'newState': 'cancelado',
+            },
+          );
+        }
+      }
+
+      LoggerService.info(
+        'Plan cancelled notifications: $count for plan: $planId',
+        context: 'NOTIFICATION_HELPER',
+      );
+      return count;
+    } catch (e) {
+      LoggerService.error(
+        'Error notifying plan cancelled: $planId',
+        context: 'NOTIFICATION_HELPER',
+        error: e,
+      );
+      return 0;
     }
   }
 }

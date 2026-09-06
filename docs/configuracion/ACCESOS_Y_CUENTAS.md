@@ -67,7 +67,7 @@ Proyecto Firebase / GCP: **planazoo** · Web prod: `https://planazoo.web.app`
 | [APIs y servicios](https://console.cloud.google.com/apis) | Habilitar Places, Maps, etc. | [CONFIGURAR_GOOGLE_PLACES_API.md](./CONFIGURAR_GOOGLE_PLACES_API.md) |
 | [Credenciales (API keys)](https://console.cloud.google.com/apis/credentials) | API keys y restricciones | No hardcodear secretas en el repo |
 | [Facturación GCP](https://console.cloud.google.com/billing) | Facturación / crédito Places | |
-| [Google Cloud → OAuth consent / clients](https://console.cloud.google.com/apis/credentials) | Clientes OAuth (Google Sign-In) | [CONFIGURAR_GOOGLE_SIGNIN.md](./CONFIGURAR_GOOGLE_SIGNIN.md) · también en Firebase Auth |
+| [Google Cloud → OAuth / Auth Platform](https://console.cloud.google.com/auth/overview?project=planazoo) | Consentimiento + clientes OAuth | Login app: [CONFIGURAR_GOOGLE_SIGNIN.md](./CONFIGURAR_GOOGLE_SIGNIN.md). Buzón T134: cliente escritorio **Planoon Gmail inbound**, Client ID `794752310537-041ja0c2p4c4u0enmso390ueojhsifn9.apps.googleusercontent.com` — secret y refresh token no se documentan; ver [`GMAIL_INBOUND_BUZON.md`](./GMAIL_INBOUND_BUZON.md) |
 | [Google Remote Desktop](https://remotedesktop.google.com/) | Acceso remoto al Mac de build | Detalle en §5 · PIN recordatorio `9534x2` · Mac pwd recordatorio `ola` |
 | [Google Play Console](https://play.google.com/console) | Publicación Android (futuro) | **Pendiente** si aún no hay app en Play |
 | [sites.google.com](https://sites.google.com) | Landing / Sites | Hoy: **no usado** en el proyecto |

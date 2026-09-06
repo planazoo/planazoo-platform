@@ -19,7 +19,7 @@ class PlacePrediction {
   });
 }
 
-/// Datos de un lugar tras Place Details (nombre, dirección, coordenadas, web).
+/// Datos de un lugar tras Place Details (nombre, dirección, coordenadas, web, teléfono).
 class PlaceDetails {
   final String displayName;
   final String? formattedAddress;
@@ -27,6 +27,8 @@ class PlaceDetails {
   final double? lng;
   /// URL oficial del lugar (Places `websiteUri`), si existe.
   final String? websiteUri;
+  /// Teléfono (Places `internationalPhoneNumber` o `nationalPhoneNumber`).
+  final String? phoneNumber;
 
   const PlaceDetails({
     required this.displayName,
@@ -34,6 +36,7 @@ class PlaceDetails {
     this.lat,
     this.lng,
     this.websiteUri,
+    this.phoneNumber,
   });
 }
 
@@ -216,7 +219,7 @@ class PlacesApiService {
       headers: {
         'X-Goog-Api-Key': apiKey,
         'X-Goog-FieldMask':
-            'id,name,displayName,formattedAddress,location,websiteUri',
+            'id,name,displayName,formattedAddress,location,websiteUri,nationalPhoneNumber,internationalPhoneNumber',
       },
     );
     if (response.statusCode != 200) {
@@ -280,12 +283,19 @@ class PlacesApiService {
       lat = (loc['latitude'] as num?)?.toDouble();
       lng = (loc['longitude'] as num?)?.toDouble();
     }
+    final websiteUri = data['websiteUri'] as String?;
+    final intlPhone = (data['internationalPhoneNumber'] as String?)?.trim();
+    final natPhone = (data['nationalPhoneNumber'] as String?)?.trim();
+    final phoneNumber = (intlPhone != null && intlPhone.isNotEmpty)
+        ? intlPhone
+        : ((natPhone != null && natPhone.isNotEmpty) ? natPhone : null);
     return PlaceDetails(
       displayName: displayName,
       formattedAddress: formattedAddress,
       lat: lat,
       lng: lng,
-      websiteUri: data['websiteUri'] as String?,
+      websiteUri: websiteUri,
+      phoneNumber: phoneNumber,
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:unp_calendario/features/calendar/domain/models/accommodation.dar
 import 'package:unp_calendario/features/calendar/domain/models/event.dart' show EventDocument;
 import 'package:unp_calendario/features/calendar/domain/services/plan_file_service.dart';
 import 'package:unp_calendario/widgets/plan/entity_attachments_section.dart';
+import 'package:unp_calendario/widgets/plan/entity_communications_section.dart';
 import 'package:unp_calendario/widgets/plan/reservation_cancellation_form_section.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
 import 'package:unp_calendario/features/places/data/places_api_service.dart';
@@ -56,8 +57,12 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _hotelNameController;
   late TextEditingController _addressController; // T225: dirección desde Places o a mano
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
   late TextEditingController _urlController; // Enlace web del alojamiento
   PlaceDetails? _lastPlaceDetails; // T225: último lugar seleccionado (lat/lng en extraData)
+  /// Nombre del lugar vinculado (Places). Si el hero coincide, al cambiar de hotel se sincroniza solo.
+  String? _linkedPlaceName;
   late TextEditingController _descriptionController;
   late TextEditingController _roomNumberController;
   late TextEditingController _bedTypeController;
@@ -105,6 +110,13 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     );
     _addressController = TextEditingController(
       text: widget.accommodation?.commonPart?.address ?? '',
+    );
+    final extra = widget.accommodation?.commonPart?.extraData;
+    _phoneController = TextEditingController(
+      text: (extra?['placePhone'] as String?)?.trim() ?? '',
+    );
+    _emailController = TextEditingController(
+      text: (extra?['placeEmail'] as String?)?.trim() ?? '',
     );
     _urlController = TextEditingController(
       text: widget.accommodation?.commonPart?.url ?? '',
@@ -162,6 +174,12 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     _loadPlanCurrency();
 
     _accommodationDocuments = List<EventDocument>.from(widget.accommodation?.documents ?? const []);
+
+    final savedPlaceName =
+        (widget.accommodation?.commonPart?.extraData?['placeName'] as String?)
+            ?.trim();
+    _linkedPlaceName =
+        (savedPlaceName != null && savedPlaceName.isNotEmpty) ? savedPlaceName : null;
   }
 
   
@@ -254,6 +272,8 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   void dispose() {
     _hotelNameController.dispose();
     _addressController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
     _urlController.dispose();
     _descriptionController.dispose();
     _roomNumberController.dispose();
@@ -384,7 +404,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
       children: [
         IosHeroHeader(
           title: canEdit ? null : displayTitle,
-          titleWidget: canEdit ? _buildHeroNameField(loc) : null,
+          titleWidget: canEdit ? _buildHeroNameWithSearch(loc) : null,
           subtitle: stay,
           onSubtitleTap: canEdit ? _selectStayDateRange : null,
           chips: [
@@ -422,6 +442,10 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             ],
           ),
         ),
+        if (widget.accommodation?.id != null) ...[
+          const SizedBox(height: spacing),
+          EntityCommunicationsSection(entityId: widget.accommodation!.id!),
+        ],
         const SizedBox(height: spacing),
         _wrapReadOnlyIfNeeded(child: _buildParticipantsScopeSection()),
         if (_planCurrency != null) ...[
@@ -618,6 +642,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   }
 
   Widget _buildLocationAndTypeCard(AppLocalizations loc, bool canEdit) {
+    final addressText = _addressController.text.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -635,23 +660,17 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
                   ),
                 ]
               : [
-                  if (_addressController.text.trim().isNotEmpty)
-                    IosSettingsRow(
-                      label: loc.placeAddressLabel,
-                      value: _addressController.text.trim(),
-                      multiline: true,
-                      valueColor:
-                          _canOpenLocationInMaps ? IosFormColors.accent : null,
-                      chevron: _canOpenLocationInMaps,
-                      onTap: _canOpenLocationInMaps
-                          ? _openLocationInGoogleMaps
-                          : null,
-                    )
-                  else
-                    IosSettingsRow(
-                      label: loc.placeAddressLabel,
-                      value: '—',
-                    ),
+                  IosSettingsRow(
+                    label: loc.placeAddressLabel,
+                    value: addressText.isEmpty ? '—' : addressText,
+                    multiline: true,
+                    valueColor:
+                        _canOpenLocationInMaps ? IosFormColors.accent : null,
+                    chevron: _canOpenLocationInMaps,
+                    onTap: _canOpenLocationInMaps
+                        ? _openLocationInGoogleMaps
+                        : null,
+                  ),
                   const IosRowSeparator(),
                   IosSettingsRow(
                     label: loc.accommodationType,
@@ -722,6 +741,28 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
             controller: _urlController,
             keyboardType: TextInputType.url,
             hint: loc.eventUrlHint,
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: !canEdit,
+          child: IosEditField(
+            label: loc.accommodationPhoneLabel,
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            hint: loc.accommodationPhoneHint,
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        const IosRowSeparator(),
+        IgnorePointer(
+          ignoring: !canEdit,
+          child: IosEditField(
+            label: loc.accommodationEmailLabel,
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            hint: loc.accommodationEmailHint,
             onChanged: (_) => setState(() {}),
           ),
         ),
@@ -1193,116 +1234,185 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
   String _formatStayRange() =>
       '${_formatShortDate(_selectedCheckIn)} – ${_formatShortDate(_selectedCheckOut)}';
 
-  /// Dirección con Places: rellena dirección y, si el nombre está vacío, el nombre.
+  /// Dirección editable a mano (la búsqueda Places va en el icono del hero).
   Widget _buildAddressField(AppLocalizations loc) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        IosFormColors.rowPaddingH,
-        IosFormColors.rowPaddingV,
-        8,
-        IosFormColors.rowPaddingV,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  loc.placeAddressLabel,
-                  style: const TextStyle(
-                    color: IosFormColors.textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Theme(
-                  data: Theme.of(context).copyWith(
-                    inputDecorationTheme: const InputDecorationTheme(
-                      contentPadding: EdgeInsets.zero,
-                      filled: true,
-                      fillColor: Colors.transparent,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                    ),
-                  ),
-                  child: PlaceAutocompleteField(
-                    controller: _addressController,
-                    initialAddress: _addressController.text.isNotEmpty
-                        ? _addressController.text
-                        : null,
-                    lodgingOnly: true,
-                    preferDisplayName: false,
-                    showFloatingLabel: false,
-                    maxLines: 3,
-                    labelText: loc.placeAddressLabel,
-                    hintText: loc.placeSearchHint,
-                    prefixIcon: Icons.place_outlined,
-                    fontSize: 17,
-                    fillColor: Colors.transparent,
-                    border: InputBorder.none,
-                    onPlaceSelected: (PlaceDetails details) {
-                      setState(() {
-                        _lastPlaceDetails = details;
-                        final address = (details.formattedAddress ?? '').trim();
-                        if (address.isNotEmpty) {
-                          _addressController.text = address;
-                        }
-                        final placeName = details.displayName.trim();
-                        if (placeName.isNotEmpty) {
-                          final currentName = _hotelNameController.text.trim();
-                          final nameLooksLikeAddress = currentName.isEmpty ||
-                              currentName == address ||
-                              (address.isNotEmpty &&
-                                  currentName.contains(address)) ||
-                              currentName.split(',').length >= 3;
-                          if (nameLooksLikeAddress) {
-                            _hotelNameController.text = placeName;
-                          }
-                        }
-                        final web = details.websiteUri?.trim();
-                        if (web != null && web.isNotEmpty) {
-                          _urlController.text = web;
-                        }
-                      });
-                    },
-                  ),
-                ),
-              ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: IosEditField(
+            label: loc.placeAddressLabel,
+            controller: _addressController,
+            maxLines: 3,
+            minLines: 1,
+            hint: loc.placeAddressLabel,
+            onChanged: (_) => setState(() {}),
+          ),
+        ),
+        if (_canOpenLocationInMaps)
+          Padding(
+            padding: const EdgeInsets.only(top: 28, right: 8),
+            child: IconButton(
+              tooltip: loc.openInGoogleMaps,
+              onPressed: _openLocationInGoogleMaps,
+              padding: const EdgeInsets.all(2),
+              constraints: const BoxConstraints(
+                minWidth: 28,
+                minHeight: 28,
+                maxWidth: 28,
+                maxHeight: 28,
+              ),
+              style: IconButton.styleFrom(
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              icon: Icon(
+                Icons.map_outlined,
+                size: _fieldIconSize,
+                color: IosFormColors.accent,
+              ),
             ),
           ),
-          if (_canOpenLocationInMaps)
-            ListenableBuilder(
-              listenable: _addressController,
-              builder: (context, _) {
-                if (!_canOpenLocationInMaps) return const SizedBox.shrink();
-                return IconButton(
-                  tooltip: loc.openInGoogleMaps,
-                  onPressed: _openLocationInGoogleMaps,
-                  padding: const EdgeInsets.all(2),
-                  constraints: const BoxConstraints(
-                    minWidth: 28,
-                    minHeight: 28,
-                    maxWidth: 28,
-                    maxHeight: 28,
-                  ),
-                  style: IconButton.styleFrom(
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  icon: Icon(
-                    Icons.map_outlined,
-                    size: _fieldIconSize,
-                    color: IosFormColors.accent,
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
+      ],
     );
+  }
+
+  /// Al elegir un lugar: actualiza nombre/dirección/coords/web/teléfono;
+  /// el nombre se sincroniza salvo personalización (entonces pregunta).
+  Future<void> _applySelectedPlace(PlaceDetails details) async {
+    final loc = AppLocalizations.of(context)!;
+    final placeName = details.displayName.trim();
+    final address = (details.formattedAddress ?? '').trim();
+    final currentName = _hotelNameController.text.trim();
+    final linked = (_linkedPlaceName ?? '').trim();
+
+    var shouldUpdateName = placeName.isNotEmpty &&
+        (currentName.isEmpty ||
+            currentName == placeName ||
+            (linked.isNotEmpty && currentName == linked) ||
+            _hotelNameLooksLikeAddress(
+              currentName,
+              address.isNotEmpty ? address : _addressController.text.trim(),
+            ));
+
+    if (placeName.isNotEmpty && !shouldUpdateName && mounted) {
+      shouldUpdateName = await IosFormConfirmSheet.show(
+        context: context,
+        title: loc.accommodationUpdateNameTitle,
+        message: loc.accommodationUpdateNameMessage(currentName, placeName),
+        cancelLabel: loc.accommodationKeepCustomName,
+        confirmLabel: loc.accommodationUseNewName,
+      );
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _lastPlaceDetails = details;
+      if (address.isNotEmpty) {
+        _addressController.text = address;
+      }
+      if (placeName.isNotEmpty) {
+        _linkedPlaceName = placeName;
+        if (shouldUpdateName) {
+          _hotelNameController.text = placeName;
+        }
+      }
+      final web = details.websiteUri?.trim();
+      if (web != null && web.isNotEmpty) {
+        _urlController.text = web;
+      }
+      final phone = details.phoneNumber?.trim();
+      if (phone != null && phone.isNotEmpty) {
+        _phoneController.text = phone;
+      }
+    });
+  }
+
+  Future<void> _openAccommodationPlaceSearch() async {
+    final loc = AppLocalizations.of(context)!;
+    final searchController = TextEditingController();
+    final screen = MediaQuery.sizeOf(context);
+    final dialogHeight = (screen.height * 0.55).clamp(320.0, 560.0);
+    final dialogWidth =
+        screen.width < 600 ? screen.width - 32 : 440.0;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        final bottomInset = MediaQuery.viewInsetsOf(ctx).bottom;
+        return Theme(
+          data: AppTheme.darkTheme,
+          child: Dialog(
+            backgroundColor: IosFormColors.groupedBg,
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: screen.width < 600 ? 16 : 40,
+              vertical: 24,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: AnimatedPadding(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOut,
+              padding: EdgeInsets.only(bottom: bottomInset > 0 ? 8 : 0),
+              child: SizedBox(
+                width: dialogWidth,
+                height: dialogHeight,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              loc.accommodationPlaceLabel,
+                              style: const TextStyle(
+                                color: IosFormColors.textPrimary,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: loc.cancel,
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            icon: const Icon(
+                              Icons.close,
+                              color: IosFormColors.textSecondary,
+                              size: 22,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      PlaceAutocompleteField(
+                        controller: searchController,
+                        lodgingOnly: true,
+                        preferDisplayName: true,
+                        showFloatingLabel: false,
+                        labelText: loc.accommodationPlaceLabel,
+                        hintText: loc.accommodationPlaceSearchHint,
+                        prefixIcon: Icons.search,
+                        fontSize: 17,
+                        onPlaceSelected: (PlaceDetails details) async {
+                          Navigator.of(ctx).pop();
+                          await _applySelectedPlace(details);
+                        },
+                      ),
+                      // Espacio para que el overlay de sugerencias quede visible.
+                      const Expanded(child: SizedBox.shrink()),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    searchController.dispose();
   }
 
   bool get _canOpenLocationInMaps {
@@ -1352,6 +1462,29 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     if (picked != null && mounted) {
       setState(() => _isDraft = picked);
     }
+  }
+
+  Widget _buildHeroNameWithSearch(AppLocalizations loc) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildHeroNameField(loc)),
+        IconButton(
+          tooltip: loc.accommodationSearchPlaceTooltip,
+          onPressed: _openAccommodationPlaceSearch,
+          padding: const EdgeInsets.only(left: 4, top: 4),
+          constraints: const BoxConstraints(
+            minWidth: 36,
+            minHeight: 36,
+          ),
+          icon: Icon(
+            Icons.search,
+            color: IosFormColors.accent,
+            size: 26,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildHeroNameField(AppLocalizations loc) {
@@ -1953,6 +2086,32 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         baseExtra['placeName'] = _lastPlaceDetails!.displayName;
       }
 
+      final phone = Sanitizer.sanitizePlainText(
+        _phoneController.text,
+        maxLength: 40,
+      );
+      final email = Sanitizer.sanitizePlainText(
+        _emailController.text,
+        maxLength: 120,
+      );
+      if (phone.isNotEmpty) {
+        baseExtra['placePhone'] = phone;
+      } else {
+        baseExtra.remove('placePhone');
+      }
+      if (email.isNotEmpty) {
+        baseExtra['placeEmail'] = email;
+      } else {
+        baseExtra.remove('placeEmail');
+      }
+
+      final contactBits = <String>[
+        if (phone.isNotEmpty) phone,
+        if (email.isNotEmpty) email,
+      ];
+      final contactInfo =
+          contactBits.isEmpty ? null : contactBits.join(' · ');
+
       final url =
           _urlController.text.trim().isEmpty ? null : _urlController.text.trim();
       final selectedParticipantIds = _selectedParticipantTrackIds.toSet().toList();
@@ -1964,6 +2123,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
         typeSubtype: normalizedType,
         customColor: _selectedColor,
         address: address,
+        contactInfo: contactInfo,
         url: url,
         participantIds: _isForAllParticipants ? [] : selectedParticipantIds,
         isForAllParticipants: _isForAllParticipants,

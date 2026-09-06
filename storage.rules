@@ -19,6 +19,13 @@ service firebase.storage {
       allow write: if request.auth != null;
     }
 
+    // T134: anexos de comunicaciones (mail inbound + notas). Lectura pública
+    // (URLs con token); escritura el dueño de la carpeta {userId}.
+    match /communication_files/{userId}/{docId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Denegar todo lo demás por defecto
     match /{allPaths=**} {
       allow read, write: if false;

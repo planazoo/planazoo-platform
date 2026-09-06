@@ -4,6 +4,7 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/features/auth/presentation/notifiers/auth_notifier.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/edit_profile_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/inbound_emails_dialog.dart';
 import 'package:unp_calendario/features/auth/presentation/providers/auth_providers.dart';
 import 'package:unp_calendario/features/language/presentation/providers/language_providers.dart';
 import 'package:unp_calendario/features/security/utils/validator.dart';
@@ -189,6 +190,24 @@ class ProfilePage extends ConsumerWidget {
                                   context: context,
                                   barrierDismissible: false,
                                   builder: (dialogContext) => const EditProfilePage(),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        _buildSectionCard(
+                          title: appLocalizations.inboundEmailsTitle,
+                          subtitle: appLocalizations.inboundEmailsSubtitle,
+                          options: [
+                            _buildTextOption(
+                              appLocalizations.inboundEmailsTitle,
+                              () {
+                                showDialog(
+                                  context: context,
+                                  builder: (dialogContext) => const InboundEmailsDialog(),
                                 );
                               },
                             ),

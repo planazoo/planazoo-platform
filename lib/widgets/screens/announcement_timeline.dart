@@ -8,6 +8,8 @@ import 'package:unp_calendario/features/calendar/domain/models/plan_participatio
 import 'package:unp_calendario/features/auth/domain/models/user_model.dart';
 import 'package:unp_calendario/app/theme/typography.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
+import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
 /// Widget para mostrar el timeline de avisos de un plan
 class AnnouncementTimeline extends ConsumerWidget {
@@ -45,31 +47,31 @@ class AnnouncementTimeline extends ConsumerWidget {
     }
   }
 
-  String _formatRelativeTime(DateTime dateTime) {
+  String _formatRelativeTime(DateTime dateTime, AppLocalizations loc) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
     if (difference.inDays == 0) {
       if (difference.inHours == 0) {
         if (difference.inMinutes == 0) {
-          return 'Hace unos momentos';
-        } else {
-          return 'Hace ${difference.inMinutes} min${difference.inMinutes > 1 ? 's' : ''}';
+          return loc.timeAgoMoments;
         }
-      } else {
-        return 'Hace ${difference.inHours} hora${difference.inHours > 1 ? 's' : ''}';
+        return loc.timeAgoMinutes(difference.inMinutes);
       }
-    } else if (difference.inDays == 1) {
-      return 'Ayer';
-    } else if (difference.inDays < 7) {
-      return 'Hace ${difference.inDays} día${difference.inDays > 1 ? 's' : ''}';
-    } else {
-      return DateFormat('dd/MM/yyyy').format(dateTime);
+      return loc.timeAgoHours(difference.inHours);
     }
+    if (difference.inDays == 1) {
+      return loc.yesterday;
+    }
+    if (difference.inDays < 7) {
+      return loc.timeAgoDays(difference.inDays);
+    }
+    return DateFormat('dd/MM/yyyy').format(dateTime);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final loc = AppLocalizations.of(context)!;
     final announcementsAsync = ref.watch(planAnnouncementsProvider(planId));
     final currentUser = ref.watch(currentUserProvider);
     final participantsAsync = ref.watch(planParticipantsProvider(planId));
@@ -95,14 +97,14 @@ class AnnouncementTimeline extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No hay avisos aún',
+                  loc.announcementsEmpty,
                   style: AppTypography.bodyStyle.copyWith(
                     color: Colors.white60,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sé el primero en publicar un aviso',
+                  loc.announcementsEmptyHint,
                   style: AppTypography.bodyStyle.copyWith(
                     color: Colors.white60,
                     fontSize: 14,
@@ -187,7 +189,7 @@ class AnnouncementTimeline extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          _formatRelativeTime(announcement.createdAt),
+                          _formatRelativeTime(announcement.createdAt, loc),
                           style: TextStyle(
                             fontSize: compact ? 11 : 12,
                             color: secondaryColor,
@@ -205,7 +207,7 @@ class AnnouncementTimeline extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(compact ? 6 : 8),
                             ),
                             child: Text(
-                              'URGENTE',
+                              loc.announcementBadgeUrgent,
                               style: TextStyle(
                                 fontSize: compact ? 9 : 10,
                                 fontWeight: FontWeight.bold,
@@ -226,7 +228,7 @@ class AnnouncementTimeline extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(compact ? 6 : 8),
                             ),
                             child: Text(
-                              'IMPORTANTE',
+                              loc.announcementBadgeImportant,
                               style: TextStyle(
                                 fontSize: compact ? 9 : 10,
                                 fontWeight: FontWeight.bold,
@@ -258,7 +260,7 @@ class AnnouncementTimeline extends ConsumerWidget {
                                 _showDeleteConfirmation(context, ref, announcement.id!);
                               },
                               icon: Icon(Icons.delete_outline, size: compact ? 14 : 16),
-                              label: Text('Eliminar', style: TextStyle(fontSize: compact ? 12 : null)),
+                              label: Text(loc.delete, style: TextStyle(fontSize: compact ? 12 : null)),
                               style: TextButton.styleFrom(
                                 foregroundColor: Colors.red,
                                 padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8),
@@ -289,7 +291,7 @@ class AnnouncementTimeline extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Error al cargar avisos',
+              loc.announcementsLoadError,
               style: AppTypography.bodyStyle.copyWith(
                 color: Colors.red.shade700,
               ),
@@ -309,42 +311,28 @@ class AnnouncementTimeline extends ConsumerWidget {
     }
   }
 
-  void _showDeleteConfirmation(
+  Future<void> _showDeleteConfirmation(
     BuildContext context,
     WidgetRef ref,
     String announcementId,
-  ) {
-    showDialog(
+  ) async {
+    final loc = AppLocalizations.of(context)!;
+    final confirmed = await IosFormConfirmSheet.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar Aviso'),
-        content: const Text('¿Estás seguro de que deseas eliminar este aviso? Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final announcementService = ref.read(announcementServiceProvider);
-              final success = await announcementService.deleteAnnouncement(planId, announcementId);
-              
-              if (context.mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(success ? '✅ Aviso eliminado' : '❌ Error al eliminar'),
-                    backgroundColor: success ? Colors.green : Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Eliminar'),
-          ),
-        ],
+      title: loc.deleteAnnouncementTitle,
+      message: loc.deleteAnnouncementConfirm,
+      cancelLabel: loc.cancel,
+      confirmLabel: loc.delete,
+      destructive: true,
+    );
+    if (!confirmed || !context.mounted) return;
+    final announcementService = ref.read(announcementServiceProvider);
+    final success = await announcementService.deleteAnnouncement(planId, announcementId);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(success ? loc.announcementDeleted : loc.announcementDeleteError),
+        backgroundColor: success ? Colors.green : Colors.red,
       ),
     );
   }

@@ -8,7 +8,8 @@
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "gmail-inbound-oauth": "node scripts/get-gmail-inbound-refresh-token.js"
   },
   "engines": {
     "node": "20"

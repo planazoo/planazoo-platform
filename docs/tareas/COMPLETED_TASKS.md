@@ -8,10 +8,23 @@ Este archivo contiene todas las tareas que han sido completadas exitosamente en 
 
 Para navegar más rápido en este archivo (Ctrl+F):
 
-- **Recientes (2026):** `T259`, `T276`, `T269`, `T273`, `T255`, `T238`, `T242`, `T229`, `T235`, `T240`, `T241`, `T230`, `T236`, `T239`, `T217–T221`.
+- **Recientes (2026):** `T134`, `T259`, `T276`, `T269`, `T273`, `T255`, `T238`, `T242`, `T229`, `T235`, `T240`, `T241`, `T230`, `T236`, `T239`, `T217–T221`.
 - **Bloque 2026 (UI/flujos):** `T203`, `T198`, `T161`, `T207`, `T206`, `T216`, `T189`, `T200`, `T201`, `T209`, `T213`, `T202`, `T194–T197`, `T199`, `T193`.
 - **Bloque funcional 2025 (sistemas core):** `T101`, `T113`, `T107`, `T123`, `T112`, `T100`, `T105`, `T109`, `T120`, `T117`, `T153`, `T152`, `T164`, `T177`, `T178`.
 - **Bloque histórico inicial (fundaciones UI/calendario):** `T1–T99` (widgets base, calendario, tracks, validaciones, reglas y seguridad).
+
+---
+
+## T134 - Mail → plan, corte mínimo (Agosto 2026)
+
+**Estado:** ✅ Completada (corte mínimo)  
+**Fecha de finalización:** 2026-08-31  
+
+**Descripción:** Reenviar a la dirección de la plataforma; buzón de comunicaciones sin colocar; colocar en evento o alojamiento existente o crear evento; copia en `events/{id}/communications` (visible al plan o privada); nota manual; anexos en Comunicaciones. Planoon no lee la bandeja del usuario.
+
+**Criterios / QA:** Corte mínimo acordado en [`COMUNICACIONES_MAIL_PLAN.md`](../producto/COMUNICACIONES_MAIL_PLAN.md). Hallazgos posteriores: LISTA **142** (excepción unicidad inbound, abierta); **143** (cid + anexos) **cerrado** 2026-09-01.
+
+**Archivos clave:** `processInboundGmail` (`functions/index.js`), `entity_communication_service.dart`, `wd_place_communication_flow.dart`, `entity_communications_section.dart`, `compose_communication_sheet.dart`, `inbound_emails_dialog.dart`. Ops: `GMAIL_INBOUND_BUZON.md`.
 
 ---
 

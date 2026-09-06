@@ -249,6 +249,7 @@ class IosEditField extends StatelessWidget {
     this.hint,
     this.onChanged,
     this.validator,
+    this.obscureText = false,
   });
 
   final String label;
@@ -259,6 +260,7 @@ class IosEditField extends StatelessWidget {
   final String? hint;
   final ValueChanged<String>? onChanged;
   final FormFieldValidator<String>? validator;
+  final bool obscureText;
 
   @override
   Widget build(BuildContext context) {
@@ -286,8 +288,11 @@ class IosEditField extends StatelessWidget {
           ],
           TextFormField(
             controller: controller,
-            maxLines: maxLines,
-            minLines: minLines,
+            maxLines: obscureText ? 1 : maxLines,
+            minLines: obscureText ? 1 : minLines,
+            obscureText: obscureText,
+            enableSuggestions: !obscureText,
+            autocorrect: !obscureText,
             keyboardType: keyboardType,
             onChanged: onChanged,
             validator: validator,
@@ -1914,6 +1919,294 @@ class IosFormConfirmSheet {
       },
     );
     return result ?? false;
+  }
+}
+
+/// Mensaje informativo (OK) en bottom sheet — misma anatomía que [IosFormConfirmSheet].
+class IosFormMessageSheet {
+  IosFormMessageSheet._();
+
+  static Future<void> show({
+    required BuildContext context,
+    required String title,
+    String? message,
+    Widget? body,
+    required String okLabel,
+    bool barrierDismissible = true,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isDismissible: barrierDismissible,
+      enableDrag: barrierDismissible,
+      backgroundColor: IosFormColors.groupedBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: IosFormColors.separator,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: IosFormColors.textPrimary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (message != null && message.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: IosFormColors.textSecondary,
+                      fontSize: 15,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+                if (body != null) ...[
+                  const SizedBox(height: 12),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.of(ctx).size.height * 0.45,
+                    ),
+                    child: SingleChildScrollView(child: body),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Navigator.of(ctx).pop(),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: IosFormColors.accent.withValues(alpha: 0.32),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: IosFormColors.accent.withValues(alpha: 0.55),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          okLabel,
+                          style: const TextStyle(
+                            color: IosFormColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Campo corto (email, contraseña, URL) en bottom sheet patrón D.
+class IosFormInputSheet {
+  IosFormInputSheet._();
+
+  static Future<String?> show({
+    required BuildContext context,
+    required String title,
+    String? message,
+    required String fieldLabel,
+    String? hint,
+    String? initialValue,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    required String cancelLabel,
+    required String confirmLabel,
+    bool confirmDestructive = false,
+    String? Function(String value)? validator,
+  }) {
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: IosFormColors.groupedBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      builder: (ctx) => _IosFormInputSheetBody(
+        title: title,
+        message: message,
+        fieldLabel: fieldLabel,
+        hint: hint,
+        initialValue: initialValue,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        cancelLabel: cancelLabel,
+        confirmLabel: confirmLabel,
+        confirmDestructive: confirmDestructive,
+        validator: validator,
+      ),
+    );
+  }
+}
+
+class _IosFormInputSheetBody extends StatefulWidget {
+  const _IosFormInputSheetBody({
+    required this.title,
+    this.message,
+    required this.fieldLabel,
+    this.hint,
+    this.initialValue,
+    required this.obscureText,
+    this.keyboardType,
+    required this.cancelLabel,
+    required this.confirmLabel,
+    required this.confirmDestructive,
+    this.validator,
+  });
+
+  final String title;
+  final String? message;
+  final String fieldLabel;
+  final String? hint;
+  final String? initialValue;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final String cancelLabel;
+  final String confirmLabel;
+  final bool confirmDestructive;
+  final String? Function(String value)? validator;
+
+  @override
+  State<_IosFormInputSheetBody> createState() => _IosFormInputSheetBodyState();
+}
+
+class _IosFormInputSheetBodyState extends State<_IosFormInputSheetBody> {
+  late final TextEditingController _controller;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue ?? '');
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final value = _controller.text;
+    final err = widget.validator?.call(value);
+    if (err != null) {
+      setState(() => _error = err);
+      return;
+    }
+    Navigator.of(context).pop(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottom),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: IosFormColors.separator,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                widget.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: IosFormColors.textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (widget.message != null && widget.message!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  widget.message!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: IosFormColors.textSecondary,
+                    fontSize: 15,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              IosGroupedCard(
+                children: [
+                  IosEditField(
+                    label: widget.fieldLabel,
+                    controller: _controller,
+                    hint: widget.hint,
+                    obscureText: widget.obscureText,
+                    keyboardType: widget.keyboardType,
+                    onChanged: (_) {
+                      if (_error != null) setState(() => _error = null);
+                    },
+                  ),
+                ],
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: IosFormColors.danger,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              IosFormSheetActions(
+                cancelLabel: widget.cancelLabel,
+                confirmLabel: widget.confirmLabel,
+                confirmDestructive: widget.confirmDestructive,
+                onCancel: () => Navigator.of(context).pop(),
+                onConfirm: _submit,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

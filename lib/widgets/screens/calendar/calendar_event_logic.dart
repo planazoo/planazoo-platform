@@ -154,11 +154,8 @@ class CalendarEventLogic {
 
   /// Obtiene la hora de inicio de un evento
   static String getEventStartTime(Event event) {
-    final commonPart = event.commonPart;
-    if (commonPart == null) return '00:00';
-    
-    final hour = commonPart.startHour.toString().padLeft(2, '0');
-    final minute = commonPart.startMinute.toString().padLeft(2, '0');
+    final hour = event.hour.toString().padLeft(2, '0');
+    final minute = event.startMinute.toString().padLeft(2, '0');
     return '$hour:$minute';
   }
 

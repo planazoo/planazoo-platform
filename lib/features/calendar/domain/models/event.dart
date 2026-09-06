@@ -258,6 +258,27 @@ class Event {
     );
   }
 
+  /// Fecha/hora de la rejilla y de `commonPart` a la vez (drag & drop).
+  Event withSchedule({
+    required DateTime date,
+    required int hour,
+    required int startMinute,
+    DateTime? updatedAt,
+  }) {
+    final day = DateTime(date.year, date.month, date.day);
+    return copyWith(
+      date: day,
+      hour: hour,
+      startMinute: startMinute,
+      updatedAt: updatedAt ?? DateTime.now(),
+      commonPart: commonPart?.copyWith(
+        date: day,
+        startHour: hour,
+        startMinute: startMinute,
+      ),
+    );
+  }
+
   @override
   String toString() {
     return 'Event(id: $id, planId: $planId, date: $date, hour: $hour, startMinute: $startMinute, duration: $duration, durationMinutes: $durationMinutes, description: $description, typeFamily: $typeFamily, typeSubtype: $typeSubtype, documents: ${documents?.length ?? 0})';
@@ -646,6 +667,12 @@ class EventCommonPart {
     this.connection,
   });
 
+  static Map<String, dynamic>? _stringKeyMap(Object? value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
+  }
+
   factory EventCommonPart.fromMap(Map<String, dynamic> map) {
     final dateValue = map['date'];
     final dateParsed = dateValue == null
@@ -668,8 +695,8 @@ class EventCommonPart {
       participantIds: (map['participantIds'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
       isForAllParticipants: map['isForAllParticipants'] ?? true,
       isDraft: map['isDraft'] ?? false,
-      extraData: map['extraData'] as Map<String, dynamic>?,
-      connection: map['connection'] as Map<String, dynamic>?,
+      extraData: _stringKeyMap(map['extraData']),
+      connection: _stringKeyMap(map['connection']),
     );
   }
 
@@ -692,6 +719,44 @@ class EventCommonPart {
       if (extraData != null) 'extraData': extraData,
       if (connection != null) 'connection': connection,
     };
+  }
+
+  EventCommonPart copyWith({
+    String? description,
+    DateTime? date,
+    int? startHour,
+    int? startMinute,
+    int? durationMinutes,
+    String? location,
+    String? notes,
+    String? url,
+    String? family,
+    String? subtype,
+    String? customColor,
+    List<String>? participantIds,
+    bool? isForAllParticipants,
+    bool? isDraft,
+    Map<String, dynamic>? extraData,
+    Map<String, dynamic>? connection,
+  }) {
+    return EventCommonPart(
+      description: description ?? this.description,
+      date: date ?? this.date,
+      startHour: startHour ?? this.startHour,
+      startMinute: startMinute ?? this.startMinute,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      location: location ?? this.location,
+      notes: notes ?? this.notes,
+      url: url ?? this.url,
+      family: family ?? this.family,
+      subtype: subtype ?? this.subtype,
+      customColor: customColor ?? this.customColor,
+      participantIds: participantIds ?? this.participantIds,
+      isForAllParticipants: isForAllParticipants ?? this.isForAllParticipants,
+      isDraft: isDraft ?? this.isDraft,
+      extraData: extraData ?? this.extraData,
+      connection: connection ?? this.connection,
+    );
   }
 }
 

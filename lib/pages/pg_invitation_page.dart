@@ -13,6 +13,7 @@ import 'package:unp_calendario/features/calendar/presentation/providers/plan_par
 import 'package:unp_calendario/l10n/app_localizations.dart';
 import 'package:unp_calendario/pages/pg_plan_detail_page.dart';
 import 'package:unp_calendario/shared/services/logger_service.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
 /// Página pública del deep link `/invitation/{token}` (diagrama §2 + §1.2 J/K).
 class InvitationPage extends ConsumerStatefulWidget {
@@ -634,23 +635,13 @@ class _InvitationPageState extends ConsumerState<InvitationPage> {
   }) async {
     final loc = AppLocalizations.of(context)!;
     if (!skipConfirm) {
-      final confirmed = await showDialog<bool>(
+      final confirmed = await IosFormConfirmSheet.show(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(loc.invitationRejectConfirmTitle),
-          content: Text(loc.invitationRejectConfirmMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(loc.invitationCancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: Text(loc.invitationRejectConfirmButton),
-            ),
-          ],
-        ),
+        title: loc.invitationRejectConfirmTitle,
+        message: loc.invitationRejectConfirmMessage,
+        cancelLabel: loc.invitationCancel,
+        confirmLabel: loc.invitationRejectConfirmButton,
+        destructive: true,
       );
       if (confirmed != true) return;
     }

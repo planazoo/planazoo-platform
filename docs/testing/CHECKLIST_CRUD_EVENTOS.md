@@ -32,6 +32,7 @@ flutter test test/features/calendar/event_logic_test.dart test/features/calendar
 | E10 | Coste negativo, fuera de rango del plan, `saveEvent` + confirmación (C-011 / C-017 / C-010) | **Agente** | |
 | E11 | Plan finalizado/cancelado bloquea crear/borrar (D-004) | **Agente** (`event_service_crud_test`, `plan_state_permissions_test`) | |
 | E12 | Diálogo confirmar borrar: Cancelar / Eliminar (D-003) | **Agente** (`delete_event_dialog_test`) | |
+| E13 | **Mapa del plan (T279):** online iOS/Android = **EVENT-MAP-001**; offline (lista sí, mapa Google no obligado) = **OFF-005** | Humano | |
 
 ## Resultado de la última pasada agente
 

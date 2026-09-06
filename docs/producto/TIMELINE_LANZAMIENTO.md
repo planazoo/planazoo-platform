@@ -115,10 +115,10 @@ timeline
 | 0.2 | Soft launch: TestFlight + web `app.planoon.com` | [EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md](../configuracion/EVALUACION_PRIMERAS_PRUEBAS_FAMILIA.md) | Pendiente |
 | 0.3 | Matriz UA iPhone / UB Android / UC web en flujos núcleo | [USUARIOS_PRUEBA.md](../configuracion/USUARIOS_PRUEBA.md) | Parcial |
 | 0.4 | Paridad iOS vs web en lo diario (plan, calendario, chat, notifs) | T257 | Pendiente |
-| 0.5 | Cancelar plan + avisar participantes | T261 | Pendiente |
+| 0.5 | Cancelar plan + avisar participantes | T261 | En curso (2026-09-01: in-app + push + cierre pending; resta email/E2E) |
 | 0.7 | **Contrato comercial C1–C3:** offline usable en iOS/Android; timezones en vuelos/perspectiva; invitar participante/observador | [`WEB_COMERCIAL.md`](./WEB_COMERCIAL.md) § contrato · T259 · T40–T45 · ítem 58 | Parcial |
 | 0.8 | **Contrato C4:** exportar itinerario (propio y del plan) sin que el destinatario tenga la app | T133, T252 §6 | Pendiente |
-| 0.9 | **Mail → plan (corte mínimo):** reenviar confirmación; buzón; colocar en evento existente o crear evento; copia personal. Parseo rico y filtro Gmail **no** son este ítem. | T134 · [`COMUNICACIONES_MAIL_PLAN.md`](./COMUNICACIONES_MAIL_PLAN.md) | Pendiente (acordado Ago 2026: gate **lanzamiento público**) |
+| 0.9 | **Mail → plan (corte mínimo):** reenviar confirmación; buzón; colocar en evento existente o crear evento; copia en Comunicaciones. Parseo rico y filtro Gmail **no** son este ítem. | T134 · [`COMUNICACIONES_MAIL_PLAN.md`](./COMUNICACIONES_MAIL_PLAN.md) | **Cerrado** 2026-08-31 (deuda LISTA **142** unicidad inbound, fuera de WIP) |
 
 **No bloquea soft launch (familia):** 2FA, pasarela de pago, landing comercial completa, export PDF pulido (**C4**), parseo rico de reservas ni filtro Gmail automático.  
 **Sí bloquea lanzamiento público:** el [contrato web → app](./WEB_COMERCIAL.md#contrato-web--app-sí-o-sí) (**C1** offline móvil, **C2** zonas horarias, **C3** invitar, **C4** exportar itinerario) y el **corte mínimo de mail** (0.9 / T134).

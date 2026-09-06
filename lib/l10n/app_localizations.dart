@@ -3086,10 +3086,10 @@ abstract class AppLocalizations {
   /// **'Invitaciones a planes'**
   String get notificationsSectionInvitations;
 
-  /// Sección eventos desde correo en notificaciones
+  /// Sección buzón de mail en notificaciones
   ///
   /// In es, this message translates to:
-  /// **'Eventos desde correo'**
+  /// **'Comunicaciones sin colocar'**
   String get notificationsSectionEmailEvents;
 
   /// Filtro lista notificaciones: todas
@@ -3146,65 +3146,551 @@ abstract class AppLocalizations {
   /// **'Creadas: {invitations} invitaciones, {pending} eventos correo, {app} notificaciones'**
   String notificationsTestDataGenerated(int invitations, int pending, int app);
 
-  /// Título pantalla buzón de eventos pendientes
+  /// Título pantalla buzón de mails sin colocar
   ///
   /// In es, this message translates to:
-  /// **'Eventos desde correo'**
+  /// **'Comunicaciones sin colocar'**
   String get pendingEventsTitle;
 
-  /// Mensaje cuando no hay eventos pendientes
+  /// Mensaje cuando el buzón está vacío
   ///
   /// In es, this message translates to:
-  /// **'No tienes eventos pendientes. Reenvía confirmaciones a la dirección de la plataforma.'**
+  /// **'No tienes nada pendiente.'**
   String get pendingEventsEmpty;
 
-  /// Botón para asignar evento pendiente a un plan
+  /// Aviso de privacidad bajo la dirección de reenvío
   ///
   /// In es, this message translates to:
-  /// **'Asignar a plan'**
+  /// **'Reenvía desde tu correo principal o desde uno verificado en el perfil. Planoon no lee tu bandeja.'**
+  String get pendingEventsInboxHint;
+
+  /// Botón para colocar un mail en un evento o alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Colocar'**
   String get pendingEventsAssignToPlan;
 
-  /// Botón descartar evento pendiente
+  /// Botón descartar mail pendiente
   ///
   /// In es, this message translates to:
   /// **'Descartar'**
   String get pendingEventsDiscard;
 
-  /// Etiqueta cuando el correo no coincidió con ninguna plantilla
+  /// Etiqueta legado; ya no se muestra
   ///
   /// In es, this message translates to:
   /// **'Sin parsear'**
   String get pendingEventUnparsed;
 
-  /// Título del diálogo para elegir plan al asignar
+  /// Título del sheet para elegir plan
   ///
   /// In es, this message translates to:
   /// **'Elegir plan'**
   String get pendingEventAssignTitle;
 
-  /// Mensaje de éxito al asignar
+  /// Mensaje de éxito al colocar
   ///
   /// In es, this message translates to:
-  /// **'Evento asignado al plan'**
+  /// **'Comunicación colocada'**
   String get pendingEventAssigned;
+
+  /// No description provided for @pendingEventPlacedOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Colocada en {name}'**
+  String pendingEventPlacedOn(String name);
 
   /// Mensaje al descartar
   ///
   /// In es, this message translates to:
-  /// **'Evento descartado'**
+  /// **'Comunicación descartada'**
   String get pendingEventDiscarded;
 
   /// Confirmación al descartar
   ///
   /// In es, this message translates to:
-  /// **'¿Descartar este evento pendiente?'**
+  /// **'¿Descartar esta comunicación?'**
   String get pendingEventDiscardConfirm;
 
-  /// Cuando no hay planes para asignar
+  /// Cuando no hay planes para colocar
   ///
   /// In es, this message translates to:
-  /// **'No tienes planes. Crea uno antes de asignar.'**
+  /// **'No tienes planes. Crea uno antes de colocar.'**
   String get pendingEventsNoPlans;
+
+  /// Snackbar al copiar la dirección de reenvío
+  ///
+  /// In es, this message translates to:
+  /// **'Dirección copiada'**
+  String get pendingEventAddressCopied;
+
+  /// Título paso 2 del wizard colocar
+  ///
+  /// In es, this message translates to:
+  /// **'Dónde colocar'**
+  String get pendingEventChooseDestination;
+
+  /// Opción de visibilidad por defecto
+  ///
+  /// In es, this message translates to:
+  /// **'Visible para el plan'**
+  String get pendingEventVisibilityPlan;
+
+  /// Opción visibilidad privada
+  ///
+  /// In es, this message translates to:
+  /// **'Solo yo'**
+  String get pendingEventVisibilityPrivate;
+
+  /// Grupo de destinos evento
+  ///
+  /// In es, this message translates to:
+  /// **'Eventos'**
+  String get pendingEventSectionEvents;
+
+  /// Grupo de destinos alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamientos'**
+  String get pendingEventSectionAccommodations;
+
+  /// Fila para abrir el diálogo de evento nuevo
+  ///
+  /// In es, this message translates to:
+  /// **'Crear evento'**
+  String get pendingEventCreateEvent;
+
+  /// Destino vacío: solo crear evento
+  ///
+  /// In es, this message translates to:
+  /// **'Este plan aún no tiene eventos ni alojamientos.'**
+  String get pendingEventPlanEmpty;
+
+  /// No description provided for @pendingEventPlaceConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Colocar en «{name}» {visibility}?'**
+  String pendingEventPlaceConfirm(String name, String visibility);
+
+  /// Fragmento de confirmación visibilidad plan
+  ///
+  /// In es, this message translates to:
+  /// **'visible para el plan'**
+  String get pendingEventPlaceConfirmPlan;
+
+  /// Fragmento de confirmación visibilidad privada
+  ///
+  /// In es, this message translates to:
+  /// **'solo tú'**
+  String get pendingEventPlaceConfirmPrivate;
+
+  /// Error al colocar
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo colocar. Inténtalo de nuevo.'**
+  String get pendingEventPlaceFailed;
+
+  /// Campo de búsqueda en el sheet de elegir plan
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar plan'**
+  String get pendingEventSearchPlanHint;
+
+  /// Campo de búsqueda en la lista de destinos (eventos)
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar evento'**
+  String get pendingEventSearchEventHint;
+
+  /// Búsqueda sin coincidencias al colocar
+  ///
+  /// In es, this message translates to:
+  /// **'Ningún resultado'**
+  String get pendingEventSearchNoMatch;
+
+  /// Título del sheet para pegar una nota/WhatsApp
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva comunicación'**
+  String get communicationComposeTitle;
+
+  /// Campo título de nota manual
+  ///
+  /// In es, this message translates to:
+  /// **'Título'**
+  String get communicationComposeSubject;
+
+  /// Campo cuerpo de nota manual
+  ///
+  /// In es, this message translates to:
+  /// **'Texto'**
+  String get communicationComposeBody;
+
+  /// Hint del cuerpo de nota manual
+  ///
+  /// In es, this message translates to:
+  /// **'Pega aquí un WhatsApp, una nota…'**
+  String get communicationComposeBodyHint;
+
+  /// Fila para adjuntar en nota manual
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir archivo o foto'**
+  String get communicationComposeAttach;
+
+  /// Guardar nota manual
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get communicationComposeSave;
+
+  /// Validación nota vacía
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe un texto o añade un archivo.'**
+  String get communicationComposeNeedBody;
+
+  /// Tipo de comunicación pegada a mano
+  ///
+  /// In es, this message translates to:
+  /// **'Nota'**
+  String get communicationKindManual;
+
+  /// Añadir comunicación en buzón o ficha
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir'**
+  String get communicationAdd;
+
+  /// Error al leer/subir adjunto de comunicación
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo adjuntar el archivo.'**
+  String get communicationAttachFailed;
+
+  /// Título del sheet al editar una nota manual
+  ///
+  /// In es, this message translates to:
+  /// **'Editar comunicación'**
+  String get communicationEditTitle;
+
+  /// Recuento de anexos en lista de comunicaciones
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 archivo} other{{count} archivos}}'**
+  String communicationFilesCount(int count);
+
+  /// Encabezado de anexos en el detalle de la comunicación
+  ///
+  /// In es, this message translates to:
+  /// **'Archivos'**
+  String get communicationAttachmentsLabel;
+
+  /// Accesibilidad del botón de ayuda contextual
+  ///
+  /// In es, this message translates to:
+  /// **'Ayuda sobre {label}'**
+  String helpAboutContext(String label);
+
+  /// Hint de accesibilidad del botón de ayuda
+  ///
+  /// In es, this message translates to:
+  /// **'Abre una explicación y un enlace a más información'**
+  String get helpSemanticsHint;
+
+  /// Título al borrar un aviso del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar aviso'**
+  String get deleteAnnouncementTitle;
+
+  /// Confirmación al borrar aviso
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar este aviso? No se puede deshacer.'**
+  String get deleteAnnouncementConfirm;
+
+  /// Snackbar aviso borrado
+  ///
+  /// In es, this message translates to:
+  /// **'Aviso eliminado'**
+  String get announcementDeleted;
+
+  /// Snackbar error al borrar aviso
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo eliminar el aviso'**
+  String get announcementDeleteError;
+
+  /// Error de carga del timeline de avisos
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar los avisos'**
+  String get announcementsLoadError;
+
+  /// Vacío de avisos
+  ///
+  /// In es, this message translates to:
+  /// **'No hay avisos aún'**
+  String get announcementsEmpty;
+
+  /// Hint vacío de avisos
+  ///
+  /// In es, this message translates to:
+  /// **'Sé el primero en publicar un aviso'**
+  String get announcementsEmptyHint;
+
+  /// Badge tipo urgente
+  ///
+  /// In es, this message translates to:
+  /// **'Urgente'**
+  String get announcementBadgeUrgent;
+
+  /// Badge tipo importante
+  ///
+  /// In es, this message translates to:
+  /// **'Importante'**
+  String get announcementBadgeImportant;
+
+  /// Título al borrar un grupo de participantes
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar grupo'**
+  String get deleteGroupTitle;
+
+  /// Confirmación al borrar grupo
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar el grupo {name}?'**
+  String deleteGroupConfirm(String name);
+
+  /// Snackbar grupo borrado
+  ///
+  /// In es, this message translates to:
+  /// **'Grupo eliminado'**
+  String get groupDeletedSuccess;
+
+  /// Snackbar error al borrar grupo
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo eliminar el grupo'**
+  String get groupDeleteError;
+
+  /// Acción promover a organizador
+  ///
+  /// In es, this message translates to:
+  /// **'Hacer organizador'**
+  String get makeOrganizer;
+
+  /// Confirmación promover organizador
+  ///
+  /// In es, this message translates to:
+  /// **'¿Hacer organizador a este usuario?'**
+  String get makeOrganizerConfirm;
+
+  /// Snackbar promover organizador
+  ///
+  /// In es, this message translates to:
+  /// **'Usuario promovido a organizador'**
+  String get userPromotedOrganizer;
+
+  /// Acción quitar participante
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar'**
+  String get removeParticipant;
+
+  /// Confirmación quitar participante
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quitar a este usuario del plan?'**
+  String get removeParticipantConfirm;
+
+  /// Snackbar participante quitado
+  ///
+  /// In es, this message translates to:
+  /// **'Usuario quitado del plan'**
+  String get userRemovedFromPlan;
+
+  /// Bloqueo por estado del plan
+  ///
+  /// In es, this message translates to:
+  /// **'No se pueden quitar participantes en el estado actual del plan.'**
+  String get cannotRemoveParticipantsNow;
+
+  /// Error de carga de participantes
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar los participantes'**
+  String get loadParticipantsError;
+
+  /// Error de carga del plan
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cargar el plan'**
+  String get loadPlanError;
+
+  /// Lista de participantes vacía
+  ///
+  /// In es, this message translates to:
+  /// **'No hay participantes'**
+  String get noParticipants;
+
+  /// Tiempo relativo < 1 min
+  ///
+  /// In es, this message translates to:
+  /// **'Hace un momento'**
+  String get timeAgoMoments;
+
+  /// Tiempo relativo en minutos
+  ///
+  /// In es, this message translates to:
+  /// **'Hace {count} min'**
+  String timeAgoMinutes(int count);
+
+  /// Tiempo relativo en horas
+  ///
+  /// In es, this message translates to:
+  /// **'Hace {count} h'**
+  String timeAgoHours(int count);
+
+  /// Tiempo relativo ayer
+  ///
+  /// In es, this message translates to:
+  /// **'Ayer'**
+  String get yesterday;
+
+  /// Tiempo relativo en días
+  ///
+  /// In es, this message translates to:
+  /// **'Hace {count} d'**
+  String timeAgoDays(int count);
+
+  /// Título de sección en ficha evento/alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Comunicaciones'**
+  String get entityCommunicationsTitle;
+
+  /// Vacío en ficha
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay correos colocados aquí.'**
+  String get entityCommunicationsEmpty;
+
+  /// Error de lectura de la subcolección communications
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar las comunicaciones.'**
+  String get entityCommunicationsLoadError;
+
+  /// Badge visibilidad privada
+  ///
+  /// In es, this message translates to:
+  /// **'Solo tú'**
+  String get entityCommunicationsPrivateBadge;
+
+  /// Dueño: devolver al buzón
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar de aquí'**
+  String get entityCommunicationsRemove;
+
+  /// Confirmación quitar de ficha
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quitar esta comunicación? Volverá a tu buzón.'**
+  String get entityCommunicationsRemoveConfirm;
+
+  /// Card de perfil: extras inbound
+  ///
+  /// In es, this message translates to:
+  /// **'Correos para reenviar'**
+  String get inboundEmailsTitle;
+
+  /// Subtítulo card perfil extras
+  ///
+  /// In es, this message translates to:
+  /// **'Planoon no lee tu bandeja. Reenvía a la dirección de la plataforma desde el correo con el que entras o desde uno verificado aquí.'**
+  String get inboundEmailsSubtitle;
+
+  /// Etiqueta del email principal
+  ///
+  /// In es, this message translates to:
+  /// **'Con este entras'**
+  String get inboundEmailsPrimaryLabel;
+
+  /// Botón añadir extra
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir correo'**
+  String get inboundEmailsAdd;
+
+  /// Estado extra no verificado
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente de verificar'**
+  String get inboundEmailsPending;
+
+  /// Estado extra verificado
+  ///
+  /// In es, this message translates to:
+  /// **'Verificado'**
+  String get inboundEmailsVerified;
+
+  /// Reenviar mail de verificación
+  ///
+  /// In es, this message translates to:
+  /// **'Reenviar correo'**
+  String get inboundEmailsResend;
+
+  /// Quitar extra
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar'**
+  String get inboundEmailsRemove;
+
+  /// Tras pedir verificación
+  ///
+  /// In es, this message translates to:
+  /// **'Te hemos enviado un enlace de verificación.'**
+  String get inboundEmailsSent;
+
+  /// Tras quitar extra
+  ///
+  /// In es, this message translates to:
+  /// **'Correo quitado'**
+  String get inboundEmailsRemoved;
+
+  /// Validación extra
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce un correo válido.'**
+  String get inboundEmailsInvalid;
+
+  /// Tope 2 extras
+  ///
+  /// In es, this message translates to:
+  /// **'Puedes tener como máximo dos correos adicionales.'**
+  String get inboundEmailsMax;
+
+  /// No añadir el principal
+  ///
+  /// In es, this message translates to:
+  /// **'Ese ya es el correo con el que entras.'**
+  String get inboundEmailsOwnPrimary;
+
+  /// Unicidad extra
+  ///
+  /// In es, this message translates to:
+  /// **'Ese correo ya está en otra cuenta.'**
+  String get inboundEmailsTaken;
+
+  /// Error genérico extras
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar. Inténtalo de nuevo.'**
+  String get inboundEmailsError;
 
   /// Botón cerrar diálogo
   ///
@@ -3997,6 +4483,66 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Buscar alojamiento'**
   String get accommodationPlaceLabel;
+
+  /// Hint del campo Places al buscar/cambiar alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Hotel, apartamento, dirección…'**
+  String get accommodationPlaceSearchHint;
+
+  /// Título al cambiar de lugar si el nombre estaba personalizado
+  ///
+  /// In es, this message translates to:
+  /// **'¿Usar el nombre del nuevo hotel?'**
+  String get accommodationUpdateNameTitle;
+
+  /// Mensaje al decidir si sincronizar el nombre del alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'El nombre actual («{current}») es distinto del nuevo lugar («{place}»).'**
+  String accommodationUpdateNameMessage(String current, String place);
+
+  /// Confirmar usar el displayName del lugar seleccionado
+  ///
+  /// In es, this message translates to:
+  /// **'Usar nombre nuevo'**
+  String get accommodationUseNewName;
+
+  /// Conservar el nombre personalizado al cambiar de lugar
+  ///
+  /// In es, this message translates to:
+  /// **'Mantener el mío'**
+  String get accommodationKeepCustomName;
+
+  /// Tooltip/icono de búsqueda Places junto al hero del alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar alojamiento'**
+  String get accommodationSearchPlaceTooltip;
+
+  /// Label del teléfono del alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Teléfono'**
+  String get accommodationPhoneLabel;
+
+  /// Hint del teléfono del alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Teléfono de contacto'**
+  String get accommodationPhoneHint;
+
+  /// Label del email de contacto del alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'Correo electrónico'**
+  String get accommodationEmailLabel;
+
+  /// Hint del email de contacto del alojamiento
+  ///
+  /// In es, this message translates to:
+  /// **'correo@hotel.com'**
+  String get accommodationEmailHint;
 
   /// Enlace para editar nombre y dirección sin Places
   ///
@@ -5797,6 +6343,102 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Itinerario'**
   String get myPlanSummaryShareSectionItinerary;
+
+  /// T279: título pantalla mapa del plan
+  ///
+  /// In es, this message translates to:
+  /// **'Mapa'**
+  String get planMapTitle;
+
+  /// T279: botón en Mi resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Mapa del plan'**
+  String get planMapTooltip;
+
+  /// T279: volver atrás del mapa
+  ///
+  /// In es, this message translates to:
+  /// **'Cerrar'**
+  String get planMapClose;
+
+  /// T279: filtro todos los días
+  ///
+  /// In es, this message translates to:
+  /// **'Todos'**
+  String get planMapAllDays;
+
+  /// T279: chip de día del plan (1-based)
+  ///
+  /// In es, this message translates to:
+  /// **'Día {day}'**
+  String planMapDayChip(int day);
+
+  /// T279: mapa sin pines
+  ///
+  /// In es, this message translates to:
+  /// **'No hay lugares con ubicación en este plan.'**
+  String get planMapEmpty;
+
+  /// T279: ayuda si no hay coordenadas
+  ///
+  /// In es, this message translates to:
+  /// **'Al crear un evento o alojamiento, elige el lugar con Google Places para que aparezca en el mapa.'**
+  String get planMapEmptyHint;
+
+  /// T279: sin API key
+  ///
+  /// In es, this message translates to:
+  /// **'El mapa embebido necesita la clave de Maps (la misma que Places: --dart-define=PLACES_API_KEY=…) y Maps JavaScript API habilitada. Mientras tanto puedes usar la lista y abrir cada sitio en Google Maps.'**
+  String get planMapMissingKey;
+
+  /// T279: fallo auth/carga JS
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo cargar el mapa. Comprueba que Maps JavaScript API está habilitada para esa clave.'**
+  String get planMapLoadError;
+
+  /// T279: abrir /maps/dir del día
+  ///
+  /// In es, this message translates to:
+  /// **'Ruta del día en Google Maps'**
+  String get planMapOpenDayRoute;
+
+  /// T279: pin H
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamiento'**
+  String get planMapLegendHotel;
+
+  /// T279: pin A
+  ///
+  /// In es, this message translates to:
+  /// **'Aeropuerto'**
+  String get planMapLegendAirport;
+
+  /// T279: aeropuerto de llegada ese día
+  ///
+  /// In es, this message translates to:
+  /// **'Llegada'**
+  String get planMapAirportArrival;
+
+  /// T279: aeropuerto de salida ese día
+  ///
+  /// In es, this message translates to:
+  /// **'Salida'**
+  String get planMapAirportDeparture;
+
+  /// T279: abrir evento o hotel desde el mapa
+  ///
+  /// In es, this message translates to:
+  /// **'Abrir ficha'**
+  String get planMapOpenItem;
+
+  /// T279: título de la lista sincronizada con el mapa
+  ///
+  /// In es, this message translates to:
+  /// **'LUGARES'**
+  String get planMapPlacesList;
 
   /// Ítem 74: recuento en Lo más importante
   ///

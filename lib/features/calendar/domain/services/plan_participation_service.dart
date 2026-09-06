@@ -899,6 +899,26 @@ class PlanParticipationService {
     }
   }
 
+  /// Marca como `expired` todas las participaciones pending del plan (T261 cancelar).
+  Future<int> expireAllPendingForPlan(String planId) async {
+    try {
+      final participations = await getPlanParticipations(planId).first;
+      var count = 0;
+      for (final p in participations) {
+        if (!p.isPending || p.userId.isEmpty) continue;
+        if (await expirePendingInvitation(planId, p.userId)) count++;
+      }
+      return count;
+    } catch (e) {
+      LoggerService.error(
+        'Error expiring pending participations for plan: $planId',
+        context: 'PLAN_PARTICIPATION_SERVICE',
+        error: e,
+      );
+      return 0;
+    }
+  }
+
   // Rechazar invitación a un plan
   Future<bool> rejectInvitation(String planId, String userId) async {
     try {

@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:unp_calendario/widgets/plan/plan_cover_image.dart';
 import 'package:unp_calendario/features/calendar/domain/models/plan.dart';
 import 'package:unp_calendario/features/calendar/domain/services/image_service.dart';
 import 'package:unp_calendario/features/calendar/presentation/providers/plan_participation_providers.dart';
@@ -170,42 +171,38 @@ class WdDashboardHeaderBar extends ConsumerWidget {
         height: w5Height,
         decoration: BoxDecoration(color: bg),
         child: Center(
-          child: Container(
-            width: circleSize,
-            height: circleSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColorScheme.color2, width: 2),
-            ),
-            child: ClipOval(
-              child: _buildPlanImage(),
-            ),
-          ),
+          child: kIsWeb
+              ? SizedBox(
+                  width: circleSize,
+                  height: circleSize,
+                  child: _buildPlanImage(bg),
+                )
+              : Container(
+                  width: circleSize,
+                  height: circleSize,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColorScheme.color2, width: 2),
+                  ),
+                  child: ClipOval(child: _buildPlanImage(bg)),
+                ),
         ),
       ),
     );
   }
 
-  Widget _buildPlanImage() {
+  Widget _buildPlanImage(Color headerBg) {
     if (selectedPlan?.imageUrl != null &&
         ImageService.isValidImageUrl(selectedPlan!.imageUrl)) {
-      return CachedNetworkImage(
-        imageUrl: selectedPlan!.imageUrl!,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          color: AppColorScheme.color2.withValues(alpha: 0.1),
-          child: const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-        ),
-        errorWidget: (context, url, error) => _buildDefaultIcon(),
+      return PlanCoverImage(
+        imageUrl: selectedPlan!.imageUrl,
+        circular: true,
+        webMaskColor: headerBg,
+        webBorderColor: AppColorScheme.color2,
+        error: ClipOval(child: _buildDefaultIcon()),
       );
     }
-    return _buildDefaultIcon();
+    return ClipOval(child: _buildDefaultIcon());
   }
 
   Widget _buildDefaultIcon() {

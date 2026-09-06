@@ -14,8 +14,10 @@ import 'package:unp_calendario/features/auth/presentation/providers/auth_provide
 import 'package:unp_calendario/shared/utils/date_formatter.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/features/calendar/domain/services/plan_map_day_colors.dart';
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
+import 'package:unp_calendario/widgets/screens/wd_plan_map_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// T252: Vista "Mi resumen" / "Mi itinerario" para participantes del plan.
@@ -74,8 +76,8 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
 
   static const int _chronoLimit = 15;
   bool _chronoExpanded = false;
-  /// Días plegados en el itinerario (clave yyyy-MM-dd). Vacío = todos desplegados.
-  final Set<String> _collapsedDayKeys = {};
+  /// Días desplegados en el itinerario (clave yyyy-MM-dd). Vacío = todos plegados.
+  final Set<String> _expandedDayKeys = {};
   /// 'mine' = solo mis eventos; 'plan' = todos los participantes.
   String _internalViewMode = 'mine';
   /// Ítem 81: en planificando, mostrar solo eventos borrador / no confirmados.
@@ -185,6 +187,21 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                     a.participantTrackIds.contains(userId))
                 .toList();
 
+        final mapEvents = _viewMode == 'plan'
+            ? List<Event>.from(allEvents)
+            : allEvents
+                .where((e) =>
+                    e.participantTrackIds.isEmpty ||
+                    e.participantTrackIds.contains(userId))
+                .toList();
+        final mapAccommodations = _viewMode == 'plan'
+            ? List<Accommodation>.from(accommodations)
+            : accommodations
+                .where((a) =>
+                    a.participantTrackIds.isEmpty ||
+                    a.participantTrackIds.contains(userId))
+                .toList();
+
         final bar = _buildSummaryBar(
           loc: loc,
           viewMode: _viewMode,
@@ -196,6 +213,14 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             loc: loc,
             events: displayEvents,
             accommodations: displayAccommodations,
+          ),
+          onOpenMap: () => PlanMapScreen.open(
+            context,
+            plan: widget.plan,
+            events: mapEvents,
+            accommodations: mapAccommodations,
+            onOpenEvent: widget.onOpenEvent,
+            onOpenAccommodation: widget.onOpenAccommodation,
           ),
         );
 
@@ -215,7 +240,12 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                       clipBehavior: Clip.none,
                       children: [
                         ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            widget.showTopSummaryBar ? 16 : 56,
+                            16,
+                            88,
+                          ),
                           children: [
                             _buildChronologicalSectionBody(
                               context,
@@ -228,6 +258,32 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                             ),
                           ],
                         ),
+                        if (!widget.showTopSummaryBar)
+                          Positioned(
+                            right: 16,
+                            top: 8,
+                            child: Material(
+                              color: _surface,
+                              shape: const CircleBorder(),
+                              elevation: 2,
+                              child: IconButton(
+                                tooltip: loc.planMapTooltip,
+                                onPressed: () => PlanMapScreen.open(
+                                  context,
+                                  plan: widget.plan,
+                                  events: mapEvents,
+                                  accommodations: mapAccommodations,
+                                  onOpenEvent: widget.onOpenEvent,
+                                  onOpenAccommodation: widget.onOpenAccommodation,
+                                ),
+                                icon: const Icon(
+                                  Icons.map_outlined,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                              ),
+                            ),
+                          ),
                         if (widget.onRequestCreateEvent != null && widget.onRequestCreateAccommodation != null)
                           Positioned(
                             right: 16,
@@ -303,6 +359,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     required bool draftsOnlyActive,
     required VoidCallback onDraftOnlyToggle,
     VoidCallback? onShare,
+    VoidCallback? onOpenMap,
   }) {
     return Container(
       width: double.infinity,
@@ -331,6 +388,17 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.1,
               ),
+            ),
+          ),
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            tooltip: loc.planMapTooltip,
+            onPressed: onOpenMap,
+            icon: const Icon(
+              Icons.map_outlined,
+              color: Colors.white,
+              size: 22,
             ),
           ),
           IconButton(
@@ -1658,7 +1726,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
   }) {
     final localeTag = Localizations.localeOf(context).toString();
     final key = _dayKey(entry.day);
-    final expanded = !_collapsedDayKeys.contains(key);
+    final expanded = _expandedDayKeys.contains(key);
     final dayLabel = DateFormat.yMMMMEEEEd(localeTag).format(entry.day);
     final now = DateTime.now();
 
@@ -1680,9 +1748,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                 onTap: () {
                   setState(() {
                     if (expanded) {
-                      _collapsedDayKeys.add(key);
+                      _expandedDayKeys.remove(key);
                     } else {
-                      _collapsedDayKeys.remove(key);
+                      _expandedDayKeys.add(key);
                     }
                   });
                 },
@@ -1718,14 +1786,6 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (final a in entry.accommodations)
-                      _buildAccommodationDayRow(
-                        loc,
-                        a,
-                        entry.day,
-                        showParticipantLabels,
-                        participantNamesMap,
-                      ),
                     for (final e in entry.events)
                       _buildEventDayRow(
                         loc,
@@ -1735,11 +1795,76 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                         dimPastInCourse: dimPastInCourse,
                         now: now,
                       ),
+                    if (entry.accommodations.isNotEmpty) ...[
+                      _stayListHeader(loc),
+                      for (final a in entry.accommodations)
+                        _buildAccommodationDayRow(
+                          loc,
+                          a,
+                          entry.day,
+                          showParticipantLabels,
+                          participantNamesMap,
+                        ),
+                    ],
                   ],
                 ),
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _stayListHeader(AppLocalizations loc) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 10, 0, 6),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.hotel_outlined,
+            size: 14,
+            color: _textSecondary,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            loc.planMapLegendHotel.toUpperCase(),
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.4,
+              color: _textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _stayMarkerColor(DateTime day) {
+    final start = _dateOnly(widget.plan.startDate);
+    final index = _dateOnly(day).difference(start).inDays;
+    final hex = PlanMapDayColors.hexForDay(index).replaceFirst('#', '');
+    if (hex.length != 6) return AppColorScheme.color2;
+    return Color(int.parse('FF$hex', radix: 16));
+  }
+
+  Widget _stayHBadge(Color color) {
+    return Container(
+      width: 28,
+      height: 28,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color, width: 1.5),
+      ),
+      child: Text(
+        'H',
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: color,
         ),
       ),
     );
@@ -1765,18 +1890,27 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     if (showParticipantLabels) {
       parts.add(_participantLabelForAccommodation(a, participantNamesMap, loc));
     }
-    return _buildSummaryLinkRow(
-      text: a.hotelName,
-      leadingIcon: Icons.hotel_outlined,
-      forceShowLeadingIcon: true,
-      onOpenDetail: widget.onOpenAccommodation != null
-          ? () => widget.onOpenAccommodation!(a)
-          : null,
-      mapsQuery: a.commonPart?.address,
-      webUrl: a.commonPart?.url,
-      subtitle: parts.join(' · '),
-      subtitleEmphasizeAll:
-          showParticipantLabels && a.participantTrackIds.isEmpty,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _stayHBadge(_stayMarkerColor(day)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildSummaryLinkRow(
+            text: a.hotelName,
+            leadingIcon: Icons.hotel_outlined,
+            forceShowLeadingIcon: true,
+            onOpenDetail: widget.onOpenAccommodation != null
+                ? () => widget.onOpenAccommodation!(a)
+                : null,
+            mapsQuery: a.commonPart?.address,
+            webUrl: a.commonPart?.url,
+            subtitle: parts.join(' · '),
+            subtitleEmphasizeAll:
+                showParticipantLabels && a.participantTrackIds.isEmpty,
+          ),
+        ),
+      ],
     );
   }
 

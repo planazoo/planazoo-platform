@@ -24,7 +24,8 @@ Guías transversales que aplican a todo el proyecto:
 ### 🔄 [Flujos / sistema de procesos](./flujos/)
 - **[MAPA_FLUJOS.md](./flujos/MAPA_FLUJOS.md)** – **Puerta de entrada:** jerarquía proceso → trabajo → prueba → referencia + mapa de dominios
 - **[ORDEN_POR_DOMINIOS.md](./flujos/ORDEN_POR_DOMINIOS.md)** – **Orden definitivo** de trabajo (#1→#9; 1 WIP)
-- **[DIAGRAMA_ALTAS_BAJAS_PLAN.md](./flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md)** – Contrato vivo del dominio WIP (participantes / invitaciones)
+- **[DIAGRAMA_ALTAS_BAJAS_PLAN.md](./flujos/DIAGRAMA_ALTAS_BAJAS_PLAN.md)** – Contrato vivo del dominio **#1** (cerrado) — participantes / invitaciones
+- **WIP actual:** **#2 Planes** · [`flujos/FLUJO_CRUD_PLANES.md`](./flujos/FLUJO_CRUD_PLANES.md) · T277
 - Índices por dominio (`FLUJO_*.md` stubs) · histórico largo en [`flujos/archivo/`](./flujos/archivo/)
 - [Notas del plan](./flujos/FLUJO_NOTAS_PLAN.md) – Flujo vivo T262
 
@@ -84,6 +85,7 @@ Configuración y contexto del proyecto:
 - [Índice de configuraciones del proyecto](./configuracion/CONFIGURACIONES_PROYECTO.md) - Dónde está cada integración en el repo
 - [Contexto del Proyecto](./configuracion/CONTEXT.md) - Normas y reglas de colaboración
 - [Índice del Sistema de Planes](./configuracion/INDICE_SISTEMA_PLANES.md) - Visión general del sistema
+- **[Publicar una versión (web + iOS)](./configuracion/PUBLICAR_APP.md)** - Orden operativo: git → Firebase backend → Hosting → TestFlight → docs
 - [Despliegue Web en Firebase Hosting](./configuracion/DEPLOY_WEB_FIREBASE_HOSTING.md) - Guía completa de despliegue
 - [Desplegar índices Firestore](./configuracion/DEPLOY_INDICES_FIRESTORE.md) - Índices compuestos
 - [Desplegar reglas Firestore](./configuracion/DESPLEGAR_REGLAS_FIRESTORE.md) - Reglas de seguridad

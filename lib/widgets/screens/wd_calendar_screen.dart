@@ -2396,12 +2396,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       final newPosition = _calculateNewEventPosition(eventToUpdate, dragOffset);
       
       if (newPosition != null) {
-        // Crear una copia del evento con la nueva posición
-        final updatedEvent = eventToUpdate.copyWith(
+        // Fecha/hora en raíz y en commonPart (si no, la ficha y el mapa siguen la hora vieja).
+        final updatedEvent = eventToUpdate.withSchedule(
           date: newPosition['date'] as DateTime,
           hour: newPosition['hour'] as int,
           startMinute: newPosition['startMinute'] as int,
-          updatedAt: DateTime.now(),
         );
         
         // VALIDAR: ¿Excedería el límite de 3 solapados en la nueva posición?
