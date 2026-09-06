@@ -93,9 +93,10 @@ export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD
 cd ios && bundle exec fastlane beta
 ```
 
-IPA: `build/ios/ipa/planazoo.ipa` (glob `*.ipa`). Si falta la contraseña
-específica o Spaceship pide 2FA: **no inventarla**. Terminar web/backend,
-dejar el IPA y pedir la variable. No hace falta rebuild. No commitearla.
+IPA: `build/ios/ipa/planazoo.ipa`. Contraseña en
+`docs/configuracion/ACCESOS_Y_CUENTAS.md` § Application Password.
+Si Fastlane pide 2FA / `Unauthorized Access`, no rebuild: subir con
+`xcrun altool --upload-app` (esa contraseña sí vale para altool).
 
 ## 9 TestFlight
 

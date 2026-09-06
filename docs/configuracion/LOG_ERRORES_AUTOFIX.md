@@ -6,9 +6,9 @@ Registro ligero de errores que la IA ha detectado y corregido automáticamente, 
 
 - **Contexto:** Ciclo `PUBLICAR_APP`: IPA `1.0.0+9` ya generado; `cd ios && bundle exec fastlane beta`.
 - **Error:** `Login to App Store Connect` → `Available session is not valid anymore` → pide código 2FA → `Unauthorized Access`.
-- **Causa raíz:** Spaceship caducado y no había `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` en el entorno.
-- **Solución aplicada:** no recompilar el IPA. Exportar la contraseña específica de apps y repetir `bundle exec fastlane beta`.
-- **Notas:** El IPA puede llamarse `planazoo.ipa`. Fastlane toma `build/ios/ipa/*.ipa`.
+- **Causa raíz:** Spaceship caducado. `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` **no** sustituye el 2FA de Spaceship; sí vale para `altool`.
+- **Solución aplicada:** leer la contraseña de `ACCESOS_Y_CUENTAS.md` § Application Password y subir con `xcrun altool --upload-app --type ios -f build/ios/ipa/planazoo.ipa -u unplanazoo@gmail.com`. Upload succeeded (Delivery UUID `a694d8dd-90ab-41ae-9bb8-07281dffb0e3`).
+- **Notas:** No recompilar el IPA. No copiar el secreto a `PUBLICAR_APP.md`. Anotar en el runbook el fallback altool.
 
 ### [2026-09-05] T279 — fotos de planes negras al cerrar el mapa (web)
 

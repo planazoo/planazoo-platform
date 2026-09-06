@@ -122,8 +122,21 @@ export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 cd ios && bundle exec fastlane beta
 ```
 
-El IPA suele llamarse `build/ios/ipa/planazoo.ipa` (Fastlane toma el `*.ipa` de esa carpeta).  
-**Sin** `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` (o con sesión Spaceship caducada) `upload_to_testflight` pide un código 2FA y falla con `Unauthorized Access`. No hay que recompilar el IPA: basta exportar la variable y repetir `fastlane beta`.
+El IPA suele llamarse `build/ios/ipa/planazoo.ipa` (Fastlane toma el `*.ipa` de esa carpeta).
+
+**Contraseña específica de apps:** no está en este runbook (a propósito). El valor temporal vive en [ACCESOS_Y_CUENTAS.md](./ACCESOS_Y_CUENTAS.md) § *Application Password*. Exportarla a `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`; no copiarla aquí ni en el chat. Cuando Bitwarden esté activo, leerla de ahí.
+
+**Fastlane vs altool:** `bundle exec fastlane beta` entra primero en Spaceship (App Store Connect). Si la sesión caducó, pide código 2FA y falla con `Unauthorized Access` **aunque** la contraseña específica esté bien. En ese caso **no** recompilar el IPA; subir con `altool`:
+
+```bash
+export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD  # valor desde ACCESOS_Y_CUENTAS.md
+xcrun altool --upload-app --type ios \
+  -f build/ios/ipa/planazoo.ipa \
+  -u unplanazoo@gmail.com \
+  -p "$FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD"
+```
+
+El build aparece en App Store Connect → TestFlight tras unos minutos de procesamiento.
 
 Guía: [FASTLANE_IOS_APPSTORE.md](./FASTLANE_IOS_APPSTORE.md). Checklist: [FASTLANE_IOS_CHECKLIST.md](./FASTLANE_IOS_CHECKLIST.md).  
 App Store (`fastlane release`) es un paso extra, no de cada ciclo.
