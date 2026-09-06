@@ -2,6 +2,8 @@
 
 Vamos paso a paso. Marca cada ítem cuando lo completes y rellena los datos abajo.
 
+**Ciclo de cada versión (web + TestFlight):** [PUBLICAR_APP.md](./PUBLICAR_APP.md). Esta página es el **setup la primera vez**.
+
 **Guía de referencia:** [FASTLANE_IOS_APPSTORE.md](./FASTLANE_IOS_APPSTORE.md)  
 **Índice de todas las configuraciones del proyecto (Firebase, Google, Android, Cursor, etc.):** [CONFIGURACIONES_PROYECTO.md](./CONFIGURACIONES_PROYECTO.md)
 

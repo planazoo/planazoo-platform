@@ -158,24 +158,11 @@ Usar una clave **dedicada** para Places (y Maps) permite restringirla y rotarla 
      - (Opcional) **Maps JavaScript API** si la usas.
 5. Guarda los cambios.
 
-### 2.4 Uso de la clave en la app (sin subirla a Git)
+### 2.4 Uso de la clave en la app
 
-- **No** poner la clave en `firebase_options.dart` ni en ningún archivo versionado.
-- La app lee la clave con `String.fromEnvironment('PLACES_API_KEY', defaultValue: '')`. Para inyectarla:
-
-  **Al ejecutar o compilar**, pasa la clave con `--dart-define`:
-
-  ```bash
-  flutter run --dart-define=PLACES_API_KEY=TU_BROWSER_KEY_AQUI
-  ```
-
-  Para **web** (producción):
-
-  ```bash
-  flutter build web --dart-define=PLACES_API_KEY=TU_BROWSER_KEY_AQUI
-  ```
-
-  Si no pasas `PLACES_API_KEY`, el campo de búsqueda de lugar se muestra pero no se envían peticiones (no habrá autocompletado). Así puedes desarrollar sin clave; para probar Places, usa la Browser key con `--dart-define`.
+- **Valor:** [ACCESOS_Y_CUENTAS.md](./ACCESOS_Y_CUENTAS.md) § *Places / Maps* (`PLACES_API_KEY`). No en `firebase_options.dart` ni en código Dart.
+- La app lee `String.fromEnvironment('PLACES_API_KEY', defaultValue: '')`. Inyectar con `--dart-define` (run, `build web`, `build ipa`). Comandos de release: [PUBLICAR_APP.md](./PUBLICAR_APP.md).
+- Si no pasas la clave, el mapa/autocompletado directo no llama a la API. En **web**, el autocompletado de Places va por Cloud Functions.
 
 ---
 

@@ -72,8 +72,8 @@ Solo destinos del inventario, desde la raíz, con `npx`.
 
 ## 6 Web
 
-Clave Places/Maps: `--dart-define=PLACES_API_KEY=…` (sesión `flutter run`,
-no el repo). No escribir la clave en archivos ni en el resumen al usuario.
+Clave Places/Maps: `docs/configuracion/ACCESOS_Y_CUENTAS.md` § Places.
+No escribirla en código ni en el resumen al usuario.
 
 ```bash
 flutter build web --dart-define=PLACES_API_KEY="$PLACES_API_KEY"

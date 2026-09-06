@@ -81,7 +81,7 @@ Gestión de tareas del proyecto:
 
 ### ⚙️ [Configuración](./configuracion/)
 Configuración y contexto del proyecto:
-- **[Accesos y cuentas](./configuracion/ACCESOS_Y_CUENTAS.md)** - Inventario de consolas (Google, Apple, remoto, etc.); sin contraseñas en el repo
+- **[Accesos y cuentas](./configuracion/ACCESOS_Y_CUENTAS.md)** - Consolas y secretos temporales (hasta Bitwarden)
 - [Índice de configuraciones del proyecto](./configuracion/CONFIGURACIONES_PROYECTO.md) - Dónde está cada integración en el repo
 - [Contexto del Proyecto](./configuracion/CONTEXT.md) - Normas y reglas de colaboración
 - [Índice del Sistema de Planes](./configuracion/INDICE_SISTEMA_PLANES.md) - Visión general del sistema

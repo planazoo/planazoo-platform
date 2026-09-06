@@ -19,7 +19,7 @@ No sustituye las guías detalladas: las enlaza.
 | 5 | Backend Firebase | Solo si cambiaron rules / índices / storage / functions |
 | 6 | Publicar web | Build + Hosting |
 | 7 | Verificar web en producción | Humo en `app.planoon.com` |
-| 8 | Publicar iOS (TestFlight) | IPA + Fastlane `beta` |
+| 8 | Publicar iOS (TestFlight) | IPA + Fastlane `beta` o `altool` si Spaceship pide 2FA |
 | 9 | Verificar TestFlight | Humo en dispositivo |
 | 10 | Revisar y actualizar la documentación de este proceso | Cerrar el ciclo |
 | — | Android (Play) | Fuera de este ciclo hasta que se acuerde |
@@ -91,13 +91,15 @@ Detalle: [DESPLEGAR_REGLAS_FIRESTORE.md](./DESPLEGAR_REGLAS_FIRESTORE.md), [DEPL
 
 ## 6. Publicar web
 
+Clave Places: [ACCESOS_Y_CUENTAS.md](./ACCESOS_Y_CUENTAS.md) § *Places / Maps* (no copiar el valor aquí).
+
 ```bash
-flutter build web --dart-define=PLACES_API_KEY=TU_BROWSER_KEY
+export PLACES_API_KEY  # valor desde ACCESOS_Y_CUENTAS.md
+flutter build web --dart-define=PLACES_API_KEY="$PLACES_API_KEY"
 npx firebase-tools deploy --only hosting
 ```
 
-Sin `PLACES_API_KEY` el mapa/autocompletado de lugares no llama a la API.  
-Guía: [DEPLOY_WEB_FIREBASE_HOSTING.md](./DEPLOY_WEB_FIREBASE_HOSTING.md), [CONFIGURAR_GOOGLE_PLACES_API.md](./CONFIGURAR_GOOGLE_PLACES_API.md).
+Sin `PLACES_API_KEY` el mapa no llama a Maps JS. Setup primer Hosting: [DEPLOY_WEB_FIREBASE_HOSTING.md](./DEPLOY_WEB_FIREBASE_HOSTING.md). Places en GCP: [CONFIGURAR_GOOGLE_PLACES_API.md](./CONFIGURAR_GOOGLE_PLACES_API.md).
 
 ---
 
@@ -114,11 +116,12 @@ Abrir **`https://app.planoon.com`** (no solo `planazoo.web.app`):
 
 ## 8. Publicar iOS (TestFlight)
 
-Misma clave Places que en web (el mapa iOS la embebe en el HTML):
+Misma `PLACES_API_KEY` que en web ([ACCESOS_Y_CUENTAS.md](./ACCESOS_Y_CUENTAS.md) § Places):
 
 ```bash
+export PLACES_API_KEY  # valor desde ACCESOS_Y_CUENTAS.md
 flutter build ipa --dart-define=PLACES_API_KEY="$PLACES_API_KEY"
-export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD  # § Application Password
 cd ios && bundle exec fastlane beta
 ```
 

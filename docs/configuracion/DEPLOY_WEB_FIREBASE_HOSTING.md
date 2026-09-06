@@ -1,10 +1,11 @@
 # 🚀 Despliegue de la Aplicación Web en Firebase Hosting
 
-Este documento describe el proceso completo para desplegar la aplicación Flutter web en Firebase Hosting.
+Este documento describe el **primer** despliegue de Flutter web en Firebase Hosting (login CLI, `init hosting`).  
+**Cada versión nueva:** [`PUBLICAR_APP.md`](./PUBLICAR_APP.md) (incluye `dart-define` y backend).
 
 **Fecha de creación:** Enero 2025  
-**Última actualización:** Febrero 2026  
-**URL de producción:** `https://planazoo.web.app`
+**Última actualización:** Sep 2026  
+**URL canónica:** `https://app.planoon.com` (Hosting también en `https://planazoo.web.app`)
 
 ---
 
@@ -125,7 +126,8 @@ npx firebase-tools@latest init hosting
 Desde la raíz del proyecto:
 
 ```bash
-flutter build web
+export PLACES_API_KEY  # valor: ACCESOS_Y_CUENTAS.md § Places
+flutter build web --dart-define=PLACES_API_KEY="$PLACES_API_KEY"
 ```
 
 **Tiempo estimado:** 1-2 minutos
@@ -135,7 +137,8 @@ flutter build web
 - Incluye HTML, CSS, JavaScript y assets optimizados
 
 **Notas:**
-- El comando puede mostrar advertencias sobre WASM (WebAssembly) - son normales
+- Sin `PLACES_API_KEY` el mapa del plan no llama a Maps JavaScript.
+- Advertencias WASM / `dart:html` (mapa web) son normales; el build JS sigue saliendo.
 - Tree-shaking reduce el tamaño de los assets automáticamente
 
 ---
@@ -167,8 +170,8 @@ Hosting URL: https://planazoo.web.app
 ## ✅ Verificación Post-Despliegue
 
 1. **Abrir la URL de producción:**
-   - `https://planazoo.web.app`
-   - Verificar que la aplicación carga correctamente
+   - **`https://app.planoon.com`** (canónica)
+   - `https://planazoo.web.app` (mismo Hosting)
 
 2. **Probar funcionalidades básicas:**
    - Login con Google
@@ -187,19 +190,7 @@ Hosting URL: https://planazoo.web.app
 
 ## 🔄 Actualizaciones Futuras
 
-Para actualizar la aplicación después de hacer cambios:
-
-1. **Compilar nuevamente:**
-   ```bash
-   flutter build web
-   ```
-
-2. **Desplegar:**
-   ```bash
-   npx firebase-tools@latest deploy --only hosting
-   ```
-
-**Tiempo total:** ~2-3 minutos por actualización
+No uses esta guía para cada release. Ciclo: [`PUBLICAR_APP.md`](./PUBLICAR_APP.md).
 
 ---
 
@@ -272,12 +263,8 @@ Después del proceso completo, estos archivos estarán en la raíz del proyecto:
 2. **Compilar antes de cada deploy:** Siempre ejecutar `flutter build web` antes de `deploy` para asegurar que los cambios están incluidos.
 
 3. **URLs de producción:**
-   - Principal: `https://planazoo.web.app`
-   - Alternativa: `https://planazoo.firebaseapp.com`
-   - Ambas apuntan a la misma aplicación
+   - Canónica: `https://app.planoon.com`
+   - Firebase: `https://planazoo.web.app` / `https://planazoo.firebaseapp.com`
+   - Mismo Hosting. Guía dominio: [DOMINIO_PLANOON.md](./DOMINIO_PLANOON.md)
 
-4. **Dominio personalizado:** **`app.planoon.com`** (app). Guía: [DOMINIO_PLANOON.md](./DOMINIO_PLANOON.md). Apex `planoon.com` reservado para comercial.
-
----
-
-**Última actualización:** Enero 2025
+4. **Dominio personalizado:** **`app.planoon.com`** (app). Apex `planoon.com` reservado para comercial.

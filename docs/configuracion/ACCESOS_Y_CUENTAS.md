@@ -4,15 +4,15 @@ Inventario de **consolas, webs, cuentas y accesos remotos** usados en Planazoo.
 Complementa el índice técnico [`CONFIGURACIONES_PROYECTO.md`](./CONFIGURACIONES_PROYECTO.md) (qué se configura y dónde en el repo).
 
 **Reglas**
-- **No** escribir contraseñas ni secretos en este documento (ni en el repo).
-- Anotar solo: URL, cuenta (email), quién tiene acceso, para qué sirve, y **dónde** está la contraseña.
-- Actualizar al dar de alta un acceso nuevo o al cambiar de responsable.
-- Usuarios de **prueba de la app** (login en Planazoo): ver [`USUARIOS_PRUEBA.md`](./USUARIOS_PRUEBA.md). Admins de plataforma: [`ADMINS_WHITELIST.md`](../admin/ADMINS_WHITELIST.md).
+- **No** poner secretos en código Dart, `firebase_options`, ni en el runbook [`PUBLICAR_APP.md`](./PUBLICAR_APP.md).
+- Hasta Bitwarden: valores **temporales** (Application Password, `PLACES_API_KEY`) viven en las tablas de este archivo. Rotar si se filtran.
+- Anotar también: URL, cuenta, quién, para qué.
+- Usuarios de **prueba de la app**: [`USUARIOS_PRUEBA.md`](./USUARIOS_PRUEBA.md). Admins: [`ADMINS_WHITELIST.md`](../admin/ADMINS_WHITELIST.md).
 
 **Responsable habitual de accesos:** Cristian (único por defecto en todas las filas salvo que se indique lo contrario).  
 **Cuenta operativa principal:** `unplanazoo@gmail.com`
 
-**Última revisión:** Agosto 2026 (dominio `planoon.com` en Cloudflare)
+**Última revisión:** Sep 2026 (Places key + ciclo publicar)
 
 ---
 
@@ -26,7 +26,7 @@ Hoy las contraseñas **no** están centralizadas. Propuesta:
 | **iCloud Keychain** | Solo como refuerzo en dispositivos Apple (autofill Safari/Apps). No sustituye un vault ordenado. |
 | **1Password** | Si más adelante hay equipo y se quiere vault familiar/pago. |
 
-**Acción pendiente:** crear cuenta Bitwarden (o elegir otra), guardar al menos: Google/`unplanazoo@gmail.com`, Apple ID, contraseña específica de apps TestFlight.  
+**Acción pendiente:** crear cuenta Bitwarden (o elegir otra), guardar al menos: Google/`unplanazoo@gmail.com`, Apple ID, Application Password TestFlight, `PLACES_API_KEY`.  
 En las tablas, columna **Secretos** = `Bitwarden (pendiente activar)` hasta confirmarlo.
 
 ---
@@ -48,7 +48,7 @@ En las tablas, columna **Secretos** = `Bitwarden (pendiente activar)` hasta conf
 
 Misma cuenta operativa: **`unplanazoo@gmail.com`** · Quién: **Cristian** · Secretos: recordatorio (no es la clave) `ito` · 2FA recomendado · Bitwarden pendiente.
 
-Proyecto Firebase / GCP: **planazoo** · Web prod: `https://planazoo.web.app`
+Proyecto Firebase / GCP: **planazoo** · App: `https://app.planoon.com` (también `https://planazoo.web.app`)
 
 | Servicio / URL | Uso | Notas |
 |----------------|-----|-------|
@@ -60,7 +60,7 @@ Proyecto Firebase / GCP: **planazoo** · Web prod: `https://planazoo.web.app`
 | [Firebase → Firestore](https://console.firebase.google.com/project/planazoo/firestore) | Datos, reglas, índices | Deploy reglas: docs configuracion |
 | [Firebase → Functions](https://console.firebase.google.com/project/planazoo/functions) | Cloud Functions (push, emails, etc.) | |
 | [Firebase → Storage](https://console.firebase.google.com/project/planazoo/storage) | Imágenes / archivos | [IMAGENES_PLAN_FIREBASE.md](./IMAGENES_PLAN_FIREBASE.md), [STORAGE_CORS.md](./STORAGE_CORS.md) |
-| [Firebase → Hosting](https://console.firebase.google.com/project/planazoo/hosting) | Web producción | [DEPLOY_WEB_FIREBASE_HOSTING.md](./DEPLOY_WEB_FIREBASE_HOSTING.md) · `https://planazoo.web.app` |
+| [Firebase → Hosting](https://console.firebase.google.com/project/planazoo/hosting) | Web producción | Ciclo: [PUBLICAR_APP.md](./PUBLICAR_APP.md) · primer setup: [DEPLOY_WEB_FIREBASE_HOSTING.md](./DEPLOY_WEB_FIREBASE_HOSTING.md) · `https://app.planoon.com` |
 | [Firebase → Messaging (FCM)](https://console.firebase.google.com/project/planazoo/messaging) | Push / campañas de prueba | APNs key en ajustes del proyecto iOS |
 | [Firebase → Project settings](https://console.firebase.google.com/project/planazoo/settings/general) | Apps iOS/Android/Web, `GoogleService-Info.plist`, `google-services.json` | Archivos locales en gitignore |
 | [Google Cloud Console](https://console.cloud.google.com/) | APIs, facturación, IAM (mismo proyecto) | Vinculado a Firebase |
@@ -74,6 +74,19 @@ Proyecto Firebase / GCP: **planazoo** · Web prod: `https://planazoo.web.app`
 | Firebase CLI (`firebase login`) | Deploy desde el Mac | Sesión ligada a esta cuenta Google |
 
 **Recordatorio de secretos Google (no son las claves reales):** login → `ito` · app password Gmail/SMTP si se usa → Bitwarden cuando se active · Remote Desktop: ver §5.
+
+### Places / Maps (`PLACES_API_KEY`)
+
+Hace falta en `flutter run`, `flutter build web` y `flutter build ipa` (`--dart-define`). El mapa del plan (T279) la embebe en el HTML. El autocompletado **web** va por Cloud Functions (clave de servidor en `functions.config`); esta es la **Browser key**.
+
+| Qué | Detalle |
+|-----|---------|
+| Variable | `PLACES_API_KEY` (si hay `MAPS_API_KEY`, el mapa la prefiere) |
+| Dónde se crea | [Credenciales GCP](https://console.cloud.google.com/apis/credentials?project=planazoo) |
+| Cómo se usa | `--dart-define=PLACES_API_KEY=…` · ver [PUBLICAR_APP.md](./PUBLICAR_APP.md) y [CONFIGURAR_GOOGLE_PLACES_API.md](./CONFIGURAR_GOOGLE_PLACES_API.md) |
+| Valor actual (temporal; rotar) | `AIzaSyDppQctfuzV9cPRCik3AlKOBIXC0ebqa5w` |
+| No poner | Código Dart, `firebase_options.dart`, runbook de publicar |
+| Recordatorio | Temporal aquí hasta Bitwarden |
 
 ---
 

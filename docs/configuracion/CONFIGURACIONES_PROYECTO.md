@@ -40,7 +40,7 @@
 | Qué | Dónde | Documentación |
 |-----|--------|----------------|
 | Google Sign-In | Firebase Auth + `web/index.html` (meta `google-signin-client_id`) | [CONFIGURAR_GOOGLE_SIGNIN.md](./CONFIGURAR_GOOGLE_SIGNIN.md). Requiere Web client ID en `web/index.html` y proveedor Google habilitado en Firebase Auth. |
-| Google Places API | Google Cloud Console (proyecto planazoo) | [CONFIGURAR_GOOGLE_PLACES_API.md](./CONFIGURAR_GOOGLE_PLACES_API.md). Habilitar Places API, API key con restricciones; facturación activa (crédito gratis mensual). |
+| Google Places API | Google Cloud Console (proyecto planazoo) | Setup: [CONFIGURAR_GOOGLE_PLACES_API.md](./CONFIGURAR_GOOGLE_PLACES_API.md). Valor `PLACES_API_KEY`: [ACCESOS_Y_CUENTAS.md](./ACCESOS_Y_CUENTAS.md) § Places. Build: [PUBLICAR_APP.md](./PUBLICAR_APP.md). |
 | Otras APIs Google | [Google Cloud Console](https://console.cloud.google.com/) → APIs y servicios | Mismo proyecto que Firebase (planazoo). Cualquier API nueva (Maps, etc.) se habilita y restringe aquí. |
 
 ---
@@ -75,7 +75,7 @@ Fastlane para Android (T256) está previsto; cuando se implemente, documentar en
 | Qué | Dónde | Notas |
 |-----|--------|--------|
 | .env | Raíz del proyecto | En `.gitignore`. No commitear `.env`, `.env.local`, `.env.production`. Usar para claves o URLs sensibles si la app las lee en runtime. |
-| Fastlane (Apple) | Opcional: variables de entorno | `FASTLANE_APPLE_ID`, `FASTLANE_TEAM_ID`, `FASTLANE_ITC_TEAM_ID`. Con **2FA**, para subir el IPA hace falta **`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`** (contraseña específica de apps en appleid.apple.com); sin ella, error **-22938** en `upload_to_testflight`. No usar `FASTLANE_PASSWORD` como sustituto de la contraseña específica. Ver [FASTLANE_IOS_APPSTORE.md](./FASTLANE_IOS_APPSTORE.md). |
+| Fastlane / Apple / Places | Variables de entorno | Application Password y `PLACES_API_KEY`: [ACCESOS_Y_CUENTAS.md](./ACCESOS_Y_CUENTAS.md). Ciclo: [PUBLICAR_APP.md](./PUBLICAR_APP.md). No usar `FASTLANE_PASSWORD` como sustituto de la contraseña específica. |
 
 **Seguridad:** Ver [GUIA_SEGURIDAD.md](../guias/GUIA_SEGURIDAD.md). No hardcodear API keys secretas ni contraseñas en código.
 

@@ -1,29 +1,22 @@
 # Publicar en App Store (iOS) con Fastlane
 
-Guía paso a paso para subir **unp_calendario** a TestFlight y a la App Store usando Fastlane.
-
-**Referencias:** T256 (`docs/tareas/T256_IMPLEMENTAR_FASTLANE.md`), evaluación T255 (`docs/tareas/archivo/T255_EVALUACION_FASTLANE.md`).  
-**Checklist imprimible:** [FASTLANE_IOS_CHECKLIST.md](./FASTLANE_IOS_CHECKLIST.md).  
-**Índice de configuraciones:** [CONFIGURACIONES_PROYECTO.md](./CONFIGURACIONES_PROYECTO.md) (sección Apple / Fastlane).
+Guía de **setup** Fastlane (primera vez) y errores de firma.  
+**Cada versión (TestFlight):** [`PUBLICAR_APP.md`](./PUBLICAR_APP.md). Checklist primera vez: [FASTLANE_IOS_CHECKLIST.md](./FASTLANE_IOS_CHECKLIST.md).  
+**Índice:** [CONFIGURACIONES_PROYECTO.md](./CONFIGURACIONES_PROYECTO.md) (Apple / Fastlane).
 
 ---
 
 ## Importante: cuenta con doble factor (2FA)
 
-`upload_to_testflight` invoca **altool** / Content Delivery. Con Apple ID y **2FA activado**, la subida **falla** con error **-22938** (“Sign in with the app-specific password…”) si no usas una **contraseña específica de apps**.
+`upload_to_testflight` entra en **Spaceship** (login App Store Connect) y luego en **altool**. Son dos cosas:
 
-**Antes de `bundle exec fastlane beta` (o `release`), en la misma terminal:**
+1. **Contraseña específica de apps** (`FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`): valor en [ACCESOS_Y_CUENTAS.md](./ACCESOS_Y_CUENTAS.md) § Application Password. Hace falta para altool (`-22938` si falta).
+2. **Sesión Spaceship:** si caducó, Fastlane pide código 2FA y falla con `Unauthorized Access` **aunque** (1) esté bien. Entonces **no** rebuild: subir el IPA con `altool` (comandos en [`PUBLICAR_APP.md`](./PUBLICAR_APP.md) § 8).
 
-```bash
-export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
-```
+**No** uses la contraseña de iCloud. **No** copies el Application Password a este archivo.
 
-La contraseña se crea en [appleid.apple.com](https://appleid.apple.com) → **Inicio de sesión y seguridad** → **Contraseñas para apps**.  
-**No** uses la contraseña normal de iCloud; **no** commitees este valor (solo variable de entorno local o secreto de CI).
-
-**Recomendación a medio plazo:** [App Store Connect API Key](https://docs.fastlane.tools/app-store-connect-api/) en el `Fastfile` para CI sin contraseñas.
-
-**Alternativa sin fastlane:** arrastra el `.ipa` de `build/ios/ipa/` a la app **Transporter** (Mac App Store).
+**Recomendación a medio plazo:** [App Store Connect API Key](https://docs.fastlane.tools/app-store-connect-api/) en el `Fastfile` para CI sin 2FA.  
+**Otra vía:** app **Transporter** (arrastrar `build/ios/ipa/*.ipa`).
 
 ---
 
@@ -165,7 +158,8 @@ La lane **release** sube el IPA con `upload_to_app_store` (`submit_for_review: f
 
 - **"No se encontró el IPA"**: ejecuta `flutter build ipa` desde la raíz del proyecto antes de `fastlane beta` o `release`.
 - **`exportArchive No Accounts` / `No signing certificate "iOS Distribution"`**: en **Xcode → Settings → Accounts** debe haber al menos un Apple ID con el equipo del proyecto; hace falta certificado **Apple Distribution** y perfil **App Store** (o gestión automática de firma). Sin cuenta en Xcode, el export del IPA falla.
-- **`-22938` / “app-specific password”** al subir: exporta `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` (no la contraseña de iCloud). Ver sección “Importante: cuenta con doble factor” al inicio de este documento.
+- **`-22938` / “app-specific password”** al subir: Application Password en [ACCESOS_Y_CUENTAS.md](./ACCESOS_Y_CUENTAS.md); exportar `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD`.
+- **`Unauthorized Access` / pide código 2FA:** Spaceship caducado. Subir con `altool` ([PUBLICAR_APP.md](./PUBLICAR_APP.md) § 8). No rebuild.
 - **Firma / provisioning**: **Runner** → **Signing & Capabilities** → team y perfil de distribución correctos para **Release**.
 - **Bundle ID**: debe coincidir con App Store Connect y `Appfile` (`app_identifier`).
 
