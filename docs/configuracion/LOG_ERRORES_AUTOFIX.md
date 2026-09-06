@@ -2,6 +2,14 @@
 
 Registro ligero de errores que la IA ha detectado y corregido automáticamente, para evitar repetirlos y documentar patrones de solución.
 
+### [2026-09-06] Publicar iOS — Fastlane `Unauthorized Access` (2FA)
+
+- **Contexto:** Ciclo `PUBLICAR_APP`: IPA `1.0.0+9` ya generado; `cd ios && bundle exec fastlane beta`.
+- **Error:** `Login to App Store Connect` → `Available session is not valid anymore` → pide código 2FA → `Unauthorized Access`.
+- **Causa raíz:** Spaceship caducado y no había `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` en el entorno.
+- **Solución aplicada:** no recompilar el IPA. Exportar la contraseña específica de apps y repetir `bundle exec fastlane beta`.
+- **Notas:** El IPA puede llamarse `planazoo.ipa`. Fastlane toma `build/ios/ipa/*.ipa`.
+
 ### [2026-09-05] T279 — fotos de planes negras al cerrar el mapa (web)
 
 - **Contexto:** Chrome; abrir mapa del plan y volver a la lista de selección de planes. Miniaturas `CachedNetworkImage` quedan negras (el resto de la card sí se ve).

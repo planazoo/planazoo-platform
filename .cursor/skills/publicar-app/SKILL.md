@@ -88,13 +88,14 @@ cambio. Si no hay browser tools, curl/HTTP y decirlo.
 ## 8 iOS
 
 ```bash
-flutter build ipa
+flutter build ipa --dart-define=PLACES_API_KEY="$PLACES_API_KEY"
 export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD
 cd ios && bundle exec fastlane beta
 ```
 
-Si falta la contraseña específica: **no inventarla**. Terminar web/backend
-y pedir la variable. No commitearla.
+IPA: `build/ios/ipa/planazoo.ipa` (glob `*.ipa`). Si falta la contraseña
+específica o Spaceship pide 2FA: **no inventarla**. Terminar web/backend,
+dejar el IPA y pedir la variable. No hace falta rebuild. No commitearla.
 
 ## 9 TestFlight
 

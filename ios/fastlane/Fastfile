@@ -7,7 +7,7 @@ default_platform(:ios)
 
 # Directorio donde Flutter genera el IPA (flutter build ipa desde la raíz del proyecto)
 FLUTTER_IPA_DIR = File.expand_path("../../build/ios/ipa", __dir__)
-# Nombre por defecto (pubspec name); Flutter a veces genera otro (p. ej. Runner.ipa)
+# Nombre por defecto (pubspec name); Flutter a veces genera otro (p. ej. planazoo.ipa)
 def find_ipa_path
   default = File.join(FLUTTER_IPA_DIR, "unp_calendario.ipa")
   return default if File.exist?(default)

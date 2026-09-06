@@ -105,6 +105,7 @@ Guía: [DEPLOY_WEB_FIREBASE_HOSTING.md](./DEPLOY_WEB_FIREBASE_HOSTING.md), [CONF
 
 Abrir **`https://app.planoon.com`** (no solo `planazoo.web.app`):
 
+- HTTP 200 y `index.html` de Flutter (mínimo si no hay browser tools)
 - Login
 - Un plan: resumen, calendario, mapa si aplica
 - Invitación / campana si el cambio las toca
@@ -113,11 +114,16 @@ Abrir **`https://app.planoon.com`** (no solo `planazoo.web.app`):
 
 ## 8. Publicar iOS (TestFlight)
 
+Misma clave Places que en web (el mapa iOS la embebe en el HTML):
+
 ```bash
-flutter build ipa
+flutter build ipa --dart-define=PLACES_API_KEY="$PLACES_API_KEY"
 export FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
 cd ios && bundle exec fastlane beta
 ```
+
+El IPA suele llamarse `build/ios/ipa/planazoo.ipa` (Fastlane toma el `*.ipa` de esa carpeta).  
+**Sin** `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` (o con sesión Spaceship caducada) `upload_to_testflight` pide un código 2FA y falla con `Unauthorized Access`. No hay que recompilar el IPA: basta exportar la variable y repetir `fastlane beta`.
 
 Guía: [FASTLANE_IOS_APPSTORE.md](./FASTLANE_IOS_APPSTORE.md). Checklist: [FASTLANE_IOS_CHECKLIST.md](./FASTLANE_IOS_CHECKLIST.md).  
 App Store (`fastlane release`) es un paso extra, no de cada ciclo.
