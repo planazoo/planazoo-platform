@@ -61,12 +61,13 @@ Hecho en código:
 - Barra inferior móvil: buscar stub · chat · notificaciones
 - Resumen un-día (chips, swipe, mapa/+, esta noche, acento evento actual en `en_curso`)
 - Sin título «mi resumen» en la sección
+- Cabecera cover colapsable en pestaña resumen (móvil): `PlanCollapsingHeader`
 
 Aplazado:
 - Buscar / filtrar reales
 - Entradas notas/stats dentro de Info
 - Acceso web a chat/notif (sin bottom bar)
-- Cabecera con cover colapsable (prod sigue con AppBar)
+- ~~Cabecera con cover colapsable~~ → hecho en móvil resumen (`PlanCollapsingHeader` + `NestedScrollView`)
 
 ## Implementación producción — notas
 

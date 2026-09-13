@@ -23,6 +23,7 @@ import 'package:unp_calendario/features/stats/presentation/pages/plan_stats_page
 import 'package:unp_calendario/features/payments/presentation/pages/payment_summary_page.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_chat_screen.dart';
 import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
+import 'package:unp_calendario/widgets/plan/plan_collapsing_header.dart';
 import 'package:unp_calendario/widgets/help/help_icon_button.dart';
 import 'package:unp_calendario/shared/constants/help_context_ids.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
@@ -208,17 +209,107 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         }
       });
     }
+    final isSummaryTab = _selectedOption == 'mySummary';
     return Theme(
       data: AppTheme.darkTheme,
       child: Scaffold(
         backgroundColor: _cPageBg,
-        appBar: _buildAppBar(plan),
+        appBar: isSummaryTab ? null : _buildAppBar(plan),
         bottomNavigationBar:
             isPendingPreview ? null : _buildQuickActionsBar(plan),
-        body: SafeArea(
-          child: Column(
-            children: [
-              PlanNavigationBar(
+        body: isSummaryTab
+            ? _buildSummaryShell(
+                plan,
+                isPendingPreview: isPendingPreview,
+                isOrganizer: isOrganizer,
+              )
+            : SafeArea(
+                child: Column(
+                  children: [
+                    PlanNavigationBar(
+                      selectedOption: _selectedOption,
+                      onOptionSelected: (option) {
+                        setState(() {
+                          _selectedOption = option;
+                          if (option != 'planData') {
+                            _planInfoEditChrome = null;
+                          }
+                        });
+                      },
+                      showStatsTab: isOrganizer && !isPendingPreview,
+                      allowedOptionIds:
+                          isPendingPreview ? _pendingPreviewTabs : null,
+                    ),
+                    if (isPendingPreview)
+                      PendingInvitePreviewBanner(
+                        plan: plan,
+                        onLeftPlan: _leavePlanOrPop,
+                      ),
+                    // Resumen: sin título redundante «mi resumen» (filtros viven en la pantalla).
+                    // Notas / stats: fuera de la nav de 5; viven en Info del plan.
+                    _buildSectionTitleBar(isPendingPreview: isPendingPreview),
+                    Expanded(
+                      child: _buildContent(
+                        plan,
+                        isPendingPreview: isPendingPreview,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  void _leavePlanOrPop() {
+    if (!mounted) return;
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const PlansListPage(),
+        ),
+      );
+    }
+  }
+
+  void _navigateBackFromPlan() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const PlansListPage()),
+      );
+    }
+  }
+
+  /// Resumen: cover colapsable + nav + contenido (sin AppBar plano).
+  Widget _buildSummaryShell(
+    Plan plan, {
+    required bool isPendingPreview,
+    required bool isOrganizer,
+  }) {
+    final loc = AppLocalizations.of(context)!;
+    return NestedScrollView(
+      headerSliverBuilder: (context, innerBoxIsScrolled) {
+        return [
+          PlanCollapsingHeader.sliver(
+            plan: plan,
+            collapsed: innerBoxIsScrolled,
+            onBack: _navigateBackFromPlan,
+            trailingHelp: HelpIconButton(
+              helpId: HelpContextIds.planDetailMyStatus,
+              contextLabel: loc.planMyStatusHelpTitle,
+              defaultBody: loc.planMyStatusHelpDefault,
+              iconSize: 18,
+              iconColor: _cTextSecondary,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Material(
+              color: _cPageBg,
+              child: PlanNavigationBar(
                 selectedOption: _selectedOption,
                 onOptionSelected: (option) {
                   setState(() {
@@ -232,33 +323,18 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                 allowedOptionIds:
                     isPendingPreview ? _pendingPreviewTabs : null,
               ),
-              if (isPendingPreview)
-                PendingInvitePreviewBanner(
-                  plan: plan,
-                  onLeftPlan: () {
-                    if (!mounted) return;
-                    if (Navigator.of(context).canPop()) {
-                      Navigator.of(context).pop();
-                    } else {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => const PlansListPage(),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              // Resumen: sin título redundante «mi resumen» (filtros viven en la pantalla).
-              // Notas / stats: fuera de la nav de 5; viven en Info del plan.
-              if (_selectedOption != 'mySummary')
-                _buildSectionTitleBar(isPendingPreview: isPendingPreview),
-              Expanded(
-                child: _buildContent(plan, isPendingPreview: isPendingPreview),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+          if (isPendingPreview)
+            SliverToBoxAdapter(
+              child: PendingInvitePreviewBanner(
+                plan: plan,
+                onLeftPlan: _leavePlanOrPop,
+              ),
+            ),
+        ];
+      },
+      body: _buildContent(plan, isPendingPreview: isPendingPreview),
     );
   }
 
@@ -273,16 +349,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           Icons.arrow_back,
           color: _cTextPrimary,
         ),
-        onPressed: () {
-          // Si al hacer pop no queda nada debajo (pantalla negra), aseguramos volver a la lista de planes.
-          if (Navigator.of(context).canPop()) {
-            Navigator.of(context).pop();
-          } else {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const PlansListPage()),
-            );
-          }
-        },
+        onPressed: _navigateBackFromPlan,
       ),
       title: Text(
         plan.name,

@@ -284,7 +284,7 @@ Fuente de verdad de composición: `docs/guias/RESUMEN_PLAN_REORG_UI.md`. Demo: `
 - Cronología compacta; en plan `en_curso`, reforzar evento actual (punto con anillo, acento `color2` en icono).  
 - Alojamiento de la noche al final: **esta noche · [nombre]** (noches `[check-in, check-out)`).  
 - Sin tarjeta independiente «ahora / siguiente».  
-- Cabecera con `plan.imageUrl` cuando exista; colapso al scroll manteniendo nombre + estado de participación.
+- Cabecera con `plan.imageUrl` cuando exista (fallback corporativo si no); colapso al scroll en móvil resumen manteniendo nombre + estado de participación (`PlanCollapsingHeader`).
 
 **Densidad de filas (sigue vigente)**
 
