@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:unp_calendario/app/theme/color_scheme.dart';
 import 'package:unp_calendario/l10n/app_localizations.dart';
+import 'package:unp_calendario/widgets/common/ios_grouped_form.dart';
 
-/// Barra de navegación horizontal para las opciones del plan en mobile
-/// Equivalente a los widgets W14-W25 del dashboard web
+/// Barra de navegación horizontal para las opciones del plan en mobile.
+/// Nav por defecto: 5 pestañas (info · resumen · agenda · personas · pagos).
+/// Chat / notificaciones van en la barra inferior; notas / stats viven en Info.
 class PlanNavigationBar extends StatelessWidget {
   final String selectedOption;
   final ValueChanged<String> onOptionSelected;
-  /// Si false, la pestaña Estadísticas no se muestra (solo visible para organizador).
+  /// Legacy: stats ya no está en la nav por defecto; se ignora salvo allowedOptionIds.
   final bool showStatsTab;
   /// T276: si no es null, solo se muestran estas pestañas (p. ej. preview pending).
   final Set<String>? allowedOptionIds;
@@ -20,105 +22,95 @@ class PlanNavigationBar extends StatelessWidget {
     this.allowedOptionIds,
   });
 
-  static const Color _surface = Color(0xFF1F2937);
+  /// IDs visibles cuando [allowedOptionIds] es null.
+  static const Set<String> defaultOptionIds = {
+    'planData',
+    'mySummary',
+    'calendar',
+    'participants',
+    'payments',
+  };
 
-  // Opciones principales del plan (T252: añadida "Mi resumen")
+  /// Catálogo completo (ids de routing estables). Etiquetas en minúsculas de presentación.
   static List<NavigationOption> _allOptions(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return [
-      NavigationOption(
+      const NavigationOption(
         id: 'planData',
-        icon: Icons.info,
-        label: 'Info',
+        icon: Icons.info_outline,
+        label: 'info',
       ),
-      NavigationOption(
+      const NavigationOption(
         id: 'mySummary',
         icon: Icons.list_alt,
-        label: loc.myPlanSummaryTab,
+        label: 'resumen',
       ),
-      NavigationOption(
+      const NavigationOption(
         id: 'calendar',
-        icon: Icons.calendar_today,
-        label: 'Calendario',
+        icon: Icons.calendar_today_outlined,
+        label: 'agenda',
       ),
-      NavigationOption(
+      const NavigationOption(
         id: 'participants',
-        icon: Icons.group,
-        label: 'Participantes',
+        icon: Icons.group_outlined,
+        label: 'personas',
       ),
+      const NavigationOption(
+        id: 'payments',
+        icon: Icons.payments_outlined,
+        label: 'pagos',
+      ),
+      // Fuera de la nav por defecto; se conservan para allowedOptionIds / deep links.
       NavigationOption(
         id: 'chat',
         icon: Icons.chat_bubble_outline,
-        label: 'Chat',
-      ),
-      // P17: Pagos entre Chat y Estadística (lista de puntos a corregir)
-      NavigationOption(
-        id: 'payments',
-        icon: Icons.payment,
-        label: 'Pagos',
+        label: 'chat',
       ),
       NavigationOption(
         id: 'planNotifications',
         icon: Icons.notifications_outlined,
-        label: loc.notificationsTitle,
+        label: loc.notificationsTitle.toLowerCase(),
       ),
       NavigationOption(
         id: 'planNotes',
         icon: Icons.note_alt_outlined,
-        label: loc.planNotesTabTitle,
+        label: loc.planNotesTabTitle.toLowerCase(),
       ),
-      NavigationOption(
+      const NavigationOption(
         id: 'stats',
         icon: Icons.bar_chart,
-        label: 'Stats',
+        label: 'stats',
       ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
+    // ignore: unused_local_variable — showStatsTab conservado por API; stats fuera de nav default.
+    final _ = showStatsTab;
     final options = _allOptions(context).where((o) {
       if (allowedOptionIds != null) {
         return allowedOptionIds!.contains(o.id);
       }
-      return o.id != 'stats' || showStatsTab;
+      return defaultOptionIds.contains(o.id);
     }).toList();
-    // P3: pantallas muy estrechas (p. ej. iPhone SE) — menos padding e iconos algo más pequeños
-    final w = MediaQuery.sizeOf(context).width;
-    final compact = w < 360;
-    final barHeight = compact ? 52.0 : 56.0;
-    final hPad = compact ? 6.0 : 12.0;
-    final vPad = compact ? 6.0 : 8.0;
-    final tabPad = compact ? 2.0 : 4.0;
-    return Container(
-      height: barHeight,
-      decoration: BoxDecoration(
-        color: _surface,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.12),
-            width: 1,
-          ),
+
+    return Material(
+      color: IosFormColors.pageBg,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+        child: Row(
+          children: [
+            for (final option in options)
+              Expanded(
+                child: _NavigationButton(
+                  option: option,
+                  isSelected: selectedOption == option.id,
+                  onTap: () => onOptionSelected(option.id),
+                ),
+              ),
+          ],
         ),
-      ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-        itemCount: options.length,
-        itemBuilder: (context, index) {
-          final option = options[index];
-          final isSelected = selectedOption == option.id;
-          
-          return Padding(
-            padding: EdgeInsets.symmetric(horizontal: tabPad),
-            child: _NavigationButton(
-              option: option,
-              isSelected: isSelected,
-              compact: compact,
-              onTap: () => onOptionSelected(option.id),
-            ),
-          );
-        },
       ),
     );
   }
@@ -140,55 +132,54 @@ class _NavigationButton extends StatelessWidget {
   final NavigationOption option;
   final bool isSelected;
   final VoidCallback onTap;
-  /// P3: modo compacto para pantallas estrechas
-  final bool compact;
 
   const _NavigationButton({
     required this.option,
     required this.isSelected,
     required this.onTap,
-    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final side = compact ? 42.0 : 48.0;
-    final iconSize = compact ? 20.0 : 24.0;
-    return GestureDetector(
+    final color =
+        isSelected ? AppColorScheme.color2 : IosFormColors.textSecondary;
+    return InkWell(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        width: side,
-        height: side,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColorScheme.color2
-              : const Color(0xFF1F2937),
-          border: Border.all(
-            color: isSelected
-                ? AppColorScheme.color2.withValues(alpha: 0.9)
-                : Colors.white.withValues(alpha: 0.12),
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Center(
-          child: Semantics(
-            label: option.label,
-            button: true,
-            selected: isSelected,
-            child: Icon(
-              option.icon,
-              color: isSelected
-                  ? Colors.white
-                  : Colors.white70,
-              size: iconSize,
-            ),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Semantics(
+          label: option.label,
+          button: true,
+          selected: isSelected,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(option.icon, size: 22, color: color),
+              const SizedBox(height: 2),
+              Text(
+                option.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                height: 2,
+                width: 28,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColorScheme.color2 : Colors.transparent,
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
-

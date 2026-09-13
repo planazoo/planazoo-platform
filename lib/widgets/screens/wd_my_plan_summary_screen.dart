@@ -74,10 +74,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     applyHeightToLastDescent: true,
   );
 
-  static const int _chronoLimit = 15;
-  bool _chronoExpanded = false;
-  /// Días desplegados en el itinerario (clave yyyy-MM-dd). Vacío = todos plegados.
-  final Set<String> _expandedDayKeys = {};
+  /// Día seleccionado en el selector horizontal (clave civil).
+  DateTime? _selectedDay;
+  final ScrollController _dayChipsScrollController = ScrollController();
   /// 'mine' = solo mis eventos; 'plan' = todos los participantes.
   String _internalViewMode = 'mine';
   /// Ítem 81: en planificando, mostrar solo eventos borrador / no confirmados.
@@ -85,6 +84,12 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
 
   String get _viewMode => widget.viewMode ?? _internalViewMode;
   bool get _draftOnlyFilter => widget.draftOnlyFilter ?? _internalDraftOnlyFilter;
+
+  @override
+  void dispose() {
+    _dayChipsScrollController.dispose();
+    super.dispose();
+  }
 
   void _setViewMode(String mode) {
     if (widget.onViewModeChanged != null) {
@@ -120,9 +125,39 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     if (eventDay.isBefore(today)) return true;
     if (eventDay.isAfter(today)) return false;
     final startMin = e.hour * 60 + e.startMinute;
-    final endMin = e.durationMinutes > 0 ? startMin + e.durationMinutes : startMin;
+    final endMin =
+        e.durationMinutes > 0 ? startMin + e.durationMinutes : startMin;
     final nowMin = now.hour * 60 + now.minute;
     return endMin < nowMin;
+  }
+
+  /// Evento cuyo rango horario contiene «ahora».
+  static bool _isEventHappeningNow(Event e, DateTime now) {
+    final eventDay = DateTime(e.date.year, e.date.month, e.date.day);
+    final today = DateTime(now.year, now.month, now.day);
+    if (eventDay != today) return false;
+    final startMin = e.hour * 60 + e.startMinute;
+    final endMin = e.durationMinutes > 0
+        ? startMin + e.durationMinutes
+        : startMin + 30;
+    final nowMin = now.hour * 60 + now.minute;
+    return nowMin >= startMin && nowMin <= endMin;
+  }
+
+  /// Evento actual (en curso) o el siguiente próximo del día.
+  static Event? _currentOrNextEvent(List<Event> events, DateTime now) {
+    Event? happening;
+    Event? next;
+    for (final e in events) {
+      if (_isEventHappeningNow(e, now)) {
+        happening = e;
+        break;
+      }
+      if (!_isEventPast(e, now)) {
+        next ??= e;
+      }
+    }
+    return happening ?? next;
   }
 
   @override
@@ -226,77 +261,73 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
 
         final isEmpty = displayEvents.isEmpty && displayAccommodations.isEmpty;
         final showParticipantLabels = _viewMode == 'plan';
+        final planDays = _planDayRange(displayEvents, displayAccommodations);
+        final selectedDay = _resolveSelectedDay(planDays);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (widget.showTopSummaryBar) bar,
+            if (!widget.showTopSummaryBar)
+              _buildMineFilterRow(
+                loc: loc,
+                viewMode: _viewMode,
+                onViewModeChanged: _setViewMode,
+                showDraftFilter: showDraftFilter,
+                draftsOnlyActive: _draftOnlyFilter,
+                onDraftOnlyToggle: () => _setDraftOnlyFilter(!_draftOnlyFilter),
+              ),
             Expanded(
               child: ColoredBox(
                 color: Colors.transparent,
                 child: isEmpty
                     ? _buildEmptyState(loc)
-                    : Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        ListView(
-                          padding: EdgeInsets.fromLTRB(
-                            16,
-                            widget.showTopSummaryBar ? 16 : 56,
-                            16,
-                            88,
-                          ),
+                    : GestureDetector(
+                        onHorizontalDragEnd: (details) {
+                          final v = details.primaryVelocity ?? 0;
+                          if (v < -280) {
+                            _shiftSelectedDay(planDays, 1);
+                          } else if (v > 280) {
+                            _shiftSelectedDay(planDays, -1);
+                          }
+                        },
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(0, 4, 0, 24),
                           children: [
-                            _buildChronologicalSectionBody(
-                              context,
-                              loc,
-                              displayEvents,
-                              displayAccommodations,
-                              showParticipantLabels,
-                              participantNamesMap,
-                              dimPastInCourse: dimPastInCourse,
-                            ),
-                          ],
-                        ),
-                        if (!widget.showTopSummaryBar)
-                          Positioned(
-                            right: 16,
-                            top: 8,
-                            child: Material(
-                              color: _surface,
-                              shape: const CircleBorder(),
-                              elevation: 2,
-                              child: IconButton(
-                                tooltip: loc.planMapTooltip,
-                                onPressed: () => PlanMapScreen.open(
+                            _buildDaySelector(planDays),
+                            if (selectedDay != null)
+                              _buildDateActionsRow(
+                                loc: loc,
+                                day: selectedDay,
+                                onOpenMap: () => PlanMapScreen.open(
                                   context,
                                   plan: widget.plan,
                                   events: mapEvents,
                                   accommodations: mapAccommodations,
                                   onOpenEvent: widget.onOpenEvent,
-                                  onOpenAccommodation: widget.onOpenAccommodation,
-                                ),
-                                icon: const Icon(
-                                  Icons.map_outlined,
-                                  color: Colors.white,
-                                  size: 22,
+                                  onOpenAccommodation:
+                                      widget.onOpenAccommodation,
                                 ),
                               ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: selectedDay == null
+                                  ? const SizedBox.shrink()
+                                  : _buildSelectedDayContent(
+                                      context,
+                                      loc,
+                                      selectedDay,
+                                      displayEvents,
+                                      displayAccommodations,
+                                      showParticipantLabels,
+                                      participantNamesMap,
+                                      dimPastInCourse: dimPastInCourse,
+                                    ),
                             ),
-                          ),
-                        if (widget.onRequestCreateEvent != null && widget.onRequestCreateAccommodation != null)
-                          Positioned(
-                            right: 16,
-                            bottom: 16,
-                            child: FloatingActionButton(
-                              onPressed: () => _showCreateChooser(context, loc),
-                              backgroundColor: AppColorScheme.color3,
-                              foregroundColor: Colors.white,
-                              child: const Icon(Icons.add),
-                            ),
-                          ),
-                      ],
-                    ),
+                          ],
+                        ),
+                      ),
               ),
             ),
           ],
@@ -305,14 +336,15 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
       loading: () => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildSummaryBar(
-            loc: loc,
-            viewMode: _viewMode,
-            onViewModeChanged: _setViewMode,
-            showDraftFilter: false,
-            draftsOnlyActive: false,
-            onDraftOnlyToggle: () {},
-          ),
+          if (widget.showTopSummaryBar)
+            _buildSummaryBar(
+              loc: loc,
+              viewMode: _viewMode,
+              onViewModeChanged: _setViewMode,
+              showDraftFilter: false,
+              draftsOnlyActive: false,
+              onDraftOnlyToggle: () {},
+            ),
           Expanded(
             child: ColoredBox(
               color: Colors.transparent,
@@ -326,14 +358,15 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
       error: (err, _) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildSummaryBar(
-            loc: loc,
-            viewMode: _viewMode,
-            onViewModeChanged: _setViewMode,
-            showDraftFilter: false,
-            draftsOnlyActive: false,
-            onDraftOnlyToggle: () {},
-          ),
+          if (widget.showTopSummaryBar)
+            _buildSummaryBar(
+              loc: loc,
+              viewMode: _viewMode,
+              onViewModeChanged: _setViewMode,
+              showDraftFilter: false,
+              draftsOnlyActive: false,
+              onDraftOnlyToggle: () {},
+            ),
           Expanded(
             child: ColoredBox(
               color: Colors.transparent,
@@ -350,7 +383,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     );
   }
 
-  /// Barra superior: título, filtro borradores (ítem 81) y selector mío/todos.
+  /// Barra superior (web): acciones mínimas sin título «Mi resumen».
   Widget _buildSummaryBar({
     required AppLocalizations loc,
     required String viewMode,
@@ -364,55 +397,28 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     return Container(
       width: double.infinity,
       height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColorScheme.color2,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: _surface,
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+        ),
       ),
       child: Row(
         children: [
-          Flexible(
-            child: Text(
-              loc.myPlanSummaryTab,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.1,
-              ),
-            ),
+          _buildViewModeChip(
+            loc.myPlanSummaryViewMine,
+            viewMode == 'mine',
+            () => onViewModeChanged('mine'),
           ),
-          IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            tooltip: loc.planMapTooltip,
-            onPressed: onOpenMap,
-            icon: const Icon(
-              Icons.map_outlined,
-              color: Colors.white,
-              size: 22,
-            ),
-          ),
-          IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            tooltip: loc.myPlanSummaryShareTooltip,
-            onPressed: onShare,
-            icon: Icon(
-              Icons.ios_share,
-              color: onShare != null ? Colors.white : Colors.white38,
-              size: 22,
-            ),
+          const SizedBox(width: 8),
+          _buildViewModeChip(
+            loc.myPlanSummaryViewPlan,
+            viewMode == 'plan',
+            () => onViewModeChanged('plan'),
           ),
           if (showDraftFilter) ...[
+            const SizedBox(width: 4),
             IconButton(
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -427,25 +433,120 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               ),
             ),
           ],
-          const SizedBox(width: 4),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              reverse: true,
-              child: Row(
-                children: [
-                  _buildViewModeChip(
-                    loc.myPlanSummaryViewMine,
-                    viewMode == 'mine',
-                    () => onViewModeChanged('mine'),
+          const Spacer(),
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            tooltip: loc.planMapTooltip,
+            onPressed: onOpenMap,
+            icon: Icon(
+              Icons.map_outlined,
+              color: AppColorScheme.color2,
+              size: 22,
+            ),
+          ),
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            tooltip: loc.myPlanSummaryShareTooltip,
+            onPressed: onShare,
+            icon: Icon(
+              Icons.ios_share,
+              color: onShare != null ? Colors.white : Colors.white38,
+              size: 22,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Fila mío/todos + filtrar (stub) para mobile (sin barra superior).
+  Widget _buildMineFilterRow({
+    required AppLocalizations loc,
+    required String viewMode,
+    required void Function(String) onViewModeChanged,
+    required bool showDraftFilter,
+    required bool draftsOnlyActive,
+    required VoidCallback onDraftOnlyToggle,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Row(
+        children: [
+          _buildViewModeChip(
+            loc.myPlanSummaryViewMine,
+            viewMode == 'mine',
+            () => onViewModeChanged('mine'),
+          ),
+          const SizedBox(width: 8),
+          _buildViewModeChip(
+            loc.myPlanSummaryViewPlan,
+            viewMode == 'plan',
+            () => onViewModeChanged('plan'),
+          ),
+          if (showDraftFilter) ...[
+            const SizedBox(width: 6),
+            Material(
+              color: draftsOnlyActive
+                  ? Colors.orange.shade200.withValues(alpha: 0.2)
+                  : _surface,
+              borderRadius: BorderRadius.circular(18),
+              child: InkWell(
+                onTap: onDraftOnlyToggle,
+                borderRadius: BorderRadius.circular(18),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Icon(
+                    draftsOnlyActive
+                        ? Icons.filter_alt
+                        : Icons.filter_alt_outlined,
+                    size: 18,
+                    color: draftsOnlyActive
+                        ? Colors.orange.shade200
+                        : Colors.white70,
                   ),
-                  const SizedBox(width: 8),
-                  _buildViewModeChip(
-                    loc.myPlanSummaryViewPlan,
-                    viewMode == 'plan',
-                    () => onViewModeChanged('plan'),
+                ),
+              ),
+            ),
+          ],
+          const Spacer(),
+          Material(
+            color: _surface,
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(loc.filter),
+                    duration: const Duration(seconds: 2),
                   ),
-                ],
+                );
+              },
+              borderRadius: BorderRadius.circular(18),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.filter_list,
+                      size: 18,
+                      color: AppColorScheme.color2,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      loc.filter.toLowerCase(),
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -707,19 +808,19 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
 
   Widget _buildViewModeChip(String label, bool selected, VoidCallback onTap) {
     return Material(
-      color: selected ? Colors.white : Colors.white24,
-      borderRadius: BorderRadius.circular(20),
+      color: selected ? AppColorScheme.color2 : _surface,
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           child: Text(
             label,
             style: GoogleFonts.poppins(
               fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: selected ? AppColorScheme.color2 : Colors.white70,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : _textSecondary,
             ),
           ),
         ),
@@ -1258,6 +1359,10 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     bool subtitleEmphasizeAll = false,
     /// Ítem 69: plan en curso, evento ya pasado.
     bool mutedPast = false,
+    /// Plan en curso: evento actual / siguiente del día.
+    bool isCurrent = false,
+    /// Mostrar etiqueta «ahora» (solo si el evento está en curso ahora).
+    bool showNowLabel = false,
     bool showDraftBadge = false,
     /// Icono compacto (18×18, como badge B) + tooltip (desplazamiento, restauración…).
     IconData? typeBadgeIcon,
@@ -1273,9 +1378,12 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     final safeMapsQuery = mapsQuery ?? '';
     final safeRouteUrl = routeUrl ?? '';
     final safeWebUrl = webUrl ?? '';
-    final titleColor = mutedPast
-        ? _textMuted
-        : (onOpenDetail != null ? AppColorScheme.color2 : _textSecondary);
+    final accent = AppColorScheme.color2;
+    final titleColor = isCurrent
+        ? accent
+        : (mutedPast
+            ? _textMuted
+            : (onOpenDetail != null ? AppColorScheme.color2 : _textSecondary));
     final subColor = mutedPast
         ? _textMuted
         : (subtitleEmphasizeAll ? Colors.orange.shade200 : _textTertiary);
@@ -1283,7 +1391,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         ? FontWeight.w400
         : (subtitleEmphasizeAll ? FontWeight.w600 : FontWeight.w400);
     final iconColor = mutedPast ? _textMuted : _textTertiary;
-    final timeColor = mutedPast ? _textMuted : _textSecondary;
+    final timeColor = isCurrent
+        ? accent
+        : (mutedPast ? _textMuted : _textSecondary);
     final hasSubtitle = subtitle != null && subtitle.isNotEmpty;
     final isMobile = MediaQuery.sizeOf(context).width < 600;
     final showLeadingIcon =
@@ -1293,47 +1403,83 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: _summaryRowGap),
-      child: SizedBox(
-        height: _summaryRowHeight,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onOpenDetail,
-            borderRadius: BorderRadius.circular(8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (showLeadingIcon) ...[
-                  SizedBox(
-                    width: _summaryLeadingIconWidth,
-                    child: Icon(leadingIcon, size: 18, color: iconColor),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                if (timeLabel != null) ...[
-                  SizedBox(
-                    width: _summaryTimeColWidth,
-                    child: Text(
-                      timeLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: timeColor,
-                        height: 1.2,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: isCurrent ? accent.withValues(alpha: 0.14) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: isCurrent
+              ? Border.all(color: accent.withValues(alpha: 0.65), width: 1.2)
+              : null,
+        ),
+        child: SizedBox(
+          height: isCurrent ? _summaryRowHeight + 12 : _summaryRowHeight,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onOpenDetail,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: isCurrent ? 8 : 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (isCurrent) ...[
+                      Container(
+                        width: 10,
+                        height: 10,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: accent,
+                          border: Border.all(color: accent, width: 2),
+                        ),
                       ),
-                      textHeightBehavior: _tightFirstLineHeight,
-                    ),
-                  ),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Row(
+                    ],
+                    if (showLeadingIcon) ...[
+                      SizedBox(
+                        width: _summaryLeadingIconWidth,
+                        child: Icon(leadingIcon, size: 18, color: iconColor),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    if (timeLabel != null) ...[
+                      SizedBox(
+                        width: _summaryTimeColWidth,
+                        child: Text(
+                          timeLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: isCurrent ? 13 : 12,
+                            fontWeight:
+                                isCurrent ? FontWeight.w700 : FontWeight.w400,
+                            color: timeColor,
+                            height: 1.2,
+                          ),
+                          textHeightBehavior: _tightFirstLineHeight,
+                        ),
+                      ),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.max,
                         children: [
+                          if (showNowLabel)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Text(
+                                'ahora',
+                                style: GoogleFonts.poppins(
+                                  color: accent,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          Row(
+                            children: [
                           if (showDraftBadge) ...[
                             Tooltip(
                               message: loc.eventStatusDraft,
@@ -1469,7 +1615,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Color get _linkChipIconColor => AppColorScheme.color2;
@@ -1621,61 +1769,384 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     return c != null ? '$c · ${e.description}' : e.description;
   }
 
-  Widget _buildChronologicalSectionBody(
-    BuildContext context,
-    AppLocalizations loc,
+  List<DateTime> _planDayRange(
     List<Event> events,
     List<Accommodation> accommodations,
+  ) {
+    final start = _dateOnly(widget.plan.startDate);
+    final end = _dateOnly(widget.plan.endDate);
+    if (!end.isBefore(start)) {
+      final days = <DateTime>[];
+      var d = start;
+      while (!d.isAfter(end)) {
+        days.add(d);
+        d = DateTime(d.year, d.month, d.day + 1);
+      }
+      return days;
+    }
+    return _buildDayEntries(events, accommodations).map((e) => e.day).toList();
+  }
+
+  DateTime? _resolveSelectedDay(List<DateTime> days) {
+    if (days.isEmpty) return null;
+    if (_selectedDay != null &&
+        days.any((d) => _dayKey(d) == _dayKey(_selectedDay!))) {
+      return _selectedDay;
+    }
+    final today = _dateOnly(DateTime.now());
+    for (final d in days) {
+      if (_dayKey(d) == _dayKey(today)) return d;
+    }
+    return days.first;
+  }
+
+  void _selectDay(List<DateTime> days, int index) {
+    if (index < 0 || index >= days.length) return;
+    final day = days[index];
+    if (_selectedDay != null && _dayKey(_selectedDay!) == _dayKey(day)) return;
+    setState(() => _selectedDay = day);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_dayChipsScrollController.hasClients) return;
+      const chipWidth = 72.0;
+      final target = (index * chipWidth) - 48;
+      _dayChipsScrollController.animateTo(
+        target.clamp(0.0, _dayChipsScrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  void _shiftSelectedDay(List<DateTime> days, int delta) {
+    if (days.isEmpty) return;
+    final current = _resolveSelectedDay(days);
+    if (current == null) return;
+    final idx = days.indexWhere((d) => _dayKey(d) == _dayKey(current));
+    if (idx < 0) return;
+    _selectDay(days, idx + delta);
+  }
+
+  Widget _buildDaySelector(List<DateTime> days) {
+    if (days.isEmpty) return const SizedBox.shrink();
+    final localeTag = Localizations.localeOf(context).toString();
+    final today = _dateOnly(DateTime.now());
+    final selected = _resolveSelectedDay(days);
+    final selectedKey = selected != null ? _dayKey(selected) : null;
+
+    return SizedBox(
+      height: 72,
+      child: ListView.separated(
+        controller: _dayChipsScrollController,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: days.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final day = days[index];
+          final selected = selectedKey == _dayKey(day);
+          final isToday = _dayKey(day) == _dayKey(today);
+          final weekdayShort =
+              DateFormat.E(localeTag).format(day).replaceAll('.', '');
+          final bg = selected ? AppColorScheme.color2 : _surface;
+          return Material(
+            color: bg,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () => _selectDay(days, index),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: 64,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: isToday && !selected
+                      ? Border.all(color: AppColorScheme.color2, width: 1.4)
+                      : null,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      weekdayShort.toLowerCase(),
+                      style: GoogleFonts.poppins(
+                        color: selected ? Colors.white : _textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${day.day}',
+                      style: GoogleFonts.poppins(
+                        color: selected ? Colors.white : Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (isToday) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'hoy',
+                        style: GoogleFonts.poppins(
+                          color: selected
+                              ? Colors.white.withValues(alpha: 0.9)
+                              : AppColorScheme.color2,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDateActionsRow({
+    required AppLocalizations loc,
+    required DateTime day,
+    required VoidCallback onOpenMap,
+  }) {
+    final localeTag = Localizations.localeOf(context).toString();
+    final fullDate = DateFormat.yMMMMEEEEd(localeTag).format(day);
+    final isToday = _dayKey(day) == _dayKey(DateTime.now());
+    final canCreate = widget.onRequestCreateEvent != null &&
+        widget.onRequestCreateAccommodation != null;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+                children: [
+                  TextSpan(text: fullDate.toLowerCase()),
+                  if (isToday)
+                    TextSpan(
+                      text: ' · hoy',
+                      style: GoogleFonts.poppins(
+                        color: AppColorScheme.color2,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: loc.planMapTooltip,
+            onPressed: onOpenMap,
+            icon: Icon(Icons.map_outlined, color: AppColorScheme.color2),
+          ),
+          if (canCreate) ...[
+            const SizedBox(width: 4),
+            Material(
+              color: AppColorScheme.color3,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => _showCreateChooser(context, loc),
+                child: const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(Icons.add, color: Colors.white, size: 24),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedDayContent(
+    BuildContext context,
+    AppLocalizations loc,
+    DateTime day,
+    List<Event> allEvents,
+    List<Accommodation> allAccommodations,
     bool showParticipantLabels,
     Map<String, String> participantNamesMap, {
     required bool dimPastInCourse,
   }) {
-    final dayEntries = _buildDayEntries(events, accommodations);
-    if (dayEntries.isEmpty) {
-      return Text(
-        '—',
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          color: _textTertiary,
-        ),
-      );
+    final dayKey = _dayKey(day);
+    final events = allEvents
+        .where((e) => _dayKey(_dateOnly(e.date)) == dayKey)
+        .toList()
+      ..sort(_compareEventsBySchedule);
+    final accommodations = allAccommodations
+        .where((a) =>
+            _accommodationStayDays(a).any((d) => _dayKey(d) == dayKey))
+        .toList();
+    final now = DateTime.now();
+    final today = _dateOnly(now);
+    final emphasizeCurrent =
+        dimPastInCourse && _dayKey(day) == _dayKey(today);
+    Event? happeningNow;
+    if (emphasizeCurrent) {
+      for (final e in events) {
+        if (_isEventHappeningNow(e, now)) {
+          happeningNow = e;
+          break;
+        }
+      }
     }
+    final highlight = emphasizeCurrent
+        ? (happeningNow ?? _currentOrNextEvent(events, now))
+        : null;
+    final highlightId = highlight?.id;
+    final showNowLabel =
+        happeningNow != null && highlight?.id == happeningNow.id;
 
-    final showLimit = dayEntries.length > _chronoLimit && !_chronoExpanded;
-    final displayDays =
-        showLimit ? dayEntries.take(_chronoLimit).toList() : dayEntries;
+    if (events.isEmpty && accommodations.isEmpty) {
+      return _buildEmptyDay(loc);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ...displayDays.map(
-          (entry) => _buildCollapsibleDaySection(
-            context,
+        for (final e in events)
+          _buildEventDayRow(
             loc,
-            entry,
+            e,
             showParticipantLabels,
             participantNamesMap,
             dimPastInCourse: dimPastInCourse,
+            now: now,
+            isCurrent: highlightId != null && e.id == highlightId,
+            showNowLabel: showNowLabel && e.id == highlightId,
           ),
-        ),
-        if (dayEntries.length > _chronoLimit)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: TextButton(
-              onPressed: () =>
-                  setState(() => _chronoExpanded = !_chronoExpanded),
-              child: Text(
-                _chronoExpanded
-                    ? loc.myPlanSummarySeeLess
-                    : loc.myPlanSummarySeeMore,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: AppColorScheme.color2,
-                ),
-              ),
-            ),
+        for (final a in accommodations)
+          _buildNightStayRow(
+            loc,
+            a,
+            day,
+            showParticipantLabels,
+            participantNamesMap,
           ),
       ],
+    );
+  }
+
+  Widget _buildEmptyDay(AppLocalizations loc) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+      child: Column(
+        children: [
+          Icon(
+            Icons.event_available_outlined,
+            size: 36,
+            color: AppColorScheme.color2.withValues(alpha: 0.8),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'nada previsto este día',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'usa + para crear un evento o un alojamiento',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: _textSecondary,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNightStayRow(
+    AppLocalizations loc,
+    Accommodation a,
+    DateTime day,
+    bool showParticipantLabels,
+    Map<String, String> participantNamesMap,
+  ) {
+    final badgeColor = _stayMarkerColor(day);
+    final subtitleParts = <String>[];
+    if (showParticipantLabels) {
+      subtitleParts.add(
+        _participantLabelForAccommodation(a, participantNamesMap, loc),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _border),
+        ),
+        child: Row(
+          children: [
+            _stayHBadge(badgeColor),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'esta noche · ${a.hotelName}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (subtitleParts.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitleParts.join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        color: _textTertiary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (widget.onOpenAccommodation != null)
+              IconButton(
+                tooltip: loc.planMapTooltip,
+                onPressed: () => widget.onOpenAccommodation!(a),
+                icon: Icon(
+                  Icons.chevron_right,
+                  color: AppColorScheme.color2,
+                  size: 20,
+                ),
+              )
+            else if ((a.commonPart?.address ?? '').trim().isNotEmpty)
+              Icon(
+                Icons.place_outlined,
+                size: 18,
+                color: AppColorScheme.color2,
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1716,6 +2187,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     ];
   }
 
+  // ignore: unused_element — legacy collapsible kept for reference during reorg
   Widget _buildCollapsibleDaySection(
     BuildContext context,
     AppLocalizations loc,
@@ -1725,8 +2197,6 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     required bool dimPastInCourse,
   }) {
     final localeTag = Localizations.localeOf(context).toString();
-    final key = _dayKey(entry.day);
-    final expanded = _expandedDayKeys.contains(key);
     final dayLabel = DateFormat.yMMMMEEEEd(localeTag).format(entry.day);
     final now = DateTime.now();
 
@@ -1742,74 +2212,46 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    if (expanded) {
-                      _expandedDayKeys.remove(key);
-                    } else {
-                      _expandedDayKeys.add(key);
-                    }
-                  });
-                },
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          dayLabel,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        expanded ? Icons.expand_less : Icons.expand_more,
-                        color: _textSecondary,
-                        size: 22,
-                      ),
-                    ],
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Text(
+                dayLabel,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
               ),
             ),
-            if (expanded) ...[
-              Divider(height: 1, thickness: 1, color: _border),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final e in entry.events)
-                      _buildEventDayRow(
+            Divider(height: 1, thickness: 1, color: _border),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final e in entry.events)
+                    _buildEventDayRow(
+                      loc,
+                      e,
+                      showParticipantLabels,
+                      participantNamesMap,
+                      dimPastInCourse: dimPastInCourse,
+                      now: now,
+                    ),
+                  if (entry.accommodations.isNotEmpty) ...[
+                    _stayListHeader(loc),
+                    for (final a in entry.accommodations)
+                      _buildAccommodationDayRow(
                         loc,
-                        e,
+                        a,
+                        entry.day,
                         showParticipantLabels,
                         participantNamesMap,
-                        dimPastInCourse: dimPastInCourse,
-                        now: now,
                       ),
-                    if (entry.accommodations.isNotEmpty) ...[
-                      _stayListHeader(loc),
-                      for (final a in entry.accommodations)
-                        _buildAccommodationDayRow(
-                          loc,
-                          a,
-                          entry.day,
-                          showParticipantLabels,
-                          participantNamesMap,
-                        ),
-                    ],
                   ],
-                ),
+                ],
               ),
-            ],
+            ),
           ],
         ),
       ),
@@ -1921,11 +2363,13 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     Map<String, String> participantNamesMap, {
     required bool dimPastInCourse,
     required DateTime now,
+    bool isCurrent = false,
+    bool showNowLabel = false,
   }) {
     final participantLabel = showParticipantLabels
         ? _participantLabelForEvent(e, participantNamesMap, loc)
         : null;
-    final past = dimPastInCourse && _isEventPast(e, now);
+    final past = dimPastInCourse && _isEventPast(e, now) && !isCurrent;
     final isDraft = e.isDraft || (e.commonPart?.isDraft == true);
     final typeBadge = _inlineTypeBadge(e, loc);
     return _buildSummaryLinkRow(
@@ -1941,6 +2385,8 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
       subtitleEmphasizeAll:
           showParticipantLabels && e.participantTrackIds.isEmpty,
       mutedPast: past,
+      isCurrent: isCurrent,
+      showNowLabel: showNowLabel,
       showDraftBadge: isDraft,
       typeBadgeIcon: typeBadge?.icon,
       typeBadgeTooltip: typeBadge?.tooltip,

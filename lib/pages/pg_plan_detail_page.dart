@@ -75,7 +75,6 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   late String _selectedOption;
   String _summaryViewMode = 'mine';
   bool _summaryDraftOnly = false;
-  bool _summaryShowDraftFilter = false;
   bool _hasSetInitialTabForParticipant = false;
   bool _didScanCancellationDeadlines = false;
   PlanInfoEditChrome? _planInfoEditChrome;
@@ -249,7 +248,10 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                     }
                   },
                 ),
-              _buildSectionTitleBar(isPendingPreview: isPendingPreview),
+              // Resumen: sin título redundante «mi resumen» (filtros viven en la pantalla).
+              // Notas / stats: fuera de la nav de 5; viven en Info del plan.
+              if (_selectedOption != 'mySummary')
+                _buildSectionTitleBar(isPendingPreview: isPendingPreview),
               Expanded(
                 child: _buildContent(plan, isPendingPreview: isPendingPreview),
               ),
@@ -365,43 +367,6 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (_selectedOption == 'mySummary') ...[
-            const SizedBox(width: 8),
-            Flexible(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  reverse: true,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildSummaryViewModeChip(
-                        label: loc.myPlanSummaryViewMine,
-                        selected: _summaryViewMode == 'mine',
-                        onTap: () => setState(() => _summaryViewMode = 'mine'),
-                      ),
-                      const SizedBox(width: 6),
-                      _buildSummaryViewModeChip(
-                        label: loc.myPlanSummaryViewPlan,
-                        selected: _summaryViewMode == 'plan',
-                        onTap: () => setState(() => _summaryViewMode = 'plan'),
-                      ),
-                      if (_summaryShowDraftFilter) ...[
-                        const SizedBox(width: 6),
-                        _buildSummaryHeaderFilterButton(
-                          tooltip: loc.myPlanSummaryDraftsOnlyTooltip,
-                          active: _summaryDraftOnly,
-                          onTap: () => setState(
-                              () => _summaryDraftOnly = !_summaryDraftOnly),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
           if (_selectedOption == 'payments' && !isPendingPreview) ...[
             const SizedBox(width: 8),
             Tooltip(
@@ -430,67 +395,6 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryHeaderFilterButton({
-    required String tooltip,
-    required bool active,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(17),
-        child: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: active
-                ? Colors.orange.shade200.withValues(alpha: 0.2)
-                : const Color(0xFF1F2937),
-            borderRadius: BorderRadius.circular(17),
-            border: Border.all(
-              color: active
-                  ? Colors.orange.shade200.withValues(alpha: 0.8)
-                  : Colors.white.withValues(alpha: 0.12),
-              width: 1,
-            ),
-          ),
-          child: Icon(
-            active ? Icons.filter_alt : Icons.filter_alt_outlined,
-            color: active ? Colors.orange.shade200 : Colors.white70,
-            size: 18,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryViewModeChip({
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: selected ? AppColorScheme.color2.withValues(alpha: 0.22) : const Color(0xFF1F2937),
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: selected ? Colors.white : Colors.white70,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -525,6 +429,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     return '${value[0].toUpperCase()}${value.substring(1)}';
   }
 
+  /// Barra inferior: utilidades (buscar stub · chat · notificaciones).
+  /// Crear evento/alojamiento vive en el + de la fila de fecha del resumen.
   Widget _buildQuickActionsBar(Plan plan) {
     final loc = AppLocalizations.of(context)!;
     final planId = plan.id;
@@ -535,56 +441,81 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         ? (ref.watch(planUnreadCountProvider(planId)).valueOrNull ?? 0)
         : 0;
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        height: 72,
-        decoration: BoxDecoration(
-          color: _cPageBg,
-          border: Border(
-            top: BorderSide(
-              color: _cTextPrimary.withValues(alpha: _aBorderStrong),
-              width: 1,
-            ),
+    return Material(
+      color: const Color(0xFF1C1C1E),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Material(
+                  color: _cPageBg,
+                  borderRadius: BorderRadius.circular(20),
+                  child: InkWell(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('buscar en el plan...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      height: 40,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.search,
+                            size: 20,
+                            color: _cTextSecondary.withValues(alpha: 0.7),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'buscar en el plan...',
+                              style: GoogleFonts.poppins(
+                                color: _cTextSecondary.withValues(alpha: 0.7),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              _buildQuickActionButton(
+                icon: _selectedOption == 'chat'
+                    ? Icons.chat_bubble
+                    : Icons.chat_bubble_outline,
+                onTap: _quickOpenChat,
+                tooltip: loc.dashboardTabChat,
+                isActive: _selectedOption == 'chat',
+                badgeCount: unreadChat,
+              ),
+              _buildQuickActionButton(
+                icon: _selectedOption == 'planNotifications'
+                    ? Icons.notifications
+                    : Icons.notifications_outlined,
+                onTap: _quickOpenNotifications,
+                tooltip: loc.notificationsTitle,
+                isActive: _selectedOption == 'planNotifications',
+                badgeCount: unreadNotifications,
+              ),
+            ],
           ),
-          boxShadow: null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildQuickActionButton(
-              icon: Icons.add_circle_outline,
-              onTap: _quickCreateEvent,
-              tooltip: loc.createEvent,
-              isActive: _selectedOption == 'calendar',
-            ),
-            _buildQuickActionButton(
-              icon: Icons.hotel_outlined,
-              onTap: _quickCreateAccommodation,
-              tooltip: loc.tooltipCreateAccommodation,
-              isActive: _selectedOption == 'calendar',
-            ),
-            _buildQuickActionButton(
-              icon: _selectedOption == 'chat' ? Icons.chat_bubble : Icons.chat_bubble_outline,
-              onTap: _quickOpenChat,
-              tooltip: loc.dashboardTabChat,
-              isActive: _selectedOption == 'chat',
-              badgeCount: unreadChat,
-            ),
-            _buildQuickActionButton(
-              icon: Icons.receipt_long_outlined,
-              onTap: _quickCreatePayment,
-              tooltip: loc.paymentsAddExpense,
-              isActive: _selectedOption == 'payments',
-            ),
-            _buildQuickActionButton(
-              icon: _selectedOption == 'planNotifications' ? Icons.notifications : Icons.notifications_outlined,
-              onTap: _quickOpenNotifications,
-              tooltip: loc.notificationsTitle,
-              isActive: _selectedOption == 'planNotifications',
-              badgeCount: unreadNotifications,
-            ),
-          ],
         ),
       ),
     );
@@ -718,12 +649,8 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
           viewMode: _summaryViewMode,
           onViewModeChanged: (mode) => setState(() => _summaryViewMode = mode),
           draftOnlyFilter: _summaryDraftOnly,
-          onDraftOnlyFilterChanged: (value) => setState(() => _summaryDraftOnly = value),
-          onDraftFilterVisibilityChanged: (visible) {
-            if (_summaryShowDraftFilter != visible) {
-              setState(() => _summaryShowDraftFilter = visible);
-            }
-          },
+          onDraftOnlyFilterChanged: (value) =>
+              setState(() => _summaryDraftOnly = value),
         );
       
       case 'calendar':
@@ -945,12 +872,6 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     );
   }
 
-  void _quickCreateEvent() {
-    if (_isPendingPreview(_planFromStreamRead(), watch: false)) return;
-    final stayOnSummary = _selectedOption == 'mySummary';
-    _openCreateEventDialog(switchToCalendar: !stayOnSummary);
-  }
-
   void _openCreateEventDialog({required bool switchToCalendar}) {
     if (_isPendingPreview(_planFromStreamRead(), watch: false)) return;
     final p = _planFromStreamRead();
@@ -982,12 +903,6 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         },
       ),
     );
-  }
-
-  void _quickCreateAccommodation() {
-    if (_isPendingPreview(_planFromStreamRead(), watch: false)) return;
-    final stayOnSummary = _selectedOption == 'mySummary';
-    _openCreateAccommodationDialog(switchToCalendar: !stayOnSummary);
   }
 
   void _openCreateAccommodationDialog({required bool switchToCalendar}) {

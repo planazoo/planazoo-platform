@@ -54,6 +54,20 @@
 - Empty state de día sin eventos  
 - Cabecera compacta al scroll: fondo agrupado + borde acento + nombre + estado  
 
+## Implementación producción — estado (2026-09-13)
+
+Hecho en código:
+- Nav 5 (móvil + web dashboard)
+- Barra inferior móvil: buscar stub · chat · notificaciones
+- Resumen un-día (chips, swipe, mapa/+, esta noche, acento evento actual en `en_curso`)
+- Sin título «mi resumen» en la sección
+
+Aplazado:
+- Buscar / filtrar reales
+- Entradas notas/stats dentro de Info
+- Acceso web a chat/notif (sin bottom bar)
+- Cabecera con cover colapsable (prod sigue con AppBar)
+
 ## Implementación producción — notas
 
 - **No** reescribir lógica de negocio (providers, Firestore, permisos).  

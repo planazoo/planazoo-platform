@@ -2,6 +2,14 @@
 
 Registro ligero de errores que la IA ha detectado y corregido automáticamente, para evitar repetirlos y documentar patrones de solución.
 
+### [2026-09-13] Resumen reorg — paréntesis en `_buildSummaryLinkRow`
+
+- **Contexto:** Reorganización UI resumen (`wd_my_plan_summary_screen.dart`); envolver fila con `DecoratedBox` + `Padding` para acento «evento actual».
+- **Error:** `Expected to find ')'` al cerrar el widget.
+- **Causa raíz:** Al añadir capas (`DecoratedBox`/`Padding`) no se actualizó el número de cierres; un `);` absorbía dos niveles.
+- **Solución aplicada:** Cerrar en orden Row → Padding → InkWell → Material → SizedBox → DecoratedBox → Padding exterior.
+- **Notas:** Tras envolver un `return` multi-nivel, contar cierres o reformatear el bloque completo.
+
 ### [2026-09-06] Publicar iOS — Fastlane `Unauthorized Access` (2FA)
 
 - **Contexto:** Ciclo `PUBLICAR_APP`: IPA `1.0.0+9` ya generado; `cd ios && bundle exec fastlane beta`.

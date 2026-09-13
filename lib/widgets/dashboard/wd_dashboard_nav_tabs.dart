@@ -48,18 +48,41 @@ class WdDashboardNavTabs extends StatelessWidget {
     required this.onTabTap,
   });
 
-  /// Lista de pestañas (W14–W20) con etiquetas localizadas. T252: añadida "Mi resumen".
+  /// Nav de 5 (alineada a mobile): info · resumen · agenda · personas · pagos.
+  /// Chat / notificaciones / notas / stats quedan fuera de esta fila
+  /// (notas/stats → Info; chat/notif → utilidades en mobile).
   static List<DashboardNavTabItem> tabItems(BuildContext context) {
     return [
-      DashboardNavTabItem(id: 'W14', icon: Icons.info, label: 'info', screen: 'planData'),
-      DashboardNavTabItem(id: 'W15_MYSUMMARY', icon: Icons.list_alt, label: 'resumen', screen: 'mySummary'),
-      DashboardNavTabItem(id: 'W15', icon: Icons.calendar_today, label: 'calendario', screen: 'calendar'),
-      DashboardNavTabItem(id: 'W16', icon: Icons.group, label: 'in', screen: 'participants'),
-      DashboardNavTabItem(id: 'W18', icon: Icons.payment, label: 'pagos', screen: 'payments'),
-      DashboardNavTabItem(id: 'W19', icon: Icons.chat_bubble_outline, label: 'chat', screen: 'chat'),
-      DashboardNavTabItem(id: 'W20', icon: Icons.notifications_outlined, label: 'avisos', screen: 'unifiedNotifications'),
-      DashboardNavTabItem(id: 'W21_NOTES', icon: Icons.note_alt_outlined, label: 'notas', screen: 'planNotes'),
-      DashboardNavTabItem(id: 'W17', icon: Icons.bar_chart, label: 'stats', screen: 'stats'),
+      DashboardNavTabItem(
+        id: 'W14',
+        icon: Icons.info_outline,
+        label: 'info',
+        screen: 'planData',
+      ),
+      DashboardNavTabItem(
+        id: 'W15_MYSUMMARY',
+        icon: Icons.list_alt,
+        label: 'resumen',
+        screen: 'mySummary',
+      ),
+      DashboardNavTabItem(
+        id: 'W15',
+        icon: Icons.calendar_today_outlined,
+        label: 'agenda',
+        screen: 'calendar',
+      ),
+      DashboardNavTabItem(
+        id: 'W16',
+        icon: Icons.group_outlined,
+        label: 'personas',
+        screen: 'participants',
+      ),
+      DashboardNavTabItem(
+        id: 'W18',
+        icon: Icons.payments_outlined,
+        label: 'pagos',
+        screen: 'payments',
+      ),
     ];
   }
 
