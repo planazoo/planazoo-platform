@@ -264,18 +264,37 @@ Orden alineado en evento y alojamiento (2026-08-27): adjuntos → participantes 
 - Botón destructivo: rojo semántico.
 - Chat (burbujas y reacciones): burbuja propia en `cAccent`, resto en `cSurfaceBg`; metadatos en texto secundario; reacciones como chips compactos de bajo contraste.
 
-### Mi resumen / itinerario (`wd_my_plan_summary_screen.dart`) *(2026-08-27)*
+### Mi resumen / itinerario (`wd_my_plan_summary_screen.dart`) *(2026-09-13 reorg)*
 
-Referencia de densidad y acciones en lista cronológica.
+Fuente de verdad de composición: `docs/guias/RESUMEN_PLAN_REORG_UI.md`. Demo: `/demo/my-summary-reorg`.
 
-- **Sin** chips de acceso rápido (Participantes / Desplazamientos·Alojamiento / Notas): el itinerario es la vista principal.
-- **Filas** (`_buildSummaryLinkRow`): altura fija **48**; centrado vertical; título/subtítulo con `ellipsis`; gap entre filas **2**.
-- **Trailing de enlaces** (chips **26×26**, icono ~15): solo si hay enlace — **ruta** (`Icons.route` → Google Maps dir), **maps** (pin → búsqueda) o **web**. Si hay ruta de desplazamiento, no duplicar pin de localización.
-- **Icono de tipo** a la izquierda: desktop (≥600); oculto en móvil (excepción: hotel en filas de alojamiento, siempre).
-- **Badges inline 18×18** (antes del título): borrador **B**/**D**; tipo **desplazamiento** / **restauración** (mismo hueco; tooltip = familia).
-- **Días**: una **card** por día, cabecera plegable (al abrir, **todas cerradas**); eventos primero y **alojamiento al final** de la jornada (cabecera `ALOJAMIENTO`, marca **H** en cuadrado del color del día, subtítulo `Alojamiento · noche n/N`). Mismo criterio que el mapa (T279). Noches = `[check-in, check-out)`.
-- URL de ruta compartida: `PlanSummaryShareContent.eventRouteUrl(event)`.
-- **Mapa del plan (T279):** icono `Icons.map_outlined` en la barra (web) o botón circular arriba a la derecha (iOS, `showTopSummaryBar: false`). Pantalla `wd_plan_map_screen.dart`: chips de día 44, header 48, tokens `IosFormColors`. Color = día; número = secuencia de visitas; hotel al **final** de la lista (sección Alojamiento, **H** en cuadrado, no círculo numerado); aeropuerto = **A**. Lista: badge + misma fila que Mi resumen (`PlanSummaryLinkRow`). Pin ↔ fila; ancho ≥720 mapa | lista, si no mapa arriba y lista abajo.
+**Shell del plan (móvil)**
+
+- Nav superior **5** secciones con icono + texto en minúsculas: info · resumen · agenda · personas · pagos.  
+- Chat, notificaciones, notas y stats **no** van en esa fila (chat/notif → barra inferior; notas/stats → info).  
+- Barra inferior fija: **buscar en el plan…** + chat + notificaciones (badges existentes).  
+- Sin título de sección «mi resumen».  
+- Crear evento/alojamiento: **+** en la fila de fecha (no FAB ni iconos de crear en la barra inferior).
+
+**Contenido resumen**
+
+- Selector **mío / todos**; chip **filtrar** (estado visual; panel de categorías aparcado).  
+- **Un día a la vez**: chips horizontales (marcar **hoy**); swipe entre días si encaja.  
+- Fila: fecha completa centrada · mapa · **+** (estilo primario `AppColorScheme.color3`).  
+- Cronología compacta; en plan `en_curso`, reforzar evento actual (punto con anillo, acento `color2` en icono).  
+- Alojamiento de la noche al final: **esta noche · [nombre]** (noches `[check-in, check-out)`).  
+- Sin tarjeta independiente «ahora / siguiente».  
+- Cabecera con `plan.imageUrl` cuando exista; colapso al scroll manteniendo nombre + estado de participación.
+
+**Densidad de filas (sigue vigente)**
+
+- Trailing de enlaces chips **26×26** (ruta / maps / web).  
+- Badges borrador / tipo según lógica existente.  
+- Mapa del plan (T279): acceso desde la fila de fecha.
+
+### Mi resumen / itinerario — legado *(2026-08-27)*
+
+La vista por **cards de día apiladas y plegables** queda sustituida por el modelo un-día de la reorg. Detalle histórico de densidad 48px / badges se reutiliza en las filas del día seleccionado.
 
 ### Formulario evento · Desplazamiento
 

@@ -65,6 +65,14 @@ Registro ligero de errores que la IA ha detectado y corregido automáticamente, 
 - **Solución aplicada:** quitar `const` del `Icon`.
 - **Notas:** No usar `const` en widgets que tomen `IosFormColors.accent`.
 
+### [2026-09-13] Demo resumen reorg — layout SliverList / IntrinsicHeight
+
+- **Contexto:** `/demo/my-summary-reorg`; cronología con evento “ahora”.
+- **Error:** `!_debugDoingThisLayout is not true` en `SliverList` + `Unexpected null value`.
+- **Causa raíz:** `IntrinsicHeight` + `Column`/`Expanded` + `LayoutBuilder`/`CustomPaint` en el rail de la timeline (layout circular durante `performLayout`).
+- **Solución aplicada:** rail con `Stack` + `Positioned` (línea sólida/discontinua) y punto encima; sin `Expanded`/`LayoutBuilder` en esa columna.
+- **Notas:** En filas de timeline dentro de slivers, no combinar `IntrinsicHeight` con `Expanded`+`LayoutBuilder`.
+
 ## Formato recomendado
 
 Cada entrada nueva debe seguir esta estructura:

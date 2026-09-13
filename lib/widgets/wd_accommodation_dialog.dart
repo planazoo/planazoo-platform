@@ -1331,7 +1331,7 @@ class _AccommodationDialogState extends ConsumerState<AccommodationDialog> {
     final loc = AppLocalizations.of(context)!;
     final searchController = TextEditingController();
     final screen = MediaQuery.sizeOf(context);
-    final dialogHeight = (screen.height * 0.55).clamp(320.0, 560.0);
+    final dialogHeight = (screen.height * 0.40).clamp(260.0, 420.0);
     final dialogWidth =
         screen.width < 600 ? screen.width - 32 : 440.0;
 

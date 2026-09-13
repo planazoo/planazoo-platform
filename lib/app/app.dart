@@ -20,6 +20,7 @@ import 'package:unp_calendario/features/auth/presentation/pages/login_demo_v2_pa
 import 'package:unp_calendario/features/auth/presentation/pages/ui_review_hub_page.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/plans_list_demo_v1_page.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/plan_summary_demo_v1_page.dart';
+import 'package:unp_calendario/features/auth/presentation/pages/my_summary_reorg_demo_page.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/calendar_demo_v1_page.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/event_form_demo_v1_page.dart';
 import 'package:unp_calendario/features/auth/presentation/pages/accommodation_form_demo_v1_page.dart';
@@ -299,6 +300,12 @@ class _AppState extends ConsumerState<App> {
         if (settings.name == '/demo/plan-summary-v1') {
           return MaterialPageRoute(
             builder: (context) => const PlanSummaryDemoV1Page(),
+            settings: settings,
+          );
+        }
+        if (settings.name == '/demo/my-summary-reorg') {
+          return MaterialPageRoute(
+            builder: (context) => const MySummaryReorgDemoPage(),
             settings: settings,
           );
         }

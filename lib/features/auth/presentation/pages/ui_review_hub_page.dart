@@ -65,6 +65,20 @@ class UiReviewHubPage extends StatelessWidget {
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: AppColorScheme.color2.withValues(alpha: 0.5)),
+              ),
+              tileColor: AppColorScheme.color2.withValues(alpha: 0.12),
+              leading: Icon(Icons.view_day_outlined, color: AppColorScheme.color2),
+              title: const Text('Resumen reorg (nuevo)'),
+              subtitle: const Text('/demo/my-summary-reorg'),
+              onTap: () =>
+                  Navigator.of(context).pushNamed('/demo/my-summary-reorg'),
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
               ),
               leading: const Icon(Icons.summarize_outlined),
