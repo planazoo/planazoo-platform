@@ -1116,6 +1116,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planDetailsSectionNotes => 'Notes';
 
   @override
+  String get planDetailsSectionMore => 'More';
+
+  @override
   String get planDetailsSectionDescription => 'Description';
 
   @override

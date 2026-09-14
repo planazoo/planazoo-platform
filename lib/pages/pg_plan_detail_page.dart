@@ -685,6 +685,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             setState(() => _planInfoEditChrome = chrome);
           },
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
+          onOpenPlanNotes: isPendingPreview
+              ? null
+              : () => setState(() => _selectedOption = 'planNotes'),
+          onOpenPlanStats: isPendingPreview
+              ? null
+              : () => setState(() => _selectedOption = 'stats'),
           onPlanDeleted: () {
             Navigator.of(context).pop();
           },
@@ -771,6 +777,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             setState(() => _planInfoEditChrome = chrome);
           },
           onOpenSummary: () => setState(() => _selectedOption = 'mySummary'),
+          onOpenPlanNotes: isPendingPreview
+              ? null
+              : () => setState(() => _selectedOption = 'planNotes'),
+          onOpenPlanStats: isPendingPreview
+              ? null
+              : () => setState(() => _selectedOption = 'stats'),
           onPlanDeleted: () {
             Navigator.of(context).pop();
           },

@@ -62,12 +62,12 @@ Hecho en código:
 - Resumen un-día (chips, swipe, mapa/+, esta noche, acento evento actual en `en_curso`)
 - Sin título «mi resumen» en la sección
 - Cabecera cover colapsable en pestaña resumen (móvil): `PlanCollapsingHeader`
+- Notas / stats accesibles desde Info (sección «Más»; stats solo organizador)
 
 Aplazado:
 - Buscar / filtrar reales
-- Entradas notas/stats dentro de Info
-- Acceso web a chat/notif (sin bottom bar)
-- ~~Cabecera con cover colapsable~~ → hecho en móvil resumen (`PlanCollapsingHeader` + `NestedScrollView`)
+- ~~Entradas notas/stats dentro de Info~~ → hecho (sección «Más» en Info)
+- Acceso web a chat/notif (sin bottom bar; chat/notif siguen en accesos del dashboard)
 
 ## Implementación producción — notas
 

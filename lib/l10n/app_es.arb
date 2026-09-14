@@ -1176,6 +1176,10 @@
   },
   "planDetailsSectionGeneral": "General",
   "planDetailsSectionNotes": "Notas",
+  "planDetailsSectionMore": "Más",
+  "@planDetailsSectionMore": {
+    "description": "Sección Info con enlaces a notas/stats (fuera de la nav de 5)"
+  },
   "planDetailsSectionDescription": "Descripción",
   "planDetailsDatesLabel": "Fechas",
   "planDetailsDateStartShort": "Inicio",

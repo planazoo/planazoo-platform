@@ -48,6 +48,10 @@ class PlanDataScreen extends ConsumerStatefulWidget {
 
   /// Si se proporciona, el botón resumen abre la página de resumen en lugar del diálogo.
   final VoidCallback? onOpenSummary;
+  /// Acceso a notas del plan (antes pestaña; vive en Info tras reorg nav 5).
+  final VoidCallback? onOpenPlanNotes;
+  /// Acceso a estadísticas (organizador; antes pestaña).
+  final VoidCallback? onOpenPlanStats;
   final bool showAppBar;
 
   /// Tras guardar datos del plan (sin invalidar el stream global: evita ciclos de dispose en web).
@@ -65,6 +69,8 @@ class PlanDataScreen extends ConsumerStatefulWidget {
     this.onPlanDeleted,
     this.onManageParticipants,
     this.onOpenSummary,
+    this.onOpenPlanNotes,
+    this.onOpenPlanStats,
     this.showAppBar = true,
     this.onPlanUpdated,
     this.forceReadOnly = false,
@@ -858,6 +864,10 @@ class _PlanDataScreenState extends ConsumerState<PlanDataScreen> {
                   _buildInfoSection(loc,
                       showBaseInfo: false, isCompact: isCompact),
                 ],
+                _buildMoreLinksSection(
+                  loc,
+                  showStats: isOrganizer && !widget.forceReadOnly,
+                ),
                 if (!widget.forceReadOnly) ...[
                   _buildLeavePlanButton(),
                   _buildDeleteButton(),
@@ -1921,6 +1931,47 @@ extension _PlanDataScreenStateExtension on _PlanDataScreenState {
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  /// Enlaces a notas / stats (ya no están en la nav de 5 del plan).
+  Widget? _buildMoreLinksSection(
+    AppLocalizations loc, {
+    required bool showStats,
+  }) {
+    final notes = widget.onOpenPlanNotes;
+    final stats = showStats ? widget.onOpenPlanStats : null;
+    if (notes == null && stats == null) return null;
+
+    final children = <Widget>[];
+    if (notes != null) {
+      children.add(
+        IosSettingsRow(
+          label: loc.planNotesTabTitle.toLowerCase(),
+          value: '\u200B',
+          chevron: true,
+          onTap: notes,
+        ),
+      );
+    }
+    if (stats != null) {
+      if (children.isNotEmpty) children.add(const IosRowSeparator());
+      children.add(
+        IosSettingsRow(
+          label: loc.dashboardTabStats.toLowerCase(),
+          value: '\u200B',
+          chevron: true,
+          onTap: stats,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IosSectionLabel(loc.planDetailsSectionMore),
+        IosGroupedCard(children: children),
       ],
     );
   }

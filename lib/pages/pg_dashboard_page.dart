@@ -1992,6 +1992,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         });
       },
       onOpenSummary: () => _openPlanTab(selectedPlan!, 'mySummary', 'W15_MYSUMMARY'),
+      onOpenPlanNotes: forceReadOnly
+          ? null
+          : () => _openPlanTab(selectedPlan!, 'planNotes', 'W_PLAN_NOTES'),
+      onOpenPlanStats: forceReadOnly
+          ? null
+          : () => _openPlanTab(selectedPlan!, 'stats', 'W_STATS'),
       onPlanDeleted: () {
         setState(() {
           planazoos.removeWhere((p) => p.id == selectedPlan!.id);

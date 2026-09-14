@@ -2108,6 +2108,12 @@ abstract class AppLocalizations {
   /// **'Notas'**
   String get planDetailsSectionNotes;
 
+  /// Sección Info con enlaces a notas/stats (fuera de la nav de 5)
+  ///
+  /// In es, this message translates to:
+  /// **'Más'**
+  String get planDetailsSectionMore;
+
   /// No description provided for @planDetailsSectionDescription.
   ///
   /// In es, this message translates to:
