@@ -7,7 +7,7 @@ import 'package:unp_calendario/app/theme/color_scheme.dart';
 /// Clase que maneja la lógica de filtros del calendario
 class CalendarFilters {
   final TrackService _trackService;
-  
+
   CalendarFilters(this._trackService);
 
   /// Obtiene los tracks filtrados según el modo de vista actual
@@ -21,16 +21,21 @@ class CalendarFilters {
         return _trackService.getVisibleTracks();
       case CalendarViewMode.personal:
         if (currentUserId != null) {
-          return _trackService.getVisibleTracks()
+          final mine = _trackService
+              .getVisibleTracks()
               .where((track) => track.participantId == currentUserId)
               .toList();
+          if (mine.isNotEmpty) return mine;
         }
         // Fallback: usar el primer track si no hay usuario actual
         final tracks = _trackService.getVisibleTracks();
         return tracks.isNotEmpty ? [tracks.first] : [];
       case CalendarViewMode.custom:
-        return _trackService.getVisibleTracks()
-            .where((track) => filteredParticipantIds.contains(track.participantId))
+        return _trackService
+            .getVisibleTracks()
+            .where(
+              (track) => filteredParticipantIds.contains(track.participantId),
+            )
             .toList();
     }
   }
@@ -63,57 +68,111 @@ class CalendarFilters {
   void showCustomViewDialog(
     BuildContext context,
     List<String> filteredParticipantIds,
-    Function(CalendarViewMode viewMode, List<String> participantIds) onApply,
-  ) {
+    Function(CalendarViewMode viewMode, List<String> participantIds) onApply, {
+    Map<String, String>? displayNames,
+  }) {
     final allTracks = _trackService.getVisibleTracks();
-    final selectedTracks = Set<String>.from(filteredParticipantIds);
-    
+    final selectedTracks = Set<String>.from(
+      filteredParticipantIds.isNotEmpty
+          ? filteredParticipantIds
+          : allTracks.map((t) => t.participantId),
+    );
+
+    String labelFor(ParticipantTrack track, int index) {
+      final fromMap = displayNames?[track.participantId]?.trim();
+      if (fromMap != null && fromMap.isNotEmpty) return fromMap;
+      if (track.participantName.trim().isNotEmpty &&
+          track.participantName != track.participantId) {
+        return track.participantName.trim();
+      }
+      return 'Participante ${index + 1}';
+    }
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Seleccionar Participantes'),
-          content: SizedBox(
-            width: 400,
-            height: 300,
-            child: ListView.builder(
-              itemCount: allTracks.length,
-              itemBuilder: (context, index) {
-                final track = allTracks[index];
-                final isSelected = selectedTracks.contains(track.participantId);
-                
-                return CheckboxListTile(
-                  title: Text(track.participantName.isNotEmpty 
-                      ? track.participantName 
-                      : 'Participante ${index + 1}'),
-                  value: isSelected,
-                  onChanged: (bool? value) {
-                    setDialogState(() {
-                      if (value == true) {
-                        selectedTracks.add(track.participantId);
-                      } else {
-                        selectedTracks.remove(track.participantId);
+        builder: (context, setDialogState) {
+          final allSelected = allTracks.isNotEmpty &&
+              allTracks.every((t) => selectedTracks.contains(t.participantId));
+          return AlertDialog(
+            title: const Text('Seleccionar participantes'),
+            content: SizedBox(
+              width: 400,
+              height: 340,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        setDialogState(() {
+                          if (allSelected) {
+                            selectedTracks.clear();
+                          } else {
+                            selectedTracks
+                              ..clear()
+                              ..addAll(
+                                allTracks.map((t) => t.participantId),
+                              );
+                          }
+                        });
+                      },
+                      child: Text(
+                        allSelected
+                            ? 'Deseleccionar todos'
+                            : 'Seleccionar todos',
+                        style: TextStyle(color: AppColorScheme.color2),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: allTracks.length,
+                      itemBuilder: (context, index) {
+                        final track = allTracks[index];
+                        final isSelected =
+                            selectedTracks.contains(track.participantId);
+                        return CheckboxListTile(
+                          title: Text(labelFor(track, index)),
+                          value: isSelected,
+                          activeColor: AppColorScheme.color2,
+                          onChanged: (bool? value) {
+                            setDialogState(() {
+                              if (value == true) {
+                                selectedTracks.add(track.participantId);
+                              } else {
+                                selectedTracks.remove(track.participantId);
+                              }
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: selectedTracks.isNotEmpty
+                    ? () {
+                        onApply(
+                          CalendarViewMode.custom,
+                          selectedTracks.toList(),
+                        );
+                        Navigator.pop(context);
                       }
-                    });
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: selectedTracks.isNotEmpty ? () {
-                onApply(CalendarViewMode.custom, selectedTracks.toList());
-                Navigator.pop(context);
-              } : null,
-              child: const Text('Aplicar'),
-            ),
-          ],
-        ),
+                    : null,
+                child: const Text('Aplicar'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

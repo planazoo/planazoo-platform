@@ -30,23 +30,33 @@ class CalendarAccommodationLogic {
     if (viewMode == CalendarViewMode.all) {
       return accommodations;
     }
-    
-    final filteredParticipantIds = filteredTracks.map((track) => track.participantId).toList();
-    
+
+    final selectedIds = filteredTracks.isNotEmpty
+        ? filteredTracks.map((track) => track.participantId).toList()
+        : filteredParticipantIds;
+
     if (viewMode == CalendarViewMode.personal) {
       if (currentUserId == null) return accommodations;
-      return accommodations.where((acc) => 
-        _isForAllParticipants(acc) || _effectiveParticipantIds(acc).contains(currentUserId)
-      ).toList();
+      return accommodations
+          .where(
+            (acc) =>
+                _isForAllParticipants(acc) ||
+                _effectiveParticipantIds(acc).contains(currentUserId),
+          )
+          .toList();
     }
-    
+
     if (viewMode == CalendarViewMode.custom) {
-      return accommodations.where((acc) => 
-        _isForAllParticipants(acc) ||
-        _effectiveParticipantIds(acc).any((id) => filteredParticipantIds.contains(id))
-      ).toList();
+      return accommodations
+          .where(
+            (acc) =>
+                _isForAllParticipants(acc) ||
+                _effectiveParticipantIds(acc)
+                    .any((id) => selectedIds.contains(id)),
+          )
+          .toList();
     }
-    
+
     return accommodations;
   }
 

@@ -100,10 +100,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // Número de días visibles simultáneamente (1-7)
   int _visibleDays = 7;
   
-  // Variables para filtros de vista
-  CalendarViewMode _viewMode = CalendarViewMode.all;
+  // Variables para filtros de vista (por defecto: agenda del usuario actual)
+  CalendarViewMode _viewMode = CalendarViewMode.personal;
   String? _currentUserId;
   List<String> _filteredParticipantIds = [];
+  Map<String, String> _participantDisplayNames = {};
   
   /// T242: Filtro de eventos. 'all' = todos, 'draft' = solo borradores, 'confirmed' = solo confirmados.
   String _eventDraftFilter = 'all';
@@ -138,11 +139,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _calendarFilters = CalendarFilters(_trackService);
     _calendarTrackReorder = CalendarTrackReorder(_trackService);
     // CalendarAppBar se inicializará en _updateCalendarAppBar()
-    
-    // Inicializar usuario actual para filtros
-    _currentUserId = _trackService.getVisibleTracks().isNotEmpty 
-        ? _trackService.getVisibleTracks().first.participantId 
-        : null;
     
     // Sincronizar controladores de scroll
     _hoursScrollController.addListener(_syncScrollFromHours);
@@ -212,6 +208,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (widget.plan.id == null) return;
     
     final participantsAsync = ref.watch(planRealParticipantsProvider(widget.plan.id!));
+    final namesAsync =
+        ref.watch(planParticipantDisplayNamesProvider(widget.plan.id!));
+    final currentUser = ref.watch(currentUserProvider);
+    if (currentUser != null && _currentUserId != currentUser.id) {
+      _currentUserId = currentUser.id;
+    }
     
     participantsAsync.when(
       data: (participations) {
@@ -242,6 +244,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         _trackService.createTracksForParticipants(participants);
       },
     );
+
+    namesAsync.whenData((names) {
+      if (names.isEmpty) return;
+      final changed = names.entries.any(
+        (e) => _participantDisplayNames[e.key] != e.value,
+      );
+      if (!changed && _participantDisplayNames.isNotEmpty) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _participantDisplayNames = Map<String, String>.from(names);
+          _trackService.applyDisplayNames(names);
+        });
+      });
+    });
   }
 
 
@@ -3188,6 +3205,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           _filteredParticipantIds = participantIds;
         });
       },
+      displayNames: _participantDisplayNames,
     );
   }
 

@@ -31,11 +31,14 @@ class DashboardNavTabItem {
 }
 
 /// Fila de pestañas de navegación del dashboard (W14–W25).
-/// Las primeras [tabs.length] celdas son tappable; el resto son celdas vacías.
+/// Las primeras [tabs.length] celdas son secciones; [utilityTabs] van después
+/// (chat / avisos, paridad con barra inferior móvil). El resto son celdas vacías.
 class WdDashboardNavTabs extends StatelessWidget {
   final double columnWidth;
   final double rowHeight;
   final List<DashboardNavTabItem> tabs;
+  /// Utilidades a la derecha (chat, notificaciones): no forman parte de las 5 secciones.
+  final List<DashboardNavTabItem> utilityTabs;
   final String? selectedId;
   final void Function(String id, String screen) onTabTap;
 
@@ -44,13 +47,12 @@ class WdDashboardNavTabs extends StatelessWidget {
     required this.columnWidth,
     required this.rowHeight,
     required this.tabs,
+    this.utilityTabs = const [],
     required this.selectedId,
     required this.onTabTap,
   });
 
   /// Nav de 5 (alineada a mobile): info · resumen · agenda · personas · pagos.
-  /// Chat / notificaciones / notas / stats quedan fuera de esta fila
-  /// (notas/stats → Info; chat/notif → utilidades en mobile).
   static List<DashboardNavTabItem> tabItems(BuildContext context) {
     return [
       DashboardNavTabItem(
@@ -86,11 +88,39 @@ class WdDashboardNavTabs extends StatelessWidget {
     ];
   }
 
+  /// Chat / avisos / buscar (utilidades; badges vía [DashboardNavTabItem.badgeCount]).
+  /// Buscar abre sheet (no cambia pantalla); chat/avisos sí.
+  static List<DashboardNavTabItem> utilityTabItems() {
+    return const [
+      DashboardNavTabItem(
+        id: 'W13_PLAN_SEARCH',
+        icon: Icons.search,
+        label: 'buscar',
+        screen: 'planInSearch',
+      ),
+      DashboardNavTabItem(
+        id: 'W19',
+        icon: Icons.chat_bubble_outline,
+        label: 'chat',
+        screen: 'chat',
+      ),
+      DashboardNavTabItem(
+        id: 'W20',
+        icon: Icons.notifications_outlined,
+        label: 'avisos',
+        screen: 'unifiedNotifications',
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     // W14 empieza en C6 (índice 5); hay 12 celdas hasta W25 (C17).
     const startColumn = 5;
     const totalCells = 12;
+    // 1 celda vacía entre secciones y utilidades.
+    final gapAfterTabs = tabs.isNotEmpty && utilityTabs.isNotEmpty ? 1 : 0;
+    final usedCells = tabs.length + gapAfterTabs + utilityTabs.length;
 
     return Positioned(
       left: columnWidth * startColumn,
@@ -109,7 +139,22 @@ class WdDashboardNavTabs extends StatelessWidget {
                   isSelected: selectedId == tabs[i].id,
                   onTap: () => onTabTap(tabs[i].id, tabs[i].screen),
                 )
-              else
+              else if (i >= tabs.length + gapAfterTabs &&
+                  i < usedCells) ...[
+                Builder(
+                  builder: (context) {
+                    final uIndex = i - tabs.length - gapAfterTabs;
+                    final item = utilityTabs[uIndex];
+                    return _NavUtilityCell(
+                      width: columnWidth,
+                      height: rowHeight,
+                      item: item,
+                      isSelected: selectedId == item.id,
+                      onTap: () => onTabTap(item.id, item.screen),
+                    );
+                  },
+                ),
+              ] else
                 _EmptyNavCell(
                   width: columnWidth,
                   height: rowHeight,
@@ -181,6 +226,75 @@ class _NavTabCell extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
                 textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavUtilityCell extends StatelessWidget {
+  final double width;
+  final double height;
+  final DashboardNavTabItem item;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _NavUtilityCell({
+    required this.width,
+    required this.height,
+    required this.item,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final badgeCount = item.badgeCount ?? 0;
+    final accent = AppColorScheme.color2;
+    final color = isSelected ? Colors.white : Colors.white70;
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Material(
+        color: const Color(0xFF111827),
+        child: InkWell(
+          onTap: onTap,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              decoration: isSelected
+                  ? BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(10),
+                    )
+                  : null,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Badge(
+                    isLabelVisible: badgeCount > 0,
+                    label: Text(
+                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      style: const TextStyle(fontSize: 9),
+                    ),
+                    child: Icon(item.icon, size: 16, color: color),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    item.label,
+                    style: GoogleFonts.poppins(
+                      color: color,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ),

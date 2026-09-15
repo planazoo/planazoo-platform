@@ -146,7 +146,7 @@ class _MySummaryReorgDemoPageState extends State<MySummaryReorgDemoPage> {
   /// Demo: plan en curso; el día 25 es “hoy” y el 3.er evento es el actual.
   static const int _demoTodayIndex = 1;
   static const int _demoCurrentEventIndex = 2;
-  static const double _expandedHeaderHeight = 168.0;
+  static const double _expandedHeaderHeight = 107.52;
 
   String _selectedTab = 'resumen';
   String _viewMode = 'mine'; // mine | plan

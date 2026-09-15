@@ -264,10 +264,12 @@ Estado: **Funciona** (T100 completada).
 ## 👥 Tracks: Filtros y Reordenación
 
 ### Filtros de Vista (Plan Completo / Mi Agenda / Personalizada)
-- Selector en AppBar para cambiar de modo de vista.
-- Personalizada: diálogo con checkboxes; botón Aplicar refresca inmediatamente la UI.
+- Selector en AppBar (web) o barra sobre el grid (móvil embebido) para cambiar de modo.
+- **Por defecto al abrir la agenda:** Mi Agenda (`CalendarViewMode.personal`) — track del usuario autenticado.
+- Personalizada: diálogo con checkboxes, **nombres reales** de participantes, botones **Seleccionar todos** / **Deseleccionar todos**; Aplicar refresca la UI.
 - Ancho de columnas se ajusta al número de tracks visibles.
-Estado: Funciona.
+- Código: `CalendarFilters` (`calendar_filters.dart`), `TrackService.applyDisplayNames`, `planParticipantDisplayNamesProvider`.
+Estado: Funciona (actualizado 2026-09-15).
 
 ---
 

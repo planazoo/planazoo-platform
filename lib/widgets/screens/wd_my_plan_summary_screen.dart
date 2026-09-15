@@ -18,6 +18,9 @@ import 'package:unp_calendario/features/calendar/domain/services/plan_map_day_co
 import 'package:unp_calendario/features/calendar/domain/services/plan_state_service.dart';
 import 'package:unp_calendario/widgets/plan/wd_participants_list_widget.dart';
 import 'package:unp_calendario/widgets/screens/wd_plan_map_screen.dart';
+import 'package:unp_calendario/widgets/plan/plan_summary_category_filter.dart';
+import 'package:unp_calendario/widgets/plan/wd_plan_category_filter_sheet.dart';
+import 'package:unp_calendario/widgets/plan/wd_plan_summary_timeline.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// T252: Vista "Mi resumen" / "Mi itinerario" para participantes del plan.
@@ -81,6 +84,8 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
   String _internalViewMode = 'mine';
   /// Ítem 81: en planificando, mostrar solo eventos borrador / no confirmados.
   bool _internalDraftOnlyFilter = false;
+  /// Filtro por categorías (null = todas).
+  Set<String>? _categoryFilter;
 
   String get _viewMode => widget.viewMode ?? _internalViewMode;
   bool get _draftOnlyFilter => widget.draftOnlyFilter ?? _internalDraftOnlyFilter;
@@ -210,17 +215,31 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               .where((e) => e.isDraft || (e.commonPart?.isDraft == true))
               .toList();
         }
+        if (PlanSummaryCategoryFilter.isActive(_categoryFilter)) {
+          displayEvents = displayEvents
+              .where((e) =>
+                  PlanSummaryCategoryFilter.eventMatches(e, _categoryFilter))
+              .toList();
+        }
         displayEvents.sort(_compareEventsBySchedule);
 
         final dimPastInCourse = widget.plan.state == 'en_curso';
 
-        final displayAccommodations = _viewMode == 'plan'
+        var displayAccommodations = _viewMode == 'plan'
             ? List<Accommodation>.from(accommodations)
             : accommodations
                 .where((a) =>
                     a.participantTrackIds.isEmpty ||
                     a.participantTrackIds.contains(userId))
                 .toList();
+        if (PlanSummaryCategoryFilter.isActive(_categoryFilter)) {
+          displayAccommodations = displayAccommodations
+              .where((a) => PlanSummaryCategoryFilter.accommodationMatches(
+                    a,
+                    _categoryFilter,
+                  ))
+              .toList();
+        }
 
         final mapEvents = _viewMode == 'plan'
             ? List<Event>.from(allEvents)
@@ -249,14 +268,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             events: displayEvents,
             accommodations: displayAccommodations,
           ),
-          onOpenMap: () => PlanMapScreen.open(
-            context,
-            plan: widget.plan,
-            events: mapEvents,
-            accommodations: mapAccommodations,
-            onOpenEvent: widget.onOpenEvent,
-            onOpenAccommodation: widget.onOpenAccommodation,
-          ),
+          categoryFilterActive:
+              PlanSummaryCategoryFilter.isActive(_categoryFilter),
+          onCategoryFilterTap: _openCategoryFilter,
         );
 
         final isEmpty = displayEvents.isEmpty && displayAccommodations.isEmpty;
@@ -276,6 +290,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                 showDraftFilter: showDraftFilter,
                 draftsOnlyActive: _draftOnlyFilter,
                 onDraftOnlyToggle: () => _setDraftOnlyFilter(!_draftOnlyFilter),
+                categoryFilterActive:
+                    PlanSummaryCategoryFilter.isActive(_categoryFilter),
+                onCategoryFilterTap: _openCategoryFilter,
               ),
             Expanded(
               child: ColoredBox(
@@ -344,6 +361,8 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               showDraftFilter: false,
               draftsOnlyActive: false,
               onDraftOnlyToggle: () {},
+              categoryFilterActive: false,
+              onCategoryFilterTap: () {},
             ),
           Expanded(
             child: ColoredBox(
@@ -366,6 +385,8 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
               showDraftFilter: false,
               draftsOnlyActive: false,
               onDraftOnlyToggle: () {},
+              categoryFilterActive: false,
+              onCategoryFilterTap: () {},
             ),
           Expanded(
             child: ColoredBox(
@@ -384,6 +405,15 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
   }
 
   /// Barra superior (web): acciones mínimas sin título «Mi resumen».
+  Future<void> _openCategoryFilter() async {
+    final result = await showPlanCategoryFilterSheet(
+      context: context,
+      current: _categoryFilter,
+    );
+    if (!mounted || result == null) return;
+    setState(() => _categoryFilter = result.selected);
+  }
+
   Widget _buildSummaryBar({
     required AppLocalizations loc,
     required String viewMode,
@@ -392,7 +422,8 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     required bool draftsOnlyActive,
     required VoidCallback onDraftOnlyToggle,
     VoidCallback? onShare,
-    VoidCallback? onOpenMap,
+    required bool categoryFilterActive,
+    required VoidCallback onCategoryFilterTap,
   }) {
     return Container(
       width: double.infinity,
@@ -434,15 +465,39 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
             ),
           ],
           const Spacer(),
-          IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            tooltip: loc.planMapTooltip,
-            onPressed: onOpenMap,
-            icon: Icon(
-              Icons.map_outlined,
-              color: AppColorScheme.color2,
-              size: 22,
+          Material(
+            color: categoryFilterActive
+                ? AppColorScheme.color2.withValues(alpha: 0.25)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              onTap: onCategoryFilterTap,
+              borderRadius: BorderRadius.circular(18),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      categoryFilterActive
+                          ? Icons.filter_list
+                          : Icons.filter_list_outlined,
+                      size: 18,
+                      color: AppColorScheme.color2,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      loc.filter.toLowerCase(),
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           IconButton(
@@ -461,7 +516,7 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     );
   }
 
-  /// Fila mío/todos + filtrar (stub) para mobile (sin barra superior).
+  /// Fila mío/todos + filtrar por categorías para mobile (sin barra superior).
   Widget _buildMineFilterRow({
     required AppLocalizations loc,
     required String viewMode,
@@ -469,6 +524,8 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     required bool showDraftFilter,
     required bool draftsOnlyActive,
     required VoidCallback onDraftOnlyToggle,
+    required bool categoryFilterActive,
+    required VoidCallback onCategoryFilterTap,
   }) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
@@ -513,17 +570,12 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
           ],
           const Spacer(),
           Material(
-            color: _surface,
+            color: categoryFilterActive
+                ? AppColorScheme.color2.withValues(alpha: 0.25)
+                : _surface,
             borderRadius: BorderRadius.circular(18),
             child: InkWell(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(loc.filter),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              },
+              onTap: onCategoryFilterTap,
               borderRadius: BorderRadius.circular(18),
               child: Padding(
                 padding:
@@ -532,7 +584,9 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.filter_list,
+                      categoryFilterActive
+                          ? Icons.filter_list
+                          : Icons.filter_list_outlined,
                       size: 18,
                       color: AppColorScheme.color2,
                     ),
@@ -2012,29 +2066,174 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
       return _buildEmptyDay(loc);
     }
 
+    final dayIsPast =
+        dimPastInCourse && _dayKey(day).compareTo(_dayKey(today)) < 0;
+    final dayIsFuture =
+        dimPastInCourse && _dayKey(day).compareTo(_dayKey(today)) > 0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final e in events)
-          _buildEventDayRow(
+        for (var i = 0; i < events.length; i++)
+          _buildTimelineEventRow(
             loc,
-            e,
+            events[i],
             showParticipantLabels,
             participantNamesMap,
+            index: i,
+            isLastEvent: i == events.length - 1,
+            hasNightBelow: accommodations.isNotEmpty,
             dimPastInCourse: dimPastInCourse,
+            dayIsPast: dayIsPast,
+            dayIsFuture: dayIsFuture,
             now: now,
-            isCurrent: highlightId != null && e.id == highlightId,
-            showNowLabel: showNowLabel && e.id == highlightId,
+            isCurrent: highlightId != null && events[i].id == highlightId,
+            showNowLabel: showNowLabel && events[i].id == highlightId,
           ),
         for (final a in accommodations)
-          _buildNightStayRow(
-            loc,
-            a,
-            day,
-            showParticipantLabels,
-            participantNamesMap,
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: _buildNightStayRow(
+              loc,
+              a,
+              day,
+              showParticipantLabels,
+              participantNamesMap,
+            ),
           ),
       ],
+    );
+  }
+
+  PlanSummaryTimelinePhase _timelinePhase({
+    required bool dimPastInCourse,
+    required bool dayIsPast,
+    required bool dayIsFuture,
+    required bool isCurrent,
+    required bool eventPast,
+  }) {
+    if (!dimPastInCourse) return PlanSummaryTimelinePhase.upcoming;
+    if (dayIsPast) return PlanSummaryTimelinePhase.past;
+    if (dayIsFuture) return PlanSummaryTimelinePhase.upcoming;
+    if (isCurrent) return PlanSummaryTimelinePhase.current;
+    if (eventPast) return PlanSummaryTimelinePhase.past;
+    return PlanSummaryTimelinePhase.upcoming;
+  }
+
+  String _formatEventStartTime(Event e) {
+    final h = e.hour.toString().padLeft(2, '0');
+    final m = e.startMinute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  String? _formatDurationLabel(Event e) {
+    final minutes = e.durationMinutes;
+    if (minutes < 45) return null;
+    if (!_isDisplacementEvent(e) && minutes < 90) return null;
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    if (h > 0 && m > 0) return '$h h $m min';
+    if (h > 0) return '$h h';
+    return '$m min';
+  }
+
+  String? _eventCardSubtitle(
+    Event e,
+    String? participantLabel,
+  ) {
+    final location = (e.commonPart?.location ?? '').trim();
+    if (location.isNotEmpty) return location;
+    final subtype = (e.typeSubtype ?? '').trim();
+    if (subtype.isNotEmpty) return subtype;
+    return participantLabel;
+  }
+
+  Widget? _timelineTrailingForEvent(Event e) {
+    final routeUrl = PlanSummaryShareContent.eventRouteUrl(e)?.trim() ?? '';
+    final maps = (e.commonPart?.location ?? '').trim();
+    final web = (e.commonPart?.url ?? '').trim();
+    final hasRoute = routeUrl.isNotEmpty;
+    final hasMaps = !hasRoute && maps.isNotEmpty;
+    final hasWeb = web.isNotEmpty;
+    if (!hasRoute && !hasMaps && !hasWeb) return null;
+
+    final actions = <Widget>[
+      if (hasRoute)
+        PlanSummaryTimelineAction.route(
+          onTap: () => _openWebUrl(routeUrl),
+        ),
+      if (hasMaps)
+        PlanSummaryTimelineAction.maps(
+          onTap: () => _openMapsQuery(maps),
+        ),
+      if (hasWeb)
+        PlanSummaryTimelineAction.web(
+          onTap: () => _openWebUrl(web),
+        ),
+    ];
+    if (actions.length == 1) return actions.first;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < actions.length; i++) ...[
+          if (i > 0) const SizedBox(width: 2),
+          actions[i],
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTimelineEventRow(
+    AppLocalizations loc,
+    Event e,
+    bool showParticipantLabels,
+    Map<String, String> participantNamesMap, {
+    required int index,
+    required bool isLastEvent,
+    required bool hasNightBelow,
+    required bool dimPastInCourse,
+    required bool dayIsPast,
+    required bool dayIsFuture,
+    required DateTime now,
+    required bool isCurrent,
+    required bool showNowLabel,
+  }) {
+    final participantLabel = showParticipantLabels
+        ? _participantLabelForEvent(e, participantNamesMap, loc)
+        : null;
+    final eventPast = _isEventPast(e, now) && !isCurrent;
+    final phase = _timelinePhase(
+      dimPastInCourse: dimPastInCourse,
+      dayIsPast: dayIsPast,
+      dayIsFuture: dayIsFuture,
+      isCurrent: isCurrent,
+      eventPast: eventPast,
+    );
+    final hasRange = e.durationMinutes > 0;
+    final showLineBelow = !isLastEvent || hasNightBelow;
+    // Línea discontinua desde el evento actual (y siguientes) en el día de hoy.
+    final dashed = dimPastInCourse &&
+        !dayIsPast &&
+        !dayIsFuture &&
+        (isCurrent || !eventPast);
+
+    return PlanSummaryTimelineEventRow(
+      startTime: _formatEventStartTime(e),
+      timeRange: hasRange ? _formatEventTime(e, loc).replaceAll('–', ' – ') : null,
+      title: _chronologicalEventTitle(e),
+      subtitle: _eventCardSubtitle(e, participantLabel),
+      durationLabel: _formatDurationLabel(e),
+      icon: _eventTypeIcon(e),
+      phase: phase,
+      isFirst: index == 0,
+      isLast: isLastEvent && !hasNightBelow,
+      showLineBelow: showLineBelow,
+      lineBelowDashed: dashed,
+      showNowLabel: showNowLabel,
+      showDraftBadge: e.isDraft || (e.commonPart?.isDraft == true),
+      draftBadgeLetter: loc.myPlanSummaryDraftBadgeLetter,
+      onTap: widget.onOpenEvent != null ? () => widget.onOpenEvent!(e) : null,
+      trailing: _timelineTrailingForEvent(e),
     );
   }
 
@@ -2079,74 +2278,20 @@ class _MyPlanSummaryScreenState extends ConsumerState<MyPlanSummaryScreen> {
     bool showParticipantLabels,
     Map<String, String> participantNamesMap,
   ) {
-    final badgeColor = _stayMarkerColor(day);
     final subtitleParts = <String>[];
     if (showParticipantLabels) {
       subtitleParts.add(
         _participantLabelForAccommodation(a, participantNamesMap, loc),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: _surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _border),
-        ),
-        child: Row(
-          children: [
-            _stayHBadge(badgeColor),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'esta noche · ${a.hotelName}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (subtitleParts.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitleParts.join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        color: _textTertiary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (widget.onOpenAccommodation != null)
-              IconButton(
-                tooltip: loc.planMapTooltip,
-                onPressed: () => widget.onOpenAccommodation!(a),
-                icon: Icon(
-                  Icons.chevron_right,
-                  color: AppColorScheme.color2,
-                  size: 20,
-                ),
-              )
-            else if ((a.commonPart?.address ?? '').trim().isNotEmpty)
-              Icon(
-                Icons.place_outlined,
-                size: 18,
-                color: AppColorScheme.color2,
-              ),
-          ],
-        ),
-      ),
+    final address = (a.commonPart?.address ?? '').trim();
+    return PlanSummaryTimelineNightRow(
+      hotelName: a.hotelName,
+      subtitle: subtitleParts.isEmpty ? null : subtitleParts.join(' · '),
+      onTap: widget.onOpenAccommodation != null
+          ? () => widget.onOpenAccommodation!(a)
+          : null,
+      onMaps: address.isNotEmpty ? () => _openMapsQuery(address) : null,
     );
   }
 

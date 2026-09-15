@@ -17,44 +17,60 @@ class CalendarEventLogic {
     if (viewMode == CalendarViewMode.all) {
       return events;
     }
-    
-    final filteredParticipantIds = filteredTracks.map((track) => track.participantId).toList();
-    
+
+    final selectedIds = filteredTracks.isNotEmpty
+        ? filteredTracks.map((track) => track.participantId).toList()
+        : filteredParticipantIds;
+
     if (viewMode == CalendarViewMode.personal) {
       if (currentUserId == null) return events;
-      return events.where((event) => 
-        event.commonPart?.participantIds.contains(currentUserId) == true
-      ).toList();
+      return events
+          .where((event) => _eventVisibleToParticipant(event, currentUserId))
+          .toList();
     }
-    
+
     if (viewMode == CalendarViewMode.custom) {
-      return events.where((event) => 
-        event.commonPart?.participantIds.any((id) => filteredParticipantIds.contains(id)) == true
-      ).toList();
+      return events
+          .where(
+            (event) => selectedIds.any(
+              (id) => _eventVisibleToParticipant(event, id),
+            ),
+          )
+          .toList();
     }
-    
+
     return events;
   }
 
+  static bool _eventVisibleToParticipant(Event event, String participantId) {
+    final now = DateTime.now();
+    return shouldShowEventInTrack(
+      event,
+      ParticipantTrack(
+        id: participantId,
+        participantId: participantId,
+        participantName: '',
+        position: 0,
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
+
   /// Verifica si un evento debe mostrarse en un track específico
-  /// 
+  ///
   /// Un evento se muestra en un track si:
-  /// 1. Es para todos los participantes (isForAllParticipants = true), O
-  /// 2. El participante está en la lista de participantIds (destinatarios originales)
-  /// 
-  /// NOTA: Los usuarios que se apuntan voluntariamente también deberían ver el evento,
-  /// pero esa verificación se hace en el widget usando providers de event_participants.
+  /// 1. Es para todos los participantes (`isForAllParticipants` o listas vacías), O
+  /// 2. El participante está en `commonPart.participantIds` o `participantTrackIds`
   static bool shouldShowEventInTrack(Event event, ParticipantTrack track) {
     final commonPart = event.commonPart;
-    if (commonPart == null) return false;
-    
-    // Si es para todos, mostrarlo en todos los tracks
-    if (commonPart.isForAllParticipants == true) {
-      return true;
-    }
-    
-    // Verificar si el participante está en la lista de destinatarios
-    return commonPart.participantIds.contains(track.participantId);
+    final ids = <String>{
+      ...?commonPart?.participantIds,
+      ...event.participantTrackIds,
+    };
+    final forAll = commonPart?.isForAllParticipants == true || ids.isEmpty;
+    if (forAll) return true;
+    return ids.contains(track.participantId);
   }
 
   /// Obtiene grupos consecutivos de tracks para un evento

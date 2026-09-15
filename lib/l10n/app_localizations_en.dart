@@ -3423,6 +3423,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myPlanSummarySeeLess => 'See less';
 
   @override
+  String get planInSearchHint => 'search in plan...';
+
+  @override
+  String get planInSearchNoQuery => 'Type to search events and accommodations';
+
+  @override
+  String get planInSearchEmpty => 'No results';
+
+  @override
+  String get planCategoryFilterTitle => 'filter';
+
+  @override
+  String get planCategoryFilterApply => 'Apply';
+
+  @override
+  String get planCategoryFilterClear => 'Clear filters';
+
+  @override
+  String get planCategoryFilterAccommodation => 'Accommodation';
+
+  @override
   String get myPlanSummaryDraftsOnlyTooltip => 'Drafts only';
 
   @override

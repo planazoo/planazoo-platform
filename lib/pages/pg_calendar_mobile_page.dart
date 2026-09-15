@@ -24,6 +24,8 @@ import 'package:unp_calendario/widgets/screens/calendar/calendar_accommodation_l
 import 'package:unp_calendario/widgets/screens/calendar/calendar_constants.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_styles.dart';
 import 'package:unp_calendario/widgets/screens/calendar/calendar_utils.dart';
+import 'package:unp_calendario/widgets/screens/calendar/calendar_filters.dart';
+import 'package:unp_calendario/features/calendar/domain/models/calendar_view_mode.dart';
 import 'package:unp_calendario/widgets/wd_event_dialog.dart';
 import 'package:unp_calendario/widgets/wd_accommodation_dialog.dart';
 import 'package:unp_calendario/widgets/dialogs/summary_preview_modals.dart';
@@ -99,12 +101,13 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   final ScrollController _hoursScrollController = ScrollController();
   final ScrollController _dataScrollController = ScrollController();
   
-  // Servicio de tracks
+  // Servicio de tracks + filtros (por defecto: agenda del usuario actual)
   late final TrackService _trackService;
-  
-  // Variables para filtros
+  late final CalendarFilters _calendarFilters;
+  CalendarViewMode _viewMode = CalendarViewMode.personal;
   String? _currentUserId;
-  final List<String> _filteredParticipantIds = [];
+  List<String> _filteredParticipantIds = [];
+  Map<String, String> _participantDisplayNames = {};
   
   // Variables para perspectiva de usuario
   String? _selectedPerspectiveUserId;
@@ -116,6 +119,7 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
   void initState() {
     super.initState();
     _trackService = TrackService();
+    _calendarFilters = CalendarFilters(_trackService);
     _initializeTracks();
     _firstVisiblePlanDay =
         Plan.initialVisiblePlanDayIndex(widget.plan, _visibleDays);
@@ -152,6 +156,12 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     if (widget.plan.id == null) return;
     
     final participantsAsync = ref.watch(planRealParticipantsProvider(widget.plan.id!));
+    final namesAsync =
+        ref.watch(planParticipantDisplayNamesProvider(widget.plan.id!));
+    final currentUser = ref.watch(currentUserProvider);
+    if (currentUser != null && _currentUserId != currentUser.id) {
+      _currentUserId = currentUser.id;
+    }
     
     participantsAsync.when(
       data: (participations) {
@@ -168,10 +178,10 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         
         // Inicializar usuario actual
         if (_currentUserId == null && participations.isNotEmpty) {
-          final currentUser = ref.read(currentUserProvider);
-          if (currentUser != null) {
+          final user = ref.read(currentUserProvider);
+          if (user != null) {
             final userParticipation = participations.firstWhere(
-              (p) => p.userId == currentUser.id,
+              (p) => p.userId == user.id,
               orElse: () => participations.first,
             );
             _currentUserId = userParticipation.userId;
@@ -187,6 +197,63 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         });
         _trackService.createTracksForParticipants(participants);
       },
+    );
+
+    namesAsync.whenData((names) {
+      if (names.isEmpty) return;
+      final changed = names.entries.any(
+        (e) => _participantDisplayNames[e.key] != e.value,
+      );
+      if (!changed && _participantDisplayNames.isNotEmpty) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _participantDisplayNames = Map<String, String>.from(names);
+          _trackService.applyDisplayNames(names);
+        });
+      });
+    });
+  }
+
+  List<ParticipantTrack> _getFilteredTracks() {
+    return _calendarFilters.getFilteredTracks(
+      _viewMode,
+      _currentUserId,
+      _filteredParticipantIds,
+    );
+  }
+
+  void _showCustomViewDialog() {
+    _calendarFilters.showCustomViewDialog(
+      context,
+      _filteredParticipantIds,
+      (viewMode, participantIds) {
+        setState(() {
+          _viewMode = viewMode;
+          _filteredParticipantIds = participantIds;
+        });
+      },
+      displayNames: _participantDisplayNames,
+    );
+  }
+
+  Widget _buildViewModeBar() {
+    return Material(
+      color: const Color(0xFF1F2937),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+        child: Row(
+          children: [
+            Expanded(
+              child: _calendarFilters.buildFilterMenu(
+                _viewMode,
+                (mode) => setState(() => _viewMode = mode),
+                _showCustomViewDialog,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -233,14 +300,6 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         'participants': _getFilteredTracks(),
       };
     });
-  }
-
-  List<ParticipantTrack> _getFilteredTracks() {
-    final tracks = _trackService.getVisibleTracks();
-    if (_filteredParticipantIds.isEmpty) {
-      return tracks;
-    }
-    return tracks.where((track) => _filteredParticipantIds.contains(track.participantId)).toList();
   }
 
   double _getSubColumnWidth(double availableWidth) {
@@ -587,10 +646,13 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
     final height = (segment.durationMinutes / 60.0) * AppConstants.cellHeight;
     final showDetailLines =
         segment.durationMinutes >= CalendarConstants.shortEventTitleOnlyMaxMinutes;
-    final showParticipantsLine = showDetailLines && eventTracks.length > 1 && height >= 28;
-    final titleMaxLines = (!showDetailLines || showParticipantsLine) ? 1 : 2;
-    final innerPadding = height < 16 ? 1.0 : (height < 24 ? 2.0 : 4.0);
-    final tinyHeight = height < 18;
+    final showParticipantsLine =
+        showDetailLines && eventTracks.length > 1 && height >= 36;
+    final titleMaxLines =
+        height < 36 || !showDetailLines || showParticipantsLine ? 1 : 2;
+    final innerPadding = height < 16 ? 1.0 : (height < 28 ? 2.0 : 4.0);
+    // Tras margin+padding, alturas ~20–26 no caben un Column de 10pt.
+    final tinyHeight = height < 28;
     
     return [
       Positioned(
@@ -623,30 +685,36 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          _eventTitleWithTransportCode(event),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                          maxLines: titleMaxLines,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (showParticipantsLine)
-                          Text(
-                            '${eventTracks.length} participantes',
-                            style: GoogleFonts.poppins(
-                              fontSize: 8,
-                              color: Colors.white.withValues(alpha: 0.8),
+                  : ClipRect(
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _eventTitleWithTransportCode(event),
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                              maxLines: titleMaxLines,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                      ],
+                            if (showParticipantsLine)
+                              Text(
+                                '${eventTracks.length} participantes',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 8,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
             ),
           ),
@@ -1019,27 +1087,37 @@ class _CalendarMobilePageState extends ConsumerState<CalendarMobilePage> {
         appBar: widget.hideAppBar
             ? null
             : _buildAppBar(startDay, endDay, totalDays),
-        body: CalendarGrid(
-          hoursScrollController: _hoursScrollController,
-          dataScrollController: _dataScrollController,
-          buildFixedRows: _buildFixedRows,
-          buildDataRows: _buildDataRows,
-          buildEventsLayer: _buildEventsLayer,
-          onHorizontalSwipeEnd: _handleHorizontalSwipe,
-          onAccommodationHeaderTap: widget.readOnly
-              ? () {}
-              : () {
-                  // Usar el mismo flujo móvil de creación de alojamientos.
-                  final visibleDays = _getColumnsToShow();
-                  if (visibleDays.isNotEmpty) {
-                    final firstDay = visibleDays.first as Map<String, dynamic>;
-                    final dayIndex = firstDay['index'] as int;
-                    final date = widget.plan.dateForPlanDayIndex(dayIndex);
-                    _showNewAccommodationDialog(date);
-                  } else {
-                    _showNewAccommodationDialog(widget.plan.startDate);
-                  }
-                },
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.hideAppBar) _buildViewModeBar(),
+            Expanded(
+              child: CalendarGrid(
+                hoursScrollController: _hoursScrollController,
+                dataScrollController: _dataScrollController,
+                buildFixedRows: _buildFixedRows,
+                buildDataRows: _buildDataRows,
+                buildEventsLayer: _buildEventsLayer,
+                onHorizontalSwipeEnd: _handleHorizontalSwipe,
+                onAccommodationHeaderTap: widget.readOnly
+                    ? () {}
+                    : () {
+                        // Usar el mismo flujo móvil de creación de alojamientos.
+                        final visibleDays = _getColumnsToShow();
+                        if (visibleDays.isNotEmpty) {
+                          final firstDay =
+                              visibleDays.first as Map<String, dynamic>;
+                          final dayIndex = firstDay['index'] as int;
+                          final date =
+                              widget.plan.dateForPlanDayIndex(dayIndex);
+                          _showNewAccommodationDialog(date);
+                        } else {
+                          _showNewAccommodationDialog(widget.plan.startDate);
+                        }
+                      },
+              ),
+            ),
+          ],
         ),
         floatingActionButton: widget.readOnly
             ? null

@@ -6260,6 +6260,48 @@ abstract class AppLocalizations {
   /// **'Ver menos'**
   String get myPlanSummarySeeLess;
 
+  /// Hint búsqueda dentro del plan (barra inferior / utilidades)
+  ///
+  /// In es, this message translates to:
+  /// **'buscar en el plan...'**
+  String get planInSearchHint;
+
+  /// Estado vacío del sheet de búsqueda en el plan
+  ///
+  /// In es, this message translates to:
+  /// **'Escribe para buscar eventos y alojamientos'**
+  String get planInSearchNoQuery;
+
+  /// Búsqueda en el plan sin coincidencias
+  ///
+  /// In es, this message translates to:
+  /// **'Sin resultados'**
+  String get planInSearchEmpty;
+
+  /// Título sheet filtro categorías del resumen
+  ///
+  /// In es, this message translates to:
+  /// **'filtrar'**
+  String get planCategoryFilterTitle;
+
+  /// Confirmar filtro de categorías
+  ///
+  /// In es, this message translates to:
+  /// **'Aplicar'**
+  String get planCategoryFilterApply;
+
+  /// Limpiar filtro de categorías del resumen
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar filtros'**
+  String get planCategoryFilterClear;
+
+  /// Chip filtro: alojamientos
+  ///
+  /// In es, this message translates to:
+  /// **'Alojamiento'**
+  String get planCategoryFilterAccommodation;
+
   /// Ítem 81: filtrar eventos no confirmados
   ///
   /// In es, this message translates to:

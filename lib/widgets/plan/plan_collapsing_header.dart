@@ -13,7 +13,7 @@ import 'package:unp_calendario/widgets/plan/wd_plan_user_status_label.dart';
 class PlanCollapsingHeader {
   PlanCollapsingHeader._();
 
-  static const double expandedHeight = 168;
+  static const double expandedHeight = 107.52;
 
   static String dateRangeLabel(Plan plan) {
     final start = DateFormatter.formatDateShort(plan.startDate);

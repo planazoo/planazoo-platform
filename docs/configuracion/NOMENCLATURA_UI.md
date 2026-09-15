@@ -247,19 +247,24 @@ El `DashboardPage` gestiona la navegación entre pantallas usando el estado `cur
 En móviles, la navegación funciona de forma diferente:
 
 - **`PlansListPage`** → Primera pantalla después del login (lista de planes)
-  - Al seleccionar un plan → Navega a `PlanDetailPage`
+  - Al seleccionar un plan → `PlanDetailPage` con pestaña **resumen** (`mySummary` por defecto)
+  - Excepciones: acceso desde chat → `initialTab: 'chat'`; preview pending → Info
   
 - **`PlanDetailPage`** → Página principal de un plan seleccionado
   - Contiene `PlanNavigationBar` para cambiar entre vistas
   - Vistas disponibles (orden en barra, ver `wd_plan_navigation_bar.dart`):
+    - `'mySummary'` → Mi resumen del plan (**entrada por defecto**)
     - `'planData'` → Muestra `PlanDataScreen`
-    - `'mySummary'` → Mi resumen del plan
-    - `'calendar'` → Muestra `CalendarMobilePage`
+    - `'calendar'` → `CalendarMobilePage`; por defecto vista **Mi agenda** (usuario actual)
     - `'participants'` → Muestra `PlanParticipantsPage` / participantes
     - `'chat'` → Chat del plan
     - `'payments'` → Muestra `PaymentSummaryPage` / pagos
     - `'stats'` → Muestra `PlanStatsPage` (solo organizador según permisos)
     - `'planNotifications'` → Notificaciones del plan
+
+### Navegación Web (dashboard)
+- Al seleccionar un plan en W28 → pantalla `mySummary` (`W15_MYSUMMARY`)
+- Agenda (`calendar` / W15): por defecto `CalendarViewMode.personal`
 
 ---
 

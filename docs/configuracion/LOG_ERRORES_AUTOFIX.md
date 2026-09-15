@@ -2,6 +2,14 @@
 
 Registro ligero de errores que la IA ha detectado y corregido automáticamente, para evitar repetirlos y documentar patrones de solución.
 
+### [2026-09-14] Simulador iOS — primer build eterno tras limpiar disco
+
+- **Contexto:** `flutter clean` + borrar DerivedData; `flutter run` al iPhone 17 Pro.
+- **Error:** Xcode >15 min en `Running Xcode build...`; Simulator.app abierto pero el iPhone en **Shutdown**; `clang` compilaba gRPC/Firebase como `x86_64-apple-ios-simulator` en Mac M1.
+- **Causa raíz:** los Pods no excluían el slice Intel del simulador; gRPC-C++ se recompila entero. El dispositivo del Simulator se apagó durante el build.
+- **Solución aplicada:** `EXCLUDED_ARCHS[sdk=iphonesimulator*] = i386 x86_64` y `ONLY_ACTIVE_ARCH=YES` (Debug) en `ios/Podfile` `post_install`; volver a arrancar el simulador.
+- **Notas:** En Apple Silicon no hace falta el slice x86_64 del simulador. Tras wipe de DerivedData el primer iOS tarda; si `clang` muestra `x86_64-apple-ios-simulator`, cortar y ajustar el Podfile.
+
 ### [2026-09-13] Resumen reorg — paréntesis en `_buildSummaryLinkRow`
 
 - **Contexto:** Reorganización UI resumen (`wd_my_plan_summary_screen.dart`); envolver fila con `DecoratedBox` + `Padding` para acento «evento actual».
@@ -80,6 +88,14 @@ Registro ligero de errores que la IA ha detectado y corregido automáticamente, 
 - **Causa raíz:** `IntrinsicHeight` + `Column`/`Expanded` + `LayoutBuilder`/`CustomPaint` en el rail de la timeline (layout circular durante `performLayout`).
 - **Solución aplicada:** rail con `Stack` + `Positioned` (línea sólida/discontinua) y punto encima; sin `Expanded`/`LayoutBuilder` en esa columna.
 - **Notas:** En filas de timeline dentro de slivers, no combinar `IntrinsicHeight` con `Expanded`+`LayoutBuilder`.
+
+### [2026-09-14] Agenda móvil — overflow 2.3px en tarjeta de evento
+
+- **Contexto:** iOS simulator; `pg_calendar_mobile_page` al ver agenda embebida.
+- **Error:** `A RenderFlex overflowed by 2.3 pixels on the bottom` en `Column` (~L626); constraints ~h=22.8.
+- **Causa raíz:** Umbral `tinyHeight < 18` dejaba pasar celdas bajas al `Column` con título 10pt + padding; no cabía.
+- **Solución aplicada:** `tinyHeight < 28` (una línea); participantes solo si `height >= 36`; `Column` con `mainAxisSize: min` + `ClipRect`.
+- **Notas:** En bloques de altura dinámica, umbral de layout por altura real, no solo por duración.
 
 ## Formato recomendado
 

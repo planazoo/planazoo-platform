@@ -61,6 +61,7 @@ import 'package:unp_calendario/widgets/dashboard/wd_dashboard_header_placeholder
 import 'package:unp_calendario/widgets/dashboard/wd_dashboard_my_status_cell.dart';
 import 'package:unp_calendario/widgets/dialogs/wd_create_plan_modal.dart';
 import 'package:unp_calendario/widgets/notifications/wd_notification_list_dialog.dart';
+import 'package:unp_calendario/widgets/plan/wd_plan_in_search_sheet.dart';
 import 'package:unp_calendario/widgets/plan/pending_invitation_on_launch.dart';
 import 'package:unp_calendario/widgets/plan/pending_invite_preview_banner.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -503,20 +504,48 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     final baseTabs = WdDashboardNavTabs.tabItems(context);
     final plan = _selectedPlanResolvedFromStream() ?? selectedPlan;
     final pending = _isPendingPreview(plan);
-    final planNotifUnread = ref.watch(planUnreadCountProvider(selectedPlanId));
-    final notifCount = planNotifUnread.valueOrNull ?? 0;
-    final chatUnread = selectedPlanId != null
-        ? ref.watch(unreadMessagesCountProvider(selectedPlanId!)).valueOrNull ?? 0
-        : 0;
     return baseTabs
         .where((t) =>
             !pending || _pendingPreviewScreens.contains(t.screen))
+        .toList();
+  }
+
+  List<DashboardNavTabItem> _dashboardUtilityItemsWithBadge() {
+    final plan = _selectedPlanResolvedFromStream() ?? selectedPlan;
+    if (_isPendingPreview(plan) || selectedPlanId == null) {
+      return const [];
+    }
+    final notifCount =
+        ref.watch(planUnreadCountProvider(selectedPlanId)).valueOrNull ?? 0;
+    final chatUnread =
+        ref.watch(unreadMessagesCountProvider(selectedPlanId!)).valueOrNull ??
+            0;
+    return WdDashboardNavTabs.utilityTabItems()
         .map((t) {
           if (t.id == 'W20') return t.copyWith(badgeCount: notifCount);
           if (t.id == 'W19') return t.copyWith(badgeCount: chatUnread);
           return t;
         })
         .toList();
+  }
+
+  void _openPlanInSearch() {
+    final plan = _selectedPlanResolvedFromStream() ?? selectedPlan;
+    if (plan == null || plan.id == null) return;
+    if (_isPendingPreview(plan)) return;
+    final planId = plan.id!;
+    final events =
+        ref.read(planEventsStreamProvider(planId)).valueOrNull ?? const [];
+    final accommodations =
+        ref.read(planAccommodationsStreamProvider(planId)).valueOrNull ??
+            const [];
+    showPlanInSearchSheet(
+      context: context,
+      events: events,
+      accommodations: accommodations,
+      onEventTap: (event) => _openEventFromSummary(event),
+      onAccommodationTap: (acc) => _openAccommodationFromSummary(acc),
+    );
   }
 
   void _selectPlanazoo(String planId) {
@@ -554,14 +583,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       } catch (e) {
         selectedPlan = null;
       }
-      // Pending: Info; resto: calendario por defecto
+      // Pending: Info; resto: resumen por defecto
       final pending = _isPendingPreview(selectedPlan, watch: false);
       if (pending) {
         selectedWidgetId = _fallbackPendingWidgetId();
         currentScreen = _fallbackPendingScreen();
       } else {
-        selectedWidgetId = 'W15';
-        currentScreen = 'calendar';
+        selectedWidgetId = 'W15_MYSUMMARY';
+        currentScreen = 'mySummary';
       }
       _calendarPanelView = 'calendar';
     });
@@ -1573,8 +1602,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 columnWidth: columnWidth,
                 rowHeight: rowHeight,
                 tabs: _dashboardTabItemsWithBadge(context),
+                utilityTabs: _dashboardUtilityItemsWithBadge(),
                 selectedId: selectedWidgetId,
                 onTabTap: (id, screen) {
+                  if (screen == 'planInSearch') {
+                    _openPlanInSearch();
+                    return;
+                  }
                   _selectWidget(id);
                   _changeScreen(screen);
                 },
@@ -1661,7 +1695,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   isLoading: isLoading,
                   onPlanSelected: (plan) {
                     if (plan.id != null) {
-                      _selectPlanazoo(plan.id!);
+                      _openPlanTab(plan, 'mySummary', 'W15_MYSUMMARY');
                     }
                   },
                 )
@@ -1920,6 +1954,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   currentScreen = 'calendar';
                   selectedWidgetId = 'W15';
                 }),
+                onRequestCreateEvent: isPendingPreview
+                    ? null
+                    : _openCreateEventFromSummary,
+                onRequestCreateAccommodation: isPendingPreview
+                    ? null
+                    : _openCreateAccommodationFromSummary,
               )
             : _buildNoPlanSelected();
         break;
@@ -2024,6 +2064,78 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       context: context,
       event: event,
       onOpenFull: isPendingPreview ? null : () => _showEventDialog(event),
+    );
+  }
+
+  void _openCreateEventFromSummary() {
+    final plan = _selectedPlanResolvedFromStream() ?? selectedPlan;
+    if (plan == null || plan.id == null) return;
+    if (_isPendingPreview(plan)) return;
+    final defaults = NewEventFromButtonDefaults.forPlan(plan);
+    showEventFormDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      dialog: EventDialog(
+        planId: plan.id!,
+        initialDate: defaults.date,
+        initialHour: defaults.hour,
+        initialStartMinute: defaults.startMinute,
+        onSaved: (newEvent) async {
+          final eventService = ref.read(eventServiceProvider);
+          final eventId = await eventService.createEvent(newEvent);
+          if (eventId == null) {
+            throw Exception('createEvent returned null');
+          }
+          final calendarParams = CalendarNotifierParams(
+            planId: plan.id!,
+            userId: plan.userId,
+            initialDate: plan.startDate,
+            initialColumnCount: plan.durationInDays,
+          );
+          ref.invalidate(calendarNotifierProvider(calendarParams));
+          ref.invalidate(planStatsProvider(plan.id!));
+          ref.invalidate(planEventsStreamProvider(plan.id!));
+          if (!mounted) return;
+          Navigator.of(context).pop();
+          setState(() {});
+        },
+      ),
+    );
+  }
+
+  void _openCreateAccommodationFromSummary() {
+    final plan = _selectedPlanResolvedFromStream() ?? selectedPlan;
+    if (plan == null || plan.id == null) return;
+    if (_isPendingPreview(plan)) return;
+    final planEndDate =
+        DateTime(plan.endDate.year, plan.endDate.month, plan.endDate.day);
+    showAccommodationFormDialog<void>(
+      context: context,
+      dialog: AccommodationDialog(
+        planId: plan.id!,
+        planStartDate: plan.startDate,
+        planEndDate: planEndDate,
+        initialCheckIn: plan.startDate,
+        onSaved: (acc) async {
+          final accommodationService = ref.read(accommodationServiceProvider);
+          final success = await accommodationService.saveAccommodation(acc);
+          if (!mounted) return;
+          Navigator.of(context).pop();
+          if (!success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Error al guardar el alojamiento. Por favor, inténtalo de nuevo.',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+          ref.invalidate(planAccommodationsStreamProvider(plan.id!));
+          setState(() {});
+        },
+      ),
     );
   }
 

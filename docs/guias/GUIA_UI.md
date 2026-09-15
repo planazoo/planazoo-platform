@@ -268,28 +268,43 @@ Orden alineado en evento y alojamiento (2026-08-27): adjuntos → participantes 
 
 Fuente de verdad de composición: `docs/guias/RESUMEN_PLAN_REORG_UI.md`. Demo: `/demo/my-summary-reorg`.
 
+**Entrada al plan**
+
+- Al seleccionar un plan en la lista (móvil `PlansListPage` → `PlanDetailPage`; web W28) se abre **resumen** (`mySummary` / `W15_MYSUMMARY`). Preview pending → Info.
+
 **Shell del plan (móvil)**
 
 - Nav superior **5** secciones con icono + texto en minúsculas: info · resumen · agenda · personas · pagos.  
-- Chat, notificaciones, notas y stats **no** van en esa fila (chat/notif → barra inferior; notas/stats → info).  
-- Barra inferior fija: **buscar en el plan…** + chat + notificaciones (badges existentes).  
+- Chat, notificaciones, notas y stats **no** van en esa fila de 5 (notas/stats → info).
+- Móvil: barra inferior fija **buscar en el plan…** (sheet real) + chat + notificaciones (badges).
+- Web: W13 búsqueda de planes en lista; utilidades **buscar · chat · avisos** (buscar = sheet en el plan).
+- Chip **filtrar** del resumen: familias de evento + alojamiento.
 - Sin título de sección «mi resumen».  
 - Crear evento/alojamiento: **+** en la fila de fecha (no FAB ni iconos de crear en la barra inferior).
+- Mapa del plan: solo en la fila de fecha (no en la barra mío/todos/compartir).
 
 **Contenido resumen**
 
-- Selector **mío / todos**; chip **filtrar** (estado visual; panel de categorías aparcado).  
-- **Un día a la vez**: chips horizontales (marcar **hoy**); swipe entre días si encaja.  
+- Selector **mío / todos**; chip **filtrar** (familias + alojamiento).  
+- **Un día a la vez**: chips horizontales (marcar **hoy**); swipe entre días.  
 - Fila: fecha completa centrada · mapa · **+** (estilo primario `AppColorScheme.color3`).  
-- Cronología compacta; en plan `en_curso`, reforzar evento actual (punto con anillo, acento `color2` en icono).  
+- Timeline vertical (`wd_plan_summary_timeline.dart`): hora a la izquierda, línea sólida/discontinua, puntos (anillo «ahora» / pasado / futuro), cards con pastilla de icono; en `en_curso` atenuar pasados y etiqueta «ahora».  
+- Título de evento: tipografía compacta, hasta **2 líneas**. Acciones trailing solo icono (ruta / maps / web; pueden ser varios).  
 - Alojamiento de la noche al final: **esta noche · [nombre]** (noches `[check-in, check-out)`).  
 - Sin tarjeta independiente «ahora / siguiente».  
-- Cabecera con `plan.imageUrl` cuando exista (fallback corporativo si no); colapso al scroll en móvil resumen manteniendo nombre + estado de participación (`PlanCollapsingHeader`).
+- Cabecera con `plan.imageUrl` cuando exista (fallback corporativo si no); colapso al scroll en móvil resumen (`PlanCollapsingHeader`, altura ~108).
 
-**Densidad de filas (sigue vigente)**
+**Agenda (calendario)**
 
-- Trailing de enlaces chips **26×26** (ruta / maps / web).  
-- Badges borrador / tipo según lógica existente.  
+- Por defecto: **Mi agenda** (`CalendarViewMode.personal`) — solo track / eventos / alojamientos del usuario actual.  
+- Selector: Plan completo · Mi agenda · Personalizada (web AppBar; móvil barra sobre el grid).  
+- Vista personalizada: nombres de participantes (`planParticipantDisplayNamesProvider`) + **Seleccionar todos** / **Deseleccionar todos**.  
+- Visibilidad en track: `isForAllParticipants` o listas vacías → todos; si no, `participantIds` / `participantTrackIds`.
+
+**Densidad / acciones**
+
+- Acciones trailing: solo icono (ruta / maps / web).  
+- Badges borrador según lógica existente.  
 - Mapa del plan (T279): acceso desde la fila de fecha.
 
 ### Mi resumen / itinerario — legado *(2026-08-27)*

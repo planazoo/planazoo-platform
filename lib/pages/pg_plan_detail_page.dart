@@ -42,6 +42,7 @@ import 'package:unp_calendario/features/notifications/domain/services/notificati
 import 'package:unp_calendario/features/calendar/presentation/providers/invitation_providers.dart';
 import 'package:unp_calendario/widgets/plan/pending_invite_preview_banner.dart';
 import 'package:unp_calendario/features/plan_notes/presentation/pages/plan_notes_screen.dart';
+import 'package:unp_calendario/widgets/plan/wd_plan_in_search_sheet.dart';
 
 /// Página de detalle del plan para mobile
 /// Incluye barra de navegación horizontal y contenido según la opción seleccionada
@@ -124,7 +125,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
   @override
   void initState() {
     super.initState();
-    _selectedOption = widget.initialTab ?? 'planData';
+    _selectedOption = widget.initialTab ?? 'mySummary';
     _calendarFirstPlanDay =
         Plan.initialVisiblePlanDayIndex(widget.plan, _calendarVisibleDays);
   }
@@ -185,29 +186,12 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
         if (mounted) setState(() => _selectedOption = 'planData');
       });
     }
-    // T252: participante aceptado (no organizador) → "Mi resumen" por defecto
+    // T252: si no hay initialTab, ya abrimos en resumen por defecto.
     if (widget.initialTab == null &&
         planId != null &&
         currentUser != null &&
-        plan.userId != currentUser.id &&
-        !_hasSetInitialTabForParticipant &&
-        !isPendingPreview) {
-      final participantsAsync = ref.watch(planParticipantsProvider(planId));
-      participantsAsync.whenData((participants) {
-        final isAccepted = participants.any(
-          (p) =>
-              p.userId == currentUser.id &&
-              p.isActive &&
-              p.isAccepted &&
-              !p.isPending,
-        );
-        if (isAccepted && _selectedOption == 'planData') {
-          _hasSetInitialTabForParticipant = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) setState(() => _selectedOption = 'mySummary');
-          });
-        }
-      });
+        !_hasSetInitialTabForParticipant) {
+      _hasSetInitialTabForParticipant = true;
     }
     final isSummaryTab = _selectedOption == 'mySummary';
     return Theme(
@@ -496,7 +480,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
     return '${value[0].toUpperCase()}${value.substring(1)}';
   }
 
-  /// Barra inferior: utilidades (buscar stub · chat · notificaciones).
+  /// Barra inferior: utilidades (buscar · chat · notificaciones).
   /// Crear evento/alojamiento vive en el + de la fila de fecha del resumen.
   Widget _buildQuickActionsBar(Plan plan) {
     final loc = AppLocalizations.of(context)!;
@@ -521,14 +505,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                   color: _cPageBg,
                   borderRadius: BorderRadius.circular(20),
                   child: InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('buscar en el plan...'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    onTap: () => _openPlanInSearch(plan),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       height: 40,
@@ -549,7 +526,7 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'buscar en el plan...',
+                              loc.planInSearchHint,
                               style: GoogleFonts.poppins(
                                 color: _cTextSecondary.withValues(alpha: 0.7),
                                 fontSize: 14,
@@ -1014,6 +991,30 @@ class _PlanDetailPageState extends ConsumerState<PlanDetailPage> {
             Navigator.of(context).pop();
           }
         },
+      ),
+    );
+  }
+
+  void _openPlanInSearch(Plan plan) {
+    if (_isPendingPreview(plan, watch: false)) return;
+    final planId = plan.id;
+    if (planId == null) return;
+    final events =
+        ref.read(planEventsStreamProvider(planId)).valueOrNull ?? const [];
+    final accommodations =
+        ref.read(planAccommodationsStreamProvider(planId)).valueOrNull ??
+            const [];
+    showPlanInSearchSheet(
+      context: context,
+      events: events,
+      accommodations: accommodations,
+      onEventTap: (event) => _openEventFromSummary(
+        event,
+        isPendingPreview: false,
+      ),
+      onAccommodationTap: (acc) => _openAccommodationFromSummary(
+        acc,
+        isPendingPreview: false,
       ),
     );
   }

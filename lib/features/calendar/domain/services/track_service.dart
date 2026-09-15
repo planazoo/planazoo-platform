@@ -232,18 +232,23 @@ class TrackService {
     return createdTracks;
   }
 
-  /// Obtiene el nombre de visualización para un participante
+  /// Actualiza nombres visibles de tracks (displayName / username / email).
+  void applyDisplayNames(Map<String, String> names) {
+    if (names.isEmpty) return;
+    for (var i = 0; i < _tracks.length; i++) {
+      final name = names[_tracks[i].participantId]?.trim();
+      if (name == null || name.isEmpty) continue;
+      if (_tracks[i].participantName == name) continue;
+      _tracks[i] = _tracks[i].copyWith(
+        participantName: name,
+        updatedAt: DateTime.now(),
+      );
+    }
+  }
+
+  /// Obtiene la nombre de visualización provisional (hasta resolver users).
   String _getParticipantDisplayName(PlanParticipation participation) {
-    // Mapeo de user IDs a nombres reales para el plan Frankenstein
-    final userNames = {
-      'uJRMMGniO2bwfbdD3S11QMXQT912': 'Cristian Claraso',
-      'mar_batllori': 'Mar Batllori',
-      'emma_claraso': 'Emma Claraso',
-      'matilde_claraso': 'Matilde Claraso',
-      'jimena_claraso': 'Jimena Claraso',
-    };
-    
-    return userNames[participation.userId] ?? participation.userId;
+    return participation.userId;
   }
 
   /// Obtiene la siguiente posición disponible para un nuevo track
